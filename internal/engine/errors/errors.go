@@ -160,12 +160,12 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 }
 
 // RemediationStatusAsError returns the remediation status for a given error
-func RemediationStatusAsError(ns db.NullRemediationStatusTypes) error {
-	if !ns.Valid {
+func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
+	if prevStatus == nil {
 		return ErrActionSkipped
 	}
 
-	s := ns.RemediationStatusTypes
+	s := prevStatus.RemStatus
 	switch s {
 	case db.RemediationStatusTypesSuccess:
 		return nil
@@ -203,7 +203,13 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 }
 
 // AlertStatusAsError returns the error for a given alert status
-func AlertStatusAsError(s db.AlertStatusTypes) error {
+func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
+	if prevStatus == nil {
+		return errors.New("no previous alert state")
+	}
+
+	s := prevStatus.AlertStatus
+
 	switch s {
 	case db.AlertStatusTypesOn:
 		return nil

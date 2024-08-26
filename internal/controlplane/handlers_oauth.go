@@ -41,6 +41,7 @@ import (
 	mcrypto "github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -69,6 +70,15 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	providerClass := req.GetProviderClass()
 	if providerClass == "" {
 		providerClass = providerName
+	}
+
+	if providerClass == string(db.ProviderClassDockerhub) &&
+		!flags.Bool(ctx, s.featureFlags, flags.DockerHubProvider) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "DockerHub provider is not enabled")
+	}
+	if providerClass == string(db.ProviderClassGitlab) &&
+		!flags.Bool(ctx, s.featureFlags, flags.GitLabProvider) {
+		return nil, util.UserVisibleError(codes.Unimplemented, "GitLab provider is not enabled")
 	}
 
 	// Telemetry logging
@@ -281,6 +291,14 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error encoding token: %w", err)
 	}
 
+	// Verify if the token user is a member of the ownerFilter (Organization)
+	if stateData.OwnerFilter.Valid {
+		err := s.validateOwnerFilter(ctx, token, stateData.OwnerFilter.String)
+		if err != nil {
+			return err
+		}
+	}
+
 	var errConfig providers.ErrProviderInvalidConfig
 
 	p, err := s.sessionService.CreateProviderFromSessionState(ctx, db.ProviderClass(provider), &encryptedToken, state)
@@ -289,7 +307,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		zerolog.Ctx(ctx).Info().Str("provider", provider).Msg("Provider already exists")
 	} else if errors.As(err, &errConfig) {
 		return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
-			"The provider configuration is invalid: " + errConfig.Details)
+			"The provider configuration is invalid: %s", errConfig.Details)
 	} else if err != nil {
 		return fmt.Errorf("error creating provider: %w", err)
 	}
@@ -311,6 +329,20 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		return fmt.Errorf("error writing OAuth success page: %w", err)
 	}
 
+	return nil
+}
+
+func (s *Server) validateOwnerFilter(ctx context.Context, token *oauth2.Token, ownerFilter string) error {
+	member, err := s.ghProviders.ValidateOrgMembershipForToken(ctx, token, ownerFilter)
+	if err != nil {
+		return fmt.Errorf("error checking organization membership: %w", err)
+	}
+
+	if !member {
+		return newHttpError(http.StatusForbidden, "Invalid OwnerFilter Provided").SetContents(
+			"You do not have access to the organization %s, specified in the owner filter."+
+				" Please ensure that you are a member of the GitHub organization and try again.", ownerFilter)
+	}
 	return nil
 }
 
@@ -366,7 +398,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		if err != nil {
 			if errors.As(err, &confErr) {
 				return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
-					"The provider configuration is invalid: " + confErr.Details)
+					"The provider configuration is invalid: %s", confErr.Details)
 			}
 			if errors.Is(err, service.ErrInvalidTokenIdentity) {
 				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(

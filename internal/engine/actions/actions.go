@@ -25,7 +25,6 @@ import (
 	"runtime/debug"
 
 	"github.com/rs/zerolog"
-	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
@@ -121,7 +120,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			getMeta(params.GetEvalStatusFromDb().RemMetadata))
+			getRemediationMeta(params.GetEvalStatusFromDb()))
 	}
 
 	// Try alerting
@@ -130,7 +129,7 @@ func (rae *RuleActionsEngine) DoActions(
 		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
-			getMeta(params.GetEvalStatusFromDb().AlertMetadata))
+			getAlertMeta(params.GetEvalStatusFromDb()))
 	}
 	return result
 }
@@ -166,8 +165,8 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 	// Get previous Remediation status
 	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb.RemStatus.Valid {
-		prevRemediation = prevEvalFromDb.RemStatus.RemediationStatusTypes
+	if prevEvalFromDb != nil {
+		prevRemediation = prevEvalFromDb.RemStatus
 	}
 
 	// Start evaluation scenarios
@@ -215,8 +214,8 @@ func shouldAlert(
 
 	// Get previous Alert status
 	prevAlert := db.AlertStatusTypesSkipped
-	if prevEvalFromDb.AlertStatus.Valid {
-		prevAlert = prevEvalFromDb.AlertStatus.AlertStatusTypes
+	if prevEvalFromDb != nil {
+		prevAlert = prevEvalFromDb.AlertStatus
 	}
 
 	// Start evaluation scenarios
@@ -299,10 +298,18 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	return skipAction
 }
 
-// getMeta returns the json.RawMessage from the database type, empty if not valid
-func getMeta(rawMsg pqtype.NullRawMessage) *json.RawMessage {
-	if rawMsg.Valid {
-		return &rawMsg.RawMessage
+// getRemediationMeta returns the json.RawMessage from the database type, empty if not valid
+func getRemediationMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prevEvalFromDb != nil {
+		return &prevEvalFromDb.RemMetadata
+	}
+	return nil
+}
+
+// getAlertMeta returns the json.RawMessage from the database type, empty if not valid
+func getAlertMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prevEvalFromDb != nil {
+		return &prevEvalFromDb.AlertMetadata
 	}
 	return nil
 }

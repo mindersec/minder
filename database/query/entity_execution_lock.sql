@@ -12,7 +12,8 @@ INSERT INTO entity_execution_lock(
     repository_id,
     artifact_id,
     pull_request_id,
-    project_id
+    project_id,
+    entity_instance_id
 ) VALUES(
     sqlc.arg(entity)::entities,
     gen_random_uuid(),
@@ -20,8 +21,9 @@ INSERT INTO entity_execution_lock(
     sqlc.narg(repository_id)::UUID,
     sqlc.narg(artifact_id)::UUID,
     sqlc.narg(pull_request_id)::UUID,
-    sqlc.arg(project_id)::UUID
-) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
+    sqlc.arg(project_id)::UUID,
+    sqlc.arg(entity_instance_id)::UUID
+) ON CONFLICT(entity_instance_id)
 DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW()
@@ -34,19 +36,11 @@ RETURNING *;
 
 -- name: ReleaseLock :exec
 DELETE FROM entity_execution_lock
-WHERE entity = sqlc.arg(entity)::entities AND
-    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(repository_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(artifact_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(pull_request_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-    locked_by = sqlc.arg(locked_by)::UUID;
+WHERE entity_instance_id = sqlc.arg(entity_instance_id) AND locked_by = sqlc.arg(locked_by)::UUID;
 
 -- name: UpdateLease :exec
 UPDATE entity_execution_lock SET last_lock_time = NOW()
-WHERE entity = $1 AND
-COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(repository_id), '00000000-0000-0000-0000-000000000000'::UUID) AND
-COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(artifact_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(pull_request_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-locked_by = sqlc.arg(locked_by)::UUID;
+WHERE entity_instance_id = $1 AND locked_by = sqlc.arg(locked_by)::UUID;
 
 -- name: EnqueueFlush :one
 INSERT INTO flush_cache(
@@ -54,23 +48,22 @@ INSERT INTO flush_cache(
     repository_id,
     artifact_id,
     pull_request_id,
-    project_id
+    project_id,
+    entity_instance_id
 ) VALUES(
     sqlc.arg(entity)::entities,
     sqlc.narg(repository_id)::UUID,
     sqlc.narg(artifact_id)::UUID,
     sqlc.narg(pull_request_id)::UUID,
-    sqlc.arg(project_id)::UUID
-) ON CONFLICT(entity, COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID), COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID))
+    sqlc.arg(project_id)::UUID,
+    sqlc.arg(entity_instance_id)::UUID
+) ON CONFLICT(entity_instance_id)
 DO NOTHING
 RETURNING *;
 
 -- name: FlushCache :one
 DELETE FROM flush_cache
-WHERE entity = $1 AND
-    COALESCE(repository_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(repository_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-    COALESCE(artifact_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(artifact_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID) AND
-    COALESCE(pull_request_id, '00000000-0000-0000-0000-000000000000'::UUID) = COALESCE(sqlc.narg(pull_request_id)::UUID, '00000000-0000-0000-0000-000000000000'::UUID)
+WHERE entity_instance_id= $1
 RETURNING *;
 
 -- name: ListFlushCache :many

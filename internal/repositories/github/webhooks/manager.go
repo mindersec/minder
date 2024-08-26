@@ -57,7 +57,9 @@ type webhookManager struct {
 
 // NewWebhookManager instantiates an instances of the WebhookManager interface
 func NewWebhookManager(webhookConfig server.WebhookConfig) WebhookManager {
-	return &webhookManager{webhookConfig: webhookConfig}
+	return &webhookManager{
+		webhookConfig: webhookConfig,
+	}
 }
 
 var (
@@ -79,7 +81,11 @@ func (w *webhookManager) CreateWebhook(
 	// generate unique URL for this webhook
 	baseURL := w.webhookConfig.ExternalWebhookURL
 	hookUUID := uuid.New().String()
-	webhookURL := fmt.Sprintf("%s/%s", baseURL, hookUUID)
+	webhookURL, err := url.JoinPath(baseURL, hookUUID)
+	if err != nil {
+		return "", nil, err
+	}
+
 	parsedWebhookURL, err := url.Parse(webhookURL)
 	if err != nil {
 		return "", nil, err
@@ -128,7 +134,14 @@ func (_ *webhookManager) DeleteWebhook(
 	resp, err := client.DeleteHook(ctx, repoOwner, repoName, hookID)
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			// if the hook is not found, we can ignore the error, user might have deleted it manually
+			// If the hook is not found, we can ignore the
+			// error, user might have deleted it manually.
+			return nil
+		}
+		if resp != nil && resp.StatusCode == http.StatusForbidden {
+			// We ignore deleting webhooks that we're not
+			// allowed to touch. This is usually the case
+			// with repository transfer.
 			return nil
 		}
 		return fmt.Errorf("error deleting hook: %w", err)

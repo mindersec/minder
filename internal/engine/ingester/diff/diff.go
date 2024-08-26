@@ -23,11 +23,13 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/entities/checkpoints"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -122,6 +124,8 @@ func (di *Diff) Ingest(
 				Pr:   pr,
 				Deps: allDiffs,
 			},
+			// NOTE: At this point we're only retrieving the timestamp as the checkpoint.
+			Checkpoint: checkpoints.NewCheckpointV1(time.Now()),
 		}, nil
 
 	case pb.DiffTypeFull:
@@ -152,6 +156,8 @@ func (di *Diff) Ingest(
 				Pr:    pr,
 				Files: allDiffs,
 			},
+			// NOTE: At this point we're only retrieving the timestamp as the checkpoint.
+			Checkpoint: checkpoints.NewCheckpointV1Now(),
 		}, nil
 
 	default:
@@ -212,6 +218,7 @@ func ingestFileForFullDiff(filename, patch, patchUrl string) (*pbinternal.PrCont
 			result = append(result, &pbinternal.PrContents_File_Line{
 				Content: line[1:],
 				// see the use of strconv.ParseInt above: this is a safe downcast
+				// nolint: gosec
 				LineNumber: int32(currentLineNumber),
 			})
 

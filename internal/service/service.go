@@ -52,11 +52,13 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
 	"github.com/stacklok/minder/internal/providers/github/service"
+	gitlabmanager "github.com/stacklok/minder/internal/providers/gitlab/manager"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/session"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
+	"github.com/stacklok/minder/internal/reminderprocessor"
 	"github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	"github.com/stacklok/minder/internal/roles"
@@ -135,11 +137,17 @@ func AllInOneServerService(
 		cryptoEngine,
 		store,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
+		cryptoEngine,
+		store,
+		cfg.Provider.GitLab,
+	)
+	providerManager, err := manager.NewProviderManager(providerStore,
+		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
-	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
+	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
@@ -238,6 +246,10 @@ func AllInOneServerService(
 		mailClient = noop.New()
 	}
 	evt.ConsumeEvents(mailClient)
+
+	// Processor would only work for sql driver as reminder publisher is sql based
+	reminderProcessor := reminderprocessor.NewReminderProcessor(evt)
+	evt.ConsumeEvents(reminderProcessor)
 
 	// Start the gRPC and HTTP server in separate goroutines
 	errg.Go(func() error {

@@ -33,9 +33,9 @@ import (
 	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
-	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/providers/testproviders"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -139,7 +139,7 @@ func TestNewRestRemediate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			restProvider, err := httpclient.NewREST(
+			restProvider, err := testproviders.NewRESTProvider(
 				&pb.RESTProviderConfig{
 					BaseUrl: proto.String("https://api.github.com/"),
 				},

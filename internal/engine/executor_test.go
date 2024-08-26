@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/actions/alert"
 	"github.com/stacklok/minder/internal/engine/actions/remediate"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/engine/selectors"
 	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
@@ -107,7 +108,7 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
-	).Return(db.ListRuleEvaluationsByProfileIdRow{}, nil)
+	).Return(nil, nil)
 
 	mockStore.EXPECT().
 		GetProviderByID(gomock.Any(), gomock.Eq(providerID)).
@@ -157,7 +158,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 	evaluationID := uuid.New()
 	historyService := mockhistory.NewMockEvaluationHistoryService(ctrl)
 	historyService.EXPECT().
-		StoreEvaluationStatus(gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any()).
+		StoreEvaluationStatus(
+			gomock.Any(), gomock.Any(), ruleInstanceID, profileID, db.EntitiesRepository, repositoryID, gomock.Any(), gomock.Any()).
 		Return(evaluationID, nil)
 
 	mockStore.EXPECT().
@@ -197,6 +199,15 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 					UpdatedAt: time.Now(),
 					Alert:     db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
 					Remediate: db.NullActionType{Valid: true, ActionType: db.ActionTypeOff},
+				},
+				ProfilesWithSelectors: []db.ProfileSelector{
+					{
+						Entity: db.NullEntities{
+							Valid:    true,
+							Entities: db.EntitiesRepository,
+						},
+						Selector: "repository.name == 'foo/test'",
+					},
 				},
 			},
 		}, nil)
@@ -242,74 +253,18 @@ default allow = true`,
 			},
 		}, nil)
 
-	ruleEvalId := uuid.New()
-
-	// Upload passing status
-	mockStore.EXPECT().
-		UpsertRuleEvaluations(gomock.Any(), db.UpsertRuleEvaluationsParams{
-			ProfileID: profileID,
-			RepositoryID: uuid.NullUUID{
-				UUID:  repositoryID,
-				Valid: true,
-			},
-			ArtifactID:     uuid.NullUUID{},
-			RuleTypeID:     ruleTypeID,
-			Entity:         db.EntitiesRepository,
-			RuleName:       passthroughRuleType,
-			RuleInstanceID: ruleInstanceID,
-		}).Return(ruleEvalId, nil)
-
-	// Mock upserting eval details status
-	ruleEvalDetailsId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsEval(gomock.Any(), db.UpsertRuleDetailsEvalParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.EvalStatusTypesSuccess,
-			Details:    "",
-		}).Return(ruleEvalDetailsId, nil)
-
-	// Mock upserting remediate status
-	ruleEvalRemediationId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsRemediate(gomock.Any(), db.UpsertRuleDetailsRemediateParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.RemediationStatusTypesSkipped,
-			Details:    "",
-			Metadata:   json.RawMessage("{}"),
-		}).Return(ruleEvalRemediationId, nil)
-	// Empty metadata
-	meta, _ := json.Marshal(map[string]any{})
-	// Mock upserting alert status
-	ruleEvalAlertId := uuid.New()
-	mockStore.EXPECT().
-		UpsertRuleDetailsAlert(gomock.Any(), db.UpsertRuleDetailsAlertParams{
-			RuleEvalID: ruleEvalId,
-			Status:     db.AlertStatusTypesSkipped,
-			Metadata:   meta,
-			Details:    "",
-		}).Return(ruleEvalAlertId, nil)
-
 	// Mock update lease for lock
 	mockStore.EXPECT().
 		UpdateLease(gomock.Any(), db.UpdateLeaseParams{
-			Entity: db.EntitiesRepository,
-			RepositoryID: uuid.NullUUID{
-				UUID:  repositoryID,
-				Valid: true,
-			},
-			ArtifactID:    uuid.NullUUID{},
-			PullRequestID: uuid.NullUUID{},
-			LockedBy:      executionID,
+			EntityInstanceID: repositoryID,
+			LockedBy:         executionID,
 		}).Return(nil)
 
 	// Mock release lock
 	mockStore.EXPECT().
 		ReleaseLock(gomock.Any(), db.ReleaseLockParams{
-			Entity:        db.EntitiesRepository,
-			RepositoryID:  uuid.NullUUID{UUID: repositoryID, Valid: true},
-			ArtifactID:    uuid.NullUUID{},
-			PullRequestID: uuid.NullUUID{},
-			LockedBy:      executionID,
+			EntityInstanceID: repositoryID,
+			LockedBy:         executionID,
 		}).Return(nil)
 
 	// -- end expectations
@@ -369,13 +324,14 @@ default allow = true`,
 		historyService,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
-		mockSelectionBuilder,
+		selectors.NewEnv(),
 	)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithProviderID(providerID).
 		WithProjectID(projectID).
 		WithRepository(&minderv1.Repository{
+			Owner:    "foo",
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",

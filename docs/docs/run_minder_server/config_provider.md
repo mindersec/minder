@@ -54,10 +54,6 @@ Select the following permissions:
      - Repository security advisories (read and write)
      - Webhooks (read and write)
      - Workflows (read and write)
-   -  Organization Permissions:
-      - Members (read only)
-   - Account permissions:
-      - Email Addresses (read only)
 
 Once completed, double check your selected numbers match the ones in the screenshot.
 ![Permissions](./images/provider-permissions.png)

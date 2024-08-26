@@ -55,6 +55,13 @@ func RandomName(seed int64) string {
 	return RandomString(10, seed)
 }
 
+// RandomFrom returns an item chosen at random from the given set of
+// alternatives.
+func RandomFrom[T any](choices []T, seed int64) T {
+	idx := RandomInt(0, int64(len(choices)-1), seed)
+	return choices[idx]
+}
+
 // GetRandomPort returns a random port number.
 // The binding address should not need to be configurable
 // as this is a short-lived operation just to discover a random available port.
@@ -65,7 +72,7 @@ func RandomName(seed int64) string {
 // Marking a nosec here because we want this to listen on all addresses to
 // ensure a reliable connection chance for the client. This is based on lessons
 // learned from the sigstore CLI.
-func GetRandomPort() (int, error) {
+func GetRandomPort() (int32, error) {
 	listener, err := net.Listen("tcp", ":0") // #nosec
 	if err != nil {
 		return 0, err
@@ -73,5 +80,7 @@ func GetRandomPort() (int, error) {
 	defer listener.Close()
 
 	port := listener.Addr().(*net.TCPAddr).Port
-	return port, nil
+	// largest TCP port is 2^16, overflow should not happen
+	// nolint: gosec
+	return int32(port), nil
 }

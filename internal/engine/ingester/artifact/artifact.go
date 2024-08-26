@@ -28,6 +28,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/stacklok/minder/internal/entities/checkpoints"
 	artif "github.com/stacklok/minder/internal/providers/artifact"
 	"github.com/stacklok/minder/internal/verifier"
 	"github.com/stacklok/minder/internal/verifier/sigstore/container"
@@ -115,6 +116,14 @@ func (i *Ingest) Ingest(
 
 	return &engif.Result{
 		Object: applicable,
+		// We would ideally return an artifact's digest here, but
+		// the current state of the artifact ingester is actually evaluating
+		// multiple artifacts at the same time. This is not ideal, ideally
+		// we should evaluate one impulse at a time. This has to be fixed,
+		// but for now we return the current time as the checkpoint.
+		// We need to track the "impulse" that triggered the evaluation
+		// so we can return the correct checkpoint.
+		Checkpoint: checkpoints.NewCheckpointV1Now(),
 	}, nil
 }
 

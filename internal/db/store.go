@@ -27,7 +27,10 @@ import (
 type ExtendQuerier interface {
 	Querier
 	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
-		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (ListRuleEvaluationsByProfileIdRow, error)
+		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
+	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
+	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
+	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
 }
 
 // Store provides all functions to execute db queries and transactions
@@ -110,7 +113,7 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ruleName sql.NullString,
 	entityID uuid.NullUUID,
 	ruleTypeName sql.NullString,
-) (ListRuleEvaluationsByProfileIdRow, error) {
+) (*ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
 		ProfileID:    profileID,
 		EntityType:   entityType,
@@ -120,17 +123,17 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	}
 	res, err := q.ListRuleEvaluationsByProfileId(ctx, params)
 	if err != nil {
-		return ListRuleEvaluationsByProfileIdRow{}, err
+		return nil, err
 	}
 
 	// Single or no row expected
 	switch len(res) {
 	case 0:
-		return ListRuleEvaluationsByProfileIdRow{}, nil
+		return nil, nil
 	case 1:
-		return res[0], nil
+		return &res[0], nil
 	}
-	return ListRuleEvaluationsByProfileIdRow{},
+	return nil,
 		fmt.Errorf("GetRuleEvaluationByProfileIdAndRuleType - expected 1 row, got %d", len(res))
 }
 

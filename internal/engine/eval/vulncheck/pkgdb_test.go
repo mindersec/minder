@@ -286,6 +286,20 @@ func TestPyPiReplyLineHasDependency(t *testing.T) {
 			},
 			expectRetval: false,
 		},
+		{
+			name: "Match, different case and underscores",
+			line: "Some-package==1.1.0",
+			reply: &PyPiReply{
+				Info: struct {
+					Name    string `json:"name"`
+					Version string `json:"version"`
+				}{
+					Name:    "some_package",
+					Version: "1.1.0",
+				},
+			},
+			expectRetval: true,
+		},
 	}
 
 	for _, tt := range tests {

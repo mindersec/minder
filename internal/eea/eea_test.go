@@ -182,6 +182,15 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	})
 	require.NoError(t, err, "expected no error when creating repo")
 
+	_, err = testQueries.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+		EntityType: db.EntitiesRepository,
+		ID:         repo.ID,
+		Name:       repo.RepoName,
+		ProjectID:  proj.ID,
+		ProviderID: prov.ID,
+	})
+	require.NoError(t, err, "expected no error when creating repo")
+
 	return proj.ID, repo.ID
 }
 
@@ -201,10 +210,11 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:           uuid.New(),
-							Entity:       db.EntitiesRepository,
-							RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
-							QueuedAt:     time.Now(),
+							ID:               uuid.New(),
+							Entity:           db.EntitiesRepository,
+							RepositoryID:     uuid.NullUUID{UUID: repoID, Valid: true},
+							QueuedAt:         time.Now(),
+							EntityInstanceID: repoID,
 						},
 					}, nil)
 
@@ -250,7 +260,8 @@ func TestFlushAll(t *testing.T) {
 								UUID:  artID,
 								Valid: true,
 							},
-							QueuedAt: time.Now(),
+							EntityInstanceID: artID,
+							QueuedAt:         time.Now(),
 						},
 					}, nil)
 
@@ -309,6 +320,7 @@ func TestFlushAll(t *testing.T) {
 								UUID:  projectID,
 								Valid: true,
 							},
+							EntityInstanceID: artID,
 						},
 					}, nil)
 
@@ -358,6 +370,7 @@ func TestFlushAll(t *testing.T) {
 								UUID:  projectID,
 								Valid: true,
 							},
+							EntityInstanceID: artID,
 						},
 					}, nil)
 

@@ -130,6 +130,21 @@ func (mr *MockGitHubProviderServiceMockRecorder) ValidateGitHubInstallationId(ct
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateGitHubInstallationId", reflect.TypeOf((*MockGitHubProviderService)(nil).ValidateGitHubInstallationId), ctx, token, installationID)
 }
 
+// ValidateOrgMembershipForToken mocks base method.
+func (m *MockGitHubProviderService) ValidateOrgMembershipForToken(ctx context.Context, token *oauth2.Token, org string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateOrgMembershipForToken", ctx, token, org)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateOrgMembershipForToken indicates an expected call of ValidateOrgMembershipForToken.
+func (mr *MockGitHubProviderServiceMockRecorder) ValidateOrgMembershipForToken(ctx, token, org any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateOrgMembershipForToken", reflect.TypeOf((*MockGitHubProviderService)(nil).ValidateOrgMembershipForToken), ctx, token, org)
+}
+
 // VerifyProviderTokenIdentity mocks base method.
 func (m *MockGitHubProviderService) VerifyProviderTokenIdentity(ctx context.Context, remoteUser, accessToken string) error {
 	m.ctrl.T.Helper()

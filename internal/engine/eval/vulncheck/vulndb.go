@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -172,10 +173,18 @@ func newOsvDb(endpoint string) *osvdb {
 }
 
 func (o *osvdb) NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pbinternal.DepEcosystem) (*http.Request, error) {
+	var dependencyName string
+
+	if eco == pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI {
+		dependencyName = pyNormalizeName(dep.Name)
+	} else {
+		dependencyName = dep.Name
+	}
+
 	reqBody := map[string]interface{}{
 		"version": dep.Version,
 		"package": map[string]string{
-			"name":      dep.Name,
+			"name":      dependencyName,
 			"ecosystem": eco.AsString(),
 		},
 	}
@@ -215,4 +224,12 @@ func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*V
 	}
 
 	return toVulnerabilityResponse(&response, dep), nil
+}
+
+// Normalize the package name for PyPI
+// See https://packaging.python.org/en/latest/specifications/name-normalization/#name-normalization)
+func pyNormalizeName(pkgName string) string {
+	regex := regexp.MustCompile(`[-_.]+`)
+	result := regex.ReplaceAllString(pkgName, "-")
+	return strings.ToLower(result)
 }

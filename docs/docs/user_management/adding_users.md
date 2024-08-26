@@ -59,8 +59,8 @@ To add a user to your project, follow these steps:
 ## Have the User Exercise the Invitation Code
 
 Relay the invitation code to the user who you are inviting to join your project.
-They will need to [install the `minder` CLI](../getting_started/install_cli.md)
-and run `minder auth invite accept <invitation code>` to accept the invitation.
+They will need to install the `minder` CLI and run 
+`minder auth invite accept <invitation code>` to accept the invitation.
 Invitations will expire when used, or after 7 days, though users who have not
 accepted an invitation can be invited again.
 

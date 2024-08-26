@@ -26,9 +26,11 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
+	ghprov "github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/providers/manager"
 	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
@@ -143,19 +145,43 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error instantiating github client: %w", err)
 	}
 
-	// get information about the repo from GitHub, and ensure it exists
-	githubRepo, err := client.GetRepository(ctx, repoOwner, repoName)
+	propClient, err := provifv1.As[provifv1.Provider](p)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving repo from github: %w", err)
+		return nil, fmt.Errorf("error instantiating properties client: %w", err)
+	}
+
+	fetchByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
+	repoProperties, err := propClient.FetchAllProperties(
+		ctx,
+		fetchByProps,
+		pb.Entity_ENTITY_REPOSITORIES)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+
+	isArchived, err := repoProperties.GetProperty(properties.RepoPropertyIsArchived).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
 	}
 
 	// skip if this is an archived repo
-	if githubRepo.GetArchived() {
+	if isArchived {
 		return nil, ErrArchivedRepoForbidden
 	}
 
+	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
 	// skip if this is a private repo, and private repos are not enabled
-	if githubRepo.GetPrivate() && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
+	if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
 		return nil, ErrPrivateRepoForbidden
 	}
 
@@ -168,7 +194,7 @@ func (r *repositoryService) CreateRepository(
 	// insert the repository into the DB
 	dbID, pbRepo, err := r.persistRepository(
 		ctx,
-		githubRepo,
+		repoProperties,
 		githubHook,
 		hookUUID,
 		projectID,
@@ -327,9 +353,24 @@ func (r *repositoryService) deleteRepository(ctx context.Context, client ghclien
 		}
 	}
 
-	// then remove the entry in the DB
-	if err = r.store.DeleteRepository(ctx, repo.ID); err != nil {
-		return fmt.Errorf("error deleting repository from DB: %w", err)
+	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
+		// then remove the entry in the DB
+		if err := t.DeleteRepository(ctx, repo.ID); err != nil {
+			return nil, fmt.Errorf("error deleting repository from DB: %w", err)
+		}
+
+		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
+			ID:        repo.ID,
+			ProjectID: repo.ProjectID,
+		}); err != nil {
+			return nil, fmt.Errorf("error deleting entity from DB: %w", err)
+		}
+
+		return nil, nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error deleting repository: %w", err)
 	}
 
 	return nil
@@ -354,55 +395,120 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 // returns DB PK along with protobuf representation of a repo
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
-	githubRepo *github.Repository,
+	repoProperties *properties.Properties,
 	githubHook *github.Hook,
 	hookUUID string,
 	projectID uuid.UUID,
 	provider *db.Provider,
 ) (uuid.UUID, *pb.Repository, error) {
-	// instantiate the response object
-	pbRepo := &pb.Repository{
-		Name:          githubRepo.GetName(),
-		Owner:         githubRepo.GetOwner().GetLogin(),
-		RepoId:        githubRepo.GetID(),
-		HookId:        githubHook.GetID(),
-		HookUrl:       githubHook.GetURL(),
-		DeployUrl:     githubRepo.GetDeploymentsURL(),
-		CloneUrl:      githubRepo.GetCloneURL(),
-		HookType:      githubHook.GetType(),
-		HookName:      githubHook.GetName(),
-		HookUuid:      hookUUID,
-		IsPrivate:     githubRepo.GetPrivate(),
-		IsFork:        githubRepo.GetFork(),
-		DefaultBranch: githubRepo.GetDefaultBranch(),
-	}
+	var outid uuid.UUID
+	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
+		// instantiate the response object
+		pbRepo, err := pbRepoFromProperties(repoProperties, githubHook, hookUUID)
+		if err != nil {
+			return nil, fmt.Errorf("error creating repository object: %w", err)
+		}
 
-	// update the database
-	dbRepo, err := r.store.CreateRepository(ctx, db.CreateRepositoryParams{
-		Provider:   provider.Name,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-		RepoOwner:  pbRepo.Owner,
-		RepoName:   pbRepo.Name,
-		RepoID:     pbRepo.RepoId,
-		IsPrivate:  pbRepo.IsPrivate,
-		IsFork:     pbRepo.IsFork,
-		WebhookID: sql.NullInt64{
-			Int64: pbRepo.HookId,
-			Valid: true,
-		},
-		CloneUrl:   pbRepo.CloneUrl,
-		WebhookUrl: pbRepo.HookUrl,
-		DeployUrl:  pbRepo.DeployUrl,
-		DefaultBranch: sql.NullString{
-			String: pbRepo.DefaultBranch,
-			Valid:  true,
-		},
+		License := sql.NullString{}
+		if pbRepo.License != "" {
+			License.String = pbRepo.License
+			License.Valid = true
+		}
+
+		// update the database
+		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
+			Provider:   provider.Name,
+			ProviderID: provider.ID,
+			ProjectID:  projectID,
+			RepoOwner:  pbRepo.Owner,
+			RepoName:   pbRepo.Name,
+			RepoID:     pbRepo.RepoId,
+			IsPrivate:  pbRepo.IsPrivate,
+			IsFork:     pbRepo.IsFork,
+			WebhookID: sql.NullInt64{
+				Int64: pbRepo.HookId,
+				Valid: true,
+			},
+			CloneUrl:   pbRepo.CloneUrl,
+			WebhookUrl: pbRepo.HookUrl,
+			DeployUrl:  pbRepo.DeployUrl,
+			DefaultBranch: sql.NullString{
+				String: pbRepo.DefaultBranch,
+				Valid:  true,
+			},
+			License: License,
+		})
+		if err != nil {
+			return pbRepo, err
+		}
+
+		outid = dbRepo.ID
+		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
+
+		// TODO: Replace with CreateEntity call
+		_, err = t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+			ID:         dbRepo.ID,
+			EntityType: db.EntitiesRepository,
+			Name:       fmt.Sprintf("%s/%s", pbRepo.Owner, pbRepo.Name),
+			ProjectID:  projectID,
+			ProviderID: provider.ID,
+		})
+
+		return pbRepo, err
 	})
 	if err != nil {
 		return uuid.Nil, nil, err
 	}
 
-	pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
-	return dbRepo.ID, pbRepo, nil
+	return outid, pbr, nil
+}
+
+func pbRepoFromProperties(
+	repoProperties *properties.Properties,
+	githubHook *github.Hook,
+	hookUUID string,
+) (*pb.Repository, error) {
+	name, err := repoProperties.GetProperty(ghprov.RepoPropertyName).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching name property: %w", err)
+	}
+
+	owner, err := repoProperties.GetProperty(ghprov.RepoPropertyOwner).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching owner property: %w", err)
+	}
+
+	repoId, err := repoProperties.GetProperty(ghprov.RepoPropertyId).AsInt64()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repo_id property: %w", err)
+	}
+
+	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
+	isFork, err := repoProperties.GetProperty(properties.RepoPropertyIsFork).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+	}
+
+	pbRepo := &pb.Repository{
+		Name:          name,
+		Owner:         owner,
+		RepoId:        repoId,
+		HookId:        githubHook.GetID(),
+		HookUrl:       githubHook.GetURL(),
+		DeployUrl:     repoProperties.GetProperty(ghprov.RepoPropertyDeployURL).GetString(),
+		CloneUrl:      repoProperties.GetProperty(ghprov.RepoPropertyCloneURL).GetString(),
+		HookType:      githubHook.GetType(),
+		HookName:      githubHook.GetName(),
+		HookUuid:      hookUUID,
+		IsPrivate:     isPrivate,
+		IsFork:        isFork,
+		DefaultBranch: repoProperties.GetProperty(ghprov.RepoPropertyDefaultBranch).GetString(),
+		License:       repoProperties.GetProperty(ghprov.RepoPropertyLicense).GetString(),
+	}
+
+	return pbRepo, nil
 }

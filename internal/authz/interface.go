@@ -64,6 +64,14 @@ var (
 	}
 	// AllRolesSorted is a list of all roles sorted
 	AllRolesSorted = []Role{RoleAdmin, RoleEditor, RoleViewer, RolePolicyWriter, RolePermissionsManager}
+	// AllRolesVerbs is a list of all roles with their verbs
+	AllRolesVerbs = map[Role]string{
+		RoleAdmin:              "administer",
+		RoleEditor:             "edit",
+		RoleViewer:             "view",
+		RolePolicyWriter:       "write policies for",
+		RolePermissionsManager: "manage permissions for",
+	}
 )
 
 func (r Role) String() string {

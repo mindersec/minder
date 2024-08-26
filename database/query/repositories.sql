@@ -52,10 +52,10 @@ WHERE id > $1
 ORDER BY id
 LIMIT sqlc.arg('limit')::bigint;
 
--- name: UpdateReminderLastSentById :exec
+-- name: UpdateReminderLastSentForRepositories :exec
 UPDATE repositories
 SET reminder_last_sent = NOW()
-WHERE id = $1;
+WHERE id = ANY (sqlc.arg('repository_ids')::uuid[]);
 
 -- name: RepositoryExistsAfterID :one
 SELECT EXISTS (
@@ -76,3 +76,13 @@ SELECT COUNT(*) FROM repositories;
 -- name: GetProviderWebhooks :many
 SELECT repo_owner, repo_name, webhook_id FROM repositories
 WHERE webhook_id IS NOT NULL AND provider_id = $1;
+
+-- name: GetRepoPathFromArtifactID :one
+SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
+JOIN artifacts AS a ON a.repository_id = r.id
+WHERE a.id = $1;
+
+-- name: GetRepoPathFromPullRequestID :one
+SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
+JOIN pull_requests AS p ON p.repository_id = r.id
+WHERE p.id = $1;

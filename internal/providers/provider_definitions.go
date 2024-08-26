@@ -20,6 +20,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/gitlab"
 )
 
 // ProviderClassDefinition contains the static fields needed when creating a provider
@@ -40,6 +41,10 @@ var supportedProviderClassDefinitions = map[string]ProviderClassDefinition{
 	dockerhub.DockerHub: {
 		Traits:             dockerhub.Implements,
 		AuthorizationFlows: dockerhub.AuthorizationFlows,
+	},
+	gitlab.Class: {
+		Traits:             gitlab.Implements,
+		AuthorizationFlows: gitlab.AuthorizationFlows,
 	},
 }
 

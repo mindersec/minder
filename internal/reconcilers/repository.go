@@ -119,42 +119,76 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 	for _, artifact := range artifacts {
 		// store information if we do not have it
 		typeLower := strings.ToLower(artifact.GetPackageType())
-		newArtifact, err := r.store.UpsertArtifact(ctx,
-			db.UpsertArtifactParams{
-				RepositoryID: uuid.NullUUID{
+		var newArtifactID uuid.UUID
+		pbArtifact, err := db.WithTransaction(r.store, func(tx db.ExtendQuerier) (*pb.Artifact, error) {
+			newArtifact, err := tx.UpsertArtifact(ctx,
+				db.UpsertArtifactParams{
+					RepositoryID: uuid.NullUUID{
+						UUID:  repository.ID,
+						Valid: true,
+					},
+					ArtifactName:       artifact.GetName(),
+					ArtifactType:       typeLower,
+					ArtifactVisibility: artifact.GetVisibility(),
+					ProjectID:          evt.Project,
+					ProviderName:       repository.Provider,
+					ProviderID:         providerID,
+				})
+
+			if err != nil {
+				return nil, err
+			}
+
+			newArtifactID = newArtifact.ID
+
+			// name is provider specific and should be based on properties.
+			// In github's case it's lowercase owner / artifact name
+			// TODO: Replace with a provider call to get
+			// a name based on properties.
+			var prefix string
+			if artifact.GetOwner().GetLogin() != "" {
+				prefix = artifact.GetOwner().GetLogin() + "/"
+			}
+
+			artName := prefix + artifact.GetName()
+
+			_, err = tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+				ID:         newArtifact.ID,
+				EntityType: db.EntitiesArtifact,
+				Name:       artName,
+				ProjectID:  evt.Project,
+				ProviderID: providerID,
+				OriginatedFrom: uuid.NullUUID{
 					UUID:  repository.ID,
 					Valid: true,
 				},
-				ArtifactName:       artifact.GetName(),
-				ArtifactType:       typeLower,
-				ArtifactVisibility: artifact.GetVisibility(),
-				ProjectID:          evt.Project,
-				ProviderName:       repository.Provider,
-				ProviderID:         providerID,
 			})
+			if err != nil {
+				return nil, err
+			}
 
+			// publish event for artifact
+			return &pb.Artifact{
+				ArtifactPk: newArtifact.ID.String(),
+				Owner:      *artifact.GetOwner().Login,
+				Name:       artifact.GetName(),
+				Type:       artifact.GetPackageType(),
+				Visibility: artifact.GetVisibility(),
+				Repository: repository.RepoName,
+				Versions:   nil, // explicitly nil, will be filled by the ingester
+				CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
+			}, nil
+		})
 		if err != nil {
 			// just log error and continue
 			log.Printf("error storing artifact: %v", err)
 			continue
 		}
-
-		// publish event for artifact
-		pbArtifact := &pb.Artifact{
-			ArtifactPk: newArtifact.ID.String(),
-			Owner:      *artifact.GetOwner().Login,
-			Name:       artifact.GetName(),
-			Type:       artifact.GetPackageType(),
-			Visibility: artifact.GetVisibility(),
-			Repository: repository.RepoName,
-			Versions:   nil, // explicitly nil, will be filled by the ingester
-			CreatedAt:  timestamppb.New(artifact.GetCreatedAt().Time),
-		}
 		err = entities.NewEntityInfoWrapper().
 			WithProviderID(providerID).
 			WithArtifact(pbArtifact).
 			WithProjectID(evt.Project).
-			WithArtifactID(newArtifact.ID).
+			WithArtifactID(newArtifactID).
 			WithRepositoryID(repository.ID).
 			Publish(r.evt)
 		if err != nil {

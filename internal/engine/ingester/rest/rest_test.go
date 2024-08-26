@@ -32,9 +32,9 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
-	httpclient "github.com/stacklok/minder/internal/providers/http"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
+	"github.com/stacklok/minder/internal/providers/testproviders"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -84,7 +84,7 @@ func TestNewRestRuleDataIngest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			rest, err := httpclient.NewREST(
+			rest, err := testproviders.NewRESTProvider(
 				&pb.RESTProviderConfig{
 					BaseUrl: proto.String("https://api.github.com/"),
 				},
@@ -318,7 +318,7 @@ func TestRestIngest(t *testing.T) {
 			}
 
 			require.NoError(t, err, "unexpected error creating remediate engine")
-			require.Equal(t, tt.ingResultFn(), result, "unexpected result")
+			require.Equal(t, tt.ingResultFn().Object, result.Object, "unexpected result")
 		})
 	}
 }

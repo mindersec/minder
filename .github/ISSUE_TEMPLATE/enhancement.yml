@@ -1,7 +1,7 @@
 name: Feature request
 description: Suggest new or updated features to include in Minder.
 title: "Suggest a new feature"
-labels: [user-story]
+labels: [feature-request]
 assignees: "-"
 body:
   - type: textarea

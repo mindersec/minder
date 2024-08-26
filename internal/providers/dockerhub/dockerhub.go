@@ -27,6 +27,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers/oci"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -91,6 +92,8 @@ type dhConfigWrapper struct {
 }
 
 // ParseV1Config parses the raw config into a DockerHubProviderConfig struct
+//
+// TODO: This should be moved to a common location
 func ParseV1Config(rawCfg json.RawMessage) (*minderv1.DockerHubProviderConfig, error) {
 	var w dhConfigWrapper
 	if err := provifv1.ParseAndValidate(rawCfg, &w); err != nil {
@@ -171,4 +174,24 @@ func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error)
 	}
 
 	return containers, nil
+}
+
+// FetchAllProperties implements the provider interface
+// TODO: Implement this
+func (_ *dockerHubImageLister) FetchAllProperties(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
+	return nil, nil
+}
+
+// FetchProperty implements the provider interface
+// TODO: Implement this
+func (_ *dockerHubImageLister) FetchProperty(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
+	return nil, nil
+}
+
+// GetEntityName implements the provider interface
+// TODO: Implement this
+func (_ *dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+	return "", nil
 }
