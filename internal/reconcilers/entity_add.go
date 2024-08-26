@@ -17,6 +17,7 @@ package reconcilers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -61,7 +62,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	case db.ProviderClassGithub,
 		db.ProviderClassGithubApp:
 		// This should be a hook into provider-specific code.
-		return r.AddGithubEntity(ctx, wcontext)
+		return r.addGithubEntity(ctx, wcontext)
 	// case db.ProviderClassGhcr:
 	// case db.ProviderClassDockerhub:
 	// case db.ProviderClassGitlab:
@@ -70,10 +71,8 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	}
 }
 
-// AddGithubEntity adds a new entity to Minder.
-//
 // NOTE: This should be moved to the github provider package.
-func (r *Reconciler) AddGithubEntity(
+func (r *Reconciler) addGithubEntity(
 	ctx context.Context,
 	wcontext *messages.CoreContext,
 ) error {
@@ -96,7 +95,7 @@ func (r *Reconciler) addGithubRepository(
 	logger.BusinessRecord(ctx).ProviderID = wcontext.ProviderID
 	logger.BusinessRecord(ctx).Project = wcontext.ProjectID
 
-	var event messages.MinderEvent[*messages.RepoEvent]
+	var event messages.MinderEvent
 	if err := json.Unmarshal(wcontext.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -118,12 +117,22 @@ func (r *Reconciler) addGithubRepository(
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
+	var repoOwner string
+	var repoName string
+	var ok bool
+	if repoOwner, ok = event.Entity["repoOwner"].(string); !ok {
+		return errors.New("invalid repo owner")
+	}
+	if repoName, ok = event.Entity["repoName"].(string); !ok {
+		return errors.New("invalid repo name")
+	}
+
 	pbRepo, err := r.repos.CreateRepository(
 		ctx,
 		&dbProvider,
 		event.ProjectID,
-		event.Entity.RepoOwner,
-		event.Entity.RepoName,
+		repoOwner,
+		repoName,
 	)
 	if err != nil {
 		return fmt.Errorf("error add repository from DB: %w", err)

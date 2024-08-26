@@ -59,7 +59,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	case db.ProviderClassGithub,
 		db.ProviderClassGithubApp:
 		// This should be a hook into provider-specific code.
-		return r.DeleteGithubEntity(ctx, wcontext)
+		return r.deleteGithubEntity(ctx, wcontext)
 	// case db.ProviderClassGhcr:
 	// case db.ProviderClassDockerhub:
 	// case db.ProviderClassGitlab:
@@ -68,7 +68,8 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	}
 }
 
-func (r *Reconciler) DeleteGithubEntity(
+// NOTE: This should be moved to the github provider package.
+func (r *Reconciler) deleteGithubEntity(
 	ctx context.Context,
 	wcontext *messages.CoreContext,
 ) error {
@@ -82,19 +83,30 @@ func (r *Reconciler) DeleteGithubEntity(
 	}
 }
 
+// NOTE: This should be moved to the github provider package.
 func (r *Reconciler) deleteGithubRepository(
 	ctx context.Context,
 	wcontext *messages.CoreContext,
 ) error {
-	var event messages.MinderEvent[*messages.RepoEvent]
+	var event messages.MinderEvent
 	if err := json.Unmarshal(wcontext.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
+	}
+
+	var repoIDStr string
+	var ok bool
+	if repoIDStr, ok = event.Entity["repoID"].(string); !ok {
+		return errors.New("invalid repo id")
+	}
+	repoID, err := uuid.Parse(repoIDStr)
+	if err != nil {
+		return fmt.Errorf("invalid repo id: %w", err)
 	}
 
 	l := zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_id", event.Entity.RepoID.String()).
+		Str("repo_id", repoID.String()).
 		Logger()
 
 	// validate event
@@ -113,13 +125,13 @@ func (r *Reconciler) deleteGithubRepository(
 	l.Info().Msg("handling entity delete event")
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
-	if err := r.repos.DeleteByID(ctx, event.Entity.RepoID, event.ProjectID); err != nil {
+	if err := r.repos.DeleteByID(ctx, repoID, event.ProjectID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
 		return fmt.Errorf("error deleting repository from DB: %w", err)
 	}
 
-	logger.BusinessRecord(ctx).Repository = event.Entity.RepoID
+	logger.BusinessRecord(ctx).Repository = repoID
 	return nil
 }

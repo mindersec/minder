@@ -67,17 +67,15 @@ func TestHandleEntityAdd(t *testing.T) {
 					&pb.Repository{},
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewMinderEvent[*messages.RepoEvent]().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntity(
-						messages.NewRepoEvent().
-							WithRepoName(repoName).
-							WithRepoOwner(repoOwner),
-					).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -91,17 +89,15 @@ func TestHandleEntityAdd(t *testing.T) {
 				),
 			),
 			mockReposFunc: rf.NewRepoService(),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewMinderEvent[*messages.RepoEvent]().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntity(
-						messages.NewRepoEvent().
-							WithRepoName(repoName).
-							WithRepoOwner(repoOwner),
-					).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -136,17 +132,15 @@ func TestHandleEntityAdd(t *testing.T) {
 					repoName,
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewMinderEvent[*messages.RepoEvent]().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntity(
-						messages.NewRepoEvent().
-							WithRepoName(repoName).
-							WithRepoOwner(repoOwner),
-					).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -156,8 +150,8 @@ func TestHandleEntityAdd(t *testing.T) {
 		{
 			name:          "bad message",
 			mockStoreFunc: nil,
-			//nolint:thelper
 			messageFunc: func(_ *testing.T) *message.Message {
+				t.Helper()
 				return message.NewMessage(uuid.New().String(), nil)
 			},
 			err: true,
