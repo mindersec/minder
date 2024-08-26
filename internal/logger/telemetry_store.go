@@ -64,8 +64,8 @@ type RuleEvalData struct {
 	// TODO: do we want to store params?
 }
 
-// ProjectMetadata can be used to store project metadata in the context.
-type ProjectMetadata struct {
+// ProjectTombstone can be used to store project metadata in the context of deletion.
+type ProjectTombstone struct {
 	// Project records the project ID that the request was associated with.
 	Project uuid.UUID `json:"project"`
 
@@ -114,8 +114,8 @@ type TelemetryStore struct {
 	// Rules evaluated during processing
 	Evals []RuleEvalData `json:"rules"`
 
-	// Metadata about the project
-	ProjectMetadata ProjectMetadata `json:"project_metadata"`
+	// Metadata about the project tombstone
+	ProjectTombstone ProjectTombstone `json:"project_tombstone"`
 }
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.

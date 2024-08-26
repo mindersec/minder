@@ -309,14 +309,14 @@ func (s *Server) DeleteProject(
 	for _, e := range entitlements {
 		entitlementsFeatures = append(entitlementsFeatures, e.Feature)
 	}
-	projectMetadata := logger.ProjectMetadata{
+	projectTombstone := logger.ProjectTombstone{
 		Project:           projectID,
 		ProfileCount:      int(profilesCount),
 		RepositoriesCount: int(reposCount),
 		Entitlements:      entitlementsFeatures,
 	}
 
-	logger.BusinessRecord(ctx).ProjectMetadata = projectMetadata
+	logger.BusinessRecord(ctx).ProjectTombstone = projectTombstone
 
 	return &minderv1.DeleteProjectResponse{
 		ProjectId: projectID.String(),
