@@ -77,6 +77,7 @@ type ProjectTombstone struct {
 	Entitlements []string `json:"entitlements"`
 }
 
+// Equals compares two ProjectTombstone structs for equality.
 func (pt ProjectTombstone) Equals(other ProjectTombstone) bool {
 	return pt.Project == other.Project &&
 		pt.ProfileCount == other.ProfileCount &&
