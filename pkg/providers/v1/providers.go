@@ -47,9 +47,11 @@ type Provider interface {
 	CanImplement(trait minderv1.ProviderType) bool
 
 	// FetchAllProperties fetches all properties for the given entity
-	FetchAllProperties(ctx context.Context, name string, entType minderv1.Entity) (*properties.Properties, error)
+	FetchAllProperties(
+		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity) (*properties.Properties, error)
 	// FetchProperty fetches a single property for the given entity
-	FetchProperty(ctx context.Context, name string, entType minderv1.Entity, key string) (*properties.Property, error)
+	FetchProperty(
+		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string) (*properties.Property, error)
 	// GetEntityName forms an entity name from the given properties
 	// The name is used to identify the entity within minder and is how
 	// it will be stored in the database.

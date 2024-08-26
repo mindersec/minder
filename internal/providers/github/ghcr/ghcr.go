@@ -139,13 +139,15 @@ func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 
 // FetchAllProperties implements the provider interface
 // TODO: Implement this
-func (_ *ImageLister) FetchAllProperties(_ context.Context, _ string, _ minderv1.Entity) (*properties.Properties, error) {
+func (_ *ImageLister) FetchAllProperties(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
 	return nil, nil
 }
 
 // FetchProperty implements the provider interface
 // TODO: Implement this
-func (_ *ImageLister) FetchProperty(_ context.Context, _ string, _ minderv1.Entity, _ string) (*properties.Property, error) {
+func (_ *ImageLister) FetchProperty(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
 
