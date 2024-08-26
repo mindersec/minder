@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -30,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/auth/jwt"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/util"
@@ -267,35 +265,6 @@ func (s *Server) DeleteProject(
 			"project does not allow project hierarchy operations")
 	}
 
-	// Gather the metadata needed for the project deletion
-	// This will then be used to create the audit log that helps with telemetry
-	var (
-		profilesCount int64
-		reposCount    int64
-		entitlements  []db.Entitlement
-	)
-
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		var err error
-		profilesCount, err = qtx.CountProfilesByProjectID(ctx, projectID)
-		return err
-	})
-	g.Go(func() error {
-		var err error
-		reposCount, err = qtx.CountRepositoriesByProjectID(ctx, projectID)
-		return err
-	})
-	g.Go(func() error {
-		var err error
-		entitlements, err = qtx.GetEntitlementsByProjectID(ctx, projectID)
-		return err
-	})
-
-	if err := g.Wait(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting project data: %v", err)
-	}
-
 	if err := s.projectDeleter.DeleteProject(ctx, projectID, qtx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error deleting project: %v", err)
 	}
@@ -303,20 +272,6 @@ func (s *Server) DeleteProject(
 	if err := s.store.Commit(tx); err != nil {
 		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
 	}
-
-	// Create the audit log after a successful deletion
-	var entitlementsFeatures []string
-	for _, e := range entitlements {
-		entitlementsFeatures = append(entitlementsFeatures, e.Feature)
-	}
-	projectTombstone := logger.ProjectTombstone{
-		Project:           projectID,
-		ProfileCount:      int(profilesCount),
-		RepositoriesCount: int(reposCount),
-		Entitlements:      entitlementsFeatures,
-	}
-
-	logger.BusinessRecord(ctx).ProjectTombstone = projectTombstone
 
 	return &minderv1.DeleteProjectResponse{
 		ProjectId: projectID.String(),

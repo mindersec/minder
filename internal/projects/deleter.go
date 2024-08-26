@@ -24,9 +24,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -145,6 +147,11 @@ func (p *projectDeleter) DeleteProject(
 		}
 	}
 
+	projectTombstone, err := exportProjectMetadata(ctx, proj, querier)
+	if err != nil {
+		return err
+	}
+
 	// no role assignments for this project
 	// we can safely delete it.
 	l.Debug().Msg("deleting project from database")
@@ -152,6 +159,8 @@ func (p *projectDeleter) DeleteProject(
 	if err != nil {
 		return fmt.Errorf("error deleting project %v", err)
 	}
+
+	logger.BusinessRecord(ctx).ProjectTombstone = *projectTombstone
 
 	for _, d := range deletions {
 		if d.ParentID.Valid {
@@ -169,4 +178,45 @@ func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
 		return a.GetRole() == authz.RoleAdmin.String() && a.Subject != subject
 	})
+}
+
+func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Querier) (*logger.ProjectTombstone, error) {
+	var (
+		profilesCount int64
+		reposCount    int64
+		entitlements  []db.Entitlement
+	)
+
+	g, ctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		profilesCount, err = qtx.CountProfilesByProjectID(ctx, projectID)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		reposCount, err = qtx.CountRepositoriesByProjectID(ctx, projectID)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		entitlements, err = qtx.GetEntitlementsByProjectID(ctx, projectID)
+		return err
+	})
+
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("error getting project metadata: %w", err)
+	}
+
+	var entitlementsFeatures []string
+	for _, e := range entitlements {
+		entitlementsFeatures = append(entitlementsFeatures, e.Feature)
+	}
+
+	return &logger.ProjectTombstone{
+		Project:           projectID,
+		ProfileCount:      int(profilesCount),
+		RepositoriesCount: int(reposCount),
+		Entitlements:      entitlementsFeatures,
+	}, nil
 }

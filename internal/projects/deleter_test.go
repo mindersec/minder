@@ -51,6 +51,12 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
 		Return([]db.Provider{}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
@@ -100,6 +106,12 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 				},
 			},
 		}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
@@ -151,6 +163,12 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 				},
 			},
 		}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
@@ -215,6 +233,12 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 				},
 			},
 		}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 
@@ -255,6 +279,12 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 		Return([]db.Provider{
 			{ID: providerID},
 		}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(proj)).Return(nil)
@@ -310,6 +340,12 @@ func TestCleanupUnmanaged(t *testing.T) {
 		Return([]db.Provider{
 			{ID: providerID},
 		}, nil).AnyTimes()
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), gomock.Any()).
+		Return(int64(0), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), gomock.Any()).
+		Return(int64(0), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), gomock.Any()).
+		Return([]db.Entitlement{}, nil)
 
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 	mockProviderManager.EXPECT().DeleteByID(gomock.Any(), gomock.Eq(providerID), gomock.Eq(projThree)).Return(nil)
