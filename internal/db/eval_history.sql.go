@@ -593,29 +593,6 @@ func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg Lis
 	return items, nil
 }
 
-const temporaryPopulateEvaluationHistory = `-- name: TemporaryPopulateEvaluationHistory :exec
-
-UPDATE evaluation_rule_entities ere
-SET entity_instance_id = CASE
-    WHEN ere.entity_type = 'repository' THEN ere.repository_id
-    WHEN ere.entity_type = 'pull_request' THEN ere.pull_request_id
-    WHEN ere.entity_type = 'artifact' THEN ere.artifact_id
-END
-WHERE entity_instance_id IS NULL
-`
-
-// TemporaryPopulateEvaluationHistory sets the entity_instance_id column for
-// all existing evaluation_rule_entities records to the id of the entity
-// instance that the rule entity is associated with. We derive this from the entity_type
-// and the corresponding entity id (repository_id, pull_request_id, or artifact_id).
-// Note that there are cases where repository_id and pull_request_id will both be set,
-// so we need to rely on the entity_type to determine which one to use. The same
-// applies to repository_id and artifact_id.
-func (q *Queries) TemporaryPopulateEvaluationHistory(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, temporaryPopulateEvaluationHistory)
-	return err
-}
-
 const upsertLatestEvaluationStatus = `-- name: UpsertLatestEvaluationStatus :exec
 INSERT INTO latest_evaluation_statuses(
     rule_entity_id,
