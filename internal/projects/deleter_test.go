@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/authz/mock"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -366,4 +367,53 @@ func TestCleanupUnmanaged(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+}
+
+func TestDeleteProjectWithTombstone(t *testing.T) {
+	t.Parallel()
+
+	proj := uuid.New()
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), proj).Return(
+		db.Project{ID: proj}, nil)
+	mockStore.EXPECT().DeleteProject(gomock.Any(), proj).
+		Return([]db.DeleteProjectRow{
+			{ID: proj},
+		}, nil)
+	mockStore.EXPECT().ListProvidersByProjectID(gomock.Any(), []uuid.UUID{proj}).
+		Return([]db.Provider{}, nil)
+	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
+		Return(int64(3), nil)
+	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+		Return(int64(6), nil)
+	mockStore.EXPECT().GetEntitlementsByProjectID(gomock.Any(), proj).
+		Return([]db.Entitlement{
+			{Feature: "stacklok"},
+		}, nil)
+
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+
+	ctx := context.Background()
+	ts := logger.BusinessRecord(ctx)
+	ctx = ts.WithTelemetry(ctx)
+
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	err := deleter.DeleteProject(ctx, proj, mockStore)
+	assert.NoError(t, err)
+
+	// Ensure the tombstone was set correctly
+	tombstone := logger.BusinessRecord(ctx).ProjectTombstone
+	assert.Equal(t, proj, tombstone.Project)
+	assert.Equal(t, 3, tombstone.ProfileCount)
+	assert.Equal(t, 6, tombstone.RepositoriesCount)
+	assert.Equal(t, []string{"stacklok"}, tombstone.Entitlements)
+
+	// Ensure there are no calls to the orphan cleanup function
+	assert.Equal(t, int32(0), authzClient.OrphanCalls.Load())
 }

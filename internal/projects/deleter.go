@@ -160,6 +160,7 @@ func (p *projectDeleter) DeleteProject(
 		return fmt.Errorf("error deleting project %v", err)
 	}
 
+	// Telemetry logging
 	logger.BusinessRecord(ctx).ProjectTombstone = *projectTombstone
 
 	for _, d := range deletions {
