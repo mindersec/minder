@@ -194,14 +194,6 @@ type Querier interface {
 	// *does not* report the invitation code, which is a secret intended for
 	// the invitee.
 	ListInvitationsForProject(ctx context.Context, project uuid.UUID) ([]ListInvitationsForProjectRow, error)
-	// ListNonOrgProjects is a query that lists all non-organization projects.
-	// projects have a boolean field is_organization that is set to true if the project is an organization.
-	// this flag is no longer used and will be removed in the future.
-	ListNonOrgProjects(ctx context.Context) ([]Project, error)
-	// ListOrgProjects is a query that lists all organization projects.
-	// projects have a boolean field is_organization that is set to true if the project is an organization.
-	// this flag is no longer used and will be removed in the future.
-	ListOldOrgProjects(ctx context.Context) ([]Project, error)
 	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
@@ -242,17 +234,6 @@ type Querier interface {
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
-	TemporaryPopulateArtifacts(ctx context.Context) error
-	// TemporaryPopulateEvaluationHistory sets the entity_instance_id column for
-	// all existing evaluation_rule_entities records to the id of the entity
-	// instance that the rule entity is associated with. We derive this from the entity_type
-	// and the corresponding entity id (repository_id, pull_request_id, or artifact_id).
-	// Note that there are cases where repository_id and pull_request_id will both be set,
-	// so we need to rely on the entity_type to determine which one to use. The same
-	// applies to repository_id and artifact_id.
-	TemporaryPopulateEvaluationHistory(ctx context.Context) error
-	TemporaryPopulatePullRequests(ctx context.Context) error
-	TemporaryPopulateRepositories(ctx context.Context) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the

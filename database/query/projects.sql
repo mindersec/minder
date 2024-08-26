@@ -91,23 +91,6 @@ DELETE FROM projects
 WHERE id IN (SELECT id FROM get_children)
 RETURNING id, name, metadata, created_at, updated_at, parent_id;
 
--- ListNonOrgProjects is a query that lists all non-organization projects.
--- projects have a boolean field is_organization that is set to true if the project is an organization.
--- this flag is no longer used and will be removed in the future.
-
--- name: ListNonOrgProjects :many
-SELECT * FROM projects
-WHERE is_organization = FALSE;
-
--- ListOrgProjects is a query that lists all organization projects.
--- projects have a boolean field is_organization that is set to true if the project is an organization.
--- this flag is no longer used and will be removed in the future.
-
--- name: ListOldOrgProjects :many
-SELECT * FROM projects
-WHERE is_organization = TRUE;
-
-
 -- OrphanProject is a query that sets the parent_id of a project to NULL.
 
 -- name: OrphanProject :one

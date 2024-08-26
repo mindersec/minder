@@ -1881,36 +1881,6 @@ func (mr *MockStoreMockRecorder) ListInvitationsForProject(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvitationsForProject", reflect.TypeOf((*MockStore)(nil).ListInvitationsForProject), arg0, arg1)
 }
 
-// ListNonOrgProjects mocks base method.
-func (m *MockStore) ListNonOrgProjects(arg0 context.Context) ([]db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListNonOrgProjects", arg0)
-	ret0, _ := ret[0].([]db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListNonOrgProjects indicates an expected call of ListNonOrgProjects.
-func (mr *MockStoreMockRecorder) ListNonOrgProjects(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListNonOrgProjects", reflect.TypeOf((*MockStore)(nil).ListNonOrgProjects), arg0)
-}
-
-// ListOldOrgProjects mocks base method.
-func (m *MockStore) ListOldOrgProjects(arg0 context.Context) ([]db.Project, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListOldOrgProjects", arg0)
-	ret0, _ := ret[0].([]db.Project)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListOldOrgProjects indicates an expected call of ListOldOrgProjects.
-func (mr *MockStoreMockRecorder) ListOldOrgProjects(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldOrgProjects", reflect.TypeOf((*MockStore)(nil).ListOldOrgProjects), arg0)
-}
-
 // ListOldestRuleEvaluationsByRepositoryId mocks base method.
 func (m *MockStore) ListOldestRuleEvaluationsByRepositoryId(arg0 context.Context, arg1 []uuid.UUID) ([]db.ListOldestRuleEvaluationsByRepositoryIdRow, error) {
 	m.ctrl.T.Helper()
@@ -2176,62 +2146,6 @@ func (m *MockStore) SetCurrentVersion(arg0 context.Context, arg1 db.SetCurrentVe
 func (mr *MockStoreMockRecorder) SetCurrentVersion(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), arg0, arg1)
-}
-
-// TemporaryPopulateArtifacts mocks base method.
-func (m *MockStore) TemporaryPopulateArtifacts(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemporaryPopulateArtifacts", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// TemporaryPopulateArtifacts indicates an expected call of TemporaryPopulateArtifacts.
-func (mr *MockStoreMockRecorder) TemporaryPopulateArtifacts(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateArtifacts", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateArtifacts), arg0)
-}
-
-// TemporaryPopulateEvaluationHistory mocks base method.
-func (m *MockStore) TemporaryPopulateEvaluationHistory(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemporaryPopulateEvaluationHistory", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// TemporaryPopulateEvaluationHistory indicates an expected call of TemporaryPopulateEvaluationHistory.
-func (mr *MockStoreMockRecorder) TemporaryPopulateEvaluationHistory(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateEvaluationHistory", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateEvaluationHistory), arg0)
-}
-
-// TemporaryPopulatePullRequests mocks base method.
-func (m *MockStore) TemporaryPopulatePullRequests(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemporaryPopulatePullRequests", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// TemporaryPopulatePullRequests indicates an expected call of TemporaryPopulatePullRequests.
-func (mr *MockStoreMockRecorder) TemporaryPopulatePullRequests(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulatePullRequests", reflect.TypeOf((*MockStore)(nil).TemporaryPopulatePullRequests), arg0)
-}
-
-// TemporaryPopulateRepositories mocks base method.
-func (m *MockStore) TemporaryPopulateRepositories(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TemporaryPopulateRepositories", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// TemporaryPopulateRepositories indicates an expected call of TemporaryPopulateRepositories.
-func (mr *MockStoreMockRecorder) TemporaryPopulateRepositories(arg0 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemporaryPopulateRepositories", reflect.TypeOf((*MockStore)(nil).TemporaryPopulateRepositories), arg0)
 }
 
 // UpdateEncryptedSecret mocks base method.
