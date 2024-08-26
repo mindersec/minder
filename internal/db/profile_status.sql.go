@@ -214,7 +214,8 @@ SELECT
         WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
         WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
         WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
-    END::uuid as entity_id
+    END::uuid as entity_id,
+    rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
@@ -269,6 +270,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RuleTypeGuidance      string                 `json:"rule_type_guidance"`
 	RuleTypeDisplayName   string                 `json:"rule_type_display_name"`
 	EntityID              uuid.UUID              `json:"entity_id"`
+	RuleTypeReleasePhase  ReleaseStatus          `json:"rule_type_release_phase"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -311,6 +313,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleTypeGuidance,
 			&i.RuleTypeDisplayName,
 			&i.EntityID,
+			&i.RuleTypeReleasePhase,
 		); err != nil {
 			return nil, err
 		}

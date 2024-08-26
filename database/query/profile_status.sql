@@ -82,7 +82,8 @@ SELECT
         WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
         WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
         WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
-    END::uuid as entity_id
+    END::uuid as entity_id,
+    rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id

@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -470,6 +471,11 @@ func (s *Server) getRuleEvalStatus(
 		}
 	}
 
+	releasePhase, err := ruletypes.GetPBReleasePhaseFromDBReleaseStatus(&dbRuleEvalStat.RuleTypeReleasePhase)
+	if err != nil {
+		l.Err(err).Msg("error getting release phase")
+	}
+
 	st := &minderv1.RuleEvaluationStatus{
 		ProfileId:           profileID,
 		RuleId:              dbRuleEvalStat.RuleTypeID.String(),
@@ -491,6 +497,7 @@ func (s *Server) getRuleEvalStatus(
 			LastUpdated: timestamppb.New(dbRuleEvalStat.AlertLastUpdated),
 		},
 		RemediationLastUpdated: timestamppb.New(dbRuleEvalStat.RemLastUpdated),
+		ReleasePhase:           releasePhase,
 	}
 
 	// If the alert is on and its metadata is valid, parse it and set the URL

@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/history"
+	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -596,6 +597,11 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		nString = eval.RuleTypeName
 	}
 
+	rp, err := ruletypes.GetPBReleasePhaseFromDBReleaseStatus(&eval.RuleTypeReleasePhase)
+	if err != nil {
+		return nil, fmt.Errorf("converting release phase: %w", err)
+	}
+
 	return &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
@@ -615,6 +621,7 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RuleTypeName:           eval.RuleTypeName,
 		Alert:                  buildEvalResultAlertFromLRERow(&eval),
 		Severity:               sev,
+		ReleasePhase:           rp,
 	}, nil
 }
 

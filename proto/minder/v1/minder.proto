@@ -1399,6 +1399,8 @@ message RuleEvaluationStatus {
     string remediation_url = 18;
     // rule_display_name captures the display name of the rule 
     string rule_display_name = 19;
+    // release_phase is the phase of the release
+    RuleTypeReleasePhase release_phase = 20;
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity

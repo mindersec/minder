@@ -139,7 +139,7 @@ func (_ *ruleTypeService) CreateRuleType(
 		return nil, err
 	}
 
-	releasePhase, err := getRuleTypeReleasePhase(ruleType.GetReleasePhase())
+	releasePhase, err := GetDBReleaseStatusFromPBReleasePhase(ruleType.GetReleasePhase())
 	if err != nil {
 		return nil, err
 	}
@@ -220,7 +220,7 @@ func (_ *ruleTypeService) UpdateRuleType(
 		return nil, err
 	}
 
-	releasePhase, err := getRuleTypeReleasePhase(ruleType.GetReleasePhase())
+	releasePhase, err := GetDBReleaseStatusFromPBReleasePhase(ruleType.GetReleasePhase())
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +310,8 @@ func validateRuleUpdate(existingRecord *db.RuleType, newRuleType *pb.RuleType) e
 	return nil
 }
 
-func getRuleTypeReleasePhase(in pb.RuleTypeReleasePhase) (*db.ReleaseStatus, error) {
+// GetDBReleaseStatusFromPBReleasePhase converts a protobuf release phase to a database release status
+func GetDBReleaseStatusFromPBReleasePhase(in pb.RuleTypeReleasePhase) (*db.ReleaseStatus, error) {
 	sev, err := in.InitializedStringValue()
 	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
@@ -324,4 +325,18 @@ func getRuleTypeReleasePhase(in pb.RuleTypeReleasePhase) (*db.ReleaseStatus, err
 	}
 
 	return &rel, nil
+}
+
+// GetPBReleasePhaseFromDBReleaseStatus converts a database release status to a protobuf release phase
+func GetPBReleasePhaseFromDBReleaseStatus(s *db.ReleaseStatus) (pb.RuleTypeReleasePhase, error) {
+	if s == nil {
+		return pb.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED, nil
+	}
+
+	var rel pb.RuleTypeReleasePhase
+	if err := rel.FromString(string(*s)); err != nil {
+		return pb.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED, err
+	}
+
+	return rel, nil
 }
