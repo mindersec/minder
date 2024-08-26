@@ -476,6 +476,18 @@ type AlertEvent struct {
 	CreatedAt    time.Time        `json:"created_at"`
 }
 
+type Artifact struct {
+	ID                 uuid.UUID     `json:"id"`
+	ProjectID          uuid.UUID     `json:"project_id"`
+	ProviderName       string        `json:"provider_name"`
+	ProviderID         uuid.UUID     `json:"provider_id"`
+	RepositoryID       uuid.NullUUID `json:"repository_id"`
+	ArtifactName       string        `json:"artifact_name"`
+	ArtifactType       string        `json:"artifact_type"`
+	ArtifactVisibility string        `json:"artifact_visibility"`
+	CreatedAt          time.Time     `json:"created_at"`
+}
+
 type Bundle struct {
 	ID        uuid.UUID `json:"id"`
 	Namespace string    `json:"namespace"`
@@ -660,6 +672,13 @@ type ProviderGithubAppInstallation struct {
 	IsOrg             bool           `json:"is_org"`
 }
 
+type PullRequest struct {
+	ID           uuid.UUID     `json:"id"`
+	RepositoryID uuid.NullUUID `json:"repository_id"`
+	PrNumber     int64         `json:"pr_number"`
+	CreatedAt    time.Time     `json:"created_at"`
+}
+
 type RemediationEvent struct {
 	ID           uuid.UUID              `json:"id"`
 	EvaluationID uuid.UUID              `json:"evaluation_id"`
@@ -667,6 +686,25 @@ type RemediationEvent struct {
 	Details      string                 `json:"details"`
 	Metadata     json.RawMessage        `json:"metadata"`
 	CreatedAt    time.Time              `json:"created_at"`
+}
+
+type Repository struct {
+	ID            uuid.UUID `json:"id"`
+	ProjectID     uuid.UUID `json:"project_id"`
+	Provider      string    `json:"provider"`
+	ProviderID    uuid.UUID `json:"provider_id"`
+	RepoOwner     string    `json:"repo_owner"`
+	RepoName      string    `json:"repo_name"`
+	RepoID        int64     `json:"repo_id"`
+	IsPrivate     bool      `json:"is_private"`
+	IsFork        bool      `json:"is_fork"`
+	WebhookID     int64     `json:"webhook_id"`
+	WebhookUrl    string    `json:"webhook_url"`
+	DeployUrl     string    `json:"deploy_url"`
+	CloneUrl      string    `json:"clone_url"`
+	DefaultBranch string    `json:"default_branch"`
+	License       string    `json:"license"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type RuleInstance struct {

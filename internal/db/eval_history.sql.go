@@ -312,7 +312,7 @@ func (q *Queries) InsertRemediationEvent(ctx context.Context, arg InsertRemediat
 const listEvaluationHistory = `-- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
-       ere.entity_type,
+       ei.entity_type,
         ere.entity_instance_id as entity_id,
        -- raw fields for entity names
        ei.name as entity_name,
@@ -335,7 +335,7 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN rule_instances ri ON ere.rule_id = ri.id
   JOIN rule_type rt ON ri.rule_type_id = rt.id
   JOIN profiles p ON ri.profile_id = p.id
-  LEFT JOIN entity_instances ei ON ei.id = ere.entity_instance_id
+  JOIN entity_instances ei ON ei.id = ere.entity_instance_id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN projects j ON r.project_id = j.id
@@ -396,7 +396,7 @@ type ListEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
-	EntityName         sql.NullString             `json:"entity_name"`
+	EntityName         string                     `json:"entity_name"`
 	RuleType           string                     `json:"rule_type"`
 	RuleName           string                     `json:"rule_name"`
 	RuleSeverity       Severity                   `json:"rule_severity"`

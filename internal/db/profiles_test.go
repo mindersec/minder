@@ -3652,11 +3652,6 @@ func verifyRow(
 
 	require.Equal(t, rt.ID, row.RuleTypeID)
 	require.Equal(t, rt.Name, row.RuleTypeName)
-
-	require.Equal(t, randomEntities.repo.RepoName, row.RepoName.String)
-	require.Equal(t, randomEntities.repo.RepoOwner, row.RepoOwner.String)
-
-	require.Equal(t, randomEntities.prov.Name, row.Provider.String)
 }
 
 func TestListRuleEvaluations(t *testing.T) {
