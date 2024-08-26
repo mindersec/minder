@@ -19,6 +19,7 @@ package nats
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -27,11 +28,15 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/test"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/events/common"
 )
 
 func TestNatsChannel(t *testing.T) {
+	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
-	server.EnableJetStream(nil)
+	if err := server.EnableJetStream(nil); err != nil {
+		t.Fatalf("failed to enable JetStream: %v", err)
+	}
 	defer server.Shutdown()
 	cfg := serverconfig.EventConfig{
 		Nats: serverconfig.NatsConfig{
@@ -47,30 +52,22 @@ func TestNatsChannel(t *testing.T) {
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
 
-	pub1, sub1, closer1, err := BuildNatsChannelDriver(&cfg)
+	pub1, sub1, closer1, out1, err := buildDriverPair(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to build nats channel driver: %v", err)
 	}
 	defer closer1()
-	out1, err := sub1.Subscribe(ctx, "test")
-	if err != nil {
-		t.Fatalf("failed to subscribe: %v", err)
-	}
 
 	// Publish one message before the second driver is created
 	if err := pub1.Publish("test", m1); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
 
-	pub2, sub2, closer2, err := BuildNatsChannelDriver(&cfg)
+	pub2, _, closer2, out2, err := buildDriverPair(ctx, cfg)
 	if err != nil {
 		t.Fatalf("failed to build nats channel driver: %v", err)
 	}
 	defer closer2()
-	out2, err := sub2.Subscribe(ctx, "test")
-	if err != nil {
-		t.Fatalf("failed to subscribe: %v", err)
-	}
 
 	if err := pub2.Publish("test", m2); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
@@ -88,11 +85,10 @@ func TestNatsChannel(t *testing.T) {
 	//    with duplicate messages in the array, which will fail the test.
 	// 2. Messages are delivered across publisher/subscriber pairs.
 	// 3. Message payloads match what they were sent with.
-	// 
+	//
 	// Note that message delivery order is not important (and may not be deterministic /
 	// meaningful in a multi-process world).
 	results := make([]*message.Message, 0, 3)
-loop:
 	for i := 0; i < 3; i++ {
 		select {
 		case m := <-out1:
@@ -102,13 +98,8 @@ loop:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
 		case <-time.After(5 * time.Second):
-			t.Logf("timeout waiting for message %d", i)
-			// "break" will break the select statement, which is not very helpful.
-			break loop
+			t.Fatalf("timeout waiting for message %d", i)
 		}
-	}
-	if len(results) < 3 {
-		t.Fatalf("expected 3 messages, got %d", len(results))
 	}
 	slices.SortFunc(results, func(a, b *message.Message) int {
 		return bytes.Compare(a.Payload, b.Payload)
@@ -117,11 +108,22 @@ loop:
 	if string(results[0].Payload) != string(m1.Payload) {
 		t.Errorf("expected %v, got %v", string(m1.Payload), string(results[0].Payload))
 	}
-	t.Logf("Metadata is: %+v", results[0].Metadata)
 	if string(results[1].Payload) != string(m2.Payload) {
 		t.Errorf("expected %v, got %v", string(m2.Payload), string(results[1].Payload))
 	}
 	if string(results[2].Payload) != string(m3.Payload) {
 		t.Errorf("expected %v, got %v", string(m3.Payload), string(results[2].Payload))
 	}
+}
+
+func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
+	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to build nats channel driver: %v", err)
+	}
+	out, err := sub.Subscribe(ctx, "test")
+	if err != nil {
+		return nil, nil, nil, nil, fmt.Errorf("failed to subscribe: %v", err)
+	}
+	return pub, sub, closer, out, nil
 }

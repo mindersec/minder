@@ -123,7 +123,7 @@ func (c *cloudEventsNatsAdapter) ensureTopic(ctx context.Context, topic string, 
 	return &state, nil
 }
 
-func (c *cloudEventsNatsAdapter) ensureStream(ctx context.Context) error {
+func (c *cloudEventsNatsAdapter) ensureStream(_ context.Context) error {
 	conn, err := nats.Connect(c.cfg.URL)
 	if err != nil {
 		return err
