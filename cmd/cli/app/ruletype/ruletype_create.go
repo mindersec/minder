@@ -84,10 +84,12 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			return cli.MessageAndError(fmt.Sprintf("Error creating rule type from %s", f), err)
 		}
 	}
+
 	// Render the table
 	table.Render()
 	return nil
 }
+
 func init() {
 	ruleTypeCmd.AddCommand(createCmd)
 	// Flags
