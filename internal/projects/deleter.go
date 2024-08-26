@@ -188,18 +188,15 @@ func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Quer
 	)
 
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() error {
-		var err error
+	g.Go(func() (err error) {
 		profilesCount, err = qtx.CountProfilesByProjectID(ctx, projectID)
 		return err
 	})
-	g.Go(func() error {
-		var err error
+	g.Go(func() (err error) {
 		reposCount, err = qtx.CountRepositoriesByProjectID(ctx, projectID)
 		return err
 	})
-	g.Go(func() error {
-		var err error
+	g.Go(func() (err error) {
 		entitlements, err = qtx.GetEntitlementsByProjectID(ctx, projectID)
 		return err
 	})
@@ -208,7 +205,7 @@ func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Quer
 		return nil, fmt.Errorf("error getting project metadata: %w", err)
 	}
 
-	var entitlementsFeatures []string
+	entitlementsFeatures := make([]string, 0, len(entitlements))
 	for _, e := range entitlements {
 		entitlementsFeatures = append(entitlementsFeatures, e.Feature)
 	}
