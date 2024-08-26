@@ -116,7 +116,6 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 ) (*ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
 		ProfileID:    profileID,
-		EntityType:   entityType,
 		EntityID:     entityID,
 		RuleName:     ruleName,
 		RuleTypeName: ruleTypeName,

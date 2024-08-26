@@ -16,7 +16,6 @@ type Querier interface {
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
-	CountRepositories(ctx context.Context) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
@@ -35,8 +34,6 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProjectWithID(ctx context.Context, arg CreateProjectWithIDParams) (Project, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
-	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
-	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSelector(ctx context.Context, arg CreateSelectorParams) (ProfileSelector, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
@@ -44,7 +41,6 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
-	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	// DeleteEntityByName removes an entity from the entity_instances table for a project.
@@ -62,8 +58,6 @@ type Querier interface {
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
-	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
-	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
@@ -80,8 +74,6 @@ type Querier interface {
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error)
-	GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams) (Artifact, error)
-	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
@@ -150,18 +142,6 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	// get a list of repos with webhooks belonging to a provider
-	// is used for webhook cleanup during provider deletion
-	GetProviderWebhooks(ctx context.Context, providerID uuid.UUID) ([]GetProviderWebhooksRow, error)
-	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
-	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
-	GetRepoPathFromArtifactID(ctx context.Context, id uuid.UUID) (GetRepoPathFromArtifactIDRow, error)
-	GetRepoPathFromPullRequestID(ctx context.Context, id uuid.UUID) (GetRepoPathFromPullRequestIDRow, error)
-	// avoid using this, where possible use GetRepositoryByIDAndProject instead
-	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
-	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
-	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
-	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
@@ -185,7 +165,6 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
-	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -205,9 +184,6 @@ type Querier interface {
 	// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
-	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
-	ListRepositoriesAfterID(ctx context.Context, arg ListRepositoriesAfterIDParams) ([]Repository, error)
-	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
 	// When doing a key/algorithm rotation, identify the secrets which need to be
@@ -232,7 +208,6 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
-	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
@@ -243,11 +218,9 @@ type Querier interface {
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
 	UpdateProvider(ctx context.Context, arg UpdateProviderParams) error
-	UpdateReminderLastSentForRepositories(ctx context.Context, repositoryIds []uuid.UUID) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpdateSelector(ctx context.Context, arg UpdateSelectorParams) (ProfileSelector, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
-	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	// Copyright 2024 Stacklok, Inc
 	//
 	// Licensed under the Apache License, Version 2.0 (the "License");
@@ -267,7 +240,6 @@ type Querier interface {
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
-	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	// Copyright 2024 Stacklok, Inc
 	//
 	// Licensed under the Apache License, Version 2.0 (the "License");

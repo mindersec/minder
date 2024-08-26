@@ -99,21 +99,9 @@ INSERT INTO alert_events(
 SELECT s.id::uuid AS evaluation_id,
     s.evaluation_time as evaluated_at,
     ere.entity_type,
-    -- entity id
-       CAST(
-           CASE
-               WHEN ere.repository_id IS NOT NULL THEN r.id
-               WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-               WHEN ere.artifact_id IS NOT NULL THEN a.id
-           END AS uuid
-       ) AS entity_id,
-    ere.entity_instance_id as new_entity_id,
+    ere.entity_instance_id as entity_id,
     -- raw fields for entity names
-    r.repo_owner,
-    r.repo_name,
-    pr.pr_number,
-    a.artifact_name,
-    j.id as project_id,
+    ei.name as entity_name,
     -- rule type, name, and profile
     rt.name AS rule_type,
     ri.name AS rule_name,
@@ -133,9 +121,7 @@ FROM evaluation_statuses s
     JOIN rule_instances ri ON ere.rule_id = ri.id
     JOIN rule_type rt ON ri.rule_type_id = rt.id
     JOIN profiles p ON ri.profile_id = p.id
-    LEFT JOIN repositories r ON ere.repository_id = r.id
-    LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-    LEFT JOIN artifacts a ON ere.artifact_id = a.id
+    LEFT JOIN entity_instances ei ON ei.id = ere.entity_instance_id
     LEFT JOIN remediation_events re ON re.evaluation_id = s.id
     LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
     LEFT JOIN projects j ON r.project_id = j.id
@@ -145,21 +131,9 @@ WHERE s.id = sqlc.arg(evaluation_id) AND j.id = sqlc.arg(project_id);
 SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
        ere.entity_type,
-       -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN r.id
-         WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-         WHEN ere.artifact_id IS NOT NULL THEN a.id
-         END AS uuid
-       ) AS entity_id,
-        ere.entity_instance_id as new_entity_id,
+        ere.entity_instance_id as entity_id,
        -- raw fields for entity names
-       r.repo_owner,
-       r.repo_name,
-       pr.pr_number,
-       a.artifact_name,
-       j.id as project_id,
+       ei.name as entity_name,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
@@ -179,9 +153,7 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN rule_instances ri ON ere.rule_id = ri.id
   JOIN rule_type rt ON ri.rule_type_id = rt.id
   JOIN profiles p ON ri.profile_id = p.id
-  LEFT JOIN repositories r ON ere.repository_id = r.id
-  LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-  LEFT JOIN artifacts a ON ere.artifact_id = a.id
+  LEFT JOIN entity_instances ei ON ei.id = ere.entity_instance_id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN projects j ON r.project_id = j.id
@@ -219,25 +191,11 @@ SELECT s.id::uuid AS evaluation_id,
 SELECT s.evaluation_time,
        s.id,
        ere.rule_id,
-       -- entity type
-       CAST(
-	 CASE
-	 WHEN ere.repository_id IS NOT NULL THEN 1
-	 WHEN ere.pull_request_id IS NOT NULL THEN 2
-	 WHEN ere.artifact_id IS NOT NULL THEN 3
-	 END AS integer
-       ) AS entity_type,
-       -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN ere.repository_id
-         WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
-         WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
-         END AS uuid
-       ) AS entity_id,
-       ere.entity_instance_id as new_entity_id
+       ei.entity_type,
+       ere.entity_instance_id as entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+       LEFT JOIN entity_instances AS ei ON ei.id = ere.entity_instance_id
        LEFT JOIN latest_evaluation_statuses l
 	   ON l.rule_entity_id = s.rule_entity_id
 	   AND l.evaluation_history_id = s.id

@@ -43,21 +43,9 @@ const getEvaluationHistory = `-- name: GetEvaluationHistory :one
 SELECT s.id::uuid AS evaluation_id,
     s.evaluation_time as evaluated_at,
     ere.entity_type,
-    -- entity id
-       CAST(
-           CASE
-               WHEN ere.repository_id IS NOT NULL THEN r.id
-               WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-               WHEN ere.artifact_id IS NOT NULL THEN a.id
-           END AS uuid
-       ) AS entity_id,
-    ere.entity_instance_id as new_entity_id,
+    ere.entity_instance_id as entity_id,
     -- raw fields for entity names
-    r.repo_owner,
-    r.repo_name,
-    pr.pr_number,
-    a.artifact_name,
-    j.id as project_id,
+    ei.name as entity_name,
     -- rule type, name, and profile
     rt.name AS rule_type,
     ri.name AS rule_name,
@@ -77,9 +65,7 @@ FROM evaluation_statuses s
     JOIN rule_instances ri ON ere.rule_id = ri.id
     JOIN rule_type rt ON ri.rule_type_id = rt.id
     JOIN profiles p ON ri.profile_id = p.id
-    LEFT JOIN repositories r ON ere.repository_id = r.id
-    LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-    LEFT JOIN artifacts a ON ere.artifact_id = a.id
+    LEFT JOIN entity_instances ei ON ei.id = ere.entity_instance_id
     LEFT JOIN remediation_events re ON re.evaluation_id = s.id
     LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
     LEFT JOIN projects j ON r.project_id = j.id
@@ -96,12 +82,7 @@ type GetEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
-	NewEntityID        uuid.UUID                  `json:"new_entity_id"`
-	RepoOwner          sql.NullString             `json:"repo_owner"`
-	RepoName           sql.NullString             `json:"repo_name"`
-	PrNumber           sql.NullInt64              `json:"pr_number"`
-	ArtifactName       sql.NullString             `json:"artifact_name"`
-	ProjectID          uuid.NullUUID              `json:"project_id"`
+	EntityName         sql.NullString             `json:"entity_name"`
 	RuleType           string                     `json:"rule_type"`
 	RuleName           string                     `json:"rule_name"`
 	RuleSeverity       Severity                   `json:"rule_severity"`
@@ -122,12 +103,7 @@ func (q *Queries) GetEvaluationHistory(ctx context.Context, arg GetEvaluationHis
 		&i.EvaluatedAt,
 		&i.EntityType,
 		&i.EntityID,
-		&i.NewEntityID,
-		&i.RepoOwner,
-		&i.RepoName,
-		&i.PrNumber,
-		&i.ArtifactName,
-		&i.ProjectID,
+		&i.EntityName,
 		&i.RuleType,
 		&i.RuleName,
 		&i.RuleSeverity,
@@ -337,21 +313,9 @@ const listEvaluationHistory = `-- name: ListEvaluationHistory :many
 SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
        ere.entity_type,
-       -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN r.id
-         WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-         WHEN ere.artifact_id IS NOT NULL THEN a.id
-         END AS uuid
-       ) AS entity_id,
-        ere.entity_instance_id as new_entity_id,
+        ere.entity_instance_id as entity_id,
        -- raw fields for entity names
-       r.repo_owner,
-       r.repo_name,
-       pr.pr_number,
-       a.artifact_name,
-       j.id as project_id,
+       ei.name as entity_name,
        -- rule type, name, and profile
        rt.name AS rule_type,
        ri.name AS rule_name,
@@ -371,9 +335,7 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN rule_instances ri ON ere.rule_id = ri.id
   JOIN rule_type rt ON ri.rule_type_id = rt.id
   JOIN profiles p ON ri.profile_id = p.id
-  LEFT JOIN repositories r ON ere.repository_id = r.id
-  LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-  LEFT JOIN artifacts a ON ere.artifact_id = a.id
+  LEFT JOIN entity_instances ei ON ei.id = ere.entity_instance_id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
   LEFT JOIN projects j ON r.project_id = j.id
@@ -434,12 +396,7 @@ type ListEvaluationHistoryRow struct {
 	EvaluatedAt        time.Time                  `json:"evaluated_at"`
 	EntityType         Entities                   `json:"entity_type"`
 	EntityID           uuid.UUID                  `json:"entity_id"`
-	NewEntityID        uuid.UUID                  `json:"new_entity_id"`
-	RepoOwner          sql.NullString             `json:"repo_owner"`
-	RepoName           sql.NullString             `json:"repo_name"`
-	PrNumber           sql.NullInt64              `json:"pr_number"`
-	ArtifactName       sql.NullString             `json:"artifact_name"`
-	ProjectID          uuid.NullUUID              `json:"project_id"`
+	EntityName         sql.NullString             `json:"entity_name"`
 	RuleType           string                     `json:"rule_type"`
 	RuleName           string                     `json:"rule_name"`
 	RuleSeverity       Severity                   `json:"rule_severity"`
@@ -485,12 +442,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.EvaluatedAt,
 			&i.EntityType,
 			&i.EntityID,
-			&i.NewEntityID,
-			&i.RepoOwner,
-			&i.RepoName,
-			&i.PrNumber,
-			&i.ArtifactName,
-			&i.ProjectID,
+			&i.EntityName,
 			&i.RuleType,
 			&i.RuleName,
 			&i.RuleSeverity,
@@ -519,25 +471,11 @@ const listEvaluationHistoryStaleRecords = `-- name: ListEvaluationHistoryStaleRe
 SELECT s.evaluation_time,
        s.id,
        ere.rule_id,
-       -- entity type
-       CAST(
-	 CASE
-	 WHEN ere.repository_id IS NOT NULL THEN 1
-	 WHEN ere.pull_request_id IS NOT NULL THEN 2
-	 WHEN ere.artifact_id IS NOT NULL THEN 3
-	 END AS integer
-       ) AS entity_type,
-       -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN ere.repository_id
-         WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
-         WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
-         END AS uuid
-       ) AS entity_id,
-       ere.entity_instance_id as new_entity_id
+       ei.entity_type,
+       ere.entity_instance_id as entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
+       LEFT JOIN entity_instances AS ei ON ei.id = ere.entity_instance_id
        LEFT JOIN latest_evaluation_statuses l
 	   ON l.rule_entity_id = s.rule_entity_id
 	   AND l.evaluation_history_id = s.id
@@ -555,12 +493,11 @@ type ListEvaluationHistoryStaleRecordsParams struct {
 }
 
 type ListEvaluationHistoryStaleRecordsRow struct {
-	EvaluationTime time.Time `json:"evaluation_time"`
-	ID             uuid.UUID `json:"id"`
-	RuleID         uuid.UUID `json:"rule_id"`
-	EntityType     int32     `json:"entity_type"`
-	EntityID       uuid.UUID `json:"entity_id"`
-	NewEntityID    uuid.UUID `json:"new_entity_id"`
+	EvaluationTime time.Time    `json:"evaluation_time"`
+	ID             uuid.UUID    `json:"id"`
+	RuleID         uuid.UUID    `json:"rule_id"`
+	EntityType     NullEntities `json:"entity_type"`
+	EntityID       uuid.UUID    `json:"entity_id"`
 }
 
 func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error) {
@@ -578,7 +515,6 @@ func (q *Queries) ListEvaluationHistoryStaleRecords(ctx context.Context, arg Lis
 			&i.RuleID,
 			&i.EntityType,
 			&i.EntityID,
-			&i.NewEntityID,
 		); err != nil {
 			return nil, err
 		}

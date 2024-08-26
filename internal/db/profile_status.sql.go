@@ -198,48 +198,38 @@ SELECT
     ad.alert_metadata,
     ad.alert_last_updated,
     ed.id AS rule_evaluation_id,
-    ere.repository_id,
-    ere.entity_type,
+    ei.id AS entity_id,
+    ei.entity_type,
     ri.name AS rule_name,
-    repo.repo_name,
-    repo.repo_owner,
-    repo.provider,
+    ei.name AS entity_name,
+    ei.provider_id,
     rt.name AS rule_type_name,
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance,
     rt.display_name as rule_type_display_name,
-    -- TODO: store entity ID directly in evaluation_rule_entities
-    CASE
-        WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
-        WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
-        WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
-    END::uuid as entity_id,
     rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
+         INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
          INNER JOIN remediation_details rd ON rd.evaluation_id = les.evaluation_history_id
          INNER JOIN alert_details ad ON ad.evaluation_id = les.evaluation_history_id
          INNER JOIN rule_instances AS ri ON ri.id = ere.rule_id
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
-         LEFT JOIN repositories repo ON repo.id = ere.repository_id
 WHERE les.profile_id = $1 AND
     (
         CASE
-            WHEN $2::entities = 'repository' AND ere.repository_id = $3::UUID THEN true
-            WHEN $2::entities  = 'artifact' AND ere.artifact_id = $3::UUID THEN true
-            WHEN $2::entities  = 'pull_request' AND ere.pull_request_id = $3::UUID THEN true
-            WHEN $3::UUID IS NULL THEN true
+            WHEN ei.entity_id = $2::UUID THEN true
+            WHEN $2::UUID IS NULL THEN true
             ELSE false
             END
-        ) AND (rt.name = $4 OR $4 IS NULL)
-          AND (lower(ri.name) = lower($5) OR $5 IS NULL)
+        ) AND (rt.name = $3 OR $3 IS NULL)
+          AND (lower(ri.name) = lower($4) OR $4 IS NULL)
 `
 
 type ListRuleEvaluationsByProfileIdParams struct {
 	ProfileID    uuid.UUID      `json:"profile_id"`
-	EntityType   NullEntities   `json:"entity_type"`
 	EntityID     uuid.NullUUID  `json:"entity_id"`
 	RuleTypeName sql.NullString `json:"rule_type_name"`
 	RuleName     sql.NullString `json:"rule_name"`
@@ -258,25 +248,22 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	AlertMetadata         json.RawMessage        `json:"alert_metadata"`
 	AlertLastUpdated      time.Time              `json:"alert_last_updated"`
 	RuleEvaluationID      uuid.UUID              `json:"rule_evaluation_id"`
-	RepositoryID          uuid.NullUUID          `json:"repository_id"`
+	EntityID              uuid.UUID              `json:"entity_id"`
 	EntityType            Entities               `json:"entity_type"`
 	RuleName              string                 `json:"rule_name"`
-	RepoName              sql.NullString         `json:"repo_name"`
-	RepoOwner             sql.NullString         `json:"repo_owner"`
-	Provider              sql.NullString         `json:"provider"`
+	EntityName            string                 `json:"entity_name"`
+	ProviderID            uuid.UUID              `json:"provider_id"`
 	RuleTypeName          string                 `json:"rule_type_name"`
 	RuleTypeSeverityValue Severity               `json:"rule_type_severity_value"`
 	RuleTypeID            uuid.UUID              `json:"rule_type_id"`
 	RuleTypeGuidance      string                 `json:"rule_type_guidance"`
 	RuleTypeDisplayName   string                 `json:"rule_type_display_name"`
-	EntityID              uuid.UUID              `json:"entity_id"`
 	RuleTypeReleasePhase  ReleaseStatus          `json:"rule_type_release_phase"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRuleEvaluationsByProfileId,
 		arg.ProfileID,
-		arg.EntityType,
 		arg.EntityID,
 		arg.RuleTypeName,
 		arg.RuleName,
@@ -301,18 +288,16 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.AlertMetadata,
 			&i.AlertLastUpdated,
 			&i.RuleEvaluationID,
-			&i.RepositoryID,
+			&i.EntityID,
 			&i.EntityType,
 			&i.RuleName,
-			&i.RepoName,
-			&i.RepoOwner,
-			&i.Provider,
+			&i.EntityName,
+			&i.ProviderID,
 			&i.RuleTypeName,
 			&i.RuleTypeSeverityValue,
 			&i.RuleTypeID,
 			&i.RuleTypeGuidance,
 			&i.RuleTypeDisplayName,
-			&i.EntityID,
 			&i.RuleTypeReleasePhase,
 		); err != nil {
 			return nil, err

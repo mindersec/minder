@@ -66,38 +66,29 @@ SELECT
     ad.alert_metadata,
     ad.alert_last_updated,
     ed.id AS rule_evaluation_id,
-    ere.repository_id,
-    ere.entity_type,
+    ei.id AS entity_id,
+    ei.entity_type,
     ri.name AS rule_name,
-    repo.repo_name,
-    repo.repo_owner,
-    repo.provider,
+    ei.name AS entity_name,
+    ei.provider_id,
     rt.name AS rule_type_name,
     rt.severity_value as rule_type_severity_value,
     rt.id AS rule_type_id,
     rt.guidance as rule_type_guidance,
     rt.display_name as rule_type_display_name,
-    -- TODO: store entity ID directly in evaluation_rule_entities
-    CASE
-        WHEN ere.entity_type = 'artifact'::entities THEN ere.artifact_id
-        WHEN ere.entity_type = 'repository'::entities THEN ere.repository_id
-        WHEN ere.entity_type = 'pull_request'::entities THEN ere.pull_request_id
-    END::uuid as entity_id,
     rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
+         INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
          INNER JOIN remediation_details rd ON rd.evaluation_id = les.evaluation_history_id
          INNER JOIN alert_details ad ON ad.evaluation_id = les.evaluation_history_id
          INNER JOIN rule_instances AS ri ON ri.id = ere.rule_id
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
-         LEFT JOIN repositories repo ON repo.id = ere.repository_id
 WHERE les.profile_id = $1 AND
     (
         CASE
-            WHEN sqlc.narg(entity_type)::entities = 'repository' AND ere.repository_id = sqlc.narg(entity_id)::UUID THEN true
-            WHEN sqlc.narg(entity_type)::entities  = 'artifact' AND ere.artifact_id = sqlc.narg(entity_id)::UUID THEN true
-            WHEN sqlc.narg(entity_type)::entities  = 'pull_request' AND ere.pull_request_id = sqlc.narg(entity_id)::UUID THEN true
+            WHEN ei.entity_id = sqlc.narg(entity_id)::UUID THEN true
             WHEN sqlc.narg(entity_id)::UUID IS NULL THEN true
             ELSE false
             END
