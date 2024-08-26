@@ -18,6 +18,7 @@ package nats
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -42,8 +43,8 @@ func BuildNatsChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, m
 // CloudEventsNatsPublisher actually consumes a _set_ of NATS topics,
 // because CloudEvents-Jetstream has a separate Consumer for each topic
 type cloudEventsNatsAdapter struct {
-	cfg    *serverconfig.NatsConfig
-	lock   sync.Mutex
+	cfg  *serverconfig.NatsConfig
+	lock sync.Mutex
 	// Keep a cache of the topics we subscribe/publish to
 	topics map[string]topicState
 }
@@ -156,10 +157,12 @@ func (c *cloudEventsNatsAdapter) Subscribe(ctx context.Context, topic string) (<
 	}
 
 	out := make(chan *message.Message)
-	err = state.ceClient.StartReceiver(ctx, convertCloudEventToMessage(out))
-	if err != nil {
-		err = fmt.Errorf("Error subscribing to topic %q: %w", subject, err)
-	}
+	go func() {
+		err = state.ceClient.StartReceiver(ctx, convertCloudEventToMessage(out))
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Str("topic", subject).Msg("Error subscribing to topic")
+		}
+	}()
 	return out, err
 }
 
@@ -217,8 +220,13 @@ func sendEvent(
 	event.SetSource("minder") // The system which generated the event.  The Minder URL would be nice here.
 	event.SetSubject("TODO")  // This *should* represent the entity, but we don't have a standard field for it yet.
 
-	// All our current payloads are JSON
-	err := event.SetData("application/json", msg.Payload)
+	// All our current payloads are encoded JSON; we need to unmarshal
+	payload := map[string]any{}
+	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
+		return fmt.Errorf("Error unmarshalling payload: %w", err)
+	}
+
+	err := event.SetData("application/json", payload)
 	if err != nil {
 		return err
 	}
