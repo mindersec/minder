@@ -22,7 +22,8 @@ INSERT INTO rule_type (
     definition,
     severity_value,
     subscription_id,
-    display_name
+    display_name,
+    release_phase
 ) VALUES (
     $1,
     $2,
@@ -31,7 +32,8 @@ INSERT INTO rule_type (
     $5::jsonb,
     $6,
     $7,
-    $8
+    $8,
+    $9
 ) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase
 `
 
@@ -44,6 +46,7 @@ type CreateRuleTypeParams struct {
 	SeverityValue  Severity        `json:"severity_value"`
 	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
 	DisplayName    string          `json:"display_name"`
+	ReleasePhase   ReleaseStatus   `json:"release_phase"`
 }
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
@@ -56,6 +59,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		arg.SeverityValue,
 		arg.SubscriptionID,
 		arg.DisplayName,
+		arg.ReleasePhase,
 	)
 	var i RuleType
 	err := row.Scan(
@@ -251,7 +255,7 @@ func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUI
 
 const updateRuleType = `-- name: UpdateRuleType :one
 UPDATE rule_type
-    SET description = $2, definition = $3::jsonb, severity_value = $4, display_name = $5
+    SET description = $2, definition = $3::jsonb, severity_value = $4, display_name = $5, release_phase = $6
     WHERE id = $1
     RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase
 `
@@ -262,6 +266,7 @@ type UpdateRuleTypeParams struct {
 	Definition    json.RawMessage `json:"definition"`
 	SeverityValue Severity        `json:"severity_value"`
 	DisplayName   string          `json:"display_name"`
+	ReleasePhase  ReleaseStatus   `json:"release_phase"`
 }
 
 func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error) {
@@ -271,6 +276,7 @@ func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) 
 		arg.Definition,
 		arg.SeverityValue,
 		arg.DisplayName,
+		arg.ReleasePhase,
 	)
 	var i RuleType
 	err := row.Scan(

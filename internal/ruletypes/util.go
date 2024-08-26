@@ -46,7 +46,6 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	project := rt.ProjectID.String()
 
 	var seval minderv1.Severity_Value
-
 	if err := seval.FromString(string(rt.SeverityValue)); err != nil {
 		seval = minderv1.Severity_VALUE_UNKNOWN
 	}
@@ -54,6 +53,11 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	displayName := rt.DisplayName
 	if displayName == "" {
 		displayName = rt.Name
+	}
+
+	var releasePhase minderv1.RuleTypeReleasePhase
+	if err := releasePhase.FromString(string(rt.ReleasePhase)); err != nil {
+		releasePhase = minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED
 	}
 
 	// TODO: (2024/03/28) this is for compatibility with old CLI versions that expect provider, remove this eventually
@@ -72,5 +76,6 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 		Severity: &minderv1.Severity{
 			Value: seval,
 		},
+		ReleasePhase: releasePhase,
 	}, nil
 }
