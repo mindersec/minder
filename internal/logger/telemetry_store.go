@@ -77,6 +77,21 @@ type ProjectTombstone struct {
 	Entitlements []string `json:"entitlements"`
 }
 
+func (pt ProjectTombstone) Equals(other ProjectTombstone) bool {
+	return pt.Project == other.Project &&
+		pt.ProfileCount == other.ProfileCount &&
+		pt.RepositoriesCount == other.RepositoriesCount &&
+		len(pt.Entitlements) == len(other.Entitlements) &&
+		func() bool {
+			for i, v := range pt.Entitlements {
+				if v != other.Entitlements[i] {
+					return false
+				}
+			}
+			return true
+		}()
+}
+
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
 type TelemetryStore struct {
 	// Project records the project ID that the request was associated with.
@@ -205,6 +220,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	if ts.RuleType != (RuleType{}) {
 		e.Any("ruletype", ts.RuleType)
+	}
+	if !ts.ProjectTombstone.Equals(ProjectTombstone{}) {
+		e.Any("project_tombstone", ts.ProjectTombstone)
 	}
 	if len(ts.Evals) > 0 {
 		e.Any("rules", ts.Evals)
