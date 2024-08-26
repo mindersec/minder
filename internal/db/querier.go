@@ -43,6 +43,7 @@ type Querier interface {
 	// Subscriptions --
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
+	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
@@ -59,6 +60,7 @@ type Querier interface {
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
+	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
@@ -77,6 +79,7 @@ type Querier interface {
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
+	GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error)
 	GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams) (Artifact, error)
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
@@ -139,6 +142,7 @@ type Querier interface {
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)
 	GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error)
+	GetProperty(ctx context.Context, arg GetPropertyParams) (Property, error)
 	GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error)
 	GetProviderByIDAndProject(ctx context.Context, arg GetProviderByIDAndProjectParams) (Provider, error)
 	// GetProviderByName allows us to get a provider by its name. This takes
@@ -281,6 +285,7 @@ type Querier interface {
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
+	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
 	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	// Copyright 2024 Stacklok, Inc
 	//

@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -147,6 +148,16 @@ func (q *Queries) CreateOrEnsureEntityByID(ctx context.Context, arg CreateOrEnsu
 	return i, err
 }
 
+const deleteAllPropertiesForEntity = `-- name: DeleteAllPropertiesForEntity :exec
+DELETE FROM properties
+WHERE entity_id = $1
+`
+
+func (q *Queries) DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteAllPropertiesForEntity, entityID)
+	return err
+}
+
 const deleteEntity = `-- name: DeleteEntity :exec
 
 DELETE FROM entity_instances
@@ -179,6 +190,55 @@ type DeleteEntityByNameParams struct {
 func (q *Queries) DeleteEntityByName(ctx context.Context, arg DeleteEntityByNameParams) error {
 	_, err := q.db.ExecContext(ctx, deleteEntityByName, arg.ProjectID, arg.Name)
 	return err
+}
+
+const deleteProperty = `-- name: DeleteProperty :exec
+DELETE FROM properties
+WHERE entity_id = $1 AND key = $2
+`
+
+type DeletePropertyParams struct {
+	EntityID uuid.UUID `json:"entity_id"`
+	Key      string    `json:"key"`
+}
+
+func (q *Queries) DeleteProperty(ctx context.Context, arg DeletePropertyParams) error {
+	_, err := q.db.ExecContext(ctx, deleteProperty, arg.EntityID, arg.Key)
+	return err
+}
+
+const getAllPropertiesForEntity = `-- name: GetAllPropertiesForEntity :many
+SELECT id, entity_id, key, value, updated_at FROM properties
+WHERE entity_id = $1
+`
+
+func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPropertiesForEntity, entityID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Property{}
+	for rows.Next() {
+		var i Property
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityID,
+			&i.Key,
+			&i.Value,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getEntitiesByType = `-- name: GetEntitiesByType :many
@@ -281,6 +341,29 @@ func (q *Queries) GetEntityByName(ctx context.Context, arg GetEntityByNameParams
 	return i, err
 }
 
+const getProperty = `-- name: GetProperty :one
+SELECT id, entity_id, key, value, updated_at FROM properties
+WHERE entity_id = $1 AND key = $2
+`
+
+type GetPropertyParams struct {
+	EntityID uuid.UUID `json:"entity_id"`
+	Key      string    `json:"key"`
+}
+
+func (q *Queries) GetProperty(ctx context.Context, arg GetPropertyParams) (Property, error) {
+	row := q.db.QueryRowContext(ctx, getProperty, arg.EntityID, arg.Key)
+	var i Property
+	err := row.Scan(
+		&i.ID,
+		&i.EntityID,
+		&i.Key,
+		&i.Value,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const temporaryPopulateArtifacts = `-- name: TemporaryPopulateArtifacts :exec
 INSERT INTO entity_instances (id, entity_type, name, project_id, provider_id, created_at, originated_from)
 SELECT artifacts.id, 'artifact', LOWER(repositories.repo_owner) || '/' || artifacts.artifact_name, repositories.project_id, repositories.provider_id, artifacts.created_at, artifacts.repository_id FROM artifacts
@@ -314,4 +397,42 @@ WHERE NOT EXISTS (SELECT 1 FROM entity_instances WHERE entity_instances.id = rep
 func (q *Queries) TemporaryPopulateRepositories(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, temporaryPopulateRepositories)
 	return err
+}
+
+const upsertProperty = `-- name: UpsertProperty :one
+INSERT INTO properties (
+    entity_id,
+    key,
+    value,
+    updated_at
+) VALUES ($1, $2, $3, NOW())
+ON CONFLICT (entity_id, key) DO UPDATE
+    SET
+        value = $4,
+        updated_at = NOW()
+RETURNING id, entity_id, key, value, updated_at
+`
+
+type UpsertPropertyParams struct {
+	EntityID uuid.UUID       `json:"entity_id"`
+	Key      string          `json:"key"`
+	Value    json.RawMessage `json:"value"`
+}
+
+func (q *Queries) UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error) {
+	row := q.db.QueryRowContext(ctx, upsertProperty,
+		arg.EntityID,
+		arg.Key,
+		arg.Value,
+		arg.Value,
+	)
+	var i Property
+	err := row.Scan(
+		&i.ID,
+		&i.EntityID,
+		&i.Key,
+		&i.Value,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
