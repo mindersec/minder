@@ -132,7 +132,7 @@ services:
 
   keycloak:
     container_name: keycloak_container
-    image: quay.io/keycloak/keycloak:25.0.2
+    image: quay.io/keycloak/keycloak:25.0
     command: ["start-dev"]
     environment:
       KEYCLOAK_ADMIN: admin
