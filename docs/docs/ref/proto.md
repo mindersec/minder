@@ -759,6 +759,21 @@ Namespace: is the namespace for the DockerHub provider.
 
 
 
+<Message id="minder-v1-EntityInstance">EntityInstance</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the entity. |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is evaluated. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity. |
+| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the type of the entity. DISCUSSION: If we're aiming for a BYO entity type, we should probably have this be a string, and have the user provide the type. |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
+
+
+
 <Message id="minder-v1-EntityTypedId">EntityTypedId</Message>
 
 EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
@@ -2590,6 +2605,20 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type that was updated. |
+
+
+
+<Message id="minder-v1-UpstreamEntityRef">UpstreamEntityRef</Message>
+
+UpstreamEntityRef providers enough information for the
+provider to identify the entity in the upstream system.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is evaluated. Note that the context is included here since users of this message may return upstream references from multiple providers |
+| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | type is the type of the entity. |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. This will be used to identify the entity in the upstream system and will be a subset of the properties of the entity that will be stored in Minder. |
 
 
 

@@ -2683,3 +2683,41 @@ message EvaluationHistoryAlert {
     // the structure and contents are alert specific, and are subject to change.
     string details = 2;
 }
+
+message EntityInstance {
+    // id is the unique identifier of the entity.
+    string id = 1;
+
+    // context is the context in which the entity is evaluated.
+    ContextV2 context = 2;
+
+    // name is the name of the entity.
+    string name = 3;
+
+    // type is the type of the entity.
+    // DISCUSSION: If we're aiming for a BYO entity type, we should probably
+    // have this be a string, and have the user provide the type.
+    Entity type = 4;
+
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 5;
+}
+
+// UpstreamEntityRef providers enough information for the
+// provider to identify the entity in the upstream system.
+message UpstreamEntityRef {
+    // context is the context in which the entity is evaluated.
+    // Note that the context is included here since users of
+    // this message may return upstream references from
+    // multiple providers
+    ContextV2 context = 1;
+
+    // type is the type of the entity.
+    Entity type = 2;
+
+    // properties is a map of properties of the entity.
+    // This will be used to identify the entity in the upstream system
+    // and will be a subset of the properties of the entity that will
+    // be stored in Minder.
+    google.protobuf.Struct properties = 3;
+}
