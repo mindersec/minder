@@ -139,6 +139,11 @@ func (_ *ruleTypeService) CreateRuleType(
 		return nil, err
 	}
 
+	releasePhase, err := GetDBReleaseStatusFromPBReleasePhase(ruleType.GetReleasePhase())
+	if err != nil {
+		return nil, err
+	}
+
 	ruleType = ruleType.WithDefaultDisplayName()
 	newDBRecord, err := qtx.CreateRuleType(ctx, db.CreateRuleTypeParams{
 		Name:           ruleTypeName,
@@ -149,6 +154,7 @@ func (_ *ruleTypeService) CreateRuleType(
 		Guidance:       ruleType.GetGuidance(),
 		SeverityValue:  *severity,
 		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
+		ReleasePhase:   *releasePhase,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
@@ -214,6 +220,11 @@ func (_ *ruleTypeService) UpdateRuleType(
 		return nil, err
 	}
 
+	releasePhase, err := GetDBReleaseStatusFromPBReleasePhase(ruleType.GetReleasePhase())
+	if err != nil {
+		return nil, err
+	}
+
 	ruleType = ruleType.WithDefaultDisplayName()
 	updatedRuleType, err := qtx.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
 		ID:            oldRuleType.ID,
@@ -221,6 +232,7 @@ func (_ *ruleTypeService) UpdateRuleType(
 		Definition:    serializedRule,
 		SeverityValue: *severity,
 		DisplayName:   ruleType.GetDisplayName(),
+		ReleasePhase:  *releasePhase,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update rule type: %w", err)
@@ -296,4 +308,35 @@ func validateRuleUpdate(existingRecord *db.RuleType, newRuleType *pb.RuleType) e
 	}
 
 	return nil
+}
+
+// GetDBReleaseStatusFromPBReleasePhase converts a protobuf release phase to a database release status
+func GetDBReleaseStatusFromPBReleasePhase(in pb.RuleTypeReleasePhase) (*db.ReleaseStatus, error) {
+	sev, err := in.InitializedStringValue()
+	if err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+	var rel db.ReleaseStatus
+
+	if err := rel.Scan(sev); err != nil {
+		// errors from the `Scan` method appear to be caused entirely by bad
+		// input
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	return &rel, nil
+}
+
+// GetPBReleasePhaseFromDBReleaseStatus converts a database release status to a protobuf release phase
+func GetPBReleasePhaseFromDBReleaseStatus(s *db.ReleaseStatus) (pb.RuleTypeReleasePhase, error) {
+	if s == nil {
+		return pb.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED, nil
+	}
+
+	var rel pb.RuleTypeReleasePhase
+	if err := rel.FromString(string(*s)); err != nil {
+		return pb.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED, err
+	}
+
+	return rel, nil
 }

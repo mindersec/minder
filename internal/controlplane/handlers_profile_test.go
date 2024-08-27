@@ -68,6 +68,7 @@ func TestCreateProfile(t *testing.T) {
 		ProjectID:     dbproj.ID,
 		Definition:    []byte(`{"in_entity": "repository","ruleSchema":{}}`),
 		SeverityValue: db.SeverityLow,
+		ReleasePhase:  db.ReleaseStatusAlpha,
 	})
 	if err != nil {
 		t.Fatalf("Error creating rule type: %v", err)
@@ -401,6 +402,7 @@ func ruleTypeSequenceCreate(
 			ProjectID:     projectID,
 			Definition:    []byte(defstr),
 			SeverityValue: db.SeverityLow,
+			ReleasePhase:  db.ReleaseStatusAlpha,
 		})
 		if err != nil {
 			return err

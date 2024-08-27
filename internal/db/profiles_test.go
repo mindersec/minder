@@ -97,6 +97,7 @@ func createRandomRuleType(t *testing.T, projectID uuid.UUID) RuleType {
 		Guidance:      rand.RandomString(64, seed),
 		Definition:    json.RawMessage(`{"key": "value"}`),
 		SeverityValue: SeverityHigh,
+		ReleasePhase:  ReleaseStatusAlpha,
 	}
 
 	ruleType, err := testQueries.CreateRuleType(context.Background(), arg)
