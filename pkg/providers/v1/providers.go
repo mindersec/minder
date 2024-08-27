@@ -48,7 +48,8 @@ type Provider interface {
 
 	// FetchAllProperties fetches all properties for the given entity
 	FetchAllProperties(
-		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity) (*properties.Properties, error)
+		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
+	) (*properties.Properties, error)
 	// FetchProperty fetches a single property for the given entity
 	FetchProperty(
 		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string) (*properties.Property, error)

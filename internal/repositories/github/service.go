@@ -157,10 +157,7 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
-	repoProperties, err := propClient.FetchAllProperties(
-		ctx,
-		fetchByProps,
-		pb.Entity_ENTITY_REPOSITORIES)
+	repoProperties, err := propClient.FetchAllProperties(ctx, fetchByProps, pb.Entity_ENTITY_REPOSITORIES, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
 	}

@@ -607,7 +607,7 @@ func newExpectation(isPrivate bool) *pb.Repository {
 func withFailingGet(ctrl *gomock.Controller) provinfv1.Provider {
 	m := mockgithub.NewMockGitHub(ctrl)
 	m.EXPECT().
-		FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
+		FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 
 	return m
@@ -617,7 +617,7 @@ func withSuccessfulPropFetch(prop *properties.Properties) func(*gomock.Controlle
 	return func(ctrl *gomock.Controller) provinfv1.Provider {
 		propMock := mockgithub.NewMockGitHub(ctrl)
 		propMock.EXPECT().
-			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any()).
+			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(prop, nil)
 
 		return propMock

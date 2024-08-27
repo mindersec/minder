@@ -55,7 +55,7 @@ func withUpstreamRepoProperties(repoProperties map[string]any, entType minderv1.
 			panic(err)
 		}
 		mock.EXPECT().
-			FetchAllProperties(gomock.Any(), gomock.Any(), entType).
+			FetchAllProperties(gomock.Any(), gomock.Any(), entType, gomock.Any()).
 			Return(props, nil)
 	}
 }

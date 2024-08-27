@@ -179,7 +179,8 @@ func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error)
 // FetchAllProperties implements the provider interface
 // TODO: Implement this
 func (_ *dockerHubImageLister) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
 	return nil, nil
 }
 

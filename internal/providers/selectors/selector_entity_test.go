@@ -116,7 +116,9 @@ func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pr *minder
 	return pullRequestToSelectorEntity(m.t, m.name, m.class, pr)
 }
 
-func (_ *fullProvider) FetchAllProperties(_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
+func (_ *fullProvider) FetchAllProperties(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
 	return nil, nil
 }
 
@@ -158,7 +160,9 @@ func (_ *repoOnlyProvider) CanImplement(_ minderv1.ProviderType) bool {
 	return true
 }
 
-func (_ *repoOnlyProvider) FetchAllProperties(_ context.Context, _ *properties.Properties, _ minderv1.Entity) (*properties.Properties, error) {
+func (_ *repoOnlyProvider) FetchAllProperties(
+	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
 	return nil, nil
 }
 

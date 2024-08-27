@@ -117,7 +117,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	}
 
 	// if not, fetch from provider
-	props, err := provider.FetchAllProperties(ctx, lookupProperties, entType)
+	props, err := provider.FetchAllProperties(ctx, lookupProperties, entType, nil)
 	if err != nil {
 		return nil, err
 	}

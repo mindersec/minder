@@ -19,8 +19,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/stacklok/minder/internal/entities/properties"
+	properties2 "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -59,7 +61,7 @@ func (c *GitHub) FetchProperty(
 
 // FetchAllProperties fetches all properties for the given entity
 func (c *GitHub) FetchAllProperties(
-	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity,
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
 ) (*properties.Properties, error) {
 	if c.propertyFetchers == nil {
 		return nil, errors.New("property fetchers not initialized")
@@ -85,5 +87,24 @@ func (c *GitHub) FetchAllProperties(
 		}
 	}
 
-	return properties.NewProperties(result)
+	upstreamProps, err := properties.NewProperties(result)
+	if err != nil {
+		return nil, err
+	}
+
+	operational := filterOperational(cachedProps, fetcher)
+	return upstreamProps.Merge(operational), nil
+}
+
+func filterOperational(cachedProperties *properties.Properties, fetcher properties2.GhPropertyFetcher) *properties.Properties {
+	operational := fetcher.OperationalProperties()
+	if len(operational) == 0 {
+		return cachedProperties
+	}
+
+	filter := func(key string, _ *properties.Property) bool {
+		return slices.Contains(operational, key)
+	}
+
+	return cachedProperties.FilteredCopy(filter)
 }
