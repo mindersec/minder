@@ -76,10 +76,11 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	case app.Table:
 		table := initializeTableForList()
 		for _, rt := range resp.RuleTypes {
+			name := mapRuleTypeReleasePhase(rt.Name, rt.ReleasePhase)
 			table.AddRow(
 				*rt.Context.Project,
 				*rt.Id,
-				rt.Name,
+				name,
 				rt.Description,
 			)
 		}

@@ -70,10 +70,11 @@ func execOnOneRuleType(
 	}
 
 	// add the rule type to the table rows
+	name := mapRuleTypeReleasePhase(rt.Name, rt.ReleasePhase)
 	t.AddRow(
 		*rt.Context.Project,
 		*rt.Id,
-		rt.Name,
+		name,
 		cli.ConcatenateAndWrap(rt.Description, 20),
 	)
 
@@ -127,6 +128,10 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("Project", *rt.Context.Project)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
+	releasePhaseString := ruleTypeReleasePhaseToString(rt.ReleasePhase)
+	if releasePhaseString != "" {
+		t.AddRow("Release phase", releasePhaseString)
+	}
 	rem := "unsupported"
 	if rt.Def.GetRemediate() != nil {
 		rem = rt.Def.GetRemediate().Type
@@ -139,4 +144,29 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	}
 	t.AddRow("Alert", alert)
 	t.AddRow("Guidance", rt.Guidance)
+}
+
+func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {
+	var phaseString string
+	switch phase {
+	case minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED:
+		phaseString = ""
+	case minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_ALPHA:
+		phaseString = "alpha"
+	case minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_BETA:
+		phaseString = "beta"
+	case minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_GA:
+		phaseString = ""
+	case minderv1.RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_DEPRECATED:
+		phaseString = "deprecated"
+	}
+	return phaseString
+}
+
+func mapRuleTypeReleasePhase(name string, phase minderv1.RuleTypeReleasePhase) string {
+	phaseStr := ruleTypeReleasePhaseToString(phase)
+	if phaseStr == "" {
+		return name
+	}
+	return fmt.Sprintf("%s (%s)", name, phaseStr)
 }
