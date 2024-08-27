@@ -27,7 +27,6 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
-	db "github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
@@ -53,17 +52,8 @@ func TestHandleEntityDelete(t *testing.T) {
 
 	tests := []testCase{
 		{
-			name: "happy path",
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID:    providerID,
-						Name:  "providerName",
-						Class: db.ProviderClassGithub,
-					},
-					providerID,
-				),
-			),
+			name:          "happy path",
+			mockStoreFunc: nil,
 			mockReposFunc: rf.NewRepoService(
 				rf.WithSuccessfulDeleteByIDDetailed(
 					repositoryID,
@@ -77,6 +67,7 @@ func TestHandleEntityDelete(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType("repository").
+					WithEntityID(repositoryID).
 					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
@@ -84,17 +75,8 @@ func TestHandleEntityDelete(t *testing.T) {
 			},
 		},
 		{
-			name: "db failure",
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID:    providerID,
-						Name:  "providerName",
-						Class: db.ProviderClassGithub,
-					},
-					providerID,
-				),
-			),
+			name:          "db failure",
+			mockStoreFunc: nil,
 			mockReposFunc: rf.NewRepoService(
 				rf.WithFailedDeleteByID(
 					errors.New("oops"),
@@ -107,6 +89,7 @@ func TestHandleEntityDelete(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType("repository").
+					WithEntityID(repositoryID).
 					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")

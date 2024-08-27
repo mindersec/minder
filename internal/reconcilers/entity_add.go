@@ -15,7 +15,6 @@
 package reconcilers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,7 +24,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
@@ -37,66 +35,10 @@ import (
 // nolint
 func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	ctx := msg.Context()
-
-	providerID, err := uuid.Parse(msg.Metadata.Get("providerID"))
-	if err != nil {
-		return fmt.Errorf("invalid provider id: %w", err)
-	}
-	projectID, err := uuid.Parse(msg.Metadata.Get("projectID"))
-	if err != nil {
-		return fmt.Errorf("invalid project id: %w", err)
-	}
-	wcontext := &messages.CoreContext{
-		ProviderID: providerID,
-		ProjectID:  projectID,
-		Type:       msg.Metadata.Get("entityType"),
-		Payload:    msg.Payload,
-	}
-
-	dbProvider, err := r.store.GetProviderByID(ctx, wcontext.ProviderID)
-	if err != nil {
-		return fmt.Errorf("error retrieving provider: %w", err)
-	}
-
-	switch dbProvider.Class {
-	case db.ProviderClassGithub,
-		db.ProviderClassGithubApp:
-		// This should be a hook into provider-specific code.
-		return r.addGithubEntity(ctx, wcontext)
-	// case db.ProviderClassGhcr:
-	// case db.ProviderClassDockerhub:
-	// case db.ProviderClassGitlab:
-	default:
-		return fmt.Errorf("unknown provider class: %s", dbProvider.Class)
-	}
-}
-
-// NOTE: This should be moved to the github provider package.
-func (r *Reconciler) addGithubEntity(
-	ctx context.Context,
-	wcontext *messages.CoreContext,
-) error {
-	// This switch statement should handle artifacts and pull
-	// requests as well.
-	switch wcontext.Type {
-	case "repository":
-		return r.addGithubRepository(ctx, wcontext)
-	default:
-		return fmt.Errorf("unknown entity type: %s", wcontext.Type)
-	}
-}
-
-// NOTE: This should be moved to the github provider package.
-func (r *Reconciler) addGithubRepository(
-	ctx context.Context,
-	wcontext *messages.CoreContext,
-) error {
-	// Telemetry logging
-	logger.BusinessRecord(ctx).ProviderID = wcontext.ProviderID
-	logger.BusinessRecord(ctx).Project = wcontext.ProjectID
+	l := zerolog.Ctx(ctx).With().Logger()
 
 	var event messages.MinderEvent
-	if err := json.Unmarshal(wcontext.Payload, &event); err != nil {
+	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
@@ -105,16 +47,8 @@ func (r *Reconciler) addGithubRepository(
 	if err := validate.Struct(&event); err != nil {
 		// We don't return the event since there's no use
 		// retrying it if it's invalid.
-		l := zerolog.Ctx(ctx).With().
-			Str("projectID", wcontext.ProjectID.String()).
-			Logger()
 		l.Error().Err(err).Msg("error validating event")
 		return nil
-	}
-
-	dbProvider, err := r.store.GetProviderByID(ctx, wcontext.ProviderID)
-	if err != nil {
-		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
 	var repoOwner string
@@ -125,6 +59,22 @@ func (r *Reconciler) addGithubRepository(
 	}
 	if repoName, ok = event.Entity["repoName"].(string); !ok {
 		return errors.New("invalid repo name")
+	}
+
+	l = zerolog.Ctx(ctx).With().
+		Str("provider_id", event.ProviderID.String()).
+		Str("project_id", event.ProjectID.String()).
+		Str("repo_name", repoName).
+		Str("repo_owner", repoOwner).
+		Logger()
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).ProviderID = event.ProviderID
+	logger.BusinessRecord(ctx).Project = event.ProjectID
+
+	dbProvider, err := r.store.GetProviderByID(ctx, event.ProviderID)
+	if err != nil {
+		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
 	pbRepo, err := r.repos.CreateRepository(
@@ -146,8 +96,6 @@ func (r *Reconciler) addGithubRepository(
 		return fmt.Errorf("repository id is not a UUID: %w", err)
 	}
 
-	// Telemetry logging
 	logger.BusinessRecord(ctx).Repository = repoID
-
 	return nil
 }

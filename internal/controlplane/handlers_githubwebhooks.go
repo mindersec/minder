@@ -838,6 +838,7 @@ func (s *Server) processRelevantRepositoryEvent(
 			WithProjectID(dbrepo.ProjectID).
 			WithProviderID(dbrepo.ProviderID).
 			WithEntityType("repository").
+			WithEntityID(dbrepo.ID).
 			WithAttribute("repoID", dbrepo.ID.String())
 
 		return &processingResult{
@@ -1154,6 +1155,7 @@ func (s *Server) repositoryRemoved(
 		WithProjectID(dbrepo.ProjectID).
 		WithProviderID(dbrepo.ProviderID).
 		WithEntityType("repository").
+		WithEntityID(dbrepo.ID).
 		WithAttribute("repoID", dbrepo.ID.String())
 
 	return &processingResult{

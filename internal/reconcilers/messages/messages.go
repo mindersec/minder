@@ -68,6 +68,7 @@ type MinderEvent struct {
 	ProviderID uuid.UUID      `json:"provider_id" validate:"required"`
 	ProjectID  uuid.UUID      `json:"project_id" validate:"required"`
 	EntityType string         `json:"entity_type" validate:"required"`
+	EntityID   uuid.UUID      `json:"entity_id"`
 	Entity     map[string]any `json:"entity" validate:"required"`
 }
 
@@ -93,6 +94,12 @@ func (e *MinderEvent) WithProjectID(projectID uuid.UUID) *MinderEvent {
 // WithAttribute sets attributes of the entity for a MinderEvent.
 func (e *MinderEvent) WithAttribute(key string, val any) *MinderEvent {
 	e.Entity[key] = val
+	return e
+}
+
+// WithEntityID sets the id of the entity.
+func (e *MinderEvent) WithEntityID(entityID uuid.UUID) *MinderEvent {
+	e.EntityID = entityID
 	return e
 }
 

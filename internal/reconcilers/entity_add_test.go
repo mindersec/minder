@@ -50,14 +50,6 @@ func TestHandleEntityAdd(t *testing.T) {
 					},
 					providerID,
 				),
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID:    providerID,
-						Name:  "providerName",
-						Class: db.ProviderClassGithub,
-					},
-					providerID,
-				),
 			),
 			mockReposFunc: rf.NewRepoService(
 				rf.WithSuccessfulCreate(
@@ -107,14 +99,6 @@ func TestHandleEntityAdd(t *testing.T) {
 		{
 			name: "repo service failure",
 			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID:    providerID,
-						Name:  "providerName",
-						Class: db.ProviderClassGithubApp,
-					},
-					providerID,
-				),
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
 						ID:    providerID,
