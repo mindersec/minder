@@ -185,3 +185,73 @@ func TestTelemetryStore_Record(t *testing.T) {
 }
 
 const ruleTypeName = "artifact_signature"
+
+func TestProjectTombstoneEquals(t *testing.T) {
+	t.Parallel()
+
+	testUUID := uuid.New()
+
+	cases := []struct {
+		name     string
+		pt1      logger.ProjectTombstone
+		pt2      logger.ProjectTombstone
+		expected bool
+	}{
+		{
+			name:     "empty ProjectTombstone structs",
+			pt1:      logger.ProjectTombstone{},
+			pt2:      logger.ProjectTombstone{},
+			expected: true,
+		},
+		{
+			name: "ProjectTombstone structs with the same values",
+			pt1: logger.ProjectTombstone{
+				Project:           testUUID,
+				ProfileCount:      1,
+				RepositoriesCount: 2,
+				Entitlements:      []string{"entitlement1", "entitlement2"},
+			},
+			pt2: logger.ProjectTombstone{
+				Project:           testUUID,
+				ProfileCount:      1,
+				RepositoriesCount: 2,
+				Entitlements:      []string{"entitlement1", "entitlement2"},
+			},
+			expected: true,
+		},
+		{
+			name: "ProjectTombstone structs with different project IDs",
+			pt1: logger.ProjectTombstone{
+				Project: testUUID,
+			},
+			pt2: logger.ProjectTombstone{
+				Project: uuid.MustParse("00000000-0000-0000-0000-000000000002"),
+			},
+			expected: false,
+		},
+		{
+			name: "ProjectTombstone structs with different entitlements",
+			pt1: logger.ProjectTombstone{
+				Project:      testUUID,
+				Entitlements: []string{"entitlement1", "entitlement2"},
+			},
+			pt2: logger.ProjectTombstone{
+				Project:      testUUID,
+				Entitlements: []string{"entitlement2", "entitlement3"},
+			},
+			expected: false,
+		},
+	}
+
+	t.Log("Running", len(cases), "test cases")
+
+	for _, testcase := range cases {
+		tc := testcase
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if tc.pt1.Equals(tc.pt2) != tc.expected {
+				t.Errorf("Expected %v, got %v", tc.expected, tc.pt1.Equals(tc.pt2))
+			}
+		})
+	}
+}
