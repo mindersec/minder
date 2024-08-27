@@ -156,7 +156,7 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 
 	return &engif.Result{
 		Object:     data,
-		Checkpoint: checkpoints.NewCheckpointV1Now(),
+		Checkpoint: checkpoints.NewCheckpointV1Now().WithHTTP(endpoint, rdi.method),
 	}, nil
 }
 

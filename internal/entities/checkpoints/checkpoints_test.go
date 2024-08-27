@@ -57,6 +57,12 @@ func TestCheckpointEnvelopeV1_MarshalJSON(t *testing.T) {
 				WithBranch("main"),
 			expected: `{"version":"v1","checkpoint":{"timestamp":"2023-07-31T12:00:00Z","commitHash":"abc123","branch":"main"}}`,
 		},
+		{
+			name: "With HTTP info",
+			input: NewCheckpointV1(timestamp).
+				WithHTTP("http://example.com", "GET"),
+			expected: `{"version":"v1","checkpoint":{"timestamp":"2023-07-31T12:00:00Z","httpURL":"http://example.com","httpMethod":"GET"}}`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -104,6 +110,12 @@ func TestCheckpointEnvelopeV1_UnmarshalJson(t *testing.T) {
 			expected: NewCheckpointV1(timestamp).
 				WithCommitHash("abc123").
 				WithBranch("main"),
+		},
+		{
+			name:  "With HTTP info",
+			input: `{"version":"v1","checkpoint":{"timestamp":"2023-07-31T12:00:00Z","httpURL":"http://example.com","httpMethod":"GET"}}`,
+			expected: NewCheckpointV1(timestamp).
+				WithHTTP("http://example.com", "GET"),
 		},
 	}
 
