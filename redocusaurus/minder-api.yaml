@@ -3661,6 +3661,9 @@ definitions:
       ruleDisplayName:
         type: string
         title: rule_display_name captures the display name of the rule
+      releasePhase:
+        $ref: '#/definitions/v1RuleTypeReleasePhase'
+        title: release_phase is the phase of the release
     title: get the status of the rules for a given profile
   v1RuleType:
     type: object
