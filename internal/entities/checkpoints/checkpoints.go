@@ -48,6 +48,12 @@ type CheckpointV1 struct {
 	// Digest is the digest of the entity that the checkpoint is for.
 	// This may be a container image digest, or some other digest.
 	Digest *string `json:"digest,omitempty" yaml:"digest,omitempty"`
+
+	// HTTPURL is the URL that was used to verify the entity.
+	HTTPURL *string `json:"httpURL,omitempty" yaml:"httpURL,omitempty"`
+
+	// HTTPMethod is the HTTP method that was used to verify the entity.
+	HTTPMethod *string `json:"httpMethod,omitempty" yaml:"httpMethod,omitempty"`
 }
 
 // NewCheckpointV1Now creates a new CheckpointV1 with the current time.
@@ -86,6 +92,13 @@ func (c *CheckpointEnvelopeV1) WithVersion(version string) *CheckpointEnvelopeV1
 // WithDigest sets the digest on the checkpoint.
 func (c *CheckpointEnvelopeV1) WithDigest(digest string) *CheckpointEnvelopeV1 {
 	c.Checkpoint.Digest = &digest
+	return c
+}
+
+// WithHTTP sets the HTTP URL and method on the checkpoint.
+func (c *CheckpointEnvelopeV1) WithHTTP(url, method string) *CheckpointEnvelopeV1 {
+	c.Checkpoint.HTTPURL = &url
+	c.Checkpoint.HTTPMethod = &method
 	return c
 }
 
