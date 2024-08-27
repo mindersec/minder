@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingester/rest"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -164,6 +165,7 @@ func TestNewRuleDataIngest(t *testing.T) {
 				&ratecache.NoopRestClientCache{},
 				credentials.NewGitHubTokenCredential("token"),
 				clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+				properties.NewPropertyFetcherFactory(),
 				"",
 			)
 			require.NoError(t, err)

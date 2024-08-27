@@ -30,7 +30,7 @@ import (
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
-	ghprov "github.com/stacklok/minder/internal/providers/github"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
 	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
@@ -468,17 +468,17 @@ func pbRepoFromProperties(
 	githubHook *github.Hook,
 	hookUUID string,
 ) (*pb.Repository, error) {
-	name, err := repoProperties.GetProperty(ghprov.RepoPropertyName).AsString()
+	name, err := repoProperties.GetProperty(ghprop.RepoPropertyName).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching name property: %w", err)
 	}
 
-	owner, err := repoProperties.GetProperty(ghprov.RepoPropertyOwner).AsString()
+	owner, err := repoProperties.GetProperty(ghprop.RepoPropertyOwner).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching owner property: %w", err)
 	}
 
-	repoId, err := repoProperties.GetProperty(ghprov.RepoPropertyId).AsInt64()
+	repoId, err := repoProperties.GetProperty(ghprop.RepoPropertyId).AsInt64()
 	if err != nil {
 		return nil, fmt.Errorf("error fetching repo_id property: %w", err)
 	}
@@ -499,15 +499,15 @@ func pbRepoFromProperties(
 		RepoId:        repoId,
 		HookId:        githubHook.GetID(),
 		HookUrl:       githubHook.GetURL(),
-		DeployUrl:     repoProperties.GetProperty(ghprov.RepoPropertyDeployURL).GetString(),
-		CloneUrl:      repoProperties.GetProperty(ghprov.RepoPropertyCloneURL).GetString(),
+		DeployUrl:     repoProperties.GetProperty(ghprop.RepoPropertyDeployURL).GetString(),
+		CloneUrl:      repoProperties.GetProperty(ghprop.RepoPropertyCloneURL).GetString(),
 		HookType:      githubHook.GetType(),
 		HookName:      githubHook.GetName(),
 		HookUuid:      hookUUID,
 		IsPrivate:     isPrivate,
 		IsFork:        isFork,
-		DefaultBranch: repoProperties.GetProperty(ghprov.RepoPropertyDefaultBranch).GetString(),
-		License:       repoProperties.GetProperty(ghprov.RepoPropertyLicense).GetString(),
+		DefaultBranch: repoProperties.GetProperty(ghprop.RepoPropertyDefaultBranch).GetString(),
+		License:       repoProperties.GetProperty(ghprop.RepoPropertyLicense).GetString(),
 	}
 
 	return pbRepo, nil

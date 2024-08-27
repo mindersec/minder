@@ -30,8 +30,8 @@ import (
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/providers/github"
 	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/util/rand"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -163,7 +163,7 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            123,
+					ghprop.RepoPropertyId:            123,
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
@@ -182,11 +182,11 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
-			key: github.RepoPropertyId,
+			key: ghprop.RepoPropertyId,
 			val: int64(456),
 			checkFn: func(t *testing.T, props *properties.Property) {
 				t.Helper()
@@ -201,7 +201,7 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            123,
+					ghprop.RepoPropertyId:            123,
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
@@ -283,19 +283,19 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
 			props: map[string]any{
 				properties.RepoPropertyIsPrivate: false,
-				github.RepoPropertyId:            int64(456),
+				ghprop.RepoPropertyId:            int64(456),
 			},
 			checkFn: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), false)
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(456))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(456))
 			},
 		},
 		{
@@ -305,18 +305,18 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
 			props: map[string]any{
-				github.RepoPropertyId: int64(456),
+				ghprop.RepoPropertyId: int64(456),
 			},
 			checkFn: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
 
 				require.Nil(t, props.GetProperty(properties.RepoPropertyIsPrivate))
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(456))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(456))
 			},
 		},
 		{
@@ -326,21 +326,21 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
 			props: map[string]any{
 				properties.RepoPropertyIsPrivate: false,
 				properties.RepoPropertyIsFork:    true,
-				github.RepoPropertyId:            int64(456),
+				ghprop.RepoPropertyId:            int64(456),
 			},
 			checkFn: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), false)
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsFork).GetBool(), true)
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(456))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(456))
 			},
 		},
 		{
@@ -350,7 +350,7 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            123,
+					ghprop.RepoPropertyId:            123,
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, entityID, propMap)
 			},
@@ -443,7 +443,7 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 		},
 		{
 			name:     "Cache miss, fetch from provider",
-			propName: github.RepoPropertyId,
+			propName: ghprop.RepoPropertyId,
 			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
 				t.Helper()
 				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
@@ -456,14 +456,14 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 
 				// these are different than tt.params.properties
 				oldPropMap := map[string]any{
-					github.RepoPropertyId: int64(1234),
+					ghprop.RepoPropertyId: int64(1234),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, ent.ID, oldPropMap)
 			},
 			githubSetup: func(params fetchParams) githubMockBuilder {
 				t.Helper()
 				return newGithubMock(
-					withUpstreamRepoProperty(github.RepoPropertyId, int64(123), params.entType),
+					withUpstreamRepoProperty(ghprop.RepoPropertyId, int64(123), params.entType),
 				)
 			},
 			params: fetchParams{
@@ -480,7 +480,7 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 		},
 		{
 			name:     "Cache hit, fetch from cache",
-			propName: github.RepoPropertyId,
+			propName: ghprop.RepoPropertyId,
 			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
 				t.Helper()
 
@@ -493,7 +493,7 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 				require.NoError(t, err)
 
 				propMap := map[string]any{
-					github.RepoPropertyId: int64(123),
+					ghprop.RepoPropertyId: int64(123),
 				}
 				props, err := properties.NewProperties(propMap)
 				require.NoError(t, err)
@@ -577,7 +577,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				return newGithubMock(
 					withUpstreamRepoProperties(propMap, params.entType),
@@ -591,7 +591,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), true)
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(123))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(123))
 			},
 		},
 		{
@@ -611,7 +611,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				// check for
 				oldPropMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(1234),
+					ghprop.RepoPropertyId:            int64(1234),
 				}
 				insertPropertiesFromMap(context.TODO(), t, store, ent.ID, oldPropMap)
 			},
@@ -620,7 +620,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				return newGithubMock(
 					withUpstreamRepoProperties(propMap, params.entType),
@@ -634,7 +634,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), true)
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(123))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(123))
 			},
 			opts: []propertiesServiceOption{
 				WithEntityTimeout(bypassCacheTimeout),
@@ -655,7 +655,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 				propMap := map[string]any{
 					properties.RepoPropertyIsPrivate: true,
-					github.RepoPropertyId:            int64(123),
+					ghprop.RepoPropertyId:            int64(123),
 				}
 				props, err := properties.NewProperties(propMap)
 				require.NoError(t, err)
@@ -674,7 +674,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), true)
-				require.Equal(t, props.GetProperty(github.RepoPropertyId).GetInt64(), int64(123))
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(123))
 			},
 		},
 	}

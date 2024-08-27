@@ -25,6 +25,7 @@ import (
 
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/verifier"
@@ -116,6 +117,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential(token),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		"",
 	)
 }

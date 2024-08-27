@@ -31,8 +31,8 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/properties"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
-	ghprov "github.com/stacklok/minder/internal/providers/github"
 	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github"
@@ -570,12 +570,12 @@ func newGithubRepoProperties(isPrivate bool) *properties.Properties {
 		properties.RepoPropertyIsPrivate:  isPrivate,
 		properties.RepoPropertyIsArchived: false,
 		properties.RepoPropertyIsFork:     false,
-		ghprov.RepoPropertyId:             *ghRepoID,
-		ghprov.RepoPropertyName:           repoName,
-		ghprov.RepoPropertyOwner:          repoOwner,
-		ghprov.RepoPropertyDeployURL:      "https://foo.com",
-		ghprov.RepoPropertyCloneURL:       "http://cloneurl.com",
-		ghprov.RepoPropertyDefaultBranch:  "main",
+		ghprop.RepoPropertyId:             *ghRepoID,
+		ghprop.RepoPropertyName:           repoName,
+		ghprop.RepoPropertyOwner:          repoOwner,
+		ghprop.RepoPropertyDeployURL:      "https://foo.com",
+		ghprop.RepoPropertyCloneURL:       "http://cloneurl.com",
+		ghprop.RepoPropertyDefaultBranch:  "main",
 	}
 
 	props, err := properties.NewProperties(repoProps)

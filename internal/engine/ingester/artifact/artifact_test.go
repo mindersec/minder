@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -52,6 +53,7 @@ func testGithubProvider() (provinfv1.GitHub, error) {
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		"",
 	)
 }
