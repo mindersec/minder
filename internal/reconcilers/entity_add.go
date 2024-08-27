@@ -16,6 +16,7 @@ package reconcilers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -36,7 +37,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	ctx := msg.Context()
 	l := zerolog.Ctx(ctx).With().Logger()
 
-	var event messages.RepoEvent
+	var event messages.MinderEvent
 	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -50,11 +51,21 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return nil
 	}
 
+	var repoOwner string
+	var repoName string
+	var ok bool
+	if repoOwner, ok = event.Entity["repoOwner"].(string); !ok {
+		return errors.New("invalid repo owner")
+	}
+	if repoName, ok = event.Entity["repoName"].(string); !ok {
+		return errors.New("invalid repo name")
+	}
+
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_name", event.RepoName).
-		Str("repo_owner", event.RepoOwner).
+		Str("repo_name", repoName).
+		Str("repo_owner", repoOwner).
 		Logger()
 
 	// Telemetry logging
@@ -70,8 +81,8 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		ctx,
 		&dbProvider,
 		event.ProjectID,
-		event.RepoOwner,
-		event.RepoName,
+		repoOwner,
+		repoName,
 	)
 	if err != nil {
 		return fmt.Errorf("error add repository from DB: %w", err)

@@ -31,7 +31,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	ctx := msg.Context()
 	l := zerolog.Ctx(ctx).With().Logger()
 
-	var event messages.RepoEvent
+	var event messages.MinderEvent
 	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
@@ -48,7 +48,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_id", event.RepoID.String()).
+		Str("entity_id", event.EntityID.String()).
 		Logger()
 
 	// Telemetry logging
@@ -58,10 +58,10 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	l.Info().Msg("handling entity delete event")
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
-	if err := r.repos.DeleteByID(ctx, event.RepoID, event.ProjectID); err != nil {
+	if err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID); err != nil {
 		return fmt.Errorf("error deleting repository from DB: %w", err)
 	}
 
-	minderlogger.BusinessRecord(ctx).Repository = event.RepoID
+	minderlogger.BusinessRecord(ctx).Repository = event.EntityID
 	return nil
 }

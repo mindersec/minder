@@ -127,11 +127,12 @@ func createEntityMessage(
 	msg := message.NewMessage(uuid.New().String(), nil)
 	msg.SetContext(ctx)
 
-	event := messages.NewRepoEvent().
+	event := messages.NewMinderEvent().
 		WithProjectID(projectID).
 		WithProviderID(providerID).
-		WithRepoName(repoName).
-		WithRepoOwner(repoOwner)
+		WithEntityType("repository").
+		WithAttribute("repoName", repoName).
+		WithAttribute("repoOwner", repoOwner)
 
 	err := event.ToMessage(msg)
 	if err != nil {

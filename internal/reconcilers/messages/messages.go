@@ -49,53 +49,64 @@ func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid
 	return msg, nil
 }
 
-// RepoEvent is an event that is sent when a new repository is
-// created in an active installation.
+// CoreContext contains information necessary to further process
+// events inside Minder Core.
+type CoreContext struct {
+	ProviderID uuid.UUID
+	ProjectID  uuid.UUID
+	Type       string
+	Payload    []byte
+}
+
+// MinderEvent encapsulate necessary information about creation or
+// deletion of entities so that they can be further processed by
+// Minder core.
 //
 // This struct is meant to be used with providers that can push events
-// to Minder, or with providers that Minder can poll, and the code
-// path it belongs to assumes that the repository was not previously
-// registered.
-type RepoEvent struct {
-	ProviderID uuid.UUID `json:"provider_id" validate:"required"`
-	ProjectID  uuid.UUID `json:"project_id" validate:"required"`
-	RepoID     uuid.UUID `json:"repo_id"`
-	RepoName   string    `json:"repo_name"`
-	RepoOwner  string    `json:"repo_owner"`
+// to Minder, or with providers that Minder can poll.
+type MinderEvent struct {
+	ProviderID uuid.UUID      `json:"provider_id" validate:"required"`
+	ProjectID  uuid.UUID      `json:"project_id" validate:"required"`
+	EntityType string         `json:"entity_type" validate:"required"`
+	EntityID   uuid.UUID      `json:"entity_id"`
+	Entity     map[string]any `json:"entity" validate:"required"`
 }
 
-// NewRepoEvent creates a new repo added event.
-func NewRepoEvent() *RepoEvent {
-	return &RepoEvent{}
+// NewMinderEvent creates a new entity added event.
+func NewMinderEvent() *MinderEvent {
+	return &MinderEvent{
+		Entity: map[string]any{},
+	}
 }
 
-// WithProviderID adds provider id to RepoEvent
-func (e *RepoEvent) WithProviderID(providerID uuid.UUID) *RepoEvent {
+// WithProviderID adds provider id to MinderEvent.
+func (e *MinderEvent) WithProviderID(providerID uuid.UUID) *MinderEvent {
 	e.ProviderID = providerID
 	return e
 }
 
-// WithProjectID adds project id to RepoEvent
-func (e *RepoEvent) WithProjectID(projectID uuid.UUID) *RepoEvent {
+// WithProjectID adds project id to MinderEvent.
+func (e *MinderEvent) WithProjectID(projectID uuid.UUID) *MinderEvent {
 	e.ProjectID = projectID
 	return e
 }
 
-// WithRepoID adds project id to RepoEvent
-func (e *RepoEvent) WithRepoID(repoID uuid.UUID) *RepoEvent {
-	e.RepoID = repoID
+// WithAttribute sets attributes of the entity for a MinderEvent.
+func (e *MinderEvent) WithAttribute(key string, val any) *MinderEvent {
+	e.Entity[key] = val
 	return e
 }
 
-// WithRepoName adds repository name to RepoEvent
-func (e *RepoEvent) WithRepoName(repoName string) *RepoEvent {
-	e.RepoName = repoName
+// WithEntityID sets the id of the entity.
+func (e *MinderEvent) WithEntityID(entityID uuid.UUID) *MinderEvent {
+	e.EntityID = entityID
 	return e
 }
 
-// WithRepoOwner adds repository owner to RepoEvent
-func (e *RepoEvent) WithRepoOwner(repoOwner string) *RepoEvent {
-	e.RepoOwner = repoOwner
+// WithEntityType sets the type of the entity. Type of the entity must
+// be meaningful to the Provider.
+func (e *MinderEvent) WithEntityType(entityType string) *MinderEvent {
+	e.EntityType = entityType
 	return e
 }
 
@@ -103,13 +114,16 @@ func (e *RepoEvent) WithRepoOwner(repoOwner string) *RepoEvent {
 // webhook handler. Such interface works by modifiying an existing
 // message by means of side effect, which is unnecessary for this
 // struct, thus its simplicity.
-func (e *RepoEvent) ToMessage(msg *message.Message) error {
+func (e *MinderEvent) ToMessage(msg *message.Message) error {
 	payload, err := json.Marshal(e)
 	if err != nil {
 		return fmt.Errorf("error marshalling event: %w", err)
 	}
 
 	msg.Payload = payload
+	msg.Metadata.Set("providerID", e.ProviderID.String())
+	msg.Metadata.Set("projectID", e.ProjectID.String())
+	msg.Metadata.Set("entityType", e.EntityType)
 
 	return nil
 }

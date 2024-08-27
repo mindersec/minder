@@ -44,8 +44,9 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
-						ID:   providerID,
-						Name: "providerName",
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithub,
 					},
 					providerID,
 				),
@@ -58,14 +59,15 @@ func TestHandleEntityAdd(t *testing.T) {
 					&pb.Repository{},
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -79,14 +81,15 @@ func TestHandleEntityAdd(t *testing.T) {
 				),
 			),
 			mockReposFunc: rf.NewRepoService(),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -98,8 +101,9 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
-						ID:   providerID,
-						Name: "providerName",
+						ID:    providerID,
+						Name:  "providerName",
+						Class: db.ProviderClassGithubApp,
 					},
 					providerID,
 				),
@@ -112,14 +116,15 @@ func TestHandleEntityAdd(t *testing.T) {
 					repoName,
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				err := messages.NewRepoEvent().
+				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithRepoName(repoName).
-					WithRepoOwner(repoOwner).
+					WithEntityType("repository").
+					WithAttribute("repoName", repoName).
+					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -129,8 +134,8 @@ func TestHandleEntityAdd(t *testing.T) {
 		{
 			name:          "bad message",
 			mockStoreFunc: nil,
-			//nolint:thelper
 			messageFunc: func(_ *testing.T) *message.Message {
+				t.Helper()
 				return message.NewMessage(uuid.New().String(), nil)
 			},
 			err: true,

@@ -60,13 +60,15 @@ func TestHandleEntityDelete(t *testing.T) {
 					projectID,
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := messages.NewRepoEvent().
-					WithProjectID(projectID).
+				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
-					WithRepoID(repositoryID)
+					WithProjectID(projectID).
+					WithEntityType("repository").
+					WithEntityID(repositoryID).
+					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -80,13 +82,15 @@ func TestHandleEntityDelete(t *testing.T) {
 					errors.New("oops"),
 				),
 			),
-			//nolint:thelper
 			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
 				m := message.NewMessage(uuid.New().String(), nil)
-				eiw := messages.NewRepoEvent().
-					WithProjectID(projectID).
+				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
-					WithRepoID(repositoryID)
+					WithProjectID(projectID).
+					WithEntityType("repository").
+					WithEntityID(repositoryID).
+					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -96,8 +100,8 @@ func TestHandleEntityDelete(t *testing.T) {
 		{
 			name:          "bad message",
 			mockStoreFunc: nil,
-			//nolint:thelper
 			messageFunc: func(_ *testing.T) *message.Message {
+				t.Helper()
 				return message.NewMessage(uuid.New().String(), nil)
 			},
 			err: true,
