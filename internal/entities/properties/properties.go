@@ -243,3 +243,51 @@ func (p *Properties) Iterate() iter.Seq2[string, *Property] {
 		})
 	}
 }
+
+// PropertyFilter is a function that filters properties
+type PropertyFilter func(key string, prop *Property) bool
+
+// FilteredCopy returns a new Properties with only the properties that pass the filter
+func (p *Properties) FilteredCopy(filter PropertyFilter) *Properties {
+	if p == nil {
+		return nil
+	}
+
+	propsMap := xsync.NewMapOf[string, Property]()
+	p.props.Range(func(key string, prop Property) bool {
+		if filter(key, &prop) {
+			propsMap.Store(key, prop)
+		}
+		return true
+	})
+
+	return &Properties{
+		props: propsMap,
+	}
+}
+
+// Merge merges two Properties into a new one
+func (p *Properties) Merge(other *Properties) *Properties {
+	if p == nil {
+		return other
+	}
+
+	if other == nil {
+		return p
+	}
+
+	propsMap := xsync.NewMapOf[string, Property](xsync.WithPresize(p.props.Size() + other.props.Size()))
+	p.props.Range(func(key string, prop Property) bool {
+		propsMap.Store(key, prop)
+		return true
+	})
+
+	other.props.Range(func(key string, prop Property) bool {
+		propsMap.Store(key, prop)
+		return true
+	})
+
+	return &Properties{
+		props: propsMap,
+	}
+}
