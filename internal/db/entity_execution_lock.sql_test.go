@@ -25,7 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -51,9 +50,6 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 			defer wg.Done()
 			_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
 				Entity:           EntitiesRepository,
-				RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
-				ArtifactID:       uuid.NullUUID{},
-				PullRequestID:    uuid.NullUUID{},
 				Interval:         fmt.Sprintf("%d", threshold),
 				ProjectID:        project.ID,
 				EntityInstanceID: repo.ID,
@@ -66,9 +62,6 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 
 				_, err := testQueries.EnqueueFlush(context.Background(), EnqueueFlushParams{
 					Entity:           EntitiesRepository,
-					RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
-					ArtifactID:       uuid.NullUUID{},
-					PullRequestID:    uuid.NullUUID{},
 					ProjectID:        project.ID,
 					EntityInstanceID: repo.ID,
 				})
@@ -93,9 +86,6 @@ func TestQueries_LockIfThresholdNotExceeded(t *testing.T) {
 
 	_, err := testQueries.LockIfThresholdNotExceeded(context.Background(), LockIfThresholdNotExceededParams{
 		Entity:           EntitiesRepository,
-		RepositoryID:     uuid.NullUUID{UUID: repo.ID, Valid: true},
-		ArtifactID:       uuid.NullUUID{},
-		PullRequestID:    uuid.NullUUID{},
 		Interval:         fmt.Sprintf("%d", threshold),
 		EntityInstanceID: repo.ID,
 	})
