@@ -20,7 +20,6 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
-	"database/sql"
 	_ "embed"
 	"encoding/hex"
 	"encoding/json"
@@ -48,12 +47,19 @@ import (
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
+	ghRepoSvc "github.com/stacklok/minder/internal/repositories/github"
+	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
 	"github.com/stacklok/minder/internal/util/testqueue"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provif "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -71,6 +77,55 @@ var rawBranchProtectionConfigurationDisabledEvent string
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
 	mock.Mock
+}
+
+type repoSvcMock = *mock_github.MockRepositoryService
+type repoSvcMockBuilder = func(*gomock.Controller) repoSvcMock
+
+func newRepoSvcMock(opts ...func(mck repoSvcMock)) repoSvcMockBuilder {
+	return func(ctrl *gomock.Controller) repoSvcMock {
+		mck := mock_github.NewMockRepositoryService(ctrl)
+		for _, opt := range opts {
+			opt(mck)
+		}
+		return mck
+	}
+}
+
+func withSuccessRepoById(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
+	repoProps, err := properties.NewProperties(propMap)
+	if err != nil {
+		panic(err)
+	}
+
+	ewp := models.EntityWithProperties{
+		Entity:     repo,
+		Properties: repoProps,
+	}
+
+	return func(mock repoSvcMock) {
+		mock.EXPECT().
+			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
+			Return(&ewp, nil)
+	}
+}
+
+func withRepoByIdRepoNotFoundUpstream(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
+	repoProps, err := properties.NewProperties(propMap)
+	if err != nil {
+		panic(err)
+	}
+
+	ewp := models.EntityWithProperties{
+		Entity:     repo,
+		Properties: repoProps,
+	}
+
+	return func(mock repoSvcMock) {
+		mock.EXPECT().
+			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
+			Return(&ewp, provif.ErrEntityNotFound)
+	}
 }
 
 // RunUnitTestSuite runs the unit test suite.
@@ -118,7 +173,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
 	defer evt.Close()
 
@@ -164,7 +219,8 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
+	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -179,9 +235,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 
 	<-evt.Running()
 
-	mockStore.EXPECT().
-		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, sql.ErrNoRows)
+	mockRepoSvc.EXPECT().
+		RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
+		Return(nil, ghRepoSvc.ErrRepoNotFound)
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -226,7 +282,8 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	defer os.Remove(prevCredsFile.Name())
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
+	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
 	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 	defer evt.Close()
@@ -245,20 +302,29 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	<-evt.Running()
 
-	providerName := "github"
 	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
 
-	mockStore.EXPECT().
-		GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-		Return(db.Repository{
+	repoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: "12345",
+		ghprop.RepoPropertyId:         12345,
+	})
+	require.NoError(t, err)
+
+	repoEntityInstance := models.EntityWithProperties{
+		Entity: models.EntityInstance{
 			ID:         repositoryID,
-			ProjectID:  projectID,
-			RepoID:     12345,
-			Provider:   providerName,
+			Type:       v1.Entity_ENTITY_REPOSITORIES,
 			ProviderID: providerID,
-		}, nil).
+			ProjectID:  projectID,
+		},
+		Properties: repoProps,
+	}
+
+	mockRepoSvc.EXPECT().
+		RefreshRepositoryByUpstreamID(gomock.Any(), int64(12345)).
+		Return(&repoEntityInstance, nil).
 		AnyTimes()
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
@@ -333,7 +399,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -385,7 +451,7 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil)
 	defer evt.Close()
 
 	go func() {
@@ -422,7 +488,7 @@ func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -473,7 +539,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	providerName := "github"
 	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
@@ -486,6 +551,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 		payload       any
 		rawPayload    []byte
 		mockStoreFunc df.MockStoreBuilder
+		mockRepoBld   repoSvcMockBuilder
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -571,15 +637,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID: providerID,
+					},
+					providerID,
 				),
 				df.WithSuccessfulGetArtifactByID(
 					db.Artifact{
@@ -614,15 +696,31 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulGetProviderByID(
+					db.Provider{
+						ID: providerID,
+					},
+					providerID,
 				),
 				df.WithSuccessfulGetArtifactByID(
 					db.Artifact{
@@ -1027,20 +1125,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
-						WebhookID: sql.NullInt64{
-							Int64: 54321,
-							Valid: true,
-						},
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1075,16 +1177,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1122,20 +1232,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
-						WebhookID: sql.NullInt64{
-							Int64: 12345,
-							Valid: true,
-						},
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1155,16 +1269,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1195,16 +1317,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1235,16 +1365,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1275,16 +1413,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1314,16 +1460,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1354,16 +1508,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1393,16 +1555,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1433,16 +1603,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1473,16 +1651,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1513,16 +1699,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1556,20 +1750,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
-						WebhookID: sql.NullInt64{
-							Int64: 12345,
-							Valid: true,
-						},
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1603,16 +1801,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1643,16 +1849,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1683,16 +1897,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1723,16 +1945,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1763,16 +1993,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -1806,16 +2044,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1847,17 +2093,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
-				df.WithSuccessfulGetFeatureInProject(false),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1878,17 +2131,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
-				df.WithSuccessfulGetFeatureInProject(true),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1919,16 +2179,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1959,16 +2227,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -1999,16 +2275,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2039,16 +2323,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2079,16 +2371,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2119,16 +2419,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2158,16 +2466,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2198,16 +2514,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2238,16 +2562,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2278,16 +2610,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2318,16 +2658,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2358,16 +2706,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2398,16 +2754,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2438,16 +2802,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2478,16 +2850,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2518,16 +2898,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2557,16 +2945,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2596,16 +2992,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2646,16 +3050,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2678,16 +3090,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2719,16 +3139,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2746,16 +3174,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2766,16 +3202,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2804,16 +3248,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2842,16 +3294,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2880,16 +3340,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2918,16 +3386,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2956,16 +3432,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -2994,16 +3478,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -3046,16 +3538,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulUpsertPullRequest(
 					db.PullRequest{},
 				),
@@ -3100,16 +3602,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulDeletePullRequest(),
 				df.WithTransaction(),
 			),
@@ -3141,16 +3653,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
 						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
 						ProviderID: providerID,
+						ProjectID:  projectID,
 					},
-				),
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
 			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
@@ -3248,7 +3768,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			srv, evt := newDefaultServer(t, mockStore, nil)
+			var mockRepoSvc *mock_github.MockRepositoryService
+			if tt.mockRepoBld != nil {
+				mockRepoSvc = tt.mockRepoBld(ctrl)
+			} else {
+				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
+			}
+
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 			srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 			srv.providerManager = providerSetup(ctrl)
@@ -3306,7 +3833,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	providerName := "github"
 	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
@@ -3320,6 +3846,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 		payload       any
 		rawPayload    []byte
 		mockStoreFunc df.MockStoreBuilder
+		mockRepoBld   repoSvcMockBuilder
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -3714,6 +4241,22 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
+			mockRepoBld: newRepoSvcMock(
+				withRepoByIdRepoNotFoundUpstream(
+					models.EntityInstance{
+						ID:         repositoryID,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
+						ProviderID: providerID,
+						ProjectID:  projectID,
+					}, nil),
+				withRepoByIdRepoNotFoundUpstream(
+					models.EntityInstance{
+						ID:         repositoryID,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
+						ProviderID: providerID,
+						ProjectID:  projectID,
+					}, nil),
+			),
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
@@ -3734,24 +4277,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 						},
 					},
 					54321),
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
-				df.WithSuccessfulGetRepositoryByRepoID(
-					db.Repository{
-						ID:         repositoryID,
-						ProjectID:  projectID,
-						RepoID:     12345,
-						Provider:   providerName,
-						ProviderID: providerID,
-					},
-				),
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
@@ -3836,7 +4361,14 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			srv, evt := newDefaultServer(t, mockStore, nil)
+			var mockRepoSvc *mock_github.MockRepositoryService
+			if tt.mockRepoBld != nil {
+				mockRepoSvc = tt.mockRepoBld(ctrl)
+			} else {
+				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
+			}
+
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "test"
 
 			pq := testqueue.NewPassthroughQueue(t)

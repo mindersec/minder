@@ -77,12 +77,12 @@ func RepoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repo
 
 	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
 	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+		return nil, fmt.Errorf("error fetching is_private property: %w", err)
 	}
 
 	isFork, err := repoProperties.GetProperty(properties.RepoPropertyIsFork).AsBool()
 	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
+		return nil, fmt.Errorf("error fetching is_fork property: %w", err)
 	}
 
 	pbRepo := &minderv1.Repository{

@@ -19,6 +19,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -76,6 +77,7 @@ func init() {
 func newDefaultServer(
 	t *testing.T,
 	mockStore *mockdb.MockStore,
+	mockRepoSvc *mock_github.MockRepositoryService,
 	ghClientFactory ghclient.GitHubClientFactory,
 ) (*Server, events.Interface) {
 	t.Helper()
@@ -126,6 +128,7 @@ func newDefaultServer(
 		idClient:      &auth.IdentityClient{},
 		ghProviders:   ghClientService,
 		providerStore: providers.NewProviderStore(mockStore),
+		repos:         mockRepoSvc,
 		cryptoEngine:  eng,
 	}
 
