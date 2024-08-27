@@ -20,13 +20,16 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 
-	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
@@ -41,6 +44,9 @@ import (
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+// ErrRepoNotFound is returned when a repository is not found
+var ErrRepoNotFound = errors.New("repository not found")
 
 // RepositoryService encapsulates logic related to registering and deleting repos
 // TODO: get rid of the github client from this interface
@@ -93,6 +99,11 @@ type RepositoryService interface {
 		projectID uuid.UUID,
 		providerName string,
 	) (db.Repository, error)
+
+	RefreshRepositoryByUpstreamID(
+		ctx context.Context,
+		upstreamRepoID int64,
+	) (*models.EntityWithProperties, error)
 }
 
 var (
@@ -110,12 +121,14 @@ type repositoryService struct {
 	store           db.Store
 	eventProducer   events.Publisher
 	providerManager manager.ProviderManager
+	propSvc         service.PropertiesService
 }
 
 // NewRepositoryService creates an instance of the RepositoryService interface
 func NewRepositoryService(
 	webhookManager webhooks.WebhookManager,
 	store db.Store,
+	propSvc service.PropertiesService,
 	eventProducer events.Publisher,
 	providerManager manager.ProviderManager,
 ) RepositoryService {
@@ -124,6 +137,7 @@ func NewRepositoryService(
 		store:           store,
 		eventProducer:   eventProducer,
 		providerManager: providerManager,
+		propSvc:         propSvc,
 	}
 }
 
@@ -157,7 +171,12 @@ func (r *repositoryService) CreateRepository(
 		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
-	repoProperties, err := propClient.FetchAllProperties(ctx, fetchByProps, pb.Entity_ENTITY_REPOSITORIES, nil)
+	repoProperties, err := r.propSvc.RetrieveAllProperties(
+		ctx,
+		propClient,
+		projectID,
+		fetchByProps,
+		pb.Entity_ENTITY_REPOSITORIES)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
 	}
@@ -183,7 +202,7 @@ func (r *repositoryService) CreateRepository(
 	}
 
 	// create a webhook to capture events from the repository
-	hookUUID, githubHook, err := r.webhookManager.CreateWebhook(ctx, client, repoOwner, repoName)
+	webhookProperties, err := r.webhookManager.CreateWebhook(ctx, client, repoOwner, repoName)
 	if err != nil {
 		return nil, fmt.Errorf("error creating webhook in repo: %w", err)
 	}
@@ -192,8 +211,7 @@ func (r *repositoryService) CreateRepository(
 	dbID, pbRepo, err := r.persistRepository(
 		ctx,
 		repoProperties,
-		githubHook,
-		hookUUID,
+		webhookProperties,
 		projectID,
 		provider,
 	)
@@ -203,7 +221,9 @@ func (r *repositoryService) CreateRepository(
 		// best-effort attempt: If it fails, the customer either has to delete
 		// the hook manually, or it will be deleted the next time the customer
 		// attempts to register a repo.
-		cleanupErr := r.webhookManager.DeleteWebhook(ctx, client, repoOwner, repoName, *githubHook.ID)
+		cleanupErr := r.webhookManager.DeleteWebhook(
+			ctx, client, repoOwner, repoName,
+			webhookProperties.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
 		if cleanupErr != nil {
 			log.Printf("error deleting new webhook: %v", cleanupErr)
 		}
@@ -322,6 +342,161 @@ func (r *repositoryService) DeleteByName(
 	return r.deleteRepository(ctx, client, &repo)
 }
 
+func (r *repositoryService) RefreshRepositoryByUpstreamID(
+	ctx context.Context,
+	upstreamRepoID int64,
+) (*models.EntityWithProperties, error) {
+	zerolog.Ctx(ctx).Debug().Int64("upstream_repo_id", upstreamRepoID).Msg("refreshing repository")
+
+	ewp, err := db.WithTransaction(r.store, func(qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
+		entRepo, isLegacy, err := getRepoEntityWithLegacyFallback(ctx, upstreamRepoID, qtx)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching repository: %w", err)
+		}
+
+		prov, err := r.providerManager.InstantiateFromID(ctx, entRepo.ProviderID)
+		if err != nil {
+			return nil, fmt.Errorf("error instantiating provider: %w", err)
+		}
+
+		fetchByProps, err := properties.NewProperties(map[string]any{
+			properties.PropertyName: entRepo.Name,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating properties: %w", err)
+		}
+
+		repoProperties, err := r.propSvc.RetrieveAllProperties(
+			ctx,
+			prov,
+			entRepo.ProjectID,
+			fetchByProps,
+			pb.Entity_ENTITY_REPOSITORIES)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		}
+
+		if !isLegacy {
+			// this is not a migration from the legacy tables, we're done
+			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
+			return &ewp, nil
+		}
+
+		zerolog.Ctx(ctx).Debug().Str("repo_name", entRepo.Name).Msg("migrating legacy repository")
+
+		// TODO: this is temporary until all entities are migrated to the new properties
+		legacyProps, err := getLegacyOperationalAttrs(ctx, entRepo.ID, repoProperties, qtx)
+		if err != nil {
+			return nil, fmt.Errorf("error merging legacy operational attributes: %w", err)
+		}
+
+		err = r.propSvc.SaveAllProperties(ctx, entRepo.ID, legacyProps, qtx)
+		if err != nil {
+			return nil, fmt.Errorf("error saving properties for repository: %w", err)
+		}
+
+		// we could as well call RetrieveAllProperties again, we should just get the same data
+		ewp := models.NewEntityWithProperties(entRepo, repoProperties.Merge(legacyProps))
+		return &ewp, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing repository: %w", err)
+	}
+
+	return ewp, nil
+}
+
+func getRepoEntityWithLegacyFallback(
+	ctx context.Context,
+	upstreamRepoID int64,
+	qtx db.ExtendQuerier,
+) (db.EntityInstance, bool, error) {
+	entities, err := qtx.GetTypedEntitiesByPropertyV1(
+		ctx,
+		uuid.Nil, // explicitly nil, we check later if we got exactly 1 entity
+		db.EntitiesRepository,
+		properties.PropertyUpstreamID,
+		strconv.FormatInt(upstreamRepoID, 10))
+	if errors.Is(err, sql.ErrNoRows) {
+		return db.EntityInstance{}, false, ErrRepoNotFound
+	} else if err != nil {
+		return db.EntityInstance{}, false, fmt.Errorf("error fetching entities by property: %w", err)
+	}
+
+	if len(entities) > 1 {
+		return db.EntityInstance{}, false, fmt.Errorf("expected 1 entity, got %d", len(entities))
+	} else if len(entities) == 1 {
+		return entities[0], false, nil
+	}
+
+	// 0 entities found, check the legacy table
+	legacyRepo, err := qtx.GetRepositoryByRepoID(ctx, upstreamRepoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		// when removing this code after the migration, remember to add a
+		// clause above to return NotFound on len(entities) == 0
+		return db.EntityInstance{}, false, ErrRepoNotFound
+	} else if err != nil {
+		return db.EntityInstance{}, false, fmt.Errorf("error fetching legacy repository: %w", err)
+	}
+
+	// check if the repo has been created in the entities table but without
+	// properties
+	ent, err := qtx.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:       legacyRepo.ID,
+		Projects: []uuid.UUID{legacyRepo.ProjectID},
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		// we have an entity in the entities table but without properties
+		return db.EntityInstance{}, false, fmt.Errorf("error fetching entity: %w", err)
+	} else if err == nil {
+		// we have an entity in the entities table but without properties (half-way migrated)
+		zerolog.Ctx(ctx).Debug().Str("repo_name", ent.Name).Msg("repo has an entity but no properties")
+		return ent, false, nil
+	}
+
+	// only sql.ErrNoRows left, we have to create the entity
+	// at this point we didn't have a repo in the entities table but did have
+	// a repo in the legacy table. Insert into the entities table and return
+	zerolog.Ctx(ctx).Debug().Str("repo_name", legacyRepo.RepoName).Msg("migrating legacy repository")
+	ent, err = qtx.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+		ID:         legacyRepo.ID,
+		EntityType: db.EntitiesRepository,
+		// it's OK to use an sprintf here, this is code that will be removed soon
+		Name:           fmt.Sprintf("%s/%s", legacyRepo.RepoOwner, legacyRepo.RepoName),
+		ProjectID:      legacyRepo.ProjectID,
+		ProviderID:     legacyRepo.ProviderID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	if err != nil {
+		return db.EntityInstance{}, false, fmt.Errorf("error creating entity: %w", err)
+	}
+
+	return ent, true, nil
+}
+
+func getLegacyOperationalAttrs(
+	ctx context.Context,
+	repoID uuid.UUID,
+	repoProps *properties.Properties,
+	qtx db.ExtendQuerier,
+) (*properties.Properties, error) {
+	legacyRepo, err := qtx.GetRepositoryByID(ctx, repoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return repoProps, nil
+	}
+
+	legacyPropMap := map[string]any{
+		ghprop.RepoPropertyHookUrl: legacyRepo.WebhookUrl,
+	}
+
+	if legacyRepo.WebhookID.Valid {
+		legacyPropMap[ghprop.RepoPropertyHookId] = legacyRepo.WebhookID.Int64
+	}
+
+	return properties.NewProperties(legacyPropMap)
+}
+
 func (r *repositoryService) instantiateGithubProvider(ctx context.Context, providerID uuid.UUID) (provifv1.GitHub, error) {
 	provider, err := r.providerManager.InstantiateFromID(ctx, providerID)
 	if err != nil {
@@ -393,15 +568,14 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
 	repoProperties *properties.Properties,
-	githubHook *github.Hook,
-	hookUUID string,
+	webhookProperties *properties.Properties,
 	projectID uuid.UUID,
 	provider *db.Provider,
 ) (uuid.UUID, *pb.Repository, error) {
 	var outid uuid.UUID
 	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
 		// instantiate the response object
-		pbRepo, err := pbRepoFromProperties(repoProperties, githubHook, hookUUID)
+		pbRepo, err := pbRepoFromProperties(repoProperties, webhookProperties)
 		if err != nil {
 			return nil, fmt.Errorf("error creating repository object: %w", err)
 		}
@@ -443,13 +617,21 @@ func (r *repositoryService) persistRepository(
 		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
 
 		// TODO: Replace with CreateEntity call
-		_, err = t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+		repoEnt, err := t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
 			ID:         dbRepo.ID,
 			EntityType: db.EntitiesRepository,
 			Name:       fmt.Sprintf("%s/%s", pbRepo.Owner, pbRepo.Name),
 			ProjectID:  projectID,
 			ProviderID: provider.ID,
 		})
+		if err != nil {
+			return pbRepo, fmt.Errorf("error creating entity: %w", err)
+		}
+
+		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, repoProperties.Merge(webhookProperties), t)
+		if err != nil {
+			return pbRepo, fmt.Errorf("error saving properties for repository: %w", err)
+		}
 
 		return pbRepo, err
 	})
@@ -462,8 +644,7 @@ func (r *repositoryService) persistRepository(
 
 func pbRepoFromProperties(
 	repoProperties *properties.Properties,
-	githubHook *github.Hook,
-	hookUUID string,
+	webhookProperties *properties.Properties,
 ) (*pb.Repository, error) {
 	name, err := repoProperties.GetProperty(ghprop.RepoPropertyName).AsString()
 	if err != nil {
@@ -494,13 +675,13 @@ func pbRepoFromProperties(
 		Name:          name,
 		Owner:         owner,
 		RepoId:        repoId,
-		HookId:        githubHook.GetID(),
-		HookUrl:       githubHook.GetURL(),
+		HookId:        webhookProperties.GetProperty(ghprop.RepoPropertyHookId).GetInt64(),
+		HookUrl:       webhookProperties.GetProperty(ghprop.RepoPropertyHookUrl).GetString(),
 		DeployUrl:     repoProperties.GetProperty(ghprop.RepoPropertyDeployURL).GetString(),
 		CloneUrl:      repoProperties.GetProperty(ghprop.RepoPropertyCloneURL).GetString(),
-		HookType:      githubHook.GetType(),
-		HookName:      githubHook.GetName(),
-		HookUuid:      hookUUID,
+		HookType:      webhookProperties.GetProperty(ghprop.RepoPropertyHookType).GetString(),
+		HookName:      webhookProperties.GetProperty(ghprop.RepoPropertyHookName).GetString(),
+		HookUuid:      webhookProperties.GetProperty(ghprop.RepoPropertyHookUiid).GetString(),
 		IsPrivate:     isPrivate,
 		IsFork:        isFork,
 		DefaultBranch: repoProperties.GetProperty(ghprop.RepoPropertyDefaultBranch).GetString(),

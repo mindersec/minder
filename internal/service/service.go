@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/email/noop"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	propService "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
 	"github.com/stacklok/minder/internal/history"
@@ -151,7 +152,8 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
-	repos := github.NewRepositoryService(whManager, store, evt, providerManager)
+	propSvc := propService.NewPropertiesService(store)
+	repos := github.NewRepositoryService(whManager, store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
 	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)

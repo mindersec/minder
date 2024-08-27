@@ -20,9 +20,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -53,10 +55,12 @@ type PropertiesService interface {
 		ctx context.Context, provider v1.Provider, projectId uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 	) (*properties.Property, error)
+	// ReplaceAllProperties saves all properties for the given entity
+	ReplaceAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error
 	// SaveAllProperties saves all properties for the given entity
 	SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error
-	// SaveProperty saves a single property for the given entity
-	SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error
+	// ReplaceProperty saves a single property for the given entity
+	ReplaceProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error
 }
 
 type propertiesServiceOption func(*propertiesService)
@@ -98,7 +102,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
 	entID, err := ps.getEntityIdByProperties(ctx, projectId, lookupProperties, entType)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, err
+		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
 
 	var dbProps []db.Property
@@ -108,21 +112,45 @@ func (ps *propertiesService) RetrieveAllProperties(
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+	} else {
+		zerolog.Ctx(ctx).Debug().Msg("no entity found, will skip saving the properties")
 	}
 
 	// if exists and not expired, turn into our model
-	if len(dbProps) > 0 && ps.areDatabasePropertiesValid(dbProps) {
-		// TODO: instead of a hard error, should we just re-fetch from provider?
-		return dbPropsToModel(dbProps)
+	var modelProps *properties.Properties
+	if len(dbProps) > 0 {
+		modelProps, err = dbPropsToModel(dbProps)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert properties: %w", err)
+		}
+		if ps.areDatabasePropertiesValid(dbProps) {
+			zerolog.Ctx(ctx).Info().Msg("properties are valid, skipping provider fetch")
+			return modelProps, nil
+		}
 	}
 
 	// if not, fetch from provider
-	props, err := provider.FetchAllProperties(ctx, lookupProperties, entType, nil)
+	zerolog.Ctx(ctx).Info().Msg("properties are not valid, fetching from provider")
+	refreshedProps, err := provider.FetchAllProperties(ctx, lookupProperties, entType, modelProps)
 	if err != nil {
 		return nil, err
 	}
 
-	return props, nil
+	// if there was no entity, just return the properties as there is nothing to update. It's up to the caller
+	// to decide what to do with the properties
+	if entID == uuid.Nil {
+		zerolog.Ctx(ctx).Debug().Msg("no entity found, returning properties without saving")
+		return refreshedProps, nil
+	}
+
+	// save updated properties to db, thus making sure that the updatedAt are bumped
+	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, ps.store)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update properties: %w", err)
+	}
+
+	zerolog.Ctx(ctx).Debug().Msg("properties updated")
+	return refreshedProps, nil
 }
 
 // RetrieveProperty fetches a single property for the given entity
@@ -156,7 +184,7 @@ func (ps *propertiesService) RetrieveProperty(
 	// if not, fetch from provider
 	prop, err := provider.FetchProperty(ctx, lookupProperties, entType, key)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch property: %w", err)
 	}
 
 	return prop, nil
@@ -186,20 +214,26 @@ func (ps *propertiesService) getEntityIdByName(
 		EntityType: entities.EntityTypeToDB(entType),
 	})
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, fmt.Errorf("failed to get entity by name: %w", err)
 	}
 
 	return ent.ID, nil
 }
 
-func (_ *propertiesService) SaveAllProperties(
+func (ps *propertiesService) ReplaceAllProperties(
 	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
 ) error {
 	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to delete properties: %w", err)
 	}
 
+	return ps.SaveAllProperties(ctx, entityID, props, qtx)
+}
+
+func (_ *propertiesService) SaveAllProperties(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+) error {
 	for key, prop := range props.Iterate() {
 		_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 			EntityID: entityID,
@@ -214,7 +248,7 @@ func (_ *propertiesService) SaveAllProperties(
 	return nil
 }
 
-func (_ *propertiesService) SaveProperty(
+func (_ *propertiesService) ReplaceProperty(
 	ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier,
 ) error {
 	if prop == nil {

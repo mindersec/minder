@@ -244,7 +244,7 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			}
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.SaveProperty(ctx, ent.ID, tt.key, prop, qtx)
+				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop, qtx)
 			})
 			require.NoError(t, err)
 
@@ -393,7 +393,7 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.SaveAllProperties(ctx, ent.ID, props, qtx)
+				return propSvc.ReplaceAllProperties(ctx, ent.ID, props, qtx)
 			})
 			require.NoError(t, err)
 

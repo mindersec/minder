@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	github "github.com/google/go-github/v63/github"
+	properties "github.com/stacklok/minder/internal/entities/properties"
 	clients "github.com/stacklok/minder/internal/repositories/github/clients"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -42,13 +42,12 @@ func (m *MockWebhookManager) EXPECT() *MockWebhookManagerMockRecorder {
 }
 
 // CreateWebhook mocks base method.
-func (m *MockWebhookManager) CreateWebhook(ctx context.Context, client clients.GitHubRepoClient, repoOwner, repoName string) (string, *github.Hook, error) {
+func (m *MockWebhookManager) CreateWebhook(ctx context.Context, client clients.GitHubRepoClient, repoOwner, repoName string) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateWebhook", ctx, client, repoOwner, repoName)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(*github.Hook)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateWebhook indicates an expected call of CreateWebhook.

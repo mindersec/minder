@@ -30,6 +30,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/properties"
+	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
 	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
@@ -48,64 +49,67 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name           string
-		ProviderSetup  func(*gomock.Controller) provinfv1.Provider
-		DBSetup        dbMockBuilder
-		WebhookSetup   whMockBuilder
-		EventsSetup    eventMockBuilder
-		EventSendFails bool
-		ExpectedError  string
+		Name              string
+		ProviderSetupFail bool
+		ServiceSetup      propSvcMockBuilder
+		DBSetup           dbMockBuilder
+		WebhookSetup      whMockBuilder
+		EventsSetup       eventMockBuilder
+		EventSendFails    bool
+		ExpectedError     string
 	}{
 		{
-			Name:          "CreateRepository fails when provider cannot be instantiated",
-			ExpectedError: "error instantiating provider",
+			Name:              "CreateRepository fails when provider cannot be instantiated",
+			ProviderSetupFail: true,
+			ServiceSetup:      newPropSvcMock(),
+			ExpectedError:     "error instantiating provider",
 		},
 		{
 			Name:          "CreateRepository fails when repo properties cannot be found in GitHub",
-			ProviderSetup: withFailingGet,
+			ServiceSetup:  newPropSvcMock(withFailingGet),
 			ExpectedError: "error fetching properties for repository",
 		},
 		{
 			Name:          "CreateRepository fails for private repo in project which disallows private repos",
-			ProviderSetup: withSuccessfulPropFetch(privateProps),
+			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(privateProps)),
 			DBSetup:       newDBMock(withPrivateReposDisabled),
 			ExpectedError: "private repos cannot be registered in this project",
 		},
 		{
 			Name:          "CreateRepository fails when webhook creation fails",
-			ProviderSetup: withSuccessfulPropFetch(publicProps),
+			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps)),
 			WebhookSetup:  newWebhookMock(withFailedWebhookCreate),
 			ExpectedError: "error creating webhook in repo",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database",
-			ProviderSetup: withSuccessfulPropFetch(publicProps),
+			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps)),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withSuccessfulWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
 			Name:          "CreateRepository fails when repo cannot be inserted into database (cleanup fails)",
-			ProviderSetup: withSuccessfulPropFetch(publicProps),
+			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps)),
 			DBSetup:       newDBMock(withFailedCreate),
 			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate, withFailedWebhookDelete),
 			ExpectedError: "error creating repository",
 		},
 		{
-			Name:          "CreateRepository succeeds",
-			ProviderSetup: withSuccessfulPropFetch(publicProps),
-			DBSetup:       newDBMock(withSuccessfulCreate),
-			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
+			Name:         "CreateRepository succeeds",
+			ServiceSetup: newPropSvcMock(withSuccessfulPropFetch(publicProps), withSuccessfulReplaceProps),
+			DBSetup:      newDBMock(withSuccessfulCreate),
+			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
-			Name:          "CreateRepository succeeds (private repos enabled)",
-			ProviderSetup: withSuccessfulPropFetch(privateProps),
-			DBSetup:       newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
-			WebhookSetup:  newWebhookMock(withSuccessfulWebhookCreate),
+			Name:         "CreateRepository succeeds (private repos enabled)",
+			ServiceSetup: newPropSvcMock(withSuccessfulPropFetch(privateProps), withSuccessfulReplaceProps),
+			DBSetup:      newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
+			WebhookSetup: newWebhookMock(withSuccessfulWebhookCreate),
 		},
 		{
 			Name:           "CreateRepository succeeds (skips failed event send)",
-			ProviderSetup:  withSuccessfulPropFetch(publicProps),
+			ServiceSetup:   newPropSvcMock(withSuccessfulPropFetch(publicProps), withSuccessfulReplaceProps),
 			DBSetup:        newDBMock(withSuccessfulCreate),
 			WebhookSetup:   newWebhookMock(withSuccessfulWebhookCreate),
 			EventSendFails: true,
@@ -120,16 +124,15 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			ctx := context.Background()
 
 			var opt func(mock pf.ProviderManagerMock)
-			if scenario.ProviderSetup != nil {
-				p := scenario.ProviderSetup(ctrl)
-				opt = pf.WithSuccessfulInstantiateFromID(p)
+			if !scenario.ProviderSetupFail {
+				opt = pf.WithSuccessfulInstantiateFromID(mockgithub.NewMockGitHub(ctrl))
 			} else {
 				opt = pf.WithFailedInstantiateFromID
 			}
 
 			providerSetup := pf.NewProviderManagerMock(opt)
 
-			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, providerSetup, scenario.EventSendFails)
+			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, scenario.ServiceSetup, providerSetup, scenario.EventSendFails)
 			res, err := svc.CreateRepository(ctx, &provider, projectID, repoOwner, repoName)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
@@ -237,7 +240,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, scenario.ProviderSetup, false)
+			svc := createService(ctrl, scenario.WebhookSetup, scenario.DBSetup, newPropSvcMock(), scenario.ProviderSetup, false)
 			var err error
 			if scenario.DeleteType == ByName {
 				err = svc.DeleteByName(ctx, dbRepo.RepoOwner, dbRepo.RepoName, projectID, providerName)
@@ -284,7 +287,7 @@ func TestRepositoryService_GetRepositoryById(t *testing.T) {
 			// For the purposes of this test, we do not need to attach any
 			// mock behaviour to the client. We can leave it as a nil pointer.
 
-			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, nil, false)
+			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, newPropSvcMock(), nil, false)
 			_, err := svc.GetRepositoryById(ctx, repoID, projectID)
 
 			if scenario.ShouldSucceed {
@@ -326,7 +329,7 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 			// For the purposes of this test, we do not need to attach any
 			// mock behaviour to the client. We can leave it as a nil pointer.
 
-			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, nil, false)
+			svc := createService(ctrl, newWebhookMock(), scenario.DBSetup, newPropSvcMock(), nil, false)
 			_, err := svc.GetRepositoryByName(ctx, repoOwner, repoName, projectID, providerName)
 
 			if scenario.ShouldSucceed {
@@ -342,6 +345,7 @@ func createService(
 	ctrl *gomock.Controller,
 	whSetup whMockBuilder,
 	dbSetup dbMockBuilder,
+	serviceSetup propSvcMockBuilder,
 	providerSetup pf.ProviderManagerMockBuilder,
 	eventsFail bool,
 ) github.RepositoryService {
@@ -368,7 +372,9 @@ func createService(
 		Return(eventErr).
 		AnyTimes()
 
-	return github.NewRepositoryService(whManager, store, events, providerManager)
+	mockPropSvc := serviceSetup(ctrl)
+
+	return github.NewRepositoryService(whManager, store, mockPropSvc, events, providerManager)
 }
 
 const (
@@ -403,6 +409,7 @@ var (
 	webhook = &gh.Hook{
 		ID: ptr.Ptr[int64](cf.HookID),
 	}
+	webhookProps = newWebhookProperties(cf.HookID, hookUUID)
 	publicRepo   = newGithubRepo(false)
 	publicProps  = newGithubRepoProperties(false)
 	privateProps = newGithubRepoProperties(true)
@@ -416,12 +423,14 @@ var (
 )
 
 type (
-	dbMock           = *mockdb.MockStore
-	dbMockBuilder    = func(controller *gomock.Controller) dbMock
-	whMock           = *mockghhook.MockWebhookManager
-	whMockBuilder    = func(controller *gomock.Controller) whMock
-	eventMock        = *mockevents.MockInterface
-	eventMockBuilder = func(controller *gomock.Controller) eventMock
+	dbMock             = *mockdb.MockStore
+	dbMockBuilder      = func(controller *gomock.Controller) dbMock
+	whMock             = *mockghhook.MockWebhookManager
+	whMockBuilder      = func(controller *gomock.Controller) whMock
+	propSvcMock        = *mock_service.MockPropertiesService
+	propSvcMockBuilder = func(controller *gomock.Controller) propSvcMock
+	eventMock          = *mockevents.MockInterface
+	eventMockBuilder   = func(controller *gomock.Controller) eventMock
 )
 
 func newDBMock(opts ...func(dbMock)) dbMockBuilder {
@@ -447,13 +456,13 @@ func newWebhookMock(opts ...func(mock whMock)) whMockBuilder {
 func withSuccessfulWebhookCreate(mock whMock) {
 	mock.EXPECT().
 		CreateWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName).
-		Return(hookUUID, webhook, nil)
+		Return(webhookProps, nil)
 }
 
 func withFailedWebhookCreate(mock whMock) {
 	mock.EXPECT().
 		CreateWebhook(gomock.Any(), gomock.Any(), repoOwner, repoName).
-		Return("", nil, errDefault)
+		Return(nil, errDefault)
 }
 
 func withSuccessfulWebhookDelete(mock whMock) {
@@ -563,6 +572,19 @@ func newGithubRepo(isPrivate bool) *gh.Repository {
 	}
 }
 
+func newWebhookProperties(hookID int64, hookUUID string) *properties.Properties {
+	webhookProps := map[string]any{
+		ghprop.RepoPropertyHookId:   hookID,
+		ghprop.RepoPropertyHookUiid: hookUUID,
+	}
+
+	props, err := properties.NewProperties(webhookProps)
+	if err != nil {
+		panic(err)
+	}
+	return props
+}
+
 func newGithubRepoProperties(isPrivate bool) *properties.Properties {
 	repoProps := map[string]any{
 		properties.PropertyName:           fmt.Sprintf("%s/%s", repoOwner, repoName),
@@ -604,22 +626,32 @@ func newExpectation(isPrivate bool) *pb.Repository {
 	}
 }
 
-func withFailingGet(ctrl *gomock.Controller) provinfv1.Provider {
-	m := mockgithub.NewMockGitHub(ctrl)
-	m.EXPECT().
-		FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, errDefault)
-
-	return m
+func newPropSvcMock(opts ...func(mock propSvcMock)) propSvcMockBuilder {
+	return func(ctrl *gomock.Controller) propSvcMock {
+		ms := mock_service.NewMockPropertiesService(ctrl)
+		for _, opt := range opts {
+			opt(ms)
+		}
+		return ms
+	}
 }
 
-func withSuccessfulPropFetch(prop *properties.Properties) func(*gomock.Controller) provinfv1.Provider {
-	return func(ctrl *gomock.Controller) provinfv1.Provider {
-		propMock := mockgithub.NewMockGitHub(ctrl)
-		propMock.EXPECT().
-			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(prop, nil)
+func withSuccessfulReplaceProps(mock propSvcMock) {
+	mock.EXPECT().
+		ReplaceAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+}
 
-		return propMock
+func withFailingGet(mock propSvcMock) {
+	mock.EXPECT().
+		RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil, errDefault)
+}
+
+func withSuccessfulPropFetch(prop *properties.Properties) func(svcMock propSvcMock) {
+	return func(mock propSvcMock) {
+		mock.EXPECT().
+			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(prop, nil)
 	}
 }
