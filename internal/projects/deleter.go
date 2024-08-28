@@ -24,7 +24,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"golang.org/x/sync/errgroup"
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
@@ -182,28 +181,21 @@ func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 }
 
 func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Querier) (*logger.ProjectTombstone, error) {
-	var (
-		profilesCount       int64
-		reposCount          int64
-		entitlementFeatures []string
-	)
+	var err error
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.Go(func() (err error) {
-		profilesCount, err = qtx.CountProfilesByProjectID(ctx, projectID)
-		return err
-	})
-	g.Go(func() (err error) {
-		reposCount, err = qtx.CountRepositoriesByProjectID(ctx, projectID)
-		return err
-	})
-	g.Go(func() (err error) {
-		entitlementFeatures, err = qtx.GetEntitlementFeaturesByProjectID(ctx, projectID)
-		return err
-	})
+	profilesCount, err := qtx.CountProfilesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting profiles count: %w", err)
+	}
 
-	if err := g.Wait(); err != nil {
-		return nil, fmt.Errorf("error getting project metadata: %w", err)
+	reposCount, err := qtx.CountRepositoriesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repositories count: %w", err)
+	}
+
+	entitlementFeatures, err := qtx.GetEntitlementFeaturesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting entitlement features: %w", err)
 	}
 
 	return &logger.ProjectTombstone{
