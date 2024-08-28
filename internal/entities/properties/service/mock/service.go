@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	db "github.com/stacklok/minder/internal/db"
 	properties "github.com/stacklok/minder/internal/entities/properties"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v10 "github.com/stacklok/minder/pkg/providers/v1"
@@ -74,29 +75,29 @@ func (mr *MockPropertiesServiceMockRecorder) RetrieveProperty(ctx, provider, pro
 }
 
 // SaveAllProperties mocks base method.
-func (m *MockPropertiesService) SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties) error {
+func (m *MockPropertiesService) SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveAllProperties", ctx, entityID, props)
+	ret := m.ctrl.Call(m, "SaveAllProperties", ctx, entityID, props, qtx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveAllProperties indicates an expected call of SaveAllProperties.
-func (mr *MockPropertiesServiceMockRecorder) SaveAllProperties(ctx, entityID, props any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) SaveAllProperties(ctx, entityID, props, qtx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).SaveAllProperties), ctx, entityID, props)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).SaveAllProperties), ctx, entityID, props, qtx)
 }
 
 // SaveProperty mocks base method.
-func (m *MockPropertiesService) SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property) error {
+func (m *MockPropertiesService) SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveProperty", ctx, entityID, key, prop)
+	ret := m.ctrl.Call(m, "SaveProperty", ctx, entityID, key, prop, qtx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveProperty indicates an expected call of SaveProperty.
-func (mr *MockPropertiesServiceMockRecorder) SaveProperty(ctx, entityID, key, prop any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) SaveProperty(ctx, entityID, key, prop, qtx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveProperty", reflect.TypeOf((*MockPropertiesService)(nil).SaveProperty), ctx, entityID, key, prop)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveProperty", reflect.TypeOf((*MockPropertiesService)(nil).SaveProperty), ctx, entityID, key, prop, qtx)
 }

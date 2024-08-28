@@ -243,7 +243,9 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			err = propSvc.SaveProperty(ctx, ent.ID, tt.key, prop)
+			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+				return propSvc.SaveProperty(ctx, ent.ID, tt.key, prop, qtx)
+			})
 			require.NoError(t, err)
 
 			dbProp, err := tctx.testQueries.GetProperty(ctx, db.GetPropertyParams{
@@ -390,7 +392,9 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			props, err := properties.NewProperties(tt.props)
 			require.NoError(t, err)
 
-			err = propSvc.SaveAllProperties(ctx, ent.ID, props)
+			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+				return propSvc.SaveAllProperties(ctx, ent.ID, props, qtx)
+			})
 			require.NoError(t, err)
 
 			dbProps, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, ent.ID)

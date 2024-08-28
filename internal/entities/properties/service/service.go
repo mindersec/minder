@@ -54,9 +54,9 @@ type PropertiesService interface {
 		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 	) (*properties.Property, error)
 	// SaveAllProperties saves all properties for the given entity
-	SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties) error
+	SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error
 	// SaveProperty saves a single property for the given entity
-	SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property) error
+	SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error
 }
 
 type propertiesServiceOption func(*propertiesService)
@@ -192,22 +192,16 @@ func (ps *propertiesService) getEntityIdByName(
 	return ent.ID, nil
 }
 
-func (ps *propertiesService) SaveAllProperties(
-	ctx context.Context, entityID uuid.UUID, props *properties.Properties,
+func (_ *propertiesService) SaveAllProperties(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
 ) error {
-	return ps.store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-		return replaceProperties(ctx, qtx, entityID, props)
-	})
-}
-
-func replaceProperties(ctx context.Context, txq db.ExtendQuerier, entityID uuid.UUID, props *properties.Properties) error {
-	err := txq.DeleteAllPropertiesForEntity(ctx, entityID)
+	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
 	if err != nil {
 		return err
 	}
 
 	for key, prop := range props.Iterate() {
-		_, err := txq.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
+		_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 			EntityID: entityID,
 			Key:      key,
 			Value:    prop.RawValue(),
@@ -220,21 +214,17 @@ func replaceProperties(ctx context.Context, txq db.ExtendQuerier, entityID uuid.
 	return nil
 }
 
-func (ps *propertiesService) SaveProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property) error {
-	return ps.store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-		return upsertProperty(ctx, qtx, entityID, key, prop)
-	})
-}
-
-func upsertProperty(ctx context.Context, txq db.ExtendQuerier, entityID uuid.UUID, key string, prop *properties.Property) error {
+func (_ *propertiesService) SaveProperty(
+	ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier,
+) error {
 	if prop == nil {
-		return txq.DeleteProperty(ctx, db.DeletePropertyParams{
+		return qtx.DeleteProperty(ctx, db.DeletePropertyParams{
 			EntityID: entityID,
 			Key:      key,
 		})
 	}
 
-	_, err := txq.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
+	_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 		EntityID: entityID,
 		Key:      key,
 		Value:    prop.RawValue(),
