@@ -183,9 +183,9 @@ func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 
 func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Querier) (*logger.ProjectTombstone, error) {
 	var (
-		profilesCount int64
-		reposCount    int64
-		entitlements  []db.Entitlement
+		profilesCount       int64
+		reposCount          int64
+		entitlementFeatures []string
 	)
 
 	g, ctx := errgroup.WithContext(ctx)
@@ -198,7 +198,7 @@ func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Quer
 		return err
 	})
 	g.Go(func() (err error) {
-		entitlements, err = qtx.GetEntitlementsByProjectID(ctx, projectID)
+		entitlementFeatures, err = qtx.GetEntitlementFeaturesByProjectID(ctx, projectID)
 		return err
 	})
 
@@ -206,15 +206,10 @@ func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Quer
 		return nil, fmt.Errorf("error getting project metadata: %w", err)
 	}
 
-	entitlementsFeatures := make([]string, 0, len(entitlements))
-	for _, e := range entitlements {
-		entitlementsFeatures = append(entitlementsFeatures, e.Feature)
-	}
-
 	return &logger.ProjectTombstone{
 		Project:           projectID,
 		ProfileCount:      int(profilesCount),
 		RepositoriesCount: int(reposCount),
-		Entitlements:      entitlementsFeatures,
+		Entitlements:      entitlementFeatures,
 	}, nil
 }

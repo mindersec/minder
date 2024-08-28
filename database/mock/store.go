@@ -881,19 +881,19 @@ func (mr *MockStoreMockRecorder) GetEntitiesByType(arg0, arg1 any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByType", reflect.TypeOf((*MockStore)(nil).GetEntitiesByType), arg0, arg1)
 }
 
-// GetEntitlementsByProjectID mocks base method.
-func (m *MockStore) GetEntitlementsByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]db.Entitlement, error) {
+// GetEntitlementFeaturesByProjectID mocks base method.
+func (m *MockStore) GetEntitlementFeaturesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntitlementsByProjectID", arg0, arg1)
-	ret0, _ := ret[0].([]db.Entitlement)
+	ret := m.ctrl.Call(m, "GetEntitlementFeaturesByProjectID", arg0, arg1)
+	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEntitlementsByProjectID indicates an expected call of GetEntitlementsByProjectID.
-func (mr *MockStoreMockRecorder) GetEntitlementsByProjectID(arg0, arg1 any) *gomock.Call {
+// GetEntitlementFeaturesByProjectID indicates an expected call of GetEntitlementFeaturesByProjectID.
+func (mr *MockStoreMockRecorder) GetEntitlementFeaturesByProjectID(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitlementsByProjectID", reflect.TypeOf((*MockStore)(nil).GetEntitlementsByProjectID), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitlementFeaturesByProjectID", reflect.TypeOf((*MockStore)(nil).GetEntitlementFeaturesByProjectID), arg0, arg1)
 }
 
 // GetEntityByID mocks base method.
