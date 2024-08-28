@@ -482,6 +482,7 @@ func (s *Server) getRuleEvalStatus(
 		RuleName:            dbRuleEvalStat.RuleTypeName,
 		RuleTypeName:        dbRuleEvalStat.RuleTypeName,
 		RuleDescriptionName: dbRuleEvalStat.RuleName,
+		RuleDisplayName:     dbRuleEvalStat.RuleTypeDisplayName,
 		Entity:              string(dbRuleEvalStat.EntityType),
 		Status:              string(dbRuleEvalStat.EvalStatus),
 		Details:             dbRuleEvalStat.EvalDetails,
