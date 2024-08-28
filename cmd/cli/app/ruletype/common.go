@@ -21,6 +21,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
@@ -70,7 +71,7 @@ func execOnOneRuleType(
 	}
 
 	// add the rule type to the table rows
-	name := mapRuleTypeReleasePhase(rt.Name, rt.ReleasePhase)
+	name := appendRuleTypePropertiesToName(rt)
 	t.AddRow(
 		*rt.Context.Project,
 		*rt.Id,
@@ -163,10 +164,22 @@ func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {
 	return phaseString
 }
 
-func mapRuleTypeReleasePhase(name string, phase minderv1.RuleTypeReleasePhase) string {
-	phaseStr := ruleTypeReleasePhaseToString(phase)
-	if phaseStr == "" {
-		return name
+// appendRuleTypePropertiesToName appends the rule type properties to the name. The format is:
+// <name> (<properties>)
+// where <properties> is a comma separated list of properties.
+func appendRuleTypePropertiesToName(rt *minderv1.RuleType) string {
+	name := rt.Name
+	properties := []string{}
+	// add the release_phase property if it is present
+	phase := ruleTypeReleasePhaseToString(rt.ReleasePhase)
+	if phase != "" {
+		properties = append(properties, fmt.Sprintf("release_phase: %s", phase))
 	}
-	return fmt.Sprintf("%s (%s)", name, phaseStr)
+
+	// add the can_remediate: false property if remediation is not supported
+	if rt.Def.GetRemediate() == nil {
+		properties = append(properties, "can_remediate: false")
+	}
+	// return the name with the properties
+	return fmt.Sprintf("%s (%s)", name, strings.Join(properties, ", "))
 }
