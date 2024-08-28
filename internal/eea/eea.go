@@ -136,6 +136,9 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
 		Entity:           entities.EntityTypeToDB(inf.Type),
+		RepositoryID:     repoID,
+		ArtifactID:       artifactID,
+		PullRequestID:    pullRequestID,
 		EntityInstanceID: entityID,
 		ProjectID:        projectID,
 		Interval:         fmt.Sprintf("%d", e.cfg.LockInterval),
@@ -160,6 +163,9 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 
 		_, err := e.querier.EnqueueFlush(ctx, db.EnqueueFlushParams{
 			Entity:           entities.EntityTypeToDB(inf.Type),
+			RepositoryID:     repoID,
+			ArtifactID:       artifactID,
+			PullRequestID:    pullRequestID,
 			EntityInstanceID: entityID,
 			ProjectID:        projectID,
 		})
