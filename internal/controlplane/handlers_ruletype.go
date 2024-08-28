@@ -15,6 +15,7 @@
 package controlplane
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -22,6 +23,10 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -31,6 +36,10 @@ import (
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	errInvalidRuleType = errors.New("invalid rule type")
 )
 
 // ListRuleTypes is a method to list all rule types for a given context
@@ -155,10 +164,13 @@ func (s *Server) CreateRuleType(
 	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+		return nil, util.UserVisibleError(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
 	projectID := entityCtx.Project.ID
+	if err := validateGuidance(crt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
 
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
@@ -189,6 +201,9 @@ func (s *Server) UpdateRuleType(
 	}
 
 	projectID := entityCtx.Project.ID
+	if err := validateGuidance(urt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
@@ -267,4 +282,41 @@ func (s *Server) DeleteRuleType(
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
 
 	return &minderv1.DeleteRuleTypeResponse{}, nil
+}
+
+func validateGuidance(guidance string) error {
+	// As of the time of this writing, Minder profiles and rules
+	// have a guidance that's less than 10kB long.
+	if len(guidance) > 10*1<<10 {
+		return fmt.Errorf(
+			"%w: guidance too long",
+			errInvalidRuleType,
+		)
+	}
+
+	// The following lines validate that guidance is valid,
+	// parseable markdown. Be mindful that any UTF-8 string is
+	// valid markdown, so this is redundant at the moment. Should
+	// the definition of `guidance` change to bytes, this check
+	// would become much more relevant.
+	md := goldmark.New(
+		// GitHub Flavored Markdown
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(
+			parser.WithAutoHeadingID(),
+		),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+			html.WithXHTML(),
+		),
+	)
+	if err := md.Convert([]byte(guidance), &bytes.Buffer{}); err != nil {
+		return fmt.Errorf(
+			"%w: %s",
+			errInvalidRuleType,
+			err,
+		)
+	}
+
+	return nil
 }
