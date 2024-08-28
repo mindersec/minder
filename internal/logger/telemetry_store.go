@@ -16,6 +16,7 @@ package logger
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -79,19 +80,10 @@ type ProjectTombstone struct {
 
 // Equals compares two ProjectTombstone structs for equality.
 func (pt ProjectTombstone) Equals(other ProjectTombstone) bool {
-	if len(pt.Entitlements) != len(other.Entitlements) {
-		return false
-	}
-
-	for i, v := range pt.Entitlements {
-		if v != other.Entitlements[i] {
-			return false
-		}
-	}
-
 	return pt.Project == other.Project &&
 		pt.ProfileCount == other.ProfileCount &&
-		pt.RepositoriesCount == other.RepositoriesCount
+		pt.RepositoriesCount == other.RepositoriesCount &&
+		slices.Equal(pt.Entitlements, other.Entitlements)
 }
 
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
