@@ -29,6 +29,8 @@ type EventConfig struct {
 	SQLPubSub SQLEventConfig `mapstructure:"sql"`
 	// Aggregator is the configuration for the event aggregator middleware
 	Aggregator AggregatorConfig `mapstructure:"aggregator"`
+	// Nats is the configuration when using NATS as the event driver
+	Nats NatsConfig `mapstructure:"nats"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver
@@ -55,4 +57,15 @@ type AggregatorConfig struct {
 	// LockInterval is the interval for locking events in seconds.
 	// This is the threshold between rule evaluations + actions.
 	LockInterval int64 `mapstructure:"lock_interval" default:"30"`
+}
+
+// NatsConfig is the configuration when using NATS as the event driver
+type NatsConfig struct {
+	// URL is the URL for the NATS server
+	URL string `mapstructure:"url" default:"nats://localhost:4222"`
+	// Prefix is the prefix for the NATS subjects to subscribe to
+	Prefix string `mapstructure:"prefix" default:"minder"`
+	// Queue is the name of the queue group to join when consuming messages
+	// queue groups allow multiple process to round-robin process messages.
+	Queue string `mapstructure:"queue" default:"minder"`
 }

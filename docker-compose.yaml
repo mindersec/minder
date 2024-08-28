@@ -78,6 +78,8 @@ services:
         condition: service_completed_successfully
       keycloak-config:
         condition: service_completed_successfully
+      nats:
+        condition: service_healthy
 
   migrate:
     container_name: minder_migrate_up
@@ -188,6 +190,20 @@ services:
       - 8085:8085
     networks:
       - app_net
+
+  nats:
+    container_name: nats
+    image: nats:2.10.18
+    entrypoint: ["./nats-server"]
+    command: ["--http_port", "8222", "-js"]
+    healthcheck:
+      test: ["CMD", "./nats-server", "-c", "/nats-server.conf", "-t"]
+    ports:
+      - 4222:4222  # Clients
+      - 8222:8222  # HTTP monitoring
+    networks:
+      - app_net
+
 networks:
   app_net:
     driver: bridge
