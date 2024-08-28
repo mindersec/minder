@@ -14,41 +14,25 @@ import (
 const enqueueFlush = `-- name: EnqueueFlush :one
 INSERT INTO flush_cache(
     entity,
-    repository_id,
-    artifact_id,
-    pull_request_id,
     project_id,
     entity_instance_id
 ) VALUES(
     $1::entities,
     $2::UUID,
-    $3::UUID,
-    $4::UUID,
-    $5::UUID,
-    $6::UUID
+    $3::UUID
 ) ON CONFLICT(entity_instance_id)
 DO NOTHING
 RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
 `
 
 type EnqueueFlushParams struct {
-	Entity           Entities      `json:"entity"`
-	RepositoryID     uuid.NullUUID `json:"repository_id"`
-	ArtifactID       uuid.NullUUID `json:"artifact_id"`
-	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
-	ProjectID        uuid.UUID     `json:"project_id"`
-	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
+	Entity           Entities  `json:"entity"`
+	ProjectID        uuid.UUID `json:"project_id"`
+	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
 }
 
 func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error) {
-	row := q.db.QueryRowContext(ctx, enqueueFlush,
-		arg.Entity,
-		arg.RepositoryID,
-		arg.ArtifactID,
-		arg.PullRequestID,
-		arg.ProjectID,
-		arg.EntityInstanceID,
-	)
+	row := q.db.QueryRowContext(ctx, enqueueFlush, arg.Entity, arg.ProjectID, arg.EntityInstanceID)
 	var i FlushCache
 	err := row.Scan(
 		&i.ID,
@@ -127,9 +111,6 @@ INSERT INTO entity_execution_lock(
     entity,
     locked_by,
     last_lock_time,
-    repository_id,
-    artifact_id,
-    pull_request_id,
     project_id,
     entity_instance_id
 ) VALUES(
@@ -137,26 +118,20 @@ INSERT INTO entity_execution_lock(
     gen_random_uuid(),
     NOW(),
     $2::UUID,
-    $3::UUID,
-    $4::UUID,
-    $5::UUID,
-    $6::UUID
+    $3::UUID
 ) ON CONFLICT(entity_instance_id)
 DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW()
-WHERE entity_execution_lock.last_lock_time < (NOW() - ($7::TEXT || ' seconds')::interval)
+WHERE entity_execution_lock.last_lock_time < (NOW() - ($4::TEXT || ' seconds')::interval)
 RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id, project_id, entity_instance_id
 `
 
 type LockIfThresholdNotExceededParams struct {
-	Entity           Entities      `json:"entity"`
-	RepositoryID     uuid.NullUUID `json:"repository_id"`
-	ArtifactID       uuid.NullUUID `json:"artifact_id"`
-	PullRequestID    uuid.NullUUID `json:"pull_request_id"`
-	ProjectID        uuid.UUID     `json:"project_id"`
-	EntityInstanceID uuid.UUID     `json:"entity_instance_id"`
-	Interval         string        `json:"interval"`
+	Entity           Entities  `json:"entity"`
+	ProjectID        uuid.UUID `json:"project_id"`
+	EntityInstanceID uuid.UUID `json:"entity_instance_id"`
+	Interval         string    `json:"interval"`
 }
 
 // LockIfThresholdNotExceeded is used to lock an entity for execution. It will
@@ -167,9 +142,6 @@ type LockIfThresholdNotExceededParams struct {
 func (q *Queries) LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThresholdNotExceededParams) (EntityExecutionLock, error) {
 	row := q.db.QueryRowContext(ctx, lockIfThresholdNotExceeded,
 		arg.Entity,
-		arg.RepositoryID,
-		arg.ArtifactID,
-		arg.PullRequestID,
 		arg.ProjectID,
 		arg.EntityInstanceID,
 		arg.Interval,

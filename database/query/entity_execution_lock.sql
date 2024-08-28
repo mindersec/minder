@@ -9,18 +9,12 @@ INSERT INTO entity_execution_lock(
     entity,
     locked_by,
     last_lock_time,
-    repository_id,
-    artifact_id,
-    pull_request_id,
     project_id,
     entity_instance_id
 ) VALUES(
     sqlc.arg(entity)::entities,
     gen_random_uuid(),
     NOW(),
-    sqlc.narg(repository_id)::UUID,
-    sqlc.narg(artifact_id)::UUID,
-    sqlc.narg(pull_request_id)::UUID,
     sqlc.arg(project_id)::UUID,
     sqlc.arg(entity_instance_id)::UUID
 ) ON CONFLICT(entity_instance_id)
@@ -45,16 +39,10 @@ WHERE entity_instance_id = $1 AND locked_by = sqlc.arg(locked_by)::UUID;
 -- name: EnqueueFlush :one
 INSERT INTO flush_cache(
     entity,
-    repository_id,
-    artifact_id,
-    pull_request_id,
     project_id,
     entity_instance_id
 ) VALUES(
     sqlc.arg(entity)::entities,
-    sqlc.narg(repository_id)::UUID,
-    sqlc.narg(artifact_id)::UUID,
-    sqlc.narg(pull_request_id)::UUID,
     sqlc.arg(project_id)::UUID,
     sqlc.arg(entity_instance_id)::UUID
 ) ON CONFLICT(entity_instance_id)
