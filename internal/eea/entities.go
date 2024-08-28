@@ -57,29 +57,28 @@ func getPullRequest(
 	ctx context.Context,
 	store db.Querier,
 	projectID,
-	repoID,
 	pullRequestID uuid.UUID,
-) (uuid.UUID, *minderv1.PullRequest, error) {
+) (uuid.UUID, uuid.UUID, *minderv1.PullRequest, error) {
+	dbpr, err := store.GetPullRequestByID(ctx, pullRequestID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, uuid.Nil, nil, fmt.Errorf("pull request not found")
+	} else if err != nil {
+		return uuid.Nil, uuid.Nil, nil, fmt.Errorf("cannot read pull request: %v", err)
+	}
+
 	// Get repository data - we need the owner and name
 	dbrepo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoID,
+		ID:        dbpr.RepositoryID,
 		ProjectID: projectID,
 	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, nil, fmt.Errorf("repository not found")
+		return uuid.Nil, uuid.Nil, nil, fmt.Errorf("repository not found")
 	} else if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("cannot read repository: %v", err)
-	}
-
-	dbpr, err := store.GetPullRequestByID(ctx, pullRequestID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, nil, fmt.Errorf("pull request not found")
-	} else if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("cannot read pull request: %v", err)
+		return uuid.Nil, uuid.Nil, nil, fmt.Errorf("cannot read repository: %v", err)
 	}
 
 	// TODO: Do we need extra columns in the pull request table?
-	return dbrepo.ProviderID, &minderv1.PullRequest{
+	return dbrepo.ProviderID, dbrepo.ID, &minderv1.PullRequest{
 		Context: &minderv1.Context{
 			Project:  ptr.Ptr(dbrepo.ProjectID.String()),
 			Provider: ptr.Ptr(dbrepo.Provider),

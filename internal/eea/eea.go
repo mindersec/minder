@@ -239,33 +239,8 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	for _, cache := range caches {
 		cache := cache
 
-		projectID := cache.ProjectID
-
-		// ensure that the eiw has a project ID.
-		// If there is no projectID (older minder). Get it from a repo.
-		if !projectID.Valid {
-			if !cache.RepositoryID.Valid {
-				zerolog.Ctx(ctx).Info().Msg("No project nor repo ID provided in entry, skipping")
-				continue
-			}
-			r, err := e.querier.GetRepositoryByID(ctx, cache.RepositoryID.UUID)
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					zerolog.Ctx(ctx).Info().Msg("No project found for repository, skipping")
-					continue
-				}
-				return fmt.Errorf("unable to look up project for repository %s: %w",
-					cache.RepositoryID.UUID, err)
-			}
-
-			projectID = uuid.NullUUID{
-				UUID:  r.ProjectID,
-				Valid: true,
-			}
-		}
-
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.RepositoryID, projectID.UUID, cache.ArtifactID, cache.PullRequestID)
+			cache.ProjectID, cache.EntityInstanceID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			continue
 		} else if err != nil {
@@ -290,17 +265,16 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 func (e *EEA) buildEntityWrapper(
 	ctx context.Context,
 	entity db.Entities,
-	repoID uuid.NullUUID,
 	projID uuid.UUID,
-	artID, prID uuid.NullUUID,
+	entityID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, repoID, projID)
+		return e.buildRepositoryInfoWrapper(ctx, entityID, projID)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, repoID, projID, artID)
+		return e.buildArtifactInfoWrapper(ctx, entityID, projID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, repoID, projID, prID)
+		return e.buildPullRequestInfoWrapper(ctx, entityID, projID)
 	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
 		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 		return nil, fmt.Errorf("entity type %q not yet supported", entity)
@@ -311,28 +285,27 @@ func (e *EEA) buildEntityWrapper(
 
 func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
-	repoID uuid.NullUUID,
+	repoID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, r, err := getRepository(ctx, e.querier, projID, repoID.UUID)
+	providerID, r, err := getRepository(ctx, e.querier, projID, repoID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting repository: %w", err)
 	}
 
 	return entities.NewEntityInfoWrapper().
 		WithRepository(r).
-		WithRepositoryID(repoID.UUID).
+		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithProviderID(providerID), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
-	repoID uuid.NullUUID,
+	artID uuid.UUID,
 	projID uuid.UUID,
-	artID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, a, err := artifacts.GetArtifact(ctx, e.querier, projID, artID.UUID)
+	providerID, a, err := artifacts.GetArtifact(ctx, e.querier, projID, artID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
 	}
@@ -340,29 +313,25 @@ func (e *EEA) buildArtifactInfoWrapper(
 	eiw := entities.NewEntityInfoWrapper().
 		WithProjectID(projID).
 		WithArtifact(a).
-		WithArtifactID(artID.UUID).
+		WithArtifactID(artID).
 		WithProviderID(providerID)
-	if repoID.Valid {
-		eiw.WithRepositoryID(repoID.UUID)
-	}
 	return eiw, nil
 }
 
 func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
-	repoID uuid.NullUUID,
+	prID uuid.UUID,
 	projID uuid.UUID,
-	prID uuid.NullUUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, pr, err := getPullRequest(ctx, e.querier, projID, repoID.UUID, prID.UUID)
+	providerID, repoID, pr, err := getPullRequest(ctx, e.querier, projID, prID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pull request: %w", err)
 	}
 
 	return entities.NewEntityInfoWrapper().
-		WithRepositoryID(repoID.UUID).
+		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithPullRequest(pr).
-		WithPullRequestID(prID.UUID).
+		WithPullRequestID(prID).
 		WithProviderID(providerID), nil
 }
