@@ -16,6 +16,7 @@ package logger
 
 import (
 	"context"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -64,6 +65,27 @@ type RuleEvalData struct {
 	// TODO: do we want to store params?
 }
 
+// ProjectTombstone can be used to store project metadata in the context of deletion.
+type ProjectTombstone struct {
+	// Project records the project ID that the request was associated with.
+	Project uuid.UUID `json:"project"`
+
+	// ProfileCount records the number of profiles associated with the project.
+	ProfileCount int `json:"profile_count"`
+	// RepositoriesCount records the number of repositories associated with the project.
+	RepositoriesCount int `json:"repositories_count"`
+	// Entitlements that the projects has.
+	Entitlements []string `json:"entitlements"`
+}
+
+// Equals compares two ProjectTombstone structs for equality.
+func (pt ProjectTombstone) Equals(other ProjectTombstone) bool {
+	return pt.Project == other.Project &&
+		pt.ProfileCount == other.ProfileCount &&
+		pt.RepositoriesCount == other.RepositoriesCount &&
+		slices.Equal(pt.Entitlements, other.Entitlements)
+}
+
 // TelemetryStore is a struct that can be used to store telemetry data in the context.
 type TelemetryStore struct {
 	// Project records the project ID that the request was associated with.
@@ -100,6 +122,9 @@ type TelemetryStore struct {
 
 	// Rules evaluated during processing
 	Evals []RuleEvalData `json:"rules"`
+
+	// Metadata about the project tombstone
+	ProjectTombstone ProjectTombstone `json:"project_tombstone"`
 }
 
 // AddRuleEval is a convenience method to add a rule evaluation result to the telemetry store.
@@ -189,6 +214,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	if ts.RuleType != (RuleType{}) {
 		e.Any("ruletype", ts.RuleType)
+	}
+	if !ts.ProjectTombstone.Equals(ProjectTombstone{}) {
+		e.Any("project_tombstone", ts.ProjectTombstone)
 	}
 	if len(ts.Evals) > 0 {
 		e.Any("rules", ts.Evals)

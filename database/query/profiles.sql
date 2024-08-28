@@ -144,6 +144,11 @@ GROUP BY r.entity_type;
 -- name: CountProfilesByName :one
 SELECT COUNT(*) AS num_named_profiles FROM profiles WHERE lower(name) = lower(sqlc.arg(name));
 
+-- name: CountProfilesByProjectID :one
+SELECT COUNT(*)
+FROM profiles
+WHERE project_id = $1;
+
 -- name: BulkGetProfilesByID :many
 WITH helper AS(
     SELECT pr.id as profid,
