@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	github2 "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -99,6 +100,7 @@ func TestNewRestClient(t *testing.T) {
 		nil,
 		credentials.NewGitHubTokenCredential("token"),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		"",
 	)
 
@@ -154,6 +156,7 @@ func TestArtifactAPIEscapesOAuth(t *testing.T) {
 				nil,
 				credentials.NewGitHubTokenCredential("token"),
 				NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+				properties.NewPropertyFetcherFactory(),
 				"stacklok",
 			)
 			assert.NoError(t, err)
@@ -189,6 +192,7 @@ func TestWaitForRateLimitResetOAuth(t *testing.T) {
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		"mockOwner",
 	)
 	require.NoError(t, err)
@@ -240,6 +244,7 @@ func TestConcurrentWaitForRateLimitResetOAuth(t *testing.T) {
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
 			NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+			properties.NewPropertyFetcherFactory(),
 			owner,
 		)
 		require.NoError(t, err)

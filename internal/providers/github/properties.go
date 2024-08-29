@@ -19,174 +19,67 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"slices"
 
 	"github.com/stacklok/minder/internal/entities/properties"
+	properties2 "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-const (
-	// RepoPropertyId represents the github repository ID (numerical)
-	RepoPropertyId = "github/repo_id"
-	// RepoPropertyName represents the github repository name
-	RepoPropertyName = "github/repo_name"
-	// RepoPropertyOwner represents the github repository owner
-	RepoPropertyOwner = "github/repo_owner"
-	// RepoPropertyDeployURL represents the github repository deployment URL
-	RepoPropertyDeployURL = "github/deploy_url"
-	// RepoPropertyCloneURL represents the github repository clone URL
-	RepoPropertyCloneURL = "github/clone_url"
-	// RepoPropertyDefaultBranch represents the github repository default branch
-	RepoPropertyDefaultBranch = "github/default_branch"
-	// RepoPropertyLicense represents the github repository license
-	RepoPropertyLicense = "github/license"
-)
-
-type propertyWrapper func(ctx context.Context, ghCli *GitHub, name string) (map[string]any, error)
-
-type propertyOrigin struct {
-	keys    []string
-	wrapper propertyWrapper
-}
-
-type propertyFetcher struct {
-	ghCli *GitHub
-
-	propertyOrigins []propertyOrigin
-}
-
-var repoPropertyDefinitions = []propertyOrigin{
-	{
-		keys: []string{
-			// general entity
-			properties.PropertyName,
-			properties.PropertyUpstreamID,
-			// general repo
-			properties.RepoPropertyIsPrivate,
-			properties.RepoPropertyIsArchived,
-			properties.RepoPropertyIsFork,
-			// github-specific
-			RepoPropertyId,
-			RepoPropertyName,
-			RepoPropertyOwner,
-			RepoPropertyDeployURL,
-			RepoPropertyCloneURL,
-			RepoPropertyDefaultBranch,
-			RepoPropertyLicense,
-		},
-		wrapper: getRepoWrapper,
-	},
-}
-
-func newRepoPropertyFetcher(ghCli *GitHub) *propertyFetcher {
-	return &propertyFetcher{
-		ghCli:           ghCli,
-		propertyOrigins: repoPropertyDefinitions,
-	}
-}
-
-func newPropertyFetcher(ghCli *GitHub, entType minderv1.Entity) *propertyFetcher {
-	if entType != minderv1.Entity_ENTITY_REPOSITORIES {
-		return nil
-	}
-
-	return newRepoPropertyFetcher(ghCli)
-}
-
-func getRepoWrapper(ctx context.Context, ghCli *GitHub, name string) (map[string]any, error) {
-	// TODO: this should be a provider interface, even if private
-	slice := strings.Split(name, "/")
-	if len(slice) != 2 {
-		return nil, errors.New("invalid name")
-	}
-
-	repo, err := ghCli.GetRepository(ctx, slice[0], slice[1])
-	if err != nil {
-		return nil, err
-	}
-
-	repoProps := map[string]any{
-		// general entity
-		properties.PropertyUpstreamID: fmt.Sprintf("%d", repo.GetID()),
-		// general repo
-		properties.RepoPropertyIsPrivate:  repo.GetPrivate(),
-		properties.RepoPropertyIsArchived: repo.GetArchived(),
-		properties.RepoPropertyIsFork:     repo.GetFork(),
-		// github-specific
-		RepoPropertyId:            repo.GetID(),
-		RepoPropertyName:          repo.GetName(),
-		RepoPropertyOwner:         repo.GetOwner().GetLogin(),
-		RepoPropertyDeployURL:     repo.GetDeploymentsURL(),
-		RepoPropertyCloneURL:      repo.GetCloneURL(),
-		RepoPropertyDefaultBranch: repo.GetDefaultBranch(),
-		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
-	}
-
-	props, err := properties.NewProperties(repoProps)
-	if err != nil {
-		return nil, err
-	}
-
-	repoProps[properties.PropertyName], err = getEntityName(minderv1.Entity_ENTITY_REPOSITORIES, props)
-	if err != nil {
-		return nil, err
-	}
-
-	return repoProps, nil
-}
 
 // FetchProperty fetches a single property for the given entity
 func (c *GitHub) FetchProperty(
 	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string,
 ) (*properties.Property, error) {
-	pf := newPropertyFetcher(c, entType)
+	if c.propertyFetchers == nil {
+		return nil, errors.New("property fetchers not initialized")
+	}
+
+	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
 
 	// TODO: right now github only supports fetching by name, but we could add support for more
 	// properties to e.g. get-repo-by-id if the upstream REST API supports that
 	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("name is not a string: %w", err)
 	}
 
-	for _, po := range pf.propertyOrigins {
-		for _, k := range po.keys {
-			if k == key {
-				props, err := po.wrapper(ctx, pf.ghCli, name)
-				if err != nil {
-					return nil, err
-				}
-
-				value, ok := props[key]
-				if !ok {
-					return nil, errors.New("requested property not found in result")
-				}
-				return properties.NewProperty(value)
-			}
-		}
+	wrapper := fetcher.WrapperForProperty(key)
+	if wrapper == nil {
+		return nil, fmt.Errorf("property %s not supported for entity %s", key, entType)
 	}
 
-	return nil, errors.New("property not found")
+	props, err := wrapper(ctx, c.client, name)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching property %s for entity %s: %w", key, entType, err)
+	}
+	value, ok := props[key]
+	if !ok {
+		return nil, errors.New("requested property not found in result")
+	}
+	return properties.NewProperty(value)
 }
 
 // FetchAllProperties fetches all properties for the given entity
 func (c *GitHub) FetchAllProperties(
-	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity,
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
 ) (*properties.Properties, error) {
-	pf := newPropertyFetcher(c, entType)
-
-	result := make(map[string]any)
+	if c.propertyFetchers == nil {
+		return nil, errors.New("property fetchers not initialized")
+	}
 
 	// TODO: right now github only supports fetching by name, but we could add support for more
 	// properties to e.g. get-repo-by-id if the upstream REST API supports that
 	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("name is not a string: %w", err)
 	}
 
-	for _, po := range pf.propertyOrigins {
-		props, err := po.wrapper(ctx, pf.ghCli, name)
+	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
+	result := make(map[string]any)
+	for _, wrapper := range fetcher.AllPropertyWrappers() {
+		props, err := wrapper(ctx, c.client, name)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error fetching properties for entity %s: %w", entType, err)
 		}
 
 		for k, v := range props {
@@ -194,5 +87,24 @@ func (c *GitHub) FetchAllProperties(
 		}
 	}
 
-	return properties.NewProperties(result)
+	upstreamProps, err := properties.NewProperties(result)
+	if err != nil {
+		return nil, err
+	}
+
+	operational := filterOperational(cachedProps, fetcher)
+	return upstreamProps.Merge(operational), nil
+}
+
+func filterOperational(cachedProperties *properties.Properties, fetcher properties2.GhPropertyFetcher) *properties.Properties {
+	operational := fetcher.OperationalProperties()
+	if len(operational) == 0 {
+		return cachedProperties
+	}
+
+	filter := func(key string, _ *properties.Property) bool {
+		return slices.Contains(operational, key)
+	}
+
+	return cachedProperties.FilteredCopy(filter)
 }

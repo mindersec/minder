@@ -24,55 +24,16 @@ import (
 )
 
 // GetEntityName implements the Provider interface
-func (_ *GitHub) GetEntityName(entType minderv1.Entity, props *properties.Properties) (string, error) {
-	return getEntityName(entType, props)
-}
-
-func getEntityName(entType minderv1.Entity, props *properties.Properties) (string, error) {
+func (c *GitHub) GetEntityName(entType minderv1.Entity, props *properties.Properties) (string, error) {
 	if props == nil {
 		return "", errors.New("properties are nil")
 	}
-
-	//nolint:exhaustive // we want to fail if we don't support the entity type
-	switch entType {
-	case minderv1.Entity_ENTITY_REPOSITORIES:
-		return getRepoName(props)
-	case minderv1.Entity_ENTITY_ARTIFACTS:
-		return getArtifactName(props)
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		return getPullRequestName(props)
-	default:
-		return "", fmt.Errorf("unsupported entity type: %s", entType)
+	if c.propertyFetchers == nil {
+		return "", errors.New("property fetchers not initialized")
 	}
-}
-
-func getRepoName(props *properties.Properties) (string, error) {
-	repoNameP := props.GetProperty(RepoPropertyName)
-	repoOwnerP := props.GetProperty(RepoPropertyOwner)
-
-	if repoNameP == nil || repoOwnerP == nil {
-		return "", errors.New("missing required properties")
+	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
+	if fetcher == nil {
+		return "", fmt.Errorf("no fetcher found for entity type %s", entType)
 	}
-
-	repoName := repoNameP.GetString()
-	if repoName == "" {
-		return "", errors.New("missing required repo-name property value")
-	}
-
-	repoOwner := repoOwnerP.GetString()
-	if repoOwner == "" {
-		return "", errors.New("missing required repo-owner property value")
-	}
-
-	return fmt.Sprintf("%s/%s", repoOwner, repoName), nil
-}
-
-func getArtifactName(_ *properties.Properties) (string, error) {
-	// TODO: implement
-	return "", errors.New("not implemented")
-}
-
-func getPullRequestName(_ *properties.Properties) (string, error) {
-	// TODO: implement
-	return "", errors.New("not implemented")
+	return fetcher.GetName(props)
 }

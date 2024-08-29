@@ -27,7 +27,9 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/entities/properties"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	ghclient "github.com/stacklok/minder/internal/repositories/github/clients"
 )
 
@@ -40,7 +42,7 @@ type WebhookManager interface {
 		client ghclient.GitHubRepoClient,
 		repoOwner string,
 		repoName string,
-	) (string, *github.Hook, error)
+	) (*properties.Properties, error)
 
 	DeleteWebhook(
 		ctx context.Context,
@@ -77,29 +79,29 @@ func (w *webhookManager) CreateWebhook(
 	client ghclient.GitHubRepoClient,
 	repoOwner string,
 	repoName string,
-) (string, *github.Hook, error) {
+) (*properties.Properties, error) {
 	// generate unique URL for this webhook
 	baseURL := w.webhookConfig.ExternalWebhookURL
 	hookUUID := uuid.New().String()
 	webhookURL, err := url.JoinPath(baseURL, hookUUID)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	parsedWebhookURL, err := url.Parse(webhookURL)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	// If we have an existing hook for same repo, delete it
 	if err := w.cleanupStaleHooks(ctx, client, repoOwner, repoName, parsedWebhookURL.Host); err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
 	// Attempt to register new webhook
 	secret, err := w.webhookConfig.GetWebhookSecret()
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 	ping := w.webhookConfig.ExternalPingURL
 
@@ -116,10 +118,18 @@ func (w *webhookManager) CreateWebhook(
 
 	webhook, err := client.CreateHook(ctx, repoOwner, repoName, newHook)
 	if err != nil {
-		return "", nil, fmt.Errorf("error creating hook: %w", err)
+		return nil, fmt.Errorf("error creating hook: %w", err)
 	}
 
-	return hookUUID, webhook, nil
+	webhookPropMap := map[string]any{
+		ghprop.RepoPropertyHookUiid: hookUUID,
+		ghprop.RepoPropertyHookId:   webhook.GetID(),
+		ghprop.RepoPropertyHookUrl:  webhook.GetURL(),
+		ghprop.RepoPropertyHookName: webhook.GetName(),
+		ghprop.RepoPropertyHookType: webhook.GetType(),
+	}
+
+	return properties.NewProperties(webhookPropMap)
 }
 
 // DeleteWebhook deletes the specified webhook from the specified GitHub repo

@@ -472,3 +472,107 @@ func TestIterator(t *testing.T) {
 	require.Equal(t, input, output)
 	require.Equal(t, 2, count)
 }
+
+func TestMerge(t *testing.T) {
+	t.Parallel()
+
+	t.Run("merge two props", func(t *testing.T) {
+		t.Parallel()
+
+		props1, err := NewProperties(map[string]any{
+			"name": "test",
+		})
+		require.NoError(t, err)
+
+		props2, err := NewProperties(map[string]any{
+			"is_private": true,
+		})
+		require.NoError(t, err)
+
+		merged := props1.Merge(props2)
+
+		expected := map[string]any{
+			"name":       "test",
+			"is_private": true,
+		}
+
+		output := make(map[string]any)
+		for key, p := range merged.Iterate() {
+			output[key] = p.RawValue()
+		}
+		require.Equal(t, expected, output)
+	})
+
+	t.Run("other is nil", func(t *testing.T) {
+		t.Parallel()
+
+		props1, err := NewProperties(map[string]any{
+			"name": "test",
+		})
+		require.NoError(t, err)
+
+		merged := props1.Merge(nil)
+
+		expected := map[string]any{
+			"name": "test",
+		}
+
+		output := make(map[string]any)
+		for key, p := range merged.Iterate() {
+			output[key] = p.RawValue()
+		}
+		require.Equal(t, expected, output)
+	})
+
+	t.Run("self is nil", func(t *testing.T) {
+		t.Parallel()
+
+		props2, err := NewProperties(map[string]any{
+			"is_private": true,
+		})
+		require.NoError(t, err)
+
+		var nilP *Properties
+		merged := nilP.Merge(props2)
+
+		expected := map[string]any{
+			"is_private": true,
+		}
+
+		output := make(map[string]any)
+		for key, p := range merged.Iterate() {
+			output[key] = p.RawValue()
+		}
+		require.Equal(t, expected, output)
+	})
+}
+
+func TestFilteredCopy(t *testing.T) {
+	t.Parallel()
+
+	t.Run("filter one", func(t *testing.T) {
+		t.Parallel()
+
+		props, err := NewProperties(map[string]any{
+			"name":       "test",
+			"is_private": true,
+		})
+		require.NoError(t, err)
+
+		filter := func(key string, _ *Property) bool {
+			return key == "name"
+		}
+
+		filtered := props.FilteredCopy(filter)
+
+		expected := map[string]any{
+			"name": "test",
+		}
+
+		output := make(map[string]any)
+		for key, p := range filtered.Iterate() {
+			output[key] = p.RawValue()
+		}
+		require.Equal(t, expected, output)
+	})
+}

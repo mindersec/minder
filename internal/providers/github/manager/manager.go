@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/github/service"
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
@@ -123,6 +124,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 			g.restClientCache,
 			creds.credential,
 			g.ghClientFactory,
+			properties.NewPropertyFetcherFactory(),
 			creds.ownerFilter.String,
 		)
 		if err != nil {
@@ -143,6 +145,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		creds.credential,
 		g.fallbackTokenClient,
 		g.ghClientFactory,
+		properties.NewPropertyFetcherFactory(),
 		creds.isOrg,
 	)
 	if err != nil {

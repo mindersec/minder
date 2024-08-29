@@ -35,6 +35,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	github2 "github.com/stacklok/minder/internal/providers/github"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -195,6 +196,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		false,
 	)
 
@@ -223,6 +225,7 @@ func TestUserInfo(t *testing.T) {
 		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		false,
 	)
 	assert.NoError(t, err)
@@ -298,6 +301,7 @@ func TestArtifactAPIEscapesApp(t *testing.T) {
 				credentials.NewGitHubTokenCredential("token"),
 				packageListingClient,
 				NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+				properties.NewPropertyFetcherFactory(),
 				true,
 			)
 
@@ -389,6 +393,7 @@ func TestListPackagesByRepository(t *testing.T) {
 				credentials.NewGitHubTokenCredential(accessToken),
 				packageListingClient,
 				NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+				properties.NewPropertyFetcherFactory(),
 				true,
 			)
 			assert.NoError(t, err)
@@ -437,6 +442,7 @@ func TestWaitForRateLimitResetApp(t *testing.T) {
 		credentials.NewGitHubTokenCredential(token),
 		packageListingClient,
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		false,
 	)
 	require.NoError(t, err)
@@ -494,6 +500,7 @@ func TestConcurrentWaitForRateLimitResetApp(t *testing.T) {
 			credentials.NewGitHubTokenCredential(token),
 			packageListingClient,
 			NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
+			properties.NewPropertyFetcherFactory(),
 			false,
 		)
 		require.NoError(t, err)

@@ -44,6 +44,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
+	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -76,6 +77,7 @@ func init() {
 func newDefaultServer(
 	t *testing.T,
 	mockStore *mockdb.MockStore,
+	mockRepoSvc *mock_github.MockRepositoryService,
 	ghClientFactory ghclient.GitHubClientFactory,
 ) (*Server, events.Interface) {
 	t.Helper()
@@ -126,6 +128,7 @@ func newDefaultServer(
 		idClient:      &auth.IdentityClient{},
 		ghProviders:   ghClientService,
 		providerStore: providers.NewProviderStore(mockStore),
+		repos:         mockRepoSvc,
 		cryptoEngine:  eng,
 	}
 

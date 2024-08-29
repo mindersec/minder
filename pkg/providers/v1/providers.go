@@ -40,6 +40,9 @@ const (
 	V1 = "v1"
 )
 
+// ErrEntityNotFound is the error returned when an entity is not found
+var ErrEntityNotFound = errors.New("property not found")
+
 // Provider is the general interface for all providers
 type Provider interface {
 	// CanImplement returns true/false depending on whether the Provider
@@ -48,7 +51,8 @@ type Provider interface {
 
 	// FetchAllProperties fetches all properties for the given entity
 	FetchAllProperties(
-		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity) (*properties.Properties, error)
+		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
+	) (*properties.Properties, error)
 	// FetchProperty fetches a single property for the given entity
 	FetchProperty(
 		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string) (*properties.Property, error)
