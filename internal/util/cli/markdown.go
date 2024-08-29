@@ -24,8 +24,8 @@ func RenderMarkdown(payload string) (string, error) {
 	r, err := glamour.NewTermRenderer(
 		glamour.WithAutoStyle(),
 	)
-	// If we can't really fail here, but in case we just return
-	// the payload as-is.
+	// We can't really fail here, but in case we just return the
+	// payload as-is.
 	if err != nil {
 		return "", err
 	}
