@@ -100,3 +100,12 @@ WHERE entity_id = $1;
 -- name: DeleteAllPropertiesForEntity :exec
 DELETE FROM properties
 WHERE entity_id = $1;
+
+-- name: GetTypedEntitiesByProperty :many
+SELECT ei.*
+FROM entity_instances ei
+         JOIN properties p ON ei.id = p.entity_id
+WHERE ei.entity_type = sqlc.arg(entity_type)
+  AND (sqlc.arg(project_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = sqlc.arg(project_id))
+  AND p.key = sqlc.arg(key)
+  AND p.value @> sqlc.arg(value)::jsonb;

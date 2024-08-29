@@ -364,6 +364,59 @@ func (q *Queries) GetProperty(ctx context.Context, arg GetPropertyParams) (Prope
 	return i, err
 }
 
+const getTypedEntitiesByProperty = `-- name: GetTypedEntitiesByProperty :many
+SELECT ei.id, ei.entity_type, ei.name, ei.project_id, ei.provider_id, ei.created_at, ei.originated_from
+FROM entity_instances ei
+         JOIN properties p ON ei.id = p.entity_id
+WHERE ei.entity_type = $1
+  AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = $2)
+  AND p.key = $3
+  AND p.value @> $4::jsonb
+`
+
+type GetTypedEntitiesByPropertyParams struct {
+	EntityType Entities        `json:"entity_type"`
+	ProjectID  uuid.UUID       `json:"project_id"`
+	Key        string          `json:"key"`
+	Value      json.RawMessage `json:"value"`
+}
+
+func (q *Queries) GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEntitiesByPropertyParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getTypedEntitiesByProperty,
+		arg.EntityType,
+		arg.ProjectID,
+		arg.Key,
+		arg.Value,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertProperty = `-- name: UpsertProperty :one
 INSERT INTO properties (
     entity_id,
