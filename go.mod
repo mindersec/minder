@@ -11,8 +11,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.33.0
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/charmbracelet/bubbles v0.17.1
-	github.com/charmbracelet/bubbletea v0.26.6
+	github.com/charmbracelet/bubbles v0.19.0
+	github.com/charmbracelet/bubbletea v0.27.0
 	github.com/charmbracelet/lipgloss v0.12.1
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.15.2
 	github.com/cloudevents/sdk-go/v2 v2.15.2
