@@ -212,21 +212,12 @@ func TestFlushAll(t *testing.T) {
 						{
 							ID:               uuid.New(),
 							Entity:           db.EntitiesRepository,
-							RepositoryID:     uuid.NullUUID{UUID: repoID, Valid: true},
 							QueuedAt:         time.Now(),
+							ProjectID:        projectID,
 							EntityInstanceID: repoID,
 						},
 					}, nil)
 
-				// 1 - fetch repo info for repo
-				// base repo info
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
 				// subsequent repo fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
@@ -250,30 +241,14 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:     uuid.New(),
-							Entity: db.EntitiesArtifact,
-							RepositoryID: uuid.NullUUID{
-								UUID:  repoID,
-								Valid: true,
-							},
-							ArtifactID: uuid.NullUUID{
-								UUID:  artID,
-								Valid: true,
-							},
+							ID:               uuid.New(),
+							Entity:           db.EntitiesArtifact,
 							EntityInstanceID: artID,
+							ProjectID:        projectID,
 							QueuedAt:         time.Now(),
 						},
 					}, nil)
 
-				// 1 - fetch repo info for repo
-				// base repo info
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
 				// subsequent artifact fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
@@ -305,21 +280,10 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:     uuid.New(),
-							Entity: db.EntitiesArtifact,
-							RepositoryID: uuid.NullUUID{
-								UUID:  repoID,
-								Valid: true,
-							},
-							ArtifactID: uuid.NullUUID{
-								UUID:  artID,
-								Valid: true,
-							},
-							QueuedAt: time.Now(),
-							ProjectID: uuid.NullUUID{
-								UUID:  projectID,
-								Valid: true,
-							},
+							ID:               uuid.New(),
+							Entity:           db.EntitiesArtifact,
+							QueuedAt:         time.Now(),
+							ProjectID:        projectID,
 							EntityInstanceID: artID,
 						},
 					}, nil)
@@ -348,28 +312,16 @@ func TestFlushAll(t *testing.T) {
 		{
 			name: "flushes one artifact with no repo and a set project ID in the flush",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				repoID := uuid.New()
 				artID := uuid.New()
 				projectID := uuid.New()
 
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:     uuid.New(),
-							Entity: db.EntitiesArtifact,
-							RepositoryID: uuid.NullUUID{
-								UUID:  repoID,
-								Valid: true,
-							},
-							ArtifactID: uuid.NullUUID{
-								UUID:  artID,
-								Valid: true,
-							},
-							QueuedAt: time.Now(),
-							ProjectID: uuid.NullUUID{
-								UUID:  projectID,
-								Valid: true,
-							},
+							ID:               uuid.New(),
+							Entity:           db.EntitiesArtifact,
+							QueuedAt:         time.Now(),
+							ProjectID:        projectID,
 							EntityInstanceID: artID,
 						},
 					}, nil)
@@ -396,29 +348,14 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
-							ID:     uuid.New(),
-							Entity: db.EntitiesPullRequest,
-							RepositoryID: uuid.NullUUID{
-								UUID:  repoID,
-								Valid: true,
-							},
-							PullRequestID: uuid.NullUUID{
-								UUID:  prID,
-								Valid: true,
-							},
-							QueuedAt: time.Now(),
+							ID:               uuid.New(),
+							Entity:           db.EntitiesPullRequest,
+							ProjectID:        projectID,
+							EntityInstanceID: prID,
+							QueuedAt:         time.Now(),
 						},
 					}, nil)
 
-				// 1 - fetch repo info for repo
-				// base repo info
-				mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
 				// subsequent artifact fetch for protobuf conversion
 				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 					Return(db.Repository{
@@ -605,23 +542,21 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	})
 
 	repoID := uuid.New()
+	projID := uuid.New()
 
 	// initial list flush
 	mockStore.EXPECT().ListFlushCache(ctx).
 		Return([]db.FlushCache{
 			{
-				ID:     uuid.New(),
-				Entity: db.EntitiesRepository,
-				RepositoryID: uuid.NullUUID{
-					UUID:  repoID,
-					Valid: true,
-				},
-				QueuedAt: time.Now(),
+				ID:               uuid.New(),
+				Entity:           db.EntitiesRepository,
+				ProjectID:        projID,
+				EntityInstanceID: repoID,
+				QueuedAt:         time.Now(),
 			},
 		}, nil)
 
-	// repo does not exist
-	mockStore.EXPECT().GetRepositoryByID(ctx, repoID).
+	mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
 		Return(db.Repository{}, sql.ErrNoRows)
 
 	t.Log("Flushing all")
