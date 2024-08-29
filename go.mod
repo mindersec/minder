@@ -39,7 +39,7 @@ require (
 	github.com/itchyny/gojq v0.12.16
 	github.com/lib/pq v1.10.9
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
-	github.com/nats-io/nats-server/v2 v2.10.18
+	github.com/nats-io/nats-server/v2 v2.10.19
 	github.com/nats-io/nats.go v1.37.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
