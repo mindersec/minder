@@ -30,45 +30,6 @@ import (
 	"github.com/stacklok/minder/internal/util/rand"
 )
 
-func createRandomEntity(t *testing.T, project uuid.UUID, provider uuid.UUID, entType Entities) {
-	t.Helper()
-
-	seed := time.Now().UnixNano()
-
-	ent, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
-		EntityType:     entType,
-		Name:           rand.RandomName(seed),
-		ProjectID:      project,
-		ProviderID:     provider,
-		OriginatedFrom: uuid.NullUUID{},
-	})
-	require.NoError(t, err)
-
-	prop, err := testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
-		EntityID: ent.ID,
-		Key:      "testkey1",
-		Value:    rand.RandomName(seed),
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, prop)
-
-	prop, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
-		EntityID: ent.ID,
-		Key:      "testkey1",
-		Value:    rand.RandomName(seed),
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, prop)
-
-	prop, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
-		EntityID: ent.ID,
-		Key:      "upstream_id",
-		Value:    rand.RandomName(seed),
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, prop)
-}
-
 func createRandomProject(t *testing.T, orgID uuid.UUID) Project {
 	t.Helper()
 

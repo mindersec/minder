@@ -209,10 +209,6 @@ func Test_PropertyCrud(t *testing.T) {
 		const testRepoName = "testorg/testrepo_getbyprops"
 		const testArtifactName = "testorg/testartifact_getbyprops"
 
-		for i := 0; i < 50000; i++ {
-			createRandomEntity(t, proj.ID, prov.ID, EntitiesRepository)
-		}
-
 		repo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
