@@ -27,6 +27,7 @@ import (
 
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -145,6 +146,11 @@ func (p *projectDeleter) DeleteProject(
 		}
 	}
 
+	projectTombstone, err := exportProjectMetadata(ctx, proj, querier)
+	if err != nil {
+		return err
+	}
+
 	// no role assignments for this project
 	// we can safely delete it.
 	l.Debug().Msg("deleting project from database")
@@ -152,6 +158,9 @@ func (p *projectDeleter) DeleteProject(
 	if err != nil {
 		return fmt.Errorf("error deleting project %v", err)
 	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).ProjectTombstone = *projectTombstone
 
 	for _, d := range deletions {
 		if d.ParentID.Valid {
@@ -169,4 +178,30 @@ func hasOtherRoleAssignments(as []*v1.RoleAssignment, subject string) bool {
 	return slices.ContainsFunc(as, func(a *v1.RoleAssignment) bool {
 		return a.GetRole() == authz.RoleAdmin.String() && a.Subject != subject
 	})
+}
+
+func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Querier) (*logger.ProjectTombstone, error) {
+	var err error
+
+	profilesCount, err := qtx.CountProfilesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting profiles count: %w", err)
+	}
+
+	reposCount, err := qtx.CountRepositoriesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting repositories count: %w", err)
+	}
+
+	entitlementFeatures, err := qtx.GetEntitlementFeaturesByProjectID(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting entitlement features: %w", err)
+	}
+
+	return &logger.ProjectTombstone{
+		Project:           projectID,
+		ProfileCount:      int(profilesCount),
+		RepositoriesCount: int(reposCount),
+		Entitlements:      entitlementFeatures,
+	}, nil
 }

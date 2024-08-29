@@ -24,6 +24,19 @@ func (q *Queries) CountRepositories(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countRepositoriesByProjectID = `-- name: CountRepositoriesByProjectID :one
+SELECT COUNT(*)
+FROM repositories
+WHERE project_id = $1
+`
+
+func (q *Queries) CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRepositoriesByProjectID, projectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createRepository = `-- name: CreateRepository :one
 INSERT INTO repositories (
     provider,

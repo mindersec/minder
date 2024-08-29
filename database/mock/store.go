@@ -131,6 +131,21 @@ func (mr *MockStoreMockRecorder) CountProfilesByName(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountProfilesByName", reflect.TypeOf((*MockStore)(nil).CountProfilesByName), arg0, arg1)
 }
 
+// CountProfilesByProjectID mocks base method.
+func (m *MockStore) CountProfilesByProjectID(arg0 context.Context, arg1 uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountProfilesByProjectID", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountProfilesByProjectID indicates an expected call of CountProfilesByProjectID.
+func (mr *MockStoreMockRecorder) CountProfilesByProjectID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountProfilesByProjectID", reflect.TypeOf((*MockStore)(nil).CountProfilesByProjectID), arg0, arg1)
+}
+
 // CountRepositories mocks base method.
 func (m *MockStore) CountRepositories(arg0 context.Context) (int64, error) {
 	m.ctrl.T.Helper()
@@ -144,6 +159,21 @@ func (m *MockStore) CountRepositories(arg0 context.Context) (int64, error) {
 func (mr *MockStoreMockRecorder) CountRepositories(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRepositories", reflect.TypeOf((*MockStore)(nil).CountRepositories), arg0)
+}
+
+// CountRepositoriesByProjectID mocks base method.
+func (m *MockStore) CountRepositoriesByProjectID(arg0 context.Context, arg1 uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountRepositoriesByProjectID", arg0, arg1)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountRepositoriesByProjectID indicates an expected call of CountRepositoriesByProjectID.
+func (mr *MockStoreMockRecorder) CountRepositoriesByProjectID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountRepositoriesByProjectID", reflect.TypeOf((*MockStore)(nil).CountRepositoriesByProjectID), arg0, arg1)
 }
 
 // CountUsers mocks base method.
@@ -907,6 +937,21 @@ func (m *MockStore) GetEntitiesByType(arg0 context.Context, arg1 db.GetEntitiesB
 func (mr *MockStoreMockRecorder) GetEntitiesByType(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByType", reflect.TypeOf((*MockStore)(nil).GetEntitiesByType), arg0, arg1)
+}
+
+// GetEntitlementFeaturesByProjectID mocks base method.
+func (m *MockStore) GetEntitlementFeaturesByProjectID(arg0 context.Context, arg1 uuid.UUID) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntitlementFeaturesByProjectID", arg0, arg1)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntitlementFeaturesByProjectID indicates an expected call of GetEntitlementFeaturesByProjectID.
+func (mr *MockStoreMockRecorder) GetEntitlementFeaturesByProjectID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitlementFeaturesByProjectID", reflect.TypeOf((*MockStore)(nil).GetEntitlementFeaturesByProjectID), arg0, arg1)
 }
 
 // GetEntityByID mocks base method.
