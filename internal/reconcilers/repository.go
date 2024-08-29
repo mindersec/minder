@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	"github.com/stacklok/minder/internal/repositories"
+	ghreposvc "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -73,6 +74,14 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 	p, err := r.providerManager.InstantiateFromID(ctx, providerID)
 	if err != nil {
 		return fmt.Errorf("error instantiating provider: %w", err)
+	}
+
+	_, err = r.repos.RefreshRepositoryByUpstreamID(ctx, repository.RepoID)
+	if errors.Is(err, v1.ErrEntityNotFound) || errors.Is(err, ghreposvc.ErrRepoNotFound) {
+		zerolog.Ctx(ctx).Debug().Err(err).Str("repository", repository.ID.String()).Msg("repository not found")
+	} else if err != nil {
+		zerolog.Ctx(ctx).Debug().Err(err).Str("repository", repository.ID.String()).Msg("error refreshing repository")
+		return fmt.Errorf("error refreshing repository: %w", err)
 	}
 
 	cli, err := v1.As[v1.GitHub](p)

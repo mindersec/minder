@@ -102,9 +102,15 @@ func (r *Reconciler) publishProfileInitEvents(
 	}
 
 	for _, dbrepo := range dbrepos {
+		_, err := r.repos.RefreshRepositoryByUpstreamID(ctx, dbrepo.RepoID)
+		if err != nil {
+			zerolog.Ctx(ctx).Debug().Err(err).Str("repository", dbrepo.ID.String()).Msg("error refreshing repository")
+			continue
+		}
+
 		// protobufs are our API, so we always execute on these instead of the DB directly.
 		repo := repositories.PBRepositoryFromDB(dbrepo)
-		err := entities.NewEntityInfoWrapper().
+		err = entities.NewEntityInfoWrapper().
 			WithProviderID(dbrepo.ProviderID).
 			WithProjectID(projectID).
 			WithRepository(repo).
