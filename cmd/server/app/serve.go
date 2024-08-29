@@ -28,7 +28,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/stacklok/minder/internal/auth"
+	"github.com/stacklok/minder/internal/auth/githubactions"
 	"github.com/stacklok/minder/internal/auth/jwt"
+	"github.com/stacklok/minder/internal/auth/jwt/dynamic"
+	"github.com/stacklok/minder/internal/auth/jwt/merged"
 	"github.com/stacklok/minder/internal/auth/keycloak"
 	"github.com/stacklok/minder/internal/authz"
 	"github.com/stacklok/minder/internal/config"
@@ -101,10 +104,12 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create issuer URL: %w\n", err)
 		}
-		jwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
+		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
+		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience)
+		jwt := merged.Validator{Validators: []jwt.Validator{staticJwt, dynamicJwt}}
 
 		authzc, err := authz.NewAuthzClient(&cfg.Authz, l)
 		if err != nil {
@@ -119,7 +124,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to create keycloak identity provider: %w", err)
 		}
-		idClient, err := auth.NewIdentityClient(kc)
+		idClient, err := auth.NewIdentityClient(kc, &githubactions.GitHubActions{})
 		if err != nil {
 			return fmt.Errorf("unable to create identity client: %w", err)
 		}

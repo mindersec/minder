@@ -71,11 +71,13 @@ func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, 
 	// TODO: this assumes that we store all users in the database, and that we don't
 	// need to namespace identify providers.  We should revisit these assumptions.
 	//
-	if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+	if identity.Provider.String() == "" {
+		if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "User not found")
+			}
+			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
 	// Check in case there's an existing role assignment for the user

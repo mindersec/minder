@@ -347,7 +347,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	} else if sub != "" && inviteeEmail == "" {
 		// Enable one or the other.
 		// This is temporary until we deprecate it completely in favor of email-based role assignments
-		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if flags.Bool(ctx, s.featureFlags, flags.MachineAccounts) || !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
 				return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, s.idClient, targetProject, sub, authzRole)
 			})
