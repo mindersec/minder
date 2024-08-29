@@ -40,6 +40,9 @@ const (
 	V1 = "v1"
 )
 
+// ErrEntityNotFound is the error returned when an entity is not found
+var ErrEntityNotFound = errors.New("property not found")
+
 // Provider is the general interface for all providers
 type Provider interface {
 	// CanImplement returns true/false depending on whether the Provider

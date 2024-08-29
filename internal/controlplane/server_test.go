@@ -19,7 +19,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -45,6 +44,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
 	ghService "github.com/stacklok/minder/internal/providers/github/service"
+	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 

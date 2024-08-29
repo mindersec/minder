@@ -19,11 +19,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	go_github "github.com/google/go-github/v63/github"
 
 	"github.com/stacklok/minder/internal/entities/properties"
+	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -93,8 +95,11 @@ func getRepoWrapper(ctx context.Context, ghCli *go_github.Client, name string) (
 		return nil, errors.New("invalid name")
 	}
 
-	repo, _, err := ghCli.Repositories.Get(ctx, slice[0], slice[1])
+	repo, result, err := ghCli.Repositories.Get(ctx, slice[0], slice[1])
 	if err != nil {
+		if result != nil && result.StatusCode == http.StatusNotFound {
+			return nil, v1.ErrEntityNotFound
+		}
 		return nil, err
 	}
 
