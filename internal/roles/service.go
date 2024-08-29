@@ -115,11 +115,13 @@ func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, 
 	}
 
 	// Verify if user exists
-	if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+	if identity.Provider.String() == "" {
+		if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "User not found")
+			}
+			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
 	// Remove the existing role assignment for the user
@@ -164,11 +166,13 @@ func (_ *roleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, 
 	}
 
 	// Verify if user exists
-	if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "User not found")
+	if identity.Provider.String() == "" {
+		if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "User not found")
+			}
+			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
 	}
 
 	// Get all role assignments for the project
