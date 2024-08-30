@@ -285,7 +285,7 @@ func (p *profileService) UpdateProfile(
 	}
 
 	if err := p.updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
+		return nil, err
 	}
 
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: updatedProfile.Name, ID: updatedProfile.ID}
