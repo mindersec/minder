@@ -49,6 +49,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
@@ -77,6 +78,27 @@ var rawBranchProtectionConfigurationDisabledEvent string
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
 	mock.Mock
+}
+
+type propSvcMock = *mock_service.MockPropertiesService
+type propSvcMockBuilder = func(*gomock.Controller) propSvcMock
+
+func newPropSvcMock(opts ...func(mck propSvcMock)) propSvcMockBuilder {
+	return func(ctrl *gomock.Controller) propSvcMock {
+		mck := mock_service.NewMockPropertiesService(ctrl)
+		for _, opt := range opts {
+			opt(mck)
+		}
+		return mck
+	}
+}
+
+func withSuccessRetrieveAllProperties(entity v1.Entity, retProps *properties.Properties) func(mck propSvcMock) {
+	return func(mock propSvcMock) {
+		mock.EXPECT().
+			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity).
+			Return(retProps, nil)
+	}
 }
 
 type repoSvcMock = *mock_github.MockRepositoryService
@@ -173,7 +195,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
 	defer evt.Close()
 
@@ -220,7 +242,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -283,7 +305,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 	defer evt.Close()
@@ -399,7 +421,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -451,7 +473,7 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	go func() {
@@ -488,7 +510,7 @@ func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -552,6 +574,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 		rawPayload    []byte
 		mockStoreFunc df.MockStoreBuilder
 		mockRepoBld   repoSvcMockBuilder
+		mockPropsBld  propSvcMockBuilder
+		ghMocks       []func(hubMock gf.GitHubMock)
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -3531,6 +3555,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
 					URL:    github.String("url"),
 					Number: github.Int(42),
 					User: &github.User{
@@ -3538,6 +3563,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3557,6 +3585,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ghprop.RepoPropertyId:             int64(12345),
 					}),
 			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulUpsertPullRequest(
 					db.PullRequest{},
@@ -3621,6 +3652,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ghprop.RepoPropertyId:             int64(12345),
 					}),
 			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulDeletePullRequest(),
 				df.WithTransaction(),
@@ -3672,6 +3706,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ghprop.RepoPropertyId:             int64(12345),
 					}),
 			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
@@ -3739,7 +3776,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			require.NoError(t, err, "failed to write to temporary file")
 			defer os.Remove(prevCredsFile.Name())
 
-			ghProvider := gf.NewGitHubMock(
+			ghMocks := []func(gf.GitHubMock){
 				gf.WithSuccessfulGetPackageByName(&github.Package{
 					Visibility: &visibility,
 				}),
@@ -3756,7 +3793,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						SHA: github.String("sha"),
 					},
 				}),
-			)
+			}
+			ghMocks = append(ghMocks, tt.ghMocks...)
+			ghProvider := gf.NewGitHubMock(ghMocks...)
+
 			providerSetup := pf.NewProviderManagerMock(
 				pf.WithSuccessfulInstantiateFromID(ghProvider(ctrl)),
 			)
@@ -3775,7 +3815,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
 			}
 
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+			var mockPropSvc *mock_service.MockPropertiesService
+			if tt.mockPropsBld != nil {
+				mockPropSvc = tt.mockPropsBld(ctrl)
+			} else {
+				mockPropSvc = mock_service.NewMockPropertiesService(ctrl)
+			}
+
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, mockPropSvc, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 			srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 			srv.providerManager = providerSetup(ctrl)
@@ -4368,7 +4415,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
 			}
 
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "test"
 
 			pq := testqueue.NewPassthroughQueue(t)

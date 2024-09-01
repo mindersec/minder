@@ -115,7 +115,7 @@ func TestCreateRuleType(t *testing.T) {
 				mockSvc = tt.ruleTypeServiceFunc(ctrl)
 			}
 
-			srv, _ := newDefaultServer(t, mockStore, nil, nil)
+			srv, _ := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
 
 			resp, err := srv.CreateRuleType(context.Background(), tt.request)
@@ -215,7 +215,7 @@ func TestUpdateRuleType(t *testing.T) {
 				mockSvc = tt.ruleTypeServiceFunc(ctrl)
 			}
 
-			srv, _ := newDefaultServer(t, mockStore, nil, nil)
+			srv, _ := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
 
 			resp, err := srv.UpdateRuleType(context.Background(), tt.request)

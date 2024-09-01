@@ -56,6 +56,7 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/history"
 	"github.com/stacklok/minder/internal/invites"
@@ -99,6 +100,7 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
+	props               propSvc.PropertiesService
 	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
 	repos               github.RepositoryService
@@ -140,6 +142,7 @@ func NewServer(
 	idClient auth.Resolver,
 	inviteService invites.InviteService,
 	repoService github.RepositoryService,
+	propertyService propSvc.PropertiesService,
 	roleService roles.RoleService,
 	profileService profiles.ProfileService,
 	historyService history.EvaluationHistoryService,
@@ -171,6 +174,7 @@ func NewServer(
 		sessionService:      sessionService,
 		invites:             inviteService,
 		repos:               repoService,
+		props:               propertyService,
 		roles:               roleService,
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
