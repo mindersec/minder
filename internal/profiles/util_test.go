@@ -634,3 +634,57 @@ func TestFilterRulesForType(t *testing.T) {
 		})
 	}
 }
+
+func TestCleanDisplayName(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "A short DisplayName with whitespace",
+			input:    "My custom profile",
+			expected: "my_custom_profile",
+		},
+		{
+			name:     "A very long DisplayName with whitespaces and more than 63 characters",
+			input:    "A very long profile name that is longer than sixty three characters and will be trimmed",
+			expected: "a_very_long_profile_name_that_is_longer_than_sixty_three_charac",
+		},
+		{
+			name:     "A DisplayName with special characters",
+			input:    "Profile with !#$() characters",
+			expected: "profile_with_characters",
+		},
+		{
+			name:     "A DisplayName with alphanumeric values",
+			input:    "My 1st Profile",
+			expected: "my_1st_profile",
+		},
+		{
+			name:     "A DisplayName with non-alphanumeric characters and leadning & trailing whitespaces",
+			input:    "  New, Profile! 123. This is a Test Display Name with Special Characters!  ",
+			expected: "new_profile_123_this_is_a_test_display_name_with_special_charac",
+		},
+		{
+			name:     "A DisplayName with Leading and trailing white spaces",
+			input:    "   Leading and trailing spaces   ",
+			expected: "leading_and_trailing_spaces",
+		},
+		{
+			name:     "A DisplayName with mix of upper and low case",
+			input:    "UPPER CASE to lower case",
+			expected: "upper_case_to_lower_case",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := profiles.CleanDisplayName(tt.input)
+			if result != tt.expected {
+				t.Errorf("CleanDisplayName(%q) = %q; want %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}

@@ -21,6 +21,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
@@ -297,6 +299,59 @@ func MergeDatabaseGetByNameIntoProfiles(ppl []db.GetProfileByProjectAndNameRow) 
 	}
 
 	return profiles
+}
+
+// Derive the profile name from the profile display name
+func DeriveProfileNameFromDisplayName(
+	profile *pb.Profile,
+) (profileName string) {
+
+	displayName := profile.GetDisplayName()
+	name := profile.GetName()
+
+	if displayName != "" && name != "" {
+		// when both a display name and a profile name are provided
+		// then the profile name from the incoming request is used as the profile name
+		profileName = name
+
+		// when both a display name and a profile name are provided, but the project already has a profile with that name
+
+	} else if displayName != "" && name == "" {
+		// when a display name is provided, but no name
+		// then the profile name is created and saved based on the profile display name
+
+		profileName = CleanDisplayName(displayName)
+
+	}
+
+	return profileName
+}
+
+// The profile name should be derived from the profile display name given the following logic
+func CleanDisplayName(displayName string) string {
+
+	// Trim leading and trailing whitespace
+	displayName = strings.TrimSpace(displayName)
+
+	// Remove non-alphanumeric characters
+	re := regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+	displayName = re.ReplaceAllString(displayName, "")
+
+	// Replace multiple spaces with a single space
+	displayName = regexp.MustCompile(`\s{2,}`).ReplaceAllString(displayName, " ")
+
+	// Replace all whitespace with underscores
+	displayName = strings.ReplaceAll(displayName, " ", "_")
+
+	// Convert to lower-case
+	displayName = strings.ToLower(displayName)
+
+	// Trim to a maximum length of 63 characters
+	if len(displayName) > 63 {
+		displayName = displayName[:63]
+	}
+
+	return displayName
 }
 
 func dbProfileToPB(p db.Profile) *pb.Profile {
