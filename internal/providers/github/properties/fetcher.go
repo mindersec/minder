@@ -27,7 +27,7 @@ import (
 
 // GhPropertyWrapper is a function that fetches a property from the GitHub API
 type GhPropertyWrapper func(
-	ctx context.Context, ghCli *go_github.Client, lookupProperties *properties.Properties,
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, lookupProperties *properties.Properties,
 ) (map[string]any, error)
 
 // GhPropertyFetcher is an interface for fetching properties from the GitHub API

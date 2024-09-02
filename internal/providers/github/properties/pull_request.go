@@ -122,8 +122,10 @@ func parsePrName(input string) (string, string, int64, error) {
 }
 
 func getPrWrapper(
-	ctx context.Context, ghCli *go_github.Client, getByProps *properties.Properties,
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
 ) (map[string]any, error) {
+	_ = isOrg
+
 	owner, name, id, err := getPrWrapperAttrsFromProps(getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pr wrapper attributes: %w", err)
