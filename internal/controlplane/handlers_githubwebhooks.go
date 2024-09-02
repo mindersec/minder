@@ -1628,7 +1628,9 @@ func (s *Server) updatePullRequestInfoFromProvider(
 		return fmt.Errorf("error creating properties: %w", err)
 	}
 
-	_, err = s.props.RetrieveAllProperties(ctx, provider, repoEnt.Entity.ProjectID, lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS)
+	_, err = s.props.RetrieveAllProperties(ctx, provider,
+		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
+		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS)
 	if err != nil {
 		return fmt.Errorf("error retrieving properties: %w", err)
 	}

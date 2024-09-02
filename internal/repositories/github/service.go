@@ -175,6 +175,7 @@ func (r *repositoryService) CreateRepository(
 		ctx,
 		propClient,
 		projectID,
+		provider.ID,
 		fetchByProps,
 		pb.Entity_ENTITY_REPOSITORIES)
 	if err != nil {
@@ -370,6 +371,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 			ctx,
 			prov,
 			entRepo.ProjectID,
+			entRepo.ProviderID,
 			fetchByProps,
 			pb.Entity_ENTITY_REPOSITORIES)
 		if errors.Is(err, provifv1.ErrEntityNotFound) {

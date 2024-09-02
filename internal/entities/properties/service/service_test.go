@@ -541,7 +541,7 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveProperty(ctx, githubMock, tctx.dbProj.ID, getByProps, tt.params.entType, tt.propName)
+			gotProps, err := propSvc.RetrieveProperty(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName)
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)
@@ -706,7 +706,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, getByProps, tt.params.entType)
+			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType)
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)

@@ -48,11 +48,13 @@ type PropertiesService interface {
 	// RetrieveAllProperties fetches all properties for the given entity
 	RetrieveAllProperties(
 		ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity,
 	) (*properties.Properties, error)
 	// RetrieveProperty fetches a single property for the given entity
 	RetrieveProperty(
 		ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 	) (*properties.Property, error)
 	// ReplaceAllProperties saves all properties for the given entity
@@ -97,10 +99,11 @@ func NewPropertiesService(
 // RetrieveAllProperties fetches a single property for the given entity
 func (ps *propertiesService) RetrieveAllProperties(
 	ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
 ) (*properties.Properties, error) {
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, lookupProperties, entType)
+	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
@@ -156,10 +159,11 @@ func (ps *propertiesService) RetrieveAllProperties(
 // RetrieveProperty fetches a single property for the given entity
 func (ps *propertiesService) RetrieveProperty(
 	ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 ) (*properties.Property, error) {
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, lookupProperties, entType)
+	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
@@ -192,12 +196,13 @@ func (ps *propertiesService) RetrieveProperty(
 
 func (ps *propertiesService) getEntityIdByProperties(
 	ctx context.Context, projectId uuid.UUID,
+	providerID uuid.UUID,
 	props *properties.Properties, entType minderv1.Entity,
 ) (uuid.UUID, error) {
 	// TODO: Add more ways to look up a property, e.g. by the upstream ID
 	name := props.GetProperty(properties.PropertyName)
 	if name != nil {
-		return ps.getEntityIdByName(ctx, projectId, name.GetString(), entType)
+		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType)
 	}
 
 	// returning nil ID and nil error would make us just go to the provider. Slow, but we'd continue.
@@ -206,12 +211,14 @@ func (ps *propertiesService) getEntityIdByProperties(
 
 func (ps *propertiesService) getEntityIdByName(
 	ctx context.Context, projectId uuid.UUID,
+	providerID uuid.UUID,
 	name string, entType minderv1.Entity,
 ) (uuid.UUID, error) {
 	ent, err := ps.store.GetEntityByName(ctx, db.GetEntityByNameParams{
 		ProjectID:  projectId,
 		Name:       name,
 		EntityType: entities.EntityTypeToDB(entType),
+		ProviderID: providerID,
 	})
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to get entity by name: %w", err)
