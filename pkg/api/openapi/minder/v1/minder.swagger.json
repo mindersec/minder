@@ -24,6 +24,9 @@
       "name": "ProfileService"
     },
     {
+      "name": "RuleTypeService"
+    },
+    {
       "name": "EvalResultsService"
     },
     {
@@ -2541,7 +2544,7 @@
     },
     "/api/v1/rule_type": {
       "post": {
-        "operationId": "ProfileService_CreateRuleType",
+        "operationId": "RuleTypeService_CreateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2562,11 +2565,11 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       },
       "put": {
-        "operationId": "ProfileService_UpdateRuleType",
+        "operationId": "RuleTypeService_UpdateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2587,13 +2590,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_type/name/{name}": {
       "get": {
-        "operationId": "ProfileService_GetRuleTypeByName",
+        "operationId": "RuleTypeService_GetRuleTypeByName",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2633,13 +2636,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_type/{id}": {
       "get": {
-        "operationId": "ProfileService_GetRuleTypeById",
+        "operationId": "RuleTypeService_GetRuleTypeById",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2678,11 +2681,11 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       },
       "delete": {
-        "operationId": "ProfileService_DeleteRuleType",
+        "operationId": "RuleTypeService_DeleteRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2721,13 +2724,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_types": {
       "get": {
-        "operationId": "ProfileService_ListRuleTypes",
+        "operationId": "RuleTypeService_ListRuleTypes",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2759,7 +2762,7 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },

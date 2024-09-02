@@ -39,7 +39,7 @@ var listCmd = &cobra.Command{
 
 // listCommand is the ruletype list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
+	client := minderv1.NewRuleTypeServiceClient(conn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
