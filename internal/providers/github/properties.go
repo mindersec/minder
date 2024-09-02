@@ -35,12 +35,8 @@ func (c *GitHub) FetchProperty(
 	}
 
 	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
-
-	// TODO: right now github only supports fetching by name, but we could add support for more
-	// properties to e.g. get-repo-by-id if the upstream REST API supports that
-	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
-	if err != nil {
-		return nil, fmt.Errorf("name is not a string: %w", err)
+	if fetcher == nil {
+		return nil, fmt.Errorf("entity %s not supported", entType)
 	}
 
 	wrapper := fetcher.WrapperForProperty(key)
@@ -48,7 +44,7 @@ func (c *GitHub) FetchProperty(
 		return nil, fmt.Errorf("property %s not supported for entity %s", key, entType)
 	}
 
-	props, err := wrapper(ctx, c.client, name)
+	props, err := wrapper(ctx, c.client, getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching property %s for entity %s: %w", key, entType, err)
 	}
@@ -67,17 +63,10 @@ func (c *GitHub) FetchAllProperties(
 		return nil, errors.New("property fetchers not initialized")
 	}
 
-	// TODO: right now github only supports fetching by name, but we could add support for more
-	// properties to e.g. get-repo-by-id if the upstream REST API supports that
-	name, err := getByProps.GetProperty(properties.PropertyName).AsString()
-	if err != nil {
-		return nil, fmt.Errorf("name is not a string: %w", err)
-	}
-
 	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
 	result := make(map[string]any)
 	for _, wrapper := range fetcher.AllPropertyWrappers() {
-		props, err := wrapper(ctx, c.client, name)
+		props, err := wrapper(ctx, c.client, getByProps)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching properties for entity %s: %w", entType, err)
 		}

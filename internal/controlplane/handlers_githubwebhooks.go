@@ -269,9 +269,17 @@ func (p *pullRequestEvent) GetPullRequest() *pullRequest {
 }
 
 type pullRequest struct {
+	ID     *int64  `json:"id,omitempty"`
 	URL    *string `json:"url,omitempty"`
 	Number *int64  `json:"number,omitempty"`
 	User   *user   `json:"user,omitempty"`
+}
+
+func (p *pullRequest) GetID() int64 {
+	if p.ID != nil {
+		return *p.ID
+	}
+	return 0
 }
 
 func (p *pullRequest) GetURL() string {
@@ -967,44 +975,45 @@ func (s *Server) processPullRequestEvent(
 		return nil, err
 	}
 
+	pullProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: event.GetPullRequest().GetID(),
+		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
+		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
+		ghprop.PullPropertyURL:        event.GetPullRequest().GetURL(),
+		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
+		ghprop.PullPropertyAuthorID:   event.GetPullRequest().GetUser().GetID(),
+		ghprop.PullPropertyAction:     event.GetAction(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating pull request properties: %w", err)
+	}
+
 	provider, err := s.providerManager.InstantiateFromID(ctx, repoEnt.Entity.ProviderID)
 	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
+		return nil, fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	cli, err := provifv1.As[provifv1.GitHub](provider)
-	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
-	}
-
-	prEvalInfo := &pb.PullRequest{
-		Url:      event.GetPullRequest().GetURL(),
-		Number:   int64(event.GetPullRequest().GetNumber()),
-		AuthorId: int64(event.GetPullRequest().GetUser().GetID()),
-		Action:   event.GetAction(),
-	}
-
-	dbPr, err := s.reconcilePrWithDb(ctx, repoEnt, prEvalInfo)
+	dbPr, err := s.reconcilePrWithDb(ctx, provider, repoEnt, pullProps)
 	if errors.Is(err, errNotHandled) {
 		return nil, err
 	} else if err != nil {
 		return nil, fmt.Errorf("error reconciling PR with DB: %w", err)
 	}
 
-	err = updatePullRequestInfoFromProvider(ctx, cli, repoEnt, prEvalInfo)
+	err = s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps)
 	if err != nil {
 		return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
 	}
 
-	l.Info().Msgf("evaluating PR %+v", prEvalInfo)
+	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
+
+	pbPullRequest := ghprop.PullRequestV1FromProperties(pullProps)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(event.GetAction()).
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
-		WithPullRequest(prEvalInfo).
+		WithPullRequest(pbPullRequest).
 		WithPullRequestID(dbPr.ID).
 		WithRepositoryID(repoEnt.Entity.ID)
 
@@ -1504,15 +1513,21 @@ func updateArtifactVersionFromRegistry(
 
 func (s *Server) reconcilePrWithDb(
 	ctx context.Context,
+	provider provifv1.Provider,
 	repoEnt *models.EntityWithProperties,
-	prEvalInfo *pb.PullRequest,
+	pullProps *properties.Properties,
 ) (*db.PullRequest, error) {
 	l := zerolog.Ctx(ctx)
 
 	var retErr error
 	var retPr *db.PullRequest
 
-	switch prEvalInfo.Action {
+	pullName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
+	if err != nil {
+		return nil, fmt.Errorf("error getting pull request name: %w", err)
+	}
+
+	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
 	// TODO go-github documentation reportes that
 	// PullRequestEvents with action "synchronize" are not
 	// published, see here
@@ -1522,7 +1537,7 @@ func (s *Server) reconcilePrWithDb(
 		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
 			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     prEvalInfo.Number,
+				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
 			})
 			if err != nil {
 				return nil, err
@@ -1531,7 +1546,7 @@ func (s *Server) reconcilePrWithDb(
 			_, err = t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
 				ID:         dbPr.ID,
 				EntityType: db.EntitiesPullRequest,
-				Name:       pullRequestName(repoEnt.Properties.GetProperty(properties.PropertyName).GetString(), prEvalInfo.Number),
+				Name:       pullName,
 				ProjectID:  repoEnt.Entity.ProjectID,
 				ProviderID: repoEnt.Entity.ProviderID,
 				OriginatedFrom: uuid.NullUUID{
@@ -1547,25 +1562,27 @@ func (s *Server) reconcilePrWithDb(
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
-				"cannot upsert PR %d in repo %s",
-				prEvalInfo.Number, repoEnt.Properties.GetProperty(properties.PropertyName).GetString())
+				"cannot upsert PR %d in repo %s: %w",
+				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
+				repoEnt.Properties.GetProperty(properties.PropertyName).GetString(),
+				err)
 		}
 		retErr = nil
 	case webhookActionEventClosed:
 		_, err := db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
 			err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
 				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     prEvalInfo.Number,
+				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
 			})
 			if err != nil {
 				return nil, err
 			}
 
 			err = t.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
-				Name:      pullRequestName(repoEnt.Properties.GetProperty(properties.PropertyName).GetString(), prEvalInfo.Number),
+				Name:      pullName,
 				ProjectID: repoEnt.Entity.ProjectID,
 			})
-			if err != nil {
+			if err != nil && !errors.Is(err, sql.ErrNoRows) {
 				return nil, err
 			}
 
@@ -1574,12 +1591,14 @@ func (s *Server) reconcilePrWithDb(
 
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("cannot delete PR record %d in repo %s",
-				prEvalInfo.Number, repoEnt.Properties.GetProperty(properties.PropertyName).GetString())
+				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
+				repoEnt.Properties.GetProperty(properties.PropertyName).GetString())
 		}
 		retPr = nil
 		retErr = errNotHandled
 	default:
-		l.Info().Msgf("action %s is not handled for pull requests", prEvalInfo.Action)
+		l.Info().Msgf("action %s is not handled for pull requests",
+			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
 		retPr = nil
 		retErr = errNotHandled
 	}
@@ -1587,26 +1606,32 @@ func (s *Server) reconcilePrWithDb(
 	return retPr, retErr
 }
 
-func updatePullRequestInfoFromProvider(
+func (s *Server) updatePullRequestInfoFromProvider(
 	ctx context.Context,
-	cli provifv1.GitHub,
+	provider provifv1.Provider,
 	repoEnt *models.EntityWithProperties,
-	prEvalInfo *pb.PullRequest,
+	pullProps *properties.Properties,
 ) error {
-	prReply, err := cli.GetPullRequest(ctx,
-		repoEnt.Properties.GetProperty(ghprop.RepoPropertyOwner).GetString(),
-		repoEnt.Properties.GetProperty(ghprop.RepoPropertyName).GetString(),
-		int(prEvalInfo.Number))
+	// create properties.Name for the PR
+	prName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
 	if err != nil {
-		return fmt.Errorf("error getting pull request: %w", err)
+		return fmt.Errorf("error getting pull request name: %w", err)
 	}
 
-	prEvalInfo.CommitSha = *prReply.Head.SHA
-	prEvalInfo.RepoOwner = repoEnt.Properties.GetProperty(ghprop.RepoPropertyOwner).GetString()
-	prEvalInfo.RepoName = repoEnt.Properties.GetProperty(ghprop.RepoPropertyName).GetString()
-	return nil
-}
+	lookupPropertiesMap := map[string]any{
+		properties.PropertyName:       prName,
+		properties.PropertyUpstreamID: pullProps.GetProperty(properties.PropertyUpstreamID).GetString(),
+	}
 
-func pullRequestName(repoName string, number int64) string {
-	return fmt.Sprintf("%s/%d", repoName, number)
+	lookupProperties, err := properties.NewProperties(lookupPropertiesMap)
+	if err != nil {
+		return fmt.Errorf("error creating properties: %w", err)
+	}
+
+	_, err = s.props.RetrieveAllProperties(ctx, provider, repoEnt.Entity.ProjectID, lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS)
+	if err != nil {
+		return fmt.Errorf("error retrieving properties: %w", err)
+	}
+
+	return nil
 }

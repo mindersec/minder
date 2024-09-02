@@ -169,6 +169,7 @@ func AllInOneServerService(
 		idClient,
 		inviteSvc,
 		repos,
+		propSvc,
 		roleScv,
 		profileSvc,
 		historySvc,
