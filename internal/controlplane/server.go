@@ -121,6 +121,7 @@ type Server struct {
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedProjectsServiceServer
 	pb.UnimplementedProfileServiceServer
+	pb.UnimplementedRuleTypeServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
