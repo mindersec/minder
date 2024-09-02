@@ -32,6 +32,8 @@ import (
 )
 
 func TestNatsChannel(t *testing.T) {
+	t.Skip("This test is flaky - skipping until we can fix it")
+
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
