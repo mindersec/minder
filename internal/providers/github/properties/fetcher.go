@@ -62,6 +62,8 @@ func (_ ghEntityFetcher) EntityPropertyFetcher(entType minderv1.Entity) GhProper
 		return NewPullRequestFetcher()
 	case minderv1.Entity_ENTITY_REPOSITORIES:
 		return NewRepositoryFetcher()
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		return NewArtifactFetcher()
 	}
 
 	return nil
