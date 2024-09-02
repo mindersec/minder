@@ -41,13 +41,13 @@ func TestRecordSize(t *testing.T) {
 		db.ListEvaluationHistoryStaleRecordsRow{
 			ID:             uuid.Nil,
 			EvaluationTime: time.Now(),
-			EntityType:     int32(1),
+			EntityType:     db.EntitiesArtifact,
 			EntityID:       uuid.Nil,
 			RuleID:         uuid.Nil,
 		},
 	)
 
-	require.Equal(t, uintptr(96), size)
+	require.Equal(t, uintptr(88), size)
 }
 
 func TestPurgeLoop(t *testing.T) {
@@ -76,7 +76,7 @@ func TestPurgeLoop(t *testing.T) {
 						EvaluationTime: time.Now(),
 						ID:             uuid1,
 						RuleID:         ruleID1,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID1,
 					},
 				),
@@ -104,7 +104,7 @@ func TestPurgeLoop(t *testing.T) {
 						EvaluationTime: time.Now(),
 						ID:             uuid1,
 						RuleID:         ruleID1,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID1,
 					},
 				),
@@ -126,21 +126,21 @@ func TestPurgeLoop(t *testing.T) {
 						EvaluationTime: time.Now(),
 						ID:             uuid1,
 						RuleID:         ruleID1,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID1,
 					},
 					db.ListEvaluationHistoryStaleRecordsRow{
 						EvaluationTime: time.Now(),
 						ID:             uuid2,
 						RuleID:         ruleID2,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID2,
 					},
 					db.ListEvaluationHistoryStaleRecordsRow{
 						EvaluationTime: time.Now(),
 						ID:             uuid3,
 						RuleID:         ruleID3,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID3,
 					},
 				),
@@ -201,7 +201,7 @@ func TestPurgeLoop(t *testing.T) {
 						EvaluationTime: time.Now(),
 						ID:             uuid1,
 						RuleID:         ruleID1,
-						EntityType:     int32(1),
+						EntityType:     db.EntitiesArtifact,
 						EntityID:       entityID1,
 					},
 				),
@@ -434,14 +434,14 @@ var (
 	ruleID3      = uuid.MustParse("00000000-0000-0000-0000-000000000333")
 	evaluatedAt1 = time.Now()
 	evaluatedAt2 = evaluatedAt1.Add(-1 * time.Hour)
-	entityType   = int32(1)
+	entityType   = db.EntitiesRepository
 )
 
 //nolint:unparam
 func makeHistoryRow(
 	id uuid.UUID,
 	evaluatedAt time.Time,
-	entityType int32,
+	entityType db.Entities,
 	entityID uuid.UUID,
 	ruleID uuid.UUID,
 ) db.ListEvaluationHistoryStaleRecordsRow {

@@ -27,6 +27,10 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	dbf "github.com/stacklok/minder/internal/db/fixtures"
+	entmodels "github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties/service"
+	propsSvcMock "github.com/stacklok/minder/internal/entities/properties/service/mock"
+	pmMock "github.com/stacklok/minder/internal/providers/manager/mock"
 )
 
 func TestStoreEvaluationStatus(t *testing.T) {
@@ -41,7 +45,8 @@ func TestStoreEvaluationStatus(t *testing.T) {
 		{
 			Name:          "StoreEvaluationStatus rejects invalid entity type",
 			EntityType:    "I'm a little teapot",
-			ExpectedError: "unknown entity",
+			DBSetup:       dbf.NewDBMock(withGetLatestEval(emptyLatestResult, errTest)),
+			ExpectedError: "error while querying DB",
 		},
 		{
 			Name:          "StoreEvaluationStatus returns error when unable to query previous status",
@@ -113,7 +118,8 @@ func TestStoreEvaluationStatus(t *testing.T) {
 				store = scenario.DBSetup(ctrl)
 			}
 
-			service := NewEvaluationHistoryService()
+			// provider manager is not used by this function
+			service := NewEvaluationHistoryService(nil)
 			id, err := service.StoreEvaluationStatus(
 				ctx, store, ruleID, profileID, scenario.EntityType, entityID, errTest, []byte("{}"))
 			if scenario.ExpectedError == "" {
@@ -150,16 +156,30 @@ func TestListEvaluationHistory(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		dbSetup dbf.DBMockBuilder
-		cursor  *ListEvaluationCursor
-		size    uint32
-		filter  ListEvaluationFilter
-		checkf  func(*testing.T, *ListEvaluationHistoryResult)
-		err     bool
+		name                     string
+		dbSetup                  dbf.DBMockBuilder
+		cursor                   *ListEvaluationCursor
+		size                     uint32
+		filter                   ListEvaluationFilter
+		checkf                   func(*testing.T, *ListEvaluationHistoryResult)
+		err                      bool
+		efp                      []*entmodels.EntityForProperties
+		entityForPropertiesError error
+		retrieveAllPropsErr      error
 	}{
 		{
 			name: "records",
+			efp: []*entmodels.EntityForProperties{
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid1,
+				}, nil, nil),
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid2,
+				}, nil, nil),
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid3,
+				}, nil, nil),
+			},
 			dbSetup: dbf.NewDBMock(
 				withListEvaluationHistory(nil, nil,
 					makeHistoryRow(
@@ -193,19 +213,19 @@ func TestListEvaluationHistory(t *testing.T) {
 
 				// database order is maintained
 				item1 := rows.Data[0]
-				require.Equal(t, uuid1, item1.EvaluationID)
-				require.Equal(t, evaluatedAt1, item1.EvaluatedAt)
-				require.Equal(t, uuid1, item1.EntityID)
+				require.Equal(t, uuid1, item1.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt1, item1.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid1, item1.Entity.ID)
 
 				item2 := rows.Data[1]
-				require.Equal(t, uuid2, item2.EvaluationID)
-				require.Equal(t, evaluatedAt2, item2.EvaluatedAt)
-				require.Equal(t, uuid2, item2.EntityID)
+				require.Equal(t, uuid2, item2.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt2, item2.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid2, item2.Entity.ID)
 
 				item3 := rows.Data[2]
-				require.Equal(t, uuid3, item3.EvaluationID)
-				require.Equal(t, evaluatedAt3, item3.EvaluatedAt)
-				require.Equal(t, uuid3, item3.EntityID)
+				require.Equal(t, uuid3, item3.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt3, item3.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid3, item3.Entity.ID)
 			},
 		},
 
@@ -230,6 +250,14 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
+			efp: []*entmodels.EntityForProperties{
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid1,
+				}, nil, nil),
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid2,
+				}, nil, nil),
+			},
 			cursor: &ListEvaluationCursor{
 				Direction: Next,
 			},
@@ -241,14 +269,14 @@ func TestListEvaluationHistory(t *testing.T) {
 
 				// database order is maintained
 				item1 := rows.Data[0]
-				require.Equal(t, uuid1, item1.EvaluationID)
-				require.Equal(t, evaluatedAt1, item1.EvaluatedAt)
-				require.Equal(t, uuid1, item1.EntityID)
+				require.Equal(t, uuid1, item1.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt1, item1.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid1, item1.Entity.ID)
 
 				item2 := rows.Data[1]
-				require.Equal(t, uuid2, item2.EvaluationID)
-				require.Equal(t, evaluatedAt2, item2.EvaluatedAt)
-				require.Equal(t, uuid2, item2.EntityID)
+				require.Equal(t, uuid2, item2.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt2, item2.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid2, item2.Entity.ID)
 			},
 		},
 		{
@@ -271,6 +299,14 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
+			efp: []*entmodels.EntityForProperties{
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid1,
+				}, nil, nil),
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid2,
+				}, nil, nil),
+			},
 			cursor: &ListEvaluationCursor{
 				Direction: Prev,
 			},
@@ -282,14 +318,14 @@ func TestListEvaluationHistory(t *testing.T) {
 
 				// database order is maintained
 				item1 := rows.Data[0]
-				require.Equal(t, uuid1, item1.EvaluationID)
-				require.Equal(t, evaluatedAt1, item1.EvaluatedAt)
-				require.Equal(t, uuid1, item1.EntityID)
+				require.Equal(t, uuid1, item1.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt1, item1.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid1, item1.Entity.ID)
 
 				item2 := rows.Data[1]
-				require.Equal(t, uuid2, item2.EvaluationID)
-				require.Equal(t, evaluatedAt2, item2.EvaluatedAt)
-				require.Equal(t, uuid2, item2.EntityID)
+				require.Equal(t, uuid2, item2.EvalHistoryRow.EvaluationID)
+				require.Equal(t, evaluatedAt2, item2.EvalHistoryRow.EvaluatedAt)
+				require.Equal(t, uuid2, item2.Entity.ID)
 			},
 		},
 
@@ -716,6 +752,72 @@ func TestListEvaluationHistory(t *testing.T) {
 			),
 			err: true,
 		},
+		{
+			name:                     "error getting entity",
+			err:                      true,
+			entityForPropertiesError: errors.New("whoops"),
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(nil, nil,
+					makeHistoryRow(
+						uuid1,
+						evaluatedAt1,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid2,
+						evaluatedAt2,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid3,
+						evaluatedAt3,
+						entityType,
+						remediation,
+						alert,
+					),
+				),
+			),
+		},
+		{
+			name:                "error getting properties",
+			err:                 true,
+			retrieveAllPropsErr: errors.New("whoops"),
+			efp: []*entmodels.EntityForProperties{
+				// Only called once
+				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+					ID: uuid1,
+				}, nil, nil),
+			},
+			dbSetup: dbf.NewDBMock(
+				withListEvaluationHistory(nil, nil,
+					makeHistoryRow(
+						uuid1,
+						evaluatedAt1,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid2,
+						evaluatedAt2,
+						entityType,
+						remediation,
+						alert,
+					),
+					makeHistoryRow(
+						uuid3,
+						evaluatedAt3,
+						entityType,
+						remediation,
+						alert,
+					),
+				),
+			),
+		},
 	}
 
 	for _, tt := range tests {
@@ -731,7 +833,23 @@ func TestListEvaluationHistory(t *testing.T) {
 				store = tt.dbSetup(ctrl)
 			}
 
-			service := NewEvaluationHistoryService()
+			pm := pmMock.NewMockProviderManager(ctrl)
+			propsSvc := propsSvcMock.NewMockPropertiesService(ctrl)
+			for _, efp := range tt.efp {
+				propsSvc.EXPECT().EntityForProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(efp, tt.entityForPropertiesError)
+			}
+
+			if tt.entityForPropertiesError != nil && len(tt.efp) == 0 {
+				propsSvc.EXPECT().EntityForProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, tt.entityForPropertiesError).AnyTimes()
+			}
+			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any()).
+				Return(tt.retrieveAllPropsErr).AnyTimes()
+
+			service := NewEvaluationHistoryService(pm, withPropertiesServiceBuilder(func(_ db.ExtendQuerier) service.PropertiesService {
+				return propsSvc
+			}))
 			res, err := service.ListEvaluationHistory(ctx, store, tt.cursor, tt.size, tt.filter)
 			if tt.err {
 				require.Error(t, err)
@@ -759,22 +877,6 @@ func makeHistoryRow(
 		EvaluatedAt:  evaluatedAt,
 		EntityType:   entityType,
 		EntityID:     id,
-		RepoOwner: sql.NullString{
-			Valid:  true,
-			String: "stacklok",
-		},
-		RepoName: sql.NullString{
-			Valid:  true,
-			String: "minder",
-		},
-		PrNumber: sql.NullInt64{
-			Valid: true,
-			Int64: 12345,
-		},
-		ArtifactName: sql.NullString{
-			Valid:  true,
-			String: "artifact1",
-		},
 		// EntityName:        "repo1",
 		RuleType:          "rule_type",
 		RuleName:          "rule_name",

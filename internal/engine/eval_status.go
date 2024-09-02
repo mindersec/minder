@@ -56,11 +56,6 @@ func (e *executor) createEvalStatusParams(
 		ExecutionID:   *inf.ExecutionID, // Execution ID is required in the executor.
 	}
 
-	// Prepare params for fetching the current rule evaluation from the database
-	entityType := db.NullEntities{
-		Entities: params.EntityType,
-		Valid:    true,
-	}
 	entityID := uuid.NullUUID{}
 	switch params.EntityType {
 	case db.EntitiesArtifact:
@@ -94,7 +89,6 @@ func (e *executor) createEvalStatusParams(
 	// Get the current rule evaluation from the database
 	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
 		params.Profile.ID,
-		entityType,
 		ruleName,
 		entityID,
 		nullableRuleTypeName,

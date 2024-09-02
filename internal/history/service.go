@@ -26,6 +26,8 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	propertiessvc "github.com/stacklok/minder/internal/entities/properties/service"
+	"github.com/stacklok/minder/internal/providers/manager"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -48,19 +50,40 @@ type EvaluationHistoryService interface {
 	// in the history table.
 	ListEvaluationHistory(
 		ctx context.Context,
-		qtx db.Querier,
+		qtx db.ExtendQuerier,
 		cursor *ListEvaluationCursor,
 		size uint32,
 		filter ListEvaluationFilter,
 	) (*ListEvaluationHistoryResult, error)
 }
 
-// NewEvaluationHistoryService creates a new instance of EvaluationHistoryService
-func NewEvaluationHistoryService() EvaluationHistoryService {
-	return &evaluationHistoryService{}
+type options func(*evaluationHistoryService)
+
+func withPropertiesServiceBuilder(builder func(qtx db.ExtendQuerier) propertiessvc.PropertiesService) options {
+	return func(ehs *evaluationHistoryService) {
+		ehs.propServiceBuilder = builder
+	}
 }
 
-type evaluationHistoryService struct{}
+// NewEvaluationHistoryService creates a new instance of EvaluationHistoryService
+func NewEvaluationHistoryService(providerManager manager.ProviderManager, opts ...options) EvaluationHistoryService {
+	ehs := &evaluationHistoryService{
+		providerManager: providerManager,
+		propServiceBuilder: func(qtx db.ExtendQuerier) propertiessvc.PropertiesService {
+			return propertiessvc.NewPropertiesService(qtx)
+		},
+	}
+	for _, opt := range opts {
+		opt(ehs)
+	}
+
+	return ehs
+}
+
+type evaluationHistoryService struct {
+	providerManager    manager.ProviderManager
+	propServiceBuilder func(qtx db.ExtendQuerier) propertiessvc.PropertiesService
+}
 
 func (e *evaluationHistoryService) StoreEvaluationStatus(
 	ctx context.Context,
@@ -76,18 +99,13 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	status := evalerrors.ErrorAsEvalStatus(evalError)
 	details := evalerrors.ErrorAsEvalDetails(evalError)
 
-	params, err := paramsFromEntity(ruleID, entityID, entityType)
-	if err != nil {
-		return uuid.Nil, err
-	}
+	params := paramsFromEntity(ruleID, entityID)
 
 	// find the latest record for this rule/entity pair
 	latestRecord, err := qtx.GetLatestEvalStateForRuleEntity(ctx,
 		db.GetLatestEvalStateForRuleEntityParams{
-			RuleID:        params.RuleID,
-			RepositoryID:  params.RepositoryID,
-			PullRequestID: params.PullRequestID,
-			ArtifactID:    params.ArtifactID,
+			RuleID:           params.RuleID,
+			EntityInstanceID: params.EntityID,
 		},
 	)
 	if err != nil {
@@ -96,9 +114,6 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 			ruleEntityID, err = qtx.InsertEvaluationRuleEntity(ctx,
 				db.InsertEvaluationRuleEntityParams{
 					RuleID:           params.RuleID,
-					RepositoryID:     params.RepositoryID,
-					PullRequestID:    params.PullRequestID,
-					ArtifactID:       params.ArtifactID,
 					EntityType:       entityType,
 					EntityInstanceID: params.EntityID,
 				},
@@ -160,45 +175,21 @@ func (_ *evaluationHistoryService) createNewStatus(
 func paramsFromEntity(
 	ruleID uuid.UUID,
 	entityID uuid.UUID,
-	entityType db.Entities,
-) (*ruleEntityParams, error) {
+) *ruleEntityParams {
 	params := ruleEntityParams{RuleID: ruleID}
 
-	nullableEntityID := uuid.NullUUID{
-		UUID:  entityID,
-		Valid: true,
-	}
-
 	params.EntityID = entityID
-
-	switch entityType {
-	case db.EntitiesRepository:
-		params.RepositoryID = nullableEntityID
-	case db.EntitiesPullRequest:
-		params.PullRequestID = nullableEntityID
-	case db.EntitiesArtifact:
-		params.ArtifactID = nullableEntityID
-	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
-		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
-	default:
-		return nil, fmt.Errorf("unknown entity %q", entityType)
-	}
-	return &params, nil
+	return &params
 }
 
 type ruleEntityParams struct {
-	RuleID        uuid.UUID
-	RepositoryID  uuid.NullUUID
-	ArtifactID    uuid.NullUUID
-	PullRequestID uuid.NullUUID
-	// Is the target entity ID. We'll be replacing the single-entity IDs
-	// with this one.
+	RuleID   uuid.UUID
 	EntityID uuid.UUID
 }
 
-func (_ *evaluationHistoryService) ListEvaluationHistory(
+func (ehs *evaluationHistoryService) ListEvaluationHistory(
 	ctx context.Context,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 	cursor *ListEvaluationCursor,
 	size uint32,
 	filter ListEvaluationFilter,
@@ -223,8 +214,28 @@ func (_ *evaluationHistoryService) ListEvaluationHistory(
 		slices.Reverse(rows)
 	}
 
+	propsvc := ehs.propServiceBuilder(qtx)
+
+	data := make([]OneEvalHistoryAndEntity, 0, len(rows))
+	for _, row := range rows {
+		efp, err := propsvc.EntityForProperties(ctx, row.EntityID, row.ProjectID, ehs.providerManager, qtx)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching entity for properties: %w", err)
+		}
+
+		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+		}
+
+		data = append(data, OneEvalHistoryAndEntity{
+			EntityWithProperties: *efp.EntityWithProperties,
+			EvalHistoryRow:       row,
+		})
+	}
+
 	result := &ListEvaluationHistoryResult{
-		Data: rows,
+		Data: data,
 	}
 	if len(rows) > 0 {
 		newest := rows[0]

@@ -97,7 +97,6 @@ func AllInOneServerService(
 	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
 	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
 
-	historySvc := history.NewEvaluationHistoryService()
 	inviteSvc := invites.NewInviteService()
 	selChecker := selectors.NewEnv()
 	profileSvc := profiles.NewProfileService(evt, selChecker)
@@ -153,6 +152,7 @@ func AllInOneServerService(
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
 	propSvc := propService.NewPropertiesService(store)
+	historySvc := history.NewEvaluationHistoryService(providerManager)
 	repos := github.NewRepositoryService(whManager, store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
@@ -210,7 +210,7 @@ func AllInOneServerService(
 		store,
 		providerManager,
 		executorMetrics,
-		history.NewEvaluationHistoryService(),
+		historySvc,
 		featureFlagClient,
 		profileStore,
 		selEnv,

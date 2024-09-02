@@ -25,6 +25,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/db"
+	entmodels "github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/history"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -34,6 +36,7 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		sut    *db.ListRuleEvaluationsByProfileIdRow
+		efp    *entmodels.EntityForProperties
 		expect *minderv1.EvalResultAlert
 	}{
 		{
@@ -43,15 +46,12 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				RepoOwner: sql.NullString{
-					String: "example",
-					Valid:  true,
-				},
-				RepoName: sql.NullString{
-					String: "test",
-					Valid:  true,
-				},
 			},
+			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				ID:   uuid.New(),
+				Type: minderv1.Entity_ENTITY_REPOSITORIES,
+				Name: "example/test",
+			}, nil, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
@@ -66,6 +66,11 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 			},
+			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				ID:   uuid.New(),
+				Type: minderv1.Entity_ENTITY_REPOSITORIES,
+				Name: "example/test",
+			}, nil, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
@@ -80,15 +85,12 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
-				RepoOwner: sql.NullString{
-					String: "",
-					Valid:  true,
-				},
-				RepoName: sql.NullString{
-					String: "test",
-					Valid:  true,
-				},
 			},
+			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				ID:   uuid.New(),
+				Type: minderv1.Entity_ENTITY_REPOSITORIES,
+				Name: "test",
+			}, nil, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
@@ -100,7 +102,7 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			res := buildEvalResultAlertFromLRERow(tc.sut)
+			res := buildEvalResultAlertFromLRERow(tc.sut, tc.efp)
 
 			require.Equal(t, tc.expect.Details, res.Details)
 			require.Equal(t, tc.expect.LastUpdated, res.LastUpdated)
@@ -174,165 +176,6 @@ func TestDBEntityToEntity(t *testing.T) {
 	}
 }
 
-func TestGetEntityName(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name   string
-		dbEnt  db.Entities
-		row    db.ListEvaluationHistoryRow
-		output string
-		err    bool
-	}{
-		{
-			name:  "pull request",
-			dbEnt: db.EntitiesPullRequest,
-			row: db.ListEvaluationHistoryRow{
-				RepoOwner: sql.NullString{
-					Valid:  true,
-					String: "stacklok",
-				},
-				RepoName: sql.NullString{
-					Valid:  true,
-					String: "minder",
-				},
-				PrNumber: sql.NullInt64{
-					Valid: true,
-					Int64: 12345,
-				},
-			},
-			output: "stacklok/minder#12345",
-		},
-		{
-			name:  "pull request no repo owner",
-			dbEnt: db.EntitiesPullRequest,
-			row: db.ListEvaluationHistoryRow{
-				RepoName: sql.NullString{
-					Valid:  true,
-					String: "minder",
-				},
-				PrNumber: sql.NullInt64{
-					Valid: true,
-					Int64: 12345,
-				},
-			},
-			err: true,
-		},
-		{
-			name:  "pull request no repo name",
-			dbEnt: db.EntitiesPullRequest,
-			row: db.ListEvaluationHistoryRow{
-				RepoOwner: sql.NullString{
-					Valid:  true,
-					String: "stacklok",
-				},
-				PrNumber: sql.NullInt64{
-					Valid: true,
-					Int64: 12345,
-				},
-			},
-			err: true,
-		},
-		{
-			name:  "pull request no pr number",
-			dbEnt: db.EntitiesPullRequest,
-			row: db.ListEvaluationHistoryRow{
-				RepoOwner: sql.NullString{
-					Valid:  true,
-					String: "stacklok",
-				},
-				RepoName: sql.NullString{
-					Valid:  true,
-					String: "minder",
-				},
-			},
-			err: true,
-		},
-		{
-			name:  "artifact",
-			dbEnt: db.EntitiesArtifact,
-			row: db.ListEvaluationHistoryRow{
-				ArtifactName: sql.NullString{
-					Valid:  true,
-					String: "artifact name",
-				},
-			},
-			output: "artifact name",
-		},
-		{
-			name:  "repository",
-			dbEnt: db.EntitiesRepository,
-			row: db.ListEvaluationHistoryRow{
-				RepoOwner: sql.NullString{
-					Valid:  true,
-					String: "stacklok",
-				},
-				RepoName: sql.NullString{
-					Valid:  true,
-					String: "minder",
-				},
-			},
-			output: "stacklok/minder",
-		},
-		{
-			name:  "repository no repo owner",
-			dbEnt: db.EntitiesRepository,
-			row: db.ListEvaluationHistoryRow{
-				RepoName: sql.NullString{
-					Valid:  true,
-					String: "minder",
-				},
-			},
-			err: true,
-		},
-		{
-			name:  "repository no repo name",
-			dbEnt: db.EntitiesRepository,
-			row: db.ListEvaluationHistoryRow{
-				RepoOwner: sql.NullString{
-					Valid:  true,
-					String: "stacklok",
-				},
-			},
-			err: true,
-		},
-		{
-			name:  "build environments",
-			dbEnt: db.EntitiesBuildEnvironment,
-			row:   db.ListEvaluationHistoryRow{},
-			err:   true,
-		},
-		{
-			name:  "default",
-			dbEnt: db.Entities("whatever"),
-			row:   db.ListEvaluationHistoryRow{},
-			err:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			res, err := getEntityName(
-				tt.dbEnt,
-				tt.row.RepoOwner,
-				tt.row.RepoName,
-				tt.row.PrNumber,
-				tt.row.ArtifactName,
-			)
-
-			if tt.err {
-				require.Error(t, err)
-				require.Equal(t, "", res)
-				return
-			}
-
-			require.NoError(t, err)
-			require.Equal(t, tt.output, res)
-		})
-	}
-}
-
 func TestFromEvaluationHistoryRows(t *testing.T) {
 	t.Parallel()
 
@@ -344,100 +187,130 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		rows   []db.ListEvaluationHistoryRow
+		rows   []history.OneEvalHistoryAndEntity
 		checkf func(*testing.T, db.ListEvaluationHistoryRow, *minderv1.EvaluationHistory)
 		err    bool
 	}{
 		{
 			name: "empty",
-			rows: []db.ListEvaluationHistoryRow{},
+			rows: []history.OneEvalHistoryAndEntity{},
 		},
 		{
 			name: "happy path",
-			rows: []db.ListEvaluationHistoryRow{
+			rows: []history.OneEvalHistoryAndEntity{
 				{
-					EvaluationID: uuid1,
-					EvaluatedAt:  now,
-					EntityType:   db.EntitiesRepository,
-					EntityID:     entityid1,
-					RepoOwner:    nullStr("stacklok"),
-					RepoName:     nullStr("minder"),
-					ProjectID:    uuid.NullUUID{},
-					RuleType:     "rule_type",
-					RuleName:     "rule_name",
-					RuleSeverity: "unknown",
-					ProfileName:  "profile_name",
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityid1,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "stacklok/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: uuid1,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityid1,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+					},
 				},
 			},
 		},
 		{
 			name: "order preserved",
-			rows: []db.ListEvaluationHistoryRow{
+			rows: []history.OneEvalHistoryAndEntity{
 				{
-					EvaluationID: uuid1,
-					EvaluatedAt:  now,
-					EntityType:   db.EntitiesRepository,
-					EntityID:     entityid1,
-					RepoOwner:    nullStr("stacklok"),
-					RepoName:     nullStr("minder"),
-					ProjectID:    uuid.NullUUID{},
-					RuleType:     "rule_type",
-					RuleName:     "rule_name",
-					RuleSeverity: "unknown",
-					ProfileName:  "profile_name",
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityid1,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "stacklok/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: uuid1,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityid1,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+					},
 				},
 				{
-					EvaluationID: uuid2,
-					EvaluatedAt:  now,
-					EntityType:   db.EntitiesRepository,
-					EntityID:     entityid2,
-					RepoOwner:    nullStr("stacklok"),
-					RepoName:     nullStr("frizbee"),
-					ProjectID:    uuid.NullUUID{},
-					RuleType:     "rule_type",
-					RuleName:     "rule_name",
-					RuleSeverity: "unknown",
-					ProfileName:  "profile_name",
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityid2,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "stacklok/frizbee",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: uuid2,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityid2,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+					},
 				},
 			},
 		},
 		{
 			name: "optional alert",
-			rows: []db.ListEvaluationHistoryRow{
+			rows: []history.OneEvalHistoryAndEntity{
 				{
-					EvaluationID: uuid1,
-					EvaluatedAt:  now,
-					EntityType:   db.EntitiesRepository,
-					EntityID:     entityid1,
-					RepoOwner:    nullStr("stacklok"),
-					RepoName:     nullStr("minder"),
-					ProjectID:    uuid.NullUUID{},
-					RuleType:     "rule_type",
-					RuleName:     "rule_name",
-					RuleSeverity: "unknown",
-					ProfileName:  "profile_name",
-					AlertStatus:  nullAlertStatusOK(),
-					AlertDetails: nullStr("alert details"),
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityid1,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "stacklok/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: uuid1,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityid1,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+						AlertStatus:  nullAlertStatusOK(),
+						AlertDetails: nullStr("alert details"),
+					},
 				},
 			},
 		},
 		{
 			name: "optional remediation",
-			rows: []db.ListEvaluationHistoryRow{
+			rows: []history.OneEvalHistoryAndEntity{
 				{
-					EvaluationID:       uuid1,
-					EvaluatedAt:        now,
-					EntityType:         db.EntitiesRepository,
-					EntityID:           entityid1,
-					RepoOwner:          nullStr("stacklok"),
-					RepoName:           nullStr("minder"),
-					ProjectID:          uuid.NullUUID{},
-					RuleType:           "rule_type",
-					RuleName:           "rule_name",
-					RuleSeverity:       "unknown",
-					ProfileName:        "profile_name",
-					RemediationStatus:  nullRemediationStatusTypesSuccess(),
-					RemediationDetails: nullStr("remediation details"),
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityid1,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "stacklok/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID:       uuid1,
+						EvaluatedAt:        now,
+						EntityType:         db.EntitiesRepository,
+						EntityID:           entityid1,
+						ProjectID:          uuid.New(),
+						RuleType:           "rule_type",
+						RuleName:           "rule_name",
+						RuleSeverity:       "unknown",
+						ProfileName:        "profile_name",
+						RemediationStatus:  nullRemediationStatusTypesSuccess(),
+						RemediationDetails: nullStr("remediation details"),
+					},
 				},
 			},
 		},
@@ -459,37 +332,37 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 			for i := 0; i < len(tt.rows); i++ {
 				row := tt.rows[i]
 				item := res[i]
-				require.Equal(t, row.EvaluationID.String(), item.Id)
-				require.Equal(t, row.EvaluatedAt, item.EvaluatedAt.AsTime())
-				require.Equal(t, row.EntityID.String(), item.Entity.Id)
-				require.Equal(t, dbEntityToEntity(row.EntityType), item.Entity.Type)
-				require.Equal(t, row.RuleType, item.Rule.RuleType)
-				require.Equal(t, row.RuleName, item.Rule.Name)
-				sev, err := dbSeverityToSeverity(row.RuleSeverity)
+				require.Equal(t, row.EvalHistoryRow.EvaluationID.String(), item.Id)
+				require.Equal(t, row.EvalHistoryRow.EvaluatedAt, item.EvaluatedAt.AsTime())
+				require.Equal(t, row.Entity.ID.String(), item.Entity.Id)
+				require.Equal(t, row.Entity.Type, item.Entity.Type)
+				require.Equal(t, row.EvalHistoryRow.RuleType, item.Rule.RuleType)
+				require.Equal(t, row.EvalHistoryRow.RuleName, item.Rule.Name)
+				sev, err := dbSeverityToSeverity(row.EvalHistoryRow.RuleSeverity)
 				require.NoError(t, err)
 				require.Equal(t, sev, item.Rule.Severity)
-				require.Equal(t, row.ProfileName, item.Rule.Profile)
+				require.Equal(t, row.EvalHistoryRow.ProfileName, item.Rule.Profile)
 
-				require.Equal(t, row.AlertStatus.Valid, item.Alert != nil)
-				if row.AlertStatus.Valid {
+				require.Equal(t, row.EvalHistoryRow.AlertStatus.Valid, item.Alert != nil)
+				if row.EvalHistoryRow.AlertStatus.Valid {
 					require.Equal(t,
-						string(row.AlertStatus.AlertStatusTypes),
+						string(row.EvalHistoryRow.AlertStatus.AlertStatusTypes),
 						item.Alert.Status,
 					)
 					require.Equal(t,
-						row.AlertDetails.String,
+						row.EvalHistoryRow.AlertDetails.String,
 						item.Alert.Details,
 					)
 				}
 
-				require.Equal(t, row.RemediationStatus.Valid, item.Remediation != nil)
-				if row.RemediationStatus.Valid {
+				require.Equal(t, row.EvalHistoryRow.RemediationStatus.Valid, item.Remediation != nil)
+				if row.EvalHistoryRow.RemediationStatus.Valid {
 					require.Equal(t,
-						string(row.RemediationStatus.RemediationStatusTypes),
+						string(row.EvalHistoryRow.RemediationStatus.RemediationStatusTypes),
 						item.Remediation.Status,
 					)
 					require.Equal(t,
-						string(row.RemediationDetails.String),
+						string(row.EvalHistoryRow.RemediationDetails.String),
 						item.Remediation.Details,
 					)
 				}
