@@ -41,7 +41,7 @@ const (
 )
 
 // ErrEntityNotFound is the error returned when an entity is not found
-var ErrEntityNotFound = errors.New("property not found")
+var ErrEntityNotFound = errors.New("entity not found")
 
 // Provider is the general interface for all providers
 type Provider interface {
