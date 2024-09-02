@@ -315,7 +315,11 @@ func (q *Queries) GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (E
 
 const getEntityByName = `-- name: GetEntityByName :one
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.name = $3 AND entity_instances.project_id = $1 AND entity_instances.entity_type = $2
+WHERE
+    entity_instances.name = $3
+    AND entity_instances.project_id = $1
+    AND entity_instances.entity_type = $2
+    AND entity_instances.provider_id = $4
 LIMIT 1
 `
 
@@ -323,11 +327,17 @@ type GetEntityByNameParams struct {
 	ProjectID  uuid.UUID `json:"project_id"`
 	EntityType Entities  `json:"entity_type"`
 	Name       string    `json:"name"`
+	ProviderID uuid.UUID `json:"provider_id"`
 }
 
 // GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 func (q *Queries) GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error) {
-	row := q.db.QueryRowContext(ctx, getEntityByName, arg.ProjectID, arg.EntityType, arg.Name)
+	row := q.db.QueryRowContext(ctx, getEntityByName,
+		arg.ProjectID,
+		arg.EntityType,
+		arg.Name,
+		arg.ProviderID,
+	)
 	var i EntityInstance
 	err := row.Scan(
 		&i.ID,

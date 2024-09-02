@@ -80,6 +80,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       "garbage/nosuchentity",
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		require.Empty(t, ent)
@@ -127,6 +128,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       testEntName,
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, getRepo)
@@ -136,6 +138,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       testEntName,
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, getRepo)
