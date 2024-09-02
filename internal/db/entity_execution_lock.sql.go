@@ -22,7 +22,7 @@ INSERT INTO flush_cache(
     $3::UUID
 ) ON CONFLICT(entity_instance_id)
 DO NOTHING
-RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
+RETURNING id, entity, queued_at, project_id, entity_instance_id
 `
 
 type EnqueueFlushParams struct {
@@ -37,9 +37,6 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 	err := row.Scan(
 		&i.ID,
 		&i.Entity,
-		&i.RepositoryID,
-		&i.ArtifactID,
-		&i.PullRequestID,
 		&i.QueuedAt,
 		&i.ProjectID,
 		&i.EntityInstanceID,
@@ -50,7 +47,7 @@ func (q *Queries) EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (Flu
 const flushCache = `-- name: FlushCache :one
 DELETE FROM flush_cache
 WHERE entity_instance_id= $1
-RETURNING id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id
+RETURNING id, entity, queued_at, project_id, entity_instance_id
 `
 
 func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (FlushCache, error) {
@@ -59,9 +56,6 @@ func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (F
 	err := row.Scan(
 		&i.ID,
 		&i.Entity,
-		&i.RepositoryID,
-		&i.ArtifactID,
-		&i.PullRequestID,
 		&i.QueuedAt,
 		&i.ProjectID,
 		&i.EntityInstanceID,
@@ -70,7 +64,7 @@ func (q *Queries) FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (F
 }
 
 const listFlushCache = `-- name: ListFlushCache :many
-SELECT id, entity, repository_id, artifact_id, pull_request_id, queued_at, project_id, entity_instance_id FROM flush_cache
+SELECT id, entity, queued_at, project_id, entity_instance_id FROM flush_cache
 `
 
 func (q *Queries) ListFlushCache(ctx context.Context) ([]FlushCache, error) {
@@ -85,9 +79,6 @@ func (q *Queries) ListFlushCache(ctx context.Context) ([]FlushCache, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Entity,
-			&i.RepositoryID,
-			&i.ArtifactID,
-			&i.PullRequestID,
 			&i.QueuedAt,
 			&i.ProjectID,
 			&i.EntityInstanceID,
@@ -124,7 +115,7 @@ DO UPDATE SET
     locked_by = gen_random_uuid(),
     last_lock_time = NOW()
 WHERE entity_execution_lock.last_lock_time < (NOW() - ($4::TEXT || ' seconds')::interval)
-RETURNING id, entity, locked_by, last_lock_time, repository_id, artifact_id, pull_request_id, project_id, entity_instance_id
+RETURNING id, entity, locked_by, last_lock_time, project_id, entity_instance_id
 `
 
 type LockIfThresholdNotExceededParams struct {
@@ -152,9 +143,6 @@ func (q *Queries) LockIfThresholdNotExceeded(ctx context.Context, arg LockIfThre
 		&i.Entity,
 		&i.LockedBy,
 		&i.LastLockTime,
-		&i.RepositoryID,
-		&i.ArtifactID,
-		&i.PullRequestID,
 		&i.ProjectID,
 		&i.EntityInstanceID,
 	)

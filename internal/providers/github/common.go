@@ -39,6 +39,7 @@ import (
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
 	gitclient "github.com/stacklok/minder/internal/providers/git"
 	"github.com/stacklok/minder/internal/providers/github/ghcr"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -81,6 +82,7 @@ type GitHub struct {
 	delegate             Delegate
 	ghcrwrap             *ghcr.ImageLister
 	gitConfig            config.GitConfig
+	propertyFetchers     properties.GhPropertyFetcherFactory
 }
 
 // Ensure that the GitHub client implements the GitHub interface
@@ -167,6 +169,7 @@ func NewGitHub(
 	cache ratecache.RestClientCache,
 	delegate Delegate,
 	cfg *config.ProviderConfig,
+	propertyFetchers properties.GhPropertyFetcherFactory,
 ) *GitHub {
 	var gitConfig config.GitConfig
 	if cfg != nil {
@@ -179,6 +182,7 @@ func NewGitHub(
 		delegate:             delegate,
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 		gitConfig:            gitConfig,
+		propertyFetchers:     propertyFetchers,
 	}
 }
 

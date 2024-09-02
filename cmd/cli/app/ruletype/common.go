@@ -144,7 +144,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 		alert = rt.Def.GetAlert().Type
 	}
 	t.AddRow("Alert", alert)
-	t.AddRow("Guidance", rt.Guidance)
+	t.AddRow("Guidance", cli.MaybeRenderMarkdown(rt.Guidance))
 }
 
 func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {
@@ -180,6 +180,12 @@ func appendRuleTypePropertiesToName(rt *minderv1.RuleType) string {
 	if rt.Def.GetRemediate() == nil {
 		properties = append(properties, "can_remediate: false")
 	}
-	// return the name with the properties
-	return fmt.Sprintf("%s (%s)", name, strings.Join(properties, ", "))
+
+	// return the name with the properties if any
+	if len(properties) != 0 {
+		return fmt.Sprintf("%s (%s)", name, strings.Join(properties, ", "))
+	}
+
+	// return only name otherwise
+	return name
 }

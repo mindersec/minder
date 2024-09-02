@@ -43,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/gitlab"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	provsel "github.com/stacklok/minder/internal/providers/selectors"
@@ -391,6 +392,7 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			credentials.NewGitHubTokenCredential(token),
 			nil,
 			clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+			properties.NewPropertyFetcherFactory(),
 			false,
 		)
 		if err != nil {

@@ -1718,6 +1718,36 @@ func (mr *MockStoreMockRecorder) GetSubscriptionByProjectBundle(arg0, arg1 any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscriptionByProjectBundle", reflect.TypeOf((*MockStore)(nil).GetSubscriptionByProjectBundle), arg0, arg1)
 }
 
+// GetTypedEntitiesByProperty mocks base method.
+func (m *MockStore) GetTypedEntitiesByProperty(arg0 context.Context, arg1 db.GetTypedEntitiesByPropertyParams) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTypedEntitiesByProperty", arg0, arg1)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTypedEntitiesByProperty indicates an expected call of GetTypedEntitiesByProperty.
+func (mr *MockStoreMockRecorder) GetTypedEntitiesByProperty(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTypedEntitiesByProperty", reflect.TypeOf((*MockStore)(nil).GetTypedEntitiesByProperty), arg0, arg1)
+}
+
+// GetTypedEntitiesByPropertyV1 mocks base method.
+func (m *MockStore) GetTypedEntitiesByPropertyV1(arg0 context.Context, arg1 uuid.UUID, arg2 db.Entities, arg3 string, arg4 any) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTypedEntitiesByPropertyV1", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTypedEntitiesByPropertyV1 indicates an expected call of GetTypedEntitiesByPropertyV1.
+func (mr *MockStoreMockRecorder) GetTypedEntitiesByPropertyV1(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTypedEntitiesByPropertyV1", reflect.TypeOf((*MockStore)(nil).GetTypedEntitiesByPropertyV1), arg0, arg1, arg2, arg3, arg4)
+}
+
 // GetUnclaimedInstallationsByUser mocks base method.
 func (m *MockStore) GetUnclaimedInstallationsByUser(arg0 context.Context, arg1 sql.NullString) ([]db.ProviderGithubAppInstallation, error) {
 	m.ctrl.T.Helper()

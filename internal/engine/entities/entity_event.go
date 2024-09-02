@@ -528,10 +528,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
-	// We always have the repository ID.
-	if err := out.withRepositoryIDFromMessage(msg); err != nil {
-		return nil, err
-	}
+	// We don't always have repo ID (e.g. for artifacts)
 
 	out.withActionEventFromMessage(msg)
 
@@ -539,14 +536,22 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	switch typ {
 	case RepositoryEventEntityType:
 		out.AsRepository()
+		if err := out.withRepositoryIDFromMessage(msg); err != nil {
+			return nil, err
+		}
 	case VersionedArtifactEventEntityType:
 		out.AsArtifact()
 		if err := out.withArtifactIDFromMessage(msg); err != nil {
 			return nil, err
 		}
+		//nolint:gosec // The repo is not always present
+		out.withRepositoryIDFromMessage(msg)
 	case PullRequestEventEntityType:
 		out.AsPullRequest()
 		if err := out.withPullRequestIDFromMessage(msg); err != nil {
+			return nil, err
+		}
+		if err := out.withRepositoryIDFromMessage(msg); err != nil {
 			return nil, err
 		}
 	default:

@@ -613,7 +613,7 @@ func TestProviderCallback(t *testing.T) {
 
 			mockGhProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 			tc.buildStubs(mockGhProviderService)
-			s, _ := newDefaultServer(t, store, clientFactory)
+			s, _ := newDefaultServer(t, store, nil, clientFactory)
 			s.ghProviders = mockGhProviderService
 			s.cfg.Provider = serverconfig.ProviderConfig{
 				GitHub: &serverconfig.GitHubConfig{

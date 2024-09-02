@@ -152,3 +152,20 @@ func (q *Queries) GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID
 
 	return props, nil
 }
+
+// GetTypedEntitiesByPropertyV1 retrieves all entities with a property value
+func (q *Queries) GetTypedEntitiesByPropertyV1(
+	ctx context.Context, project uuid.UUID, entType Entities, key string, value any,
+) ([]EntityInstance, error) {
+	jsonVal, err := PropValueToDbV1(value)
+	if err != nil {
+		return nil, err
+	}
+
+	return q.GetTypedEntitiesByProperty(ctx, GetTypedEntitiesByPropertyParams{
+		EntityType: entType,
+		ProjectID:  project,
+		Key:        key,
+		Value:      jsonVal,
+	})
+}

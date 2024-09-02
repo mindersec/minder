@@ -24,6 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	cf "github.com/stacklok/minder/internal/repositories/github/clients/mock/fixtures"
 	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 )
@@ -226,19 +227,19 @@ func TestWebhookManager_CreateWebhook(t *testing.T) {
 			ctx := context.Background()
 			client := scenario.ClientSetup(ctrl)
 			webhookConfig := getWebhookConfig(scenario.WebhookOpts...)
-			resultID, hook, err := webhooks.NewWebhookManager(webhookConfig).
+			hookParams, err := webhooks.NewWebhookManager(webhookConfig).
 				CreateWebhook(ctx, client, cf.RepoOwner, cf.RepoName)
 
 			if scenario.ShouldSucceed {
 				require.NoError(t, err)
-				require.Equal(t, cf.ResultHook, hook)
+				require.Equal(t, hookParams.GetProperty(properties.RepoPropertyHookId).GetInt64(), cf.ResultHook.GetID())
+				require.Equal(t, hookParams.GetProperty(properties.RepoPropertyHookUrl).GetString(), cf.ResultHook.GetURL())
 				// can't do much cf.With the ID since it is a random UUID
 				// assert that it is in fact a string of a UUID
-				_, err := uuid.Parse(resultID)
+				_, err := uuid.Parse(hookParams.GetProperty(properties.RepoPropertyHookUiid).GetString())
 				require.NoError(t, err)
 			} else {
-				require.Equal(t, "", resultID)
-				require.Nil(t, hook)
+				require.Nil(t, hookParams)
 				require.ErrorContains(t, err, scenario.ExpectedError)
 			}
 		})

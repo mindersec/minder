@@ -57,18 +57,18 @@ func (mr *MockRepoSelectorConverterMockRecorder) CanImplement(trait any) *gomock
 }
 
 // FetchAllProperties mocks base method.
-func (m *MockRepoSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity) (*properties.Properties, error) {
+func (m *MockRepoSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType)
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
 	ret0, _ := ret[0].(*properties.Properties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchAllProperties indicates an expected call of FetchAllProperties.
-func (mr *MockRepoSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType any) *gomock.Call {
+func (mr *MockRepoSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockRepoSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockRepoSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
 }
 
 // FetchProperty mocks base method.
@@ -167,18 +167,18 @@ func (mr *MockArtifactSelectorConverterMockRecorder) CanImplement(trait any) *go
 }
 
 // FetchAllProperties mocks base method.
-func (m *MockArtifactSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity) (*properties.Properties, error) {
+func (m *MockArtifactSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType)
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
 	ret0, _ := ret[0].(*properties.Properties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchAllProperties indicates an expected call of FetchAllProperties.
-func (mr *MockArtifactSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType any) *gomock.Call {
+func (mr *MockArtifactSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
 }
 
 // FetchProperty mocks base method.
@@ -249,18 +249,18 @@ func (mr *MockPullRequestSelectorConverterMockRecorder) CanImplement(trait any) 
 }
 
 // FetchAllProperties mocks base method.
-func (m *MockPullRequestSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity) (*properties.Properties, error) {
+func (m *MockPullRequestSelectorConverter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v1.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType)
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
 	ret0, _ := ret[0].(*properties.Properties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FetchAllProperties indicates an expected call of FetchAllProperties.
-func (mr *MockPullRequestSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType any) *gomock.Call {
+func (mr *MockPullRequestSelectorConverterMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
 }
 
 // FetchProperty mocks base method.

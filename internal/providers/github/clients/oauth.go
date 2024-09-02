@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -84,6 +85,7 @@ func NewRestClient(
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	ghClientFactory GitHubClientFactory,
+	propertyFetchers properties.GhPropertyFetcherFactory,
 	owner string,
 ) (*github.GitHub, error) {
 	ghClient, delegate, err := ghClientFactory.BuildOAuthClient(cfg.GetEndpoint(), credential, owner)
@@ -97,6 +99,7 @@ func NewRestClient(
 		restClientCache,
 		delegate,
 		providerCfg,
+		propertyFetchers,
 	), nil
 }
 

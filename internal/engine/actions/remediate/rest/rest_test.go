@@ -33,6 +33,7 @@ import (
 	"github.com/stacklok/minder/internal/profiles/models"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/providers/testproviders"
@@ -60,6 +61,7 @@ func testGithubProvider(baseURL string) (provifv1.REST, error) {
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
+		properties.NewPropertyFetcherFactory(),
 		"",
 	)
 }

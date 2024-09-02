@@ -28,6 +28,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers/github"
 	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/ratecache"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -88,6 +89,7 @@ func NewGitHubAppProvider(
 	credential provifv1.GitHubCredential,
 	packageListingClient *gogithub.Client,
 	ghClientFactory GitHubClientFactory,
+	propertyFetchers properties.GhPropertyFetcherFactory,
 	isOrg bool,
 ) (*github.GitHub, error) {
 	if appConfig == nil || appConfig.GitHubApp == nil {
@@ -114,6 +116,7 @@ func NewGitHubAppProvider(
 		restClientCache,
 		delegate,
 		appConfig,
+		propertyFetchers,
 	), nil
 }
 

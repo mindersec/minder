@@ -202,6 +202,72 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, anotherKeyVal.Value, "anothervalue")
 	})
+
+	t.Run("GetTypedEntitiesByPropertyV1", func(t *testing.T) {
+		t.Parallel()
+
+		const testRepoName = "testorg/testrepo_getbyprops"
+		const testArtifactName = "testorg/testartifact_getbyprops"
+
+		repo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+			EntityType:     EntitiesRepository,
+			Name:           testRepoName,
+			ProjectID:      proj.ID,
+			ProviderID:     prov.ID,
+			OriginatedFrom: uuid.NullUUID{},
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, repo)
+
+		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+			EntityID: repo.ID,
+			Key:      "sharedkey",
+			Value:    "sharedvalue",
+		})
+		require.NoError(t, err)
+
+		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+			EntityID: repo.ID,
+			Key:      "repokey",
+			Value:    "repovalue",
+		})
+		require.NoError(t, err)
+
+		art, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+			EntityType:     EntitiesArtifact,
+			Name:           testArtifactName,
+			ProjectID:      proj.ID,
+			ProviderID:     prov.ID,
+			OriginatedFrom: uuid.NullUUID{},
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, art)
+
+		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+			EntityID: art.ID,
+			Key:      "sharedkey",
+			Value:    "sharedvalue",
+		})
+		require.NoError(t, err)
+
+		getEnt, err := testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), proj.ID, EntitiesRepository, "sharedkey", "sharedvalue")
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), proj.ID, EntitiesArtifact, "sharedkey", "sharedvalue")
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, art.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), proj.ID, EntitiesRepository, "repokey", "repovalue")
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+	})
 }
 
 func propertyByKey(t *testing.T, props []PropertyValueV1, key string) PropertyValueV1 {
