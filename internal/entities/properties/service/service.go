@@ -37,7 +37,7 @@ import (
 
 const (
 	// propertiesCacheTimeout is the default timeout for the cache of properties
-	propertiesCacheTimeout = time.Duration(60) * time.Second
+	propertiesCacheTimeout = time.Duration(300) * time.Second
 	// bypassCacheTimeout is a special value to bypass the cache timeout
 	// it is not exported from the package and should only be used for testing
 	bypassCacheTimeout = time.Duration(-1)
