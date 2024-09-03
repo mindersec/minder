@@ -979,9 +979,7 @@ func (s *Server) processPullRequestEvent(
 		properties.PropertyUpstreamID: event.GetPullRequest().GetID(),
 		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
 		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
-		ghprop.PullPropertyURL:        event.GetPullRequest().GetURL(),
 		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
-		ghprop.PullPropertyAuthorID:   event.GetPullRequest().GetUser().GetID(),
 		ghprop.PullPropertyAction:     event.GetAction(),
 	})
 	if err != nil {
@@ -1000,14 +998,14 @@ func (s *Server) processPullRequestEvent(
 		return nil, fmt.Errorf("error reconciling PR with DB: %w", err)
 	}
 
-	err = s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps)
+	refreshedProps, err := s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps)
 	if err != nil {
 		return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
 	}
 
 	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
 
-	pbPullRequest := ghprop.PullRequestV1FromProperties(pullProps)
+	pbPullRequest := ghprop.PullRequestV1FromProperties(refreshedProps)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(event.GetAction()).
@@ -1611,11 +1609,11 @@ func (s *Server) updatePullRequestInfoFromProvider(
 	provider provifv1.Provider,
 	repoEnt *models.EntityWithProperties,
 	pullProps *properties.Properties,
-) error {
+) (*properties.Properties, error) {
 	// create properties.Name for the PR
 	prName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
 	if err != nil {
-		return fmt.Errorf("error getting pull request name: %w", err)
+		return nil, fmt.Errorf("error getting pull request name: %w", err)
 	}
 
 	lookupPropertiesMap := map[string]any{
@@ -1625,15 +1623,15 @@ func (s *Server) updatePullRequestInfoFromProvider(
 
 	lookupProperties, err := properties.NewProperties(lookupPropertiesMap)
 	if err != nil {
-		return fmt.Errorf("error creating properties: %w", err)
+		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
-	_, err = s.props.RetrieveAllProperties(ctx, provider,
+	prProps, err := s.props.RetrieveAllProperties(ctx, provider,
 		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
 		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS)
 	if err != nil {
-		return fmt.Errorf("error retrieving properties: %w", err)
+		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}
 
-	return nil
+	return prProps, nil
 }

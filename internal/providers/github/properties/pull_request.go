@@ -142,8 +142,9 @@ func getPrWrapper(
 		properties.PropertyUpstreamID: prReply.GetID(),
 		properties.PropertyName:       fmt.Sprintf("%s/%s/%d", owner, name, id),
 		// github-specific
-		PullPropertyURL:       prReply.GetHTMLURL(),
-		PullPropertyNumber:    prReply.GetNumber(),
+		PullPropertyURL: prReply.GetHTMLURL(),
+		// our proto representation uses int64 for the number but GH uses int
+		PullPropertyNumber:    int64(prReply.GetNumber()),
 		PullPropertySha:       prReply.GetHead().GetSHA(),
 		PullPropertyRepoOwner: owner,
 		PullPropertyRepoName:  name,
