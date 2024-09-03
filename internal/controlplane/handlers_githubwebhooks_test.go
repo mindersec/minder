@@ -93,7 +93,12 @@ func newPropSvcMock(opts ...func(mck propSvcMock)) propSvcMockBuilder {
 	}
 }
 
-func withSuccessRetrieveAllProperties(entity v1.Entity, retProps *properties.Properties) func(mck propSvcMock) {
+func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]any) func(mck propSvcMock) {
+	retProps, err := properties.NewProperties(retPropsMap)
+	if err != nil {
+		panic(err)
+	}
+
 	return func(mock propSvcMock) {
 		mock.EXPECT().
 			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity).
@@ -564,7 +569,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
-	artifactID := uuid.New()
 	visibility := "visibility"
 
 	tests := []struct {
@@ -638,6 +642,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			payload: &packageEvent{
 				Action: github.String("published"),
 				Package: &pkg{
+					ID:          github.Int64(123),
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
@@ -660,6 +665,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"stacklok/minder",
 					"https://github.com/stacklok/minder",
 				),
+			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
+					properties.PropertyUpstreamID:    "123",
+					ghprop.ArtifactPropertyOwner:     "login",
+					ghprop.ArtifactPropertyName:      "package-name",
+					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
+				}),
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
+					properties.PropertyUpstreamID:    "123",
+					ghprop.ArtifactPropertyOwner:     "login",
+					ghprop.ArtifactPropertyName:      "package-name",
+					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
+				}),
+			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("login/package-name"),
 			},
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
@@ -686,11 +708,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ID: providerID,
 					},
 					providerID,
-				),
-				df.WithSuccessfulGetArtifactByID(
-					db.Artifact{
-						ID: artifactID,
-					},
 				),
 				df.WithSuccessfulUpsertArtifact(
 					db.Artifact{
@@ -720,6 +737,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
+			mockPropsBld: newPropSvcMock(
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
+					properties.PropertyUpstreamID:    "12345",
+					ghprop.ArtifactPropertyOwner:     "stacklok",
+					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
+					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
+				}),
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
+					properties.PropertyUpstreamID:    "12345",
+					ghprop.ArtifactPropertyOwner:     "stacklok",
+					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
+					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
+				}),
+			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder"),
+			},
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -745,11 +779,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ID: providerID,
 					},
 					providerID,
-				),
-				df.WithSuccessfulGetArtifactByID(
-					db.Artifact{
-						ID: artifactID,
-					},
 				),
 				df.WithSuccessfulUpsertArtifact(
 					db.Artifact{

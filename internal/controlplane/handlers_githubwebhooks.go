@@ -27,6 +27,7 @@ import (
 	"mime"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -35,7 +36,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/artifacts"
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
@@ -118,6 +118,7 @@ type packageEvent struct {
 }
 
 type pkg struct {
+	ID             *int64          `json:"id,omitempty"`
 	Name           *string         `json:"name,omitempty"`
 	PackageType    *string         `json:"package_type,omitempty"`
 	PackageVersion *packageVersion `json:"package_version,omitempty"`
@@ -711,19 +712,27 @@ func (s *Server) processPackageEvent(
 		return nil, err
 	}
 
-	cli, err := provifv1.As[provifv1.GitHub](provider)
+	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
+		return nil, fmt.Errorf("error converting package event to properties: %w", err)
 	}
 
-	tempArtifact, err := gatherArtifact(ctx, cli, event)
+	pkgName, err := provider.GetEntityName(pb.Entity_ENTITY_ARTIFACTS, pkgLookupProps)
 	if err != nil {
-		return nil, fmt.Errorf("error gathering versioned artifact: %w", err)
+		return nil, fmt.Errorf("error getting package name: %w", err)
 	}
 
-	var artifactID uuid.UUID
-	pbArtifact, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*pb.Artifact, error) {
+	// we do two property lookups here: this first one will go away once we migrate artifacts to entities
+	// as the only reason is to have the visibility and type of the artifact available.
+	refreshedPkgProperties, err := s.props.RetrieveAllProperties(
+		ctx, provider,
+		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
+		pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving properties: %w", err)
+	}
+
+	ei, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*db.EntityInstance, error) {
 		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
 		dbProv, getPrErr := tx.GetProviderByID(ctx, repoEnt.Entity.ProviderID)
 		if getPrErr != nil {
@@ -735,9 +744,9 @@ func (s *Server) processPackageEvent(
 				UUID:  repoEnt.Entity.ID,
 				Valid: true,
 			},
-			ArtifactName:       tempArtifact.GetName(),
-			ArtifactType:       tempArtifact.GetTypeLower(),
-			ArtifactVisibility: tempArtifact.Visibility,
+			ArtifactName:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
+			ArtifactType:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
+			ArtifactVisibility: refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyVisibility).GetString(),
 			ProjectID:          repoEnt.Entity.ProjectID,
 			ProviderID:         repoEnt.Entity.ProviderID,
 			ProviderName:       dbProv.Name,
@@ -746,31 +755,10 @@ func (s *Server) processPackageEvent(
 			return nil, fmt.Errorf("error upserting artifact: %w", err)
 		}
 
-		_, pba, err := artifacts.GetArtifact(ctx, tx, repoEnt.Entity.ProjectID, dbArtifact.ID)
-		if err != nil {
-			return nil, fmt.Errorf("error getting artifact with versions: %w", err)
-		}
-		// TODO: wrap in a function
-		pba.Versions = tempArtifact.Versions
-
-		artifactID = dbArtifact.ID
-
-		// name is provider specific and should be based on properties.
-		// In github's case it's lowercase owner / artifact name
-		// TODO: Replace with a provider call to get
-		// a name based on properties.
-		var prefix string
-		if tempArtifact.GetOwner() != "" {
-			prefix = tempArtifact.GetOwner() + "/"
-		}
-
-		// At this point the package name has been checked.
-		artName := prefix + *event.Package.Name
-
-		_, err = tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+		ent, err := tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
 			ID:         dbArtifact.ID,
 			EntityType: db.EntitiesArtifact,
-			Name:       artName,
+			Name:       pkgName,
 			ProjectID:  repoEnt.Entity.ProjectID,
 			ProviderID: repoEnt.Entity.ProviderID,
 			OriginatedFrom: uuid.NullUUID{
@@ -782,16 +770,46 @@ func (s *Server) processPackageEvent(
 			return nil, fmt.Errorf("error creating or ensuring entity: %w", err)
 		}
 
-		return pba, nil
+		return &ent, nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	// fetch the properties
+	refreshedPkgProperties, err = s.props.RetrieveAllProperties(
+		ctx, provider,
+		ei.ProjectID, ei.ProviderID,
+		refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving properties: %w", err)
+	}
+
+	// refresh the version to attach it to the pb representation we send to the evaluation
+	cli, err := provifv1.As[provifv1.GitHub](provider)
+	if err != nil {
+		l.Error().Err(err).Msg("error instantiating provider")
+		return nil, err
+	}
+
+	version, err := gatherArtifactVersionInfo(ctx, cli, event,
+		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyOwner).GetString(),
+		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
+	}
+
+	pbArtifact, err := ghprop.ArtifactV1FromProperties(refreshedPkgProperties)
+	if err != nil {
+		return nil, fmt.Errorf("error converting artifact to protobuf: %w", err)
+	}
+	pbArtifact.Versions = []*pb.ArtifactVersion{version}
+
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(*event.Action).
 		WithArtifact(pbArtifact).
-		WithArtifactID(artifactID).
+		WithArtifactID(ei.ID).
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
 		WithRepositoryID(repoEnt.Entity.ID)
@@ -1370,11 +1388,9 @@ func handleParseError(ctx context.Context, typ string, parseErr error) *metrics.
 // This routine assumes that all necessary validation is performed on
 // the upper layer and accesses package and repo without checking for
 // nulls.
-func gatherArtifactInfo(
-	ctx context.Context,
-	client provifv1.GitHub,
+func packageEventToProperties(
 	event *packageEvent,
-) (*pb.Artifact, error) {
+) (*properties.Properties, error) {
 	if event.Repo.GetFullName() == "" {
 		return nil, errors.New("invalid package: full name is nil")
 	}
@@ -1390,27 +1406,13 @@ func gatherArtifactInfo(
 		owner = event.Package.Owner.GetLogin()
 	}
 
-	artifact := &pb.Artifact{
-		Owner:      owner,
-		Name:       *event.Package.Name,
-		Type:       *event.Package.PackageType,
-		Repository: event.Repo.GetFullName(),
-		// visibility and createdAt are not in the payload, we need to get it with a REST call
-	}
-
-	// we also need to fill in the visibility which is not in the payload
-	ghArtifact, err := client.GetPackageByName(
-		ctx,
-		artifact.Owner,
-		string(verifyif.ArtifactTypeContainer),
-		artifact.Name,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from repo: %w", err)
-	}
-
-	artifact.Visibility = *ghArtifact.Visibility
-	return artifact, nil
+	return properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: strconv.FormatInt(*event.Package.ID, 10),
+		// we need these to look up the package properties
+		ghprop.ArtifactPropertyOwner: owner,
+		ghprop.ArtifactPropertyName:  *event.Package.Name,
+		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
+	})
 }
 
 // This routine assumes that all necessary validation is performed on
@@ -1462,24 +1464,6 @@ func gatherArtifactVersionInfo(
 	}
 
 	return version, nil
-}
-
-func gatherArtifact(
-	ctx context.Context,
-	cli provifv1.GitHub,
-	event *packageEvent,
-) (*pb.Artifact, error) {
-	artifact, err := gatherArtifactInfo(ctx, cli, event)
-	if err != nil {
-		return nil, fmt.Errorf("error gatherinfo artifact info: %w", err)
-	}
-
-	version, err := gatherArtifactVersionInfo(ctx, cli, event, artifact.Owner, artifact.Name)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
-	}
-	artifact.Versions = []*pb.ArtifactVersion{version}
-	return artifact, nil
 }
 
 func updateArtifactVersionFromRegistry(
