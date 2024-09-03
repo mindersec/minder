@@ -44,7 +44,7 @@ func (c *GitHub) FetchProperty(
 		return nil, fmt.Errorf("property %s not supported for entity %s", key, entType)
 	}
 
-	props, err := wrapper(ctx, c.client, getByProps)
+	props, err := wrapper(ctx, c.client, c.IsOrg(), getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching property %s for entity %s: %w", key, entType, err)
 	}
@@ -66,7 +66,7 @@ func (c *GitHub) FetchAllProperties(
 	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
 	result := make(map[string]any)
 	for _, wrapper := range fetcher.AllPropertyWrappers() {
-		props, err := wrapper(ctx, c.client, getByProps)
+		props, err := wrapper(ctx, c.client, c.IsOrg(), getByProps)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching properties for entity %s: %w", entType, err)
 		}

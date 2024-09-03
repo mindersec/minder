@@ -86,8 +86,9 @@ var repoPropertyDefinitions = []propertyOrigin{
 }
 
 func getRepoWrapper(
-	ctx context.Context, ghCli *go_github.Client, getByProps *properties.Properties,
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
 ) (map[string]any, error) {
+	_ = isOrg
 
 	name, owner, err := getNameOwnerFromProps(getByProps)
 	if err != nil {

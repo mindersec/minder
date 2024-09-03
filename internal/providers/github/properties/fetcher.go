@@ -27,7 +27,7 @@ import (
 
 // GhPropertyWrapper is a function that fetches a property from the GitHub API
 type GhPropertyWrapper func(
-	ctx context.Context, ghCli *go_github.Client, lookupProperties *properties.Properties,
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, lookupProperties *properties.Properties,
 ) (map[string]any, error)
 
 // GhPropertyFetcher is an interface for fetching properties from the GitHub API
@@ -62,6 +62,8 @@ func (_ ghEntityFetcher) EntityPropertyFetcher(entType minderv1.Entity) GhProper
 		return NewPullRequestFetcher()
 	case minderv1.Entity_ENTITY_REPOSITORIES:
 		return NewRepositoryFetcher()
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		return NewArtifactFetcher()
 	}
 
 	return nil
