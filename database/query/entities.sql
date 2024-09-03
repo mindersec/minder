@@ -62,7 +62,11 @@ LIMIT 1;
 -- GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 -- name: GetEntityByName :one
 SELECT * FROM entity_instances
-WHERE entity_instances.name = sqlc.arg(name) AND entity_instances.project_id = $1 AND entity_instances.entity_type = $2
+WHERE
+    entity_instances.name = sqlc.arg(name)
+    AND entity_instances.project_id = $1
+    AND entity_instances.entity_type = $2
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
 LIMIT 1;
 
 -- GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.

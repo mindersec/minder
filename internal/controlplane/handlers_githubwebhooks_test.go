@@ -96,7 +96,7 @@ func newPropSvcMock(opts ...func(mck propSvcMock)) propSvcMockBuilder {
 func withSuccessRetrieveAllProperties(entity v1.Entity, retProps *properties.Properties) func(mck propSvcMock) {
 	return func(mock propSvcMock) {
 		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity).
+			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity).
 			Return(retProps, nil)
 	}
 }
