@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/bufbuild/buf v1.39.0
-	github.com/daixiang0/gci v0.13.4
+	github.com/daixiang0/gci v0.13.5
 	github.com/deepmap/oapi-codegen/v2 v2.2.0
 	github.com/go-critic/go-critic v0.11.4
 	github.com/golangci/golangci-lint v1.60.3
