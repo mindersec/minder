@@ -200,7 +200,7 @@ func (s *Server) ListEvaluationHistory(
 }
 
 func fromEvaluationHistoryRows(
-	rows []history.OneEvalHistoryAndEntity,
+	rows []*history.OneEvalHistoryAndEntity,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := make([]*minderv1.EvaluationHistory, len(rows))
 
@@ -560,7 +560,7 @@ func filterProfileLists(
 func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
 	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
-	efp entmodels.EntityWithProperties,
+	efp *entmodels.EntityWithProperties,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
@@ -650,7 +650,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	}, nil
 }
 
-func buildEntityFromEvaluation(efp entmodels.EntityWithProperties) *minderv1.EntityTypedId {
+func buildEntityFromEvaluation(efp *entmodels.EntityWithProperties) *minderv1.EntityTypedId {
 	ent := &minderv1.EntityTypedId{
 		Type: efp.Entity.Type,
 	}
@@ -688,7 +688,8 @@ func buildProfileStatus(
 // buildEvalResultAlertFromLRERow build the evaluation result alert from a
 // database row.
 func buildEvalResultAlertFromLRERow(
-	eval *db.ListRuleEvaluationsByProfileIdRow, ent entmodels.EntityWithProperties) *minderv1.EvalResultAlert {
+	eval *db.ListRuleEvaluationsByProfileIdRow, ent *entmodels.EntityWithProperties,
+) *minderv1.EvalResultAlert {
 	era := &minderv1.EvalResultAlert{
 		Status:      string(eval.AlertStatus),
 		LastUpdated: timestamppb.New(eval.AlertLastUpdated),

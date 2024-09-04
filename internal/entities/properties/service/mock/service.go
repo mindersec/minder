@@ -47,10 +47,10 @@ func (m *MockPropertiesService) EXPECT() *MockPropertiesServiceMockRecorder {
 }
 
 // EntityWithProperties mocks base method.
-func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier) (models.EntityWithProperties, error) {
+func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, projectId, qtx)
-	ret0, _ := ret[0].(models.EntityWithProperties)
+	ret0, _ := ret[0].(*models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -105,7 +105,7 @@ func (mr *MockPropertiesServiceMockRecorder) RetrieveAllProperties(ctx, provider
 }
 
 // RetrieveAllPropertiesForEntity mocks base method.
-func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp models.EntityWithProperties, provMan manager.ProviderManager) error {
+func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RetrieveAllPropertiesForEntity", ctx, efp, provMan)
 	ret0, _ := ret[0].(error)

@@ -36,7 +36,7 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		sut    *db.ListRuleEvaluationsByProfileIdRow
-		efp    entmodels.EntityWithProperties
+		efp    *entmodels.EntityWithProperties
 		expect *minderv1.EvalResultAlert
 	}{
 		{
@@ -187,17 +187,17 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		rows   []history.OneEvalHistoryAndEntity
+		rows   []*history.OneEvalHistoryAndEntity
 		checkf func(*testing.T, db.ListEvaluationHistoryRow, *minderv1.EvaluationHistory)
 		err    bool
 	}{
 		{
 			name: "empty",
-			rows: []history.OneEvalHistoryAndEntity{},
+			rows: []*history.OneEvalHistoryAndEntity{},
 		},
 		{
 			name: "happy path",
-			rows: []history.OneEvalHistoryAndEntity{
+			rows: []*history.OneEvalHistoryAndEntity{
 				{
 					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
 						entmodels.EntityInstance{
@@ -221,7 +221,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 		},
 		{
 			name: "order preserved",
-			rows: []history.OneEvalHistoryAndEntity{
+			rows: []*history.OneEvalHistoryAndEntity{
 				{
 					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
 						entmodels.EntityInstance{
@@ -264,7 +264,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 		},
 		{
 			name: "optional alert",
-			rows: []history.OneEvalHistoryAndEntity{
+			rows: []*history.OneEvalHistoryAndEntity{
 				{
 					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
 						entmodels.EntityInstance{
@@ -290,7 +290,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 		},
 		{
 			name: "optional remediation",
-			rows: []history.OneEvalHistoryAndEntity{
+			rows: []*history.OneEvalHistoryAndEntity{
 				{
 					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
 						entmodels.EntityInstance{

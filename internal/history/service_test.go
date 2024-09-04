@@ -163,13 +163,13 @@ func TestListEvaluationHistory(t *testing.T) {
 		filter                   ListEvaluationFilter
 		checkf                   func(*testing.T, *ListEvaluationHistoryResult)
 		err                      bool
-		efp                      []entmodels.EntityWithProperties
+		efp                      []*entmodels.EntityWithProperties
 		entityForPropertiesError error
 		retrieveAllPropsErr      error
 	}{
 		{
 			name: "records",
-			efp: []entmodels.EntityWithProperties{
+			efp: []*entmodels.EntityWithProperties{
 				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
 				}, nil),
@@ -250,7 +250,7 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
-			efp: []entmodels.EntityWithProperties{
+			efp: []*entmodels.EntityWithProperties{
 				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
 				}, nil),
@@ -299,7 +299,7 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
-			efp: []entmodels.EntityWithProperties{
+			efp: []*entmodels.EntityWithProperties{
 				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
 				}, nil),
@@ -786,7 +786,7 @@ func TestListEvaluationHistory(t *testing.T) {
 			name:                "error getting properties",
 			err:                 true,
 			retrieveAllPropsErr: errors.New("whoops"),
-			efp: []entmodels.EntityWithProperties{
+			efp: []*entmodels.EntityWithProperties{
 				// Only called once
 				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
@@ -842,7 +842,7 @@ func TestListEvaluationHistory(t *testing.T) {
 
 			if tt.entityForPropertiesError != nil && len(tt.efp) == 0 {
 				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(entmodels.NilEntityWithProperties, tt.entityForPropertiesError).AnyTimes()
+					Return(nil, tt.entityForPropertiesError).AnyTimes()
 			}
 			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any(), gomock.Any()).
 				Return(tt.retrieveAllPropsErr).AnyTimes()

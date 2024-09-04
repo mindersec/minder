@@ -39,12 +39,9 @@ type EntityWithProperties struct {
 	Properties *properties.Properties
 }
 
-// NilEntityWithProperties is a nil EntityWithProperties instance
-var NilEntityWithProperties = EntityWithProperties{}
-
 // NewEntityWithProperties creates a new EntityWithProperties instance
-func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) EntityWithProperties {
-	return EntityWithProperties{
+func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) *EntityWithProperties {
+	return &EntityWithProperties{
 		Entity: EntityInstance{
 			ID:         dbEntity.ID,
 			Type:       entities.EntityTypeFromDB(dbEntity.EntityType),
@@ -57,8 +54,8 @@ func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Prope
 }
 
 // NewEntityWithPropertiesFromInstance creates a new EntityWithProperties instance from an existing entity instance
-func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *properties.Properties) EntityWithProperties {
-	return EntityWithProperties{
+func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *properties.Properties) *EntityWithProperties {
+	return &EntityWithProperties{
 		Entity:     entity,
 		Properties: props,
 	}

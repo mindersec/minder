@@ -280,7 +280,7 @@ func getProfilePBFromDB(
 // probably coming from the properties.
 func getRuleEvalEntityInfo(
 	rs db.ListRuleEvaluationsByProfileIdRow,
-	efp entmodels.EntityWithProperties,
+	efp *entmodels.EntityWithProperties,
 ) map[string]string {
 	entityInfo := map[string]string{}
 

@@ -50,7 +50,7 @@ type PropertiesService interface {
 	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithProperties(
 		ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier,
-	) (models.EntityWithProperties, error)
+	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for the given entity
 	RetrieveAllProperties(
 		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
@@ -59,7 +59,7 @@ type PropertiesService interface {
 	) (*properties.Properties, error)
 	// RetrieveAllPropertiesForEntity fetches all properties for the given entity
 	// for properties model. Note that properties will be updated in place.
-	RetrieveAllPropertiesForEntity(ctx context.Context, efp models.EntityWithProperties,
+	RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties,
 		provMan manager.ProviderManager,
 	) error
 	// RetrieveProperty fetches a single property for the given entity
@@ -170,7 +170,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 // RetrieveAllPropertiesForEntity fetches a single property for the given an entity
 // for properties model. Note that properties will be updated in place.
 func (ps *propertiesService) RetrieveAllPropertiesForEntity(
-	ctx context.Context, efp models.EntityWithProperties, provMan manager.ProviderManager,
+	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager,
 ) error {
 	propClient, err := provMan.InstantiateFromID(ctx, efp.Entity.ProviderID)
 	if err != nil {
@@ -312,7 +312,7 @@ func (_ *propertiesService) ReplaceProperty(
 func (ps *propertiesService) EntityWithProperties(
 	ctx context.Context, entityID, projectID uuid.UUID,
 	qtx db.ExtendQuerier,
-) (models.EntityWithProperties, error) {
+) (*models.EntityWithProperties, error) {
 	// use the transaction if provided, otherwise use the store
 	var q db.Querier
 	if qtx != nil {
@@ -321,21 +321,19 @@ func (ps *propertiesService) EntityWithProperties(
 		q = ps.store
 	}
 
-	n := models.NilEntityWithProperties
-
 	ent, err := q.GetEntityByID(ctx, db.GetEntityByIDParams{
 		ID:       entityID,
 		Projects: []uuid.UUID{projectID},
 	})
 	if err != nil {
-		return n, fmt.Errorf("error getting entity: %w", err)
+		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 
 	fetchByProps, err := properties.NewProperties(map[string]any{
 		properties.PropertyName: ent.Name,
 	})
 	if err != nil {
-		return n, fmt.Errorf("error creating properties: %w", err)
+		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
 	return models.NewEntityWithProperties(ent, fetchByProps), nil

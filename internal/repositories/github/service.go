@@ -377,7 +377,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 		if errors.Is(err, provifv1.ErrEntityNotFound) {
 			// return the entity without properties in case the upstream entity is not found
 			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
-			return &ewp, nil
+			return ewp, nil
 		} else if err != nil {
 			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
 		}
@@ -385,7 +385,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 		if !isLegacy {
 			// this is not a migration from the legacy tables, we're done
 			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
-			return &ewp, nil
+			return ewp, nil
 		}
 
 		zerolog.Ctx(ctx).Debug().Str("repo_name", entRepo.Name).Msg("migrating legacy repository")
@@ -403,7 +403,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 
 		// we could as well call RetrieveAllProperties again, we should just get the same data
 		ewp := models.NewEntityWithProperties(entRepo, repoProperties.Merge(legacyProps))
-		return &ewp, nil
+		return ewp, nil
 	})
 
 	if err != nil {

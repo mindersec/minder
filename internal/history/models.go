@@ -638,7 +638,7 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 // OneEvalHistoryAndEntity is a struct representing a combination of an
 // evaluation and an entity.
 type OneEvalHistoryAndEntity struct {
-	em.EntityWithProperties
+	*em.EntityWithProperties
 	EvalHistoryRow db.ListEvaluationHistoryRow
 }
 
@@ -646,7 +646,7 @@ type OneEvalHistoryAndEntity struct {
 // ListEvaluationHistory function.
 type ListEvaluationHistoryResult struct {
 	// Data is an ordered collection of evaluation events.
-	Data []OneEvalHistoryAndEntity
+	Data []*OneEvalHistoryAndEntity
 	// Next is an object usable as cursor to fetch the next
 	// page. The page is absent if Next is nil.
 	Next []byte

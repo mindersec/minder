@@ -216,7 +216,7 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 
 	propsvc := ehs.propServiceBuilder(qtx)
 
-	data := make([]OneEvalHistoryAndEntity, 0, len(rows))
+	data := make([]*OneEvalHistoryAndEntity, 0, len(rows))
 	for _, row := range rows {
 		efp, err := propsvc.EntityWithProperties(ctx, row.EntityID, row.ProjectID, qtx)
 		if err != nil {
@@ -228,7 +228,7 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 		}
 
-		data = append(data, OneEvalHistoryAndEntity{
+		data = append(data, &OneEvalHistoryAndEntity{
 			EntityWithProperties: efp,
 			EvalHistoryRow:       row,
 		})
