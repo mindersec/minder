@@ -49,6 +49,7 @@ func TestNatsChannel(t *testing.T) {
 
 	// N.B. This list is in alphabetical order
 	m1 := message.NewMessage("123", []byte(`{"msg":"hello"}`))
+	m1.Metadata.Set("foo", "bar")
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
 
@@ -107,6 +108,9 @@ func TestNatsChannel(t *testing.T) {
 
 	if string(results[0].Payload) != string(m1.Payload) {
 		t.Errorf("expected %v, got %v", string(m1.Payload), string(results[0].Payload))
+	}
+	if results[0].Metadata["foo"] != "bar" {
+		t.Errorf("expected %v, got %v", "bar", results[0].Metadata["foo"])
 	}
 	if string(results[1].Payload) != string(m2.Payload) {
 		t.Errorf("expected %v, got %v", string(m2.Payload), string(results[1].Payload))
