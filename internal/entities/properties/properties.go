@@ -202,12 +202,32 @@ type Properties struct {
 	props *xsync.MapOf[string, Property]
 }
 
-// NewProperties Properties from a map
-func NewProperties(props map[string]any) (*Properties, error) {
+// newPropertiesOption is a function that configures NewProperties
+type newPropertiesOption func(*newPropertiesConfig)
+
+type newPropertiesConfig struct {
+	skipPrefixCheck bool
+}
+
+// WithSkipPrefixCheckTestOnly returns an option to skip checking the prefix
+// This should only be used for testing purposes
+func WithSkipPrefixCheckTestOnly() newPropertiesOption {
+	return func(c *newPropertiesConfig) {
+		c.skipPrefixCheck = true
+	}
+}
+
+// NewProperties creates Properties from a map
+func NewProperties(props map[string]any, opts ...newPropertiesOption) (*Properties, error) {
+	config := &newPropertiesConfig{}
+	for _, opt := range opts {
+		opt(config)
+	}
+
 	propsMap := xsync.NewMapOf[string, Property](xsync.WithPresize(len(props)))
 
 	for key, value := range props {
-		if strings.HasPrefix(key, internalPrefix) {
+		if !config.skipPrefixCheck && strings.HasPrefix(key, internalPrefix) {
 			return nil, fmt.Errorf("property key %s is reserved", key)
 		}
 

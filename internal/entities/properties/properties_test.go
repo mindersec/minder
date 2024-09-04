@@ -580,6 +580,8 @@ func TestFilteredCopy(t *testing.T) {
 }
 
 func TestProperties_ToProtoStruct(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		props    map[string]any
@@ -616,6 +618,8 @@ func TestProperties_ToProtoStruct(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var p *Properties
 			var err error
 			if tt.props != nil {
@@ -637,5 +641,36 @@ func TestProperties_ToProtoStruct(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
+	t.Parallel()
+
+	// Test case with reserved prefix, without skip option
+	reservedProps := map[string]any{
+		"minder.internal.test": "value",
+	}
+	_, err := NewProperties(reservedProps)
+	if err == nil {
+		t.Error("Expected error for reserved prefix without skip option, got nil")
+	}
+
+	// Test case with reserved prefix, with skip option
+	props, err := NewProperties(reservedProps, WithSkipPrefixCheckTestOnly())
+	if err != nil {
+		t.Errorf("Unexpected error with skip option: %v", err)
+	}
+	if props == nil {
+		t.Error("Expected non-nil Properties with skip option")
+	}
+
+	// Verify the property was actually added
+	prop := props.GetProperty("minder.internal.test")
+	if prop == nil {
+		t.Error("Expected property to be present")
+	}
+	if val := prop.GetString(); val != "value" {
+		t.Errorf("Expected value 'value', got '%s'", val)
 	}
 }
