@@ -58,7 +58,7 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.19.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.19.0
 	github.com/sigstore/protobuf-specs v0.3.2
-	github.com/sigstore/sigstore-go v0.6.0
+	github.com/sigstore/sigstore-go v0.6.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -185,7 +185,7 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.19.0 // indirect
-	github.com/sigstore/sigstore v1.8.8 // indirect
+	github.com/sigstore/sigstore v1.8.9 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.0 // indirect
