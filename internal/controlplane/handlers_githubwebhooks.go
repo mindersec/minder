@@ -80,6 +80,7 @@ const (
 	webhookActionEventDeleted     = "deleted"
 	webhookActionEventOpened      = "opened"
 	webhookActionEventReopened    = "reopened"
+	webhookActionEventSynchronize = "synchronize"
 	webhookActionEventClosed      = "closed"
 	webhookActionEventPublished   = "published"
 	webhookActionEventTransferred = "transferred"
@@ -1510,11 +1511,9 @@ func (s *Server) reconcilePrWithDb(
 	}
 
 	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
-	// TODO go-github documentation reportes that
-	// PullRequestEvents with action "synchronize" are not
-	// published, see here
-	// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
-	case webhookActionEventOpened, webhookActionEventReopened:
+	case webhookActionEventOpened,
+		webhookActionEventReopened,
+		webhookActionEventSynchronize:
 		var err error
 		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
 			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
