@@ -105,7 +105,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	for _, dep := range prDependencies.Deps {
 		depscore, err := getDependencyScore(ctx, e.client, dep)
 		if err != nil {
-			logger.Error().Msgf("error fetching trusty data: %s", err)
+			logger.Error().
+				Err(err).
+				Str("dependency_name", dep.Dep.Name).
+				Str("dependency_version", dep.Dep.Version).
+				Msg("error fetching trusty data")
 			return fmt.Errorf("getting dependency score: %w", err)
 		}
 
