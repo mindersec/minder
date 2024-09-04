@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -667,6 +668,92 @@ func TestListEvaluationHistoryPagination(t *testing.T) {
 
 			require.NoError(t, err)
 			tt.checkf(t, rows)
+		})
+	}
+}
+
+func TestGetEvaluationHistory(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	proj := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, proj.ID)
+
+	repos := make([]Repository, 0)
+	for i := 0; i < 10; i++ {
+		repos = append(repos, createRandomRepository(t, proj.ID, prov))
+	}
+	ruleType1 := createRandomRuleType(t, proj.ID)
+	profile1 := createRandomProfile(t, proj.ID, []string{})
+	riID1 := createRandomRuleInstance(
+		t,
+		proj.ID,
+		profile1.ID,
+		ruleType1.ID,
+	)
+
+	ess := make([]uuid.UUID, 0)
+	for i := 0; i < 10; i++ {
+		ere := createRandomEvaluationRuleEntity(t, riID1, repos[i].ID)
+		ess = append(ess, createRandomEvaluationStatus(t, ere))
+	}
+
+	absent, err := uuid.NewRandom()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		params GetEvaluationHistoryParams
+		checkf func(*testing.T, GetEvaluationHistoryRow)
+		norows bool
+		error  bool
+	}{
+		{
+			name: "present",
+			params: GetEvaluationHistoryParams{
+				EvaluationID: ess[0],
+				ProjectID:    proj.ID,
+			},
+			checkf: func(t *testing.T, row GetEvaluationHistoryRow) {
+				t.Helper()
+				require.Equal(t, ess[0], row.EvaluationID)
+			},
+		},
+		{
+			name: "absent",
+			params: GetEvaluationHistoryParams{
+				EvaluationID: absent,
+				ProjectID:    proj.ID,
+			},
+			norows: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			row, err := testQueries.GetEvaluationHistory(
+				context.Background(),
+				tt.params,
+			)
+
+			if tt.error {
+				require.Error(t, err)
+				require.Nil(t, row)
+				return
+			}
+
+			if tt.norows {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, sql.ErrNoRows))
+				return
+			}
+
+			require.NoError(t, err)
+			tt.checkf(t, row)
 		})
 	}
 }
