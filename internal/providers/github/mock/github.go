@@ -62,6 +62,20 @@ func (mr *MockProviderMockRecorder) CanImplement(trait any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockProvider)(nil).CanImplement), trait)
 }
 
+// DeregisterEntity mocks base method.
+func (m *MockProvider) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockProviderMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockProvider)(nil).DeregisterEntity), ctx, entType, props)
+}
+
 // FetchAllProperties mocks base method.
 func (m *MockProvider) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -105,6 +119,34 @@ func (m *MockProvider) GetEntityName(entType v10.Entity, props *properties.Prope
 func (mr *MockProviderMockRecorder) GetEntityName(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockProvider)(nil).GetEntityName), entType, props)
+}
+
+// RegisterEntity mocks base method.
+func (m *MockProvider) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockProviderMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockProvider)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockProvider) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockProviderMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockProvider)(nil).SupportsEntity), entType)
 }
 
 // MockGit is a mock of Git interface.
@@ -159,6 +201,20 @@ func (mr *MockGitMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGit)(nil).Clone), ctx, url, branch)
 }
 
+// DeregisterEntity mocks base method.
+func (m *MockGit) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockGitMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockGit)(nil).DeregisterEntity), ctx, entType, props)
+}
+
 // FetchAllProperties mocks base method.
 func (m *MockGit) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -204,6 +260,34 @@ func (mr *MockGitMockRecorder) GetEntityName(entType, props any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockGit)(nil).GetEntityName), entType, props)
 }
 
+// RegisterEntity mocks base method.
+func (m *MockGit) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockGitMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGit)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockGit) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockGitMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockGit)(nil).SupportsEntity), entType)
+}
+
 // MockREST is a mock of REST interface.
 type MockREST struct {
 	ctrl     *gomock.Controller
@@ -239,6 +323,20 @@ func (m *MockREST) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockRESTMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockREST)(nil).CanImplement), trait)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockREST) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockRESTMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockREST)(nil).DeregisterEntity), ctx, entType, props)
 }
 
 // Do mocks base method.
@@ -330,6 +428,34 @@ func (mr *MockRESTMockRecorder) NewRequest(method, url, body any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockREST)(nil).NewRequest), method, url, body)
 }
 
+// RegisterEntity mocks base method.
+func (m *MockREST) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockRESTMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockREST)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockREST) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockRESTMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockREST)(nil).SupportsEntity), entType)
+}
+
 // MockRepoLister is a mock of RepoLister interface.
 type MockRepoLister struct {
 	ctrl     *gomock.Controller
@@ -365,6 +491,20 @@ func (m *MockRepoLister) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockRepoListerMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockRepoLister)(nil).CanImplement), trait)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockRepoLister) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockRepoListerMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockRepoLister)(nil).DeregisterEntity), ctx, entType, props)
 }
 
 // FetchAllProperties mocks base method.
@@ -425,6 +565,34 @@ func (m *MockRepoLister) ListAllRepositories(arg0 context.Context) ([]*v10.Repos
 func (mr *MockRepoListerMockRecorder) ListAllRepositories(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRepositories", reflect.TypeOf((*MockRepoLister)(nil).ListAllRepositories), arg0)
+}
+
+// RegisterEntity mocks base method.
+func (m *MockRepoLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockRepoListerMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockRepoLister)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockRepoLister) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockRepoListerMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockRepoLister)(nil).SupportsEntity), entType)
 }
 
 // MockGetArtifactVersionsFilter is a mock of GetArtifactVersionsFilter interface.
@@ -685,6 +853,20 @@ func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int6
 func (mr *MockGitHubMockRecorder) DeleteHook(ctx, owner, repo, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteHook", reflect.TypeOf((*MockGitHub)(nil).DeleteHook), ctx, owner, repo, id)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockGitHub) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockGitHubMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockGitHub)(nil).DeregisterEntity), ctx, entType, props)
 }
 
 // DismissReview mocks base method.
@@ -1119,6 +1301,20 @@ func (mr *MockGitHubMockRecorder) NewRequest(method, url, body any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewRequest", reflect.TypeOf((*MockGitHub)(nil).NewRequest), method, url, body)
 }
 
+// RegisterEntity mocks base method.
+func (m *MockGitHub) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockGitHubMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGitHub)(nil).RegisterEntity), ctx, entType, props)
+}
+
 // SetCommitStatus mocks base method.
 func (m *MockGitHub) SetCommitStatus(arg0 context.Context, arg1, arg2, arg3 string, arg4 *github.RepoStatus) (*github.RepoStatus, error) {
 	m.ctrl.T.Helper()
@@ -1147,6 +1343,20 @@ func (m *MockGitHub) StartCheckRun(arg0 context.Context, arg1, arg2 string, arg3
 func (mr *MockGitHubMockRecorder) StartCheckRun(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartCheckRun", reflect.TypeOf((*MockGitHub)(nil).StartCheckRun), arg0, arg1, arg2, arg3)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockGitHub) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockGitHubMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockGitHub)(nil).SupportsEntity), entType)
 }
 
 // UpdateBranchProtection mocks base method.
@@ -1244,6 +1454,20 @@ func (mr *MockImageListerMockRecorder) CanImplement(trait any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockImageLister)(nil).CanImplement), trait)
 }
 
+// DeregisterEntity mocks base method.
+func (m *MockImageLister) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockImageListerMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockImageLister)(nil).DeregisterEntity), ctx, entType, props)
+}
+
 // FetchAllProperties mocks base method.
 func (m *MockImageLister) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -1318,6 +1542,34 @@ func (mr *MockImageListerMockRecorder) ListImages(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImages", reflect.TypeOf((*MockImageLister)(nil).ListImages), ctx)
 }
 
+// RegisterEntity mocks base method.
+func (m *MockImageLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockImageListerMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockImageLister)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockImageLister) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockImageListerMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockImageLister)(nil).SupportsEntity), entType)
+}
+
 // MockOCI is a mock of OCI interface.
 type MockOCI struct {
 	ctrl     *gomock.Controller
@@ -1353,6 +1605,20 @@ func (m *MockOCI) CanImplement(trait v10.ProviderType) bool {
 func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockOCI) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockOCIMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockOCI)(nil).DeregisterEntity), ctx, entType, props)
 }
 
 // FetchAllProperties mocks base method.
@@ -1502,4 +1768,32 @@ func (m *MockOCI) ListTags(ctx context.Context, name string) ([]string, error) {
 func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockOCI)(nil).ListTags), ctx, name)
+}
+
+// RegisterEntity mocks base method.
+func (m *MockOCI) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockOCIMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockOCI)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockOCI) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockOCIMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockOCI)(nil).SupportsEntity), entType)
 }

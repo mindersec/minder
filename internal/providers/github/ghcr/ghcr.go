@@ -157,3 +157,21 @@ func (_ *ImageLister) FetchProperty(
 func (_ *ImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
+
+// SupportsEntity implements the Provider interface
+func (_ *ImageLister) SupportsEntity(_ minderv1.Entity) bool {
+	// TODO: implement
+	return false
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *ImageLister) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *ImageLister) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}

@@ -70,3 +70,21 @@ func (_ *RESTProvider) FetchProperty(
 func (_ *RESTProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
+
+// SupportsEntity implements the Provider interface
+func (_ *RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
+	// TODO: implement
+	return false
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *RESTProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *RESTProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}

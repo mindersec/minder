@@ -60,6 +60,26 @@ type Provider interface {
 	// The name is used to identify the entity within minder and is how
 	// it will be stored in the database.
 	GetEntityName(entType minderv1.Entity, props *properties.Properties) (string, error)
+
+	// SupportsEntity returns true if the provider supports the given entity type
+	SupportsEntity(entType minderv1.Entity) bool
+
+	// RegisterEntity ensures that the service provider has the necessary information
+	// to know that the entity is handled by Minder. This could be creating a webhook
+	// for a particular repository or artifact.
+	// Note that the provider might choose to update the properties of the entity
+	// adding the information about the registration. e.g. The webhook ID and URL.
+	RegisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+
+	// DeregisterEntity rolls back the registration of the entity. This could be deleting
+	// a webhook for a particular repository or artifact. Note that this assumes a pre-registered
+	// entity and thus requires the entity to have been registered before. Therefore, you should
+	// either call this after RegisterEntity or after a FetchAllProperties call on an already
+	// registered entity.
+	//
+	// When implementing, try to make this idempotent. That is, if the entity is already deregistered,
+	// (e.g. a webhook is already deleted), then this should not return an error.
+	DeregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
 }
 
 // Git is the interface for git providers
