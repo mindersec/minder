@@ -136,3 +136,21 @@ func (_ *gitlabClient) FetchProperty(
 func (_ *gitlabClient) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
+
+// SupportsEntity implements the Provider interface
+func (_ *gitlabClient) SupportsEntity(_ minderv1.Entity) bool {
+	// TODO: implement
+	return false
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *gitlabClient) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *gitlabClient) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}

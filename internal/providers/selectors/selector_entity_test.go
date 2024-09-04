@@ -130,6 +130,18 @@ func (_ *fullProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties
 	return "", nil
 }
 
+func (_ *fullProvider) SupportsEntity(_ minderv1.Entity) bool {
+	return false
+}
+
+func (_ *fullProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
+}
+
+func (_ *fullProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
+}
+
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
 	t.Helper()
 
@@ -172,6 +184,18 @@ func (_ *repoOnlyProvider) FetchProperty(_ context.Context, _ *properties.Proper
 
 func (_ *repoOnlyProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
+}
+
+func (_ *repoOnlyProvider) SupportsEntity(minderv1.Entity) bool {
+	return false
+}
+
+func (_ *repoOnlyProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
+}
+
+func (_ *repoOnlyProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
 }
 
 func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity {

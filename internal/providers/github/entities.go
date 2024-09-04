@@ -16,6 +16,7 @@
 package github
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -36,4 +37,21 @@ func (c *GitHub) GetEntityName(entType minderv1.Entity, props *properties.Proper
 		return "", fmt.Errorf("no fetcher found for entity type %s", entType)
 	}
 	return fetcher.GetName(props)
+}
+
+// SupportsEntity implements the Provider interface
+func (c *GitHub) SupportsEntity(entType minderv1.Entity) bool {
+	return c.propertyFetchers.EntityPropertyFetcher(entType) != nil
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *GitHub) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *GitHub) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
 }
