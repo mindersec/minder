@@ -16,6 +16,9 @@
 package models
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
@@ -59,6 +62,54 @@ func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *propertie
 		Entity:     entity,
 		Properties: props,
 	}
+}
+
+// GetEntityWithPropertiesByID retrieves an EntityWithProperties instance by its ID.
+func GetEntityWithPropertiesByID(ctx context.Context, q db.Querier, id uuid.UUID) (*EntityWithProperties, error) {
+	dbEntity, err := q.GetEntityByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get entity by ID: %w", err)
+	}
+
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get properties for entity: %w", err)
+	}
+
+	props, err := DbPropsToModel(dbProps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert properties to model: %w", err)
+	}
+
+	return NewEntityWithProperties(dbEntity, props), nil
+}
+
+// DbPropsToModel converts a slice of db.Property to a properties.Properties instance.
+func DbPropsToModel(dbProps []db.Property) (*properties.Properties, error) {
+	propMap := make(map[string]any)
+
+	// TODO: should we change the property API to include a Set
+	// and rather move the construction from a map to a separate method?
+	// this double iteration is not ideal
+	for _, prop := range dbProps {
+		anyVal, err := db.PropValueFromDbV1(prop.Value)
+		if err != nil {
+			return nil, err
+		}
+		propMap[prop.Key] = anyVal
+	}
+
+	return properties.NewProperties(propMap)
+}
+
+// DbPropToModel converts a single db.Property to a properties.Property instance.
+func DbPropToModel(dbProp db.Property) (*properties.Property, error) {
+	anyVal, err := db.PropValueFromDbV1(dbProp.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return properties.NewProperty(anyVal)
 }
 
 // UpdateProperties updates the properties for the "entity for properties" instance

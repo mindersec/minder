@@ -133,7 +133,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	// if exists and not expired, turn into our model
 	var modelProps *properties.Properties
 	if len(dbProps) > 0 {
-		modelProps, err = dbPropsToModel(dbProps)
+		modelProps, err = models.DbPropsToModel(dbProps)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert properties: %w", err)
 		}
@@ -218,7 +218,7 @@ func (ps *propertiesService) RetrieveProperty(
 
 	// if exists, turn into our model
 	if ps.isDatabasePropertyValid(dbProp) {
-		return dbPropToModel(dbProp)
+		return models.DbPropToModel(dbProp)
 	}
 
 	// if not, fetch from provider
@@ -353,30 +353,4 @@ func (ps *propertiesService) isDatabasePropertyValid(dbProp db.Property) bool {
 		return false
 	}
 	return time.Since(dbProp.UpdatedAt) < ps.entityTimeout
-}
-
-func dbPropsToModel(dbProps []db.Property) (*properties.Properties, error) {
-	propMap := make(map[string]any)
-
-	// TODO: should we change the property API to include a Set
-	// and rather move the construction from a map to a separate method?
-	// this double iteration is not ideal
-	for _, prop := range dbProps {
-		anyVal, err := db.PropValueFromDbV1(prop.Value)
-		if err != nil {
-			return nil, err
-		}
-		propMap[prop.Key] = anyVal
-	}
-
-	return properties.NewProperties(propMap)
-}
-
-func dbPropToModel(dbProp db.Property) (*properties.Property, error) {
-	anyVal, err := db.PropValueFromDbV1(dbProp.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	return properties.NewProperty(anyVal)
 }

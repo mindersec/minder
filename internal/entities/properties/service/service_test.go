@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
@@ -258,7 +259,7 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			updatedProp, err := dbPropToModel(dbProp)
+			updatedProp, err := models.DbPropToModel(dbProp)
 			require.NoError(t, err)
 			tt.checkFn(t, updatedProp)
 		})
@@ -400,7 +401,7 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			dbProps, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, ent.ID)
 			require.NoError(t, err)
 
-			updatedProps, err := dbPropsToModel(dbProps)
+			updatedProps, err := models.DbPropsToModel(dbProps)
 			require.NoError(t, err)
 			tt.checkFn(t, updatedProps)
 		})
