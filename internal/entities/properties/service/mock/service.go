@@ -46,19 +46,19 @@ func (m *MockPropertiesService) EXPECT() *MockPropertiesServiceMockRecorder {
 	return m.recorder
 }
 
-// EntityForProperties mocks base method.
-func (m *MockPropertiesService) EntityForProperties(ctx context.Context, entityID, projectId uuid.UUID, provMan manager.ProviderManager, qtx db.ExtendQuerier) (*models.EntityForProperties, error) {
+// EntityWithProperties mocks base method.
+func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier) (models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EntityForProperties", ctx, entityID, projectId, provMan, qtx)
-	ret0, _ := ret[0].(*models.EntityForProperties)
+	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, projectId, qtx)
+	ret0, _ := ret[0].(models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// EntityForProperties indicates an expected call of EntityForProperties.
-func (mr *MockPropertiesServiceMockRecorder) EntityForProperties(ctx, entityID, projectId, provMan, qtx any) *gomock.Call {
+// EntityWithProperties indicates an expected call of EntityWithProperties.
+func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, projectId, qtx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityForProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityForProperties), ctx, entityID, projectId, provMan, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, projectId, qtx)
 }
 
 // ReplaceAllProperties mocks base method.
@@ -105,17 +105,17 @@ func (mr *MockPropertiesServiceMockRecorder) RetrieveAllProperties(ctx, provider
 }
 
 // RetrieveAllPropertiesForEntity mocks base method.
-func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityForProperties) error {
+func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp models.EntityWithProperties, provMan manager.ProviderManager) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveAllPropertiesForEntity", ctx, efp)
+	ret := m.ctrl.Call(m, "RetrieveAllPropertiesForEntity", ctx, efp, provMan)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RetrieveAllPropertiesForEntity indicates an expected call of RetrieveAllPropertiesForEntity.
-func (mr *MockPropertiesServiceMockRecorder) RetrieveAllPropertiesForEntity(ctx, efp any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) RetrieveAllPropertiesForEntity(ctx, efp, provMan any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllPropertiesForEntity", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllPropertiesForEntity), ctx, efp)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllPropertiesForEntity", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllPropertiesForEntity), ctx, efp, provMan)
 }
 
 // RetrieveProperty mocks base method.

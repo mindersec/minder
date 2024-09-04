@@ -376,7 +376,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				continue
 			}
 
-			efp, err := s.props.EntityForProperties(ctx, e.EntityID, e.ProjectID, s.providerManager, nil)
+			efp, err := s.props.EntityWithProperties(ctx, e.EntityID, e.ProjectID, nil)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
 					// If the entity is not found, log and skip
@@ -560,7 +560,7 @@ func filterProfileLists(
 func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
 	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
-	efp *entmodels.EntityForProperties,
+	efp entmodels.EntityWithProperties,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
@@ -580,7 +580,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}
@@ -650,7 +650,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	}, nil
 }
 
-func buildEntityFromEvaluation(efp *entmodels.EntityForProperties) *minderv1.EntityTypedId {
+func buildEntityFromEvaluation(efp entmodels.EntityWithProperties) *minderv1.EntityTypedId {
 	ent := &minderv1.EntityTypedId{
 		Type: efp.Entity.Type,
 	}
@@ -688,7 +688,7 @@ func buildProfileStatus(
 // buildEvalResultAlertFromLRERow build the evaluation result alert from a
 // database row.
 func buildEvalResultAlertFromLRERow(
-	eval *db.ListRuleEvaluationsByProfileIdRow, ent *entmodels.EntityForProperties) *minderv1.EvalResultAlert {
+	eval *db.ListRuleEvaluationsByProfileIdRow, ent entmodels.EntityWithProperties) *minderv1.EvalResultAlert {
 	era := &minderv1.EvalResultAlert{
 		Status:      string(eval.AlertStatus),
 		LastUpdated: timestamppb.New(eval.AlertLastUpdated),

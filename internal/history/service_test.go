@@ -163,22 +163,22 @@ func TestListEvaluationHistory(t *testing.T) {
 		filter                   ListEvaluationFilter
 		checkf                   func(*testing.T, *ListEvaluationHistoryResult)
 		err                      bool
-		efp                      []*entmodels.EntityForProperties
+		efp                      []entmodels.EntityWithProperties
 		entityForPropertiesError error
 		retrieveAllPropsErr      error
 	}{
 		{
 			name: "records",
-			efp: []*entmodels.EntityForProperties{
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: []entmodels.EntityWithProperties{
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
-				}, nil, nil),
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				}, nil),
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid2,
-				}, nil, nil),
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				}, nil),
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid3,
-				}, nil, nil),
+				}, nil),
 			},
 			dbSetup: dbf.NewDBMock(
 				withListEvaluationHistory(nil, nil,
@@ -250,13 +250,13 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
-			efp: []*entmodels.EntityForProperties{
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: []entmodels.EntityWithProperties{
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
-				}, nil, nil),
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				}, nil),
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid2,
-				}, nil, nil),
+				}, nil),
 			},
 			cursor: &ListEvaluationCursor{
 				Direction: Next,
@@ -299,13 +299,13 @@ func TestListEvaluationHistory(t *testing.T) {
 					),
 				),
 			),
-			efp: []*entmodels.EntityForProperties{
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: []entmodels.EntityWithProperties{
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
-				}, nil, nil),
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				}, nil),
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid2,
-				}, nil, nil),
+				}, nil),
 			},
 			cursor: &ListEvaluationCursor{
 				Direction: Prev,
@@ -786,11 +786,11 @@ func TestListEvaluationHistory(t *testing.T) {
 			name:                "error getting properties",
 			err:                 true,
 			retrieveAllPropsErr: errors.New("whoops"),
-			efp: []*entmodels.EntityForProperties{
+			efp: []entmodels.EntityWithProperties{
 				// Only called once
-				entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+				entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 					ID: uuid1,
-				}, nil, nil),
+				}, nil),
 			},
 			dbSetup: dbf.NewDBMock(
 				withListEvaluationHistory(nil, nil,
@@ -836,15 +836,15 @@ func TestListEvaluationHistory(t *testing.T) {
 			pm := pmMock.NewMockProviderManager(ctrl)
 			propsSvc := propsSvcMock.NewMockPropertiesService(ctrl)
 			for _, efp := range tt.efp {
-				propsSvc.EXPECT().EntityForProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(efp, tt.entityForPropertiesError)
 			}
 
 			if tt.entityForPropertiesError != nil && len(tt.efp) == 0 {
-				propsSvc.EXPECT().EntityForProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil, tt.entityForPropertiesError).AnyTimes()
+				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(entmodels.NilEntityWithProperties, tt.entityForPropertiesError).AnyTimes()
 			}
-			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any()).
+			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any(), gomock.Any()).
 				Return(tt.retrieveAllPropsErr).AnyTimes()
 
 			service := NewEvaluationHistoryService(pm, withPropertiesServiceBuilder(func(_ db.ExtendQuerier) service.PropertiesService {

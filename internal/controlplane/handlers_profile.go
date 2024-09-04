@@ -280,7 +280,7 @@ func getProfilePBFromDB(
 // probably coming from the properties.
 func getRuleEvalEntityInfo(
 	rs db.ListRuleEvaluationsByProfileIdRow,
-	efp *entmodels.EntityForProperties,
+	efp entmodels.EntityWithProperties,
 ) map[string]string {
 	entityInfo := map[string]string{}
 
@@ -454,13 +454,13 @@ func (s *Server) getRuleEvalStatus(
 	var guidance string
 	var err error
 
-	efp, err := s.props.EntityForProperties(
-		ctx, dbRuleEvalStat.EntityID, dbRuleEvalStat.ProjectID, s.providerManager, nil)
+	efp, err := s.props.EntityWithProperties(
+		ctx, dbRuleEvalStat.EntityID, dbRuleEvalStat.ProjectID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}

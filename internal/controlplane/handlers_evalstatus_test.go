@@ -36,7 +36,7 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		sut    *db.ListRuleEvaluationsByProfileIdRow
-		efp    *entmodels.EntityForProperties
+		efp    entmodels.EntityWithProperties
 		expect *minderv1.EvalResultAlert
 	}{
 		{
@@ -47,11 +47,11 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
 			},
-			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 				ID:   uuid.New(),
 				Type: minderv1.Entity_ENTITY_REPOSITORIES,
 				Name: "example/test",
-			}, nil, nil),
+			}, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
@@ -66,11 +66,11 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertLastUpdated: d,
 				AlertDetails:     "details go here",
 			},
-			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 				ID:   uuid.New(),
 				Type: minderv1.Entity_ENTITY_REPOSITORIES,
 				Name: "example/test",
-			}, nil, nil),
+			}, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
@@ -86,11 +86,11 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 				AlertDetails:     "details go here",
 				AlertMetadata:    []byte(`{"ghsa_id": "GHAS-advisory_ID_here"}`),
 			},
-			efp: entmodels.NewEntityForPropertiesFromInstance(entmodels.EntityInstance{
+			efp: entmodels.NewEntityWithPropertiesFromInstance(entmodels.EntityInstance{
 				ID:   uuid.New(),
 				Type: minderv1.Entity_ENTITY_REPOSITORIES,
 				Name: "test",
-			}, nil, nil),
+			}, nil),
 			expect: &minderv1.EvalResultAlert{
 				Status:      string(db.AlertStatusTypesOn),
 				LastUpdated: timestamppb.New(d),
