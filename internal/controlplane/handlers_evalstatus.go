@@ -128,14 +128,22 @@ func (s *Server) ListEvaluationHistory(
 			in.GetCursor().GetCursor(),
 		)
 		if err != nil {
-			return nil, status.Error(codes.InvalidArgument, "invalid cursor")
+			return nil, util.UserVisibleError(
+				codes.InvalidArgument,
+				"invalid cursor: %s",
+				err,
+			)
 		}
 		cursor = parsedCursor
 		size = in.GetCursor().GetSize()
 	}
 
 	if size > maxPageSize {
-		return nil, status.Error(codes.InvalidArgument, "invalid cursor")
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument,
+			"requested page size was %d, max is %d",
+			size, maxPageSize,
+		)
 	}
 
 	// process filter
@@ -159,7 +167,11 @@ func (s *Server) ListEvaluationHistory(
 
 	filter, err := history.NewListEvaluationFilter(opts...)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid filter")
+		return nil, util.UserVisibleError(
+			codes.InvalidArgument,
+			"invalid filter: %s",
+			err,
+		)
 	}
 
 	// retrieve data set
