@@ -177,7 +177,7 @@ require (
 	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pressly/goose/v3 v3.21.1 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
-	github.com/rs/cors v1.11.0 // indirect
+	github.com/rs/cors v1.11.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
@@ -310,7 +310,7 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/yashtewari/glob-intersection v0.2.0 // indirect
-	github.com/zitadel/oidc/v3 v3.28.2
+	github.com/zitadel/oidc/v3 v3.29.0
 	go.mongodb.org/mongo-driver v1.16.1 // indirect
 	go.opentelemetry.io/otel/metric v1.29.0
 	go.uber.org/atomic v1.11.0 // indirect
