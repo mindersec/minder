@@ -955,7 +955,7 @@ func (mr *MockStoreMockRecorder) GetEntitlementFeaturesByProjectID(arg0, arg1 an
 }
 
 // GetEntityByID mocks base method.
-func (m *MockStore) GetEntityByID(arg0 context.Context, arg1 db.GetEntityByIDParams) (db.EntityInstance, error) {
+func (m *MockStore) GetEntityByID(arg0 context.Context, arg1 uuid.UUID) (db.EntityInstance, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEntityByID", arg0, arg1)
 	ret0, _ := ret[0].(db.EntityInstance)

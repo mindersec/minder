@@ -47,18 +47,18 @@ func (m *MockPropertiesService) EXPECT() *MockPropertiesServiceMockRecorder {
 }
 
 // EntityWithProperties mocks base method.
-func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
+func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID uuid.UUID, qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, projectId, qtx)
+	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, qtx)
 	ret0, _ := ret[0].(*models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EntityWithProperties indicates an expected call of EntityWithProperties.
-func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, projectId, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, qtx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, projectId, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, qtx)
 }
 
 // ReplaceAllProperties mocks base method.

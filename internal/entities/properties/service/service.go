@@ -49,7 +49,7 @@ const (
 type PropertiesService interface {
 	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithProperties(
-		ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier,
+		ctx context.Context, entityID uuid.UUID, qtx db.ExtendQuerier,
 	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for the given entity
 	RetrieveAllProperties(
@@ -310,7 +310,7 @@ func (_ *propertiesService) ReplaceProperty(
 }
 
 func (ps *propertiesService) EntityWithProperties(
-	ctx context.Context, entityID, projectID uuid.UUID,
+	ctx context.Context, entityID uuid.UUID,
 	qtx db.ExtendQuerier,
 ) (*models.EntityWithProperties, error) {
 	// use the transaction if provided, otherwise use the store
@@ -321,10 +321,7 @@ func (ps *propertiesService) EntityWithProperties(
 		q = ps.store
 	}
 
-	ent, err := q.GetEntityByID(ctx, db.GetEntityByIDParams{
-		ID:       entityID,
-		Projects: []uuid.UUID{projectID},
-	})
+	ent, err := q.GetEntityByID(ctx, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting entity: %w", err)
 	}

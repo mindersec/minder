@@ -288,18 +288,13 @@ func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypePa
 const getEntityByID = `-- name: GetEntityByID :one
 
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.id = $1 AND entity_instances.project_id = ANY($2::uuid[])
+WHERE entity_instances.id = $1
 LIMIT 1
 `
 
-type GetEntityByIDParams struct {
-	ID       uuid.UUID   `json:"id"`
-	Projects []uuid.UUID `json:"projects"`
-}
-
 // GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
-func (q *Queries) GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (EntityInstance, error) {
-	row := q.db.QueryRowContext(ctx, getEntityByID, arg.ID, pq.Array(arg.Projects))
+func (q *Queries) GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstance, error) {
+	row := q.db.QueryRowContext(ctx, getEntityByID, id)
 	var i EntityInstance
 	err := row.Scan(
 		&i.ID,

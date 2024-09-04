@@ -448,10 +448,7 @@ func getRepoEntityWithLegacyFallback(
 
 	// check if the repo has been created in the entities table but without
 	// properties
-	ent, err := qtx.GetEntityByID(ctx, db.GetEntityByIDParams{
-		ID:       legacyRepo.ID,
-		Projects: []uuid.UUID{legacyRepo.ProjectID},
-	})
+	ent, err := qtx.GetEntityByID(ctx, legacyRepo.ID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		// we have an entity in the entities table but without properties
 		return db.EntityInstance{}, false, fmt.Errorf("error fetching entity: %w", err)

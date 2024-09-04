@@ -56,7 +56,7 @@ WHERE name = sqlc.arg(name) AND project_id = $1;
 
 -- name: GetEntityByID :one
 SELECT * FROM entity_instances
-WHERE entity_instances.id = $1 AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[])
+WHERE entity_instances.id = $1
 LIMIT 1;
 
 -- GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.

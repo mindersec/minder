@@ -454,8 +454,7 @@ func (s *Server) getRuleEvalStatus(
 	var guidance string
 	var err error
 
-	efp, err := s.props.EntityWithProperties(
-		ctx, dbRuleEvalStat.EntityID, dbRuleEvalStat.ProjectID, nil)
+	efp, err := s.props.EntityWithProperties(ctx, dbRuleEvalStat.EntityID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 	}
