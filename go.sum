@@ -842,12 +842,12 @@ github.com/sethvargo/go-retry v0.2.4 h1:T+jHEQy/zKJf5s95UkguisicE0zuF9y7+/vgz08O
 github.com/sethvargo/go-retry v0.2.4/go.mod h1:1afjQuvh7s4gflMObvjLPaWgluLLyhA1wmVZ6KLpICw=
 github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh5dkI=
 github.com/shibumi/go-pathspec v1.3.0/go.mod h1:Xutfslp817l2I1cZvgcfeMQJG5QnU2lh5tVaaMCl3jE=
-github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.18.0 h1:Bq8eEKaolDfNOlMR2bCzVg60Z8JECBBUCAHI9flQE0w=
-github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.18.0/go.mod h1:5lcZUA5P3BpX0b6auGAwhIiveqfMeFDkDWR6sBWOvMo=
+github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.19.0 h1:jOSGQqIO7bJFMzu1btCASvy3FnHZ04EDTIKbyu4fULs=
+github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.19.0/go.mod h1:h2m+lu+VI6LXVPioTcPoYCreBYSjasPuWuDVg1NKoNI=
 github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.18.0 h1:7vovJ30WhbF+dUJ8k9YOSv58H77P/WAbhb0T4/s/KkI=
 github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.18.0/go.mod h1:Zow0fS+I+Jb3mhz4D5+f7QGduZaHjULbbvNOPDCBZ58=
-github.com/signalfx/splunk-otel-go/instrumentation/internal v1.18.0 h1:3pv351X3sysKVlrhagu79TYi2kyAai3CXK1RXHb/dRw=
-github.com/signalfx/splunk-otel-go/instrumentation/internal v1.18.0/go.mod h1:eMyUB5TRtKoV4jC8k8AYZCbVpR69xo1SPoUbxMLwkDw=
+github.com/signalfx/splunk-otel-go/instrumentation/internal v1.19.0 h1:VqX7nJGqYpPfVec5HhmQbZPxbT3PkQg0Jt3zyffrhdQ=
+github.com/signalfx/splunk-otel-go/instrumentation/internal v1.19.0/go.mod h1:mfu5FziLnvJDNR2XDbqJriwLGxf3DQcd1j2uI2YgzZk=
 github.com/sigstore/protobuf-specs v0.3.2 h1:nCVARCN+fHjlNCk3ThNXwrZRqIommIeNKWwQvORuRQo=
 github.com/sigstore/protobuf-specs v0.3.2/go.mod h1:RZ0uOdJR4OB3tLQeAyWoJFbNCBFrPQdcokntde4zRBA=
 github.com/sigstore/rekor v1.3.6 h1:QvpMMJVWAp69a3CHzdrLelqEqpTM3ByQRt5B5Kspbi8=
