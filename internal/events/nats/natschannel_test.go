@@ -32,8 +32,6 @@ import (
 )
 
 func TestNatsChannel(t *testing.T) {
-	t.Skip("This test is flaky - skipping until we can fix it")
-
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
@@ -99,7 +97,7 @@ func TestNatsChannel(t *testing.T) {
 		case m := <-out2:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
-		case <-time.After(5 * time.Second):
+		case <-time.After(20 * time.Second):
 			t.Fatalf("timeout waiting for message %d", i)
 		}
 	}
