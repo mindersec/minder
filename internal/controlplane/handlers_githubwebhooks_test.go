@@ -3639,6 +3639,148 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 		},
 		{
+			name: "pull_request reopened",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
+			event: "pull_request",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
+			payload: &github.PullRequestEvent{
+				Action: github.String("reopened"),
+				Repo: newGitHubRepo(
+					12345,
+					"minder",
+					"stacklok/minder",
+					"https://github.com/stacklok/minder",
+				),
+				Organization: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
+					URL:    github.String("url"),
+					Number: github.Int(42),
+					User: &github.User{
+						ID: github.Int64(42),
+					},
+				},
+			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+			),
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
+						ID:         repositoryID,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
+						ProviderID: providerID,
+						ProjectID:  projectID,
+					},
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulUpsertPullRequest(
+					db.PullRequest{},
+				),
+				df.WithTransaction(),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
+		},
+		{
+			name: "pull_request synchronize",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
+			event: "pull_request",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
+			payload: &github.PullRequestEvent{
+				Action: github.String("synchronize"),
+				Repo: newGitHubRepo(
+					12345,
+					"minder",
+					"stacklok/minder",
+					"https://github.com/stacklok/minder",
+				),
+				Organization: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
+					URL:    github.String("url"),
+					Number: github.Int(42),
+					User: &github.User{
+						ID: github.Int64(42),
+					},
+				},
+			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+			),
+			mockRepoBld: newRepoSvcMock(
+				withSuccessRepoById(
+					models.EntityInstance{
+						ID:         repositoryID,
+						Type:       v1.Entity_ENTITY_REPOSITORIES,
+						ProviderID: providerID,
+						ProjectID:  projectID,
+					},
+					map[string]any{
+						properties.PropertyName:           "stacklok/minder",
+						properties.PropertyUpstreamID:     "12345",
+						properties.RepoPropertyIsArchived: false,
+						properties.RepoPropertyIsPrivate:  false,
+						properties.RepoPropertyIsFork:     false,
+						ghprop.RepoPropertyOwner:          "stacklok",
+						ghprop.RepoPropertyName:           "minder",
+						ghprop.RepoPropertyId:             int64(12345),
+					}),
+			),
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithSuccessfulUpsertPullRequest(
+					db.PullRequest{},
+				),
+				df.WithTransaction(),
+			),
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
+				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
+				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+			},
+		},
+		{
 			name: "pull_request closed",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
 			event: "pull_request",
