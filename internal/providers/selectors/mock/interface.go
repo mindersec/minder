@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	models "github.com/stacklok/minder/internal/entities/models"
 	properties "github.com/stacklok/minder/internal/entities/properties"
 	proto "github.com/stacklok/minder/internal/proto"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -130,17 +131,17 @@ func (mr *MockRepoSelectorConverterMockRecorder) RegisterEntity(ctx, entType, pr
 }
 
 // RepoToSelectorEntity mocks base method.
-func (m *MockRepoSelectorConverter) RepoToSelectorEntity(ctx context.Context, repo *v1.Repository) *proto.SelectorEntity {
+func (m *MockRepoSelectorConverter) RepoToSelectorEntity(ctx context.Context, repoEntWithProps *models.EntityWithProperties) *proto.SelectorEntity {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RepoToSelectorEntity", ctx, repo)
+	ret := m.ctrl.Call(m, "RepoToSelectorEntity", ctx, repoEntWithProps)
 	ret0, _ := ret[0].(*proto.SelectorEntity)
 	return ret0
 }
 
 // RepoToSelectorEntity indicates an expected call of RepoToSelectorEntity.
-func (mr *MockRepoSelectorConverterMockRecorder) RepoToSelectorEntity(ctx, repo any) *gomock.Call {
+func (mr *MockRepoSelectorConverterMockRecorder) RepoToSelectorEntity(ctx, repoEntWithProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepoToSelectorEntity", reflect.TypeOf((*MockRepoSelectorConverter)(nil).RepoToSelectorEntity), ctx, repo)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepoToSelectorEntity", reflect.TypeOf((*MockRepoSelectorConverter)(nil).RepoToSelectorEntity), ctx, repoEntWithProps)
 }
 
 // SupportsEntity mocks base method.
@@ -181,17 +182,17 @@ func (m *MockArtifactSelectorConverter) EXPECT() *MockArtifactSelectorConverterM
 }
 
 // ArtifactToSelectorEntity mocks base method.
-func (m *MockArtifactSelectorConverter) ArtifactToSelectorEntity(ctx context.Context, artifact *v1.Artifact) *proto.SelectorEntity {
+func (m *MockArtifactSelectorConverter) ArtifactToSelectorEntity(ctx context.Context, artifactEntWithProps *models.EntityWithProperties) *proto.SelectorEntity {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ArtifactToSelectorEntity", ctx, artifact)
+	ret := m.ctrl.Call(m, "ArtifactToSelectorEntity", ctx, artifactEntWithProps)
 	ret0, _ := ret[0].(*proto.SelectorEntity)
 	return ret0
 }
 
 // ArtifactToSelectorEntity indicates an expected call of ArtifactToSelectorEntity.
-func (mr *MockArtifactSelectorConverterMockRecorder) ArtifactToSelectorEntity(ctx, artifact any) *gomock.Call {
+func (mr *MockArtifactSelectorConverterMockRecorder) ArtifactToSelectorEntity(ctx, artifactEntWithProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArtifactToSelectorEntity", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).ArtifactToSelectorEntity), ctx, artifact)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ArtifactToSelectorEntity", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).ArtifactToSelectorEntity), ctx, artifactEntWithProps)
 }
 
 // CanImplement mocks base method.
@@ -392,17 +393,17 @@ func (mr *MockPullRequestSelectorConverterMockRecorder) GetEntityName(entType, p
 }
 
 // PullRequestToSelectorEntity mocks base method.
-func (m *MockPullRequestSelectorConverter) PullRequestToSelectorEntity(ctx context.Context, pullRequest *v1.PullRequest) *proto.SelectorEntity {
+func (m *MockPullRequestSelectorConverter) PullRequestToSelectorEntity(ctx context.Context, pullRequestEntityWithProps *models.EntityWithProperties) *proto.SelectorEntity {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PullRequestToSelectorEntity", ctx, pullRequest)
+	ret := m.ctrl.Call(m, "PullRequestToSelectorEntity", ctx, pullRequestEntityWithProps)
 	ret0, _ := ret[0].(*proto.SelectorEntity)
 	return ret0
 }
 
 // PullRequestToSelectorEntity indicates an expected call of PullRequestToSelectorEntity.
-func (mr *MockPullRequestSelectorConverterMockRecorder) PullRequestToSelectorEntity(ctx, pullRequest any) *gomock.Call {
+func (mr *MockPullRequestSelectorConverterMockRecorder) PullRequestToSelectorEntity(ctx, pullRequestEntityWithProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullRequestToSelectorEntity", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).PullRequestToSelectorEntity), ctx, pullRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullRequestToSelectorEntity", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).PullRequestToSelectorEntity), ctx, pullRequestEntityWithProps)
 }
 
 // RegisterEntity mocks base method.

@@ -123,6 +123,21 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			Definition: json.RawMessage(`{"github": {}}`),
 		}, nil)
 
+	// search entity for its properties
+	mockStore.EXPECT().
+		GetEntityByID(gomock.Any(), repositoryID).
+		Return(db.EntityInstance{
+			ID:             repositoryID,
+			EntityType:     db.EntitiesRepository,
+			Name:           "foo/test",
+			ProjectID:      projectID,
+			ProviderID:     providerID,
+			OriginatedFrom: uuid.NullUUID{},
+		}, nil)
+	mockStore.EXPECT().
+		GetAllPropertiesForEntity(gomock.Any(), repositoryID).
+		Return([]db.Property{}, nil)
+
 	// get access token
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(),

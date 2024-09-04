@@ -19,8 +19,8 @@ package selectors
 import (
 	"context"
 
+	"github.com/stacklok/minder/internal/entities/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -31,7 +31,7 @@ type RepoSelectorConverter interface {
 	provifv1.Provider
 
 	// RepoToSelectorEntity converts the given repository to a repository selector
-	RepoToSelectorEntity(ctx context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity
+	RepoToSelectorEntity(ctx context.Context, repoEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
 }
 
 // ArtifactSelectorConverter is an interface for converting an artifact to a artifact selector
@@ -39,7 +39,7 @@ type ArtifactSelectorConverter interface {
 	provifv1.Provider
 
 	// ArtifactToSelectorEntity converts the given artifact to a artifact selector
-	ArtifactToSelectorEntity(ctx context.Context, artifact *minderv1.Artifact) *internalpb.SelectorEntity
+	ArtifactToSelectorEntity(ctx context.Context, artifactEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
 }
 
 // PullRequestSelectorConverter is an interface for converting an pull request to a pull request selector
@@ -47,5 +47,6 @@ type PullRequestSelectorConverter interface {
 	provifv1.Provider
 
 	// PullRequestToSelectorEntity converts the given pull request to a pull request selector
-	PullRequestToSelectorEntity(ctx context.Context, pullRequest *minderv1.PullRequest) *internalpb.SelectorEntity
+	PullRequestToSelectorEntity(
+		ctx context.Context, pullRequestEntityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
 }

@@ -17,57 +17,72 @@ package github
 
 import (
 	"context"
-	"fmt"
 
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RepoToSelectorEntity converts a Repository to a SelectorEntity
-func (_ *GitHub) RepoToSelectorEntity(_ context.Context, r *minderv1.Repository) *internalpb.SelectorEntity {
-	fullName := fmt.Sprintf("%s/%s", r.GetOwner(), r.GetName())
+func (_ *GitHub) RepoToSelectorEntity(
+	_ context.Context, repoEntWithProps *models.EntityWithProperties,
+) *internalpb.SelectorEntity {
+	var isFork *bool
+	if propIsFork, err := repoEntWithProps.Properties.GetProperty(properties.RepoPropertyIsFork).AsBool(); err == nil {
+		isFork = proto.Bool(propIsFork)
+	}
+
+	var isPrivate *bool
+	if propIsPrivate, err := repoEntWithProps.Properties.GetProperty(properties.RepoPropertyIsPrivate).AsBool(); err == nil {
+		isPrivate = proto.Bool(propIsPrivate)
+	}
 
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
-		Name:       fullName,
+		Name:       repoEntWithProps.Entity.Name,
 		Entity: &internalpb.SelectorEntity_Repository{
 			Repository: &internalpb.SelectorRepository{
-				Name:      fullName,
-				IsFork:    proto.Bool(r.GetIsFork()),
-				IsPrivate: proto.Bool(r.GetIsPrivate()),
+				Name:       repoEntWithProps.Entity.Name,
+				IsFork:     isFork,
+				IsPrivate:  isPrivate,
+				Properties: repoEntWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}
 }
 
 // ArtifactToSelectorEntity converts an Artifact to a SelectorEntity
-func (_ *GitHub) ArtifactToSelectorEntity(_ context.Context, a *minderv1.Artifact) *internalpb.SelectorEntity {
-	fullName := fmt.Sprintf("%s/%s", a.GetOwner(), a.GetName())
-
+func (_ *GitHub) ArtifactToSelectorEntity(
+	_ context.Context, artifactEntWithProps *models.EntityWithProperties,
+) *internalpb.SelectorEntity {
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
-		Name:       fullName,
+		Name:       artifactEntWithProps.Entity.Name,
 		Entity: &internalpb.SelectorEntity_Artifact{
 			Artifact: &internalpb.SelectorArtifact{
-				Name: fullName,
-				Type: a.GetType(),
+				Name:       artifactEntWithProps.Entity.Name,
+				Type:       artifactEntWithProps.Properties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
+				Properties: artifactEntWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}
 }
 
 // PullRequestToSelectorEntity converts a Pull Request to a SelectorEntity
-func (_ *GitHub) PullRequestToSelectorEntity(_ context.Context, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
-	fullName := fmt.Sprintf("%s/%s/%d", pr.GetRepoOwner(), pr.GetRepoName(), pr.GetNumber())
-
+func (_ *GitHub) PullRequestToSelectorEntity(
+	_ context.Context, pullRequestEntityWithProps *models.EntityWithProperties,
+) *internalpb.SelectorEntity {
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
-		Name:       fullName,
+		Name:       pullRequestEntityWithProps.Entity.Name,
 		Entity: &internalpb.SelectorEntity_PullRequest{
 			PullRequest: &internalpb.SelectorPullRequest{
-				Name: fullName,
+				Name:       pullRequestEntityWithProps.Entity.Name,
+				Properties: pullRequestEntityWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}

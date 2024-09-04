@@ -33,6 +33,7 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	entmodels "github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
@@ -215,12 +216,28 @@ func (e *executor) profileEvalStatus(
 	// so far this function only handles selectors. In the future we can extend it to handle other
 	// profile-global evaluations
 
+	if len(aggregate.Selectors) == 0 {
+		return nil
+	}
+
 	selection, err := e.selBuilder.NewSelectionFromProfile(eiw.Type, aggregate.Selectors)
 	if err != nil {
 		return fmt.Errorf("error creating selection from profile: %w", err)
 	}
 
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, eiw.Type, eiw.Entity)
+	// get the entity UUID (the primary key in the database)
+	entityID, err := eiw.GetID()
+	if err != nil {
+		return fmt.Errorf("error getting entity id: %w", err)
+	}
+
+	// get the entity with properties by the entity UUID
+	ewp, err := entmodels.GetEntityWithPropertiesByID(ctx, e.querier, entityID)
+	if err != nil {
+		return fmt.Errorf("error getting entity with properties: %w", err)
+	}
+
+	selEnt := provsel.EntityToSelectorEntity(ctx, provider, eiw.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}

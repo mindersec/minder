@@ -19,8 +19,7 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/protobuf/proto"
-
+	"github.com/stacklok/minder/internal/entities/models"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -28,7 +27,7 @@ import (
 
 // entityInfoConverter is an interface for converting an entity from an EntityInfoWrapper to a SelectorEntity
 type entityInfoConverter interface {
-	toSelectorEntity(ctx context.Context, entity proto.Message) *internalpb.SelectorEntity
+	toSelectorEntity(ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
 }
 
 type repositoryInfoConverter struct {
@@ -46,17 +45,17 @@ func newRepositoryInfoConverter(provider provifv1.Provider) *repositoryInfoConve
 	}
 }
 
-func (rc *repositoryInfoConverter) toSelectorEntity(ctx context.Context, entity proto.Message) *internalpb.SelectorEntity {
+func (rc *repositoryInfoConverter) toSelectorEntity(
+	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	if rc == nil {
 		return nil
 	}
 
-	r, ok := entity.(*minderv1.Repository)
-	if !ok {
+	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_REPOSITORIES {
 		return nil
 	}
 
-	return rc.converter.RepoToSelectorEntity(ctx, r)
+	return rc.converter.RepoToSelectorEntity(ctx, entityWithProps)
 }
 
 type artifactInfoConverter struct {
@@ -74,17 +73,17 @@ func newArtifactInfoConverter(provider provifv1.Provider) *artifactInfoConverter
 	}
 }
 
-func (ac *artifactInfoConverter) toSelectorEntity(ctx context.Context, entity proto.Message) *internalpb.SelectorEntity {
+func (ac *artifactInfoConverter) toSelectorEntity(
+	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	if ac == nil {
 		return nil
 	}
 
-	a, ok := entity.(*minderv1.Artifact)
-	if !ok {
+	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_ARTIFACTS {
 		return nil
 	}
 
-	return ac.converter.ArtifactToSelectorEntity(ctx, a)
+	return ac.converter.ArtifactToSelectorEntity(ctx, entityWithProps)
 }
 
 type pullRequestInfoConverter struct {
@@ -102,17 +101,17 @@ func newPullRequestInfoConverter(provider provifv1.Provider) *pullRequestInfoCon
 	}
 }
 
-func (prc *pullRequestInfoConverter) toSelectorEntity(ctx context.Context, entity proto.Message) *internalpb.SelectorEntity {
+func (prc *pullRequestInfoConverter) toSelectorEntity(
+	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	if prc == nil {
 		return nil
 	}
 
-	p, ok := entity.(*minderv1.PullRequest)
-	if !ok {
+	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_PULL_REQUESTS {
 		return nil
 	}
 
-	return prc.converter.PullRequestToSelectorEntity(ctx, p)
+	return prc.converter.PullRequestToSelectorEntity(ctx, entityWithProps)
 }
 
 // converterFactory is a map of entity types to their respective converters
@@ -145,12 +144,12 @@ func EntityToSelectorEntity(
 	ctx context.Context,
 	provider provifv1.Provider,
 	entType minderv1.Entity,
-	entity proto.Message,
+	entityWithProps *models.EntityWithProperties,
 ) *internalpb.SelectorEntity {
 	factory := newConverterFactory(provider)
 	conv, err := factory.getConverter(entType)
 	if err != nil {
 		return nil
 	}
-	return conv.toSelectorEntity(ctx, entity)
+	return conv.toSelectorEntity(ctx, entityWithProps)
 }
