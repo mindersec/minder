@@ -126,7 +126,7 @@ func (p *profileService) CreateProfile(
 	}
 
 	// Adds default rule names, if not present
-	PopulateRuleNames(profile)
+	PopulateRuleNames(profile, rulesInProf)
 
 	displayName := profile.GetDisplayName()
 	// if empty use the name
@@ -223,7 +223,7 @@ func (p *profileService) UpdateProfile(
 	}
 
 	// Adds default rule names, if not present
-	PopulateRuleNames(profile)
+	PopulateRuleNames(profile, rules)
 
 	displayName := profile.GetDisplayName()
 	// if empty use the name
@@ -564,7 +564,7 @@ func upsertRuleInstances(
 	updatedIDs := make([]uuid.UUID, len(newRules))
 	for i, rule := range newRules {
 		// TODO: Clean up this logic once we no longer have to support the old tables.
-		entityRuleTuple, ok := rulesInProf[RuleTypeAndNamePair{
+		ruleIDAndName, ok := rulesInProf[RuleTypeAndNamePair{
 			RuleType: rule.Type,
 			RuleName: rule.Name,
 		}]
@@ -586,7 +586,7 @@ func upsertRuleInstances(
 			ProfileID: profileID,
 			// TODO: Make non nullable in future PR
 			ProjectID:  projectID,
-			RuleTypeID: entityRuleTuple.RuleID,
+			RuleTypeID: ruleIDAndName.RuleID,
 			Name:       rule.Name,
 			EntityType: entityType,
 			Def:        def,

@@ -117,8 +117,8 @@ func profileStatusLayout(table *tablewriter.Table) {
 func ruleEvaluationsLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{
-		"Rule Name", "Display Name", "Entity", "Status", "Remediation", "Entity Info"})
-	table.SetAutoMergeCellsByColumnIndex([]int{0})
+		"Rule Name", "Rule Type", "Entity", "Status", "Remediation", "Entity Info"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(true)
 }

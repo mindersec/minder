@@ -17,15 +17,13 @@ package profiles
 
 import (
 	"github.com/google/uuid"
-
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-// EntityAndRuleTuple is a tuple that allows us track rule instantiations
-// and the entity they're associated with
-type EntityAndRuleTuple struct {
-	Entity minderv1.Entity
-	RuleID uuid.UUID
+// RuleIdAndNamePair is a tuple of a rule's instance ID and the name derived from the rule's
+// descriptive name and rule type name
+type RuleIdAndNamePair struct {
+	RuleID          uuid.UUID
+	DerivedRuleName string
 }
 
 // RuleTypeAndNamePair is a tuple of a rule instance's name and rule type name
@@ -36,4 +34,4 @@ type RuleTypeAndNamePair struct {
 
 // RuleMapping is a mapping of rule instance info (name + type)
 // to entity info (rule ID + entity type)
-type RuleMapping map[RuleTypeAndNamePair]EntityAndRuleTuple
+type RuleMapping map[RuleTypeAndNamePair]RuleIdAndNamePair
