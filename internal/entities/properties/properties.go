@@ -291,3 +291,23 @@ func (p *Properties) Merge(other *Properties) *Properties {
 		props: propsMap,
 	}
 }
+
+// ToProtoStruct converts the Properties to a protobuf Struct
+func (p *Properties) ToProtoStruct() *structpb.Struct {
+	if p == nil {
+		return nil
+	}
+
+	fields := make(map[string]*structpb.Value)
+
+	p.props.Range(func(key string, prop Property) bool {
+		fields[key] = prop.value
+		return true
+	})
+
+	protoStruct := &structpb.Struct{
+		Fields: fields,
+	}
+
+	return protoStruct
+}
