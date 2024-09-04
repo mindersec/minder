@@ -31,11 +31,14 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/engine/entities"
+	entmodels "github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // CreateProfile creates a profile for a project
@@ -273,41 +276,38 @@ func getProfilePBFromDB(
 	return nil, fmt.Errorf("profile not found")
 }
 
-func (s *Server) getRuleEvalEntityInfo(
-	ctx context.Context,
-	entityType *db.NullEntities,
-	selector *uuid.NullUUID,
+// TODO: We need to replace this with a more generic method that can be used for all entities
+// probably coming from the properties.
+func getRuleEvalEntityInfo(
 	rs db.ListRuleEvaluationsByProfileIdRow,
-	projectID uuid.UUID,
+	efp *entmodels.EntityWithProperties,
 ) map[string]string {
-	l := zerolog.Ctx(ctx)
 	entityInfo := map[string]string{}
 
-	if rs.RepositoryID.Valid {
-		// this is always true now but might not be when we support entities not tied to a repo
-		entityInfo["repo_name"] = rs.RepoName.String
-		entityInfo["repo_owner"] = rs.RepoOwner.String
-		entityInfo["provider"] = rs.Provider.String
-		entityInfo["repository_id"] = rs.RepositoryID.UUID.String()
+	if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
+		entityInfo["repo_owner"] = owner.GetString()
+	}
+	if name := efp.Properties.GetProperty(ghprop.RepoPropertyName); name != nil {
+		entityInfo["repo_name"] = name.GetString()
 	}
 
-	if !selector.Valid || !entityType.Valid {
-		return entityInfo
+	if artName := efp.Properties.GetProperty(ghprop.ArtifactPropertyName); artName != nil {
+		entityInfo["artifact_name"] = artName.GetString()
 	}
 
-	if entityType.Entities == db.EntitiesArtifact {
-		artifact, err := s.store.GetArtifactByID(ctx, db.GetArtifactByIDParams{
-			ID:        selector.UUID,
-			ProjectID: projectID,
-		})
-		if err != nil {
-			l.Err(err).Msg("error getting artifact by ID")
-			return entityInfo
-		}
-		entityInfo["artifact_id"] = artifact.ID.String()
-		entityInfo["artifact_name"] = artifact.ArtifactName
-		entityInfo["artifact_type"] = artifact.ArtifactType
-		entityInfo["provider"] = artifact.ProviderName
+	if artType := efp.Properties.GetProperty(ghprop.ArtifactPropertyType); artType != nil {
+		entityInfo["artifact_type"] = artType.GetString()
+	}
+
+	entityInfo["provider"] = rs.Provider
+	entityInfo["entity_type"] = efp.Entity.Type.ToString()
+	entityInfo["entity_id"] = rs.EntityID.String()
+
+	// temporary: These will be replaced by entity_id
+	if rs.EntityType == db.EntitiesRepository {
+		entityInfo["repository_id"] = efp.Entity.ID.String()
+	} else if rs.EntityType == db.EntitiesArtifact {
+		entityInfo["artifact_id"] = efp.Entity.ID.String()
 	}
 
 	return entityInfo
@@ -319,7 +319,6 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
 
 	entityCtx := engcontext.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
 
 	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
@@ -339,13 +338,11 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 	var selector *uuid.NullUUID
-	var dbEntity *db.NullEntities
 	var ruleType *sql.NullString
 	var ruleName *sql.NullString
 
 	if in.GetAll() {
 		selector = &uuid.NullUUID{}
-		dbEntity = &db.NullEntities{}
 	} else if e := in.GetEntity(); e != nil {
 		if !e.GetType().IsValid() {
 			return nil, util.UserVisibleError(codes.InvalidArgument,
@@ -356,7 +353,6 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		if err := selector.Scan(e.GetId()); err != nil {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid entity ID in selector")
 		}
-		dbEntity = &db.NullEntities{Entities: entities.EntityTypeToDB(e.GetType()), Valid: true}
 	}
 
 	ruleType = &sql.NullString{
@@ -383,7 +379,6 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    dbProfileStatus.ID,
 			EntityID:     *selector,
-			EntityType:   *dbEntity,
 			RuleTypeName: *ruleType,
 			RuleName:     *ruleName,
 		})
@@ -391,11 +386,9 @@ func (s *Server) GetProfileStatusByName(ctx context.Context,
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
 		}
 
-		ruleEvaluationStatuses = s.
-			getRuleEvaluationStatuses(
-				ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-				dbEntity, selector, projectID,
-			)
+		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
+			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
+		)
 		// TODO: Add other entities once we have database entries for them
 	}
 
@@ -418,9 +411,6 @@ func (s *Server) getRuleEvaluationStatuses(
 	ctx context.Context,
 	dbRuleEvaluationStatuses []db.ListRuleEvaluationsByProfileIdRow,
 	profileId string,
-	dbEntity *db.NullEntities,
-	selector *uuid.NullUUID,
-	projectID uuid.UUID,
 ) []*minderv1.RuleEvaluationStatus {
 	ruleEvaluationStatuses := make(
 		[]*minderv1.RuleEvaluationStatus, 0, len(dbRuleEvaluationStatuses),
@@ -428,7 +418,24 @@ func (s *Server) getRuleEvaluationStatuses(
 	// Loop through the rule evaluation statuses and convert them to protobuf
 	for _, dbRuleEvalStat := range dbRuleEvaluationStatuses {
 		// Get the rule evaluation status
-		st := s.getRuleEvalStatus(ctx, profileId, dbEntity, selector, dbRuleEvalStat, projectID)
+		st, err := s.getRuleEvalStatus(ctx, profileId, dbRuleEvalStat)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
+				zerolog.Ctx(ctx).Error().
+					Str("profile_id", profileId).
+					Str("rule_id", dbRuleEvalStat.RuleTypeID.String()).
+					Str("entity_id", dbRuleEvalStat.EntityID.String()).
+					Err(err).Msg("entity not found. error getting rule evaluation status")
+				continue
+			}
+
+			zerolog.Ctx(ctx).Error().
+				Str("profile_id", profileId).
+				Str("rule_id", dbRuleEvalStat.RuleTypeID.String()).
+				Str("entity_id", dbRuleEvalStat.EntityID.String()).
+				Err(err).Msg("error getting rule evaluation status")
+			continue
+		}
 		// Append the rule evaluation status to the list
 		ruleEvaluationStatuses = append(ruleEvaluationStatuses, st)
 	}
@@ -441,14 +448,22 @@ func (s *Server) getRuleEvaluationStatuses(
 func (s *Server) getRuleEvalStatus(
 	ctx context.Context,
 	profileID string,
-	dbEntity *db.NullEntities,
-	selector *uuid.NullUUID,
 	dbRuleEvalStat db.ListRuleEvaluationsByProfileIdRow,
-	projectID uuid.UUID,
-) *minderv1.RuleEvaluationStatus {
+) (*minderv1.RuleEvaluationStatus, error) {
 	l := zerolog.Ctx(ctx)
 	var guidance string
 	var err error
+
+	efp, err := s.props.EntityWithProperties(
+		ctx, dbRuleEvalStat.EntityID, dbRuleEvalStat.ProjectID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
+	}
+
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+	}
 
 	if dbRuleEvalStat.EvalStatus == db.EvalStatusTypesFailure ||
 		dbRuleEvalStat.EvalStatus == db.EvalStatusTypesError {
@@ -463,7 +478,7 @@ func (s *Server) getRuleEvalStatus(
 	if dbRuleEvalStat.EntityType == db.EntitiesRepository {
 		remediationURL, err = getRemediationURLFromMetadata(
 			dbRuleEvalStat.RemMetadata,
-			fmt.Sprintf("%s/%s", dbRuleEvalStat.RepoOwner.String, dbRuleEvalStat.RepoName.String),
+			efp.Entity.Name,
 		)
 		if err != nil {
 			// A failure parsing the alert metadata points to a corrupt record. Log but don't err.
@@ -486,7 +501,7 @@ func (s *Server) getRuleEvalStatus(
 		Entity:              string(dbRuleEvalStat.EntityType),
 		Status:              string(dbRuleEvalStat.EvalStatus),
 		Details:             dbRuleEvalStat.EvalDetails,
-		EntityInfo:          s.getRuleEvalEntityInfo(ctx, dbEntity, selector, dbRuleEvalStat, projectID),
+		EntityInfo:          getRuleEvalEntityInfo(dbRuleEvalStat, efp),
 		Guidance:            guidance,
 		LastUpdated:         timestamppb.New(dbRuleEvalStat.EvalLastUpdated),
 		RemediationStatus:   string(dbRuleEvalStat.RemStatus),
@@ -513,19 +528,17 @@ func (s *Server) getRuleEvalStatus(
 		if dbRuleEvalStat.EntityType == db.EntitiesRepository {
 			repoPath = fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"])
 		} else if dbRuleEvalStat.EntityType == db.EntitiesArtifact {
-			repoDetails, err := s.store.GetRepoPathFromArtifactID(ctx, dbRuleEvalStat.EntityID)
-			if err != nil {
-				l.Err(err).Msg("error getting repo details from db")
-				return st
+			artRepoOwner := efp.Properties.GetProperty(ghprop.ArtifactPropertyRepoOwner).GetString()
+			artRepoName := efp.Properties.GetProperty(ghprop.ArtifactPropertyRepoName).GetString()
+			if artRepoOwner != "" && artRepoName != "" {
+				repoPath = fmt.Sprintf("%s/%s", artRepoOwner, artRepoName)
 			}
-			repoPath = fmt.Sprintf("%s/%s", repoDetails.Owner, repoDetails.Name)
 		} else if dbRuleEvalStat.EntityType == db.EntitiesPullRequest {
-			repoDetails, err := s.store.GetRepoPathFromPullRequestID(ctx, dbRuleEvalStat.EntityID)
-			if err != nil {
-				l.Err(err).Msg("error getting repo details from db")
-				return st
+			prRepoOwner := efp.Properties.GetProperty(ghprop.PullPropertyRepoOwner).GetString()
+			prRepoName := efp.Properties.GetProperty(ghprop.PullPropertyRepoName).GetString()
+			if prRepoOwner != "" && prRepoName != "" {
+				repoPath = fmt.Sprintf("%s/%s", prRepoOwner, prRepoName)
 			}
-			repoPath = fmt.Sprintf("%s/%s", repoDetails.Owner, repoDetails.Name)
 		}
 		alertURL, err := getAlertURLFromMetadata(
 			dbRuleEvalStat.AlertMetadata,
@@ -537,7 +550,7 @@ func (s *Server) getRuleEvalStatus(
 			st.Alert.Url = alertURL
 		}
 	}
-	return st
+	return st, nil
 }
 
 // GetProfileStatusByProject is a method to get profile status for a project

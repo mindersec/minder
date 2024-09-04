@@ -26,7 +26,7 @@ import (
 // ExtendQuerier extends the Querier interface with custom queries
 type ExtendQuerier interface {
 	Querier
-	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
+	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID,
 		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
 	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
@@ -112,14 +112,12 @@ func NewStore(db *sql.DB) Store {
 func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ctx context.Context,
 	profileID uuid.UUID,
-	entityType NullEntities,
 	ruleName sql.NullString,
 	entityID uuid.NullUUID,
 	ruleTypeName sql.NullString,
 ) (*ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
 		ProfileID:    profileID,
-		EntityType:   entityType,
 		EntityID:     entityID,
 		RuleName:     ruleName,
 		RuleTypeName: ruleTypeName,

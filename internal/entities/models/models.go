@@ -40,8 +40,8 @@ type EntityWithProperties struct {
 }
 
 // NewEntityWithProperties creates a new EntityWithProperties instance
-func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) EntityWithProperties {
-	return EntityWithProperties{
+func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) *EntityWithProperties {
+	return &EntityWithProperties{
 		Entity: EntityInstance{
 			ID:         dbEntity.ID,
 			Type:       entities.EntityTypeFromDB(dbEntity.EntityType),
@@ -51,4 +51,17 @@ func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Prope
 		},
 		Properties: props,
 	}
+}
+
+// NewEntityWithPropertiesFromInstance creates a new EntityWithProperties instance from an existing entity instance
+func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *properties.Properties) *EntityWithProperties {
+	return &EntityWithProperties{
+		Entity:     entity,
+		Properties: props,
+	}
+}
+
+// UpdateProperties updates the properties for the "entity for properties" instance
+func (e *EntityWithProperties) UpdateProperties(props *properties.Properties) {
+	e.Properties = props
 }

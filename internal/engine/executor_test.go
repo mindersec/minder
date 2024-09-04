@@ -107,7 +107,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
-		gomock.Any(),
 	).Return(nil, nil)
 
 	mockStore.EXPECT().

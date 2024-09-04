@@ -16,29 +16,18 @@
 SELECT eh.* FROM evaluation_rule_entities AS re
 JOIN latest_evaluation_statuses AS les ON les.rule_entity_id = re.id
 JOIN evaluation_statuses AS eh ON les.evaluation_history_id = eh.id
-WHERE re.rule_id = $1
-AND (
-    re.repository_id = $2
-    OR re.pull_request_id = $3
-    OR re.artifact_id = $4
-)
+WHERE re.rule_id = $1 AND re.entity_instance_id = $2
 FOR UPDATE;
 
 -- name: InsertEvaluationRuleEntity :one
 INSERT INTO evaluation_rule_entities(
     rule_id,
-    repository_id,
-    pull_request_id,
-    artifact_id,
     entity_type,
     entity_instance_id
 ) VALUES (
     $1,
     $2,
-    $3,
-    $4,
-    $5,
-    $6
+    $3
 )
 RETURNING id;
 
@@ -100,19 +89,9 @@ SELECT s.id::uuid AS evaluation_id,
     s.evaluation_time as evaluated_at,
     ere.entity_type,
     -- entity id
-       CAST(
-           CASE
-               WHEN ere.repository_id IS NOT NULL THEN r.id
-               WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-               WHEN ere.artifact_id IS NOT NULL THEN a.id
-           END AS uuid
-       ) AS entity_id,
-    ere.entity_instance_id as new_entity_id,
-    -- raw fields for entity names
-    r.repo_owner,
-    r.repo_name,
-    pr.pr_number,
-    a.artifact_name,
+    ere.entity_instance_id as entity_id,
+    -- entity name
+    ei.name as entity_name,
     j.id as project_id,
     -- rule type, name, and profile
     rt.name AS rule_type,
@@ -133,12 +112,10 @@ FROM evaluation_statuses s
     JOIN rule_instances ri ON ere.rule_id = ri.id
     JOIN rule_type rt ON ri.rule_type_id = rt.id
     JOIN profiles p ON ri.profile_id = p.id
-    LEFT JOIN repositories r ON ere.repository_id = r.id
-    LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-    LEFT JOIN artifacts a ON ere.artifact_id = a.id
+    JOIN projects j ON ei.project_id = j.id
+    JOIN entity_instances ei ON ere.entity_instance_id = ei.id
     LEFT JOIN remediation_events re ON re.evaluation_id = s.id
     LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
-    LEFT JOIN projects j ON r.project_id = j.id
 WHERE s.id = sqlc.arg(evaluation_id) AND j.id = sqlc.arg(project_id);
 
 -- name: ListEvaluationHistory :many
@@ -146,19 +123,7 @@ SELECT s.id::uuid AS evaluation_id,
        s.evaluation_time as evaluated_at,
        ere.entity_type,
        -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN r.id
-         WHEN ere.pull_request_id IS NOT NULL THEN pr.id
-         WHEN ere.artifact_id IS NOT NULL THEN a.id
-         END AS uuid
-       ) AS entity_id,
-        ere.entity_instance_id as new_entity_id,
-       -- raw fields for entity names
-       r.repo_owner,
-       r.repo_name,
-       pr.pr_number,
-       a.artifact_name,
+        ere.entity_instance_id as entity_id,
        j.id as project_id,
        -- rule type, name, and profile
        rt.name AS rule_type,
@@ -179,28 +144,22 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN rule_instances ri ON ere.rule_id = ri.id
   JOIN rule_type rt ON ri.rule_type_id = rt.id
   JOIN profiles p ON ri.profile_id = p.id
-  LEFT JOIN repositories r ON ere.repository_id = r.id
-  LEFT JOIN pull_requests pr ON ere.pull_request_id = pr.id
-  LEFT JOIN artifacts a ON ere.artifact_id = a.id
+  JOIN entity_instances ei ON ere.entity_instance_id = ei.id
+  JOIN projects j ON ei.project_id = j.id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
-  LEFT JOIN projects j ON r.project_id = j.id
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.evaluation_time)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.evaluation_time)
    -- inclusion filters
    AND (sqlc.slice(entityTypes)::entities[] IS NULL OR ere.entity_type = ANY(sqlc.slice(entityTypes)::entities[]))
-   AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) = ANY(sqlc.slice(entityNames)::text[]))
-   AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text = ANY(sqlc.slice(entityNames)::text[]))
-   AND (sqlc.slice(entityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name = ANY(sqlc.slice(entityNames)::text[]))
+   AND (sqlc.slice(entityNames)::text[] IS NULL OR ei.name = ANY(sqlc.slice(entityNames)::text[]))
    AND (sqlc.slice(profileNames)::text[] IS NULL OR p.name = ANY(sqlc.slice(profileNames)::text[]))
    AND (sqlc.slice(remediations)::remediation_status_types[] IS NULL OR re.status = ANY(sqlc.slice(remediations)::remediation_status_types[]))
    AND (sqlc.slice(alerts)::alert_status_types[] IS NULL OR ae.status = ANY(sqlc.slice(alerts)::alert_status_types[]))
    AND (sqlc.slice(statuses)::eval_status_types[] IS NULL OR s.status = ANY(sqlc.slice(statuses)::eval_status_types[]))
    -- exclusion filters
    AND (sqlc.slice(notEntityTypes)::entities[] IS NULL OR ere.entity_type != ALL(sqlc.slice(notEntityTypes)::entities[]))
-   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.repository_id IS NULL OR CONCAT(r.repo_owner, '/', r.repo_name) != ALL(sqlc.slice(notEntityNames)::text[]))
-   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.pull_request_id IS NULL OR pr.pr_number::text != ALL(sqlc.slice(notEntityNames)::text[]))
-   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ere.artifact_id IS NULL OR a.artifact_name != ALL(sqlc.slice(notEntityNames)::text[]))
+   AND (sqlc.slice(notEntityNames)::text[] IS NULL OR ei.name != ALL(sqlc.slice(notEntityNames)::text[]))
    AND (sqlc.slice(notProfileNames)::text[] IS NULL OR p.name != ALL(sqlc.slice(notProfileNames)::text[]))
    AND (sqlc.slice(notRemediations)::remediation_status_types[] IS NULL OR re.status != ALL(sqlc.slice(notRemediations)::remediation_status_types[]))
    AND (sqlc.slice(notAlerts)::alert_status_types[] IS NULL OR ae.status != ALL(sqlc.slice(notAlerts)::alert_status_types[]))
@@ -220,22 +179,9 @@ SELECT s.evaluation_time,
        s.id,
        ere.rule_id,
        -- entity type
-       CAST(
-	 CASE
-	 WHEN ere.repository_id IS NOT NULL THEN 1
-	 WHEN ere.pull_request_id IS NOT NULL THEN 2
-	 WHEN ere.artifact_id IS NOT NULL THEN 3
-	 END AS integer
-       ) AS entity_type,
+       ere.entity_type,
        -- entity id
-       CAST(
-         CASE
-         WHEN ere.repository_id IS NOT NULL THEN ere.repository_id
-         WHEN ere.pull_request_id IS NOT NULL THEN ere.pull_request_id
-         WHEN ere.artifact_id IS NOT NULL THEN ere.artifact_id
-         END AS uuid
-       ) AS entity_id,
-       ere.entity_instance_id as new_entity_id
+       ere.entity_instance_id as entity_id
   FROM evaluation_statuses s
        JOIN evaluation_rule_entities ere ON s.rule_entity_id = ere.id
        LEFT JOIN latest_evaluation_statuses l

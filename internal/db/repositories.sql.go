@@ -160,42 +160,6 @@ func (q *Queries) GetProviderWebhooks(ctx context.Context, providerID uuid.UUID)
 	return items, nil
 }
 
-const getRepoPathFromArtifactID = `-- name: GetRepoPathFromArtifactID :one
-SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
-JOIN artifacts AS a ON a.repository_id = r.id
-WHERE a.id = $1
-`
-
-type GetRepoPathFromArtifactIDRow struct {
-	Owner string `json:"owner"`
-	Name  string `json:"name"`
-}
-
-func (q *Queries) GetRepoPathFromArtifactID(ctx context.Context, id uuid.UUID) (GetRepoPathFromArtifactIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getRepoPathFromArtifactID, id)
-	var i GetRepoPathFromArtifactIDRow
-	err := row.Scan(&i.Owner, &i.Name)
-	return i, err
-}
-
-const getRepoPathFromPullRequestID = `-- name: GetRepoPathFromPullRequestID :one
-SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
-JOIN pull_requests AS p ON p.repository_id = r.id
-WHERE p.id = $1
-`
-
-type GetRepoPathFromPullRequestIDRow struct {
-	Owner string `json:"owner"`
-	Name  string `json:"name"`
-}
-
-func (q *Queries) GetRepoPathFromPullRequestID(ctx context.Context, id uuid.UUID) (GetRepoPathFromPullRequestIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getRepoPathFromPullRequestID, id)
-	var i GetRepoPathFromPullRequestIDRow
-	err := row.Scan(&i.Owner, &i.Name)
-	return i, err
-}
-
 const getRepositoryByID = `-- name: GetRepositoryByID :one
 SELECT id, provider, project_id, repo_owner, repo_name, repo_id, is_private, is_fork, webhook_id, webhook_url, deploy_url, clone_url, created_at, updated_at, default_branch, license, provider_id, reminder_last_sent FROM repositories WHERE id = $1
 `

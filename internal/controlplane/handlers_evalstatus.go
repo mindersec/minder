@@ -31,10 +31,14 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	entmodels "github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/history"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -77,25 +81,13 @@ func (s *Server) GetEvaluationHistory(
 		return nil, status.Error(codes.Internal, evalErrMsg)
 	}
 
-	entityName, err := getEntityName(
-		eval.EntityType,
-		eval.RepoOwner,
-		eval.RepoName,
-		eval.PrNumber,
-		eval.ArtifactName,
-	)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg(evalErrMsg)
-		return nil, status.Error(codes.Internal, evalErrMsg)
-	}
-
 	pbEval := &minderv1.EvaluationHistory{
 		Id:          eval.EvaluationID.String(),
 		EvaluatedAt: timestamppb.New(eval.EvaluatedAt),
 		Entity: &minderv1.EvaluationHistoryEntity{
 			Id:   eval.EntityID.String(),
 			Type: dbEntityToEntity(eval.EntityType),
-			Name: entityName,
+			Name: eval.EntityName,
 		},
 		Rule: &minderv1.EvaluationHistoryRule{
 			Name:     eval.RuleName,
@@ -220,48 +212,39 @@ func (s *Server) ListEvaluationHistory(
 }
 
 func fromEvaluationHistoryRows(
-	rows []db.ListEvaluationHistoryRow,
+	rows []*history.OneEvalHistoryAndEntity,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := make([]*minderv1.EvaluationHistory, len(rows))
 
 	for i, row := range rows {
-		entityType := dbEntityToEntity(row.EntityType)
-		entityName, err := getEntityName(
-			row.EntityType,
-			row.RepoOwner,
-			row.RepoName,
-			row.PrNumber,
-			row.ArtifactName,
-		)
-		if err != nil {
-			return nil, err
-		}
+		entityType := row.Entity.Type
+		entityName := row.Entity.Name
 
-		ruleSeverity, err := dbSeverityToSeverity(row.RuleSeverity)
+		ruleSeverity, err := dbSeverityToSeverity(row.EvalHistoryRow.RuleSeverity)
 		if err != nil {
 			return nil, err
 		}
 
 		res[i] = &minderv1.EvaluationHistory{
-			Id:          row.EvaluationID.String(),
-			EvaluatedAt: timestamppb.New(row.EvaluatedAt),
+			Id:          row.EvalHistoryRow.EvaluationID.String(),
+			EvaluatedAt: timestamppb.New(row.EvalHistoryRow.EvaluatedAt),
 			Entity: &minderv1.EvaluationHistoryEntity{
-				Id:   row.EntityID.String(),
+				Id:   row.Entity.ID.String(),
 				Type: entityType,
 				Name: entityName,
 			},
 			Rule: &minderv1.EvaluationHistoryRule{
-				Name:     row.RuleName,
-				RuleType: row.RuleType,
+				Name:     row.EvalHistoryRow.RuleName,
+				RuleType: row.EvalHistoryRow.RuleType,
 				Severity: ruleSeverity,
-				Profile:  row.ProfileName,
+				Profile:  row.EvalHistoryRow.ProfileName,
 			},
 			Status: &minderv1.EvaluationHistoryStatus{
-				Status:  string(row.EvaluationStatus),
-				Details: row.EvaluationDetails,
+				Status:  string(row.EvalHistoryRow.EvaluationStatus),
+				Details: row.EvalHistoryRow.EvaluationDetails,
 			},
-			Alert:       getAlert(row.AlertStatus, row.AlertDetails.String),
-			Remediation: getRemediation(row.RemediationStatus, row.RemediationDetails.String),
+			Alert:       getAlert(row.EvalHistoryRow.AlertStatus, row.EvalHistoryRow.AlertDetails.String),
+			Remediation: getRemediation(row.EvalHistoryRow.RemediationStatus, row.EvalHistoryRow.RemediationDetails.String),
 		}
 	}
 
@@ -354,7 +337,7 @@ func (s *Server) ListEvaluationResults(
 	profileList, profileStatusList = filterProfileLists(in, profileList, profileStatusList)
 
 	// Do the final sort of all the data
-	entities, profileStatuses, statusByEntity, err := sortEntitiesEvaluationStatus(
+	entities, profileStatuses, statusByEntity, err := s.sortEntitiesEvaluationStatus(
 		ctx, s.store, profileList, profileStatusList, rtIndex, entIdIndex, entTypeIndex,
 	)
 	if err != nil {
@@ -368,7 +351,9 @@ func (s *Server) ListEvaluationResults(
 // and compiles the unified entities map, the map of profile statuses and the
 // status by entity map that will be assembled into the evaluation status
 // response.
-func sortEntitiesEvaluationStatus(
+//
+//nolint:gocyclo // This function is complex by nature
+func (s *Server) sortEntitiesEvaluationStatus(
 	ctx context.Context, store db.Store,
 	profileList []db.ListProfilesByProjectIDAndLabelRow,
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
@@ -388,6 +373,10 @@ func sortEntitiesEvaluationStatus(
 			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.Profile.ID},
 		)
 		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, nil, nil,
+					util.UserVisibleError(codes.NotFound, "profile not found")
+			}
 			return nil, nil, nil,
 				status.Errorf(codes.Internal,
 					"error reading evaluations from profile %q: %v", p.Profile.ID.String(), err)
@@ -399,7 +388,23 @@ func sortEntitiesEvaluationStatus(
 				continue
 			}
 
-			ent := buildEntityFromEvaluation(e)
+			efp, err := s.props.EntityWithProperties(ctx, e.EntityID, e.ProjectID, nil)
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
+					// If the entity is not found, log and skip
+					zerolog.Ctx(ctx).Error().
+						Str("entity_id", e.EntityID.String()).
+						Err(err).Msg("Entity not found while building rule evaluation status")
+					continue
+				}
+
+				zerolog.Ctx(ctx).Error().
+					Str("entity_id", e.EntityID.String()).
+					Err(err).Msg("error building entity for rule evaluation status")
+				continue
+			}
+
+			ent := buildEntityFromEvaluation(efp)
 			entString := fmt.Sprintf("%s/%s", ent.Type, ent.Id)
 
 			/// If we're constrained to a single entity type, ignore others
@@ -418,7 +423,7 @@ func sortEntitiesEvaluationStatus(
 				profileStatuses[p.Profile.ID] = buildProfileStatus(&p, profileStatusList)
 			}
 
-			stat, err := buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e)
+			stat, err := s.buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e, efp)
 			if err != nil {
 				// A failure parsing the PR metadata points to a corrupt record. Log but don't err.
 				zerolog.Ctx(ctx).Error().Err(err).Msg("error building rule evaluation status")
@@ -564,9 +569,10 @@ func filterProfileLists(
 
 // buildRuleEvaluationStatusFromDBEvaluation converts from an evaluation and a
 // profile from the database to a minder RuleEvaluationStatus
-func buildRuleEvaluationStatusFromDBEvaluation(
+func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
 	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
+	efp *entmodels.EntityWithProperties,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
@@ -586,17 +592,36 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+	}
+
 	entityInfo := map[string]string{}
+	entityInfo["entity_id"] = eval.EntityID.String()
+
+	if uid := efp.Properties.GetProperty(properties.PropertyUpstreamID); uid != nil {
+		entityInfo["upstream_id"] = uid.GetString()
+	}
+
 	remediationURL := ""
 	if eval.EntityType == db.EntitiesRepository {
 		// If any fields are missing, just leave them empty in the response
-		entityInfo["provider"] = eval.Provider.String
-		entityInfo["repo_owner"] = eval.RepoOwner.String
-		entityInfo["repo_name"] = eval.RepoName.String
-		entityInfo["repository_id"] = eval.RepositoryID.UUID.String()
+		entityInfo["provider"] = eval.Provider
+		// TODO: We'll probably remove these fields in the future as we
+		// introduce more providers
+		if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
+			entityInfo["repo_owner"] = owner.GetString()
+		}
+		if name := efp.Properties.GetProperty(ghprop.RepoPropertyName); name != nil {
+			entityInfo["repo_name"] = name.GetString()
+		}
+
+		// TODO: This will be removed in favor of entity_id
+		entityInfo["repository_id"] = efp.Entity.ID.String()
 
 		remediationURL, err = getRemediationURLFromMetadata(
-			eval.RemMetadata, fmt.Sprintf("%s/%s", eval.RepoOwner.String, eval.RepoName.String),
+			eval.RemMetadata, efp.Entity.Name,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("parsing remediation pull request data: %w", err)
@@ -631,19 +656,19 @@ func buildRuleEvaluationStatusFromDBEvaluation(
 		RemediationUrl:         remediationURL,
 		RuleDisplayName:        nString,
 		RuleTypeName:           eval.RuleTypeName,
-		Alert:                  buildEvalResultAlertFromLRERow(&eval),
+		Alert:                  buildEvalResultAlertFromLRERow(&eval, efp),
 		Severity:               sev,
 		ReleasePhase:           rp,
 	}, nil
 }
 
-func buildEntityFromEvaluation(eval db.ListRuleEvaluationsByProfileIdRow) *minderv1.EntityTypedId {
+func buildEntityFromEvaluation(efp *entmodels.EntityWithProperties) *minderv1.EntityTypedId {
 	ent := &minderv1.EntityTypedId{
-		Type: dbEntityToEntity(eval.EntityType),
+		Type: efp.Entity.Type,
 	}
 
-	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES && eval.RepoOwner.String != "" && eval.RepoName.String != "" {
-		ent.Id = eval.RepositoryID.UUID.String()
+	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES {
+		ent.Id = efp.Entity.ID.String()
 	}
 	return ent
 }
@@ -674,7 +699,9 @@ func buildProfileStatus(
 
 // buildEvalResultAlertFromLRERow build the evaluation result alert from a
 // database row.
-func buildEvalResultAlertFromLRERow(eval *db.ListRuleEvaluationsByProfileIdRow) *minderv1.EvalResultAlert {
+func buildEvalResultAlertFromLRERow(
+	eval *db.ListRuleEvaluationsByProfileIdRow, ent *entmodels.EntityWithProperties,
+) *minderv1.EvalResultAlert {
 	era := &minderv1.EvalResultAlert{
 		Status:      string(eval.AlertStatus),
 		LastUpdated: timestamppb.New(eval.AlertLastUpdated),
@@ -682,12 +709,8 @@ func buildEvalResultAlertFromLRERow(eval *db.ListRuleEvaluationsByProfileIdRow) 
 	}
 
 	if eval.AlertStatus == db.AlertStatusTypesOn {
-		repoSlug := ""
-		if eval.RepoOwner.String != "" && eval.RepoName.String != "" {
-			repoSlug = fmt.Sprintf("%s/%s", eval.RepoOwner.String, eval.RepoName.String)
-		}
 		urlString, err := getAlertURLFromMetadata(
-			eval.AlertMetadata, repoSlug,
+			eval.AlertMetadata, ent.Entity.Name,
 		)
 		if err == nil {
 			era.Url = urlString
@@ -731,54 +754,4 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	}
 
 	return severity, nil
-}
-
-// ugly function signature needed to handle the fact that we have two different
-// row types with the same fields, but no mechanism in the language to treat
-// them as the same thing.
-func getEntityName(
-	entityType db.Entities,
-	repoOwner sql.NullString,
-	repoName sql.NullString,
-	prNumber sql.NullInt64,
-	artifactName sql.NullString,
-) (string, error) {
-	switch entityType {
-	case db.EntitiesPullRequest:
-		if !repoOwner.Valid {
-			return "", errors.New("repo_owner is missing")
-		}
-		if !repoName.Valid {
-			return "", errors.New("repo_name is missing")
-		}
-		if !prNumber.Valid {
-			return "", errors.New("pr_number is missing")
-		}
-		return fmt.Sprintf("%s/%s#%d",
-			repoOwner.String,
-			repoName.String,
-			prNumber.Int64,
-		), nil
-	case db.EntitiesArtifact:
-		if !artifactName.Valid {
-			return "", errors.New("artifact_name is missing")
-		}
-		return artifactName.String, nil
-	case db.EntitiesRepository:
-		if !repoOwner.Valid {
-			return "", errors.New("repo_owner is missing")
-		}
-		if !repoName.Valid {
-			return "", errors.New("repo_name is missing")
-		}
-		return fmt.Sprintf("%s/%s",
-			repoOwner.String,
-			repoName.String,
-		), nil
-	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
-		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
-		return "", errors.New("invalid entity type")
-	default:
-		return "", errors.New("invalid entity type")
-	}
 }

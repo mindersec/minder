@@ -28,9 +28,11 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	"github.com/stacklok/minder/internal/providers/manager"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -45,15 +47,24 @@ const (
 
 // PropertiesService is the interface for the properties service
 type PropertiesService interface {
+	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
+	EntityWithProperties(
+		ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier,
+	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for the given entity
 	RetrieveAllProperties(
-		ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity,
 	) (*properties.Properties, error)
+	// RetrieveAllPropertiesForEntity fetches all properties for the given entity
+	// for properties model. Note that properties will be updated in place.
+	RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties,
+		provMan manager.ProviderManager,
+	) error
 	// RetrieveProperty fetches a single property for the given entity
 	RetrieveProperty(
-		ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 	) (*properties.Property, error)
@@ -68,7 +79,7 @@ type PropertiesService interface {
 type propertiesServiceOption func(*propertiesService)
 
 type propertiesService struct {
-	store         db.Store
+	store         db.ExtendQuerier
 	entityTimeout time.Duration
 }
 
@@ -81,7 +92,7 @@ func WithEntityTimeout(timeout time.Duration) propertiesServiceOption {
 
 // NewPropertiesService creates a new properties service
 func NewPropertiesService(
-	store db.Store,
+	store db.ExtendQuerier,
 	opts ...propertiesServiceOption,
 ) PropertiesService {
 	ps := &propertiesService{
@@ -98,7 +109,7 @@ func NewPropertiesService(
 
 // RetrieveAllProperties fetches a single property for the given entity
 func (ps *propertiesService) RetrieveAllProperties(
-	ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
 ) (*properties.Properties, error) {
@@ -156,9 +167,34 @@ func (ps *propertiesService) RetrieveAllProperties(
 	return refreshedProps, nil
 }
 
+// RetrieveAllPropertiesForEntity fetches a single property for the given an entity
+// for properties model. Note that properties will be updated in place.
+func (ps *propertiesService) RetrieveAllPropertiesForEntity(
+	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager,
+) error {
+	propClient, err := provMan.InstantiateFromID(ctx, efp.Entity.ProviderID)
+	if err != nil {
+		return fmt.Errorf("error instantiating provider: %w", err)
+	}
+
+	props, err := ps.RetrieveAllProperties(
+		ctx,
+		propClient,
+		efp.Entity.ProjectID,
+		efp.Entity.ProviderID,
+		efp.Properties,
+		efp.Entity.Type)
+	if err != nil {
+		return fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+
+	efp.UpdateProperties(props)
+	return nil
+}
+
 // RetrieveProperty fetches a single property for the given entity
 func (ps *propertiesService) RetrieveProperty(
-	ctx context.Context, provider v1.Provider, projectId uuid.UUID,
+	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 ) (*properties.Property, error) {
@@ -271,6 +307,36 @@ func (_ *propertiesService) ReplaceProperty(
 		Value:    prop.RawValue(),
 	})
 	return err
+}
+
+func (ps *propertiesService) EntityWithProperties(
+	ctx context.Context, entityID, projectID uuid.UUID,
+	qtx db.ExtendQuerier,
+) (*models.EntityWithProperties, error) {
+	// use the transaction if provided, otherwise use the store
+	var q db.Querier
+	if qtx != nil {
+		q = qtx
+	} else {
+		q = ps.store
+	}
+
+	ent, err := q.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:       entityID,
+		Projects: []uuid.UUID{projectID},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error getting entity: %w", err)
+	}
+
+	fetchByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyName: ent.Name,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
+	return models.NewEntityWithProperties(ent, fetchByProps), nil
 }
 
 func (ps *propertiesService) areDatabasePropertiesValid(dbProps []db.Property) bool {

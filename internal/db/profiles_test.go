@@ -158,13 +158,7 @@ func createRuleEntity(
 
 	id, err := testQueries.InsertEvaluationRuleEntity(ctx,
 		InsertEvaluationRuleEntityParams{
-			RuleID: ruleID,
-			RepositoryID: uuid.NullUUID{
-				UUID:  repoID,
-				Valid: true,
-			},
-			PullRequestID:    uuid.NullUUID{},
-			ArtifactID:       uuid.NullUUID{},
+			RuleID:           ruleID,
 			EntityType:       EntitiesRepository,
 			EntityInstanceID: repoID,
 		},
@@ -3427,7 +3421,15 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusDeleteFn: func(delRepo *Repository) {
+				// TODO: This will be removed once we fully move
+				// to using the entity_instances table.
 				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+
+				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+					ID:        delRepo.ID,
+					ProjectID: delRepo.ProjectID,
+				})
 				require.NoError(t, err)
 			},
 			expectedStatusAfterModify: EvalStatusTypesSuccess,
@@ -3477,7 +3479,15 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 
 			expectedStatusAfterSetup: EvalStatusTypesError,
 			ruleStatusDeleteFn: func(delRepo *Repository) {
+				// TODO: This will be removed once we fully move
+				// to using the entity_instances table.
 				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+
+				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+					ID:        delRepo.ID,
+					ProjectID: delRepo.ProjectID,
+				})
 				require.NoError(t, err)
 			},
 			expectedStatusAfterModify: EvalStatusTypesFailure,
@@ -3527,7 +3537,15 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 
 			expectedStatusAfterSetup: EvalStatusTypesError,
 			ruleStatusDeleteFn: func(delRepo *Repository) {
+				// TODO: This will be removed once we fully move
+				// to using the entity_instances table.
 				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+
+				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+					ID:        delRepo.ID,
+					ProjectID: delRepo.ProjectID,
+				})
 				require.NoError(t, err)
 			},
 			expectedStatusAfterModify: EvalStatusTypesError,
@@ -3558,7 +3576,15 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusDeleteFn: func(delRepo *Repository) {
+				// TODO: This will be removed once we fully move
+				// to using the entity_instances table.
 				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
+				require.NoError(t, err)
+
+				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+					ID:        delRepo.ID,
+					ProjectID: delRepo.ProjectID,
+				})
 				require.NoError(t, err)
 			},
 			expectedStatusAfterModify: EvalStatusTypesSkipped,
@@ -3640,7 +3666,6 @@ func verifyRow(
 	expectedRow *ListRuleEvaluationsByProfileIdRow,
 	fetchedRows []ListRuleEvaluationsByProfileIdRow,
 	rt RuleType,
-	randomEntities *testRandomEntities,
 ) {
 	t.Helper()
 
@@ -3652,11 +3677,6 @@ func verifyRow(
 
 	require.Equal(t, rt.ID, row.RuleTypeID)
 	require.Equal(t, rt.Name, row.RuleTypeName)
-
-	require.Equal(t, randomEntities.repo.RepoName, row.RepoName.String)
-	require.Equal(t, randomEntities.repo.RepoOwner, row.RepoOwner.String)
-
-	require.Equal(t, randomEntities.prov.Name, row.Provider.String)
 }
 
 func TestListRuleEvaluations(t *testing.T) {
@@ -3864,8 +3884,8 @@ func TestListRuleEvaluations(t *testing.T) {
 			require.Len(t, evalStatusRows, tt.totalRows)
 			require.Equal(t, getStatusCount(t, evalStatusRows), tt.sc)
 
-			verifyRow(t, tt.rule1Expected, evalStatusRows, randomEntities.ruleType1, randomEntities)
-			verifyRow(t, tt.rule2Expected, evalStatusRows, randomEntities.ruleType2, randomEntities)
+			verifyRow(t, tt.rule1Expected, evalStatusRows, randomEntities.ruleType1)
+			verifyRow(t, tt.rule2Expected, evalStatusRows, randomEntities.ruleType2)
 		})
 	}
 }
