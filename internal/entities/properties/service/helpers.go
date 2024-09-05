@@ -36,7 +36,7 @@ import (
 func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	ctx context.Context, provider provifv1.Provider, entID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
-	l zerolog.Logger,
+	qtx db.ExtendQuerier, l zerolog.Logger,
 ) (*properties.Properties, error) {
 
 	var dbProps []db.Property
@@ -45,7 +45,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 		l.Debug().Msg("entity found, fetching properties")
 		// fetch properties from db
 		var err error
-		dbProps, err = ps.store.GetAllPropertiesForEntity(ctx, entID)
+		dbProps, err = qtx.GetAllPropertiesForEntity(ctx, entID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	}
 
 	// save updated properties to db, thus making sure that the updatedAt are bumped
-	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, ps.store)
+	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, qtx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update properties: %w", err)
 	}
@@ -97,10 +97,11 @@ func (ps *propertiesService) getEntityIdByProperties(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	props *properties.Properties, entType minderv1.Entity,
+	qtx db.ExtendQuerier,
 ) (uuid.UUID, error) {
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID)
 	if upstreamID != nil {
-		ent, getErr := ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType)
+		ent, getErr := ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType, qtx)
 		if getErr == nil {
 			return ent, nil
 		} else if !errors.Is(getErr, ErrEntityNotFound) {
@@ -113,7 +114,7 @@ func (ps *propertiesService) getEntityIdByProperties(
 	// Fall back to name if no upstream ID is provided
 	name := props.GetProperty(properties.PropertyName)
 	if name != nil {
-		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType)
+		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType, qtx)
 	}
 
 	// returning nil ID and nil error would make us just go to the provider. Slow, but we'd continue.
@@ -124,8 +125,9 @@ func (ps *propertiesService) getEntityIdByName(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	name string, entType minderv1.Entity,
+	qtx db.ExtendQuerier,
 ) (uuid.UUID, error) {
-	ent, err := ps.store.GetEntityByName(ctx, db.GetEntityByNameParams{
+	ent, err := qtx.GetEntityByName(ctx, db.GetEntityByNameParams{
 		ProjectID:  projectId,
 		Name:       name,
 		EntityType: entities.EntityTypeToDB(entType),
@@ -144,8 +146,9 @@ func (ps *propertiesService) getEntityIdByUpstreamID(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	upstreamID string, entType minderv1.Entity,
+	qtx db.ExtendQuerier,
 ) (uuid.UUID, error) {
-	ents, err := ps.store.GetTypedEntitiesByPropertyV1(
+	ents, err := qtx.GetTypedEntitiesByPropertyV1(
 		ctx,
 		entities.EntityTypeToDB(entType),
 		properties.PropertyUpstreamID,

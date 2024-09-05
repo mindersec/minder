@@ -669,14 +669,14 @@ func withSuccessfulReplaceProps(mock propSvcMock) {
 
 func withFailingGet(mock propSvcMock) {
 	mock.EXPECT().
-		RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 }
 
 func withSuccessfulPropFetch(prop *properties.Properties) func(svcMock propSvcMock) {
 	return func(mock propSvcMock) {
 		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(prop, nil)
 	}
 }

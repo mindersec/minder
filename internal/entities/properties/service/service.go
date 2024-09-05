@@ -68,6 +68,7 @@ type PropertiesService interface {
 		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity,
+		qtx db.ExtendQuerier,
 	) (*properties.Properties, error)
 	// RetrieveAllPropertiesForEntity fetches all properties for the given entity.
 	// If the entity has properties in the database, it will return those
@@ -75,7 +76,7 @@ type PropertiesService interface {
 	// from the provider and update the database.
 	// Note that this assumes an entity that already exists in Minder's database.
 	RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties,
-		provMan manager.ProviderManager,
+		provMan manager.ProviderManager, qtx db.ExtendQuerier,
 	) error
 	// RetrieveProperty fetches a single property for the given entity given
 	// a project, provider, and identifying properties.
@@ -127,6 +128,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
+	qtx db.ExtendQuerier,
 ) (*properties.Properties, error) {
 	l := zerolog.Ctx(ctx).With().
 		Str("projectID", projectId.String()).
@@ -134,16 +136,16 @@ func (ps *propertiesService) RetrieveAllProperties(
 		Str("entityType", entType.String()).
 		Logger()
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
+	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, qtx)
 	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
 
-	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, lookupProperties, entType, l)
+	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, lookupProperties, entType, qtx, l)
 }
 
 func (ps *propertiesService) RetrieveAllPropertiesForEntity(
-	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager,
+	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager, qtx db.ExtendQuerier,
 ) error {
 	l := zerolog.Ctx(ctx).With().
 		Str("projectID", efp.Entity.ProjectID.String()).
@@ -158,7 +160,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 		return fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, l)
+	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, qtx, l)
 	if err != nil {
 		return fmt.Errorf("error fetching properties for repository: %w", err)
 	}
@@ -181,7 +183,7 @@ func (ps *propertiesService) RetrieveProperty(
 		Logger()
 
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
+	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, ps.store)
 	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, err
 	}

@@ -223,7 +223,7 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 			return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 		}
 
-		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager)
+		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager, qtx)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 		}

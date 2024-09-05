@@ -592,7 +592,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager, s.store)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %s: %w", efp.Entity.ID.String(), err)
 	}

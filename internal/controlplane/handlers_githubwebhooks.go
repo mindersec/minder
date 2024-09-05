@@ -723,17 +723,18 @@ func (s *Server) processPackageEvent(
 		return nil, fmt.Errorf("error getting package name: %w", err)
 	}
 
-	// we do two property lookups here: this first one will go away once we migrate artifacts to entities
-	// as the only reason is to have the visibility and type of the artifact available.
-	refreshedPkgProperties, err := s.props.RetrieveAllProperties(
-		ctx, provider,
-		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-		pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving properties: %w", err)
-	}
-
+	var refreshedPkgProperties *properties.Properties
 	ei, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*db.EntityInstance, error) {
+		// we do two property lookups here: this first one will go away once we migrate artifacts to entities
+		// as the only reason is to have the visibility and type of the artifact available.
+		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
+			ctx, provider,
+			repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
+			pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS, tx)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving properties: %w", err)
+		}
+
 		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
 		dbProv, getPrErr := tx.GetProviderByID(ctx, repoEnt.Entity.ProviderID)
 		if getPrErr != nil {
@@ -771,19 +772,19 @@ func (s *Server) processPackageEvent(
 			return nil, fmt.Errorf("error creating or ensuring entity: %w", err)
 		}
 
+		// fetch the properties
+		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
+			ctx, provider,
+			ent.ProjectID, ent.ProviderID,
+			refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS, tx)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving properties: %w", err)
+		}
+
 		return &ent, nil
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// fetch the properties
-	refreshedPkgProperties, err = s.props.RetrieveAllProperties(
-		ctx, provider,
-		ei.ProjectID, ei.ProviderID,
-		refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}
 
 	// refresh the version to attach it to the pb representation we send to the evaluation
@@ -1010,28 +1011,23 @@ func (s *Server) processPullRequestEvent(
 		return nil, fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	dbPr, err := s.reconcilePrWithDb(ctx, provider, repoEnt, pullProps)
+	prEntWithProps, err := s.reconcilePrWithDb(ctx, provider, repoEnt, pullProps)
 	if errors.Is(err, errNotHandled) {
 		return nil, err
 	} else if err != nil {
 		return nil, fmt.Errorf("error reconciling PR with DB: %w", err)
 	}
 
-	refreshedProps, err := s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps)
-	if err != nil {
-		return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
-	}
-
 	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
 
-	pbPullRequest := ghprop.PullRequestV1FromProperties(refreshedProps)
+	pbPullRequest := ghprop.PullRequestV1FromProperties(prEntWithProps.Properties)
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(event.GetAction()).
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
 		WithPullRequest(pbPullRequest).
-		WithPullRequestID(dbPr.ID).
+		WithPullRequestID(prEntWithProps.Entity.ID).
 		WithRepositoryID(repoEnt.Entity.ID)
 
 	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
@@ -1499,11 +1495,11 @@ func (s *Server) reconcilePrWithDb(
 	provider provifv1.Provider,
 	repoEnt *models.EntityWithProperties,
 	pullProps *properties.Properties,
-) (*db.PullRequest, error) {
+) (*models.EntityWithProperties, error) {
 	l := zerolog.Ctx(ctx)
 
 	var retErr error
-	var retPr *db.PullRequest
+	var retPr *models.EntityWithProperties
 
 	pullName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
 	if err != nil {
@@ -1515,7 +1511,7 @@ func (s *Server) reconcilePrWithDb(
 		webhookActionEventReopened,
 		webhookActionEventSynchronize:
 		var err error
-		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
+		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
 			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 				RepositoryID: repoEnt.Entity.ID,
 				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
@@ -1524,7 +1520,7 @@ func (s *Server) reconcilePrWithDb(
 				return nil, err
 			}
 
-			_, err = t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+			prEnt, err := t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
 				ID:         dbPr.ID,
 				EntityType: db.EntitiesPullRequest,
 				Name:       pullName,
@@ -1539,7 +1535,12 @@ func (s *Server) reconcilePrWithDb(
 				return nil, err
 			}
 
-			return &dbPr, nil
+			refreshedProps, err := s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps, t)
+			if err != nil {
+				return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
+			}
+
+			return models.NewEntityWithProperties(prEnt, refreshedProps), nil
 		})
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -1592,6 +1593,7 @@ func (s *Server) updatePullRequestInfoFromProvider(
 	provider provifv1.Provider,
 	repoEnt *models.EntityWithProperties,
 	pullProps *properties.Properties,
+	qtx db.ExtendQuerier,
 ) (*properties.Properties, error) {
 	// create properties.Name for the PR
 	prName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
@@ -1611,7 +1613,7 @@ func (s *Server) updatePullRequestInfoFromProvider(
 
 	prProps, err := s.props.RetrieveAllProperties(ctx, provider,
 		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS)
+		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS, qtx)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}

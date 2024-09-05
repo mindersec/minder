@@ -161,7 +161,8 @@ func (r *repositoryService) CreateRepository(
 		projectID,
 		provider.ID,
 		fetchByProps,
-		pb.Entity_ENTITY_REPOSITORIES)
+		pb.Entity_ENTITY_REPOSITORIES,
+		r.store) // a transaction is used in the service. The repo is not cached here anyway
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
 	}
@@ -360,7 +361,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 			entRepo.ProjectID,
 			entRepo.ProviderID,
 			fetchByProps,
-			pb.Entity_ENTITY_REPOSITORIES)
+			pb.Entity_ENTITY_REPOSITORIES, qtx)
 		if errors.Is(err, service.ErrEntityNotFound) {
 			// return the entity without properties in case the upstream entity is not found
 			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
