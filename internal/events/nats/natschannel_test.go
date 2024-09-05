@@ -106,18 +106,9 @@ func TestNatsChannel(t *testing.T) {
 		return bytes.Compare(a.Payload, b.Payload)
 	})
 
-	if string(results[0].Payload) != string(m1.Payload) {
-		t.Errorf("expected %v, got %v", string(m1.Payload), string(results[0].Payload))
-	}
-	if results[0].Metadata["foo"] != "bar" {
-		t.Errorf("expected %v, got %v", "bar", results[0].Metadata["foo"])
-	}
-	if string(results[1].Payload) != string(m2.Payload) {
-		t.Errorf("expected %v, got %v", string(m2.Payload), string(results[1].Payload))
-	}
-	if string(results[2].Payload) != string(m3.Payload) {
-		t.Errorf("expected %v, got %v", string(m3.Payload), string(results[2].Payload))
-	}
+	expectMessageEqual(t, m1, results[0])
+	expectMessageEqual(t, m2, results[1])
+	expectMessageEqual(t, m3, results[2])
 }
 
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
@@ -130,4 +121,18 @@ func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message
 		return nil, nil, nil, nil, fmt.Errorf("failed to subscribe: %v", err)
 	}
 	return pub, sub, closer, out, nil
+}
+
+func expectMessageEqual(t *testing.T, want *message.Message, got *message.Message) {
+	t.Helper()
+	if !bytes.Equal(want.Payload, got.Payload) {
+		t.Errorf("expected %v, got %v", string(want.Payload), string(got.Payload))
+	}
+	// got will have a bunch of additional CloudEvents metadata
+	if want.Metadata["foo"] != got.Metadata["foo"] {
+		t.Errorf("expected %v, got %v", want.Metadata, got.Metadata)
+	}
+	if got.Metadata["ce-time"] == "" {
+		t.Errorf("expected ce-time to be set, got %v", got.Metadata)
+	}
 }
