@@ -109,14 +109,20 @@ func getNameFromParams(owner, name string) string {
 }
 
 func parseArtifactName(name string) (string, string, string, error) {
-	parts := strings.Split(name, "/")
-	if len(parts) == 2 {
-		return parts[0], parts[1], string(verifyif.ArtifactTypeContainer), nil
-	} else if len(parts) == 1 {
-		return "", parts[0], string(verifyif.ArtifactTypeContainer), nil
+	index := strings.Index(name, "/")
+	if index == -1 {
+		// No slash found, treat the entire name as the artifact name
+		return "", name, string(verifyif.ArtifactTypeContainer), nil
 	}
 
-	return "", "", "", fmt.Errorf("invalid name format")
+	owner := name[:index]
+	artifactName := name[index+1:]
+
+	if owner == "" || artifactName == "" {
+		return "", "", "", fmt.Errorf("invalid name format")
+	}
+
+	return owner, artifactName, string(verifyif.ArtifactTypeContainer), nil
 }
 
 func getArtifactWrapper(
@@ -126,7 +132,6 @@ func getArtifactWrapper(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get artifact properties: %w", err)
 	}
-	fmt.Println(owner, name, pkgType)
 
 	var fetchErr error
 	var pkg *go_github.Package
