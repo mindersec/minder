@@ -33,7 +33,7 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
-	entmodels "github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
@@ -59,6 +59,7 @@ type executor struct {
 	featureFlags    openfeature.IClient
 	profileStore    profiles.ProfileStore
 	selBuilder      selectors.SelectionBuilder
+	propService     service.PropertiesService
 }
 
 // NewExecutor creates a new executor
@@ -70,6 +71,7 @@ func NewExecutor(
 	featureFlags openfeature.IClient,
 	profileStore profiles.ProfileStore,
 	selBuilder selectors.SelectionBuilder,
+	propService service.PropertiesService,
 ) Executor {
 	return &executor{
 		querier:         querier,
@@ -79,6 +81,7 @@ func NewExecutor(
 		featureFlags:    featureFlags,
 		profileStore:    profileStore,
 		selBuilder:      selBuilder,
+		propService:     propService,
 	}
 }
 
@@ -232,7 +235,7 @@ func (e *executor) profileEvalStatus(
 	}
 
 	// get the entity with properties by the entity UUID
-	ewp, err := entmodels.GetEntityWithPropertiesByID(ctx, e.querier, entityID)
+	ewp, err := e.propService.EntityWithProperties(ctx, entityID, e.querier)
 	if err != nil {
 		return fmt.Errorf("error getting entity with properties: %w", err)
 	}

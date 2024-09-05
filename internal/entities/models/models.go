@@ -16,9 +16,6 @@
 package models
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
@@ -62,26 +59,6 @@ func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *propertie
 		Entity:     entity,
 		Properties: props,
 	}
-}
-
-// GetEntityWithPropertiesByID retrieves an EntityWithProperties instance by its ID.
-func GetEntityWithPropertiesByID(ctx context.Context, q db.Querier, id uuid.UUID) (*EntityWithProperties, error) {
-	dbEntity, err := q.GetEntityByID(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get entity by ID: %w", err)
-	}
-
-	dbProps, err := q.GetAllPropertiesForEntity(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get properties for entity: %w", err)
-	}
-
-	props, err := DbPropsToModel(dbProps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert properties to model: %w", err)
-	}
-
-	return NewEntityWithProperties(dbEntity, props), nil
 }
 
 // DbPropsToModel converts a slice of db.Property to a properties.Properties instance.

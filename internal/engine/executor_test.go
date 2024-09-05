@@ -42,6 +42,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/selectors"
 	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
+	"github.com/stacklok/minder/internal/entities/models"
+	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
@@ -122,21 +124,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 			},
 			Definition: json.RawMessage(`{"github": {}}`),
 		}, nil)
-
-	// search entity for its properties
-	mockStore.EXPECT().
-		GetEntityByID(gomock.Any(), repositoryID).
-		Return(db.EntityInstance{
-			ID:             repositoryID,
-			EntityType:     db.EntitiesRepository,
-			Name:           "foo/test",
-			ProjectID:      projectID,
-			ProviderID:     providerID,
-			OriginatedFrom: uuid.NullUUID{},
-		}, nil)
-	mockStore.EXPECT().
-		GetAllPropertiesForEntity(gomock.Any(), repositoryID).
-		Return([]db.Property{}, nil)
 
 	// get access token
 	mockStore.EXPECT().
@@ -331,6 +318,19 @@ default allow = true`,
 		Return(mockSelection, nil).
 		AnyTimes()
 
+	mockPropSvc := mock_service.NewMockPropertiesService(ctrl)
+	mockPropSvc.EXPECT().
+		EntityWithProperties(gomock.Any(), repositoryID, gomock.Any()).
+		Return(&models.EntityWithProperties{
+			Entity: models.EntityInstance{
+				ID:         repositoryID,
+				Type:       minderv1.Entity_ENTITY_REPOSITORIES,
+				Name:       "foo/test",
+				ProjectID:  projectID,
+				ProviderID: providerID,
+			},
+		}, nil)
+
 	executor := engine.NewExecutor(
 		mockStore,
 		providerManager,
@@ -339,6 +339,7 @@ default allow = true`,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
 		selectors.NewEnv(),
+		mockPropSvc,
 	)
 
 	eiw := entities.NewEntityInfoWrapper().

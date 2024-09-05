@@ -326,14 +326,17 @@ func (ps *propertiesService) EntityWithProperties(
 		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 
-	fetchByProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyName: ent.Name,
-	})
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
 	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
+		return nil, fmt.Errorf("failed to get properties for entity: %w", err)
 	}
 
-	return models.NewEntityWithProperties(ent, fetchByProps), nil
+	props, err := models.DbPropsToModel(dbProps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert properties to model: %w", err)
+	}
+
+	return models.NewEntityWithProperties(ent, props), nil
 }
 
 func (ps *propertiesService) areDatabasePropertiesValid(dbProps []db.Property) bool {
