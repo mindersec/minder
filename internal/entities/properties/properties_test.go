@@ -674,3 +674,86 @@ func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
 		t.Errorf("Expected value 'value', got '%s'", val)
 	}
 }
+
+func TestProperties_SetKeyValue(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		key     string
+		value   any
+		wantErr bool
+	}{
+		{
+			name:    "Set string value",
+			key:     "testKey",
+			value:   "testValue",
+			wantErr: false,
+		},
+		{
+			name:    "Set int64 value",
+			key:     "intKey",
+			value:   int64(42),
+			wantErr: false,
+		},
+		{
+			name:    "Set uint64 value",
+			key:     "uintKey",
+			value:   uint64(42),
+			wantErr: false,
+		},
+		{
+			name:    "Set bool value",
+			key:     "boolKey",
+			value:   true,
+			wantErr: false,
+		},
+		{
+			name:    "Set invalid value",
+			key:     "invalidKey",
+			value:   complex(1, 2),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			p, _ := NewProperties(map[string]any{}, WithSkipPrefixCheckTestOnly())
+			err := p.SetKeyValue(tt.key, tt.value)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SetKeyValue() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				prop := p.GetProperty(tt.key)
+				if prop == nil {
+					t.Errorf("Property not set for key %s", tt.key)
+					return
+				}
+
+				switch v := tt.value.(type) {
+				case string:
+					if got := prop.GetString(); got != v {
+						t.Errorf("Expected string value %v, got %v", v, got)
+					}
+				case int64:
+					if got := prop.GetInt64(); got != v {
+						t.Errorf("Expected int64 value %v, got %v", v, got)
+					}
+				case uint64:
+					if got := prop.GetUint64(); got != v {
+						t.Errorf("Expected uint64 value %v, got %v", v, got)
+					}
+				case bool:
+					if got := prop.GetBool(); got != v {
+						t.Errorf("Expected bool value %v, got %v", v, got)
+					}
+				}
+			}
+		})
+	}
+}

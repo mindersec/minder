@@ -255,6 +255,29 @@ func (p *Properties) GetProperty(key string) *Property {
 	return &prop
 }
 
+// SetProperty sets the Property for a given key
+func (p *Properties) SetProperty(key string, prop *Property) {
+	if p == nil {
+		return
+	}
+
+	p.props.Store(key, *prop)
+}
+
+// SetKeyValue sets the key value pair in the Properties
+func (p *Properties) SetKeyValue(key string, value any) error {
+	if p == nil {
+		return nil
+	}
+
+	prop, err := NewProperty(value)
+	if err != nil {
+		return fmt.Errorf("failed to create property for key %s: %w", key, err)
+	}
+	p.props.Store(key, *prop)
+	return nil
+}
+
 // Iterate implements the seq2 iterator so that the caller can call for key, prop := range Iterate()
 func (p *Properties) Iterate() iter.Seq2[string, *Property] {
 	return func(yield func(string, *Property) bool) {
