@@ -594,7 +594,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 
 	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+		return nil, fmt.Errorf("error fetching properties for entity: %s: %w", efp.Entity.ID.String(), err)
 	}
 
 	entityInfo := map[string]string{}
