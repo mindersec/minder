@@ -50,6 +50,7 @@ func testGithubProvider() (provinfv1.GitHub, error) {
 			Endpoint: &baseURL,
 		},
 		nil,
+		nil,
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential("token"),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

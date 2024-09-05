@@ -35,9 +35,9 @@ import (
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
-	ghrepo "github.com/stacklok/minder/internal/repositories/github"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	reposvc "github.com/stacklok/minder/internal/repositories"
+	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	"github.com/stacklok/minder/internal/util/ptr"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -85,7 +85,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner: repoOwner,
 			RepoName:  repoName,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
-				ghrepo.ErrPrivateRepoForbidden,
+				reposvc.ErrPrivateRepoForbidden,
 				projectID,
 				repoOwner,
 				repoName,
@@ -97,7 +97,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoOwner: repoOwner,
 			RepoName:  repoName,
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
-				ghrepo.ErrArchivedRepoForbidden,
+				reposvc.ErrArchivedRepoForbidden,
 				projectID,
 				repoOwner,
 				repoName,
@@ -371,7 +371,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 }
 
 type (
-	repoServiceMock   = *mockghrepo.MockRepositoryService
+	repoServiceMock   = *mockrepo.MockRepositoryService
 	repoMockBuilder   = func(*gomock.Controller) repoServiceMock
 	githubMock        = *mockgh.MockGitHub
 	githubMockBuilder = func(*gomock.Controller) githubMock
@@ -473,7 +473,7 @@ func createServer(
 	providerFails bool,
 	providerManager manager.ProviderManager,
 ) *Server {
-	var svc ghrepo.RepositoryService
+	var svc reposvc.RepositoryService
 	if repoServiceSetup != nil {
 		svc = repoServiceSetup(ctrl)
 	}

@@ -49,7 +49,7 @@ import (
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	ghsvc "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	ghreposvc "github.com/stacklok/minder/internal/repositories/github"
+	reposvc "github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -1241,7 +1241,7 @@ func (s *Server) fetchRepo(
 		if errors.Is(err, provifv1.ErrEntityNotFound) {
 			l.Info().Msgf("repository %d not found upstream", repo.GetID())
 			return repoEnt, err
-		} else if errors.Is(err, ghreposvc.ErrRepoNotFound) {
+		} else if errors.Is(err, reposvc.ErrRepoNotFound) {
 			l.Info().Msgf("repository %d not found", repo.GetID())
 			// no use in continuing if the repository doesn't exist
 			return nil, fmt.Errorf("repository %d not found: %w",

@@ -39,7 +39,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/service"
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -51,7 +50,6 @@ func NewGitHubProviderClassManager(
 	providerConfig *server.ProviderConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
-	whManager webhooks.WebhookManager,
 	store db.Store,
 	ghService service.GitHubProviderService,
 ) m.ProviderClassManager {
@@ -62,7 +60,6 @@ func NewGitHubProviderClassManager(
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
-		webhooks:            whManager,
 		ghService:           ghService,
 	}
 }
@@ -73,7 +70,6 @@ type githubProviderManager struct {
 	config              *server.ProviderConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
-	webhooks            webhooks.WebhookManager
 	store               db.Store
 	ghService           service.GitHubProviderService
 }
@@ -183,7 +179,7 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 
 		for _, webhook := range providerWebhooks {
 			// SQL query guarantees that webhook ID is always non-null
-			err = g.webhooks.DeleteWebhook(ctx, client, webhook.RepoOwner, webhook.RepoName, webhook.WebhookID.Int64)
+			err = cli.DeleteWebhook(ctx, client, webhook.RepoOwner, webhook.RepoName, webhook.WebhookID.Int64)
 			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
 			// The repositories will still be deleted by a cascade delete in the database
 			zerolog.Ctx(ctx).Error().Err(err).

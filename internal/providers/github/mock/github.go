@@ -122,11 +122,12 @@ func (mr *MockProviderMockRecorder) GetEntityName(entType, props any) *gomock.Ca
 }
 
 // RegisterEntity mocks base method.
-func (m *MockProvider) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockProvider) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -261,11 +262,12 @@ func (mr *MockGitMockRecorder) GetEntityName(entType, props any) *gomock.Call {
 }
 
 // RegisterEntity mocks base method.
-func (m *MockGit) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockGit) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -429,11 +431,12 @@ func (mr *MockRESTMockRecorder) NewRequest(method, url, body any) *gomock.Call {
 }
 
 // RegisterEntity mocks base method.
-func (m *MockREST) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockREST) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -568,11 +571,12 @@ func (mr *MockRepoListerMockRecorder) ListAllRepositories(arg0 any) *gomock.Call
 }
 
 // RegisterEntity mocks base method.
-func (m *MockRepoLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockRepoLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -841,12 +845,11 @@ func (mr *MockGitHubMockRecorder) CreateSecurityAdvisory(ctx, owner, repo, sever
 }
 
 // DeleteHook mocks base method.
-func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
+func (m *MockGitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteHook", ctx, owner, repo, id)
-	ret0, _ := ret[0].(*github.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // DeleteHook indicates an expected call of DeleteHook.
@@ -1302,11 +1305,12 @@ func (mr *MockGitHubMockRecorder) NewRequest(method, url, body any) *gomock.Call
 }
 
 // RegisterEntity mocks base method.
-func (m *MockGitHub) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockGitHub) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -1543,11 +1547,12 @@ func (mr *MockImageListerMockRecorder) ListImages(ctx any) *gomock.Call {
 }
 
 // RegisterEntity mocks base method.
-func (m *MockImageLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockImageLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -1771,11 +1776,12 @@ func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
 }
 
 // RegisterEntity mocks base method.
-func (m *MockOCI) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+func (m *MockOCI) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.

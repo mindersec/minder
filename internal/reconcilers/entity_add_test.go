@@ -26,7 +26,7 @@ import (
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	db "github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 

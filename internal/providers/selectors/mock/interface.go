@@ -116,11 +116,12 @@ func (mr *MockRepoSelectorConverterMockRecorder) GetEntityName(entType, props an
 }
 
 // RegisterEntity mocks base method.
-func (m *MockRepoSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+func (m *MockRepoSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -268,11 +269,12 @@ func (mr *MockArtifactSelectorConverterMockRecorder) GetEntityName(entType, prop
 }
 
 // RegisterEntity mocks base method.
-func (m *MockArtifactSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+func (m *MockArtifactSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.
@@ -406,11 +408,12 @@ func (mr *MockPullRequestSelectorConverterMockRecorder) PullRequestToSelectorEnt
 }
 
 // RegisterEntity mocks base method.
-func (m *MockPullRequestSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+func (m *MockPullRequestSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RegisterEntity indicates an expected call of RegisterEntity.

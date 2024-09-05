@@ -169,7 +169,6 @@ func Test_NewOAuthConfig(t *testing.T) {
 				nil,
 				nil,
 				nil,
-				nil,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -659,7 +658,6 @@ func TestProviderCallback(t *testing.T) {
 						},
 					},
 				},
-				nil,
 				nil,
 				nil,
 				nil,

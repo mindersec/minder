@@ -232,7 +232,6 @@ func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.Pr
 		&cfg.Provider,
 		fallbackTokenClient,
 		cryptoEng,
-		nil, // whManager not needed here (only when creating/delete webhooks)
 		store,
 		nil, // ghProviderService not needed here
 	)

@@ -29,8 +29,8 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 )
 
 var (
@@ -139,7 +139,7 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		mockStore = tt.mockStoreFunc(ctrl)
 	}
 
-	repoService := mockghrepo.NewMockRepositoryService(ctrl)
+	repoService := mockrepo.NewMockRepositoryService(ctrl)
 	if tt.mockReposFunc != nil {
 		repoService = tt.mockReposFunc(ctrl)
 	}

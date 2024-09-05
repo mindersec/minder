@@ -60,8 +60,7 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/reminderprocessor"
-	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 )
@@ -110,7 +109,6 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
@@ -129,7 +127,6 @@ func AllInOneServerService(
 		&cfg.Provider,
 		fallbackTokenClient,
 		cryptoEngine,
-		whManager,
 		store,
 		ghProviders,
 	)
@@ -153,7 +150,7 @@ func AllInOneServerService(
 	}
 	propSvc := propService.NewPropertiesService(store)
 	historySvc := history.NewEvaluationHistoryService(providerManager)
-	repos := github.NewRepositoryService(whManager, store, propSvc, evt, providerManager)
+	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
 	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)

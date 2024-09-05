@@ -21,9 +21,10 @@ import (
 	"strconv"
 	"strings"
 
+	"iter"
+
 	"github.com/puzpuzpuz/xsync/v3"
 	"google.golang.org/protobuf/types/known/structpb"
-	"iter"
 )
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value

@@ -284,7 +284,6 @@ default allow = true`,
 		&serverconfig.ProviderConfig{},
 		nil,
 		cryptoEngine,
-		nil,
 		mockStore,
 		ghProviderService,
 	)

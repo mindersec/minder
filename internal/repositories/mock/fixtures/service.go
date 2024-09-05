@@ -24,7 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/stacklok/minder/internal/db"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
+	mockghrepo "github.com/stacklok/minder/internal/repositories/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
