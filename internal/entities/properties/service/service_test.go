@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -716,6 +717,99 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 			require.NoError(t, err)
 			tt.checkResult(t, gotProps)
+		})
+	}
+}
+
+func TestPropertiesService_EntityWithProperties(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	scenarios := []struct {
+		name           string
+		entityID       uuid.UUID
+		entName        string
+		dbEntBuilder   func(id uuid.UUID, entName string) db.EntityInstance
+		dbPropsBuilder func(id uuid.UUID) []db.Property
+		checkProps     func(t *testing.T, props *properties.Properties)
+	}{
+		{
+			name:     "Entity with properties",
+			entityID: uuid.New(),
+			entName:  "myorg/the-props-are-different",
+			dbEntBuilder: func(id uuid.UUID, entName string) db.EntityInstance {
+				return db.EntityInstance{
+					ID:   id,
+					Name: entName,
+				}
+			},
+			dbPropsBuilder: func(id uuid.UUID) []db.Property {
+				return []db.Property{
+					{
+						EntityID: id,
+						Key:      "name",
+						Value:    []byte(`{"value": "myorg/bad-go", "version": "v1"}`),
+					},
+					{
+						EntityID: id,
+						Key:      "is_private",
+						Value:    []byte(`{"value": false, "version": "v1"}`),
+					},
+				}
+			},
+			checkProps: func(t *testing.T, props *properties.Properties) {
+				t.Helper()
+
+				require.Equal(t, props.GetProperty("name").GetString(), "myorg/bad-go")
+				require.Equal(t, props.GetProperty("is_private").GetBool(), false)
+			},
+		},
+		{
+			name:     "Entity without properties",
+			entityID: uuid.New(),
+			entName:  "myorg/noprops",
+			dbEntBuilder: func(id uuid.UUID, entName string) db.EntityInstance {
+				return db.EntityInstance{
+					ID:   id,
+					Name: entName,
+				}
+			},
+			dbPropsBuilder: func(_ uuid.UUID) []db.Property {
+				return []db.Property{}
+			},
+			checkProps: func(t *testing.T, props *properties.Properties) {
+				t.Helper()
+
+				require.Equal(t, props.GetProperty("name").GetString(), "myorg/noprops")
+			},
+		},
+	}
+
+	for _, tt := range scenarios {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			mockDB := mockdb.NewMockStore(ctrl)
+
+			mockDB.EXPECT().
+				GetEntityByID(ctx, tt.entityID).
+				Return(tt.dbEntBuilder(tt.entityID, tt.entName), nil)
+			mockDB.EXPECT().
+				GetAllPropertiesForEntity(ctx, tt.entityID).
+				Return(tt.dbPropsBuilder(tt.entityID), nil)
+
+			ps := NewPropertiesService(mockDB)
+			result, err := ps.EntityWithProperties(ctx, tt.entityID, nil)
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			require.Equal(t, result.Entity.ID, tt.entityID)
+			require.Equal(t, result.Entity.Name, tt.entName)
+			tt.checkProps(t, result.Properties)
 		})
 	}
 }

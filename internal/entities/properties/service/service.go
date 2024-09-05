@@ -336,6 +336,17 @@ func (ps *propertiesService) EntityWithProperties(
 		return nil, fmt.Errorf("failed to convert properties to model: %w", err)
 	}
 
+	// temporary migration case - if we had an entity but no properties for it from
+	// our live-on-demand migration case, we might not have a name. In this case, we
+	// fill the name property from the entity name which is always there
+	nameP := props.GetProperty(properties.PropertyName)
+	if nameP == nil {
+		err := props.SetKeyValue(properties.PropertyName, ent.Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set name property: %w", err)
+		}
+	}
+
 	return models.NewEntityWithProperties(ent, props), nil
 }
 
