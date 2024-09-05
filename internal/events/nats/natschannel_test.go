@@ -32,8 +32,6 @@ import (
 )
 
 func TestNatsChannel(t *testing.T) {
-	t.Skip("This test is flaky - skipping until we can fix it")
-
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
@@ -51,6 +49,7 @@ func TestNatsChannel(t *testing.T) {
 
 	// N.B. This list is in alphabetical order
 	m1 := message.NewMessage("123", []byte(`{"msg":"hello"}`))
+	m1.Metadata.Set("foo", "bar")
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
 
@@ -99,7 +98,7 @@ func TestNatsChannel(t *testing.T) {
 		case m := <-out2:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
-		case <-time.After(5 * time.Second):
+		case <-time.After(20 * time.Second):
 			t.Fatalf("timeout waiting for message %d", i)
 		}
 	}
@@ -107,15 +106,9 @@ func TestNatsChannel(t *testing.T) {
 		return bytes.Compare(a.Payload, b.Payload)
 	})
 
-	if string(results[0].Payload) != string(m1.Payload) {
-		t.Errorf("expected %v, got %v", string(m1.Payload), string(results[0].Payload))
-	}
-	if string(results[1].Payload) != string(m2.Payload) {
-		t.Errorf("expected %v, got %v", string(m2.Payload), string(results[1].Payload))
-	}
-	if string(results[2].Payload) != string(m3.Payload) {
-		t.Errorf("expected %v, got %v", string(m3.Payload), string(results[2].Payload))
-	}
+	expectMessageEqual(t, m1, results[0])
+	expectMessageEqual(t, m2, results[1])
+	expectMessageEqual(t, m3, results[2])
 }
 
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
@@ -128,4 +121,18 @@ func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message
 		return nil, nil, nil, nil, fmt.Errorf("failed to subscribe: %v", err)
 	}
 	return pub, sub, closer, out, nil
+}
+
+func expectMessageEqual(t *testing.T, want *message.Message, got *message.Message) {
+	t.Helper()
+	if !bytes.Equal(want.Payload, got.Payload) {
+		t.Errorf("expected %v, got %v", string(want.Payload), string(got.Payload))
+	}
+	// got will have a bunch of additional CloudEvents metadata
+	if want.Metadata["foo"] != got.Metadata["foo"] {
+		t.Errorf("expected %v, got %v", want.Metadata, got.Metadata)
+	}
+	if got.Metadata["ce-time"] == "" {
+		t.Errorf("expected ce-time to be set, got %v", got.Metadata)
+	}
 }
