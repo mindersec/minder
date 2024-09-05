@@ -404,6 +404,7 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			&serverconfig.ProviderConfig{
 				GitHubApp: &serverconfig.GitHubAppConfig{AppName: "test"},
 			},
+			&serverconfig.WebhookConfig{},
 			&ratecache.NoopRestClientCache{},
 			credentials.NewGitHubTokenCredential(token),
 			nil,

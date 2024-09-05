@@ -34,7 +34,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/github"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	"github.com/stacklok/minder/internal/repositories"
-	ghreposvc "github.com/stacklok/minder/internal/repositories/github"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -84,7 +83,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 	}
 
 	_, err = r.repos.RefreshRepositoryByUpstreamID(ctx, repository.RepoID)
-	if errors.Is(err, v1.ErrEntityNotFound) || errors.Is(err, ghreposvc.ErrRepoNotFound) {
+	if errors.Is(err, v1.ErrEntityNotFound) || errors.Is(err, repositories.ErrRepoNotFound) {
 		zerolog.Ctx(ctx).Debug().Err(err).Str("repository", repository.ID.String()).Msg("repository not found")
 	} else if err != nil {
 		zerolog.Ctx(ctx).Debug().Err(err).Str("repository", repository.ID.String()).Msg("error refreshing repository")

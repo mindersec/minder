@@ -82,6 +82,7 @@ func NewOAuthDelegate(
 func NewRestClient(
 	cfg *minderv1.GitHubProviderConfig,
 	providerCfg *server.ProviderConfig,
+	whcfg *server.WebhookConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	ghClientFactory GitHubClientFactory,
@@ -99,6 +100,7 @@ func NewRestClient(
 		restClientCache,
 		delegate,
 		providerCfg,
+		whcfg,
 		propertyFetchers,
 	), nil
 }

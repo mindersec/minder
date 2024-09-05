@@ -56,8 +56,8 @@ import (
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	ghRepoSvc "github.com/stacklok/minder/internal/repositories/github"
-	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
+	repoSvc "github.com/stacklok/minder/internal/repositories"
+	mock_repos "github.com/stacklok/minder/internal/repositories/mock"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provif "github.com/stacklok/minder/pkg/providers/v1"
@@ -106,12 +106,12 @@ func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]a
 	}
 }
 
-type repoSvcMock = *mock_github.MockRepositoryService
+type repoSvcMock = *mock_repos.MockRepositoryService
 type repoSvcMockBuilder = func(*gomock.Controller) repoSvcMock
 
 func newRepoSvcMock(opts ...func(mck repoSvcMock)) repoSvcMockBuilder {
 	return func(ctrl *gomock.Controller) repoSvcMock {
-		mck := mock_github.NewMockRepositoryService(ctrl)
+		mck := mock_repos.NewMockRepositoryService(ctrl)
 		for _, opt := range opts {
 			opt(mck)
 		}
@@ -246,7 +246,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
+	mockRepoSvc := mock_repos.NewMockRepositoryService(ctrl)
 	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 	defer evt.Close()
 
@@ -264,7 +264,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 
 	mockRepoSvc.EXPECT().
 		RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-		Return(nil, ghRepoSvc.ErrRepoNotFound)
+		Return(nil, repoSvc.ErrRepoNotFound)
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -309,7 +309,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	defer os.Remove(prevCredsFile.Name())
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
+	mockRepoSvc := mock_repos.NewMockRepositoryService(ctrl)
 	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
@@ -3979,11 +3979,11 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			var mockRepoSvc *mock_github.MockRepositoryService
+			var mockRepoSvc *mock_repos.MockRepositoryService
 			if tt.mockRepoBld != nil {
 				mockRepoSvc = tt.mockRepoBld(ctrl)
 			} else {
-				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
+				mockRepoSvc = mock_repos.NewMockRepositoryService(ctrl)
 			}
 
 			var mockPropSvc *mock_service.MockPropertiesService
@@ -4579,11 +4579,11 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			var mockRepoSvc *mock_github.MockRepositoryService
+			var mockRepoSvc *mock_repos.MockRepositoryService
 			if tt.mockRepoBld != nil {
 				mockRepoSvc = tt.mockRepoBld(ctrl)
 			} else {
-				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
+				mockRepoSvc = mock_repos.NewMockRepositoryService(ctrl)
 			}
 
 			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)

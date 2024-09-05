@@ -26,7 +26,7 @@ import (
 	mockevents "github.com/stacklok/minder/internal/events/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )

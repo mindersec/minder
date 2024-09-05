@@ -69,7 +69,7 @@ type Provider interface {
 	// for a particular repository or artifact.
 	// Note that the provider might choose to update the properties of the entity
 	// adding the information about the registration. e.g. The webhook ID and URL.
-	RegisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+	RegisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) (*properties.Properties, error)
 
 	// DeregisterEntity rolls back the registration of the entity. This could be deleting
 	// a webhook for a particular repository or artifact. Note that this assumes a pre-registered
@@ -158,7 +158,7 @@ type GitHub interface {
 		perPage int, pageNumber int) ([]*github.CommitFile, *github.Response, error)
 	IsOrg() bool
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
-	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
+	DeleteHook(ctx context.Context, owner, repo string, id int64) error
 	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,

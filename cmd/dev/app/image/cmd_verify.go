@@ -114,6 +114,7 @@ func buildGitHubClient(token string) (provifv1.GitHub, error) {
 	return clients.NewRestClient(
 		&minderv1.GitHubProviderConfig{},
 		nil,
+		nil,
 		&ratecache.NoopRestClientCache{},
 		credentials.NewGitHubTokenCredential(token),
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),

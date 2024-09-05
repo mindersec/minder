@@ -86,6 +86,9 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetEntitiesByProvider retrieves all entities of a given provider.
+	// this is how one would get all repositories, artifacts, etc. for a given provider.
+	GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
 	// this is how one would get all repositories, artifacts, etc.
 	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
@@ -153,9 +156,6 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	// get a list of repos with webhooks belonging to a provider
-	// is used for webhook cleanup during provider deletion
-	GetProviderWebhooks(ctx context.Context, providerID uuid.UUID) ([]GetProviderWebhooksRow, error)
 	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
 	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
 	// avoid using this, where possible use GetRepositoryByIDAndProject instead

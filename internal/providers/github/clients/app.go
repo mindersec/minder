@@ -85,6 +85,7 @@ func NewAppDelegate(
 func NewGitHubAppProvider(
 	cfg *minderv1.GitHubAppProviderConfig,
 	appConfig *server.ProviderConfig,
+	whcfg *server.WebhookConfig,
 	restClientCache ratecache.RestClientCache,
 	credential provifv1.GitHubCredential,
 	packageListingClient *gogithub.Client,
@@ -116,6 +117,7 @@ func NewGitHubAppProvider(
 		restClientCache,
 		delegate,
 		appConfig,
+		whcfg,
 		propertyFetchers,
 	), nil
 }

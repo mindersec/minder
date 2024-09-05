@@ -193,6 +193,7 @@ func TestNewGitHubAppProvider(t *testing.T) {
 		&minderv1.GitHubAppProviderConfig{Endpoint: proto.String("https://api.github.com")},
 		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
 		nil,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
@@ -221,6 +222,7 @@ func TestUserInfo(t *testing.T) {
 				UserID:  expectedUserId,
 			},
 		},
+		&config.WebhookConfig{},
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential("token"),
 		github.NewClient(http.DefaultClient),
@@ -297,6 +299,7 @@ func TestArtifactAPIEscapesApp(t *testing.T) {
 			client, err := NewGitHubAppProvider(
 				&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(testServer.URL + "/")},
 				&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
+				&config.WebhookConfig{},
 				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential("token"),
 				packageListingClient,
@@ -389,6 +392,7 @@ func TestListPackagesByRepository(t *testing.T) {
 						FallbackToken: accessToken,
 					},
 				},
+				&config.WebhookConfig{},
 				ratecache.NewRestClientCache(context.Background()),
 				credentials.NewGitHubTokenCredential(accessToken),
 				packageListingClient,
@@ -438,6 +442,7 @@ func TestWaitForRateLimitResetApp(t *testing.T) {
 	client, err := NewGitHubAppProvider(
 		&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(server.URL + "/")},
 		&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
+		&config.WebhookConfig{},
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
 		packageListingClient,
@@ -496,6 +501,7 @@ func TestConcurrentWaitForRateLimitResetApp(t *testing.T) {
 		client, err := NewGitHubAppProvider(
 			&minderv1.GitHubAppProviderConfig{Endpoint: proto.String(server.URL + "/")},
 			&config.ProviderConfig{GitHubApp: &config.GitHubAppConfig{}},
+			&config.WebhookConfig{},
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
 			packageListingClient,
