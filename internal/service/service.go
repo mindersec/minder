@@ -214,6 +214,7 @@ func AllInOneServerService(
 		featureFlagClient,
 		profileStore,
 		selEnv,
+		propSvc,
 	)
 
 	handler := engine.NewExecutorEventHandler(

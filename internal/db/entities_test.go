@@ -52,10 +52,7 @@ func Test_EntityCrud(t *testing.T) {
 		require.Equal(t, ent.ProviderID, prov.ID)
 		require.Equal(t, ent.OriginatedFrom, uuid.NullUUID{})
 
-		entGet, err := testQueries.GetEntityByID(context.Background(), GetEntityByIDParams{
-			ID:       ent.ID,
-			Projects: []uuid.UUID{proj.ID},
-		})
+		entGet, err := testQueries.GetEntityByID(context.Background(), ent.ID)
 		require.NoError(t, err)
 		require.Equal(t, entGet, ent)
 
@@ -65,10 +62,7 @@ func Test_EntityCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		entGet, err = testQueries.GetEntityByID(context.Background(), GetEntityByIDParams{
-			ID:       ent.ID,
-			Projects: []uuid.UUID{proj.ID},
-		})
+		entGet, err = testQueries.GetEntityByID(context.Background(), ent.ID)
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		require.Empty(t, entGet)
 	})

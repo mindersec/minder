@@ -20,7 +20,9 @@ import (
 	"math"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestBoolGetters(t *testing.T) {
@@ -575,4 +577,100 @@ func TestFilteredCopy(t *testing.T) {
 		}
 		require.Equal(t, expected, output)
 	})
+}
+
+func TestProperties_ToProtoStruct(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		props    map[string]any
+		expected *structpb.Struct
+	}{
+		{
+			name: "mixed types",
+			props: map[string]any{
+				"string": "value",
+				"int":    42,
+				"bool":   true,
+				"float":  3.14,
+			},
+			expected: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"string": structpb.NewStringValue("value"),
+					"int":    structpb.NewNumberValue(42),
+					"bool":   structpb.NewBoolValue(true),
+					"float":  structpb.NewNumberValue(3.14),
+				},
+			},
+		},
+		{
+			name:     "empty properties",
+			props:    map[string]any{},
+			expected: &structpb.Struct{Fields: map[string]*structpb.Value{}},
+		},
+		{
+			name:     "nil properties",
+			props:    nil,
+			expected: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var p *Properties
+			var err error
+			if tt.props != nil {
+				p, err = NewProperties(tt.props)
+				require.NoError(t, err)
+			}
+
+			result := p.ToProtoStruct()
+
+			if tt.expected == nil {
+				assert.Nil(t, result)
+			} else {
+				assert.NotNil(t, result)
+				assert.Equal(t, len(tt.expected.Fields), len(result.Fields))
+				for key, expectedValue := range tt.expected.Fields {
+					assert.Contains(t, result.Fields, key)
+					assert.Equal(t, expectedValue.GetKind(), result.Fields[key].GetKind())
+					assert.Equal(t, expectedValue.AsInterface(), result.Fields[key].AsInterface())
+				}
+			}
+		})
+	}
+}
+
+func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
+	t.Parallel()
+
+	// Test case with reserved prefix, without skip option
+	reservedProps := map[string]any{
+		"minder.internal.test": "value",
+	}
+	_, err := NewProperties(reservedProps)
+	if err == nil {
+		t.Error("Expected error for reserved prefix without skip option, got nil")
+	}
+
+	// Test case with reserved prefix, with skip option
+	props, err := NewProperties(reservedProps, WithSkipPrefixCheckTestOnly())
+	if err != nil {
+		t.Errorf("Unexpected error with skip option: %v", err)
+	}
+	if props == nil {
+		t.Error("Expected non-nil Properties with skip option")
+	}
+
+	// Verify the property was actually added
+	prop := props.GetProperty("minder.internal.test")
+	if prop == nil {
+		t.Error("Expected property to be present")
+	}
+	if val := prop.GetString(); val != "value" {
+		t.Errorf("Expected value 'value', got '%s'", val)
+	}
 }

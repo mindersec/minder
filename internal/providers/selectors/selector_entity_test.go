@@ -17,78 +17,91 @@ package selectors
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
+	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-func repoToSelectorEntity(t *testing.T, name, class string, repo *minderv1.Repository) *internalpb.SelectorEntity {
+func repoToSelectorEntity(t *testing.T, name, class string, repoEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	t.Helper()
+
+	var isFork *bool
+	if propIsFork, err := repoEntWithProps.Properties.GetProperty(properties.RepoPropertyIsFork).AsBool(); err == nil {
+		isFork = proto.Bool(propIsFork)
+	}
+
+	var isPrivate *bool
+	if propIsPrivate, err := repoEntWithProps.Properties.GetProperty(properties.RepoPropertyIsPrivate).AsBool(); err == nil {
+		isPrivate = proto.Bool(propIsPrivate)
+	}
 
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
-		Name:       fmt.Sprintf("%s/%s", repo.GetOwner(), repo.GetName()),
+		Name:       repoEntWithProps.Entity.Name,
 		Provider: &internalpb.SelectorProvider{
 			Name:  name,
 			Class: class,
 		},
 		Entity: &internalpb.SelectorEntity_Repository{
 			Repository: &internalpb.SelectorRepository{
-				Name: fmt.Sprintf("%s/%s", repo.GetOwner(), repo.GetName()),
+				Name: repoEntWithProps.Entity.Name,
 				Provider: &internalpb.SelectorProvider{
 					Name:  name,
 					Class: class,
 				},
-				IsFork:    proto.Bool(repo.GetIsFork()),
-				IsPrivate: proto.Bool(repo.GetIsFork()),
+				IsFork:     isFork,
+				IsPrivate:  isPrivate,
+				Properties: repoEntWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}
 }
 
-func artifactToSelectorEntity(t *testing.T, name, class string, artifact *minderv1.Artifact) *internalpb.SelectorEntity {
+func artifactToSelectorEntity(t *testing.T, name, class string, artifactEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	t.Helper()
 
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
-		Name:       fmt.Sprintf("%s/%s", artifact.GetOwner(), artifact.GetName()),
+		Name:       artifactEntWithProps.Entity.Name,
 		Provider: &internalpb.SelectorProvider{
 			Name:  name,
 			Class: class,
 		},
 		Entity: &internalpb.SelectorEntity_Artifact{
 			Artifact: &internalpb.SelectorArtifact{
-				Name: fmt.Sprintf("%s/%s", artifact.GetOwner(), artifact.GetName()),
+				Name: artifactEntWithProps.Entity.Name,
 				Provider: &internalpb.SelectorProvider{
 					Name:  name,
 					Class: class,
 				},
+				Properties: artifactEntWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}
 }
 
-func pullRequestToSelectorEntity(t *testing.T, name, class string, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
+func pullRequestToSelectorEntity(t *testing.T, name, class string, pullRequestEntityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	t.Helper()
 
-	fullName := fmt.Sprintf("%s/%s/%d", pr.GetRepoOwner(), pr.GetRepoName(), pr.GetNumber())
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
-		Name:       fullName,
+		Name:       pullRequestEntityWithProps.Entity.Name,
 		Provider: &internalpb.SelectorProvider{
 			Name:  name,
 			Class: class,
 		},
 		Entity: &internalpb.SelectorEntity_PullRequest{
 			PullRequest: &internalpb.SelectorPullRequest{
-				Name: fullName,
+				Name:       pullRequestEntityWithProps.Entity.Name,
+				Properties: pullRequestEntityWithProps.Properties.ToProtoStruct(),
 			},
 		},
 	}
@@ -104,16 +117,16 @@ func (_ *fullProvider) CanImplement(_ minderv1.ProviderType) bool {
 	return true
 }
 
-func (m *fullProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity {
-	return repoToSelectorEntity(m.t, m.name, m.class, repo)
+func (m *fullProvider) RepoToSelectorEntity(_ context.Context, repoEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	return repoToSelectorEntity(m.t, m.name, m.class, repoEntWithProps)
 }
 
-func (m *fullProvider) ArtifactToSelectorEntity(_ context.Context, artifact *minderv1.Artifact) *internalpb.SelectorEntity {
-	return artifactToSelectorEntity(m.t, m.name, m.class, artifact)
+func (m *fullProvider) ArtifactToSelectorEntity(_ context.Context, artifactEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	return artifactToSelectorEntity(m.t, m.name, m.class, artifactEntWithProps)
 }
 
-func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pr *minderv1.PullRequest) *internalpb.SelectorEntity {
-	return pullRequestToSelectorEntity(m.t, m.name, m.class, pr)
+func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pullRequestEntityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	return pullRequestToSelectorEntity(m.t, m.name, m.class, pullRequestEntityWithProps)
 }
 
 func (_ *fullProvider) FetchAllProperties(
@@ -198,29 +211,49 @@ func (_ *repoOnlyProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity
 	return nil
 }
 
-func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repo *minderv1.Repository) *internalpb.SelectorEntity {
-	return repoToSelectorEntity(m.t, m.name, m.class, repo)
+func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repoEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	return repoToSelectorEntity(m.t, m.name, m.class, repoEntWithProps)
+}
+
+func buildEntityWithProperties(entityType minderv1.Entity, name string, propMap map[string]any) *models.EntityWithProperties {
+	props, err := properties.NewProperties(propMap)
+	if err != nil {
+		panic(err)
+	}
+	entity := &models.EntityWithProperties{
+		Entity: models.EntityInstance{
+			Type: entityType,
+			Name: name,
+		},
+		Properties: props,
+	}
+
+	return entity
 }
 
 func TestEntityToSelectorEntity(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		name       string
-		provider   provifv1.Provider
-		entityType minderv1.Entity
-		entity     proto.Message
-		success    bool
+		name        string
+		provider    provifv1.Provider
+		entityType  minderv1.Entity
+		entityName  string
+		entityProps map[string]any
+		success     bool
 	}{
 		{
 			name:       "Repository",
 			provider:   newMockProvider(t, "github", "github"),
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			entity: &minderv1.Repository{
-				Owner:     "testorg",
-				Name:      "testrepo",
-				IsFork:    true,
-				IsPrivate: true,
+			entityName: "testorg/testrepo",
+			entityProps: map[string]any{
+				properties.PropertyUpstreamID:    "12345",
+				properties.RepoPropertyIsFork:    true,
+				properties.RepoPropertyIsPrivate: true,
+				ghprops.RepoPropertyId:           "12345",
+				ghprops.RepoPropertyName:         "testrepo",
+				ghprops.RepoPropertyOwner:        "testorg",
 			},
 			success: true,
 		},
@@ -228,10 +261,14 @@ func TestEntityToSelectorEntity(t *testing.T) {
 			name:       "Artifact",
 			provider:   newMockProvider(t, "github", "github"),
 			entityType: minderv1.Entity_ENTITY_ARTIFACTS,
-			entity: &minderv1.Artifact{
-				Owner: "testorg",
-				Name:  "testartifact",
-				Type:  "container",
+			entityName: "testorg/testartifact",
+			entityProps: map[string]any{
+				properties.PropertyUpstreamID:      "67890",
+				ghprops.ArtifactPropertyOwner:      "testorg/testartifact",
+				ghprops.ArtifactPropertyName:       "testorg/testartifact",
+				ghprops.ArtifactPropertyType:       "container",
+				ghprops.ArtifactPropertyCreatedAt:  "2024-01-01T00:00:00Z",
+				ghprops.ArtifactPropertyVisibility: "public",
 			},
 			success: true,
 		},
@@ -239,10 +276,16 @@ func TestEntityToSelectorEntity(t *testing.T) {
 			name:       "Pull Request",
 			provider:   newMockProvider(t, "github", "github"),
 			entityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
-			entity: &minderv1.PullRequest{
-				RepoOwner: "testorg",
-				RepoName:  "testartifact",
-				Number:    12345,
+			entityName: "testorg/testrepo/12345",
+			entityProps: map[string]any{
+				properties.PropertyUpstreamID: "12345",
+				ghprops.PullPropertyURL:       "https://github.com/testorg/testrepo/pull/12345",
+				ghprops.PullPropertyNumber:    "12345",
+				ghprops.PullPropertySha:       "abc123",
+				ghprops.PullPropertyRepoOwner: "testorg",
+				ghprops.PullPropertyRepoName:  "testrepo",
+				ghprops.PullPropertyAuthorID:  "56789",
+				ghprops.PullPropertyAction:    "opened",
 			},
 			success: true,
 		},
@@ -250,11 +293,14 @@ func TestEntityToSelectorEntity(t *testing.T) {
 			name:       "Repository with RepoOnlyProvider",
 			provider:   newRepoOnlyProvider(t, "github", "github"),
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			entity: &minderv1.Repository{
-				Owner:     "testorg",
-				Name:      "testrepo",
-				IsFork:    true,
-				IsPrivate: true,
+			entityName: "testorg/testrepo",
+			entityProps: map[string]any{
+				properties.PropertyUpstreamID:    "12345",
+				properties.RepoPropertyIsFork:    true,
+				properties.RepoPropertyIsPrivate: true,
+				ghprops.RepoPropertyId:           "12345",
+				ghprops.RepoPropertyName:         "testrepo",
+				ghprops.RepoPropertyOwner:        "testorg",
 			},
 			success: true,
 		},
@@ -262,10 +308,14 @@ func TestEntityToSelectorEntity(t *testing.T) {
 			name:       "Artifact with RepoOnlyProvider",
 			provider:   newRepoOnlyProvider(t, "github", "github"),
 			entityType: minderv1.Entity_ENTITY_ARTIFACTS,
-			entity: &minderv1.Artifact{
-				Owner: "testorg",
-				Name:  "testartifact",
-				Type:  "container",
+			entityName: "testorg/testartifact",
+			entityProps: map[string]any{
+				properties.PropertyUpstreamID:      "67890",
+				ghprops.ArtifactPropertyOwner:      "testorg/testartifact",
+				ghprops.ArtifactPropertyName:       "testorg/testartifact",
+				ghprops.ArtifactPropertyType:       "container",
+				ghprops.ArtifactPropertyCreatedAt:  "2024-01-01T00:00:00Z",
+				ghprops.ArtifactPropertyVisibility: "public",
 			},
 			success: false,
 		},
@@ -277,11 +327,13 @@ func TestEntityToSelectorEntity(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 
+			entity := buildEntityWithProperties(scenario.entityType, scenario.entityName, scenario.entityProps)
+
 			selEnt := EntityToSelectorEntity(
 				context.Background(),
 				scenario.provider,
 				scenario.entityType,
-				scenario.entity,
+				entity,
 			)
 
 			if scenario.success {

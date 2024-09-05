@@ -836,12 +836,12 @@ func TestListEvaluationHistory(t *testing.T) {
 			pm := pmMock.NewMockProviderManager(ctrl)
 			propsSvc := propsSvcMock.NewMockPropertiesService(ctrl)
 			for _, efp := range tt.efp {
-				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any()).
 					Return(efp, tt.entityForPropertiesError)
 			}
 
 			if tt.entityForPropertiesError != nil && len(tt.efp) == 0 {
-				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
+				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any()).
 					Return(nil, tt.entityForPropertiesError).AnyTimes()
 			}
 			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any(), gomock.Any()).

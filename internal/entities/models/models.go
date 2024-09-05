@@ -61,6 +61,34 @@ func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *propertie
 	}
 }
 
+// DbPropsToModel converts a slice of db.Property to a properties.Properties instance.
+func DbPropsToModel(dbProps []db.Property) (*properties.Properties, error) {
+	propMap := make(map[string]any)
+
+	// TODO: should we change the property API to include a Set
+	// and rather move the construction from a map to a separate method?
+	// this double iteration is not ideal
+	for _, prop := range dbProps {
+		anyVal, err := db.PropValueFromDbV1(prop.Value)
+		if err != nil {
+			return nil, err
+		}
+		propMap[prop.Key] = anyVal
+	}
+
+	return properties.NewProperties(propMap)
+}
+
+// DbPropToModel converts a single db.Property to a properties.Property instance.
+func DbPropToModel(dbProp db.Property) (*properties.Property, error) {
+	anyVal, err := db.PropValueFromDbV1(dbProp.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return properties.NewProperty(anyVal)
+}
+
 // UpdateProperties updates the properties for the "entity for properties" instance
 func (e *EntityWithProperties) UpdateProperties(props *properties.Properties) {
 	e.Properties = props

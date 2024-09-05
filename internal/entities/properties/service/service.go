@@ -49,7 +49,7 @@ const (
 type PropertiesService interface {
 	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithProperties(
-		ctx context.Context, entityID, projectId uuid.UUID, qtx db.ExtendQuerier,
+		ctx context.Context, entityID uuid.UUID, qtx db.ExtendQuerier,
 	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for the given entity
 	RetrieveAllProperties(
@@ -133,7 +133,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	// if exists and not expired, turn into our model
 	var modelProps *properties.Properties
 	if len(dbProps) > 0 {
-		modelProps, err = dbPropsToModel(dbProps)
+		modelProps, err = models.DbPropsToModel(dbProps)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert properties: %w", err)
 		}
@@ -218,7 +218,7 @@ func (ps *propertiesService) RetrieveProperty(
 
 	// if exists, turn into our model
 	if ps.isDatabasePropertyValid(dbProp) {
-		return dbPropToModel(dbProp)
+		return models.DbPropToModel(dbProp)
 	}
 
 	// if not, fetch from provider
@@ -310,7 +310,7 @@ func (_ *propertiesService) ReplaceProperty(
 }
 
 func (ps *propertiesService) EntityWithProperties(
-	ctx context.Context, entityID, projectID uuid.UUID,
+	ctx context.Context, entityID uuid.UUID,
 	qtx db.ExtendQuerier,
 ) (*models.EntityWithProperties, error) {
 	// use the transaction if provided, otherwise use the store
@@ -321,22 +321,22 @@ func (ps *propertiesService) EntityWithProperties(
 		q = ps.store
 	}
 
-	ent, err := q.GetEntityByID(ctx, db.GetEntityByIDParams{
-		ID:       entityID,
-		Projects: []uuid.UUID{projectID},
-	})
+	ent, err := q.GetEntityByID(ctx, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 
-	fetchByProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyName: ent.Name,
-	})
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
 	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
+		return nil, fmt.Errorf("failed to get properties for entity: %w", err)
 	}
 
-	return models.NewEntityWithProperties(ent, fetchByProps), nil
+	props, err := models.DbPropsToModel(dbProps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert properties to model: %w", err)
+	}
+
+	return models.NewEntityWithProperties(ent, props), nil
 }
 
 func (ps *propertiesService) areDatabasePropertiesValid(dbProps []db.Property) bool {
@@ -356,30 +356,4 @@ func (ps *propertiesService) isDatabasePropertyValid(dbProp db.Property) bool {
 		return false
 	}
 	return time.Since(dbProp.UpdatedAt) < ps.entityTimeout
-}
-
-func dbPropsToModel(dbProps []db.Property) (*properties.Properties, error) {
-	propMap := make(map[string]any)
-
-	// TODO: should we change the property API to include a Set
-	// and rather move the construction from a map to a separate method?
-	// this double iteration is not ideal
-	for _, prop := range dbProps {
-		anyVal, err := db.PropValueFromDbV1(prop.Value)
-		if err != nil {
-			return nil, err
-		}
-		propMap[prop.Key] = anyVal
-	}
-
-	return properties.NewProperties(propMap)
-}
-
-func dbPropToModel(dbProp db.Property) (*properties.Property, error) {
-	anyVal, err := db.PropValueFromDbV1(dbProp.Value)
-	if err != nil {
-		return nil, err
-	}
-
-	return properties.NewProperty(anyVal)
 }
