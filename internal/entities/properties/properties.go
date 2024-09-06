@@ -209,14 +209,6 @@ type newPropertiesConfig struct {
 	skipPrefixCheck bool
 }
 
-// WithSkipPrefixCheckTestOnly returns an option to skip checking the prefix
-// This should only be used for testing purposes
-func WithSkipPrefixCheckTestOnly() newPropertiesOption {
-	return func(c *newPropertiesConfig) {
-		c.skipPrefixCheck = true
-	}
-}
-
 // NewProperties creates Properties from a map
 func NewProperties(props map[string]any, opts ...newPropertiesOption) (*Properties, error) {
 	config := &newPropertiesConfig{}

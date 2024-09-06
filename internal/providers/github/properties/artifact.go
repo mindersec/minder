@@ -108,21 +108,25 @@ func getNameFromParams(owner, name string) string {
 	return prefix + name
 }
 
-func parseArtifactName(name string) (string, string, string, error) {
+func parseArtifactName(name string) (owner string, artifactName string, artifactType string, err error) {
 	index := strings.Index(name, "/")
 	if index == -1 {
 		// No slash found, treat the entire name as the artifact name
-		return "", name, string(verifyif.ArtifactTypeContainer), nil
+		artifactName = name
+		artifactType = string(verifyif.ArtifactTypeContainer)
+		return
 	}
 
-	owner := name[:index]
-	artifactName := name[index+1:]
+	owner = name[:index]
+	artifactName = name[index+1:]
 
 	if owner == "" || artifactName == "" {
-		return "", "", "", fmt.Errorf("invalid name format")
+		err = fmt.Errorf("invalid name format")
+		return
 	}
 
-	return owner, artifactName, string(verifyif.ArtifactTypeContainer), nil
+	artifactType = string(verifyif.ArtifactTypeContainer)
+	return
 }
 
 func getArtifactWrapper(
