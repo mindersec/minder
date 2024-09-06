@@ -51,11 +51,11 @@ As a maintainer, you will have the following responsibilities:
 
 1. **Set Technical Direction**:
 
-- Where appropriate, participate in authoring and reviewing technical design
-  documents.
-  - Note: many project documents are currently in the Stacklok Google Drive
-    instance. We are working to open the relevant documents for community review
-    and feedback.
+   - Where appropriate, participate in authoring and reviewing technical design
+     documents.
+     - Note: many project documents are currently in the Stacklok Google Drive
+       instance. We are working to open the relevant documents for community
+       review and feedback.
 
 ## Maintainers List
 
@@ -72,6 +72,6 @@ The current list of maintainers is:
 - @blkt (Stacklok)
 - @puerco (Stacklok)
 
-Assignment of permissions for these maintainers is currently managed by Stacklok
-as a matter of accident; changes to this list will need a Stacker to apply some
-private automation to grant the privileges.
+Assignment of permissions for these maintainers is currently privately managed
+by Stacklok as a matter of accident; changes to this list will need a Stacker to
+apply some private automation to grant the privileges.
