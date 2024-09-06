@@ -16,6 +16,7 @@ package reconcilers
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -66,6 +67,12 @@ func (r *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *messages.RepoReconcilerEvent) error {
 	// first retrieve data for the repository
 	repository, err := r.store.GetRepositoryByRepoID(ctx, evt.Repository)
+	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Err(err).
+			Int64("repositoryUpstreamID", evt.Repository).
+			Msg("repository not found")
+		return nil
+	}
 	if err != nil {
 		return fmt.Errorf("error retrieving repository %d in project %s: %w", evt.Repository, evt.Project, err)
 	}
