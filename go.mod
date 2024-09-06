@@ -51,7 +51,7 @@ require (
 	github.com/openfga/go-sdk v0.6.0
 	github.com/openfga/openfga v1.6.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
-	github.com/prometheus/client_golang v1.20.2
+	github.com/prometheus/client_golang v1.20.3
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.33.0
