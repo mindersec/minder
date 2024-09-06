@@ -62,6 +62,9 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	// will automatically remove them when the repository is deleted.
 	err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID)
 	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Err(err).
+			Str("entity UUID", event.EntityID.String()).
+			Msg("repository not found")
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("error deleting repository: %w", err)
