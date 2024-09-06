@@ -83,7 +83,6 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
 	projectID := inf.ProjectID
 
 	logger := zerolog.Ctx(ctx).With().
@@ -97,60 +96,42 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	entityID, err := inf.GetID()
 	if err != nil {
 		logger.Debug().AnErr("error getting entity ID", err).Msgf("Entity ID was not set for event %s", inf.Type)
+		// Nothing we can do after this.
+		return nil, nil
 	}
 
-	// We need to check that the resources still exist before attempting to lock them.
-	// TODO: consider whether we need foreign key checks on the locks.
-	if repoID.Valid {
-		_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-			ID:        repoID.UUID,
-			ProjectID: projectID,
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because repository no longer exists")
-				return nil, nil
-			}
-		}
+	logger = logger.With().Str("entity_id", entityID.String()).Logger()
+
+	tx, err := e.querier.BeginTransaction()
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
 	}
-	if artifactID.Valid {
-		_, err := e.querier.GetArtifactByID(ctx, db.GetArtifactByIDParams{
-			ID:        artifactID.UUID,
-			ProjectID: projectID,
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because artifact no longer exists")
-				return nil, nil
-			}
+	qtx := e.querier.GetQuerierWithTransaction(tx)
+
+	// We'll only attempt to lock if the entity exists.
+	_, err = qtx.GetEntityByID(ctx, entityID)
+	if err != nil {
+		// explicit rollback if entity had an issue.
+		_ = e.querier.Rollback(tx)
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Debug().Msg("entity not found")
+			return nil, nil
 		}
-	}
-	if pullRequestID.Valid {
-		if _, err := e.querier.GetPullRequestByID(ctx, pullRequestID.UUID); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because pull request no longer exists")
-				return nil, nil
-			}
-		}
+		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 
-	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
+	res, err := qtx.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
 		Entity:           entities.EntityTypeToDB(inf.Type),
 		EntityInstanceID: entityID,
 		ProjectID:        projectID,
 		Interval:         fmt.Sprintf("%d", e.cfg.LockInterval),
 	})
-
-	if repoID.Valid {
-		logger = logger.With().Str("repository_id", repoID.UUID.String()).Logger()
-	}
-
-	if artifactID.Valid {
-		logger = logger.With().Str("artifact_id", artifactID.UUID.String()).Logger()
-	}
-
-	if pullRequestID.Valid {
-		logger = logger.With().Str("pull_request_id", pullRequestID.UUID.String()).Logger()
+	if err == nil {
+		if err := tx.Commit(); err != nil {
+			return nil, fmt.Errorf("error committing transaction: %w", err)
+		}
+	} else {
+		_ = e.querier.Rollback(tx)
 	}
 
 	// if nothing was retrieved from the database, then we can assume
