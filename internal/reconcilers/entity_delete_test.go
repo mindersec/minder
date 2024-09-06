@@ -16,6 +16,7 @@ package reconcilers
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -73,6 +74,29 @@ func TestHandleEntityDelete(t *testing.T) {
 				require.NoError(t, err, "invalid message")
 				return m
 			},
+		},
+		{
+			name:          "ignore entity not found - expect no error",
+			mockStoreFunc: nil,
+			mockReposFunc: rf.NewRepoService(
+				rf.WithFailedDeleteByID(
+					sql.ErrNoRows,
+				),
+			),
+			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
+				m := message.NewMessage(uuid.New().String(), nil)
+				eiw := messages.NewMinderEvent().
+					WithProviderID(providerID).
+					WithProjectID(projectID).
+					WithEntityType("repository").
+					WithEntityID(repositoryID).
+					WithAttribute("repoID", repositoryID.String())
+				err := eiw.ToMessage(m)
+				require.NoError(t, err, "invalid message")
+				return m
+			},
+			err: false,
 		},
 		{
 			name:          "db failure",
