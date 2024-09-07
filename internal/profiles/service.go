@@ -131,8 +131,21 @@ func (p *profileService) CreateProfile(
 
 	displayName := profile.GetDisplayName()
 
+	listParams := db.ListProfilesByProjectIDAndLabelParams{
+		ProjectID: projectID,
+	}
+
+	existingProfiles, err := qtx.ListProfilesByProjectIDAndLabel(ctx, listParams)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
+	}
+
+	profileMap := MergeDatabaseListIntoProfiles(existingProfiles)
+
+	existingProfileNames := make([]string, 0, len(profileMap))
+
 	// Derive the profile name from the profile display name
-	name := DeriveProfileNameFromDisplayName(profile)
+	name := DeriveProfileNameFromDisplayName(profile, existingProfileNames)
 
 	// if empty use the name
 	if displayName == "" {

@@ -638,9 +638,10 @@ func TestFilterRulesForType(t *testing.T) {
 func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name     string
-		profile  *minderv1.Profile
-		expected string
+		name                 string
+		profile              *minderv1.Profile
+		existingProfileNames []string
+		expected             string
 	}{
 		{
 			name: "A short DisplayName with whitespace",
@@ -648,7 +649,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "My custom profile",
 			},
-			expected: "my_custom_profile",
+			existingProfileNames: []string{},
+			expected:             "my_custom_profile",
 		},
 		{
 			name: "A very long DisplayName with whitespaces and more than 63 characters",
@@ -656,7 +658,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "A very long profile name that is longer than sixty three characters and will be trimmed",
 			},
-			expected: "a_very_long_profile_name_that_is_longer_than_sixty_three_charac",
+			existingProfileNames: []string{},
+			expected:             "a_very_long_profile_name_that_is_longer_than_sixty_three_charac",
 		},
 		{
 			name: "A DisplayName with special characters",
@@ -664,7 +667,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "Profile with !#$() characters",
 			},
-			expected: "profile_with_characters",
+			existingProfileNames: []string{},
+			expected:             "profile_with_characters",
 		},
 		{
 			name: "A DisplayName with alphanumeric values",
@@ -672,7 +676,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "My 1st Profile",
 			},
-			expected: "my_1st_profile",
+			existingProfileNames: []string{},
+			expected:             "my_1st_profile",
 		},
 		{
 			name: "A DisplayName with non-alphanumeric characters and leadning & trailing whitespaces",
@@ -680,7 +685,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "  New, Profile! 123. This is a Test Display Name with Special Characters!  ",
 			},
-			expected: "new_profile_123_this_is_a_test_display_name_with_special_charac",
+			existingProfileNames: []string{},
+			expected:             "new_profile_123_this_is_a_test_display_name_with_special_charac",
 		},
 		{
 			name: "A DisplayName with Leading and trailing white spaces",
@@ -688,7 +694,8 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "   Leading and trailing spaces   ",
 			},
-			expected: "leading_and_trailing_spaces",
+			existingProfileNames: []string{},
+			expected:             "leading_and_trailing_spaces",
 		},
 		{
 			name: "A DisplayName with mix of upper and low case",
@@ -696,7 +703,35 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "UPPER CASE to lower case",
 			},
-			expected: "upper_case_to_lower_case",
+			existingProfileNames: []string{},
+			expected:             "upper_case_to_lower_case",
+		},
+		{
+			name: "Derived profile name does not exist in the current project",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "custom_profile"},
+			expected:             "my_profile",
+		},
+		{
+			name: "Derived profile name does exist in the current project",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "my_profile"},
+			expected:             "my_profile-1",
+		},
+		{
+			name: "Derived profile name does exist in the current project",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "my_profile", "my_profile-1"},
+			expected:             "my_profile-2",
 		},
 	}
 
@@ -706,7 +741,7 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := profiles.DeriveProfileNameFromDisplayName(tt.profile)
+			result := profiles.DeriveProfileNameFromDisplayName(tt.profile, tt.existingProfileNames)
 			if result != tt.expected {
 				t.Errorf("DeriveProfileNameFromDisplayName: for profile %+v, expected %s, but got %s", tt.profile, tt.expected, result)
 			}
