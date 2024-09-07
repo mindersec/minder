@@ -341,7 +341,6 @@ func cleanDisplayName(displayName string) string {
 	displayName = strings.TrimSpace(displayName)
 
 	// Remove non-alphanumeric characters
-
 	displayName = nonAlphanumericRegex.ReplaceAllString(displayName, "")
 
 	// Replace multiple spaces with a single space
