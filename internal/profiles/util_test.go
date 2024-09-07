@@ -635,55 +635,80 @@ func TestFilterRulesForType(t *testing.T) {
 	}
 }
 
-func TestCleanDisplayName(t *testing.T) {
+func TestDeriveProfileNameFromDisplayName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
-		input    string
+		profile  *minderv1.Profile
 		expected string
 	}{
 		{
-			name:     "A short DisplayName with whitespace",
-			input:    "My custom profile",
+			name: "A short DisplayName with whitespace",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My custom profile",
+			},
 			expected: "my_custom_profile",
 		},
 		{
-			name:     "A very long DisplayName with whitespaces and more than 63 characters",
-			input:    "A very long profile name that is longer than sixty three characters and will be trimmed",
+			name: "A very long DisplayName with whitespaces and more than 63 characters",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "A very long profile name that is longer than sixty three characters and will be trimmed",
+			},
 			expected: "a_very_long_profile_name_that_is_longer_than_sixty_three_charac",
 		},
 		{
-			name:     "A DisplayName with special characters",
-			input:    "Profile with !#$() characters",
+			name: "A DisplayName with special characters",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "Profile with !#$() characters",
+			},
 			expected: "profile_with_characters",
 		},
 		{
-			name:     "A DisplayName with alphanumeric values",
-			input:    "My 1st Profile",
+			name: "A DisplayName with alphanumeric values",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My 1st Profile",
+			},
 			expected: "my_1st_profile",
 		},
 		{
-			name:     "A DisplayName with non-alphanumeric characters and leadning & trailing whitespaces",
-			input:    "  New, Profile! 123. This is a Test Display Name with Special Characters!  ",
+			name: "A DisplayName with non-alphanumeric characters and leadning & trailing whitespaces",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "  New, Profile! 123. This is a Test Display Name with Special Characters!  ",
+			},
 			expected: "new_profile_123_this_is_a_test_display_name_with_special_charac",
 		},
 		{
-			name:     "A DisplayName with Leading and trailing white spaces",
-			input:    "   Leading and trailing spaces   ",
+			name: "A DisplayName with Leading and trailing white spaces",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "   Leading and trailing spaces   ",
+			},
 			expected: "leading_and_trailing_spaces",
 		},
 		{
-			name:     "A DisplayName with mix of upper and low case",
-			input:    "UPPER CASE to lower case",
+			name: "A DisplayName with mix of upper and low case",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "UPPER CASE to lower case",
+			},
 			expected: "upper_case_to_lower_case",
 		},
 	}
 
 	for _, tt := range tests {
+
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := profiles.CleanDisplayName(tt.input)
+
+			result := profiles.DeriveProfileNameFromDisplayName(tt.profile)
 			if result != tt.expected {
-				t.Errorf("CleanDisplayName(%q) = %q; want %q", tt.input, result, tt.expected)
+				t.Errorf("DeriveProfileNameFromDisplayName: for profile %+v, expected %s, but got %s", tt.profile, tt.expected, result)
 			}
 		})
 	}

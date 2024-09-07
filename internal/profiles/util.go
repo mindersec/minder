@@ -34,6 +34,10 @@ import (
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+
+var multipleSpacesRegex = regexp.MustCompile(`\s{2,}`)
+
 // RuleValidationError is used to report errors from evaluating a rule, including
 // attribution of the particular error encountered.
 type RuleValidationError struct {
@@ -301,44 +305,39 @@ func MergeDatabaseGetByNameIntoProfiles(ppl []db.GetProfileByProjectAndNameRow) 
 	return profiles
 }
 
-// Derive the profile name from the profile display name
+// DeriveProfileNameFromDisplayName derives the profile name from the profile display name
 func DeriveProfileNameFromDisplayName(
 	profile *pb.Profile,
-) (profileName string) {
+) (name string) {
 
 	displayName := profile.GetDisplayName()
-	name := profile.GetName()
+	name = profile.GetName()
 
-	if displayName != "" && name != "" {
-		// when both a display name and a profile name are provided
-		// then the profile name from the incoming request is used as the profile name
-		profileName = name
-
-		// when both a display name and a profile name are provided, but the project already has a profile with that name
-
-	} else if displayName != "" && name == "" {
-		// when a display name is provided, but no name
+	if displayName != "" && name == "" {
+		// when a display name is provided, but no profile name
 		// then the profile name is created and saved based on the profile display name
-
-		profileName = CleanDisplayName(displayName)
-
+		return cleanDisplayName(displayName)
 	}
+	// when both a display name and a profile name are provided
+	// then the profile name from the incoming request is used as the profile name
+	// but the project already has a profile with that name
 
-	return profileName
+	return name
+
 }
 
 // The profile name should be derived from the profile display name given the following logic
-func CleanDisplayName(displayName string) string {
+func cleanDisplayName(displayName string) string {
 
 	// Trim leading and trailing whitespace
 	displayName = strings.TrimSpace(displayName)
 
 	// Remove non-alphanumeric characters
-	re := regexp.MustCompile(`[^a-zA-Z0-9\s]`)
-	displayName = re.ReplaceAllString(displayName, "")
+
+	displayName = nonAlphanumericRegex.ReplaceAllString(displayName, "")
 
 	// Replace multiple spaces with a single space
-	displayName = regexp.MustCompile(`\s{2,}`).ReplaceAllString(displayName, " ")
+	displayName = multipleSpacesRegex.ReplaceAllString(displayName, " ")
 
 	// Replace all whitespace with underscores
 	displayName = strings.ReplaceAll(displayName, " ", "_")
