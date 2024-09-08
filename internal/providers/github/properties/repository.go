@@ -46,6 +46,8 @@ const (
 	RepoPropertyLicense = "github/license"
 	// RepoPropertyPrimaryLanguage represents the github repository language
 	RepoPropertyPrimaryLanguage = "github/primary_language"
+	// RepoPropertyAllLanguages represents the github repository all languages
+	RepoPropertyAllLanguages = "github/all_languages"
 
 	// RepoPropertyHookId represents the github repository hook ID
 	RepoPropertyHookId = "github/hook_id"
@@ -85,6 +87,12 @@ var repoPropertyDefinitions = []propertyOrigin{
 			RepoPropertyPrimaryLanguage,
 		},
 		wrapper: getRepoWrapper,
+	},
+	{
+		keys: []string{
+			RepoPropertyAllLanguages,
+		},
+		wrapper: getLangsWrapper,
 	},
 }
 
@@ -127,6 +135,34 @@ func getRepoWrapper(
 	repoProps[properties.PropertyName] = fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
 
 	return repoProps, nil
+}
+
+func getLangsWrapper(
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
+) (map[string]any, error) {
+	_ = isOrg
+
+	name, owner, err := getNameOwnerFromProps(getByProps)
+	if err != nil {
+		return nil, fmt.Errorf("error getting name and owner from properties: %w", err)
+	}
+
+	langMap, result, err := ghCli.Repositories.ListLanguages(ctx, owner, name)
+	if err != nil {
+		if result != nil && result.StatusCode == http.StatusNotFound {
+			return nil, v1.ErrEntityNotFound
+		}
+		return nil, err
+	}
+
+	anyLangs := make([]any, 0, len(langMap))
+	for lang := range langMap {
+		anyLangs = append(anyLangs, lang)
+	}
+
+	return map[string]any{
+		RepoPropertyAllLanguages: anyLangs,
+	}, nil
 }
 
 func getNameOwnerFromProps(props *properties.Properties) (string, string, error) {
