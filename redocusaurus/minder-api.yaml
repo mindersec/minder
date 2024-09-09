@@ -3494,6 +3494,9 @@ definitions:
         type: string
       license:
         type: string
+      properties:
+        type: object
+        description: properties is a map of properties of the entity.
   v1ResolveInvitationResponse:
     type: object
     properties:
