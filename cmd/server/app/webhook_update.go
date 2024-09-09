@@ -32,6 +32,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	propssvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
@@ -230,15 +231,17 @@ func wireUpProviderManager(
 	}
 	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
 	providerStore := providers.NewProviderStore(store)
+	propSvc := propssvc.NewPropertiesService(store)
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		&ratecache.NoopRestClientCache{},
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		&cfg.Provider,
+		&cfg.WebhookConfig,
 		fallbackTokenClient,
 		cryptoEng,
-		nil, // whManager not needed here (only when creating/delete webhooks)
 		store,
 		nil, // ghProviderService not needed here
+		propSvc,
 	)
 
 	return manager.NewProviderManager(ctx, providerStore, githubProviderManager)

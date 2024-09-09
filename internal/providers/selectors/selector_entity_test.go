@@ -147,8 +147,8 @@ func (_ *fullProvider) SupportsEntity(_ minderv1.Entity) bool {
 	return false
 }
 
-func (_ *fullProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
+func (_ *fullProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
+	return nil, nil
 }
 
 func (_ *fullProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
@@ -203,8 +203,8 @@ func (_ *repoOnlyProvider) SupportsEntity(minderv1.Entity) bool {
 	return false
 }
 
-func (_ *repoOnlyProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
+func (_ *repoOnlyProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
+	return nil, nil
 }
 
 func (_ *repoOnlyProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {

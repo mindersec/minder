@@ -241,6 +241,45 @@ func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.U
 	return items, nil
 }
 
+const getEntitiesByProvider = `-- name: GetEntitiesByProvider :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.provider_id = $1
+`
+
+// GetEntitiesByProvider retrieves all entities of a given provider.
+// this is how one would get all repositories, artifacts, etc. for a given provider.
+func (q *Queries) GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesByProvider, providerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntitiesByType = `-- name: GetEntitiesByType :many
 
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances

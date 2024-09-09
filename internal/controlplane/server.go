@@ -68,7 +68,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/session"
-	"github.com/stacklok/minder/internal/repositories/github"
+	reposvc "github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
@@ -103,7 +103,7 @@ type Server struct {
 	props               propSvc.PropertiesService
 	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
-	repos               github.RepositoryService
+	repos               reposvc.RepositoryService
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
@@ -142,7 +142,7 @@ func NewServer(
 	authzClient authz.Client,
 	idClient auth.Resolver,
 	inviteService invites.InviteService,
-	repoService github.RepositoryService,
+	repoService reposvc.RepositoryService,
 	propertyService propSvc.PropertiesService,
 	roleService roles.RoleService,
 	profileService profiles.ProfileService,
