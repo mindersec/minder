@@ -90,6 +90,7 @@ func TestNatsChannel(t *testing.T) {
 	// Note that message delivery order is not important (and may not be deterministic /
 	// meaningful in a multi-process world).
 	results := make([]*message.Message, 0, 7)
+loop:
 	for i := 0; i < 7; i++ {
 		select {
 		case m := <-out1:
@@ -98,8 +99,9 @@ func TestNatsChannel(t *testing.T) {
 		case m := <-out2:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
-		case <-time.After(30 * time.Second):
-			t.Fatalf("timeout waiting for message %d", i)
+		case <-time.After(25 * time.Second):
+			t.Logf("timeout waiting for message %d", i)
+			break loop
 		}
 	}
 	slices.SortFunc(results, func(a, b *message.Message) int {
