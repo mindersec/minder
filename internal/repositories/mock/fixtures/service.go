@@ -45,8 +45,6 @@ func NewRepoService(opts ...func(RepoServiceMock)) RepoMockBuilder {
 
 func WithSuccessfulCreate(
 	projectID uuid.UUID,
-	repoOwner string,
-	repoName string,
 	pbRepo *pb.Repository,
 ) func(RepoServiceMock) {
 	return func(mock RepoServiceMock) {
@@ -55,8 +53,7 @@ func WithSuccessfulCreate(
 				gomock.Any(),
 				gomock.Any(),
 				projectID,
-				repoOwner,
-				repoName,
+				gomock.Any(),
 			).
 			Return(pbRepo, nil)
 	}
@@ -65,8 +62,6 @@ func WithSuccessfulCreate(
 func WithFailedCreate(
 	err error,
 	projectID uuid.UUID,
-	repoOwner string,
-	repoName string,
 ) func(RepoServiceMock) {
 	return func(mock RepoServiceMock) {
 		mock.EXPECT().
@@ -74,8 +69,7 @@ func WithFailedCreate(
 				gomock.Any(),
 				gomock.Any(),
 				projectID,
-				repoOwner,
-				repoName,
+				gomock.Any(),
 			).
 			Return(nil, err)
 	}

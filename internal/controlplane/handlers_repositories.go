@@ -26,6 +26,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
@@ -56,32 +57,30 @@ func (s *Server) RegisterRepository(
 	projectID := GetProjectID(ctx)
 	providerName := GetProviderName(ctx)
 
-	// Validate that the Repository struct in the request
-	githubRepo := in.GetRepository()
-	// If the repo owner is missing, GitHub will assume a default value based
-	// on the user's credentials. An explicit check for owner is left out to
-	// avoid breaking backwards compatibility.
-	if githubRepo.GetName() == "" {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "missing repository name")
+	var fetchByProps *properties.Properties
+	var provider *db.Provider
+	var err error
+	if in.GetEntity() != nil {
+		fetchByProps, provider, err = s.repoCreateInfoFromUpstreamEntityRef(
+			ctx, projectID, providerName, in.GetEntity())
+	} else if in.GetRepository() != nil {
+		fetchByProps, provider, err = s.repoCreateInfoFromUpstreamRepositoryRef(
+			ctx, projectID, providerName, in.GetRepository())
+	} else {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "missing entity or repository field")
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	l := zerolog.Ctx(ctx).With().
-		Str("repoName", githubRepo.GetName()).
-		Str("repoOwner", githubRepo.GetOwner()).
+		Dict("properties", fetchByProps.ToLogDict()).
 		Str("projectID", projectID.String()).
 		Logger()
 	ctx = l.WithContext(ctx)
 
-	provider, err := s.inferProviderByOwner(ctx, githubRepo.GetOwner(), projectID, providerName)
-	if err != nil {
-		pErr := providers.ErrProviderNotFoundBy{}
-		if errors.As(err, &pErr) {
-			return nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
-		}
-		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
-	}
-
-	newRepo, err := s.repos.CreateRepository(ctx, provider, projectID, githubRepo.GetOwner(), githubRepo.GetName())
+	newRepo, err := s.repos.CreateRepository(ctx, provider, projectID, fetchByProps)
 	if err != nil {
 		if errors.Is(err, repositories.ErrPrivateRepoForbidden) || errors.Is(err, repositories.ErrArchivedRepoForbidden) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
@@ -97,6 +96,62 @@ func (s *Server) RegisterRepository(
 			Repository: newRepo,
 		},
 	}, nil
+}
+
+func (s *Server) repoCreateInfoFromUpstreamRepositoryRef(
+	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
+	rep *pb.UpstreamRepositoryRef,
+) (*properties.Properties, *db.Provider, error) {
+	// If the repo owner is missing, GitHub will assume a default value based
+	// on the user's credentials. An explicit check for owner is left out to
+	// avoid breaking backwards compatibility.
+	if rep.GetName() == "" {
+		return nil, nil, util.UserVisibleError(codes.InvalidArgument, "missing repository name")
+	}
+
+	fetchByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: fmt.Sprintf("%d", rep.GetRepoId()),
+		properties.PropertyName:       fmt.Sprintf("%s/%s", rep.GetOwner(), rep.GetName()),
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
+	provider, err := s.inferProviderByOwner(ctx, rep.GetOwner(), projectID, providerName)
+	if err != nil {
+		pErr := providers.ErrProviderNotFoundBy{}
+		if errors.As(err, &pErr) {
+			return nil, nil, util.UserVisibleError(codes.NotFound, "no suitable provider found, please enroll a provider")
+		}
+		return nil, nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+	}
+
+	return fetchByProps, provider, nil
+}
+
+func (s *Server) repoCreateInfoFromUpstreamEntityRef(
+	ctx context.Context,
+	projectID uuid.UUID,
+	providerName string,
+	entity *pb.UpstreamEntityRef,
+) (*properties.Properties, *db.Provider, error) {
+	inPropsMap := entity.GetProperties().AsMap()
+	fetchByProps, err := properties.NewProperties(inPropsMap)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+	}
+
+	return fetchByProps, provider, nil
 }
 
 // ListRepositories returns a list of repositories for a given project
@@ -330,7 +385,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	}
 
 	out := &pb.ListRemoteRepositoriesFromProviderResponse{
-		Results: []*pb.UpstreamRepositoryRef{},
+		Results:  []*pb.UpstreamRepositoryRef{},
+		Entities: []*pb.RegistrableUpstreamEntityRef{},
 	}
 
 	for providerID, providerT := range provs {
@@ -342,7 +398,10 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 			errorProvs = append(errorProvs, providerT.Name)
 			continue
 		}
-		out.Results = append(out.Results, results...)
+		for _, result := range results {
+			out.Results = append(out.Results, result.Repo)
+			out.Entities = append(out.Entities, result.Entity)
+		}
 	}
 
 	// If all providers failed, return an error
@@ -362,7 +421,7 @@ func (s *Server) fetchRepositoriesForProvider(
 	providerID uuid.UUID,
 	providerName string,
 	provider v1.Provider,
-) ([]*pb.UpstreamRepositoryRef, error) {
+) ([]*UpstreamRepoAndEntityRef, error) {
 	zerolog.Ctx(ctx).Trace().
 		Str("provider_id", providerID.String()).
 		Str("project_id", projectID.String()).
@@ -412,10 +471,35 @@ func (s *Server) fetchRepositoriesForProvider(
 	}
 
 	for _, result := range results {
-		// TEMPORARY: This will be changed to use properties.
-		// for now, we transform the repo ID to a string
-		uid := fmt.Sprintf("%d", result.RepoId)
-		result.Registered = registered[uid]
+		uprops := result.Entity.GetEntity().GetProperties()
+		upropsMap := uprops.AsMap()
+		if upropsMap == nil {
+			zerolog.Ctx(ctx).Warn().
+				Str("provider_id", providerID.String()).
+				Str("project_id", projectID.String()).
+				Msg("upstream repository entry has no properties")
+			continue
+		}
+		uidAny, ok := upropsMap[properties.PropertyUpstreamID]
+		if !ok {
+			zerolog.Ctx(ctx).Warn().
+				Str("provider_id", providerID.String()).
+				Str("project_id", projectID.String()).
+				Msg("upstream repository entry has no upstream ID")
+			continue
+		}
+
+		uid, ok := uidAny.(string)
+		if !ok {
+			zerolog.Ctx(ctx).Warn().
+				Str("provider_id", providerID.String()).
+				Str("project_id", projectID.String()).
+				Msg("upstream repository entry has invalid upstream ID")
+			continue
+		}
+
+		result.Repo.Registered = registered[uid]
+		result.Entity.Registered = registered[uid]
 	}
 
 	return results, nil
@@ -426,7 +510,7 @@ func (s *Server) listRemoteRepositoriesForProvider(
 	provName string,
 	repoLister v1.RepoLister,
 	projectID uuid.UUID,
-) ([]*pb.UpstreamRepositoryRef, error) {
+) ([]*UpstreamRepoAndEntityRef, error) {
 	tmoutCtx, cancel := context.WithTimeout(ctx, github.ExpensiveRestCallTimeout)
 	defer cancel()
 
@@ -442,7 +526,7 @@ func (s *Server) listRemoteRepositoriesForProvider(
 		zerolog.Ctx(ctx).Info().Msg("including private repositories")
 	}
 
-	results := make([]*pb.UpstreamRepositoryRef, 0, len(remoteRepos))
+	results := make([]*UpstreamRepoAndEntityRef, 0, len(remoteRepos))
 
 	for idx, rem := range remoteRepos {
 		// Skip private repositories
@@ -450,14 +534,32 @@ func (s *Server) listRemoteRepositoriesForProvider(
 			continue
 		}
 		remoteRepo := remoteRepos[idx]
-		repo := &pb.UpstreamRepositoryRef{
-			Context: &pb.Context{
-				Provider: &provName,
-				Project:  ptr.Ptr(projectID.String()),
+
+		var props *structpb.Struct
+		if remoteRepo.Properties != nil {
+			props = remoteRepo.Properties
+		}
+
+		repo := &UpstreamRepoAndEntityRef{
+			Repo: &pb.UpstreamRepositoryRef{
+				Context: &pb.Context{
+					Provider: &provName,
+					Project:  ptr.Ptr(projectID.String()),
+				},
+				Owner:  remoteRepo.Owner,
+				Name:   remoteRepo.Name,
+				RepoId: remoteRepo.RepoId,
 			},
-			Owner:  remoteRepo.Owner,
-			Name:   remoteRepo.Name,
-			RepoId: remoteRepo.RepoId,
+			Entity: &pb.RegistrableUpstreamEntityRef{
+				Entity: &pb.UpstreamEntityRef{
+					Context: &pb.ContextV2{
+						Provider:  provName,
+						ProjectId: projectID.String(),
+					},
+					Type:       pb.Entity_ENTITY_REPOSITORIES,
+					Properties: props,
+				},
+			},
 		}
 		results = append(results, repo)
 	}
@@ -495,4 +597,10 @@ func (s *Server) inferProviderByOwner(ctx context.Context, owner string, project
 	}
 
 	return nil, fmt.Errorf("no providers can handle repo owned by %s", owner)
+}
+
+// UpstreamRepoAndEntityRef is a pair of upstream repository and entity references
+type UpstreamRepoAndEntityRef struct {
+	Repo   *pb.UpstreamRepositoryRef
+	Entity *pb.RegistrableUpstreamEntityRef
 }

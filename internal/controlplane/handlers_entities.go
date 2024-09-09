@@ -79,14 +79,14 @@ func (s *Server) ReconcileEntityRegistration(
 		}
 
 		for _, repo := range repos {
-			if repo.Registered {
+			if repo.Repo.Registered {
 				continue
 			}
 
-			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.GetName(), repo.GetOwner())
+			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.Repo.GetName(), repo.Repo.GetOwner())
 			if err != nil {
 				l.Error().Err(err).
-					Int64("repoID", repo.RepoId).
+					Int64("repoID", repo.Repo.RepoId).
 					Str("providerName", providerT.Name).
 					Msg("error creating registration entity message")
 				// This message will not be sent, but we can continue with the rest.

@@ -89,25 +89,8 @@ var repoPropertyDefinitions = []propertyOrigin{
 	},
 }
 
-func getRepoWrapper(
-	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
-) (map[string]any, error) {
-	_ = isOrg
-
-	name, owner, err := getNameOwnerFromProps(ctx, getByProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting name and owner from properties: %w", err)
-	}
-	zerolog.Ctx(ctx).Debug().Str("name", name).Str("owner", owner).Msg("Fetching repository")
-
-	repo, result, err := ghCli.Repositories.Get(ctx, owner, name)
-	if err != nil {
-		if result != nil && result.StatusCode == http.StatusNotFound {
-			return nil, v1.ErrEntityNotFound
-		}
-		return nil, err
-	}
-
+// GitHubRepoToMap converts a github repository to a map
+func GitHubRepoToMap(repo *go_github.Repository) map[string]any {
 	repoProps := map[string]any{
 		// general entity
 		properties.PropertyUpstreamID: fmt.Sprintf("%d", repo.GetID()),
@@ -128,7 +111,29 @@ func getRepoWrapper(
 
 	repoProps[properties.PropertyName] = fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
 
-	return repoProps, nil
+	return repoProps
+}
+
+func getRepoWrapper(
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
+) (map[string]any, error) {
+	_ = isOrg
+
+	name, owner, err := getNameOwnerFromProps(ctx, getByProps)
+	if err != nil {
+		return nil, fmt.Errorf("error getting name and owner from properties: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Str("name", name).Str("owner", owner).Msg("Fetching repository")
+
+	repo, result, err := ghCli.Repositories.Get(ctx, owner, name)
+	if err != nil {
+		if result != nil && result.StatusCode == http.StatusNotFound {
+			return nil, v1.ErrEntityNotFound
+		}
+		return nil, err
+	}
+
+	return GitHubRepoToMap(repo), nil
 }
 
 func getNameOwnerFromProps(ctx context.Context, props *properties.Properties) (string, string, error) {

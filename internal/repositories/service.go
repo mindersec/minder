@@ -57,8 +57,7 @@ type RepositoryService interface {
 		// Switch once we get rid of provider names from the repo table
 		provider *db.Provider,
 		projectID uuid.UUID,
-		repoName string,
-		repoOwner string,
+		fetchByProps *properties.Properties,
 	) (*pb.Repository, error)
 	// DeleteByID removes the webhook and deletes the repo from the database.
 	DeleteByID(
@@ -138,19 +137,11 @@ func (r *repositoryService) CreateRepository(
 	ctx context.Context,
 	provider *db.Provider,
 	projectID uuid.UUID,
-	repoOwner string,
-	repoName string,
+	fetchByProps *properties.Properties,
 ) (*pb.Repository, error) {
 	prov, err := r.providerManager.InstantiateFromID(ctx, provider.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error instantiating provider: %w", err)
-	}
-
-	fetchByProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
 	repoProperties, err := r.propSvc.RetrieveAllProperties(
@@ -185,21 +176,32 @@ func (r *repositoryService) CreateRepository(
 		return nil, ErrPrivateRepoForbidden
 	}
 
+	entName, err := prov.GetEntityName(pb.Entity_ENTITY_REPOSITORIES, repoProperties)
+	if err != nil {
+		return nil, fmt.Errorf("error getting entity name: %w", err)
+	}
+
+	ewp := models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
+		Type:       pb.Entity_ENTITY_REPOSITORIES,
+		Name:       entName,
+		ProviderID: provider.ID,
+		ProjectID:  projectID,
+	}, repoProperties)
+
 	// create a webhook to capture events from the repository
 	props, err := prov.RegisterEntity(ctx, pb.Entity_ENTITY_REPOSITORIES, repoProperties)
 	if err != nil {
 		return nil, fmt.Errorf("error creating webhook in repo: %w", err)
 	}
 
+	ewp.Properties = props
+
 	// insert the repository into the DB
-	dbID, pbRepo, err := r.persistRepository(
-		ctx,
-		props,
-		projectID,
-		provider,
-	)
+	dbID, pbRepo, err := r.persistRepository(ctx, ewp, provider.Name)
 	if err != nil {
-		log.Printf("error creating repository '%s/%s' in database: %v", repoOwner, repoName, err)
+		zerolog.Ctx(ctx).Error().Err(err).
+			Dict("properties", fetchByProps.ToLogDict()).
+			Msg("error persisting repository")
 		// Attempt to clean up the webhook we created earlier. This is a
 		// best-effort attempt: If it fails, the customer either has to delete
 		// the hook manually, or it will be deleted the next time the customer
@@ -577,18 +579,21 @@ func (r *repositoryService) pushReconcilerEvent(pbRepo *pb.Repository, projectID
 // returns DB PK along with protobuf representation of a repo
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
-	repoProperties *properties.Properties,
-	projectID uuid.UUID,
-	provider *db.Provider,
+	ewp *models.EntityWithProperties,
+	providerName string,
 ) (uuid.UUID, *pb.Repository, error) {
 	var outid uuid.UUID
-	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		// instantiate the response object
-		pbRepo, err := pbRepoFromProperties(repoProperties)
-		if err != nil {
-			return nil, fmt.Errorf("error creating repository object: %w", err)
-		}
+	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
+	if err != nil {
+		return uuid.Nil, nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
 
+	pbRepo, ok := somePB.(*pb.Repository)
+	if !ok {
+		return uuid.Nil, nil, fmt.Errorf("couldn't convert to protobuf. unexpected type: %T", somePB)
+	}
+
+	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
 		License := sql.NullString{}
 		if pbRepo.License != "" {
 			License.String = pbRepo.License
@@ -597,9 +602,9 @@ func (r *repositoryService) persistRepository(
 
 		// update the database
 		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
-			Provider:   provider.Name,
-			ProviderID: provider.ID,
-			ProjectID:  projectID,
+			Provider:   providerName,
+			ProviderID: ewp.Entity.ProviderID,
+			ProjectID:  ewp.Entity.ProjectID,
 			RepoOwner:  pbRepo.Owner,
 			RepoName:   pbRepo.Name,
 			RepoID:     pbRepo.RepoId,
@@ -625,19 +630,18 @@ func (r *repositoryService) persistRepository(
 		outid = dbRepo.ID
 		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
 
-		// TODO: Replace with CreateEntity call
 		repoEnt, err := t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
 			ID:         dbRepo.ID,
 			EntityType: db.EntitiesRepository,
-			Name:       fmt.Sprintf("%s/%s", pbRepo.Owner, pbRepo.Name),
-			ProjectID:  projectID,
-			ProviderID: provider.ID,
+			Name:       ewp.Entity.Name,
+			ProjectID:  ewp.Entity.ProjectID,
+			ProviderID: ewp.Entity.ProviderID,
 		})
 		if err != nil {
 			return pbRepo, fmt.Errorf("error creating entity: %w", err)
 		}
 
-		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, repoProperties,
+		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, ewp.Properties,
 			service.CallBuilder().WithStoreOrTransaction(t))
 
 		if err != nil {
@@ -651,52 +655,4 @@ func (r *repositoryService) persistRepository(
 	}
 
 	return outid, pbr, nil
-}
-
-func pbRepoFromProperties(
-	repoProperties *properties.Properties,
-) (*pb.Repository, error) {
-	name, err := repoProperties.GetProperty(ghprop.RepoPropertyName).AsString()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching name property: %w", err)
-	}
-
-	owner, err := repoProperties.GetProperty(ghprop.RepoPropertyOwner).AsString()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching owner property: %w", err)
-	}
-
-	repoId, err := repoProperties.GetProperty(ghprop.RepoPropertyId).AsInt64()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching repo_id property: %w", err)
-	}
-
-	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
-	}
-
-	isFork, err := repoProperties.GetProperty(properties.RepoPropertyIsFork).AsBool()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
-	}
-
-	pbRepo := &pb.Repository{
-		Name:          name,
-		Owner:         owner,
-		RepoId:        repoId,
-		HookId:        repoProperties.GetProperty(ghprop.RepoPropertyHookId).GetInt64(),
-		HookUrl:       repoProperties.GetProperty(ghprop.RepoPropertyHookUrl).GetString(),
-		DeployUrl:     repoProperties.GetProperty(ghprop.RepoPropertyDeployURL).GetString(),
-		CloneUrl:      repoProperties.GetProperty(ghprop.RepoPropertyCloneURL).GetString(),
-		HookType:      repoProperties.GetProperty(ghprop.RepoPropertyHookType).GetString(),
-		HookName:      repoProperties.GetProperty(ghprop.RepoPropertyHookName).GetString(),
-		HookUuid:      repoProperties.GetProperty(ghprop.RepoPropertyHookUiid).GetString(),
-		IsPrivate:     isPrivate,
-		IsFork:        isFork,
-		DefaultBranch: repoProperties.GetProperty(ghprop.RepoPropertyDefaultBranch).GetString(),
-		License:       repoProperties.GetProperty(ghprop.RepoPropertyLicense).GetString(),
-	}
-
-	return pbRepo, nil
 }

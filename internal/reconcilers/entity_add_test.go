@@ -54,8 +54,6 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockReposFunc: rf.NewRepoService(
 				rf.WithSuccessfulCreate(
 					projectID,
-					repoOwner,
-					repoName,
 					&pb.Repository{},
 				),
 			),
@@ -112,8 +110,6 @@ func TestHandleEntityAdd(t *testing.T) {
 				rf.WithFailedCreate(
 					errors.New("oops"),
 					projectID,
-					repoOwner,
-					repoName,
 				),
 			),
 			messageFunc: func(t *testing.T) *message.Message {
