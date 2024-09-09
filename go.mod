@@ -1,6 +1,6 @@
 module github.com/stacklok/minder
 
-go 1.23.0
+go 1.23.1
 
 require (
 	github.com/ThreeDotsLabs/watermill v1.3.7
@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.33.2
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/cenkalti/backoff/v4 v4.3.0
-	github.com/charmbracelet/bubbles v0.19.0
+	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.1.0
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/lipgloss v0.13.0
@@ -22,7 +22,7 @@ require (
 	github.com/fergusstrange/embedded-postgres v1.29.0
 	github.com/go-git/go-billy/v5 v5.5.0
 	github.com/go-git/go-git/v5 v5.12.0
-	github.com/go-playground/validator/v10 v10.22.0
+	github.com/go-playground/validator/v10 v10.22.1
 	github.com/go-viper/mapstructure/v2 v2.1.0
 	github.com/goccy/go-json v0.10.3
 	github.com/golang-jwt/jwt/v4 v4.5.0
