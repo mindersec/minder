@@ -60,8 +60,7 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/reminderprocessor"
-	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 )
@@ -110,8 +109,8 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
+	propSvc := propService.NewPropertiesService(store)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
 	// webhook handling to make this viable.
@@ -127,11 +126,12 @@ func AllInOneServerService(
 		restClientCache,
 		ghClientFactory,
 		&cfg.Provider,
+		&cfg.WebhookConfig,
 		fallbackTokenClient,
 		cryptoEngine,
-		whManager,
 		store,
 		ghProviders,
+		propSvc,
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
 		cryptoEngine,
@@ -142,18 +142,19 @@ func AllInOneServerService(
 		store,
 		cfg.Provider.GitLab,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore,
+	providerManager, closer, err := manager.NewProviderManager(ctx, providerStore,
 		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
+	defer closer()
+
 	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
-	propSvc := propService.NewPropertiesService(store)
 	historySvc := history.NewEvaluationHistoryService(providerManager)
-	repos := github.NewRepositoryService(whManager, store, propSvc, evt, providerManager)
+	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
 	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)

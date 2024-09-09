@@ -144,9 +144,11 @@ func (_ *gitlabClient) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface
-func (_ *gitlabClient) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+func (_ *gitlabClient) RegisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
 	// TODO: implement
-	return nil
+	return nil, nil
 }
 
 // DeregisterEntity implements the Provider interface

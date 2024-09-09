@@ -15,7 +15,9 @@
 package reconcilers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -58,8 +60,14 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	l.Info().Msg("handling entity delete event")
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
-	if err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID); err != nil {
-		return fmt.Errorf("error deleting repository from DB: %w", err)
+	err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID)
+	if errors.Is(err, sql.ErrNoRows) {
+		zerolog.Ctx(ctx).Debug().Err(err).
+			Str("entity UUID", event.EntityID.String()).
+			Msg("repository not found")
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error deleting repository: %w", err)
 	}
 
 	minderlogger.BusinessRecord(ctx).Repository = event.EntityID

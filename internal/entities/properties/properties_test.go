@@ -657,7 +657,7 @@ func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
 	}
 
 	// Test case with reserved prefix, with skip option
-	props, err := NewProperties(reservedProps, WithSkipPrefixCheckTestOnly())
+	props, err := NewProperties(reservedProps, withSkipPrefixCheckTestOnly())
 	if err != nil {
 		t.Errorf("Unexpected error with skip option: %v", err)
 	}
@@ -672,6 +672,14 @@ func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
 	}
 	if val := prop.GetString(); val != "value" {
 		t.Errorf("Expected value 'value', got '%s'", val)
+	}
+}
+
+// withSkipPrefixCheckTestOnly returns an option to skip checking the prefix
+// This should only be used for testing purposes
+func withSkipPrefixCheckTestOnly() newPropertiesOption {
+	return func(c *newPropertiesConfig) {
+		c.skipPrefixCheck = true
 	}
 }
 
@@ -720,7 +728,7 @@ func TestProperties_SetKeyValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			p, _ := NewProperties(map[string]any{}, WithSkipPrefixCheckTestOnly())
+			p, _ := NewProperties(map[string]any{}, withSkipPrefixCheckTestOnly())
 			err := p.SetKeyValue(tt.key, tt.value)
 
 			if (err != nil) != tt.wantErr {

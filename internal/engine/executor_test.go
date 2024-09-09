@@ -43,7 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/selectors"
 	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
 	"github.com/stacklok/minder/internal/entities/models"
-	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
+	mockprops "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
@@ -280,20 +280,25 @@ default allow = true`,
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 	)
 
+	propssvc := mockprops.NewMockPropertiesService(ctrl)
+
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		&ratecache.NoopRestClientCache{},
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		&serverconfig.ProviderConfig{},
+		&serverconfig.WebhookConfig{},
 		nil,
 		cryptoEngine,
-		nil,
 		mockStore,
 		ghProviderService,
+		propssvc,
 	)
 
 	providerStore := providers.NewProviderStore(mockStore)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	defer closer()
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
@@ -318,7 +323,7 @@ default allow = true`,
 		Return(mockSelection, nil).
 		AnyTimes()
 
-	mockPropSvc := mock_service.NewMockPropertiesService(ctrl)
+	mockPropSvc := mockprops.NewMockPropertiesService(ctrl)
 	mockPropSvc.EXPECT().
 		EntityWithProperties(gomock.Any(), repositoryID, gomock.Any()).
 		Return(&models.EntityWithProperties{

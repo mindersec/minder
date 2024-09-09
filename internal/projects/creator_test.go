@@ -46,13 +46,10 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 			ID: uuid.New(),
 		}, nil)
 
-	mockStore.EXPECT().CreateProvider(gomock.Any(), gomock.Any()).
-		Return(db.Provider{}, nil)
-
 	ctx := context.Background()
 
 	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
-	_, err := creator.ProvisionSelfEnrolledOAuthProject(
+	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
 		"test-proj",
@@ -79,7 +76,7 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 	ctx := context.Background()
 
 	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
-	_, err := creator.ProvisionSelfEnrolledOAuthProject(
+	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
 		"test-proj",
@@ -89,4 +86,36 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 
 	t.Log("ensure project permission was cleaned up")
 	assert.Len(t, authzClient.Allowed, 0)
+}
+
+func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name string
+	}{
+		{"///invalid-name"},
+		{""},
+		{"longestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidname"},
+	}
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	ctx := context.Background()
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+
+	for _, tc := range testCases {
+		_, err := creator.ProvisionSelfEnrolledProject(
+			ctx,
+			mockStore,
+			tc.name,
+			"test-user",
+		)
+		assert.EqualError(t, err, "invalid project name: validation failed")
+	}
+
 }

@@ -44,6 +44,8 @@ import (
 	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/entities/models"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
 	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
@@ -51,7 +53,6 @@ import (
 	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	mockwebhooks "github.com/stacklok/minder/internal/repositories/github/webhooks/mock"
 	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -77,7 +78,8 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	providerStore := providers.NewProviderStore(mockStore)
 	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
-	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
+
+	mockprops := propSvc.NewMockPropertiesService(ctrl)
 
 	cancelable, cancel := context.WithCancel(context.Background())
 	clientCache := ratecache.NewRestClientCache(cancelable)
@@ -87,16 +89,20 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 		clientCache,
 		nil,
 		&serverconfig.ProviderConfig{},
+		&serverconfig.WebhookConfig{},
 		nil,
 		mockCryptoEngine,
-		whManager,
 		mockStore,
 		mockProvidersSvc,
+		mockprops,
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
 
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager, dockerhubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New()},
@@ -518,6 +524,12 @@ func TestDeleteProvider(t *testing.T) {
 	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProvidersSvc.EXPECT().DeleteInstallation(gomock.Any(), gomock.Any()).Return(nil)
 
+	mockprops := propSvc.NewMockPropertiesService(ctrl)
+	mockprops.EXPECT().
+		EntityWithProperties(gomock.Any(), gomock.Any(), nil).
+		Return(models.NewEntityWithPropertiesFromInstance(
+			models.EntityInstance{}, nil), nil)
+
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	mockCryptoEngine.EXPECT().
 		DecryptOAuthToken(gomock.Any()).
@@ -540,27 +552,27 @@ func TestDeleteProvider(t *testing.T) {
 		Return(db.ProviderAccessToken{
 			EncryptedAccessToken: generateSecret(t),
 		}, nil).AnyTimes()
+	mockStore.EXPECT().
+		GetEntitiesByProvider(gomock.Any(), gomock.Any()).
+		Return([]db.EntityInstance{
+			{
+				ID:         uuid.New(),
+				Name:       "test-entity",
+				ProviderID: providerID,
+				ProjectID:  projectID,
+			},
+		}, nil).AnyTimes()
 	mockStore.EXPECT().DeleteProvider(gomock.Any(), db.DeleteProviderParams{
 		ID:        providerID,
 		ProjectID: projectID,
 	}).Return(nil)
-	mockStore.EXPECT().
-		GetProviderWebhooks(gomock.Any(), gomock.Eq(providerID)).
-		Return([]db.GetProviderWebhooksRow{
-			{
-				RepoOwner: "test",
-				RepoName:  "repo",
-				WebhookID: sql.NullInt64{Valid: true, Int64: 12345},
-			}}, nil)
-
-	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
-	whManager.EXPECT().DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 
 	cancelable, cancel := context.WithCancel(context.Background())
 	clientCache := ratecache.NewRestClientCache(cancelable)
 	defer cancel()
 
 	gh := mockgh.NewMockGitHub(ctrl)
+	gh.EXPECT().DeregisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	clientCache.Set("", accessToken, db.ProviderTypeGithub, gh)
 
@@ -571,14 +583,19 @@ func TestDeleteProvider(t *testing.T) {
 		clientCache,
 		nil,
 		&serverconfig.ProviderConfig{},
+		&serverconfig.WebhookConfig{},
 		nil,
 		mockCryptoEngine,
-		whManager,
 		mockStore,
 		mockProvidersSvc,
+		mockprops,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	ctx := context.Background()
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
@@ -590,7 +607,6 @@ func TestDeleteProvider(t *testing.T) {
 		cfg:             &serverconfig.Config{},
 	}
 
-	ctx := context.Background()
 	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project:  engcontext.Project{ID: projectID},
@@ -629,6 +645,12 @@ func TestDeleteProviderByID(t *testing.T) {
 	mockProvidersSvc := mockprovsvc.NewMockGitHubProviderService(ctrl)
 	mockProvidersSvc.EXPECT().DeleteInstallation(gomock.Any(), gomock.Any()).Return(nil)
 
+	mockprops := propSvc.NewMockPropertiesService(ctrl)
+	mockprops.EXPECT().
+		EntityWithProperties(gomock.Any(), gomock.Any(), nil).
+		Return(models.NewEntityWithPropertiesFromInstance(
+			models.EntityInstance{}, nil), nil)
+
 	mockCryptoEngine := mockcrypto.NewMockEngine(ctrl)
 	mockCryptoEngine.EXPECT().
 		DecryptOAuthToken(gomock.Any()).
@@ -660,22 +682,22 @@ func TestDeleteProviderByID(t *testing.T) {
 			EncryptedAccessToken: generateSecret(t),
 		}, nil).AnyTimes()
 	mockStore.EXPECT().
-		GetProviderWebhooks(gomock.Any(), gomock.Eq(providerID)).
-		Return([]db.GetProviderWebhooksRow{
+		GetEntitiesByProvider(gomock.Any(), gomock.Any()).
+		Return([]db.EntityInstance{
 			{
-				RepoOwner: "test",
-				RepoName:  "repo",
-				WebhookID: sql.NullInt64{Valid: true, Int64: 12345},
-			}}, nil)
-
-	whManager := mockwebhooks.NewMockWebhookManager(ctrl)
-	whManager.EXPECT().DeleteWebhook(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+				ID:         uuid.New(),
+				Name:       "test-entity",
+				ProviderID: providerID,
+				ProjectID:  projectID,
+			},
+		}, nil).AnyTimes()
 
 	cancelable, cancel := context.WithCancel(context.Background())
 	clientCache := ratecache.NewRestClientCache(cancelable)
 	defer cancel()
 
 	gh := mockgh.NewMockGitHub(ctrl)
+	gh.EXPECT().DeregisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 
 	clientCache.Set("", accessToken, db.ProviderTypeGithub, gh)
 
@@ -684,14 +706,19 @@ func TestDeleteProviderByID(t *testing.T) {
 		clientCache,
 		nil,
 		&serverconfig.ProviderConfig{},
+		&serverconfig.WebhookConfig{},
 		nil,
 		mockCryptoEngine,
-		whManager,
 		mockStore,
 		mockProvidersSvc,
+		mockprops,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	ctx := context.Background()
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
@@ -703,7 +730,6 @@ func TestDeleteProviderByID(t *testing.T) {
 		cfg:             &serverconfig.Config{},
 	}
 
-	ctx := context.Background()
 	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project: engcontext.Project{ID: projectID},

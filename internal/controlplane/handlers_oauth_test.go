@@ -49,6 +49,7 @@ import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	mockprops "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/dockerhub"
@@ -146,6 +147,8 @@ func Test_NewOAuthConfig(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			t.Cleanup(ctrl.Finish)
 
+			propssvc := mockprops.NewMockPropertiesService(ctrl)
+
 			githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 				nil,
 				nil,
@@ -165,11 +168,12 @@ func Test_NewOAuthConfig(t *testing.T) {
 						},
 					},
 				},
+				&serverconfig.WebhookConfig{},
 				nil,
 				nil,
 				nil,
 				nil,
-				nil,
+				propssvc,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -647,6 +651,8 @@ func TestProviderCallback(t *testing.T) {
 				clientFactory,
 			)
 
+			propssvc := mockprops.NewMockPropertiesService(ctrl)
+
 			githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 				nil,
 				nil,
@@ -659,11 +665,12 @@ func TestProviderCallback(t *testing.T) {
 						},
 					},
 				},
-				nil,
+				&serverconfig.WebhookConfig{},
 				nil,
 				nil,
 				nil,
 				ghClientService,
+				propssvc,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -672,8 +679,11 @@ func TestProviderCallback(t *testing.T) {
 			s.providerAuthManager = authManager
 
 			providerStore := providers.NewProviderStore(store)
-			providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+			providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager, dockerhubProviderManager)
 			require.NoError(t, err)
+
+			defer closer()
+
 			s.providerManager = providerManager
 
 			sessionService := session.NewProviderSessionService(providerManager, providerStore, store)

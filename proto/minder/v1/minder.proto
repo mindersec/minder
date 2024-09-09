@@ -1073,6 +1073,8 @@ message Repository {
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;
     string license = 19;
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 20;
 }
 
 message RegisterRepositoryRequest {

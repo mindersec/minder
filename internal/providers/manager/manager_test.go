@@ -122,8 +122,10 @@ func TestProviderManager_PatchProviderConfig(t *testing.T) {
 			classManager.EXPECT().GetSupportedClasses().
 				Return([]db.ProviderClass{db.ProviderClassGithubApp}).
 				Times(1)
-			provManager, err := manager.NewProviderManager(store, classManager)
+			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)
+
+			defer closer()
 
 			dbProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.CurrentConfig))
 			store.EXPECT().GetByNameInSpecificProject(ctx, scenario.Provider.ProjectID, scenario.Provider.Name).
@@ -214,8 +216,10 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))
 			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(expectedProvider, nil).MaxTimes(1)
 
-			provManager, err := manager.NewProviderManager(store, classManager)
+			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)
+
+			defer closer()
 
 			newProv, err := provManager.CreateFromConfig(ctx, scenario.Provider.Class, scenario.Provider.ProjectID, scenario.Provider.Name, scenario.Config)
 			if scenario.ExpectedError != "" {
@@ -294,8 +298,10 @@ func TestProviderManager_Instantiate(t *testing.T) {
 			provider := mockgithub.NewMockGitHub(ctrl)
 			classManager.EXPECT().Build(gomock.Any(), gomock.Any()).Return(provider, nil).MaxTimes(1)
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
-			provManager, err := manager.NewProviderManager(store, classManager)
+			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)
+
+			defer closer()
 
 			if scenario.LookupType == byName {
 				_, err = provManager.InstantiateFromNameProject(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)
@@ -358,8 +364,10 @@ func TestProviderManager_BulkInstantiateByTrait(t *testing.T) {
 				classManager.EXPECT().Build(gomock.Any(), gomock.Any()).Return(provider, nil).MaxTimes(1)
 			}
 			classManager.EXPECT().GetSupportedClasses().Return([]db.ProviderClass{db.ProviderClassGithub}).MaxTimes(1)
-			provManager, err := manager.NewProviderManager(store, classManager)
+			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)
+
+			defer closer()
 
 			success, fail, err := provManager.BulkInstantiateByTrait(ctx, scenario.Provider.ProjectID, db.ProviderTypeRepoLister, "")
 			if scenario.ExpectedError != "" {
@@ -493,8 +501,10 @@ func TestProviderManager_Delete(t *testing.T) {
 			} else {
 				classManager.EXPECT().Delete(gomock.Any(), gomock.Any()).Return(errors.New("oh no")).MaxTimes(1)
 			}
-			provManager, err := manager.NewProviderManager(store, classManager)
+			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)
+
+			defer closer()
 
 			if scenario.LookupType == byName {
 				err = provManager.DeleteByName(ctx, scenario.Provider.Name, scenario.Provider.ProjectID)

@@ -76,6 +76,13 @@ LIMIT 1;
 SELECT * FROM entity_instances
 WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
+-- GetEntitiesByProvider retrieves all entities of a given provider.
+-- this is how one would get all repositories, artifacts, etc. for a given provider.
+
+-- name: GetEntitiesByProvider :many
+SELECT * FROM entity_instances
+WHERE entity_instances.provider_id = $1;
+
 -- name: GetProperty :one
 SELECT * FROM properties
 WHERE entity_id = $1 AND key = $2;

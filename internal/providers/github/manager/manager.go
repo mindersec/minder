@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	propssvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/providers"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -39,7 +40,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/service"
 	m "github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -49,20 +49,22 @@ func NewGitHubProviderClassManager(
 	restClientCache ratecache.RestClientCache,
 	ghClientFactory clients.GitHubClientFactory,
 	providerConfig *server.ProviderConfig,
+	webhookConfig *server.WebhookConfig,
 	fallbackTokenClient *gogithub.Client,
 	crypteng crypto.Engine,
-	whManager webhooks.WebhookManager,
 	store db.Store,
 	ghService service.GitHubProviderService,
+	propSvc propssvc.PropertiesService,
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
 		ghClientFactory:     ghClientFactory,
 		config:              providerConfig,
+		whconfig:            webhookConfig,
 		fallbackTokenClient: fallbackTokenClient,
 		crypteng:            crypteng,
 		store:               store,
-		webhooks:            whManager,
+		propsSvc:            propSvc,
 		ghService:           ghService,
 	}
 }
@@ -71,9 +73,10 @@ type githubProviderManager struct {
 	restClientCache     ratecache.RestClientCache
 	ghClientFactory     clients.GitHubClientFactory
 	config              *server.ProviderConfig
+	whconfig            *server.WebhookConfig
 	fallbackTokenClient *gogithub.Client
 	crypteng            crypto.Engine
-	webhooks            webhooks.WebhookManager
+	propsSvc            propssvc.PropertiesService
 	store               db.Store
 	ghService           service.GitHubProviderService
 }
@@ -120,7 +123,8 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 
 		cli, err := clients.NewRestClient(
 			cfg,
-			nil,
+			g.config,
+			g.whconfig,
 			g.restClientCache,
 			creds.credential,
 			g.ghClientFactory,
@@ -141,6 +145,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 	cli, err := clients.NewGitHubAppProvider(
 		cfg,
 		g.config,
+		g.whconfig,
 		g.restClientCache,
 		creds.credential,
 		g.fallbackTokenClient,
@@ -166,30 +171,29 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 			return err
 		}
 
-		client, err := v1.As[v1.GitHub](provider)
+		entities, err := g.store.GetEntitiesByProvider(ctx, config.ID)
 		if err != nil {
-			// this should never happen
-			return errors.New("unable to instantiate provider as GitHub client")
+			return fmt.Errorf("unable to retrieve list of entities to deregister: %w", err)
 		}
 
-		// to avoid a circular dependency between this struct and the repo
-		// service, only delete the webhooks from the repos, and allow the
-		// cascade delete to delete the repos in the DB
-		// TODO: move webhook management behind a provider trait
-		providerWebhooks, err := g.store.GetProviderWebhooks(ctx, config.ID)
-		if err != nil {
-			return fmt.Errorf("unable to retrieve list of webhooks: %w", err)
-		}
-
-		for _, webhook := range providerWebhooks {
-			// SQL query guarantees that webhook ID is always non-null
-			err = g.webhooks.DeleteWebhook(ctx, client, webhook.RepoOwner, webhook.RepoName, webhook.WebhookID.Int64)
-			// Don't fail the deletion if the repositories cannot be deleted or webhook cannot be removed
-			// The repositories will still be deleted by a cascade delete in the database
-			zerolog.Ctx(ctx).Error().Err(err).
-				Str("projectID", config.ProjectID.String()).
-				Str("providerID", config.ID.String()).
-				Msg("error deleting repositories")
+		for _, ent := range entities {
+			ewp, err := g.propsSvc.EntityWithProperties(ctx, ent.ID, nil)
+			if err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).
+					Str("provider_id", config.ID.String()).
+					Str("entity_type", ewp.Entity.Type.String()).
+					Str("entity_id", ent.ID.String()).
+					Msg("error getting entity with properties")
+				continue
+			}
+			if err := provider.DeregisterEntity(ctx, ewp.Entity.Type, ewp.Properties); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).
+					Str("provider_id", config.ID.String()).
+					Str("entity_type", ewp.Entity.Type.String()).
+					Str("entity_id", ent.ID.String()).
+					Msg("error deregistering entity")
+				continue
+			}
 		}
 	}
 

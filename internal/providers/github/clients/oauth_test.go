@@ -98,6 +98,7 @@ func TestNewRestClient(t *testing.T) {
 		},
 		nil,
 		nil,
+		nil,
 		credentials.NewGitHubTokenCredential("token"),
 		NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 		properties.NewPropertyFetcherFactory(),
@@ -154,6 +155,7 @@ func TestArtifactAPIEscapesOAuth(t *testing.T) {
 				&minderv1.GitHubProviderConfig{Endpoint: proto.String(testServer.URL + "/")},
 				nil,
 				nil,
+				nil,
 				credentials.NewGitHubTokenCredential("token"),
 				NewGitHubClientFactory(provtelemetry.NewNoopMetrics()),
 				properties.NewPropertyFetcherFactory(),
@@ -188,6 +190,7 @@ func TestWaitForRateLimitResetOAuth(t *testing.T) {
 
 	client, err := NewRestClient(
 		&minderv1.GitHubProviderConfig{Endpoint: proto.String(server.URL + "/")},
+		nil,
 		nil,
 		ratecache.NewRestClientCache(context.Background()),
 		credentials.NewGitHubTokenCredential(token),
@@ -240,6 +243,7 @@ func TestConcurrentWaitForRateLimitResetOAuth(t *testing.T) {
 		defer wg.Done()
 		client, err := NewRestClient(
 			&minderv1.GitHubProviderConfig{Endpoint: proto.String(server.URL + "/")},
+			nil,
 			nil,
 			restClientCache,
 			credentials.NewGitHubTokenCredential(token),
