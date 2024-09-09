@@ -142,11 +142,13 @@ func AllInOneServerService(
 		store,
 		cfg.Provider.GitLab,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore,
+	providerManager, closer, err := manager.NewProviderManager(ctx, providerStore,
 		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
+	defer closer()
+
 	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)

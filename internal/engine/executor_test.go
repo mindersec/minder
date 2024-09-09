@@ -292,8 +292,10 @@ default allow = true`,
 	)
 
 	providerStore := providers.NewProviderStore(mockStore)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	defer closer()
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)

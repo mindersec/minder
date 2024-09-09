@@ -95,10 +95,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	providerManager, err := wireUpProviderManager(cfg, store)
+	providerManager, pmcloser, err := wireUpProviderManager(cmd.Context(), cfg, store)
 	if err != nil {
 		return fmt.Errorf("failed to instantiate provider manager: %w", err)
 	}
+	defer pmcloser()
 
 	for _, provider := range allProviders {
 		if providerName != "" && providerName != provider.Name {
@@ -219,10 +220,13 @@ func updateGithubRepoHooks(
 	return nil
 }
 
-func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.ProviderManager, error) {
+func wireUpProviderManager(
+	ctx context.Context, cfg *serverconfig.Config, store db.Store,
+) (manager.ProviderManager, func(), error) {
+	noop := func() {}
 	cryptoEng, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
+		return nil, noop, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
 	providerStore := providers.NewProviderStore(store)
@@ -237,7 +241,7 @@ func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.Pr
 		nil, // ghProviderService not needed here
 	)
 
-	return manager.NewProviderManager(providerStore, githubProviderManager)
+	return manager.NewProviderManager(ctx, providerStore, githubProviderManager)
 }
 
 func getWebhookSecret(cfg *serverconfig.Config) (string, error) {

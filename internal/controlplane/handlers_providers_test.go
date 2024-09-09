@@ -95,8 +95,11 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
 
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager, dockerhubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New()},
@@ -577,8 +580,12 @@ func TestDeleteProvider(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	ctx := context.Background()
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
@@ -590,7 +597,6 @@ func TestDeleteProvider(t *testing.T) {
 		cfg:             &serverconfig.Config{},
 	}
 
-	ctx := context.Background()
 	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project:  engcontext.Project{ID: projectID},
@@ -690,8 +696,12 @@ func TestDeleteProviderByID(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 	)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	ctx := context.Background()
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	// We don't need the cache for these tests
+	closer()
 
 	server := Server{
 		cryptoEngine:    mockCryptoEngine,
@@ -703,7 +713,6 @@ func TestDeleteProviderByID(t *testing.T) {
 		cfg:             &serverconfig.Config{},
 	}
 
-	ctx := context.Background()
 	ctx = jwt.WithAuthTokenContext(ctx, user)
 	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 		Project: engcontext.Project{ID: projectID},
