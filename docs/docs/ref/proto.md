@@ -2120,6 +2120,7 @@ Stubs for the SDLC entities
 | updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | default_branch | <TypeLink type="string">string</TypeLink> |  |  |
 | license | <TypeLink type="string">string</TypeLink> |  |  |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
 
 
 
