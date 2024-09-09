@@ -44,6 +44,8 @@ const (
 	RepoPropertyDefaultBranch = "github/default_branch"
 	// RepoPropertyLicense represents the github repository license
 	RepoPropertyLicense = "github/license"
+	// RepoPropertyPrimaryLanguage represents the github repository language
+	RepoPropertyPrimaryLanguage = "github/primary_language"
 
 	// RepoPropertyHookId represents the github repository hook ID
 	RepoPropertyHookId = "github/hook_id"
@@ -80,6 +82,7 @@ var repoPropertyDefinitions = []propertyOrigin{
 			RepoPropertyCloneURL,
 			RepoPropertyDefaultBranch,
 			RepoPropertyLicense,
+			RepoPropertyPrimaryLanguage,
 		},
 		wrapper: getRepoWrapper,
 	},
@@ -111,13 +114,14 @@ func getRepoWrapper(
 		properties.RepoPropertyIsArchived: repo.GetArchived(),
 		properties.RepoPropertyIsFork:     repo.GetFork(),
 		// github-specific
-		RepoPropertyId:            repo.GetID(),
-		RepoPropertyName:          repo.GetName(),
-		RepoPropertyOwner:         repo.GetOwner().GetLogin(),
-		RepoPropertyDeployURL:     repo.GetDeploymentsURL(),
-		RepoPropertyCloneURL:      repo.GetCloneURL(),
-		RepoPropertyDefaultBranch: repo.GetDefaultBranch(),
-		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
+		RepoPropertyId:              repo.GetID(),
+		RepoPropertyName:            repo.GetName(),
+		RepoPropertyOwner:           repo.GetOwner().GetLogin(),
+		RepoPropertyDeployURL:       repo.GetDeploymentsURL(),
+		RepoPropertyCloneURL:        repo.GetCloneURL(),
+		RepoPropertyDefaultBranch:   repo.GetDefaultBranch(),
+		RepoPropertyLicense:         repo.GetLicense().GetSPDXID(),
+		RepoPropertyPrimaryLanguage: repo.GetLanguage(),
 	}
 
 	repoProps[properties.PropertyName] = fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
