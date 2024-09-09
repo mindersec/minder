@@ -672,8 +672,11 @@ func TestProviderCallback(t *testing.T) {
 			s.providerAuthManager = authManager
 
 			providerStore := providers.NewProviderStore(store)
-			providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager, dockerhubProviderManager)
+			providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager, dockerhubProviderManager)
 			require.NoError(t, err)
+
+			defer closer()
+
 			s.providerManager = providerManager
 
 			sessionService := session.NewProviderSessionService(providerManager, providerStore, store)
