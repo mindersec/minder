@@ -1,7 +1,7 @@
 # Minder Contribution and Maintainership
 
-Stacklok welcomes additional contributors to Minder, including maintainers.
-Minder currently has a two-tier contributor structure:
+We welcome additional contributors to Minder, including maintainers. Minder
+currently has a two-tier contributor structure:
 
 | Role        | Description                                                      | Privileges                          |
 | ----------- | ---------------------------------------------------------------- | ----------------------------------- |
@@ -73,5 +73,7 @@ The current list of maintainers is:
 - @puerco (Stacklok)
 
 Assignment of permissions for these maintainers is currently privately managed
-by Stacklok as a matter of accident; changes to this list will need a Stacker to
-apply some private automation to grant the privileges.
+by Stacklok as a matter of circumstance; changes to this list will need a
+Stacker to apply some private automation to grant the privileges, until we find
+a different approach (for example, donation to a foundation, which would have
+their own automation).
