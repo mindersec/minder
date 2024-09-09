@@ -646,6 +646,15 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 		{
 			name: "A short DisplayName with whitespace",
 			profile: &minderv1.Profile{
+				Name:        "profile_name",
+				DisplayName: "",
+			},
+			existingProfileNames: []string{},
+			expected:             "profile_name",
+		},
+		{
+			name: "A short DisplayName with whitespace",
+			profile: &minderv1.Profile{
 				Name:        "",
 				DisplayName: "My custom profile",
 			},
