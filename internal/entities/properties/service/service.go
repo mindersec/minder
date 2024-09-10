@@ -235,7 +235,12 @@ func (ps *propertiesService) getEntityIdByProperties(
 	providerID uuid.UUID,
 	props *properties.Properties, entType minderv1.Entity,
 ) (uuid.UUID, error) {
-	// TODO: Add more ways to look up a property, e.g. by the upstream ID
+	upstreamID := props.GetProperty(properties.PropertyUpstreamID)
+	if upstreamID != nil {
+		return ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType)
+	}
+
+	// Fall back to name if no upstream ID is provided
 	name := props.GetProperty(properties.PropertyName)
 	if name != nil {
 		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType)
@@ -261,6 +266,36 @@ func (ps *propertiesService) getEntityIdByName(
 	}
 
 	return ent.ID, nil
+}
+
+func (ps *propertiesService) getEntityIdByUpstreamID(
+	ctx context.Context, projectId uuid.UUID,
+	providerID uuid.UUID,
+	upstreamID string, entType minderv1.Entity,
+) (uuid.UUID, error) {
+	ents, err := ps.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		entities.EntityTypeToDB(entType),
+		properties.PropertyUpstreamID,
+		upstreamID,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectId,
+			ProviderID: providerID,
+		})
+	if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, errors.New("no entity found")
+	} else if err != nil {
+		return uuid.Nil, fmt.Errorf("error fetching entities by property: %w", err)
+	}
+
+	if len(ents) > 1 {
+		return uuid.Nil, fmt.Errorf("expected 1 entity, got %d", len(ents))
+	} else if len(ents) == 1 {
+		return ents[0].ID, nil
+	}
+
+	// no entity found
+	return uuid.Nil, errors.New("no entity found")
 }
 
 func (ps *propertiesService) ReplaceAllProperties(

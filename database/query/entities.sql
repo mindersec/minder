@@ -118,5 +118,6 @@ FROM entity_instances ei
          JOIN properties p ON ei.id = p.entity_id
 WHERE ei.entity_type = sqlc.arg(entity_type)
   AND (sqlc.arg(project_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = sqlc.arg(project_id))
+  AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = sqlc.arg(provider_id))
   AND p.key = sqlc.arg(key)
   AND p.value @> sqlc.arg(value)::jsonb;

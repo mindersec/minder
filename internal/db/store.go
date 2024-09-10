@@ -23,6 +23,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetTypedEntitiesOptions provides options for GetTypedEntitiesByPropertyV1
+type GetTypedEntitiesOptions struct {
+	ProjectID  uuid.UUID
+	ProviderID uuid.UUID
+}
+
 // ExtendQuerier extends the Querier interface with custom queries
 type ExtendQuerier interface {
 	Querier
@@ -32,7 +38,7 @@ type ExtendQuerier interface {
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
 	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
 	GetTypedEntitiesByPropertyV1(
-		ctx context.Context, project uuid.UUID, entType Entities, key string, value any,
+		ctx context.Context, entType Entities, key string, value any, opts GetTypedEntitiesOptions,
 	) ([]EntityInstance, error)
 }
 
