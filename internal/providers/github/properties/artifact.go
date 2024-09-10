@@ -25,6 +25,7 @@ import (
 	"time"
 
 	go_github "github.com/google/go-github/v63/github"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/entities/properties"
@@ -132,17 +133,25 @@ func parseArtifactName(name string) (owner string, artifactName string, artifact
 func getArtifactWrapper(
 	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
 ) (map[string]any, error) {
-	owner, name, pkgType, err := getArtifactWrapperAttrsFromProps(getByProps)
+	owner, name, pkgType, err := getArtifactWrapperAttrsFromProps(ctx, getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get artifact properties: %w", err)
 	}
+
+	l := zerolog.Ctx(ctx).With().
+		Str("owner", owner).
+		Str("pkgType", pkgType).
+		Str("name", name).
+		Logger()
 
 	var fetchErr error
 	var pkg *go_github.Package
 	var result *go_github.Response
 	if isOrg {
+		l.Debug().Msg("fetching org package")
 		pkg, result, fetchErr = ghCli.Organizations.GetPackage(ctx, owner, pkgType, name)
 	} else {
+		l.Debug().Msg("fetching user package")
 		pkg, result, fetchErr = ghCli.Users.GetPackage(ctx, owner, pkgType, name)
 	}
 
@@ -169,16 +178,20 @@ func getArtifactWrapper(
 	}, nil
 }
 
-func getArtifactWrapperAttrsFromProps(props *properties.Properties) (string, string, string, error) {
+func getArtifactWrapperAttrsFromProps(
+	ctx context.Context, props *properties.Properties,
+) (string, string, string, error) {
 	ownerP := props.GetProperty(ArtifactPropertyOwner)
 	nameP := props.GetProperty(ArtifactPropertyName)
 	pkgTypeP := props.GetProperty(ArtifactPropertyType)
 	if ownerP != nil && nameP != nil && pkgTypeP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("returning artifact properties directly")
 		return ownerP.GetString(), nameP.GetString(), pkgTypeP.GetString(), nil
 	}
 
 	pkgNameP := props.GetProperty(properties.PropertyName)
 	if pkgNameP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("parsing the name")
 		return parseArtifactName(pkgNameP.GetString())
 	}
 
