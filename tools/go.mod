@@ -12,7 +12,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
 	github.com/mikefarah/yq/v4 v4.44.3
 	github.com/norwoodj/helm-docs v1.14.2
-	github.com/openfga/cli v0.6.0
+	github.com/openfga/cli v0.6.1
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.27.0
 	go.uber.org/mock v0.4.0

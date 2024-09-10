@@ -604,8 +604,8 @@ github.com/opencontainers/selinux v1.11.0 h1:+5Zbo97w3Lbmb3PeqQtpmTkMwsW5nRI3YaL
 github.com/opencontainers/selinux v1.11.0/go.mod h1:E5dMC3VPuVvVHDYmi78qvhJp8+M586T4DlDRYpFkyec=
 github.com/openfga/api/proto v0.0.0-20240807201305-c96ec773cae9 h1:Y0fIAHrYECcf5lpa/o1AbH21bS7rsco/FoH4A4NGlZE=
 github.com/openfga/api/proto v0.0.0-20240807201305-c96ec773cae9/go.mod h1:gil5LBD8tSdFQbUkCQdnXsoeU9kDJdJgbGdHkgJfcd0=
-github.com/openfga/cli v0.6.0 h1:UK8PDmnVmymrTD76GjFBVolLIZ2nUxlQQ1eag5LO4iI=
-github.com/openfga/cli v0.6.0/go.mod h1:xdT6sd8GmxU+rUts0a0apqW8onaNjL86EdC/JQo8iew=
+github.com/openfga/cli v0.6.1 h1:xwv7QhIIlBZCGMHr7X6UNad8onvpBCX0sJ3bo3s8B7Y=
+github.com/openfga/cli v0.6.1/go.mod h1:xdT6sd8GmxU+rUts0a0apqW8onaNjL86EdC/JQo8iew=
 github.com/openfga/go-sdk v0.6.0 h1:AzfIByBk2niW5gbN5fm9A8WnDz/vW8wT1Zv4cZwWbww=
 github.com/openfga/go-sdk v0.6.0/go.mod h1:L4ss/4HEMmehyV2WIuBEPMdeh686MqIEJcnoUk3Lhd8=
 github.com/openfga/language/pkg/go v0.2.0-beta.0 h1:dTvgDkQImfNnH1iDvxnUIbz4INvKr4kS46dI12oAEzM=
