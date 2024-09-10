@@ -67,6 +67,19 @@ func (r *RuleType) WithDefaultDisplayName() *RuleType {
 	return r
 }
 
+// WithDefaultEvaluationFailureMessage sets the evaluation failure message if it is not set
+func (r *RuleType) WithDefaultEvaluationFailureMessage() *RuleType {
+	if r == nil {
+		return nil
+	}
+
+	if r.EvaluationFailureMessage == "" {
+		r.EvaluationFailureMessage = "Rule evaluation failed"
+	}
+
+	return r
+}
+
 // GetContext returns the context from the nested RuleType
 func (r *CreateRuleTypeRequest) GetContext() *Context {
 	if r != nil && r.RuleType != nil {

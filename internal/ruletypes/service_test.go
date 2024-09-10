@@ -216,6 +216,18 @@ func TestRuleTypeService(t *testing.T) {
 			TestMethod:     upsert,
 			SubscriptionID: subscriptionID,
 		},
+		{
+			Name:       "CreateRuleType with EvaluationFailureMessage",
+			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(evaluationFailureMessage)),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateWithEvaluationFailureMessage),
+			TestMethod: create,
+		},
+		{
+			Name:       "UpdateRuleType with EvaluationFailureMessage",
+			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(evaluationFailureMessage)),
+			DBSetup:    dbf.NewDBMock(withSuccessfulGet, withSuccessfulUpdateWithEvaluationFailureMessage),
+			TestMethod: update,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -272,6 +284,7 @@ func TestRuleTypeService(t *testing.T) {
 					// By default this should be the name
 					require.Equal(t, scenario.RuleType.Name, res.DisplayName)
 					require.Equal(t, scenario.RuleType.Severity.Value, res.Severity.Value)
+					require.Equal(t, scenario.RuleType.EvaluationFailureMessage, res.EvaluationFailureMessage)
 				}
 			} else {
 				require.Nil(t, res)
@@ -287,21 +300,23 @@ const (
 	create method = iota
 	update
 	upsert
-	ruleName           = "rule_type"
-	namespacedRuleName = "namespace/rule_type"
-	description        = "this is my awesome rule"
+	ruleName                 = "rule_type"
+	namespacedRuleName       = "namespace/rule_type"
+	description              = "this is my awesome rule"
+	evaluationFailureMessage = "Custom failure message"
 )
 
 var (
-	ruleTypeID            = uuid.New()
-	projectID             = uuid.New()
-	subscriptionID        = uuid.New()
-	errDefault            = errors.New("oh no")
-	oldRuleType           = newDBRuleType("low", uuid.Nil)
-	namespacedOldRuleType = newDBRuleType("low", subscriptionID)
-	expectation           = newDBRuleType("high", uuid.Nil)
-	namespacedExpectation = newDBRuleType("high", subscriptionID)
-	incompatibleSchema    = &structpb.Struct{
+	ruleTypeID                          = uuid.New()
+	projectID                           = uuid.New()
+	subscriptionID                      = uuid.New()
+	errDefault                          = errors.New("oh no")
+	oldRuleType                         = newDBRuleType("low", uuid.Nil, "")
+	namespacedOldRuleType               = newDBRuleType("low", subscriptionID, "")
+	expectation                         = newDBRuleType("high", uuid.Nil, "")
+	namespacedExpectation               = newDBRuleType("high", subscriptionID, "")
+	expectationEvaluationFailureMessage = newDBRuleType("high", uuid.Nil, evaluationFailureMessage)
+	incompatibleSchema                  = &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"required": {
 				Kind: &structpb.Value_StringValue{
@@ -331,6 +346,12 @@ func withBasicStructure(ruleType *pb.RuleType) {
 		Eval:       &pb.RuleType_Definition_Eval{},
 	}
 	ruleType.Severity = &pb.Severity{Value: pb.Severity_VALUE_HIGH}
+}
+
+func withEvaluationFailureMessage(message string) func(ruleType *pb.RuleType) {
+	return func(ruleType *pb.RuleType) {
+		ruleType.EvaluationFailureMessage = message
+	}
 }
 
 func withRuleName(name string) func(ruleType *pb.RuleType) {
@@ -364,6 +385,18 @@ func withSuccessfulNamespaceGet(mock dbf.DBMock) {
 		GetRuleTypeByName(gomock.Any(), gomock.Any()).
 		Return(namespacedOldRuleType, nil).
 		MaxTimes(2)
+}
+
+func withSuccessfulCreateWithEvaluationFailureMessage(mock dbf.DBMock) {
+	mock.EXPECT().
+		CreateRuleType(gomock.Any(), gomock.Any()).
+		Return(expectationEvaluationFailureMessage, nil)
+}
+
+func withSuccessfulUpdateWithEvaluationFailureMessage(mock dbf.DBMock) {
+	mock.EXPECT().
+		UpdateRuleType(gomock.Any(), gomock.Any()).
+		Return(expectationEvaluationFailureMessage, nil)
 }
 
 func withNotFoundGet(mock dbf.DBMock) {
@@ -408,17 +441,21 @@ func withFailedUpdate(mock dbf.DBMock) {
 		Return(db.RuleType{}, errDefault)
 }
 
-func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID) db.RuleType {
+func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID, failureMessage string) db.RuleType {
 	name := ruleName
 	if subscriptionID != uuid.Nil {
 		name = namespacedRuleName
 	}
+	if failureMessage == "" {
+		failureMessage = "Rule evaluation failed"
+	}
 	return db.RuleType{
-		ID:             ruleTypeID,
-		Name:           name,
-		Definition:     []byte(`{}`),
-		SeverityValue:  severity,
-		Description:    description,
-		SubscriptionID: uuid.NullUUID{Valid: subscriptionID != uuid.Nil, UUID: subscriptionID},
+		ID:                       ruleTypeID,
+		Name:                     name,
+		Definition:               []byte(`{}`),
+		SeverityValue:            severity,
+		Description:              description,
+		SubscriptionID:           uuid.NullUUID{Valid: subscriptionID != uuid.Nil, UUID: subscriptionID},
+		EvaluationFailureMessage: failureMessage,
 	}
 }
