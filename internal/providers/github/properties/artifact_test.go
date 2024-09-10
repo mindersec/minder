@@ -17,6 +17,7 @@
 package properties
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -227,7 +228,7 @@ func TestGetArtifactWrapperAttrsFromProps(t *testing.T) {
 			props, err := properties.NewProperties(tt.props)
 			assert.NoError(t, err)
 
-			owner, name, pkgType, err := getArtifactWrapperAttrsFromProps(props)
+			owner, name, pkgType, err := getArtifactWrapperAttrsFromProps(context.Background(), props)
 			if tt.expectedErrMsg != "" {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErrMsg)

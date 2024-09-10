@@ -18,6 +18,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"time"
 )
@@ -32,6 +33,9 @@ func GenerateNonce() (string, error) {
 
 	nonceBytes := make([]byte, 8)
 	timestamp := time.Now().Unix()
+	if timestamp < 0 {
+		return "", fmt.Errorf("We are before 1970, invalid nonce timestamp: %d", timestamp)
+	}
 	binary.BigEndian.PutUint64(nonceBytes, uint64(timestamp))
 
 	nonceBytes = append(nonceBytes, randomBytes...)

@@ -16,10 +16,13 @@
 package properties
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"math"
 	"testing"
 
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -763,5 +766,46 @@ func TestProperties_SetKeyValue(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestProperties_ToLogDict(t *testing.T) {
+	t.Parallel()
+
+	props, err := NewProperties(map[string]any{
+		"string": "test",
+		"int":    42,
+		"bool":   true,
+		"float":  3.14,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, props)
+
+	dict := props.ToLogDict()
+
+	var buf bytes.Buffer
+	logger := zerolog.New(&buf)
+
+	logger.Info().Dict("properties", dict).Msg("Test log")
+
+	var result map[string]any
+	err = json.Unmarshal(buf.Bytes(), &result)
+	require.NoError(t, err)
+
+	// Check if the properties are correctly logged
+	properties, ok := result["properties"].(map[string]any)
+	require.True(t, ok, "couldn't convert to map[string]any")
+
+	expectedProps := map[string]interface{}{
+		"string": "test",
+		"int":    float64(42), // JSON numbers are floats
+		"bool":   true,
+		"float":  3.14,
+	}
+
+	for key, expectedValue := range expectedProps {
+		actualValue, exists := properties[key]
+		require.True(t, exists, "property %s not found in log output", key)
+		require.Equal(t, expectedValue, actualValue)
 	}
 }

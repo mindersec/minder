@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/rs/zerolog"
+
 	"github.com/stacklok/minder/internal/entities/properties"
 	properties2 "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -62,6 +64,11 @@ func (c *GitHub) FetchAllProperties(
 	if c.propertyFetchers == nil {
 		return nil, errors.New("property fetchers not initialized")
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Str("entity", entType.String()).
+		Dict("getByProps", getByProps.ToLogDict()).
+		Msg("Fetching all properties")
 
 	fetcher := c.propertyFetchers.EntityPropertyFetcher(entType)
 	result := make(map[string]any)

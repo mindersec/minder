@@ -18,12 +18,13 @@ package properties
 
 import (
 	"fmt"
+	"iter"
 	"strconv"
 	"strings"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
-	"iter"
 )
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
@@ -345,4 +346,20 @@ func (p *Properties) ToProtoStruct() *structpb.Struct {
 	}
 
 	return protoStruct
+}
+
+// ToLogDict converts the Properties to a zerolog Dict
+func (p *Properties) ToLogDict() *zerolog.Event {
+	dict := zerolog.Dict()
+
+	if p == nil {
+		return dict
+	}
+
+	p.props.Range(func(key string, prop Property) bool {
+		dict.Interface(key, prop.value.AsInterface())
+		return true
+	})
+
+	return dict
 }

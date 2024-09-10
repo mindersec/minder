@@ -113,6 +113,12 @@ func (ps *propertiesService) RetrieveAllProperties(
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
 ) (*properties.Properties, error) {
+	l := zerolog.Ctx(ctx).With().
+		Str("projectID", projectId.String()).
+		Str("providerID", providerID.String()).
+		Str("entityType", entType.String()).
+		Logger()
+
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
 	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -121,13 +127,14 @@ func (ps *propertiesService) RetrieveAllProperties(
 
 	var dbProps []db.Property
 	if entID != uuid.Nil {
+		l.Debug().Str("entityID", entID.String()).Msg("entity found, fetching properties")
 		// fetch properties from db
 		dbProps, err = ps.store.GetAllPropertiesForEntity(ctx, entID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
 	} else {
-		zerolog.Ctx(ctx).Debug().Msg("no entity found, will skip saving the properties")
+		l.Info().Msg("no entity found, skipping properties fetch")
 	}
 
 	// if exists and not expired, turn into our model
@@ -138,13 +145,13 @@ func (ps *propertiesService) RetrieveAllProperties(
 			return nil, fmt.Errorf("failed to convert properties: %w", err)
 		}
 		if ps.areDatabasePropertiesValid(dbProps) {
-			zerolog.Ctx(ctx).Info().Msg("properties are valid, skipping provider fetch")
+			l.Info().Msg("properties are valid, skipping provider fetch")
 			return modelProps, nil
 		}
 	}
 
 	// if not, fetch from provider
-	zerolog.Ctx(ctx).Info().Msg("properties are not valid, fetching from provider")
+	l.Debug().Msg("properties are not valid, fetching from provider")
 	refreshedProps, err := provider.FetchAllProperties(ctx, lookupProperties, entType, modelProps)
 	if err != nil {
 		return nil, err
@@ -153,7 +160,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 	// if there was no entity, just return the properties as there is nothing to update. It's up to the caller
 	// to decide what to do with the properties
 	if entID == uuid.Nil {
-		zerolog.Ctx(ctx).Debug().Msg("no entity found, returning properties without saving")
+		l.Debug().Msg("no entity found, returning properties without saving")
 		return refreshedProps, nil
 	}
 
@@ -163,7 +170,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 		return nil, fmt.Errorf("failed to update properties: %w", err)
 	}
 
-	zerolog.Ctx(ctx).Debug().Msg("properties updated")
+	l.Debug().Msg("properties updated")
 	return refreshedProps, nil
 }
 
@@ -172,6 +179,14 @@ func (ps *propertiesService) RetrieveAllProperties(
 func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager,
 ) error {
+	l := zerolog.Ctx(ctx).With().
+		Str("projectID", efp.Entity.ProjectID.String()).
+		Str("providerID", efp.Entity.ProviderID.String()).
+		Str("entityType", efp.Entity.Type.String()).
+		Str("entityName", efp.Entity.Name).
+		Str("entityID", efp.Entity.ID.String()).
+		Logger()
+
 	propClient, err := provMan.InstantiateFromID(ctx, efp.Entity.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error instantiating provider: %w", err)
@@ -189,6 +204,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 	}
 
 	efp.UpdateProperties(props)
+	l.Debug().Msg("properties fetched and updated")
 	return nil
 }
 
@@ -198,6 +214,12 @@ func (ps *propertiesService) RetrieveProperty(
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity, key string,
 ) (*properties.Property, error) {
+	l := zerolog.Ctx(ctx).With().
+		Str("projectID", projectId.String()).
+		Str("providerID", providerID.String()).
+		Str("entityType", entType.String()).
+		Logger()
+
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
 	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -207,6 +229,7 @@ func (ps *propertiesService) RetrieveProperty(
 	// fetch properties from db
 	var dbProp db.Property
 	if entID != uuid.Nil {
+		l.Debug().Str("entityID", entID.String()).Msg("entity found, fetching properties")
 		dbProp, err = ps.store.GetProperty(ctx, db.GetPropertyParams{
 			EntityID: entID,
 			Key:      key,
@@ -214,14 +237,18 @@ func (ps *propertiesService) RetrieveProperty(
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
+	} else {
+		l.Info().Msg("no entity found, skipping properties fetch")
 	}
 
 	// if exists, turn into our model
 	if ps.isDatabasePropertyValid(dbProp) {
+		l.Info().Msg("properties are valid, skipping provider fetch")
 		return models.DbPropToModel(dbProp)
 	}
 
 	// if not, fetch from provider
+	l.Debug().Msg("properties are not valid, fetching from provider")
 	prop, err := provider.FetchProperty(ctx, lookupProperties, entType, key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch property: %w", err)
@@ -235,7 +262,12 @@ func (ps *propertiesService) getEntityIdByProperties(
 	providerID uuid.UUID,
 	props *properties.Properties, entType minderv1.Entity,
 ) (uuid.UUID, error) {
-	// TODO: Add more ways to look up a property, e.g. by the upstream ID
+	upstreamID := props.GetProperty(properties.PropertyUpstreamID)
+	if upstreamID != nil {
+		return ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType)
+	}
+
+	// Fall back to name if no upstream ID is provided
 	name := props.GetProperty(properties.PropertyName)
 	if name != nil {
 		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType)
@@ -263,9 +295,41 @@ func (ps *propertiesService) getEntityIdByName(
 	return ent.ID, nil
 }
 
+func (ps *propertiesService) getEntityIdByUpstreamID(
+	ctx context.Context, projectId uuid.UUID,
+	providerID uuid.UUID,
+	upstreamID string, entType minderv1.Entity,
+) (uuid.UUID, error) {
+	ents, err := ps.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		entities.EntityTypeToDB(entType),
+		properties.PropertyUpstreamID,
+		upstreamID,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectId,
+			ProviderID: providerID,
+		})
+	if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, errors.New("no entity found")
+	} else if err != nil {
+		return uuid.Nil, fmt.Errorf("error fetching entities by property: %w", err)
+	}
+
+	if len(ents) > 1 {
+		return uuid.Nil, fmt.Errorf("expected 1 entity, got %d", len(ents))
+	} else if len(ents) == 1 {
+		return ents[0].ID, nil
+	}
+
+	// no entity found
+	return uuid.Nil, errors.New("no entity found")
+}
+
 func (ps *propertiesService) ReplaceAllProperties(
 	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
 ) error {
+	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("replacing all properties")
+
 	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
 	if err != nil {
 		return fmt.Errorf("failed to delete properties: %w", err)
@@ -321,10 +385,18 @@ func (ps *propertiesService) EntityWithProperties(
 		q = ps.store
 	}
 
+	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
 	ent, err := q.GetEntityByID(ctx, entityID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
+	zerolog.Ctx(ctx).Debug().
+		Str("projectID", ent.ProjectID.String()).
+		Str("providerID", ent.ProviderID.String()).
+		Str("entityType", string(ent.EntityType)).
+		Str("entityName", ent.Name).
+		Str("entityID", ent.ID.String()).
+		Msg("entity found")
 
 	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
 	if err != nil {

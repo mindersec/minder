@@ -75,6 +75,7 @@ func countFailuresHandler(counter *int) events.Handler {
 	}
 }
 
+// nolint: gocyclo
 func TestEventer(t *testing.T) {
 	t.Parallel()
 
@@ -224,6 +225,9 @@ func TestEventer(t *testing.T) {
 				if c > 0 {
 					expectedFailures++
 				}
+			}
+			if expected < 0 || expectedFailures < 0 {
+				t.Fatalf("Negative expected counts: %d, %d", expected, expectedFailures)
 			}
 			checkEventCounts(t, metricReader, uint64(expected), uint64(expectedFailures))
 		})
