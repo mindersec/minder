@@ -45,7 +45,7 @@ require (
 	github.com/nats-io/nats.go v1.37.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/open-feature/go-sdk v1.12.0
+	github.com/open-feature/go-sdk v1.13.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
 	github.com/open-policy-agent/opa v0.68.0
 	github.com/openfga/go-sdk v0.6.0
