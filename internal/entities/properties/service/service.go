@@ -162,7 +162,9 @@ func (ps *propertiesService) RetrieveAllProperties(
 	// if not, fetch from provider
 	l.Debug().Msg("properties are not valid, fetching from provider")
 	refreshedProps, err := provider.FetchAllProperties(ctx, lookupProperties, entType, modelProps)
-	if err != nil {
+	if errors.Is(err, provifv1.ErrEntityNotFound) {
+		return nil, fmt.Errorf("failed to fetch upstream properties: %w", ErrEntityNotFound)
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -259,8 +261,10 @@ func (ps *propertiesService) RetrieveProperty(
 	// if not, fetch from provider
 	l.Debug().Msg("properties are not valid, fetching from provider")
 	prop, err := provider.FetchProperty(ctx, lookupProperties, entType, key)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch property: %w", err)
+	if errors.Is(err, provifv1.ErrEntityNotFound) {
+		return nil, fmt.Errorf("failed to fetch upstream property: %w", ErrEntityNotFound)
+	} else if err != nil {
+		return nil, err
 	}
 
 	return prop, nil
