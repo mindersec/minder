@@ -33,12 +33,12 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	entmodels "github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/history"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -390,7 +390,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 
 			efp, err := s.props.EntityWithProperties(ctx, e.EntityID, nil)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
+				if errors.Is(err, propSvc.ErrEntityNotFound) {
 					// If the entity is not found, log and skip
 					zerolog.Ctx(ctx).Error().
 						Str("entity_id", e.EntityID.String()).

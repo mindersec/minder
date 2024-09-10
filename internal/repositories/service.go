@@ -361,7 +361,7 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 			entRepo.ProviderID,
 			fetchByProps,
 			pb.Entity_ENTITY_REPOSITORIES)
-		if errors.Is(err, provifv1.ErrEntityNotFound) {
+		if errors.Is(err, service.ErrEntityNotFound) {
 			// return the entity without properties in case the upstream entity is not found
 			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
 			return ewp, nil
