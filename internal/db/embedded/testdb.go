@@ -81,13 +81,17 @@ func GetFakeStore() (db.Store, CancelFunc, error) {
 	return db.NewStore(sqlDB), cancel, nil
 }
 
-func pickUnusedPort() (int32, error) {
+func pickUnusedPort() (uint32, error) {
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		return 0, err
 	}
 	defer l.Close()
 	// largest TCP port is 2^16, overflow should not happen
+	port := l.Addr().(*net.TCPAddr).Port
+	if port < 0 {
+		return 0, fmt.Errorf("invalid port %d", port)
+	}
 	// nolint: gosec
-	return int32(l.Addr().(*net.TCPAddr).Port), nil
+	return uint32(port), nil
 }
