@@ -106,6 +106,8 @@ type fetchParams struct {
 
 	providerID uuid.UUID
 	projectID  uuid.UUID
+
+	other map[string]any
 }
 
 type testCtx struct {
@@ -481,7 +483,7 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 			},
 		},
 		{
-			name:     "Cache hit, fetch from cache",
+			name:     "Cache hit by name, fetch from cache",
 			propName: ghprop.RepoPropertyId,
 			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
 				t.Helper()
@@ -514,6 +516,44 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 				require.Equal(t, prop.GetInt64(), int64(123))
 			},
 		},
+		{
+			name:     "Cache hit by upstream ID, fetch from cache",
+			propName: properties.RepoPropertyIsArchived,
+			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
+				t.Helper()
+
+				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(params.entType),
+					Name:       params.entName,
+					ProjectID:  params.projectID,
+					ProviderID: params.providerID,
+				})
+				require.NoError(t, err)
+
+				propMap := map[string]any{
+					properties.PropertyUpstreamID:     "this is an upstream ID",
+					properties.RepoPropertyIsArchived: true,
+				}
+				props, err := properties.NewProperties(propMap)
+				require.NoError(t, err)
+				insertProperties(context.TODO(), t, store, ent.ID, props)
+			},
+			githubSetup: func(_ fetchParams) githubMockBuilder {
+				return newGithubMock()
+			},
+			params: fetchParams{
+				entType: minderv1.Entity_ENTITY_REPOSITORIES,
+				other: map[string]any{
+					properties.PropertyUpstreamID: "this is an upstream ID",
+				},
+			},
+			checkResult: func(t *testing.T, prop *properties.Property) {
+				t.Helper()
+
+				// This is checking for IsArchived
+				require.Equal(t, prop.GetBool(), true)
+			},
+		},
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -538,9 +578,13 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 
 			propSvc := NewPropertiesService(tctx.testQueries, tt.opts...)
 
-			getByProps, err := properties.NewProperties(map[string]any{
-				properties.PropertyName: tt.params.entName,
-			})
+			propSearch := map[string]any{}
+			if tt.params.entName == "" {
+				propSearch[properties.PropertyUpstreamID] = tt.params.other[properties.PropertyUpstreamID]
+			} else {
+				propSearch[properties.PropertyName] = tt.params.entName
+			}
+			getByProps, err := properties.NewProperties(propSearch)
 			require.NoError(t, err)
 
 			gotProps, err := propSvc.RetrieveProperty(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName)

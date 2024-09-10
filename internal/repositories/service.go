@@ -407,10 +407,10 @@ func getRepoEntityWithLegacyFallback(
 ) (db.EntityInstance, bool, error) {
 	entities, err := qtx.GetTypedEntitiesByPropertyV1(
 		ctx,
-		uuid.Nil, // explicitly nil, we check later if we got exactly 1 entity
 		db.EntitiesRepository,
 		properties.PropertyUpstreamID,
-		strconv.FormatInt(upstreamRepoID, 10))
+		strconv.FormatInt(upstreamRepoID, 10),
+		db.GetTypedEntitiesOptions{})
 	if errors.Is(err, sql.ErrNoRows) {
 		return db.EntityInstance{}, false, ErrRepoNotFound
 	} else if err != nil {

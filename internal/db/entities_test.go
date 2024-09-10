@@ -206,6 +206,7 @@ func Test_PropertyCrud(t *testing.T) {
 		const testRepoName = "testorg/testrepo_getbyprops"
 		const testArtifactName = "testorg/testartifact_getbyprops"
 
+		t.Log("Creating repository for GetTypedEntitiesByPropertyV1 test")
 		repo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
@@ -230,6 +231,7 @@ func Test_PropertyCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		t.Log("Creating artifact for GetTypedEntitiesByPropertyV1 test")
 		art, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
 			EntityType:     EntitiesArtifact,
 			Name:           testArtifactName,
@@ -247,23 +249,65 @@ func Test_PropertyCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		t.Log("Get by shared key and repo should return the repository")
 		getEnt, err := testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesRepository, "sharedkey", "sharedvalue")
+			context.Background(), EntitiesRepository, "sharedkey", "sharedvalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, repo.ID)
 
+		t.Log("Get by shared key and artifact should return the artifact")
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesArtifact, "sharedkey", "sharedvalue")
+			context.Background(), EntitiesArtifact, "sharedkey", "sharedvalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, art.ID)
 
+		t.Log("Get by repo key and value should return the repository")
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesRepository, "repokey", "repovalue")
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Get by repo key, value and provider should return the repository")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Get by repo key, value, project and provider should return the repository")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Getting by key but with wrong provider should return nothing")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProviderID: uuid.New(),
+			})
+		require.NoError(t, err)
+		require.Empty(t, getEnt)
 	})
 }
 
