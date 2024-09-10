@@ -147,16 +147,15 @@ func (_ *Validator) validateRuleParams(
 			return fmt.Errorf("error validating rule params: %w", err)
 		}
 
-		ruleName := ComputeRuleName(profileRule)
-
 		key := RuleTypeAndNamePair{
 			RuleType: profileRule.GetType(),
-			RuleName: ruleName,
+			RuleName: profileRule.GetName(),
 		}
 
-		rulesInProfile[key] = EntityAndRuleTuple{
-			Entity: minderv1.EntityFromString(ruleTypePB.Def.InEntity),
-			RuleID: ruleType.ID,
+		ruleName := ComputeRuleName(profileRule, ruleTypePB.DisplayName)
+		rulesInProfile[key] = RuleIdAndNamePair{
+			RuleID:          ruleType.ID,
+			DerivedRuleName: ruleName,
 		}
 
 		return nil

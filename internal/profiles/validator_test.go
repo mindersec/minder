@@ -113,14 +113,14 @@ func TestValidatorScenarios(t *testing.T) {
 			Name:           "Validator accepts well-formed profile",
 			Profile:        makeProfile(withBasicProfileData, withRules(makeRule(withRuleDefs, withRuleParams))),
 			DBSetup:        dbReturnsRuleType,
-			ExpectedResult: expectation(ruleName),
+			ExpectedResult: expectation(ruleName, ruleName),
 		},
 		{
 			Name:    "Validator accepts well-formed profile with empty rule name",
 			Profile: makeProfile(withBasicProfileData, withRules(makeRule(withRuleDefs, withRuleParams, withEmptyRuleName))),
 			DBSetup: dbReturnsRuleType,
-			// if rule name is empty in the profile, it should be set to the name of the rule type by the validator
-			ExpectedResult: expectation(ruleTypeName),
+			// if rule name is empty in the profile, it should be set to the name of the rule by the validator
+			ExpectedResult: expectation("", ruleTypeDisplayName),
 		},
 		{
 			Name: "Validator rejects profile with with rule type that doesn't match entity",
@@ -161,6 +161,7 @@ func TestValidatorScenarios(t *testing.T) {
 // fixtures
 
 var ruleTypeName = "branch_protection_allow_force_pushes"
+var ruleTypeDisplayName = "Allow force pushes to the branch"
 var ruleName = "MyRule"
 var ruleUUID = uuid.New()
 var projectID = uuid.New()
@@ -199,9 +200,10 @@ func dbReturnsError(store *mockdb.MockStore) {
 func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStore) {
 	return func(store *mockdb.MockStore) {
 		ruleType := db.RuleType{
-			ID:         ruleUUID,
-			Name:       ruleTypeName,
-			Definition: rawRuleDefinition,
+			ID:          ruleUUID,
+			Name:        ruleTypeName,
+			DisplayName: ruleTypeDisplayName,
+			Definition:  rawRuleDefinition,
 		}
 
 		store.EXPECT().
@@ -215,14 +217,14 @@ func dbMockWithRuleType(rawRuleDefinition json.RawMessage) func(*mockdb.MockStor
 	}
 }
 
-func expectation(expectedRuleName string) profiles.RuleMapping {
+func expectation(profileRuleName string, expectedRuleName string) profiles.RuleMapping {
 	return profiles.RuleMapping{
 		profiles.RuleTypeAndNamePair{
 			RuleType: ruleTypeName,
-			RuleName: expectedRuleName,
-		}: profiles.EntityAndRuleTuple{
-			RuleID: ruleUUID,
-			Entity: minderv1.Entity_ENTITY_REPOSITORIES,
+			RuleName: profileRuleName,
+		}: profiles.RuleIdAndNamePair{
+			RuleID:          ruleUUID,
+			DerivedRuleName: expectedRuleName,
 		},
 	}
 }

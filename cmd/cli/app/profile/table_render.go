@@ -116,7 +116,7 @@ func RenderRuleEvaluationStatusTable(
 	for _, eval := range statuses {
 		t.AddRowWithColor(
 			layouts.NoColor(eval.RuleDescriptionName),
-			layouts.NoColor(eval.RuleDisplayName),
+			layouts.NoColor(eval.RuleTypeName),
 			layouts.NoColor(eval.Entity),
 			common.GetEvalStatusColor(eval.Status),
 			common.GetRemediateStatusColor(eval.RemediationStatus),
