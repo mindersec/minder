@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	go_github "github.com/google/go-github/v63/github"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -93,10 +94,11 @@ func getRepoWrapper(
 ) (map[string]any, error) {
 	_ = isOrg
 
-	name, owner, err := getNameOwnerFromProps(getByProps)
+	name, owner, err := getNameOwnerFromProps(ctx, getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("error getting name and owner from properties: %w", err)
 	}
+	zerolog.Ctx(ctx).Debug().Str("name", name).Str("owner", owner).Msg("Fetching repository")
 
 	repo, result, err := ghCli.Repositories.Get(ctx, owner, name)
 	if err != nil {
@@ -129,15 +131,17 @@ func getRepoWrapper(
 	return repoProps, nil
 }
 
-func getNameOwnerFromProps(props *properties.Properties) (string, string, error) {
+func getNameOwnerFromProps(ctx context.Context, props *properties.Properties) (string, string, error) {
 	repoNameP := props.GetProperty(RepoPropertyName)
 	repoOwnerP := props.GetProperty(RepoPropertyOwner)
 	if repoNameP != nil && repoOwnerP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("returning repo properties directly")
 		return repoNameP.GetString(), repoOwnerP.GetString(), nil
 	}
 
 	repoNameP = props.GetProperty(properties.PropertyName)
 	if repoNameP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("parsing the name")
 		slice := strings.Split(repoNameP.GetString(), "/")
 		if len(slice) != 2 {
 			return "", "", errors.New("invalid repo name")
