@@ -121,7 +121,7 @@ func (ps *propertiesService) getEntityIdByProperties(
 	return uuid.Nil, nil
 }
 
-func (ps *propertiesService) getEntityIdByName(
+func (_ *propertiesService) getEntityIdByName(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	name string, entType minderv1.Entity,
@@ -142,7 +142,7 @@ func (ps *propertiesService) getEntityIdByName(
 	return ent.ID, nil
 }
 
-func (ps *propertiesService) getEntityIdByUpstreamID(
+func (_ *propertiesService) getEntityIdByUpstreamID(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	upstreamID string, entType minderv1.Entity,
