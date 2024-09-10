@@ -117,18 +117,18 @@ func (mr *MockRepositoryServiceMockRecorder) GetRepositoryByName(ctx, repoOwner,
 }
 
 // ListRepositories mocks base method.
-func (m *MockRepositoryService) ListRepositories(ctx context.Context, projectID uuid.UUID, providerName string) ([]db.Repository, error) {
+func (m *MockRepositoryService) ListRepositories(ctx context.Context, projectID, providerID uuid.UUID) ([]*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRepositories", ctx, projectID, providerName)
-	ret0, _ := ret[0].([]db.Repository)
+	ret := m.ctrl.Call(m, "ListRepositories", ctx, projectID, providerID)
+	ret0, _ := ret[0].([]*models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRepositories indicates an expected call of ListRepositories.
-func (mr *MockRepositoryServiceMockRecorder) ListRepositories(ctx, projectID, providerName any) *gomock.Call {
+func (mr *MockRepositoryServiceMockRecorder) ListRepositories(ctx, projectID, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositories", reflect.TypeOf((*MockRepositoryService)(nil).ListRepositories), ctx, projectID, providerName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositories", reflect.TypeOf((*MockRepositoryService)(nil).ListRepositories), ctx, projectID, providerID)
 }
 
 // RefreshRepositoryByUpstreamID mocks base method.

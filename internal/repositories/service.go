@@ -78,14 +78,12 @@ type RepositoryService interface {
 	) error
 
 	// ListRepositories retrieves all repositories for the
-	// specific provider and project. Ideally, we would take
-	// provider ID instead of name. Name is used for backwards
-	// compatibility with the API endpoint which calls it.
+	// specific provider and project.
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
-		providerName string,
-	) ([]db.Repository, error)
+		providerID uuid.UUID,
+	) ([]*models.EntityWithProperties, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (db.Repository, error)
@@ -229,18 +227,53 @@ func (r *repositoryService) CreateRepository(
 func (r *repositoryService) ListRepositories(
 	ctx context.Context,
 	projectID uuid.UUID,
-	providerName string,
-) ([]db.Repository, error) {
-	return r.store.ListRepositoriesByProjectID(
-		ctx,
-		db.ListRepositoriesByProjectIDParams{
-			ProjectID: projectID,
-			Provider: sql.NullString{
-				String: providerName,
-				Valid:  providerName != "",
-			},
-		},
-	)
+	providerID uuid.UUID,
+) (ents []*models.EntityWithProperties, outErr error) {
+	tx, err := r.store.BeginTransaction()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+
+	defer func() {
+		if outErr != nil {
+			if err := tx.Rollback(); err != nil {
+				log.Printf("error rolling back transaction: %v", err)
+			}
+		}
+	}()
+
+	qtx := r.store.GetQuerierWithTransaction(tx)
+
+	repoEnts, err := qtx.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
+		EntityType: db.EntitiesRepository,
+		ProviderID: providerID,
+		Projects:   []uuid.UUID{projectID},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repositories: %w", err)
+	}
+
+	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
+	for _, ent := range repoEnts {
+		ewp, err := r.propSvc.EntityWithProperties(ctx, ent.ID, qtx)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		}
+
+		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager, qtx); err != nil {
+			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		}
+
+		ents = append(ents, ewp)
+	}
+
+	// We care about commiting the transaction since the `RetrieveAllPropertiesForEntity`
+	// call above may have modified the properties of the entities
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return ents, nil
 }
 
 func (r *repositoryService) GetRepositoryById(

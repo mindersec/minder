@@ -33,6 +33,12 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+// NameProviderTuple is a tuple of a provider name and the provider instance
+type NameProviderTuple struct {
+	Name     string
+	Provider v1.Provider
+}
+
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
 	// CreateFromConfig creates a new Provider instance in the database with a given configuration or the provider default
@@ -55,7 +61,7 @@ type ProviderManager interface {
 		projectID uuid.UUID,
 		trait db.ProviderType,
 		name string,
-	) (map[string]v1.Provider, []string, error)
+	) (map[uuid.UUID]NameProviderTuple, []string, error)
 	// DeleteByID deletes the specified instance of the Provider, and
 	// carries out any cleanup needed.
 	DeleteByID(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
@@ -217,13 +223,13 @@ func (p *providerManager) BulkInstantiateByTrait(
 	projectID uuid.UUID,
 	trait db.ProviderType,
 	name string,
-) (map[string]v1.Provider, []string, error) {
+) (map[uuid.UUID]NameProviderTuple, []string, error) {
 	providerConfigs, err := p.store.GetByTraitInHierarchy(ctx, projectID, name, trait)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error retrieving db records: %w", err)
 	}
 
-	result := make(map[string]v1.Provider, len(providerConfigs))
+	result := make(map[uuid.UUID]NameProviderTuple, len(providerConfigs))
 	failedProviders := []string{}
 	for _, config := range providerConfigs {
 		provider, err := p.buildFromDBRecord(ctx, &config)
@@ -232,7 +238,10 @@ func (p *providerManager) BulkInstantiateByTrait(
 			failedProviders = append(failedProviders, config.Name)
 			continue
 		}
-		result[config.Name] = provider
+		result[config.ID] = NameProviderTuple{
+			Name:     config.Name,
+			Provider: provider,
+		}
 	}
 
 	return result, failedProviders, nil
