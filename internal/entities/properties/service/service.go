@@ -35,6 +35,15 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+var (
+	// ErrEntityNotFound is returned when an entity is not found
+	ErrEntityNotFound = errors.New("entity not found")
+	// ErrMultipleEntities is returned when multiple entities are found
+	ErrMultipleEntities = errors.New("multiple entities found")
+	// ErrPropertyNotFound is returned when a property is not found
+	ErrPropertyNotFound = errors.New("property not found")
+)
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 const (
@@ -121,7 +130,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
 	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
 
@@ -222,7 +231,7 @@ func (ps *propertiesService) RetrieveProperty(
 
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
 	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, err
 	}
 
@@ -234,7 +243,7 @@ func (ps *propertiesService) RetrieveProperty(
 			EntityID: entID,
 			Key:      key,
 		})
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, ErrPropertyNotFound) {
 			return nil, err
 		}
 	} else {
@@ -264,7 +273,14 @@ func (ps *propertiesService) getEntityIdByProperties(
 ) (uuid.UUID, error) {
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID)
 	if upstreamID != nil {
-		return ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType)
+		ent, getErr := ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType)
+		if getErr == nil {
+			return ent, nil
+		} else if !errors.Is(getErr, ErrEntityNotFound) {
+			return uuid.Nil, getErr
+		}
+		// on ErrEntityNot fall back to name if no upstream ID is provided
+		// it might be that the entity was created with a name, but the upstream ID is not yet available
 	}
 
 	// Fall back to name if no upstream ID is provided
@@ -288,7 +304,9 @@ func (ps *propertiesService) getEntityIdByName(
 		EntityType: entities.EntityTypeToDB(entType),
 		ProviderID: providerID,
 	})
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return uuid.Nil, ErrEntityNotFound
+	} else if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to get entity by name: %w", err)
 	}
 
@@ -310,19 +328,19 @@ func (ps *propertiesService) getEntityIdByUpstreamID(
 			ProviderID: providerID,
 		})
 	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, errors.New("no entity found")
+		return uuid.Nil, ErrEntityNotFound
 	} else if err != nil {
 		return uuid.Nil, fmt.Errorf("error fetching entities by property: %w", err)
 	}
 
 	if len(ents) > 1 {
-		return uuid.Nil, fmt.Errorf("expected 1 entity, got %d", len(ents))
+		return uuid.Nil, ErrMultipleEntities
 	} else if len(ents) == 1 {
 		return ents[0].ID, nil
 	}
 
 	// no entity found
-	return uuid.Nil, errors.New("no entity found")
+	return uuid.Nil, ErrEntityNotFound
 }
 
 func (ps *propertiesService) ReplaceAllProperties(
@@ -387,7 +405,9 @@ func (ps *propertiesService) EntityWithProperties(
 
 	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
 	ent, err := q.GetEntityByID(ctx, entityID)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrEntityNotFound
+	} else if err != nil {
 		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 	zerolog.Ctx(ctx).Debug().
@@ -399,7 +419,9 @@ func (ps *propertiesService) EntityWithProperties(
 		Msg("entity found")
 
 	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
-	if err != nil {
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("failed to get properties for entity: %w", ErrEntityNotFound)
+	} else if err != nil {
 		return nil, fmt.Errorf("failed to get properties for entity: %w", err)
 	}
 
