@@ -60,6 +60,7 @@ type gitlabClient struct {
 
 // New creates a new GitLab provider
 func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig) (*gitlabClient, error) {
+	// TODO: We need a context here.
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
 
 	if cfg.Endpoint == "" {
@@ -117,9 +118,8 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 }
 
 // SupportsEntity implements the Provider interface
-func (_ *gitlabClient) SupportsEntity(_ minderv1.Entity) bool {
-	// TODO: implement
-	return false
+func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
+	return entType == minderv1.Entity_ENTITY_REPOSITORIES
 }
 
 // RegisterEntity implements the Provider interface
