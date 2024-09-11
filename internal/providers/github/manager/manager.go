@@ -177,7 +177,7 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 		}
 
 		for _, ent := range entities {
-			ewp, err := g.propsSvc.EntityWithProperties(ctx, ent.ID, nil)
+			ewp, err := g.propsSvc.EntityWithPropertiesByID(ctx, ent.ID, nil)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).
 					Str("provider_id", config.ID.String()).

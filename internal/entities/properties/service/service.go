@@ -60,8 +60,8 @@ type PropertiesService interface {
 	EntityWithPropertiesAsProto(
 		ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
 	) (protoreflect.ProtoMessage, error)
-	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
-	EntityWithProperties(
+	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
+	EntityWithPropertiesByID(
 		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for an entity
@@ -290,7 +290,7 @@ func (ps *propertiesService) ReplaceProperty(
 	return err
 }
 
-func (ps *propertiesService) EntityWithProperties(
+func (ps *propertiesService) EntityWithPropertiesByID(
 	ctx context.Context, entityID uuid.UUID,
 	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
