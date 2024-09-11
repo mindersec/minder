@@ -116,27 +116,6 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 	return c.cred
 }
 
-// FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-// FetchProperty implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchProperty(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-// GetEntityName implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
-}
-
 // SupportsEntity implements the Provider interface
 func (_ *gitlabClient) SupportsEntity(_ minderv1.Entity) bool {
 	// TODO: implement
