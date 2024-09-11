@@ -20,6 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/config"
 	clientconfig "github.com/mindersec/minder/internal/config/client"
@@ -33,13 +34,11 @@ var loginCmd = &cobra.Command{
 	Short: "Login to Minder",
 	Long: `The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
 $XDG_CONFIG_HOME/minder/credentials.json`,
-	RunE: LoginCommand,
+	RunE: cli.GRPCClientWrapRunE(LoginCommand),
 }
 
 // LoginCommand is the login subcommand
-func LoginCommand(cmd *cobra.Command, _ []string) error {
-	ctx := context.Background()
-
+func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
@@ -53,11 +52,6 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error ensuring credentials", err)
 	}
 
-	conn, err := cli.GrpcForCommand(viper.GetViper())
-	if err != nil {
-		return cli.MessageAndError("Error getting grpc connection", err)
-	}
-	defer conn.Close()
 	client := minderv1.NewUserServiceClient(conn)
 
 	// check if the user already exists in the local database

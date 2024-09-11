@@ -108,6 +108,7 @@ func init() {
 		RootCmd.Printf("error: %s", err)
 		os.Exit(1)
 	}
+	RootCmd.PersistentFlags().BoolP("verbose", "v", false, "Output additional messages to STDERR")
 	viper.AutomaticEnv()
 }
 

@@ -99,7 +99,7 @@ func GRPCClientWrapRunE(
 		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
 
-		c, err := GrpcForCommand(viper.GetViper())
+		c, err := GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return err
 		}

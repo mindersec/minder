@@ -153,7 +153,12 @@ var cmd = &cobra.Command{
 // quickstartCommand is the quickstart command
 //
 //nolint:gocyclo
-func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func quickstartCommand(
+	ctx context.Context,
+	cmd *cobra.Command,
+	_ []string,
+	conn *grpc.ClientConn,
+) error {
 	var err error
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
@@ -180,13 +185,13 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 	userClient := minderv1.NewUserServiceClient(conn)
 	_, err = userClient.GetUser(cmd.Context(), &minderv1.GetUserRequest{})
 	if err != nil {
-		err = loginPromptErrWrapper(cmd, err)
+		err = loginPromptErrWrapper(ctx, cmd, conn, err)
 		if err != nil {
 			return cli.MessageAndError("", err)
 		}
 		// User logged in successfully
 		// We now have to re-create the gRPC connection
-		newConn, err := cli.GrpcForCommand(viper.GetViper())
+		newConn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return err
 		}
@@ -399,7 +404,12 @@ func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context,
 	return cli.GetAppContextWithTimeoutDuration(ctx, v, 30)
 }
 
-func loginPromptErrWrapper(cmnd *cobra.Command, inErr error) error {
+func loginPromptErrWrapper(
+	ctx context.Context,
+	cmnd *cobra.Command,
+	conn *grpc.ClientConn,
+	inErr error,
+) error {
 	// Check if the error is unauthenticated, if so, prompt the user to log in
 	if rpcStatus, ok := status.FromError(inErr); ok {
 		if rpcStatus.Code() == codes.Unauthenticated {
@@ -411,7 +421,7 @@ func loginPromptErrWrapper(cmnd *cobra.Command, inErr error) error {
 				true)
 			if yes {
 				// Run the login command
-				err := auth.LoginCommand(cmnd, []string{})
+				err := auth.LoginCommand(ctx, cmnd, []string{}, conn)
 				if err != nil {
 					return err
 				}
