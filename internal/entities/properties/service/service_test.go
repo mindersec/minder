@@ -803,7 +803,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 			getByProps, err := properties.NewProperties(tt.lookupProps)
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType)
+			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tctx.testQueries)
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)

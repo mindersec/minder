@@ -192,6 +192,11 @@ func (s *Server) ListEvaluationHistory(
 		return nil, err
 	}
 
+	if err := s.store.Commit(tx); err != nil {
+		// non: fatal - this handler just refreshes properties but doesn't write any new data
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error committing transaction")
+	}
+
 	// return data set to client
 	resp := &minderv1.ListEvaluationHistoryResponse{}
 	if len(data) == 0 {
@@ -592,7 +597,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager, s.store)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %s: %w", efp.Entity.ID.String(), err)
 	}
