@@ -904,7 +904,7 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 				Return(tt.dbPropsBuilder(tt.entityID), nil)
 
 			ps := NewPropertiesService(mockDB)
-			result, err := ps.EntityWithProperties(ctx, tt.entityID, nil)
+			result, err := ps.EntityWithPropertiesByID(ctx, tt.entityID, nil)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			require.Equal(t, result.Entity.ID, tt.entityID)

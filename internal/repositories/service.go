@@ -257,7 +257,7 @@ func (r *repositoryService) ListRepositories(
 
 	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
 	for _, ent := range repoEnts {
-		ewp, err := r.propSvc.EntityWithProperties(ctx, ent.ID,
+		ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, ent.ID,
 			service.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
@@ -315,7 +315,7 @@ func (r *repositoryService) DeleteByID(ctx context.Context, repositoryID uuid.UU
 	logger.BusinessRecord(ctx).Project = projectID
 	logger.BusinessRecord(ctx).Repository = repositoryID
 
-	ent, err := r.propSvc.EntityWithProperties(ctx, repositoryID, nil)
+	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, repositoryID, nil)
 	if err != nil {
 		return fmt.Errorf("error fetching repository: %w", err)
 	}
@@ -355,7 +355,7 @@ func (r *repositoryService) DeleteByName(
 
 	logger.BusinessRecord(ctx).Repository = repo.ID
 
-	ent, err := r.propSvc.EntityWithProperties(ctx, repo.ID, nil)
+	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, repo.ID, nil)
 	if err != nil {
 		return fmt.Errorf("error fetching repository: %w", err)
 	}
