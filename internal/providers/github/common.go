@@ -307,6 +307,7 @@ func (c *GitHub) getPackageVersions(ctx context.Context, owner string, package_t
 		if c.IsOrg() {
 			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		} else {
+			package_name = url.PathEscape(package_name)
 			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		}
 		if err != nil {
@@ -364,6 +365,7 @@ func (c *GitHub) GetPackageVersionById(ctx context.Context, owner string, packag
 			return nil, err
 		}
 	} else {
+		packageName = url.PathEscape(packageName)
 		pkgVersion, _, err = c.client.Users.PackageGetVersion(ctx, owner, packageType, packageName, version)
 		if err != nil {
 			return nil, err
