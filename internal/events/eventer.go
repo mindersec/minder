@@ -109,14 +109,15 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (Interface, error
 	// Router level middleware are executed for every message sent to the router
 	router.AddMiddleware(
 		recordMetrics(metricInstruments),
-		poisonQueueMiddleware,
-		middleware.Retry{
-			MaxRetries:      3,
-			InitialInterval: time.Millisecond * 100,
-			Logger:          l,
-		}.Middleware,
 		// CorrelationID will copy the correlation id from the incoming message's metadata to the produced messages
 		middleware.CorrelationID,
+		poisonQueueMiddleware,
+		middleware.Retry{
+			MaxRetries:      5,
+			InitialInterval: time.Millisecond * 500,
+			Logger:          l,
+		}.Middleware,
+		dontNack(cfg.Driver, l),
 	)
 
 	pubWithMetrics, err := metricsBuilder.DecoratePublisher(pub)
