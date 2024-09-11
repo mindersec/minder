@@ -32,11 +32,14 @@ const (
 )
 
 // FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
+func (c *gitlabClient) FetchAllProperties(
+	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
-	return nil, nil
+	if !c.SupportsEntity(entType) {
+		return nil, fmt.Errorf("entity type %s not supported", entType)
+	}
+
+	return c.getPropertiesForRepo(ctx, getByProps)
 }
 
 // FetchProperty implements the provider interface
@@ -47,26 +50,26 @@ func (_ *gitlabClient) FetchProperty(
 }
 
 // GetEntityName implements the provider interface
-func (_ *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properties.Properties) (string, error) {
+func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properties.Properties) (string, error) {
 	if props == nil {
 		return "", errors.New("properties are nil")
 	}
 
-	if entityType == minderv1.Entity_ENTITY_REPOSITORIES {
-		groupName, err := getStringProp(props, RepoPropertyGroupName)
-		if err != nil {
-			return "", err
-		}
-
-		projectName, err := getStringProp(props, RepoPropertyProjectName)
-		if err != nil {
-			return "", err
-		}
-
-		return formatRepoName(groupName, projectName), nil
+	if !c.SupportsEntity(entityType) {
+		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
 
-	return "", fmt.Errorf("entity type %s not supported", entityType)
+	groupName, err := getStringProp(props, RepoPropertyGroupName)
+	if err != nil {
+		return "", err
+	}
+
+	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	return formatRepoName(groupName, projectName), nil
 }
 
 func getStringProp(props *properties.Properties, key string) (string, error) {
