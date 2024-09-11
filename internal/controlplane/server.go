@@ -251,6 +251,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
 		logger.Interceptor(s.cfg.LoggingConfig),
+		logger.RequestIDInterceptor(),
 		TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,

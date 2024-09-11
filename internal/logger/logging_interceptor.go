@@ -21,6 +21,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -100,4 +101,46 @@ func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 
 		return resp, err
 	}
+}
+
+// RequestIDInterceptor traces request ids.
+//
+// It tries to use the request id from the request context, creating a
+// new one if that is missing. It also sends back in the trailer the
+// request id, ensuring that the client receives it.
+func RequestIDInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		rID := maybeGetRequestID(ctx)
+		ctx = zerolog.Ctx(ctx).With().Str("request_id", rID).Logger().WithContext(ctx)
+
+		resp, err := handler(ctx, req)
+
+		if err := grpc.SetTrailer(ctx, metadata.Pairs("request-id", rID)); err != nil {
+			zerolog.Ctx(ctx).Trace().Err(err).Msg("unable to attach request id to trailer")
+		}
+
+		return resp, err
+	}
+}
+
+func maybeGetRequestID(ctx context.Context) string {
+	var rID string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if rIDs, ok := md["request-id"]; ok {
+			if len(rIDs) != 0 {
+				rID = rIDs[0]
+			}
+		}
+	}
+
+	if rID == "" {
+		return uuid.New().String()
+	}
+
+	if _, err := uuid.Parse(rID); err != nil {
+		zerolog.Ctx(ctx).Trace().Err(err).Msg("request id is not valid uuid")
+		return uuid.New().String()
+	}
+
+	return rID
 }
