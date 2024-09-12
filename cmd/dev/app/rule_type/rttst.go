@@ -378,7 +378,7 @@ func entityWithPropertiesToEntityInfoWrapper(ewp *entModels.EntityWithProperties
 	case minderv1.Entity_ENTITY_ARTIFACTS:
 		ent, err = properties.ArtifactV1FromProperties(ewp.Properties)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		ent = properties.PullRequestV1FromProperties(ewp.Properties)
+		ent, err = properties.PullRequestV1FromProperties(ewp.Properties)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("error converting properties to entity: %w", err)

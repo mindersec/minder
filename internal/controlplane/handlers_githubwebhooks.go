@@ -806,9 +806,15 @@ func (s *Server) processPackageEvent(
 		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
 	}
 
-	pbArtifact, err := ghprop.ArtifactV1FromProperties(refreshedPkgProperties)
+	ewp := models.NewEntityWithProperties(*ei, refreshedPkgProperties)
+	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, ewp, s.providerManager)
 	if err != nil {
 		return nil, fmt.Errorf("error converting artifact to protobuf: %w", err)
+	}
+
+	pbArtifact, ok := pbMsg.(*pb.Artifact)
+	if !ok {
+		return nil, errors.New("error converting proto message to protobuf")
 	}
 	pbArtifact.Versions = []*pb.ArtifactVersion{version}
 
@@ -891,9 +897,14 @@ func (s *Server) processRelevantRepositoryEvent(
 
 	// For all other actions, we trigger an evaluation.
 	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbRepo, err := ghprop.RepoV1FromProperties(repoEntity.Properties)
+	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, repoEntity, s.providerManager)
 	if err != nil {
 		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
+	}
+
+	pbRepo, ok := pbMsg.(*pb.Repository)
+	if !ok {
+		return nil, errors.New("error converting proto message to protobuf")
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
@@ -941,9 +952,14 @@ func (s *Server) processRepositoryEvent(
 	}
 
 	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbRepo, err := ghprop.RepoV1FromProperties(repoEnt.Properties)
+	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, repoEnt, s.providerManager)
 	if err != nil {
 		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
+	}
+
+	pbRepo, ok := pbMsg.(*pb.Repository)
+	if !ok {
+		return nil, errors.New("error converting proto message to protobuf")
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
@@ -956,6 +972,7 @@ func (s *Server) processRepositoryEvent(
 	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
 }
 
+// nolint:gocyclo // This function will be re-simplified real soon
 func (s *Server) processPullRequestEvent(
 	ctx context.Context,
 	payload []byte,
@@ -1024,7 +1041,16 @@ func (s *Server) processPullRequestEvent(
 
 	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
 
-	pbPullRequest := ghprop.PullRequestV1FromProperties(prEntWithProps.Properties)
+	// protobufs are our API, so we always execute on these instead of the DB directly.
+	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, prEntWithProps, s.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
+	}
+
+	pbPullRequest, ok := pbMsg.(*pb.PullRequest)
+	if !ok {
+		return nil, errors.New("error converting proto message to protobuf")
+	}
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithActionEvent(event.GetAction()).

@@ -30,6 +30,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-github/v63/github"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -88,6 +89,15 @@ type Git interface {
 
 	// Clone clones a git repository
 	Clone(ctx context.Context, url string, branch string) (*git.Repository, error)
+}
+
+// ProtoMessageConverter is the interface for converting properties to a proto message
+// this is temporary until we can get rid of the typed proto messages in EntityInfoWrapper
+// and the engine. That's also why we just didn't add the method to the generic Provider
+// interface.
+type ProtoMessageConverter interface {
+	Provider
+	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
 }
 
 // REST is the trait interface for interacting with an REST API.

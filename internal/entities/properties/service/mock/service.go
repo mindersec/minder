@@ -21,6 +21,7 @@ import (
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v10 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // MockPropertiesService is a mock of PropertiesService interface.
@@ -59,6 +60,21 @@ func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entity
 func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, opts)
+}
+
+// EntityWithPropertiesAsProto mocks base method.
+func (m *MockPropertiesService) EntityWithPropertiesAsProto(ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityWithPropertiesAsProto", ctx, ewp, provMgr)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityWithPropertiesAsProto indicates an expected call of EntityWithPropertiesAsProto.
+func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesAsProto(ctx, ewp, provMgr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesAsProto", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesAsProto), ctx, ewp, provMgr)
 }
 
 // ReplaceAllProperties mocks base method.
