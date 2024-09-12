@@ -113,6 +113,42 @@ func TestSeverity_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestRuleType_WithDefaultShortFailureMessage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		r    *minderv1.RuleType
+		want *minderv1.RuleType
+	}{
+		{
+			name: "nil RuleType",
+			r:    nil,
+			want: nil,
+		},
+		{
+			name: "empty EvaluationFailureMessage",
+			r:    &minderv1.RuleType{Name: "TestRule"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Rule TestRule evaluation failed", Name: "TestRule"},
+		},
+		{
+			name: "non-empty EvaluationFailureMessage",
+			r:    &minderv1.RuleType{ShortFailureMessage: "Custom message", Name: "TestRule"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Custom message", Name: "TestRule"},
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := tt.r.WithDefaultShortFailureMessage()
+			assert.Equal(t, tt.want, got, "expected %v, got %v", tt.want, got)
+		})
+	}
+}
+
 func TestRuleTypeState_MarshalJSON(t *testing.T) {
 	t.Parallel()
 

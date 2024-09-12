@@ -67,6 +67,19 @@ func (r *RuleType) WithDefaultDisplayName() *RuleType {
 	return r
 }
 
+// WithDefaultShortFailureMessage sets the evaluation failure message if it is not set
+func (r *RuleType) WithDefaultShortFailureMessage() *RuleType {
+	if r == nil {
+		return nil
+	}
+
+	if r.ShortFailureMessage == "" {
+		r.ShortFailureMessage = fmt.Sprintf("Rule %s evaluation failed", r.Name)
+	}
+
+	return r
+}
+
 // GetContext returns the context from the nested RuleType
 func (r *CreateRuleTypeRequest) GetContext() *Context {
 	if r != nil && r.RuleType != nil {
