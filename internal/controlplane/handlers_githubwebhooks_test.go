@@ -101,7 +101,7 @@ func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]a
 
 	return func(mock propSvcMock) {
 		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity).
+			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity, gomock.Any()).
 			Return(retProps, nil)
 	}
 }

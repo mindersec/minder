@@ -23,7 +23,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/models"
 	mockghrepo "github.com/stacklok/minder/internal/repositories/mock"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -131,7 +131,7 @@ func WithFailedDeleteByName(err error) func(RepoServiceMock) {
 }
 
 func WithSuccessfulListRepositories(
-	repositories ...db.Repository,
+	repositories ...*models.EntityWithProperties,
 ) func(RepoServiceMock) {
 	return func(mock RepoServiceMock) {
 		mock.EXPECT().

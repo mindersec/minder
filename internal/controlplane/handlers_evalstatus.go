@@ -33,12 +33,12 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	entmodels "github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/history"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 const (
@@ -190,6 +190,11 @@ func (s *Server) ListEvaluationHistory(
 	data, err := fromEvaluationHistoryRows(result.Data)
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.store.Commit(tx); err != nil {
+		// non: fatal - this handler just refreshes properties but doesn't write any new data
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error committing transaction")
 	}
 
 	// return data set to client
@@ -390,7 +395,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 
 			efp, err := s.props.EntityWithProperties(ctx, e.EntityID, nil)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
+				if errors.Is(err, propSvc.ErrEntityNotFound) {
 					// If the entity is not found, log and skip
 					zerolog.Ctx(ctx).Error().
 						Str("entity_id", e.EntityID.String()).
@@ -592,7 +597,8 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 			Msg("error converting severity will use defaults")
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager,
+		propSvc.ReadBuilder().WithStoreOrTransaction(s.store).TolerateStaleData())
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %s: %w", efp.Entity.ID.String(), err)
 	}

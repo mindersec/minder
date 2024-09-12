@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -152,6 +153,7 @@ func getArtifactWrapper(
 		pkg, result, fetchErr = ghCli.Organizations.GetPackage(ctx, owner, pkgType, name)
 	} else {
 		l.Debug().Msg("fetching user package")
+		name = url.PathEscape(name)
 		pkg, result, fetchErr = ghCli.Users.GetPackage(ctx, owner, pkgType, name)
 	}
 

@@ -29,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers"
@@ -318,7 +319,8 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 	logger.BusinessRecord(ctx).Project = projectID
 
 	providerName := in.GetContext().GetProvider()
-	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(ctx, projectID, db.ProviderTypeRepoLister, providerName)
+	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(
+		ctx, projectID, db.ProviderTypeRepoLister, providerName)
 	if err != nil {
 		pErr := providers.ErrProviderNotFoundBy{}
 		if errors.As(err, &pErr) {
@@ -331,11 +333,13 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 		Results: []*pb.UpstreamRepositoryRef{},
 	}
 
-	for providerName, provider := range provs {
-		results, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
+	for providerID, providerT := range provs {
+		results, err := s.fetchRepositoriesForProvider(
+			ctx, projectID, providerID, providerT.Name, providerT.Provider)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msgf("error listing repositories for provider %s in project %s", providerName, projectID)
-			errorProvs = append(errorProvs, providerName)
+			zerolog.Ctx(ctx).Error().Err(err).
+				Msgf("error listing repositories for provider %s in project %s", providerT.Name, projectID)
+			errorProvs = append(errorProvs, providerT.Name)
 			continue
 		}
 		out.Results = append(out.Results, results...)
@@ -355,11 +359,12 @@ func (s *Server) ListRemoteRepositoriesFromProvider(
 func (s *Server) fetchRepositoriesForProvider(
 	ctx context.Context,
 	projectID uuid.UUID,
+	providerID uuid.UUID,
 	providerName string,
 	provider v1.Provider,
 ) ([]*pb.UpstreamRepositoryRef, error) {
 	zerolog.Ctx(ctx).Trace().
-		Str("provider", providerName).
+		Str("provider_id", providerID.String()).
 		Str("project_id", projectID.String()).
 		Msg("listing repositories")
 
@@ -378,12 +383,12 @@ func (s *Server) fetchRepositoriesForProvider(
 	registeredRepos, err := s.repos.ListRepositories(
 		ctx,
 		projectID,
-		providerName,
+		providerID,
 	)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().
-			Str("projectID", projectID.String()).
-			Str("providerName", providerName).
+			Str("project_id", projectID.String()).
+			Str("provider_id", providerID.String()).
 			Err(err).Msg("cannot list registered repositories")
 		return nil, util.UserVisibleError(
 			codes.Internal,
@@ -391,13 +396,26 @@ func (s *Server) fetchRepositoriesForProvider(
 		)
 	}
 
-	registered := make(map[int64]bool)
+	registered := make(map[string]bool)
 	for _, repo := range registeredRepos {
-		registered[repo.RepoID] = true
+		uidP := repo.Properties.GetProperty(properties.PropertyUpstreamID)
+		if uidP == nil {
+			zerolog.Ctx(ctx).Warn().
+				Str("entity_id", repo.Entity.ID.String()).
+				Str("entity_name", repo.Entity.Name).
+				Str("provider_id", providerID.String()).
+				Str("project_id", projectID.String()).
+				Msg("repository has no upstream ID")
+			continue
+		}
+		registered[uidP.GetString()] = true
 	}
 
 	for _, result := range results {
-		result.Registered = registered[result.RepoId]
+		// TEMPORARY: This will be changed to use properties.
+		// for now, we transform the repo ID to a string
+		uid := fmt.Sprintf("%d", result.RepoId)
+		result.Registered = registered[uid]
 	}
 
 	return results, nil

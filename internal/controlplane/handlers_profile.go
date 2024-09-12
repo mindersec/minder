@@ -32,13 +32,13 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/engine/entities"
 	entmodels "github.com/stacklok/minder/internal/entities/models"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // CreateProfile creates a profile for a project
@@ -420,7 +420,7 @@ func (s *Server) getRuleEvaluationStatuses(
 		// Get the rule evaluation status
 		st, err := s.getRuleEvalStatus(ctx, profileId, dbRuleEvalStat)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, provifv1.ErrEntityNotFound) {
+			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, propSvc.ErrEntityNotFound) {
 				zerolog.Ctx(ctx).Error().
 					Str("profile_id", profileId).
 					Str("rule_id", dbRuleEvalStat.RuleTypeID.String()).
@@ -454,12 +454,15 @@ func (s *Server) getRuleEvalStatus(
 	var guidance string
 	var err error
 
+	// the caller just ignores allt the errors anyway, so we don't start a transaction as the integrity issues
+	// would not be discovered anyway
 	efp, err := s.props.EntityWithProperties(ctx, dbRuleEvalStat.EntityID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager,
+		propSvc.ReadBuilder().WithStoreOrTransaction(s.store).TolerateStaleData())
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}

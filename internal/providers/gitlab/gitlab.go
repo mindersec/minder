@@ -60,6 +60,7 @@ type gitlabClient struct {
 
 // New creates a new GitLab provider
 func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig) (*gitlabClient, error) {
+	// TODO: We need a context here.
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
 
 	if cfg.Endpoint == "" {
@@ -116,31 +117,9 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 	return c.cred
 }
 
-// FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-// FetchProperty implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchProperty(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-// GetEntityName implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
-}
-
 // SupportsEntity implements the Provider interface
-func (_ *gitlabClient) SupportsEntity(_ minderv1.Entity) bool {
-	// TODO: implement
-	return false
+func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
+	return entType == minderv1.Entity_ENTITY_REPOSITORIES
 }
 
 // RegisterEntity implements the Provider interface

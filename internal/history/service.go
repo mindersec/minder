@@ -218,12 +218,14 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 
 	data := make([]*OneEvalHistoryAndEntity, 0, len(rows))
 	for _, row := range rows {
-		efp, err := propsvc.EntityWithProperties(ctx, row.EntityID, qtx)
+		efp, err := propsvc.EntityWithProperties(ctx, row.EntityID,
+			propertiessvc.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 		}
 
-		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager)
+		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager,
+			propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
 		if err != nil {
 			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 		}

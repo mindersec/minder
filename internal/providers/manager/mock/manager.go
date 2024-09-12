@@ -16,6 +16,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	db "github.com/stacklok/minder/internal/db"
+	manager "github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -44,10 +45,10 @@ func (m *MockProviderManager) EXPECT() *MockProviderManagerMockRecorder {
 }
 
 // BulkInstantiateByTrait mocks base method.
-func (m *MockProviderManager) BulkInstantiateByTrait(ctx context.Context, projectID uuid.UUID, trait db.ProviderType, name string) (map[string]v1.Provider, []string, error) {
+func (m *MockProviderManager) BulkInstantiateByTrait(ctx context.Context, projectID uuid.UUID, trait db.ProviderType, name string) (map[uuid.UUID]manager.NameProviderTuple, []string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BulkInstantiateByTrait", ctx, projectID, trait, name)
-	ret0, _ := ret[0].(map[string]v1.Provider)
+	ret0, _ := ret[0].(map[uuid.UUID]manager.NameProviderTuple)
 	ret1, _ := ret[1].([]string)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

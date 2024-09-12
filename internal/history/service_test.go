@@ -844,7 +844,7 @@ func TestListEvaluationHistory(t *testing.T) {
 				propsSvc.EXPECT().EntityWithProperties(ctx, gomock.Any(), gomock.Any()).
 					Return(nil, tt.entityForPropertiesError).AnyTimes()
 			}
-			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any(), gomock.Any()).
+			propsSvc.EXPECT().RetrieveAllPropertiesForEntity(ctx, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(tt.retrieveAllPropsErr).AnyTimes()
 
 			service := NewEvaluationHistoryService(pm, withPropertiesServiceBuilder(func(_ db.ExtendQuerier) service.PropertiesService {

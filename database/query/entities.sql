@@ -74,7 +74,9 @@ LIMIT 1;
 
 -- name: GetEntitiesByType :many
 SELECT * FROM entity_instances
-WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
 -- GetEntitiesByProvider retrieves all entities of a given provider.
 -- this is how one would get all repositories, artifacts, etc. for a given provider.

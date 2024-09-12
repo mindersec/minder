@@ -248,7 +248,8 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			}
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop, qtx)
+				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop,
+					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
@@ -397,7 +398,8 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceAllProperties(ctx, ent.ID, props, qtx)
+				return propSvc.ReplaceAllProperties(ctx, ent.ID, props,
+					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
@@ -587,7 +589,8 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 			getByProps, err := properties.NewProperties(propSearch)
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveProperty(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName)
+			gotProps, err := propSvc.RetrieveProperty(
+				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName, nil)
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)
@@ -610,6 +613,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 		dbSetup     func(t *testing.T, store db.Store, params fetchParams)
 		githubSetup func(t *testing.T, params fetchParams) githubMockBuilder
 		params      fetchParams
+		lookupProps map[string]any
 		expectErr   string
 		checkResult func(t *testing.T, props *properties.Properties)
 		opts        []propertiesServiceOption
@@ -632,6 +636,10 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 			params: fetchParams{
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
 				entName: rand.RandomName(seed),
+			},
+			lookupProps: map[string]any{
+				properties.PropertyUpstreamID: "123",
+				properties.PropertyName:       rand.RandomName(seed),
 			},
 			checkResult: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
@@ -676,6 +684,9 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
 				entName: rand.RandomName(seed),
 			},
+			lookupProps: map[string]any{
+				properties.PropertyName: rand.RandomName(seed),
+			},
 			checkResult: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
 
@@ -716,11 +727,56 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
 				entName: "testorg/testrepo",
 			},
+			lookupProps: map[string]any{
+				properties.PropertyName: "testorg/testrepo",
+			},
 			checkResult: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
 
 				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), true)
 				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(123))
+			},
+		},
+		{
+			name: "Cache hit by upstream ID, fetch from cache",
+			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
+				t.Helper()
+
+				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(params.entType),
+					Name:       params.entName,
+					ProjectID:  params.projectID,
+					ProviderID: params.providerID,
+				})
+				require.NoError(t, err)
+
+				propMap := map[string]any{
+					properties.PropertyUpstreamID:    "456",
+					properties.RepoPropertyIsPrivate: true,
+					ghprop.RepoPropertyId:            int64(456),
+				}
+				props, err := properties.NewProperties(propMap)
+				require.NoError(t, err)
+				insertProperties(context.TODO(), t, store, ent.ID, props)
+			},
+			githubSetup: func(t *testing.T, _ fetchParams) githubMockBuilder {
+				t.Helper()
+
+				return newGithubMock()
+			},
+			params: fetchParams{
+				entType: minderv1.Entity_ENTITY_REPOSITORIES,
+				entName: "testorg/testrepo2",
+			},
+			lookupProps: map[string]any{
+				// no name here, we're just looking up by upstream ID
+				properties.PropertyUpstreamID: "456",
+			},
+			checkResult: func(t *testing.T, props *properties.Properties) {
+				t.Helper()
+
+				require.Equal(t, props.GetProperty(properties.RepoPropertyIsPrivate).GetBool(), true)
+				require.Equal(t, props.GetProperty(ghprop.RepoPropertyId).GetInt64(), int64(456))
 			},
 		},
 	}
@@ -747,12 +803,12 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 			propSvc := NewPropertiesService(tctx.testQueries, tt.opts...)
 
-			getByProps, err := properties.NewProperties(map[string]any{
-				properties.PropertyName: tt.params.entName,
-			})
+			getByProps, err := properties.NewProperties(tt.lookupProps)
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType)
+			gotProps, err := propSvc.RetrieveAllProperties(
+				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType,
+				ReadBuilder().WithStoreOrTransaction(tctx.testQueries))
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)

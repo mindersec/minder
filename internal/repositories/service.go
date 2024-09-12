@@ -78,14 +78,12 @@ type RepositoryService interface {
 	) error
 
 	// ListRepositories retrieves all repositories for the
-	// specific provider and project. Ideally, we would take
-	// provider ID instead of name. Name is used for backwards
-	// compatibility with the API endpoint which calls it.
+	// specific provider and project.
 	ListRepositories(
 		ctx context.Context,
 		projectID uuid.UUID,
-		providerName string,
-	) ([]db.Repository, error)
+		providerID uuid.UUID,
+	) ([]*models.EntityWithProperties, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (db.Repository, error)
@@ -161,7 +159,8 @@ func (r *repositoryService) CreateRepository(
 		projectID,
 		provider.ID,
 		fetchByProps,
-		pb.Entity_ENTITY_REPOSITORIES)
+		pb.Entity_ENTITY_REPOSITORIES,
+		nil) // a transaction is used in the service. The repo is not cached here anyway
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
 	}
@@ -228,18 +227,55 @@ func (r *repositoryService) CreateRepository(
 func (r *repositoryService) ListRepositories(
 	ctx context.Context,
 	projectID uuid.UUID,
-	providerName string,
-) ([]db.Repository, error) {
-	return r.store.ListRepositoriesByProjectID(
-		ctx,
-		db.ListRepositoriesByProjectIDParams{
-			ProjectID: projectID,
-			Provider: sql.NullString{
-				String: providerName,
-				Valid:  providerName != "",
-			},
-		},
-	)
+	providerID uuid.UUID,
+) (ents []*models.EntityWithProperties, outErr error) {
+	tx, err := r.store.BeginTransaction()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+
+	defer func() {
+		if outErr != nil {
+			if err := tx.Rollback(); err != nil {
+				log.Printf("error rolling back transaction: %v", err)
+			}
+		}
+	}()
+
+	qtx := r.store.GetQuerierWithTransaction(tx)
+
+	repoEnts, err := qtx.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
+		EntityType: db.EntitiesRepository,
+		ProviderID: providerID,
+		Projects:   []uuid.UUID{projectID},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repositories: %w", err)
+	}
+
+	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
+	for _, ent := range repoEnts {
+		ewp, err := r.propSvc.EntityWithProperties(ctx, ent.ID,
+			service.CallBuilder().WithStoreOrTransaction(qtx))
+		if err != nil {
+			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		}
+
+		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
+			service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
+			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+		}
+
+		ents = append(ents, ewp)
+	}
+
+	// We care about commiting the transaction since the `RetrieveAllPropertiesForEntity`
+	// call above may have modified the properties of the entities
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return ents, nil
 }
 
 func (r *repositoryService) GetRepositoryById(
@@ -360,8 +396,9 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 			entRepo.ProjectID,
 			entRepo.ProviderID,
 			fetchByProps,
-			pb.Entity_ENTITY_REPOSITORIES)
-		if errors.Is(err, provifv1.ErrEntityNotFound) {
+			pb.Entity_ENTITY_REPOSITORIES,
+			service.ReadBuilder().WithStoreOrTransaction(qtx))
+		if errors.Is(err, service.ErrEntityNotFound) {
 			// return the entity without properties in case the upstream entity is not found
 			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
 			return ewp, nil
@@ -383,7 +420,8 @@ func (r *repositoryService) RefreshRepositoryByUpstreamID(
 			return nil, fmt.Errorf("error merging legacy operational attributes: %w", err)
 		}
 
-		err = r.propSvc.SaveAllProperties(ctx, entRepo.ID, legacyProps, qtx)
+		err = r.propSvc.SaveAllProperties(ctx, entRepo.ID, legacyProps,
+			service.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, fmt.Errorf("error saving properties for repository: %w", err)
 		}
@@ -599,7 +637,9 @@ func (r *repositoryService) persistRepository(
 			return pbRepo, fmt.Errorf("error creating entity: %w", err)
 		}
 
-		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, repoProperties, t)
+		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, repoProperties,
+			service.CallBuilder().WithStoreOrTransaction(t))
+
 		if err != nil {
 			return pbRepo, fmt.Errorf("error saving properties for repository: %w", err)
 		}

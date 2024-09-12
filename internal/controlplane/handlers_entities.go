@@ -55,8 +55,9 @@ func (s *Server) ReconcileEntityRegistration(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "entity type %s not supported", entityType)
 	}
 
-	providerName := in.GetContext().GetProvider()
-	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(ctx, projectID, db.ProviderTypeRepoLister, providerName)
+	providerNameParam := in.GetContext().GetProvider()
+	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(
+		ctx, projectID, db.ProviderTypeRepoLister, providerNameParam)
 	if err != nil {
 		pErr := providers.ErrProviderNotFoundBy{}
 		if errors.As(err, &pErr) {
@@ -65,22 +66,15 @@ func (s *Server) ReconcileEntityRegistration(
 		return nil, providerError(err)
 	}
 
-	for providerName, provider := range provs {
-		// Explicitly fetch the provider here as we need its ID for posting the event.
-		pvr, err := s.providerStore.GetByName(ctx, projectID, providerName)
-		if err != nil {
-			errorProvs = append(errorProvs, providerName)
-			continue
-		}
-
-		repos, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
+	for providerID, providerT := range provs {
+		repos, err := s.fetchRepositoriesForProvider(ctx, projectID, providerID, providerT.Name, providerT.Provider)
 		if err != nil {
 			l.Error().
-				Str("providerName", providerName).
+				Str("providerName", providerT.Name).
 				Str("projectID", projectID.String()).
 				Err(err).
 				Msg("error fetching repositories for provider")
-			errorProvs = append(errorProvs, providerName)
+			errorProvs = append(errorProvs, providerT.Name)
 			continue
 		}
 
@@ -89,11 +83,11 @@ func (s *Server) ReconcileEntityRegistration(
 				continue
 			}
 
-			msg, err := createEntityMessage(ctx, &l, projectID, pvr.ID, repo.GetName(), repo.GetOwner())
+			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.GetName(), repo.GetOwner())
 			if err != nil {
 				l.Error().Err(err).
 					Int64("repoID", repo.RepoId).
-					Str("providerName", providerName).
+					Str("providerName", providerT.Name).
 					Msg("error creating registration entity message")
 				// This message will not be sent, but we can continue with the rest.
 				continue
