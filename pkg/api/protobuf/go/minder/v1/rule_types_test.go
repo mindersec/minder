@@ -128,13 +128,13 @@ func TestRuleType_WithDefaultShortFailureMessage(t *testing.T) {
 		},
 		{
 			name: "empty EvaluationFailureMessage",
-			r:    &minderv1.RuleType{},
-			want: &minderv1.RuleType{ShortFailureMessage: "Rule evaluation failed"},
+			r:    &minderv1.RuleType{Name: "TestRule"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Rule TestRule evaluation failed", Name: "TestRule"},
 		},
 		{
 			name: "non-empty EvaluationFailureMessage",
-			r:    &minderv1.RuleType{ShortFailureMessage: "Custom message"},
-			want: &minderv1.RuleType{ShortFailureMessage: "Custom message"},
+			r:    &minderv1.RuleType{ShortFailureMessage: "Custom message", Name: "TestRule"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Custom message", Name: "TestRule"},
 		},
 	}
 	for _, tt := range tests {
