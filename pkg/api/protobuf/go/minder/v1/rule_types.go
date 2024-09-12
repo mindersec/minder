@@ -74,7 +74,7 @@ func (r *RuleType) WithDefaultShortFailureMessage() *RuleType {
 	}
 
 	if r.ShortFailureMessage == "" {
-		r.ShortFailureMessage = "Rule evaluation failed"
+		r.ShortFailureMessage = fmt.Sprintf("Rule %s evaluation failed", r.Name)
 	}
 
 	return r
