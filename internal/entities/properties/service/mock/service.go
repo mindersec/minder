@@ -47,6 +47,21 @@ func (m *MockPropertiesService) EXPECT() *MockPropertiesServiceMockRecorder {
 	return m.recorder
 }
 
+// EntityWithPropertiesAsProto mocks base method.
+func (m *MockPropertiesService) EntityWithPropertiesAsProto(ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityWithPropertiesAsProto", ctx, ewp, provMgr)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityWithPropertiesAsProto indicates an expected call of EntityWithPropertiesAsProto.
+func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesAsProto(ctx, ewp, provMgr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesAsProto", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesAsProto), ctx, ewp, provMgr)
+}
+
 // EntityWithPropertiesByID mocks base method.
 func (m *MockPropertiesService) EntityWithPropertiesByID(ctx context.Context, entityID uuid.UUID, opts *service.CallOptions) (*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
@@ -62,19 +77,19 @@ func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesByID(ctx, entit
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesByID", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesByID), ctx, entityID, opts)
 }
 
-// EntityWithPropertiesAsProto mocks base method.
-func (m *MockPropertiesService) EntityWithPropertiesAsProto(ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager) (protoreflect.ProtoMessage, error) {
+// EntityWithPropertiesByUpstreamHint mocks base method.
+func (m *MockPropertiesService) EntityWithPropertiesByUpstreamHint(ctx context.Context, entType v1.Entity, getByProps *properties.Properties, hint service.ByUpstreamHint, opts *service.CallOptions) (*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EntityWithPropertiesAsProto", ctx, ewp, provMgr)
-	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret := m.ctrl.Call(m, "EntityWithPropertiesByUpstreamHint", ctx, entType, getByProps, hint, opts)
+	ret0, _ := ret[0].(*models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// EntityWithPropertiesAsProto indicates an expected call of EntityWithPropertiesAsProto.
-func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesAsProto(ctx, ewp, provMgr any) *gomock.Call {
+// EntityWithPropertiesByUpstreamHint indicates an expected call of EntityWithPropertiesByUpstreamHint.
+func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesByUpstreamHint(ctx, entType, getByProps, hint, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesAsProto", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesAsProto), ctx, ewp, provMgr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesByUpstreamHint", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesByUpstreamHint), ctx, entType, getByProps, hint, opts)
 }
 
 // ReplaceAllProperties mocks base method.

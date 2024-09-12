@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -111,9 +112,10 @@ type fetchParams struct {
 }
 
 type testCtx struct {
-	testQueries   db.Store
-	dbProj        db.Project
-	ghAppProvider db.Provider
+	testQueries       db.Store
+	dbProj            db.Project
+	ghAppProvider     db.Provider
+	dockerHubProvider db.Provider
 }
 
 func createTestCtx(ctx context.Context, t *testing.T) testCtx {
@@ -141,10 +143,22 @@ func createTestCtx(ctx context.Context, t *testing.T) testCtx {
 		})
 	require.NoError(t, err)
 
+	dockerHubProvider, err := testQueries.CreateProvider(context.Background(),
+		db.CreateProviderParams{
+			Name:       rand.RandomName(seed),
+			ProjectID:  dbProj.ID,
+			Class:      db.ProviderClassDockerhub,
+			Implements: []db.ProviderType{db.ProviderTypeOci},
+			AuthFlows:  []db.AuthorizationFlow{db.AuthorizationFlowOauth2AuthorizationCodeFlow},
+			Definition: json.RawMessage("{}"),
+		})
+	require.NoError(t, err)
+
 	return testCtx{
-		testQueries:   testQueries,
-		dbProj:        dbProj,
-		ghAppProvider: ghAppProvider,
+		testQueries:       testQueries,
+		dbProj:            dbProj,
+		ghAppProvider:     ghAppProvider,
+		dockerHubProvider: dockerHubProvider,
 	}
 }
 
@@ -603,6 +617,163 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 	}
 }
 
+func TestPropertiesService_EntityWithPropertiesByUpstreamHint(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	tctx := createTestCtx(ctx, t)
+
+	scenarios := []struct {
+		name          string
+		entType       minderv1.Entity
+		byPropMap     map[string]any
+		upstreamID    string
+		hint          ByUpstreamHint
+		dbSetup       func(t *testing.T, store db.Store)
+		expectedError error
+		checkResult   func(t *testing.T, result *models.EntityWithProperties)
+	}{
+		{
+			name:      "Entity not found",
+			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
+			byPropMap: map[string]any{properties.PropertyUpstreamID: "456"},
+			hint: ByUpstreamHint{
+				ProviderImplements: db.NullProviderType{
+					ProviderType: db.ProviderTypeGithub,
+					Valid:        true,
+				},
+			},
+			expectedError: ErrEntityNotFound,
+		},
+		{
+			name:      "Multiple entities returned by ID with provider hint",
+			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
+			byPropMap: map[string]any{properties.PropertyUpstreamID: "789"},
+			hint: ByUpstreamHint{
+				ProviderImplements: db.NullProviderType{
+					ProviderType: db.ProviderTypeGithub,
+					Valid:        true,
+				},
+			},
+			dbSetup: func(t *testing.T, store db.Store) {
+				t.Helper()
+				for i := range 2 {
+					ent, err := store.CreateEntity(ctx, db.CreateEntityParams{
+						EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+						Name:       fmt.Sprintf("test-repo-%d", i),
+						ProjectID:  tctx.dbProj.ID,
+						ProviderID: tctx.ghAppProvider.ID,
+					})
+					require.NoError(t, err)
+
+					propMap := map[string]any{
+						properties.PropertyUpstreamID: "789",
+						properties.PropertyName:       fmt.Sprintf("test-repo-%d", i),
+					}
+					insertPropertiesFromMap(ctx, t, store, ent.ID, propMap)
+				}
+			},
+			expectedError: ErrMultipleEntities,
+		},
+		{
+			name:      "One of multiple entities matched by provider hint",
+			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
+			byPropMap: map[string]any{properties.PropertyUpstreamID: "890"},
+			hint: ByUpstreamHint{
+				ProviderImplements: db.NullProviderType{
+					ProviderType: db.ProviderTypeGithub,
+					Valid:        true,
+				},
+			},
+			dbSetup: func(t *testing.T, store db.Store) {
+				t.Helper()
+				providerIDs := []uuid.UUID{tctx.ghAppProvider.ID, tctx.dockerHubProvider.ID}
+				for i, providerID := range providerIDs {
+					ent, err := store.CreateEntity(ctx, db.CreateEntityParams{
+						EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+						Name:       fmt.Sprintf("test-repo-implements-hint-%d", i),
+						ProjectID:  tctx.dbProj.ID,
+						ProviderID: providerID,
+					})
+					require.NoError(t, err)
+
+					propMap := map[string]any{
+						properties.PropertyUpstreamID: "890",
+						properties.PropertyName:       fmt.Sprintf("test-repo-implements-hint-%d", i),
+					}
+					insertPropertiesFromMap(ctx, t, store, ent.ID, propMap)
+				}
+			},
+			checkResult: func(t *testing.T, result *models.EntityWithProperties) {
+				t.Helper()
+				require.NotNil(t, result)
+				require.Equal(t, "test-repo-implements-hint-0", result.Entity.Name)
+				require.Equal(t, "890", result.Properties.GetProperty(properties.PropertyUpstreamID).GetString())
+				require.Equal(t, tctx.ghAppProvider.ID, result.Entity.ProviderID)
+			},
+		},
+		{
+			name:      "Searching entity with provider hint for a nonexistent provider",
+			entType:   minderv1.Entity_ENTITY_REPOSITORIES,
+			byPropMap: map[string]any{properties.PropertyUpstreamID: "891"},
+			hint: ByUpstreamHint{
+				ProviderImplements: db.NullProviderType{
+					ProviderType: db.ProviderTypeRest,
+					Valid:        true,
+				},
+			},
+			dbSetup: func(t *testing.T, store db.Store) {
+				t.Helper()
+				providerIDs := []uuid.UUID{tctx.ghAppProvider.ID, tctx.dockerHubProvider.ID}
+				for i, providerID := range providerIDs {
+					ent, err := store.CreateEntity(ctx, db.CreateEntityParams{
+						EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+						Name:       fmt.Sprintf("test-repo-implements-hint-nomatch-%d", i),
+						ProjectID:  tctx.dbProj.ID,
+						ProviderID: providerID,
+					})
+					require.NoError(t, err)
+
+					propMap := map[string]any{
+						properties.PropertyUpstreamID: "891",
+						properties.PropertyName:       fmt.Sprintf("test-repo-implements-hint-nomatch-%d", i),
+					}
+					insertPropertiesFromMap(ctx, t, store, ent.ID, propMap)
+				}
+			},
+			expectedError: ErrEntityNotFound,
+		},
+	}
+
+	for _, tt := range scenarios {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if tt.dbSetup != nil {
+				tt.dbSetup(t, tctx.testQueries)
+			}
+
+			propSvc := NewPropertiesService(tctx.testQueries)
+
+			byProps, err := properties.NewProperties(tt.byPropMap)
+			require.NoError(t, err)
+
+			result, err := propSvc.EntityWithPropertiesByUpstreamHint(ctx, tt.entType, byProps, tt.hint, nil)
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.expectedError)
+			} else {
+				require.NoError(t, err)
+				tt.checkResult(t, result)
+			}
+		})
+	}
+}
+
 func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 	t.Parallel()
 
@@ -698,7 +869,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 			},
 		},
 		{
-			name: "Cache hit, fetch from cache",
+			name: "Cache hit by name, fetch from cache",
 			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
 				t.Helper()
 
