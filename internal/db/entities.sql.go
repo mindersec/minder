@@ -283,18 +283,21 @@ func (q *Queries) GetEntitiesByProvider(ctx context.Context, providerID uuid.UUI
 const getEntitiesByType = `-- name: GetEntitiesByType :many
 
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = ANY($2::uuid[])
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.provider_id = $2
+    AND entity_instances.project_id = ANY($3::uuid[])
 `
 
 type GetEntitiesByTypeParams struct {
 	EntityType Entities    `json:"entity_type"`
+	ProviderID uuid.UUID   `json:"provider_id"`
 	Projects   []uuid.UUID `json:"projects"`
 }
 
 // GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
 // this is how one would get all repositories, artifacts, etc.
 func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error) {
-	rows, err := q.db.QueryContext(ctx, getEntitiesByType, arg.EntityType, pq.Array(arg.Projects))
+	rows, err := q.db.QueryContext(ctx, getEntitiesByType, arg.EntityType, arg.ProviderID, pq.Array(arg.Projects))
 	if err != nil {
 		return nil, err
 	}

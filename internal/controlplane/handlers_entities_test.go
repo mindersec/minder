@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -25,10 +26,10 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	mockevents "github.com/stacklok/minder/internal/events/mock"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
+	"github.com/stacklok/minder/internal/providers/manager"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 func TestServer_ReconcileEntityRegistration(t *testing.T) {
@@ -58,7 +59,12 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 				providerManager := mockmanager.NewMockProviderManager(ctrl)
 				providerManager.EXPECT().BulkInstantiateByTrait(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(map[string]provinfv1.Provider{provider.Name: mockgh.NewMockGitHub(ctrl)}, []string{}, nil).Times(1)
+				).Return(map[uuid.UUID]manager.NameProviderTuple{
+					uuid.New(): {
+						Name:     provider.Name,
+						Provider: mockgh.NewMockGitHub(ctrl),
+					},
+				}, []string{}, nil).Times(1)
 				return providerManager
 			},
 			EventerSetup: func(ctrl *gomock.Controller) *mockevents.MockInterface {
@@ -80,7 +86,12 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 				providerManager := mockmanager.NewMockProviderManager(ctrl)
 				providerManager.EXPECT().BulkInstantiateByTrait(
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(map[string]provinfv1.Provider{provider.Name: mockgh.NewMockGitHub(ctrl)}, []string{}, nil).Times(1)
+				).Return(map[uuid.UUID]manager.NameProviderTuple{
+					uuid.New(): {
+						Name:     provider.Name,
+						Provider: mockgh.NewMockGitHub(ctrl),
+					},
+				}, []string{}, nil).Times(1)
 				return providerManager
 			},
 			ExpectedError: "cannot register entities for providers: [github]",
@@ -101,22 +112,27 @@ func TestServer_ReconcileEntityRegistration(t *testing.T) {
 				Project: engcontext.Project{ID: projectID},
 			})
 
-			manager := mockmanager.NewMockProviderManager(ctrl)
+			mgr := mockmanager.NewMockProviderManager(ctrl)
 			if scenario.ProviderSetup != nil && scenario.GitHubSetup != nil {
 				prov := scenario.GitHubSetup(ctrl)
-				manager.EXPECT().BulkInstantiateByTrait(
+				mgr.EXPECT().BulkInstantiateByTrait(
 					gomock.Any(),
 					gomock.Eq(projectID),
 					gomock.Eq(db.ProviderTypeRepoLister),
 					gomock.Eq(""),
-				).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
+				).Return(map[uuid.UUID]manager.NameProviderTuple{
+					uuid.New(): {
+						Name:     provider.Name,
+						Provider: prov,
+					},
+				}, []string{}, nil)
 			}
 
 			server := createServer(
 				ctrl,
 				scenario.RepoServiceSetup,
 				scenario.ProviderFails,
-				manager,
+				mgr,
 			)
 
 			if scenario.EventerSetup != nil {

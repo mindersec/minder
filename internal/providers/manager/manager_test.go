@@ -379,7 +379,10 @@ func TestProviderManager_BulkInstantiateByTrait(t *testing.T) {
 			} else {
 				require.Len(t, success, 1)
 				require.Empty(t, fail)
-				require.Equal(t, provider, success[scenario.Provider.Name])
+				require.Equal(t, manager.NameProviderTuple{
+					Name:     scenario.Provider.Name,
+					Provider: provider,
+				}, success[scenario.Provider.ID])
 			}
 		})
 	}

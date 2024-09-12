@@ -19,6 +19,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -30,6 +31,8 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github/clients"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
@@ -223,19 +226,24 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			})
 
 			prov := scenario.GitHubSetup(ctrl)
-			manager := mockmanager.NewMockProviderManager(ctrl)
-			manager.EXPECT().BulkInstantiateByTrait(
+			mgr := mockmanager.NewMockProviderManager(ctrl)
+			mgr.EXPECT().BulkInstantiateByTrait(
 				gomock.Any(),
 				gomock.Eq(projectID),
 				gomock.Eq(db.ProviderTypeRepoLister),
 				gomock.Eq(""),
-			).Return(map[string]provinfv1.Provider{provider.Name: prov}, []string{}, nil)
+			).Return(map[uuid.UUID]manager.NameProviderTuple{
+				provider.ID: {
+					Name:     provider.Name,
+					Provider: prov,
+				},
+			}, []string{}, nil)
 
 			server := createServer(
 				ctrl,
 				scenario.RepoServiceSetup,
 				scenario.ProviderFails,
-				manager,
+				mgr,
 			)
 
 			projectIDStr := projectID.String()
@@ -420,14 +428,16 @@ var (
 	}
 )
 
-func simpleDbRepository(name string, id int64) db.Repository {
-	return db.Repository{
-		ID:        uuid.UUID{},
-		Provider:  ghprovider.Github,
-		RepoOwner: repoOwner,
-		RepoName:  name,
-		RepoID:    id,
-	}
+func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
+	//nolint:errcheck // this shouldn't fail
+	props, _ := properties.NewProperties(map[string]any{
+		"repo_id":                     id,
+		properties.PropertyUpstreamID: fmt.Sprintf("%d", id),
+	})
+	return models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
+		ID:   uuid.UUID{},
+		Name: name,
+	}, props)
 }
 
 func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *pb.UpstreamRepositoryRef {
