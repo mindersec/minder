@@ -64,6 +64,16 @@ type PropertiesService interface {
 	EntityWithPropertiesByID(
 		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
+	// EntityWithPropertiesByUpstreamID fetches an entity by upstream ID
+	// and returns the entity with its properties. It is expected that the caller
+	// does NOT know the project or provider ID. Whatever hints it may have
+	// are to be passed to the hint parameter which will be used in case multiple
+	// entries with the same ID are found.
+	EntityWithPropertiesByUpstreamID(
+		ctx context.Context, entType minderv1.Entity,
+		upstreamID string, hint ByUpstreamIdHint,
+		opts *CallOptions,
+	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for an entity
 	// given a project, provider, and identifying properties.
 	// If the entity has properties in the database, it will return those
@@ -290,28 +300,14 @@ func (ps *propertiesService) ReplaceProperty(
 	return err
 }
 
-func (ps *propertiesService) EntityWithPropertiesByID(
-	ctx context.Context, entityID uuid.UUID,
+func (ps *propertiesService) getEntityWithProperties(
+	ctx context.Context,
+	ent db.EntityInstance,
 	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
 	q := ps.getStoreOrTransaction(opts)
 
-	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
-	ent, err := q.GetEntityByID(ctx, entityID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrEntityNotFound
-	} else if err != nil {
-		return nil, fmt.Errorf("error getting entity: %w", err)
-	}
-	zerolog.Ctx(ctx).Debug().
-		Str("projectID", ent.ProjectID.String()).
-		Str("providerID", ent.ProviderID.String()).
-		Str("entityType", string(ent.EntityType)).
-		Str("entityName", ent.Name).
-		Str("entityID", ent.ID.String()).
-		Msg("entity found")
-
-	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, ent.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to get properties for entity: %w", ErrEntityNotFound)
 	} else if err != nil {
@@ -335,6 +331,75 @@ func (ps *propertiesService) EntityWithPropertiesByID(
 	}
 
 	return models.NewEntityWithProperties(ent, props), nil
+}
+
+func (ps *propertiesService) EntityWithPropertiesByID(
+	ctx context.Context, entityID uuid.UUID,
+	opts *CallOptions,
+) (*models.EntityWithProperties, error) {
+	q := ps.getStoreOrTransaction(opts)
+
+	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
+	ent, err := q.GetEntityByID(ctx, entityID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrEntityNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("error getting entity: %w", err)
+	}
+
+	return ps.getEntityWithProperties(ctx, ent, opts)
+}
+
+func (ps *propertiesService) EntityWithPropertiesByUpstreamID(
+	ctx context.Context, entType minderv1.Entity,
+	upstreamID string, hint ByUpstreamIdHint,
+	opts *CallOptions,
+) (*models.EntityWithProperties, error) {
+	q := ps.getStoreOrTransaction(opts)
+
+	zerolog.Ctx(ctx).Debug().
+		Str("upstreamID", upstreamID).
+		Msg("fetching entity with properties by upstream ID")
+
+	ent, err := matchEntityByUpstreamID(ctx, upstreamID, entType, &hint, q)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get entity ID: %w", err)
+	}
+
+	ewp, err := ps.getEntityWithProperties(ctx, *ent, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if !propsMatchUpstreamHint(ewp.Properties, hint) {
+		zerolog.Ctx(ctx).Debug().Msg("properties do not match hint")
+		return nil, ErrEntityNotFound
+	}
+
+	return ewp, nil
+}
+
+// ByUpstreamIdHint is a hint to help find an entity by upstream ID
+// API-wise it should only be exposed in those methods of the service layer
+// that do not know the project or provider ID and are searching for an entity
+// based on upstream properties only.
+// The hint
+type ByUpstreamIdHint struct {
+	// PropName is the name of the property to search by
+	// Note that this is an additional filtering criteria, not the only one.
+	// if neither of projectID, providerID or ProviderImplements is set and the entity
+	// has multiple entries, the search will fail.
+	PropName  string
+	PropValue any
+
+	// ProviderImplements is the provider type to search by
+	ProviderImplements db.NullProviderType
+
+	// providerID and projectID are the IDs of the provider and project to search by. These are used
+	// internally by the module to be able to pass the hint to the database layer and are not exposed
+	// to the API.
+	providerID uuid.UUID
+	projectID  uuid.UUID
 }
 
 // EntityWithPropertiesAsProto converts the entity with properties to a protobuf message
