@@ -42,6 +42,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -730,7 +731,9 @@ func (s *Server) processPackageEvent(
 		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
 			ctx, provider,
 			repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-			pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS, tx)
+			pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS,
+			service.ReadBuilder().WithStoreOrTransaction(tx))
+
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving properties: %w", err)
 		}
@@ -776,7 +779,8 @@ func (s *Server) processPackageEvent(
 		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
 			ctx, provider,
 			ent.ProjectID, ent.ProviderID,
-			refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS, tx)
+			refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS,
+			service.ReadBuilder().WithStoreOrTransaction(tx))
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving properties: %w", err)
 		}
@@ -1613,7 +1617,9 @@ func (s *Server) updatePullRequestInfoFromProvider(
 
 	prProps, err := s.props.RetrieveAllProperties(ctx, provider,
 		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS, qtx)
+		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS,
+		service.ReadBuilder().WithStoreOrTransaction(qtx))
+
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving properties: %w", err)
 	}

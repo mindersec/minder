@@ -57,7 +57,7 @@ const (
 type PropertiesService interface {
 	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithProperties(
-		ctx context.Context, entityID uuid.UUID, qtx db.ExtendQuerier,
+		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for an entity
 	// given a project, provider, and identifying properties.
@@ -68,7 +68,7 @@ type PropertiesService interface {
 		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity,
-		qtx db.ExtendQuerier,
+		opts *ReadOptions,
 	) (*properties.Properties, error)
 	// RetrieveAllPropertiesForEntity fetches all properties for the given entity.
 	// If the entity has properties in the database, it will return those
@@ -76,7 +76,7 @@ type PropertiesService interface {
 	// from the provider and update the database.
 	// Note that this assumes an entity that already exists in Minder's database.
 	RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties,
-		provMan manager.ProviderManager, qtx db.ExtendQuerier,
+		provMan manager.ProviderManager, opts *ReadOptions,
 	) error
 	// RetrieveProperty fetches a single property for the given entity given
 	// a project, provider, and identifying properties.
@@ -84,13 +84,20 @@ type PropertiesService interface {
 		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 		providerID uuid.UUID,
 		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
+		opts *ReadOptions,
 	) (*properties.Property, error)
 	// ReplaceAllProperties saves all properties for the given entity
-	ReplaceAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error
+	ReplaceAllProperties(
+		ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *CallOptions,
+	) error
 	// SaveAllProperties saves all properties for the given entity
-	SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error
+	SaveAllProperties(
+		ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *CallOptions,
+	) error
 	// ReplaceProperty saves a single property for the given entity
-	ReplaceProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error
+	ReplaceProperty(
+		ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, opts *CallOptions,
+	) error
 }
 
 type propertiesServiceOption func(*propertiesService)
@@ -128,24 +135,26 @@ func (ps *propertiesService) RetrieveAllProperties(
 	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
-	qtx db.ExtendQuerier,
+	opts *ReadOptions,
 ) (*properties.Properties, error) {
+	qtx := ps.getStoreOrTransaction(opts)
 	l := zerolog.Ctx(ctx).With().
 		Str("projectID", projectId.String()).
 		Str("providerID", providerID.String()).
 		Str("entityType", entType.String()).
 		Logger()
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, qtx)
+	entID, err := getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, qtx)
 	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
 
-	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, lookupProperties, entType, qtx, l)
+	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, lookupProperties, entType, opts, l)
 }
 
 func (ps *propertiesService) RetrieveAllPropertiesForEntity(
-	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager, qtx db.ExtendQuerier,
+	ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager,
+	opts *ReadOptions,
 ) error {
 	l := zerolog.Ctx(ctx).With().
 		Str("projectID", efp.Entity.ProjectID.String()).
@@ -160,7 +169,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 		return fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, qtx, l)
+	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, opts, l)
 	if err != nil {
 		return fmt.Errorf("error fetching properties for repository: %w", err)
 	}
@@ -175,6 +184,7 @@ func (ps *propertiesService) RetrieveProperty(
 	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
 	providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity, key string,
+	opts *ReadOptions,
 ) (*properties.Property, error) {
 	l := zerolog.Ctx(ctx).With().
 		Str("projectID", projectId.String()).
@@ -183,7 +193,7 @@ func (ps *propertiesService) RetrieveProperty(
 		Logger()
 
 	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := ps.getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, ps.store)
+	entID, err := getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, ps.store)
 	if err != nil && !errors.Is(err, ErrEntityNotFound) {
 		return nil, err
 	}
@@ -204,7 +214,7 @@ func (ps *propertiesService) RetrieveProperty(
 	}
 
 	// if exists, turn into our model
-	if ps.isDatabasePropertyValid(dbProp) {
+	if ps.isDatabasePropertyValid(dbProp, opts) {
 		l.Info().Msg("properties are valid, skipping provider fetch")
 		return models.DbPropToModel(dbProp)
 	}
@@ -222,8 +232,10 @@ func (ps *propertiesService) RetrieveProperty(
 }
 
 func (ps *propertiesService) ReplaceAllProperties(
-	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties,
+	opts *CallOptions,
 ) error {
+	qtx := ps.getStoreOrTransaction(opts)
 	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("replacing all properties")
 
 	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
@@ -231,12 +243,14 @@ func (ps *propertiesService) ReplaceAllProperties(
 		return fmt.Errorf("failed to delete properties: %w", err)
 	}
 
-	return ps.SaveAllProperties(ctx, entityID, props, qtx)
+	return ps.SaveAllProperties(ctx, entityID, props, opts)
 }
 
-func (_ *propertiesService) SaveAllProperties(
-	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+func (ps *propertiesService) SaveAllProperties(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties,
+	opts *CallOptions,
 ) error {
+	qtx := ps.getStoreOrTransaction(opts)
 	for key, prop := range props.Iterate() {
 		_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 			EntityID: entityID,
@@ -251,9 +265,11 @@ func (_ *propertiesService) SaveAllProperties(
 	return nil
 }
 
-func (_ *propertiesService) ReplaceProperty(
-	ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier,
+func (ps *propertiesService) ReplaceProperty(
+	ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property,
+	opts *CallOptions,
 ) error {
+	qtx := ps.getStoreOrTransaction(opts)
 	if prop == nil {
 		return qtx.DeleteProperty(ctx, db.DeletePropertyParams{
 			EntityID: entityID,
@@ -271,15 +287,9 @@ func (_ *propertiesService) ReplaceProperty(
 
 func (ps *propertiesService) EntityWithProperties(
 	ctx context.Context, entityID uuid.UUID,
-	qtx db.ExtendQuerier,
+	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
-	// use the transaction if provided, otherwise use the store
-	var q db.Querier
-	if qtx != nil {
-		q = qtx
-	} else {
-		q = ps.store
-	}
+	q := ps.getStoreOrTransaction(opts)
 
 	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
 	ent, err := q.GetEntityByID(ctx, entityID)
