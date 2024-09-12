@@ -88,8 +88,6 @@ const (
 	BuildIDEventKey = "build_run_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
-	// ActionEventKey is the key for the action event
-	ActionEventKey = "action_event"
 )
 
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
@@ -102,13 +100,6 @@ func NewEntityInfoWrapper() *EntityInfoWrapper {
 // WithProviderID sets the provider ID
 func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWrapper {
 	eiw.ProviderID = providerID
-
-	return eiw
-}
-
-// WithActionEvent sets the webhook action
-func (eiw *EntityInfoWrapper) WithActionEvent(action string) *EntityInfoWrapper {
-	eiw.ActionEvent = action
 
 	return eiw
 }
@@ -305,7 +296,6 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	msg.Metadata.Set(ProviderIDEventKey, eiw.ProviderID.String())
 	msg.Metadata.Set(EntityTypeEventKey, typ)
 	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
-	msg.Metadata.Set(ActionEventKey, eiw.ActionEvent)
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
@@ -402,11 +392,6 @@ func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) er
 
 	eiw.ProviderID = providerID
 	return nil
-}
-
-func (eiw *EntityInfoWrapper) withActionEventFromMessage(msg *message.Message) {
-	action := msg.Metadata.Get(ActionEventKey)
-	eiw.ActionEvent = action
 }
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
@@ -529,8 +514,6 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	}
 
 	// We don't always have repo ID (e.g. for artifacts)
-
-	out.withActionEventFromMessage(msg)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
 	switch typ {
