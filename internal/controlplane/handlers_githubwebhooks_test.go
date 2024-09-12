@@ -106,6 +106,30 @@ func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]a
 	}
 }
 
+func withSuccessPullProto() func(mck propSvcMock) {
+	return func(mock propSvcMock) {
+		mock.EXPECT().
+			EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(&v1.PullRequest{}, nil)
+	}
+}
+
+func withSuccessArtifactProto() func(mck propSvcMock) {
+	return func(mock propSvcMock) {
+		mock.EXPECT().
+			EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(&v1.Artifact{}, nil)
+	}
+}
+
+func withSuccessRepoProto() func(mck propSvcMock) {
+	return func(mock propSvcMock) {
+		mock.EXPECT().
+			EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(&v1.Repository{}, nil)
+	}
+}
+
 type repoSvcMock = *mock_repos.MockRepositoryService
 type repoSvcMockBuilder = func(*gomock.Controller) repoSvcMock
 
@@ -679,6 +703,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					ghprop.ArtifactPropertyName:      "package-name",
 					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
 				}),
+				withSuccessArtifactProto(),
 			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("login/package-name"),
@@ -750,6 +775,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
 					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
 				}),
+				withSuccessArtifactProto(),
 			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("stacklok/minder"),
@@ -1322,6 +1348,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1370,6 +1399,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1418,6 +1450,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1466,6 +1501,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1513,6 +1551,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1561,6 +1602,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1608,6 +1652,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1656,6 +1703,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1704,6 +1754,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1854,6 +1907,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1902,6 +1958,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1950,6 +2009,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -1998,6 +2060,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2097,6 +2162,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2184,6 +2252,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2232,6 +2303,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2280,6 +2354,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2328,6 +2405,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2376,6 +2456,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2424,6 +2507,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2472,6 +2558,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2519,6 +2608,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2567,6 +2659,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2615,6 +2710,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2663,6 +2761,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2711,6 +2812,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2759,6 +2863,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2807,6 +2914,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2855,6 +2965,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2903,6 +3016,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2951,6 +3067,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -2998,6 +3117,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3045,6 +3167,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3103,6 +3228,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3143,6 +3271,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3192,6 +3323,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3227,6 +3361,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3255,6 +3392,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3301,6 +3441,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3347,6 +3490,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3412,6 +3558,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						ghprop.RepoPropertyId:             int64(12345),
 					}),
 			),
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			topic:      events.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
@@ -3439,6 +3588,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3485,6 +3637,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3531,6 +3686,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
+			mockPropsBld: newPropSvcMock(
+				withSuccessRepoProto(),
+			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
 					models.EntityInstance{
@@ -3594,6 +3752,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 			mockPropsBld: newPropSvcMock(
 				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+				withSuccessPullProto(),
 			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
@@ -3665,6 +3824,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 			mockPropsBld: newPropSvcMock(
 				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+				withSuccessPullProto(),
 			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(
@@ -3736,6 +3896,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 			mockPropsBld: newPropSvcMock(
 				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_PULL_REQUESTS, nil),
+				withSuccessPullProto(),
 			),
 			mockRepoBld: newRepoSvcMock(
 				withSuccessRepoById(

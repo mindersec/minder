@@ -24,6 +24,7 @@ import (
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
@@ -196,4 +197,24 @@ func (c *GitHub) cleanupStaleHooks(
 	}
 
 	return nil
+}
+
+// PropertiesToProtoMessage implements the ProtoMessageConverter interface
+func (c *GitHub) PropertiesToProtoMessage(
+	entType minderv1.Entity, props *properties.Properties,
+) (protoreflect.ProtoMessage, error) {
+	if !c.SupportsEntity(entType) {
+		return nil, fmt.Errorf("entity type %s is not supported by the github provider", entType)
+	}
+
+	switch entType { // nolint:exhaustive // these are really the only entities we support
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return ghprop.RepoV1FromProperties(props)
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		return ghprop.ArtifactV1FromProperties(props)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return ghprop.PullRequestV1FromProperties(props)
+	}
+
+	return nil, fmt.Errorf("conversion of entity type %s is not handled by the github provider", entType)
 }

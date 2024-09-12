@@ -173,7 +173,7 @@ func getPrWrapperAttrsFromProps(props *properties.Properties) (string, string, i
 }
 
 // PullRequestV1FromProperties creates a PullRequestV1 from a properties object
-func PullRequestV1FromProperties(props *properties.Properties) *minderv1.PullRequest {
+func PullRequestV1FromProperties(props *properties.Properties) (*minderv1.PullRequest, error) {
 	return &minderv1.PullRequest{
 		Url:       props.GetProperty(PullPropertyURL).GetString(),
 		CommitSha: props.GetProperty(PullPropertySha).GetString(),
@@ -182,5 +182,5 @@ func PullRequestV1FromProperties(props *properties.Properties) *minderv1.PullReq
 		RepoName:  props.GetProperty(PullPropertyRepoName).GetString(),
 		AuthorId:  props.GetProperty(PullPropertyAuthorID).GetInt64(),
 		Action:    props.GetProperty(PullPropertyAction).GetString(),
-	}
+	}, nil
 }

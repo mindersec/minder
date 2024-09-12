@@ -25,6 +25,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/models"
@@ -55,6 +56,10 @@ const (
 
 // PropertiesService is the interface for the properties service
 type PropertiesService interface {
+	// EntityWithPropertiesAsProto calls the provider to convert the entity with properties to the appropriate proto message
+	EntityWithPropertiesAsProto(
+		ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
+	) (protoreflect.ProtoMessage, error)
 	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithProperties(
 		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
@@ -330,4 +335,22 @@ func (ps *propertiesService) EntityWithProperties(
 	}
 
 	return models.NewEntityWithProperties(ent, props), nil
+}
+
+// EntityWithPropertiesAsProto converts the entity with properties to a protobuf message
+func (_ *propertiesService) EntityWithPropertiesAsProto(
+	ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
+) (protoreflect.ProtoMessage, error) {
+	prov, err := provMgr.InstantiateFromID(ctx, ewp.Entity.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("error instantiating provider %s: %w", ewp.Entity.ProviderID.String(), err)
+	}
+
+	converter, err := provifv1.As[provifv1.ProtoMessageConverter](prov)
+	if err != nil {
+		return nil, fmt.Errorf("provider %s doesn't implement ProtoMessageConverter: %w",
+			ewp.Entity.ProviderID.String(), err)
+	}
+
+	return converter.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
 }
