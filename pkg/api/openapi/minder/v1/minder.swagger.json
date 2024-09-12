@@ -4949,9 +4949,9 @@
           "type": "string",
           "description": "display_name is the display name of the rule type."
         },
-        "evaluationFailureMessage": {
+        "shortFailureMessage": {
           "type": "string",
-          "description": "evaluation_failure_message is the message to display when the evaluation fails."
+          "description": "short_failure_message is the message to display when the evaluation fails."
         },
         "context": {
           "$ref": "#/definitions/v1Context",

@@ -12,4 +12,4 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-ALTER TABLE rule_type DROP COLUMN evaluation_failure_message;
+ALTER TABLE rule_type DROP COLUMN short_failure_message;

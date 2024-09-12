@@ -218,13 +218,13 @@ func TestRuleTypeService(t *testing.T) {
 		},
 		{
 			Name:       "CreateRuleType with EvaluationFailureMessage",
-			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(evaluationFailureMessage)),
+			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(shortFailureMessage)),
 			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateWithEvaluationFailureMessage),
 			TestMethod: create,
 		},
 		{
 			Name:       "UpdateRuleType with EvaluationFailureMessage",
-			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(evaluationFailureMessage)),
+			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(shortFailureMessage)),
 			DBSetup:    dbf.NewDBMock(withSuccessfulGet, withSuccessfulUpdateWithEvaluationFailureMessage),
 			TestMethod: update,
 		},
@@ -284,7 +284,7 @@ func TestRuleTypeService(t *testing.T) {
 					// By default this should be the name
 					require.Equal(t, scenario.RuleType.Name, res.DisplayName)
 					require.Equal(t, scenario.RuleType.Severity.Value, res.Severity.Value)
-					require.Equal(t, scenario.RuleType.EvaluationFailureMessage, res.EvaluationFailureMessage)
+					require.Equal(t, scenario.RuleType.ShortFailureMessage, res.ShortFailureMessage)
 				}
 			} else {
 				require.Nil(t, res)
@@ -300,10 +300,10 @@ const (
 	create method = iota
 	update
 	upsert
-	ruleName                 = "rule_type"
-	namespacedRuleName       = "namespace/rule_type"
-	description              = "this is my awesome rule"
-	evaluationFailureMessage = "Custom failure message"
+	ruleName            = "rule_type"
+	namespacedRuleName  = "namespace/rule_type"
+	description         = "this is my awesome rule"
+	shortFailureMessage = "Custom failure message"
 )
 
 var (
@@ -315,7 +315,7 @@ var (
 	namespacedOldRuleType               = newDBRuleType("low", subscriptionID, "")
 	expectation                         = newDBRuleType("high", uuid.Nil, "")
 	namespacedExpectation               = newDBRuleType("high", subscriptionID, "")
-	expectationEvaluationFailureMessage = newDBRuleType("high", uuid.Nil, evaluationFailureMessage)
+	expectationEvaluationFailureMessage = newDBRuleType("high", uuid.Nil, shortFailureMessage)
 	incompatibleSchema                  = &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"required": {
@@ -350,7 +350,7 @@ func withBasicStructure(ruleType *pb.RuleType) {
 
 func withEvaluationFailureMessage(message string) func(ruleType *pb.RuleType) {
 	return func(ruleType *pb.RuleType) {
-		ruleType.EvaluationFailureMessage = message
+		ruleType.ShortFailureMessage = message
 	}
 }
 
@@ -450,12 +450,12 @@ func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID, failureMessag
 		failureMessage = "Rule evaluation failed"
 	}
 	return db.RuleType{
-		ID:                       ruleTypeID,
-		Name:                     name,
-		Definition:               []byte(`{}`),
-		SeverityValue:            severity,
-		Description:              description,
-		SubscriptionID:           uuid.NullUUID{Valid: subscriptionID != uuid.Nil, UUID: subscriptionID},
-		EvaluationFailureMessage: failureMessage,
+		ID:                  ruleTypeID,
+		Name:                name,
+		Definition:          []byte(`{}`),
+		SeverityValue:       severity,
+		Description:         description,
+		SubscriptionID:      uuid.NullUUID{Valid: subscriptionID != uuid.Nil, UUID: subscriptionID},
+		ShortFailureMessage: failureMessage,
 	}
 }

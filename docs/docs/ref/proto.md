@@ -2276,7 +2276,7 @@ The version is assumed from the folder's version.
 | id | <TypeLink type="string">string</TypeLink> | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule type. |
 | display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the rule type. |
-| evaluation_failure_message | <TypeLink type="string">string</TypeLink> |  | evaluation_failure_message is the message to display when the evaluation fails. |
+| short_failure_message | <TypeLink type="string">string</TypeLink> |  | short_failure_message is the message to display when the evaluation fails. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule is evaluated. |
 | def | <TypeLink type="minder-v1-RuleType-Definition">RuleType.Definition</TypeLink> |  | def is the definition of the rule type. |
 | description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |

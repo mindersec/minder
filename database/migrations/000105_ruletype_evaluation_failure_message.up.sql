@@ -12,6 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- Adds a `evaluation_failure_message` column to the `rule_type` table. The failure message
+-- Adds a `short_failure_message` column to the `rule_type` table. The failure message
 -- is displayed to the user when a rule evaluation fails.
-ALTER TABLE rule_type ADD COLUMN evaluation_failure_message TEXT NOT NULL DEFAULT '';
+ALTER TABLE rule_type ADD COLUMN short_failure_message TEXT NOT NULL DEFAULT '';

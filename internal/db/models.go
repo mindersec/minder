@@ -719,21 +719,21 @@ type RuleInstance struct {
 }
 
 type RuleType struct {
-	ID                       uuid.UUID       `json:"id"`
-	Name                     string          `json:"name"`
-	Provider                 sql.NullString  `json:"provider"`
-	ProjectID                uuid.UUID       `json:"project_id"`
-	Description              string          `json:"description"`
-	Guidance                 string          `json:"guidance"`
-	Definition               json.RawMessage `json:"definition"`
-	CreatedAt                time.Time       `json:"created_at"`
-	UpdatedAt                time.Time       `json:"updated_at"`
-	SeverityValue            Severity        `json:"severity_value"`
-	ProviderID               uuid.NullUUID   `json:"provider_id"`
-	SubscriptionID           uuid.NullUUID   `json:"subscription_id"`
-	DisplayName              string          `json:"display_name"`
-	ReleasePhase             ReleaseStatus   `json:"release_phase"`
-	EvaluationFailureMessage string          `json:"evaluation_failure_message"`
+	ID                  uuid.UUID       `json:"id"`
+	Name                string          `json:"name"`
+	Provider            sql.NullString  `json:"provider"`
+	ProjectID           uuid.UUID       `json:"project_id"`
+	Description         string          `json:"description"`
+	Guidance            string          `json:"guidance"`
+	Definition          json.RawMessage `json:"definition"`
+	CreatedAt           time.Time       `json:"created_at"`
+	UpdatedAt           time.Time       `json:"updated_at"`
+	SeverityValue       Severity        `json:"severity_value"`
+	ProviderID          uuid.NullUUID   `json:"provider_id"`
+	SubscriptionID      uuid.NullUUID   `json:"subscription_id"`
+	DisplayName         string          `json:"display_name"`
+	ReleasePhase        ReleaseStatus   `json:"release_phase"`
+	ShortFailureMessage string          `json:"short_failure_message"`
 }
 
 type SessionStore struct {

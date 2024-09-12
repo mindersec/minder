@@ -63,10 +63,10 @@ func RuleTypePBFromDB(rt *db.RuleType) (*minderv1.RuleType, error) {
 	// TODO: (2024/03/28) this is for compatibility with old CLI versions that expect provider, remove this eventually
 	noProvider := ""
 	return &minderv1.RuleType{
-		Id:                       &id,
-		Name:                     rt.Name,
-		DisplayName:              displayName,
-		EvaluationFailureMessage: rt.EvaluationFailureMessage,
+		Id:                  &id,
+		Name:                rt.Name,
+		DisplayName:         displayName,
+		ShortFailureMessage: rt.ShortFailureMessage,
 		Context: &minderv1.Context{
 			Provider: &noProvider,
 			Project:  &project,

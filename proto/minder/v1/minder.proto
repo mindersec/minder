@@ -1818,8 +1818,8 @@ message RuleType {
     // display_name is the display name of the rule type.
     string display_name = 8;
 
-    // evaluation_failure_message is the message to display when the evaluation fails.
-    string evaluation_failure_message = 10;
+    // short_failure_message is the message to display when the evaluation fails.
+    string short_failure_message = 10;
 
     // context is the context in which the rule is evaluated.
     Context context = 3;

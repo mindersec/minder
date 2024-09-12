@@ -113,7 +113,7 @@ func TestSeverity_UnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestRuleType_WithDefaultEvaluationFailureMessage(t *testing.T) {
+func TestRuleType_WithDefaultShortFailureMessage(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -129,12 +129,12 @@ func TestRuleType_WithDefaultEvaluationFailureMessage(t *testing.T) {
 		{
 			name: "empty EvaluationFailureMessage",
 			r:    &minderv1.RuleType{},
-			want: &minderv1.RuleType{EvaluationFailureMessage: "Rule evaluation failed"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Rule evaluation failed"},
 		},
 		{
 			name: "non-empty EvaluationFailureMessage",
-			r:    &minderv1.RuleType{EvaluationFailureMessage: "Custom message"},
-			want: &minderv1.RuleType{EvaluationFailureMessage: "Custom message"},
+			r:    &minderv1.RuleType{ShortFailureMessage: "Custom message"},
+			want: &minderv1.RuleType{ShortFailureMessage: "Custom message"},
 		},
 	}
 	for _, tt := range tests {
@@ -143,7 +143,7 @@ func TestRuleType_WithDefaultEvaluationFailureMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := tt.r.WithDefaultEvaluationFailureMessage()
+			got := tt.r.WithDefaultShortFailureMessage()
 			assert.Equal(t, tt.want, got, "expected %v, got %v", tt.want, got)
 		})
 	}
