@@ -248,7 +248,8 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			}
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop, qtx)
+				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop,
+					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
@@ -397,7 +398,8 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceAllProperties(ctx, ent.ID, props, qtx)
+				return propSvc.ReplaceAllProperties(ctx, ent.ID, props,
+					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
@@ -587,7 +589,8 @@ func TestPropertiesService_RetrieveProperty(t *testing.T) {
 			getByProps, err := properties.NewProperties(propSearch)
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveProperty(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName)
+			gotProps, err := propSvc.RetrieveProperty(
+				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName, nil)
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)
@@ -803,7 +806,9 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 			getByProps, err := properties.NewProperties(tt.lookupProps)
 			require.NoError(t, err)
 
-			gotProps, err := propSvc.RetrieveAllProperties(ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tctx.testQueries)
+			gotProps, err := propSvc.RetrieveAllProperties(
+				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType,
+				ReadBuilder().WithStoreOrTransaction(tctx.testQueries))
 
 			if tt.expectErr != "" {
 				require.Contains(t, err.Error(), tt.expectErr)

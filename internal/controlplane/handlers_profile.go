@@ -461,7 +461,8 @@ func (s *Server) getRuleEvalStatus(
 		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 	}
 
-	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager, s.store)
+	err = s.props.RetrieveAllPropertiesForEntity(ctx, efp, s.providerManager,
+		propSvc.ReadBuilder().WithStoreOrTransaction(s.store).TolerateStaleData())
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties for entity: %w", err)
 	}

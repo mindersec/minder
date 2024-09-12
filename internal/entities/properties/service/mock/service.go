@@ -14,9 +14,9 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
 	models "github.com/stacklok/minder/internal/entities/models"
 	properties "github.com/stacklok/minder/internal/entities/properties"
+	service "github.com/stacklok/minder/internal/entities/properties/service"
 	manager "github.com/stacklok/minder/internal/providers/manager"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v10 "github.com/stacklok/minder/pkg/providers/v1"
@@ -47,102 +47,102 @@ func (m *MockPropertiesService) EXPECT() *MockPropertiesServiceMockRecorder {
 }
 
 // EntityWithProperties mocks base method.
-func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID uuid.UUID, qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
+func (m *MockPropertiesService) EntityWithProperties(ctx context.Context, entityID uuid.UUID, opts *service.CallOptions) (*models.EntityWithProperties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, qtx)
+	ret := m.ctrl.Call(m, "EntityWithProperties", ctx, entityID, opts)
 	ret0, _ := ret[0].(*models.EntityWithProperties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EntityWithProperties indicates an expected call of EntityWithProperties.
-func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) EntityWithProperties(ctx, entityID, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithProperties", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithProperties), ctx, entityID, opts)
 }
 
 // ReplaceAllProperties mocks base method.
-func (m *MockPropertiesService) ReplaceAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error {
+func (m *MockPropertiesService) ReplaceAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *service.CallOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReplaceAllProperties", ctx, entityID, props, qtx)
+	ret := m.ctrl.Call(m, "ReplaceAllProperties", ctx, entityID, props, opts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ReplaceAllProperties indicates an expected call of ReplaceAllProperties.
-func (mr *MockPropertiesServiceMockRecorder) ReplaceAllProperties(ctx, entityID, props, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) ReplaceAllProperties(ctx, entityID, props, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).ReplaceAllProperties), ctx, entityID, props, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).ReplaceAllProperties), ctx, entityID, props, opts)
 }
 
 // ReplaceProperty mocks base method.
-func (m *MockPropertiesService) ReplaceProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, qtx db.ExtendQuerier) error {
+func (m *MockPropertiesService) ReplaceProperty(ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, opts *service.CallOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReplaceProperty", ctx, entityID, key, prop, qtx)
+	ret := m.ctrl.Call(m, "ReplaceProperty", ctx, entityID, key, prop, opts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ReplaceProperty indicates an expected call of ReplaceProperty.
-func (mr *MockPropertiesServiceMockRecorder) ReplaceProperty(ctx, entityID, key, prop, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) ReplaceProperty(ctx, entityID, key, prop, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceProperty", reflect.TypeOf((*MockPropertiesService)(nil).ReplaceProperty), ctx, entityID, key, prop, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplaceProperty", reflect.TypeOf((*MockPropertiesService)(nil).ReplaceProperty), ctx, entityID, key, prop, opts)
 }
 
 // RetrieveAllProperties mocks base method.
-func (m *MockPropertiesService) RetrieveAllProperties(ctx context.Context, provider v10.Provider, projectId, providerID uuid.UUID, lookupProperties *properties.Properties, entType v1.Entity, qtx db.ExtendQuerier) (*properties.Properties, error) {
+func (m *MockPropertiesService) RetrieveAllProperties(ctx context.Context, provider v10.Provider, projectId, providerID uuid.UUID, lookupProperties *properties.Properties, entType v1.Entity, opts *service.ReadOptions) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveAllProperties", ctx, provider, projectId, providerID, lookupProperties, entType, qtx)
+	ret := m.ctrl.Call(m, "RetrieveAllProperties", ctx, provider, projectId, providerID, lookupProperties, entType, opts)
 	ret0, _ := ret[0].(*properties.Properties)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RetrieveAllProperties indicates an expected call of RetrieveAllProperties.
-func (mr *MockPropertiesServiceMockRecorder) RetrieveAllProperties(ctx, provider, projectId, providerID, lookupProperties, entType, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) RetrieveAllProperties(ctx, provider, projectId, providerID, lookupProperties, entType, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllProperties), ctx, provider, projectId, providerID, lookupProperties, entType, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllProperties), ctx, provider, projectId, providerID, lookupProperties, entType, opts)
 }
 
 // RetrieveAllPropertiesForEntity mocks base method.
-func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager, qtx db.ExtendQuerier) error {
+func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties, provMan manager.ProviderManager, opts *service.ReadOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveAllPropertiesForEntity", ctx, efp, provMan, qtx)
+	ret := m.ctrl.Call(m, "RetrieveAllPropertiesForEntity", ctx, efp, provMan, opts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // RetrieveAllPropertiesForEntity indicates an expected call of RetrieveAllPropertiesForEntity.
-func (mr *MockPropertiesServiceMockRecorder) RetrieveAllPropertiesForEntity(ctx, efp, provMan, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) RetrieveAllPropertiesForEntity(ctx, efp, provMan, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllPropertiesForEntity", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllPropertiesForEntity), ctx, efp, provMan, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllPropertiesForEntity", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllPropertiesForEntity), ctx, efp, provMan, opts)
 }
 
 // RetrieveProperty mocks base method.
-func (m *MockPropertiesService) RetrieveProperty(ctx context.Context, provider v10.Provider, projectId, providerID uuid.UUID, lookupProperties *properties.Properties, entType v1.Entity, key string) (*properties.Property, error) {
+func (m *MockPropertiesService) RetrieveProperty(ctx context.Context, provider v10.Provider, projectId, providerID uuid.UUID, lookupProperties *properties.Properties, entType v1.Entity, key string, opts *service.ReadOptions) (*properties.Property, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveProperty", ctx, provider, projectId, providerID, lookupProperties, entType, key)
+	ret := m.ctrl.Call(m, "RetrieveProperty", ctx, provider, projectId, providerID, lookupProperties, entType, key, opts)
 	ret0, _ := ret[0].(*properties.Property)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RetrieveProperty indicates an expected call of RetrieveProperty.
-func (mr *MockPropertiesServiceMockRecorder) RetrieveProperty(ctx, provider, projectId, providerID, lookupProperties, entType, key any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) RetrieveProperty(ctx, provider, projectId, providerID, lookupProperties, entType, key, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveProperty", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveProperty), ctx, provider, projectId, providerID, lookupProperties, entType, key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveProperty", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveProperty), ctx, provider, projectId, providerID, lookupProperties, entType, key, opts)
 }
 
 // SaveAllProperties mocks base method.
-func (m *MockPropertiesService) SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier) error {
+func (m *MockPropertiesService) SaveAllProperties(ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *service.CallOptions) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveAllProperties", ctx, entityID, props, qtx)
+	ret := m.ctrl.Call(m, "SaveAllProperties", ctx, entityID, props, opts)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SaveAllProperties indicates an expected call of SaveAllProperties.
-func (mr *MockPropertiesServiceMockRecorder) SaveAllProperties(ctx, entityID, props, qtx any) *gomock.Call {
+func (mr *MockPropertiesServiceMockRecorder) SaveAllProperties(ctx, entityID, props, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).SaveAllProperties), ctx, entityID, props, qtx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).SaveAllProperties), ctx, entityID, props, opts)
 }

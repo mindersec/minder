@@ -36,8 +36,9 @@ import (
 func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	ctx context.Context, provider provifv1.Provider, entID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
-	qtx db.ExtendQuerier, l zerolog.Logger,
+	opts *ReadOptions, l zerolog.Logger,
 ) (*properties.Properties, error) {
+	qtx := ps.getStoreOrTransaction(opts)
 
 	var dbProps []db.Property
 	if entID != uuid.Nil {
@@ -61,7 +62,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert properties: %w", err)
 		}
-		if ps.areDatabasePropertiesValid(dbProps) {
+		if ps.areDatabasePropertiesValid(dbProps, opts) {
 			l.Info().Msg("properties are valid, skipping provider fetch")
 			return modelProps, nil
 		}
@@ -84,7 +85,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	}
 
 	// save updated properties to db, thus making sure that the updatedAt are bumped
-	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, qtx)
+	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, opts.getPropertiesServiceCallOptions())
 	if err != nil {
 		return nil, fmt.Errorf("failed to update properties: %w", err)
 	}
@@ -93,7 +94,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	return refreshedProps, nil
 }
 
-func (ps *propertiesService) getEntityIdByProperties(
+func getEntityIdByProperties(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	props *properties.Properties, entType minderv1.Entity,
@@ -101,7 +102,7 @@ func (ps *propertiesService) getEntityIdByProperties(
 ) (uuid.UUID, error) {
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID)
 	if upstreamID != nil {
-		ent, getErr := ps.getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType, qtx)
+		ent, getErr := getEntityIdByUpstreamID(ctx, projectId, providerID, upstreamID.GetString(), entType, qtx)
 		if getErr == nil {
 			return ent, nil
 		} else if !errors.Is(getErr, ErrEntityNotFound) {
@@ -114,14 +115,14 @@ func (ps *propertiesService) getEntityIdByProperties(
 	// Fall back to name if no upstream ID is provided
 	name := props.GetProperty(properties.PropertyName)
 	if name != nil {
-		return ps.getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType, qtx)
+		return getEntityIdByName(ctx, projectId, providerID, name.GetString(), entType, qtx)
 	}
 
 	// returning nil ID and nil error would make us just go to the provider. Slow, but we'd continue.
 	return uuid.Nil, nil
 }
 
-func (_ *propertiesService) getEntityIdByName(
+func getEntityIdByName(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	name string, entType minderv1.Entity,
@@ -142,7 +143,7 @@ func (_ *propertiesService) getEntityIdByName(
 	return ent.ID, nil
 }
 
-func (_ *propertiesService) getEntityIdByUpstreamID(
+func getEntityIdByUpstreamID(
 	ctx context.Context, projectId uuid.UUID,
 	providerID uuid.UUID,
 	upstreamID string, entType minderv1.Entity,
@@ -173,20 +174,21 @@ func (_ *propertiesService) getEntityIdByUpstreamID(
 	return uuid.Nil, ErrEntityNotFound
 }
 
-func (ps *propertiesService) areDatabasePropertiesValid(dbProps []db.Property) bool {
+func (ps *propertiesService) areDatabasePropertiesValid(
+	dbProps []db.Property, opts *ReadOptions) bool {
 	// if the all the properties are to be valid, neither must be older than
 	// the cache timeout
 	for _, prop := range dbProps {
-		if !ps.isDatabasePropertyValid(prop) {
+		if !ps.isDatabasePropertyValid(prop, opts) {
 			return false
 		}
 	}
 	return true
 }
 
-func (ps *propertiesService) isDatabasePropertyValid(dbProp db.Property) bool {
-	if ps.entityTimeout == bypassCacheTimeout {
-		// this is mostly for testing
+func (ps *propertiesService) isDatabasePropertyValid(
+	dbProp db.Property, opts *ReadOptions) bool {
+	if ps.entityTimeout == bypassCacheTimeout || opts.canTolerateStaleData() {
 		return false
 	}
 	return time.Since(dbProp.UpdatedAt) < ps.entityTimeout
