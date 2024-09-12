@@ -18,6 +18,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -447,7 +448,7 @@ func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID, failureMessag
 		name = namespacedRuleName
 	}
 	if failureMessage == "" {
-		failureMessage = "Rule evaluation failed"
+		failureMessage = fmt.Sprintf("Rule %s evaluation failed", name)
 	}
 	return db.RuleType{
 		ID:                  ruleTypeID,
