@@ -23,6 +23,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // Do implements the REST provider interface
@@ -75,4 +77,40 @@ func (c *gitlabClient) NewRequest(method, requestUrl string, body any) (*http.Re
 	c.cred.SetAuthorizationHeader(req)
 
 	return req, nil
+}
+
+type genericRESTClient interface {
+	// Do sends an HTTP request and returns an HTTP response
+	Do(ctx context.Context, req *http.Request) (*http.Response, error)
+	NewRequest(method, requestUrl string, body any) (*http.Request, error)
+}
+
+// NOTE: We're not using github.com/xanzy/go-gitlab to do the actual
+// request here because of the way they form authentication for requests.
+// It would be ideal to use it, so we should consider contributing and making
+// that part more pluggable.
+func glREST[T any](ctx context.Context, cli genericRESTClient, method, requestUrl string, body any, out T) error {
+	req, err := cli.NewRequest(method, requestUrl, body)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := cli.Do(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to get projects: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			return provifv1.ErrEntityNotFound
+		}
+		return fmt.Errorf("failed to get projects: %s", resp.Status)
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return nil
 }

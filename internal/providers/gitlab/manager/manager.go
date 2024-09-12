@@ -74,10 +74,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 		return nil, fmt.Errorf("error parsing gitlab config: %w", err)
 	}
 
-	cli, err := gitlab.New(
-		creds,
-		cfg,
-	)
+	cli, err := gitlab.New(creds, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating gitlab client: %w", err)
 	}

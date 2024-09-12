@@ -20,15 +20,23 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
-	// RepoPropertyGroupName represents the gitlab group
-	RepoPropertyGroupName = "gitlab/group_name"
 	// RepoPropertyProjectName represents the gitlab project
 	RepoPropertyProjectName = "gitlab/project_name"
+	// RepoPropertyDefaultBranch represents the gitlab default branch
+	RepoPropertyDefaultBranch = "gitlab/default_branch"
+	// RepoPropertyNamespace represents the gitlab repo namespace
+	RepoPropertyNamespace = "gitlab/namespace"
+	// RepoPropertyLicense represents the gitlab repo license
+	RepoPropertyLicense = "gitlab/license"
+	// RepoPropertyCloneURL represents the gitlab repo clone URL
+	RepoPropertyCloneURL = "gitlab/clone_url"
 )
 
 // FetchAllProperties implements the provider interface
@@ -59,7 +67,7 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
 
-	groupName, err := getStringProp(props, RepoPropertyGroupName)
+	groupName, err := getStringProp(props, RepoPropertyNamespace)
 	if err != nil {
 		return "", err
 	}
@@ -70,6 +78,17 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 	}
 
 	return formatRepoName(groupName, projectName), nil
+}
+
+// PropertiesToProtoMessage implements the ProtoMessageConverter interface
+func (c *gitlabClient) PropertiesToProtoMessage(
+	entType minderv1.Entity, props *properties.Properties,
+) (protoreflect.ProtoMessage, error) {
+	if !c.SupportsEntity(entType) {
+		return nil, fmt.Errorf("entity type %s is not supported by the gitlab provider", entType)
+	}
+
+	return repoV1FromProperties(props)
 }
 
 func getStringProp(props *properties.Properties, key string) (string, error) {

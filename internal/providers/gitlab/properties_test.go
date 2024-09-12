@@ -57,7 +57,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			args: args{
 				entityType: minderv1.Entity_ENTITY_REPOSITORIES,
 				props: MustNewProperties(map[string]any{
-					RepoPropertyGroupName:   "group",
+					RepoPropertyNamespace:   "group",
 					RepoPropertyProjectName: "project",
 				}),
 			},
@@ -69,7 +69,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			args: args{
 				entityType: minderv1.Entity_ENTITY_REPOSITORIES,
 				props: MustNewProperties(map[string]any{
-					RepoPropertyGroupName: "group",
+					RepoPropertyNamespace: "group",
 				}),
 			},
 			want:    "",
@@ -164,6 +164,9 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 					Visibility:        gitlab.PrivateVisibility,
 					Archived:          false,
 					ForkedFromProject: nil,
+					Namespace: &gitlab.ProjectNamespace{
+						Path: "group",
+					},
 				}
 
 				w.Header().Set("Content-Type", "application/json")
