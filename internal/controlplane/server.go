@@ -367,7 +367,7 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	}
 
 	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/github", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/webhook/github/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
 	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
 	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)
