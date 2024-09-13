@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
+	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -67,17 +69,19 @@ func (c *GitHub) RegisterEntity(
 
 	// generate unique URL for this webhook
 	// TODO: we should change this to use a per-provider configuration.
-	baseURL := c.webhookConfig.ExternalWebhookURL
-	hookUUID := uuid.New().String()
-	webhookURL, err := url.JoinPath(baseURL, hookUUID)
+	ewurl := c.webhookConfig.ExternalWebhookURL
+	parsedBaseURL, err := url.Parse(ewurl)
 	if err != nil {
-		return nil, fmt.Errorf("error joining webhook URL: %w", err)
+		return nil, errors.New("error parsing webhook base URL. Please check the configuration")
 	}
 
-	parsedWebhookURL, err := url.Parse(webhookURL)
+	baseURL, err := ensureGitHubPathInWebhook(parsedBaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing webhook URL: %w", err)
+		return nil, fmt.Errorf("error ensuring github path in webhook URL: %w", err)
 	}
+
+	hookUUID := uuid.New().String()
+	webhookURL := baseURL.JoinPath(hookUUID)
 
 	repoNameP := props.GetProperty(ghprop.RepoPropertyName)
 	if repoNameP == nil {
@@ -93,7 +97,7 @@ func (c *GitHub) RegisterEntity(
 	repoOwner := repoOwnerP.GetString()
 
 	// If we have an existing hook for same repo, delete it
-	if err := c.cleanupStaleHooks(ctx, repoOwner, repoName, parsedWebhookURL.Host); err != nil {
+	if err := c.cleanupStaleHooks(ctx, repoOwner, repoName, webhookURL.Host); err != nil {
 		return nil, fmt.Errorf("error cleaning up stale hooks: %w", err)
 	}
 
@@ -107,7 +111,7 @@ func (c *GitHub) RegisterEntity(
 	jsonCT := "json"
 	newHook := &github.Hook{
 		Config: &github.HookConfig{
-			URL:         &webhookURL,
+			URL:         ptr.Ptr(webhookURL.String()),
 			ContentType: &jsonCT,
 			Secret:      &secret,
 		},
@@ -217,4 +221,23 @@ func (c *GitHub) PropertiesToProtoMessage(
 	}
 
 	return nil, fmt.Errorf("conversion of entity type %s is not handled by the github provider", entType)
+}
+
+// While we migrate to per-provider webhook URLs, we need to ensure that this webhook URL
+// has `github` at the end of the path. This logic will later be removed in favor of
+// per-provider webhook URL configuration.
+// Note that this also needs to handle the case where `github` is already in the path.
+func ensureGitHubPathInWebhook(u *url.URL) (*url.URL, error) {
+	if u == nil {
+		return nil, errors.New("url is nil")
+	}
+
+	path := u.Path
+
+	// If the path already contains `github`, we don't need to do anything
+	if path == "github" || strings.HasSuffix(path, "/github") || strings.HasSuffix(path, "/github/") {
+		return u, nil
+	}
+
+	return u.JoinPath("github"), nil
 }

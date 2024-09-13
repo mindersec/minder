@@ -12,6 +12,8 @@ package mock_manager
 import (
 	context "context"
 	json "encoding/json"
+	iter "iter"
+	http "net/http"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -133,6 +135,20 @@ func (mr *MockProviderManagerMockRecorder) InstantiateFromNameProject(ctx, name,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantiateFromNameProject", reflect.TypeOf((*MockProviderManager)(nil).InstantiateFromNameProject), ctx, name, projectID)
 }
 
+// IterateWebhookHandlers mocks base method.
+func (m *MockProviderManager) IterateWebhookHandlers() iter.Seq2[string, http.Handler] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IterateWebhookHandlers")
+	ret0, _ := ret[0].(iter.Seq2[string, http.Handler])
+	return ret0
+}
+
+// IterateWebhookHandlers indicates an expected call of IterateWebhookHandlers.
+func (mr *MockProviderManagerMockRecorder) IterateWebhookHandlers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateWebhookHandlers", reflect.TypeOf((*MockProviderManager)(nil).IterateWebhookHandlers))
+}
+
 // PatchProviderConfig mocks base method.
 func (m *MockProviderManager) PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error {
 	m.ctrl.T.Helper()
@@ -211,6 +227,20 @@ func (m *MockProviderClassManager) GetSupportedClasses() []db.ProviderClass {
 func (mr *MockProviderClassManagerMockRecorder) GetSupportedClasses() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedClasses", reflect.TypeOf((*MockProviderClassManager)(nil).GetSupportedClasses))
+}
+
+// GetWebhookHandler mocks base method.
+func (m *MockProviderClassManager) GetWebhookHandler() http.Handler {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWebhookHandler")
+	ret0, _ := ret[0].(http.Handler)
+	return ret0
+}
+
+// GetWebhookHandler indicates an expected call of GetWebhookHandler.
+func (mr *MockProviderClassManagerMockRecorder) GetWebhookHandler() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWebhookHandler", reflect.TypeOf((*MockProviderClassManager)(nil).GetWebhookHandler))
 }
 
 // MarshallConfig mocks base method.
