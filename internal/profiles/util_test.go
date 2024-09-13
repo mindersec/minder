@@ -725,7 +725,7 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 			expected:             "my_profile",
 		},
 		{
-			name: "Derived profile name does exist in the current project",
+			name: "Derived profile name that does exist in the current project",
 			profile: &minderv1.Profile{
 				Name:        "",
 				DisplayName: "My profile",
@@ -734,13 +734,42 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 			expected:             "my_profile-1",
 		},
 		{
-			name: "Derived profile name does exist in the current project",
+			name: "Derived profile name  which does exist in the current project, when adding a counter to the name",
 			profile: &minderv1.Profile{
 				Name:        "",
 				DisplayName: "My profile",
 			},
 			existingProfileNames: []string{"other_profile", "my_profile", "my_profile-1"},
 			expected:             "my_profile-2",
+		},
+		{
+			name: "Derived profile name for the edge case: name exceeds 63 characters with single digit counter",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
+			},
+			existingProfileNames: []string{"this_is_a_very_long_display_name_that_will_exceed_the_limit_when"},
+			expected:             "this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
+		},
+		{
+			name: "Derived profile name for the edge case: name exceeds 63 characters with double digit counter",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
+			},
+			existingProfileNames: []string{
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_when",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-2",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-3",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-4",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-5",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-6",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-7",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-8",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-9",
+			},
+			expected: "this_is_a_very_long_display_name_that_will_exceed_the_limit_-10",
 		},
 	}
 

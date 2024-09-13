@@ -38,6 +38,8 @@ var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
 
 var multipleSpacesRegex = regexp.MustCompile(`\s{2,}`)
 
+const profileNameMaxLength = 63
+
 // RuleValidationError is used to report errors from evaluating a rule, including
 // attribution of the particular error encountered.
 type RuleValidationError struct {
@@ -328,6 +330,10 @@ func DeriveProfileNameFromDisplayName(
 	// check if the current project already has a profile with that name, then add a counter
 	for strings.Contains(strings.Join(existingProfileNames, " "), derivedName) {
 		derivedName = fmt.Sprintf("%s-%d", name, counter)
+		if len(derivedName) > profileNameMaxLength {
+			nameLength := profileNameMaxLength - len(fmt.Sprintf("-%d", counter))
+			derivedName = fmt.Sprintf("%s-%d", name[:nameLength], counter)
+		}
 		counter++
 	}
 	return derivedName
@@ -353,7 +359,7 @@ func cleanDisplayName(displayName string) string {
 	displayName = strings.ToLower(displayName)
 
 	// Trim to a maximum length of 63 characters
-	if len(displayName) > 63 {
+	if len(displayName) > profileNameMaxLength {
 		displayName = displayName[:63]
 	}
 
