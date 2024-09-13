@@ -188,8 +188,8 @@ func (ps *propertiesService) areDatabasePropertiesValid(
 
 func (ps *propertiesService) isDatabasePropertyValid(
 	dbProp db.Property, opts *ReadOptions) bool {
-	if ps.entityTimeout == bypassCacheTimeout || opts.canTolerateStaleData() {
+	if ps.entityTimeout == bypassCacheTimeout {
 		return false
 	}
-	return time.Since(dbProp.UpdatedAt) < ps.entityTimeout
+	return time.Since(dbProp.UpdatedAt) < ps.entityTimeout || opts.canTolerateStaleData()
 }
