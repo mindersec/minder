@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	// ignore this linter warning - this is pre-existing code, and I do not
 	// want to change the logging library it uses at this time.
 	// nolint:depguard
