@@ -21,6 +21,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
@@ -31,6 +33,12 @@ import (
 	"github.com/stacklok/minder/internal/util/jsonyaml"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
+
+var multipleSpacesRegex = regexp.MustCompile(`\s{2,}`)
+
+const profileNameMaxLength = 63
 
 // RuleValidationError is used to report errors from evaluating a rule, including
 // attribution of the particular error encountered.
@@ -297,6 +305,65 @@ func MergeDatabaseGetByNameIntoProfiles(ppl []db.GetProfileByProjectAndNameRow) 
 	}
 
 	return profiles
+}
+
+// DeriveProfileNameFromDisplayName generates a unique profile name based on the display name and existing profiles.
+func DeriveProfileNameFromDisplayName(
+	profile *pb.Profile,
+	existingProfileNames []string,
+) (name string) {
+
+	displayName := profile.GetDisplayName()
+	name = profile.GetName()
+
+	if displayName != "" && name == "" {
+		// when a display name is provided, but no profile name
+		// then the profile name is created and saved based on the profile display name
+		name = cleanDisplayName(displayName)
+	}
+	// when both a display name and a profile name are provided
+	// then the profile name from the incoming request is used as the profile name
+
+	derivedName := name
+	counter := 1
+
+	// check if the current project already has a profile with that name, then add a counter
+	for strings.Contains(strings.Join(existingProfileNames, " "), derivedName) {
+		derivedName = fmt.Sprintf("%s-%d", name, counter)
+		if len(derivedName) > profileNameMaxLength {
+			nameLength := profileNameMaxLength - len(fmt.Sprintf("-%d", counter))
+			derivedName = fmt.Sprintf("%s-%d", name[:nameLength], counter)
+		}
+		counter++
+	}
+	return derivedName
+
+}
+
+// The profile name should be derived from the profile display name given the following logic
+func cleanDisplayName(displayName string) string {
+
+	// Trim leading and trailing whitespace
+	displayName = strings.TrimSpace(displayName)
+
+	// Remove non-alphanumeric characters
+	displayName = nonAlphanumericRegex.ReplaceAllString(displayName, "")
+
+	// Replace multiple spaces with a single space
+	displayName = multipleSpacesRegex.ReplaceAllString(displayName, " ")
+
+	// Replace all whitespace with underscores
+	displayName = strings.ReplaceAll(displayName, " ", "_")
+
+	// Convert to lower-case
+	displayName = strings.ToLower(displayName)
+
+	// Trim to a maximum length of 63 characters
+	if len(displayName) > profileNameMaxLength {
+		displayName = displayName[:profileNameMaxLength]
+	}
+
+	return displayName
 }
 
 func dbProfileToPB(p db.Profile) *pb.Profile {

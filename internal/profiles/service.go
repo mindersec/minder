@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	// ignore this linter warning - this is pre-existing code, and I do not
 	// want to change the logging library it uses at this time.
 	// nolint:depguard
@@ -129,6 +130,23 @@ func (p *profileService) CreateProfile(
 	PopulateRuleNames(profile, rulesInProf)
 
 	displayName := profile.GetDisplayName()
+
+	listParams := db.ListProfilesByProjectIDAndLabelParams{
+		ProjectID: projectID,
+	}
+
+	existingProfiles, err := qtx.ListProfilesByProjectIDAndLabel(ctx, listParams)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
+	}
+
+	profileMap := MergeDatabaseListIntoProfiles(existingProfiles)
+
+	existingProfileNames := make([]string, 0, len(profileMap))
+
+	// Derive the profile name from the profile display name
+	name := DeriveProfileNameFromDisplayName(profile, existingProfileNames)
+
 	// if empty use the name
 	if displayName == "" {
 		displayName = profile.GetName()
@@ -136,7 +154,7 @@ func (p *profileService) CreateProfile(
 
 	params := db.CreateProfileParams{
 		ProjectID:      projectID,
-		Name:           profile.GetName(),
+		Name:           name,
 		DisplayName:    displayName,
 		Labels:         profile.GetLabels(),
 		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
