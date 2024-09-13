@@ -360,7 +360,7 @@ func cleanDisplayName(displayName string) string {
 
 	// Trim to a maximum length of 63 characters
 	if len(displayName) > profileNameMaxLength {
-		displayName = displayName[:63]
+		displayName = displayName[:profileNameMaxLength]
 	}
 
 	return displayName
