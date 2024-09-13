@@ -534,7 +534,9 @@ func (r *repositoryService) deleteRepository(
 
 	err = client.DeregisterEntity(ctx, pb.Entity_ENTITY_REPOSITORIES, repo.Properties)
 	if err != nil {
-		return fmt.Errorf("error deleting webhook: %w", err)
+		zerolog.Ctx(ctx).Error().
+			Dict("properties", repo.Properties.ToLogDict()).
+			Err(err).Msg("error deregistering repo")
 	}
 
 	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
