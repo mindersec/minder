@@ -19,6 +19,7 @@ package gitlab
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"golang.org/x/oauth2"
@@ -37,6 +38,7 @@ const Class = "gitlab"
 var Implements = []db.ProviderType{
 	db.ProviderTypeGit,
 	db.ProviderTypeRest,
+	db.ProviderTypeRepoLister,
 }
 
 // AuthorizationFlows is the list of authorization flows that the DockerHub provider supports
@@ -48,8 +50,7 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 // Ensure that the GitLab provider implements the right interfaces
 var _ provifv1.Git = (*gitlabClient)(nil)
 var _ provifv1.REST = (*gitlabClient)(nil)
-
-// var _ provifv1.RepoLister = (*gitlabClient)(nil)
+var _ provifv1.RepoLister = (*gitlabClient)(nil)
 
 type gitlabClient struct {
 	cred      provifv1.GitLabCredential
@@ -87,6 +88,12 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitLabProviderConfig, erro
 	if err := json.Unmarshal(rawCfg, &cfg); err != nil {
 		return nil, err
 	}
+
+	if cfg.GitLab == nil {
+		// Return a default but working config
+		return &minderv1.GitLabProviderConfig{}, nil
+	}
+
 	return cfg.GitLab, nil
 }
 
@@ -123,11 +130,16 @@ func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface
-func (_ *gitlabClient) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+func (c *gitlabClient) RegisterEntity(
+	_ context.Context, entType minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {
+	if !c.SupportsEntity(entType) {
+		return nil, errors.New("unsupported entity type")
+	}
+
 	// TODO: implement
-	return nil, nil
+
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface
