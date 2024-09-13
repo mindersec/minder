@@ -19,6 +19,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"github.com/stacklok/minder/internal/entities/handlers"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -244,6 +245,10 @@ func AllInOneServerService(
 	// Register the installation manager to handle provider installation events
 	im := installations.NewInstallationManager(ghProviders)
 	evt.ConsumeEvents(im)
+
+	// Register the entity refresh manager to handle entity refresh events
+	refresh := handlers.NewRefreshEntityAndDoHandler(evt, propSvc, providerManager)
+	evt.ConsumeEvents(refresh)
 
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer

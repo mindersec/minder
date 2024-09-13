@@ -36,6 +36,12 @@ const (
 )
 
 const (
+	TopicQueueOriginatingEntityAdd    = "originating.entity.add.event"
+	TopicQueueOriginatingEntityDelete = "originating.entity.delete.event"
+	// TopicQueueGetEntityAndDelete retrieves an entity from the database and schedules it for deletion
+	TopicQueueGetEntityAndDelete = "get.entity.delete.event"
+	// TopicQueueRefreshEntityAndEvaluate is the topic for entity evaluation events using generic entities
+	TopicQueueRefreshEntityAndEvaluate = "refresh.entity.evaluate.event"
 	// TopicQueueEntityEvaluate is the topic for entity evaluation events from webhooks
 	TopicQueueEntityEvaluate = "execute.entity.event"
 	// TopicQueueEntityFlush is the topic for flushing internal webhook events
