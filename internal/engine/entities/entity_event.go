@@ -104,6 +104,15 @@ func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWr
 	return eiw
 }
 
+// WithProtoMessage sets the entity to a protobuf message
+// and sets the entity type
+func (eiw *EntityInfoWrapper) WithProtoMessage(entType minderv1.Entity, msg protoreflect.ProtoMessage) *EntityInfoWrapper {
+	eiw.Type = entType
+	eiw.Entity = msg
+
+	return eiw
+}
+
 // WithArtifact sets the entity to a versioned artifact sets the entity to a versioned artifact
 func (eiw *EntityInfoWrapper) WithArtifact(va *minderv1.Artifact) *EntityInfoWrapper {
 	eiw.Type = minderv1.Entity_ENTITY_ARTIFACTS
@@ -546,4 +555,15 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	}
 
 	return out, nil
+}
+
+// WithID sets the ID for an entity type
+func (eiw *EntityInfoWrapper) WithID(entType minderv1.Entity, id uuid.UUID) *EntityInfoWrapper {
+	key, err := getEntityMetadataKey(entType)
+	if err != nil {
+		return nil
+	}
+
+	eiw.withID(key, id.String())
+	return eiw
 }
