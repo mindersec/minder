@@ -1639,6 +1639,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | results | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> | repeated |  |
+| entities | <TypeLink type="minder-v1-RegistrableUpstreamEntityRef">RegistrableUpstreamEntityRef</TypeLink> | repeated | entities is the same list as the repositories, but it uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. |
 
 
 
@@ -2051,6 +2052,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
 | repository | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  | entity is the entity to register. This is the same as the repository field, but uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. |
 
 
 
@@ -2062,6 +2064,18 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | result | <TypeLink type="minder-v1-RegisterRepoResult">RegisterRepoResult</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RegistrableUpstreamEntityRef">RegistrableUpstreamEntityRef</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  |  |
+| registered | <TypeLink type="bool">bool</TypeLink> |  | True if the entity is already registered in Minder. |
 
 
 

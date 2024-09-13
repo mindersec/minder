@@ -1038,6 +1038,17 @@ message ListRemoteRepositoriesFromProviderRequest {
 
 message ListRemoteRepositoriesFromProviderResponse {
     repeated UpstreamRepositoryRef results = 1;
+    // entities is the same list as the repositories, but it
+    // uses the new UpstreamEntityRef message. This is what
+    // we'll migrate to eventually.
+    repeated RegistrableUpstreamEntityRef entities = 2;
+}
+
+message RegistrableUpstreamEntityRef {
+    UpstreamEntityRef entity = 1;
+
+    // True if the entity is already registered in Minder.
+    bool registered = 2;
 }
 
 message UpstreamRepositoryRef {
@@ -1081,6 +1092,10 @@ message RegisterRepositoryRequest {
     string provider = 1 [deprecated=true];
     UpstreamRepositoryRef repository = 3;
     Context context = 4;
+    // entity is the entity to register. This is the same as the repository
+    // field, but uses the new UpstreamEntityRef message. This is what we'll
+    // migrate to eventually.
+    UpstreamEntityRef entity = 5;
 
     reserved 2; // deprecated project_id
 }

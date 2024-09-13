@@ -65,11 +65,12 @@ type CoreContext struct {
 // This struct is meant to be used with providers that can push events
 // to Minder, or with providers that Minder can poll.
 type MinderEvent struct {
-	ProviderID uuid.UUID      `json:"provider_id" validate:"required"`
-	ProjectID  uuid.UUID      `json:"project_id" validate:"required"`
-	EntityType string         `json:"entity_type" validate:"required"`
-	EntityID   uuid.UUID      `json:"entity_id"`
-	Entity     map[string]any `json:"entity" validate:"required"`
+	ProviderID uuid.UUID `json:"provider_id" validate:"required"`
+	ProjectID  uuid.UUID `json:"project_id" validate:"required"`
+	EntityType string    `json:"entity_type" validate:"required"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	// TODO: This should really be using actual property keys
+	Entity map[string]any `json:"entity" validate:"required"`
 }
 
 // NewMinderEvent creates a new entity added event.

@@ -26,6 +26,7 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/stacklok/minder/database/mock"
 	"github.com/stacklok/minder/internal/config/server"
@@ -36,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github/clients"
 	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
+	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
 	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	reposvc "github.com/stacklok/minder/internal/repositories"
@@ -78,8 +80,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 				rf.WithFailedCreate(
 					errDefault,
 					projectID,
-					repoOwner,
-					repoName,
 				)),
 			ExpectedError: errDefault.Error(),
 		},
@@ -90,8 +90,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
 				reposvc.ErrPrivateRepoForbidden,
 				projectID,
-				repoOwner,
-				repoName,
 			)),
 			ExpectedError: "private repos cannot be registered in this project",
 		},
@@ -102,8 +100,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
 				reposvc.ErrArchivedRepoForbidden,
 				projectID,
-				repoOwner,
-				repoName,
 			)),
 			ExpectedError: "archived repos cannot be registered in this project",
 		},
@@ -114,8 +110,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoServiceSetup: rf.NewRepoService(rf.WithFailedCreate(
 				errDefault,
 				projectID,
-				repoOwner,
-				repoName,
 			)),
 			ExpectedError: errDefault.Error(),
 		},
@@ -125,8 +119,6 @@ func TestServer_RegisterRepository(t *testing.T) {
 			RepoName:  repoName,
 			RepoServiceSetup: rf.NewRepoService(rf.WithSuccessfulCreate(
 				projectID,
-				repoOwner,
-				repoName,
 				creationResult,
 			)),
 		},
@@ -184,7 +176,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 		RepoServiceSetup repoMockBuilder
 		GitHubSetup      githubMockBuilder
 		ProviderFails    bool
-		ExpectedResults  []*pb.UpstreamRepositoryRef
+		ExpectedResults  []*UpstreamRepoAndEntityRef
 		ExpectedError    string
 	}{
 		{
@@ -200,7 +192,7 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 					simpleDbRepository(repoName, remoteRepoId),
 				),
 			),
-			ExpectedResults: []*pb.UpstreamRepositoryRef{
+			ExpectedResults: []*UpstreamRepoAndEntityRef{
 				simpleUpstreamRepositoryRef(repoName, remoteRepoId, true),
 				simpleUpstreamRepositoryRef(repoName2, remoteRepoId2, false),
 			},
@@ -254,11 +246,23 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			}
 			res, err := server.ListRemoteRepositoriesFromProvider(ctx, req)
 			if scenario.ExpectedError == "" {
-				expectation := &pb.ListRemoteRepositoriesFromProviderResponse{
-					Results: scenario.ExpectedResults,
+				expectation := &pb.ListRemoteRepositoriesFromProviderResponse{}
+				for _, repo := range scenario.ExpectedResults {
+					expectation.Results = append(expectation.Results, repo.Repo)
+					expectation.Entities = append(expectation.Entities, repo.Entity)
 				}
 				require.NoError(t, err)
-				require.Equal(t, expectation, res)
+
+				require.Len(t, res.Results, len(scenario.ExpectedResults))
+				require.Len(t, res.Entities, len(scenario.ExpectedResults))
+
+				require.Equal(t, expectation.Results, res.Results)
+				// we can't compare the structs directly because the properties are not guaranteed to be in the same order
+				// and the structpb wrapper converts some values as internal representations
+				for i := range res.Entities {
+					require.Equal(t, expectation.Entities[i].Entity.Type, res.Entities[i].Entity.Type)
+					require.Equal(t, expectation.Entities[i].Registered, res.Entities[i].Registered)
+				}
 			} else {
 				require.Nil(t, res)
 				require.Contains(t, err.Error(), scenario.ExpectedError)
@@ -386,14 +390,14 @@ type (
 )
 
 const (
-	repoOwner        = "acme-corp"
-	repoName         = "api-gateway"
-	repoOwnerAndName = "acme-corp/api-gateway"
-	repoID           = "3eb6d254-4163-460f-89f7-44e2ae916e71"
-	remoteRepoId     = 123456
-	repoName2        = "another-repo"
-	remoteRepoId2    = 234567
-	accessToken      = "TOKEN"
+	repoOwner              = "acme-corp"
+	repoName               = "api-gateway"
+	repoOwnerAndName       = "acme-corp/api-gateway"
+	repoID                 = "3eb6d254-4163-460f-89f7-44e2ae916e71"
+	remoteRepoId     int64 = 123456
+	repoName2              = "another-repo"
+	remoteRepoId2    int64 = 234567
+	accessToken            = "TOKEN"
 )
 
 var (
@@ -413,11 +417,23 @@ var (
 		Owner:  repoOwner,
 		Name:   repoName,
 		RepoId: remoteRepoId,
+		Properties: mustNewPBStruct(map[string]any{
+			properties.PropertyUpstreamID: fmt.Sprintf("%d", remoteRepoId),
+			ghprops.RepoPropertyId:        remoteRepoId,
+			ghprops.RepoPropertyName:      repoName,
+			ghprops.RepoPropertyOwner:     repoOwner,
+		}),
 	}
 	existingRepo2 = pb.Repository{
 		Owner:  repoOwner,
 		Name:   repoName2,
 		RepoId: 234567,
+		Properties: mustNewPBStruct(map[string]any{
+			properties.PropertyUpstreamID: "234567",
+			ghprops.RepoPropertyId:        234567,
+			ghprops.RepoPropertyName:      repoName2,
+			ghprops.RepoPropertyOwner:     repoOwner,
+		}),
 	}
 	dbExistingRepo = db.Repository{
 		ID:        uuid.UUID{},
@@ -427,6 +443,14 @@ var (
 		RepoID:    remoteRepoId,
 	}
 )
+
+func mustNewPBStruct(m map[string]any) *structpb.Struct {
+	s, err := structpb.NewStruct(m)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
 
 func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
 	//nolint:errcheck // this shouldn't fail
@@ -440,16 +464,39 @@ func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
 	}, props)
 }
 
-func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *pb.UpstreamRepositoryRef {
-	return &pb.UpstreamRepositoryRef{
-		Context: &pb.Context{
-			Provider: &provider.Name,
-			Project:  ptr.Ptr(projectID.String()),
+func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *UpstreamRepoAndEntityRef {
+	props, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: fmt.Sprintf("%d", id),
+		ghprops.RepoPropertyId:        id,
+		ghprops.RepoPropertyName:      name,
+		ghprops.RepoPropertyOwner:     repoOwner,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return &UpstreamRepoAndEntityRef{
+		Repo: &pb.UpstreamRepositoryRef{
+			Context: &pb.Context{
+				Provider: &provider.Name,
+				Project:  ptr.Ptr(projectID.String()),
+			},
+			Owner:      repoOwner,
+			Name:       name,
+			RepoId:     id,
+			Registered: registered,
 		},
-		Owner:      repoOwner,
-		Name:       name,
-		RepoId:     id,
-		Registered: registered,
+		Entity: &pb.RegistrableUpstreamEntityRef{
+			Entity: &pb.UpstreamEntityRef{
+				Context: &pb.ContextV2{
+					Provider:  provider.Name,
+					ProjectId: projectID.String(),
+				},
+				Type:       pb.Entity_ENTITY_REPOSITORIES,
+				Properties: props.ToProtoStruct(),
+			},
+			Registered: registered,
+		},
 	}
 }
 

@@ -24,6 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 )
@@ -61,6 +62,16 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return errors.New("invalid repo name")
 	}
 
+	// TODO: This should be using the properties map coming from the event
+	// as-is, but for now we are using the repoOwner and repoName to create
+	// the properties map.
+	fetchByProps, err := properties.NewProperties(map[string]interface{}{
+		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
+	})
+	if err != nil {
+		return fmt.Errorf("error creating properties: %w", err)
+	}
+
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
@@ -77,13 +88,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	pbRepo, err := r.repos.CreateRepository(
-		ctx,
-		&dbProvider,
-		event.ProjectID,
-		repoOwner,
-		repoName,
-	)
+	pbRepo, err := r.repos.CreateRepository(ctx, &dbProvider, event.ProjectID, fetchByProps)
 	if err != nil {
 		return fmt.Errorf("error add repository from DB: %w", err)
 	}
