@@ -247,8 +247,15 @@ func AllInOneServerService(
 	evt.ConsumeEvents(im)
 
 	// Register the entity refresh manager to handle entity refresh events
-	refresh := handlers.NewRefreshEntityAndDoHandler(evt, propSvc, providerManager)
+	refresh := handlers.NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, providerManager)
 	evt.ConsumeEvents(refresh)
+	// Register the entity refresh manager to handle entity delete events
+	delHandler := handlers.NewGetEntityAndDeleteHandler(evt, propSvc)
+	evt.ConsumeEvents(delHandler)
+	addOriginatingEntityHandler := handlers.NewAddOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(addOriginatingEntityHandler)
+	delOriginatingEntityHandler := handlers.NewRemoveOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(delOriginatingEntityHandler)
 
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer
