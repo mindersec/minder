@@ -50,7 +50,7 @@ func (psco *CallOptions) getStoreOrTransaction() db.ExtendQuerier {
 // This field is used to determine if the service call can return stale data or not.
 // This is useful for read calls that can tolerate stale data.
 type ReadOptions struct {
-	*CallOptions
+	CallOptions
 	tolerateStaleData bool
 }
 
@@ -68,15 +68,12 @@ func (psco *ReadOptions) TolerateStaleData() *ReadOptions {
 	return psco
 }
 
-// WithStoreOrTransaction is a function that sets the StoreOrTransaction field in the ReadOptions struct
+// WithStoreOrTransaction is a function that sets the StoreOrTransaction field in the CallOptions struct
 func (psco *ReadOptions) WithStoreOrTransaction(storeOrTransaction db.ExtendQuerier) *ReadOptions {
 	if psco == nil {
 		return nil
 	}
-	if psco.CallOptions == nil {
-		psco.CallOptions = CallBuilder()
-	}
-	psco.CallOptions = psco.CallOptions.WithStoreOrTransaction(storeOrTransaction)
+	psco.storeOrTransaction = storeOrTransaction
 	return psco
 }
 
@@ -88,7 +85,7 @@ func (psco *ReadOptions) canTolerateStaleData() bool {
 }
 
 func (psco *ReadOptions) getStoreOrTransaction() db.ExtendQuerier {
-	if psco == nil || psco.CallOptions == nil {
+	if psco == nil {
 		return nil
 	}
 	return psco.CallOptions.getStoreOrTransaction()
@@ -98,7 +95,7 @@ func (psco *ReadOptions) getPropertiesServiceCallOptions() *CallOptions {
 	if psco == nil {
 		return nil
 	}
-	return psco.CallOptions
+	return &psco.CallOptions
 }
 
 type getStoreOrTransaction interface {
