@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -73,6 +75,8 @@ type ProviderManager interface {
 	// PatchProviderConfig updates the configuration of the specified provider with the specified patch.
 	// All keys in the configMap will overwrite the fields in the provider config.
 	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
+	// IterateWebhookHandlers iterates over the classes and returns the associated webhook handler
+	IterateWebhookHandlers() iter.Seq2[string, http.Handler]
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -90,6 +94,8 @@ type ProviderClassManager interface {
 	// GetSupportedClasses lists the types of Provider class which this manager
 	// can produce.
 	GetSupportedClasses() []db.ProviderClass
+	// GetWebhookHandler returns the webhook handler for the provider class
+	GetWebhookHandler() http.Handler
 }
 
 type classTracker struct {
@@ -291,6 +297,20 @@ func (p *providerManager) PatchProviderConfig(
 	}
 
 	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, marshalledConfig)
+}
+
+func (p *providerManager) IterateWebhookHandlers() iter.Seq2[string, http.Handler] {
+	return func(yield func(string, http.Handler) bool) {
+		for class, manager := range p.classManagers {
+			handler := manager.GetWebhookHandler()
+			if handler == nil {
+				continue
+			}
+			if !yield(string(class), handler) {
+				break
+			}
+		}
+	}
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

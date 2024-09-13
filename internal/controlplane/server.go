@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"runtime/debug"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -352,8 +354,20 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// This already has _some_ middleware due to the GRPC handling
 	mux.Handle("/", withMaxSizeMiddleware(s.withCORSMiddleware(gwmux)))
 
+	// Register the webhook handlers
+	// Note: The GitHub webhook handler is not registered here.
+	for classpath, handler := range s.providerManager.IterateWebhookHandlers() {
+		path, err := url.JoinPath("/api/v1/webhook/", url.PathEscape(classpath))
+		if err != nil {
+			return fmt.Errorf("failed to register webhook handler for %s: %w", classpath, err)
+		}
+
+		zerolog.Ctx(ctx).Debug().Str("class-path", path).Msg("registering provider class webhook handler")
+		mux.Handle(path, otelmw(withMiddleware(handler)))
+	}
+
 	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/webhook/github", otelmw(withMiddleware(s.HandleGitHubWebHook())))
 	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
 	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)

@@ -12,6 +12,7 @@ package mock_manager
 import (
 	context "context"
 	json "encoding/json"
+	http "net/http"
 	reflect "reflect"
 
 	db "github.com/stacklok/minder/internal/db"
@@ -165,6 +166,20 @@ func (m *MockproviderClassOAuthManager) GetSupportedClasses() []db.ProviderClass
 func (mr *MockproviderClassOAuthManagerMockRecorder) GetSupportedClasses() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSupportedClasses", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).GetSupportedClasses))
+}
+
+// GetWebhookHandler mocks base method.
+func (m *MockproviderClassOAuthManager) GetWebhookHandler() http.Handler {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWebhookHandler")
+	ret0, _ := ret[0].(http.Handler)
+	return ret0
+}
+
+// GetWebhookHandler indicates an expected call of GetWebhookHandler.
+func (mr *MockproviderClassOAuthManagerMockRecorder) GetWebhookHandler() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWebhookHandler", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).GetWebhookHandler))
 }
 
 // MarshallConfig mocks base method.
