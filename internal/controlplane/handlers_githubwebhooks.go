@@ -819,7 +819,6 @@ func (s *Server) processPackageEvent(
 	pbArtifact.Versions = []*pb.ArtifactVersion{version}
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(*event.Action).
 		WithArtifact(pbArtifact).
 		WithArtifactID(ei.ID).
 		WithProjectID(repoEnt.Entity.ProjectID).
@@ -908,7 +907,6 @@ func (s *Server) processRelevantRepositoryEvent(
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(event.GetAction()).
 		WithProjectID(repoEntity.Entity.ProjectID).
 		WithProviderID(repoEntity.Entity.ProviderID).
 		WithRepository(pbRepo).
@@ -963,7 +961,6 @@ func (s *Server) processRepositoryEvent(
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(event.GetAction()).
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
 		WithRepository(pbRepo).
@@ -1053,7 +1050,6 @@ func (s *Server) processPullRequestEvent(
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
-		WithActionEvent(event.GetAction()).
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
 		WithPullRequest(pbPullRequest).
