@@ -31,6 +31,7 @@ The _status_ of a rule evaluation describes the outcome of executing the rule ag
 * **Success**: the entity was evaluated and is in compliance with the rule. For example, given the [`secret_scanning`](../ref/rules/secret_scanning) rule, this means that secret scanning is enabled on the repository being evaluated.
 * **Failure**: the entity was evaluated and is _not_ in compliance with the rule. For example, given the [`secret_scanning`](../ref/rules/secret_scanning) rule, this means that secret scanning is _not_ enabled on the repository being evaluated.
 * **Error**: the rule could not be evaluated for some reason. For example, the server being evaluated was not online or could not be contacted.
+* **Pending**: the rule has not yet been evaluated. Once evaluated, it will move into a state that represents the evaluation.
 * **Skipped**: the rule is not configured for the entity. For example, given the [`secret_scanning`](../ref/rules/secret_scanning) rule, it can be configured to skip private repositories.
 
 ### Alert status
