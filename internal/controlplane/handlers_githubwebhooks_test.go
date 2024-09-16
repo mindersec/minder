@@ -410,8 +410,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	require.NoError(t, validator.New().Struct(&inner))
 	require.Equal(t, providerID, inner.ProviderID)
 	require.Equal(t, projectID, inner.ProjectID)
-	require.Equal(t, nil, inner.Entity["repoName"])  // optional
-	require.Equal(t, nil, inner.Entity["repoOwner"]) // optional
 
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
@@ -1227,8 +1225,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
 			},
 		},
 		{
@@ -1278,8 +1274,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
 			},
 		},
 		{
@@ -1651,8 +1645,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
 			},
 		},
 		{
@@ -1701,8 +1693,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
 			},
 		},
 		{
@@ -1955,8 +1945,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
 			},
 		},
 		{
@@ -3484,6 +3472,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
+				require.Equal(t, "stacklok/minder", evt.Properties[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3636,6 +3626,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
+				require.Equal(t, repositoryID, evt.EntityID)
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)

@@ -23,6 +23,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -73,14 +74,13 @@ type MinderEvent struct {
 	ProjectID  uuid.UUID       `json:"project_id" validate:"required"`
 	EntityType minderv1.Entity `json:"entity_type" validate:"required"`
 	EntityID   uuid.UUID       `json:"entity_id"`
-	// TODO: This should really be using actual property keys
-	Entity map[string]any `json:"entity" validate:"required"`
+	Properties map[string]any  `json:"entity" validate:"required"`
 }
 
 // NewMinderEvent creates a new entity added event.
 func NewMinderEvent() *MinderEvent {
 	return &MinderEvent{
-		Entity: map[string]any{},
+		Properties: map[string]any{},
 	}
 }
 
@@ -96,9 +96,9 @@ func (e *MinderEvent) WithProjectID(projectID uuid.UUID) *MinderEvent {
 	return e
 }
 
-// WithAttribute sets attributes of the entity for a MinderEvent.
-func (e *MinderEvent) WithAttribute(key string, val any) *MinderEvent {
-	e.Entity[key] = val
+// WithProperties adds properties to MinderEvent.
+func (e *MinderEvent) WithProperties(props *properties.Properties) *MinderEvent {
+	e.Properties = props.ToProtoStruct().AsMap()
 	return e
 }
 

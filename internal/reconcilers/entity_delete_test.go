@@ -69,8 +69,8 @@ func TestHandleEntityDelete(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -91,8 +91,8 @@ func TestHandleEntityDelete(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -114,8 +114,8 @@ func TestHandleEntityDelete(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m

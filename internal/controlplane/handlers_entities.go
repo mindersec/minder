@@ -22,9 +22,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
@@ -83,7 +85,7 @@ func (s *Server) ReconcileEntityRegistration(
 				continue
 			}
 
-			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.Repo.GetName(), repo.Repo.GetOwner())
+			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.Entity.GetEntity().GetProperties())
 			if err != nil {
 				l.Error().Err(err).
 					Int64("repoID", repo.Repo.RepoId).
@@ -116,19 +118,23 @@ func createEntityMessage(
 	ctx context.Context,
 	l *zerolog.Logger,
 	projectID, providerID uuid.UUID,
-	repoName, repoOwner string,
+	props *structpb.Struct,
 ) (*message.Message, error) {
 	msg := message.NewMessage(uuid.New().String(), nil)
 	msg.SetContext(ctx)
+
+	repoProps, err := properties.NewProperties(props.AsMap())
+	if err != nil {
+		return nil, err
+	}
 
 	event := messages.NewMinderEvent().
 		WithProjectID(projectID).
 		WithProviderID(providerID).
 		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-		WithAttribute("repoName", repoName).
-		WithAttribute("repoOwner", repoOwner)
+		WithProperties(repoProps)
 
-	err := event.ToMessage(msg)
+	err = event.ToMessage(msg)
 	if err != nil {
 		l.Error().Err(err).Msg("error marshalling register entities message")
 		return nil, err

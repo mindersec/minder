@@ -25,15 +25,22 @@ import (
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	db "github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
-	repoOwner = "stacklok"
-	repoName  = "minder"
+	repoFullName = "stacklok/minder"
 )
+
+func repoProperties() *properties.Properties {
+	props, _ := properties.NewProperties(map[string]any{
+		properties.PropertyName: repoFullName,
+	})
+	return props
+}
 
 func TestHandleEntityAdd(t *testing.T) {
 	t.Parallel()
@@ -64,8 +71,7 @@ func TestHandleEntityAdd(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -86,8 +92,7 @@ func TestHandleEntityAdd(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -119,8 +124,7 @@ func TestHandleEntityAdd(t *testing.T) {
 					WithProviderID(providerID).
 					WithProjectID(projectID).
 					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
