@@ -22,7 +22,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
+	"github.com/rs/zerolog"
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/stacklok/minder/internal/entities/properties"
@@ -41,6 +43,15 @@ func (c *gitlabClient) RegisterEntity(
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID).GetString()
 	if upstreamID == "" {
 		return nil, errors.New("missing upstream ID")
+	}
+
+	if err := c.cleanUpStaleWebhooks(ctx, upstreamID); err != nil {
+		// This is a non-fatal error and may be transient. We log it and
+		// continue with the registration.
+		zerolog.Ctx(ctx).Error().
+			Str("upstreamID", upstreamID).
+			Str("provider-class", Class).
+			Err(err).Msg("failed to clean up stale webhooks")
 	}
 
 	whprops, err := c.createWebhook(ctx, upstreamID)
@@ -85,13 +96,13 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 	}
 
 	trve := ptr.Ptr(true)
-	hreq := &gitlab.AddHookOptions{
+	hreq := &gitlab.AddProjectHookOptions{
 		URL: &c.webhookURL,
 		// TODO: Add secret
-		PushEvents:             trve,
-		TagPushEvents:          trve,
-		MergeRequestsEvents:    trve,
-		RepositoryUpdateEvents: trve,
+		PushEvents:          trve,
+		TagPushEvents:       trve,
+		MergeRequestsEvents: trve,
+		ReleasesEvents:      trve,
 		// TODO: Enable SSL verification
 	}
 
@@ -114,8 +125,8 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 }
 
 func (c *gitlabClient) doCreateWebhook(
-	ctx context.Context, createHookPath string, hreq *gitlab.AddHookOptions,
-) (*gitlab.Hook, error) {
+	ctx context.Context, createHookPath string, hreq *gitlab.AddProjectHookOptions,
+) (*gitlab.ProjectHook, error) {
 	req, err := c.NewRequest(http.MethodPost, createHookPath, hreq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
@@ -131,7 +142,7 @@ func (c *gitlabClient) doCreateWebhook(
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	hook := &gitlab.Hook{}
+	hook := &gitlab.ProjectHook{}
 	if err := json.NewDecoder(resp.Body).Decode(hook); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -166,6 +177,28 @@ func (c *gitlabClient) doDeleteWebhook(ctx context.Context, deleteHookPath strin
 
 	if resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (c *gitlabClient) cleanUpStaleWebhooks(ctx context.Context, upstreamID string) error {
+	getHooksPath, err := url.JoinPath("projects", upstreamID, "hooks")
+	if err != nil {
+		return fmt.Errorf("failed to join URL path for hooks: %w", err)
+	}
+
+	hooks := []*gitlab.ProjectHook{}
+	if err := glREST(ctx, c, http.MethodGet, getHooksPath, nil, &hooks); err != nil {
+		return fmt.Errorf("failed to get webhooks: %w", err)
+	}
+
+	for _, hook := range hooks {
+		if strings.HasPrefix(hook.URL, c.webhookURL) {
+			if err := c.deleteWebhook(ctx, upstreamID, fmt.Sprintf("%d", hook.ID)); err != nil {
+				return fmt.Errorf("failed to delete webhook: %w", err)
+			}
+		}
 	}
 
 	return nil
