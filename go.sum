@@ -101,8 +101,8 @@ github.com/alessio/shellescape v1.4.1 h1:V7yhSDDn8LP4lc4jS8pFkt0zCnzVJlG5JXy9BVK
 github.com/alessio/shellescape v1.4.1/go.mod h1:PZAiSCk0LJaZkiCSkPv8qIobYglO3FPpyFjDCtHLS30=
 github.com/alexdrl/zerowater v0.0.3 h1:HXJ/81MQPZzuDkyYA0qJIeO+b0zfhbHx0AMwIYf8kpY=
 github.com/alexdrl/zerowater v0.0.3/go.mod h1:/saQVO5M1WksImbThtIC8kes8/mDqpO1KZe+gFXtGe0=
-github.com/anderseknert/roast v0.1.0 h1:PE1KAcrhMEYzsjGmouOqn0qSqdPd+s8N5/e+eHK4y4c=
-github.com/anderseknert/roast v0.1.0/go.mod h1:ViJIrrLZLl3+EbjYzsr8G60UfRhaMtN3dwDBlS8OD4o=
+github.com/anderseknert/roast v0.2.0 h1:Hi+noJBe+rLhCzApy8Xo5IE6pkAPBGVFLMJ8EecoghA=
+github.com/anderseknert/roast v0.2.0/go.mod h1:+VbTe/Fj1AUhtafMwz9JBdoPqFCS4rkNwsAhJwMgr1Y=
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be h1:9AeTilPcZAjCFIImctFaOjnTIavg87rW78vTPkQqLI8=
 github.com/anmitsu/go-shlex v0.0.0-20200514113438-38f4b401e2be/go.mod h1:ySMOLuWl6zY27l47sB3qLNK6tF2fkHG55UZxx8oIVo4=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
@@ -918,8 +918,8 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/styrainc/regal v0.26.1 h1:1GFmBJCU/k1/S/v5JNIMzKinbrhR9g4sFq9Mm/Sb6TE=
-github.com/styrainc/regal v0.26.1/go.mod h1:dOEa6xeE8Y9Vzai9cFihZ31BmExQrPYKGVvCsBJo70g=
+github.com/styrainc/regal v0.26.2 h1:l/a3KqDOMWCqdSh0h8m/i1TpZw9qcA/rz3M4/tjf720=
+github.com/styrainc/regal v0.26.2/go.mod h1:Xlh28Kg4ztSf8aQDY1KB+Noba3l5iMLtVXKiUIXbZqA=
 github.com/subosito/gotenv v1.6.0 h1:9NlTDc1FTs4qu0DDq7AEtTPNw6SVm7uBMsUCUjABIf8=
 github.com/subosito/gotenv v1.6.0/go.mod h1:Dk4QP5c2W3ibzajGcXpNraDfq2IrhjMIvMSWPKKo0FU=
 github.com/tchap/go-patricia/v2 v2.3.1 h1:6rQp39lgIYZ+MHmdEq4xzuk1t7OdC35z/xm0BGhTkes=
