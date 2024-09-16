@@ -66,7 +66,7 @@ require (
 	github.com/stacklok/frizbee v0.1.2
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.26.1
+	github.com/styrainc/regal v0.26.2
 	github.com/thomaspoignant/go-feature-flag v1.33.0
 	github.com/xanzy/go-gitlab v0.109.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -101,7 +101,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
-	github.com/anderseknert/roast v0.1.0 // indirect
+	github.com/anderseknert/roast v0.2.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
