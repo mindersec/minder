@@ -16,7 +16,6 @@ package reconcilers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -52,21 +51,17 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return nil
 	}
 
-	var repoOwner string
-	var repoName string
+	var entName string
 	var ok bool
-	if repoOwner, ok = event.Entity["repoOwner"].(string); !ok {
-		return errors.New("invalid repo owner")
-	}
-	if repoName, ok = event.Entity["repoName"].(string); !ok {
-		return errors.New("invalid repo name")
+	if entName, ok = event.Entity[properties.PropertyName].(string); !ok {
+		return fmt.Errorf("invalid or unset entity name: %s", entName)
 	}
 
 	// TODO: This should be using the properties map coming from the event
 	// as-is, but for now we are using the repoOwner and repoName to create
 	// the properties map.
 	fetchByProps, err := properties.NewProperties(map[string]interface{}{
-		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
+		properties.PropertyName: entName,
 	})
 	if err != nil {
 		return fmt.Errorf("error creating properties: %w", err)
@@ -75,8 +70,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_name", repoName).
-		Str("repo_owner", repoOwner).
+		Str("ent_name", entName).
 		Logger()
 
 	// Telemetry logging

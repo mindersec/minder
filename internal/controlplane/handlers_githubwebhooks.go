@@ -1241,8 +1241,7 @@ func (_ *Server) repositoryAdded(
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
 		WithEntityType("repository").
-		WithAttribute("repoName", repo.GetName()).
-		WithAttribute("repoOwner", repo.GetOwner())
+		WithAttribute(properties.PropertyName, repo.GetFullName())
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityAdd,

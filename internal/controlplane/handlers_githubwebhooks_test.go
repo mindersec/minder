@@ -4517,6 +4517,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, "stacklok/minder", evt.Entity[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -4528,6 +4529,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, "stacklok/trusty", evt.Entity[properties.PropertyName])
 			},
 		},
 		{
