@@ -104,6 +104,14 @@ ON CONFLICT (entity_id, key) DO UPDATE
         updated_at = NOW()
 RETURNING *;
 
+-- name: UpsertProperties :exec
+INSERT INTO properties (entity_id, key, value, updated_at)
+SELECT entity_id, key, value, updated_at
+  FROM jsonb_to_recordset(sqlc.slice(props)::jsonb)
+    AS t(entity_id uuid, key text, value jsonb, updated_at timestamp)
+    ON CONFLICT (entity_id, key) DO UPDATE
+   SET value = excluded.value, updated_at = NOW();
+
 -- name: GetAllPropertiesForEntity :many
 SELECT * FROM properties
 WHERE entity_id = $1;

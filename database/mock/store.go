@@ -2563,6 +2563,34 @@ func (mr *MockStoreMockRecorder) UpsertProfileForEntity(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProfileForEntity", reflect.TypeOf((*MockStore)(nil).UpsertProfileForEntity), ctx, arg)
 }
 
+// UpsertProperties mocks base method.
+func (m *MockStore) UpsertProperties(arg0 context.Context, arg1 json.RawMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertProperties", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertProperties indicates an expected call of UpsertProperties.
+func (mr *MockStoreMockRecorder) UpsertProperties(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertProperties", reflect.TypeOf((*MockStore)(nil).UpsertProperties), arg0, arg1)
+}
+
+// UpsertPropertiesV1 mocks base method.
+func (m *MockStore) UpsertPropertiesV1(arg0 context.Context, arg1 []db.UpsertPropertiesV1Params) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertPropertiesV1", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertPropertiesV1 indicates an expected call of UpsertPropertiesV1.
+func (mr *MockStoreMockRecorder) UpsertPropertiesV1(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertPropertiesV1", reflect.TypeOf((*MockStore)(nil).UpsertPropertiesV1), arg0, arg1)
+}
+
 // UpsertProperty mocks base method.
 func (m *MockStore) UpsertProperty(ctx context.Context, arg db.UpsertPropertyParams) (db.Property, error) {
 	m.ctrl.T.Helper()

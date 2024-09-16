@@ -82,6 +82,44 @@ func (q *Queries) UpsertPropertyValueV1(ctx context.Context, params UpsertProper
 	return q.UpsertProperty(ctx, dbParams)
 }
 
+type UpsertPropertiesV1Params struct {
+	EntityID  uuid.UUID `json:"entity_id"`
+	Key       string    `json:"key"`
+	Value     any       `json:"value"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (q *Queries) UpsertPropertiesV1(
+	ctx context.Context,
+	params []UpsertPropertiesV1Params,
+) error {
+	records := make([]UpsertPropertiesV1Params, 0, len(params))
+	for _, p := range params {
+		jsonVal, err := PropValueToDbV1(p.Value)
+		if err != nil {
+			return err
+		}
+
+		records = append(records, UpsertPropertiesV1Params{
+			EntityID:  p.EntityID,
+			Key:       p.Key,
+			Value:     jsonVal,
+			UpdatedAt: p.UpdatedAt,
+		})
+	}
+
+	payload, err := json.Marshal(records)
+	if err != nil {
+		return err
+	}
+
+	if err := q.UpsertProperties(ctx, payload); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // PropertyValueV1 is a property value for an entity
 type PropertyValueV1 struct {
 	ID        uuid.UUID `json:"id"`

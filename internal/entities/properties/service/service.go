@@ -193,18 +193,18 @@ func (ps *propertiesService) SaveAllProperties(
 	opts *CallOptions,
 ) error {
 	qtx := ps.getStoreOrTransaction(opts)
+
+	params := make([]db.UpsertPropertiesV1Params, 0)
 	for key, prop := range props.Iterate() {
-		_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
-			EntityID: entityID,
-			Key:      key,
-			Value:    prop.RawValue(),
+		params = append(params, db.UpsertPropertiesV1Params{
+			EntityID:  entityID,
+			Key:       key,
+			Value:     prop.RawValue(),
+			UpdatedAt: time.Now(),
 		})
-		if err != nil {
-			return err
-		}
 	}
 
-	return nil
+	return qtx.UpsertPropertiesV1(ctx, params)
 }
 
 func (ps *propertiesService) ReplaceProperty(

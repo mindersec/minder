@@ -486,6 +486,20 @@ func (q *Queries) GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEn
 	return items, nil
 }
 
+const upsertProperties = `-- name: UpsertProperties :exec
+INSERT INTO properties (entity_id, key, value, updated_at)
+SELECT entity_id, key, value, updated_at
+  FROM jsonb_to_recordset($1::jsonb)
+    AS t(entity_id uuid, key text, value jsonb, updated_at timestamp)
+    ON CONFLICT (entity_id, key) DO UPDATE
+   SET value = excluded.value, updated_at = NOW()
+`
+
+func (q *Queries) UpsertProperties(ctx context.Context, props json.RawMessage) error {
+	_, err := q.db.ExecContext(ctx, upsertProperties, props)
+	return err
+}
+
 const upsertProperty = `-- name: UpsertProperty :one
 INSERT INTO properties (
     entity_id,

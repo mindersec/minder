@@ -23,6 +23,7 @@ type ExtendQuerier interface {
 	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID,
 		ruleName sql.NullString, entityID uuid.UUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
 	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
+	UpsertPropertiesV1(ctx context.Context, params []UpsertPropertiesV1Params) error
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
 	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
 	GetTypedEntitiesByPropertyV1(
