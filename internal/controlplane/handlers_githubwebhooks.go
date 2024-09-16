@@ -885,8 +885,7 @@ func (s *Server) processRelevantRepositoryEvent(
 			WithProjectID(repoEntity.Entity.ProjectID).
 			WithProviderID(repoEntity.Entity.ProviderID).
 			WithEntityType("repository").
-			WithEntityID(repoEntity.Entity.ID).
-			WithAttribute("repoID", repoEntity.Entity.ID.String())
+			WithEntityID(repoEntity.Entity.ID)
 
 		return &processingResult{
 			topic:   events.TopicQueueReconcileEntityDelete,
@@ -1221,8 +1220,7 @@ func (s *Server) repositoryRemoved(
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
 		WithEntityType("repository").
-		WithEntityID(repoEnt.Entity.ID).
-		WithAttribute("repoID", repoEnt.Entity.ID.String())
+		WithEntityID(repoEnt.Entity.ID)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityDelete,
