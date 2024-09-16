@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"net/url"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -357,7 +358,12 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// Register the webhook handlers
 	// Note: The GitHub webhook handler is not registered here.
 	for classpath, handler := range s.providerManager.IterateWebhookHandlers() {
-		path, err := url.JoinPath("/api/v1/webhook/", url.PathEscape(classpath))
+		classpath = url.PathEscape(classpath)
+		if !strings.HasSuffix(classpath, "/") {
+			classpath += "/"
+		}
+
+		path, err := url.JoinPath("/api/v1/webhook/", classpath)
 		if err != nil {
 			return fmt.Errorf("failed to register webhook handler for %s: %w", classpath, err)
 		}

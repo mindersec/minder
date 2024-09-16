@@ -26,7 +26,6 @@ import (
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -53,14 +52,16 @@ var _ provifv1.REST = (*gitlabClient)(nil)
 var _ provifv1.RepoLister = (*gitlabClient)(nil)
 
 type gitlabClient struct {
-	cred      provifv1.GitLabCredential
-	cli       *http.Client
-	glcfg     *minderv1.GitLabProviderConfig
-	gitConfig config.GitConfig
+	cred       provifv1.GitLabCredential
+	cli        *http.Client
+	glcfg      *minderv1.GitLabProviderConfig
+	webhookURL string
+	gitConfig  config.GitConfig
 }
 
 // New creates a new GitLab provider
-func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig) (*gitlabClient, error) {
+// Note that the webhook URL should already contain the provider class in the path
+func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig, webhookURL string) (*gitlabClient, error) {
 	// TODO: We need a context here.
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
 
@@ -68,10 +69,15 @@ func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig) (*g
 		cfg.Endpoint = "https://gitlab.com/api/v4/"
 	}
 
+	if webhookURL == "" {
+		return nil, errors.New("webhook URL is required")
+	}
+
 	return &gitlabClient{
-		cred:  cred,
-		cli:   cli,
-		glcfg: cfg,
+		cred:       cred,
+		cli:        cli,
+		glcfg:      cfg,
+		webhookURL: webhookURL,
 		// TODO: Add git config
 	}, nil
 }
@@ -127,23 +133,4 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 // SupportsEntity implements the Provider interface
 func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
 	return entType == minderv1.Entity_ENTITY_REPOSITORIES
-}
-
-// RegisterEntity implements the Provider interface
-func (c *gitlabClient) RegisterEntity(
-	_ context.Context, entType minderv1.Entity, props *properties.Properties,
-) (*properties.Properties, error) {
-	if !c.SupportsEntity(entType) {
-		return nil, errors.New("unsupported entity type")
-	}
-
-	// TODO: implement
-
-	return props, nil
-}
-
-// DeregisterEntity implements the Provider interface
-func (_ *gitlabClient) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	// TODO: implement
-	return nil
 }
