@@ -39,6 +39,7 @@ selection:
 ```
 
 Let's break down the example above:
+
 - `entity`: Defines the type of entity you want to filter (`repository`, `artifact`, or `pull_request`). In the case that the `entity` type is omitted, the selector will be applied to all entities.
 - `selector`: The CEL expression that specifies the filtering criteria. In the example:
   - The first selector filters repositories to include only those that are not forks and whose name starts with stacklok. In other words, those that are part of the stacklok organization.
@@ -81,7 +82,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 
 | Field               | Description                                                                 | Type   |
 |---------------------|-----------------------------------------------------------------------------|--------|
-| `github/crated_at`  | The time the artifact was created formatted as RFC3339 string               | string |
+| `github/created_at` | The time the artifact was created formatted as RFC3339 string               | string |
 | `github/name`       | The full name of the artifact.                                              | string |
 | `github/type`       | The type of the artifact, e.g. "container"                                  | string |
 | `github/visibility` | The visibility of the artifact, e.g. "public"                               | string |
@@ -96,7 +97,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 |--------|-------------------------------------------------------------|--------|
 | `name` | The full name of the pull request, e.g. stacklok/minder/123 | string |
 
-## Artifact properties set by the GitHub provider
+## Pull request properties set by the GitHub provider
 
 | Field                   | Description                             | Type   |
 |-------------------------|-----------------------------------------|--------|
