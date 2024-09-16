@@ -37,6 +37,10 @@ const (
 	RepoPropertyLicense = "gitlab/license"
 	// RepoPropertyCloneURL represents the gitlab repo clone URL
 	RepoPropertyCloneURL = "gitlab/clone_url"
+	// RepoPropertyHookID represents the gitlab repo hook ID
+	RepoPropertyHookID = "gitlab/hook_id"
+	// RepoPropertyHookURL represents the gitlab repo hook URL
+	RepoPropertyHookURL = "gitlab/hook_url"
 )
 
 // FetchAllProperties implements the provider interface

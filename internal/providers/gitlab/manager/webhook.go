@@ -14,11 +14,28 @@
 
 package manager
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/rs/zerolog"
+)
 
 // GetWebhookHandler implements the ProviderManager interface
 // Note that this is where the whole webhook handler is defined and
 // will live.
-func (_ *providerClassManager) GetWebhookHandler() http.Handler {
-	return nil
+func (m *providerClassManager) GetWebhookHandler() http.Handler {
+	return http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		l := zerolog.Ctx(m.parentContext).With().
+			Str("webhook", "gitlab").
+			Str("method", r.Method).
+			Str("path", r.URL.Path).
+			Str("remote", r.RemoteAddr).
+			Str("user-agent", r.UserAgent()).
+			Str("content-type", r.Header.Get("Content-Type")).
+			Logger()
+
+		// TODO: Implement webhook handler
+
+		l.Debug().Msg("received webhook")
+	})
 }

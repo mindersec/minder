@@ -137,11 +137,18 @@ func AllInOneServerService(
 		cryptoEngine,
 		store,
 	)
-	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
+
+	gitlabProviderManager, err := gitlabmanager.NewGitLabProviderClassManager(
+		ctx,
 		cryptoEngine,
 		store,
 		cfg.Provider.GitLab,
+		cfg.WebhookConfig,
 	)
+	if err != nil {
+		return fmt.Errorf("failed to create gitlab provider manager: %w", err)
+	}
+
 	providerManager, closer, err := manager.NewProviderManager(ctx, providerStore,
 		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
 	if err != nil {

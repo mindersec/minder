@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
 
 	"github.com/stacklok/minder/internal/config/server"
@@ -35,16 +36,32 @@ type providerClassManager struct {
 	store    db.Store
 	crypteng crypto.Engine
 	// gitlab provider config
-	glpcfg *server.GitLabConfig
+	glpcfg        *server.GitLabConfig
+	webhookURL    string
+	parentContext context.Context
 }
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
-func NewGitLabProviderClassManager(crypteng crypto.Engine, store db.Store, cfg *server.GitLabConfig) *providerClassManager {
-	return &providerClassManager{
-		store:    store,
-		crypteng: crypteng,
-		glpcfg:   cfg,
+func NewGitLabProviderClassManager(
+	ctx context.Context, crypteng crypto.Engine, store db.Store, cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
+) (*providerClassManager, error) {
+	webhookURLBase := wgCfg.ExternalWebhookURL
+	if webhookURLBase == "" {
+		return nil, errors.New("webhook URL is required")
 	}
+
+	webhookURL, err := url.JoinPath(webhookURLBase, url.PathEscape(string(db.ProviderClassGitlab)))
+	if err != nil {
+		return nil, fmt.Errorf("error joining webhook URL: %w", err)
+	}
+
+	return &providerClassManager{
+		store:         store,
+		crypteng:      crypteng,
+		glpcfg:        cfg,
+		webhookURL:    webhookURL,
+		parentContext: ctx,
+	}, nil
 }
 
 // GetSupportedClasses implements the ProviderClassManager interface
@@ -74,7 +91,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 		return nil, fmt.Errorf("error parsing gitlab config: %w", err)
 	}
 
-	cli, err := gitlab.New(creds, cfg)
+	cli, err := gitlab.New(creds, cfg, g.webhookURL)
 	if err != nil {
 		return nil, fmt.Errorf("error creating gitlab client: %w", err)
 	}

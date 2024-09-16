@@ -437,7 +437,8 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			return nil, fmt.Errorf("error parsing gitlab provider config: %w", err)
 		}
 
-		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg)
+		// We may pass a "fake" webhook URL here as it is not used in the test
+		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg, "fake")
 		if err != nil {
 			return nil, fmt.Errorf("error instantiating gitlab provider: %w", err)
 		}
