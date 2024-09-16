@@ -43,6 +43,7 @@ const (
 	// AlertType is the type of the security advisory alert engine
 	AlertType                = "security_advisory"
 	tmplSummaryName          = "summary"
+	tmplSummary              = `minder: profile {{.Profile}} failed`
 	tmplDescriptionNameNoRem = "description_no_remediate"
 	tmplDescriptionNameRem   = "description"
 	// nolint:lll
@@ -142,7 +143,7 @@ func NewSecurityAdvisoryAlert(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 	// Parse the templates for summary and description
-	sumT, err := htmltemplate.New(tmplSummaryName).Option("missingkey=error").Parse(ruleType.ShortFailureMessage)
+	sumT, err := htmltemplate.New(tmplSummaryName).Option("missingkey=error").Parse(tmplSummary + " - " + ruleType.ShortFailureMessage)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse summary template: %w", err)
 	}
