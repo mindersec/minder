@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/xanzy/go-gitlab"
 
@@ -95,9 +96,15 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 		return nil, fmt.Errorf("failed to join URL path for hooks: %w", err)
 	}
 
+	hookUUID := uuid.New()
+	webhookUniqueURL, err := url.JoinPath(c.webhookURL, hookUUID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to join URL path for webhook: %w", err)
+	}
+
 	trve := ptr.Ptr(true)
 	hreq := &gitlab.AddProjectHookOptions{
-		URL: &c.webhookURL,
+		URL: &webhookUniqueURL,
 		// TODO: Add secret
 		PushEvents:          trve,
 		TagPushEvents:       trve,
