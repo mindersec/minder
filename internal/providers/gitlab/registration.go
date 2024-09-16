@@ -29,6 +29,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/stacklok/minder/internal/entities/properties"
+	"github.com/stacklok/minder/internal/providers/gitlab/webhooksecret"
 	"github.com/stacklok/minder/internal/util/ptr"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -57,8 +58,11 @@ func (c *gitlabClient) RegisterEntity(
 
 	whprops, err := c.createWebhook(ctx, upstreamID)
 	if err != nil {
-		// There is already enough context in the error message
-		return nil, err
+		zerolog.Ctx(ctx).Error().
+			Str("upstreamID", upstreamID).
+			Str("provider-class", Class).
+			Err(err).Msg("failed to create webhook")
+		return nil, errors.New("failed to create webhook")
 	}
 
 	return props.Merge(whprops), nil
@@ -102,15 +106,20 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 		return nil, fmt.Errorf("failed to join URL path for webhook: %w", err)
 	}
 
+	sec, err := webhooksecret.New(c.currentWebhookSecret, hookUUID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to create webhook secret: %w", err)
+	}
+
 	trve := ptr.Ptr(true)
 	hreq := &gitlab.AddProjectHookOptions{
-		URL: &webhookUniqueURL,
-		// TODO: Add secret
-		PushEvents:          trve,
-		TagPushEvents:       trve,
-		MergeRequestsEvents: trve,
-		ReleasesEvents:      trve,
-		// TODO: Enable SSL verification
+		URL:                   &webhookUniqueURL,
+		Token:                 &sec,
+		PushEvents:            trve,
+		TagPushEvents:         trve,
+		MergeRequestsEvents:   trve,
+		ReleasesEvents:        trve,
+		EnableSSLVerification: trve,
 	}
 
 	hook, err := c.doCreateWebhook(ctx, createHookPath, hreq)
