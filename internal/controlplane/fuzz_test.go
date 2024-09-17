@@ -118,7 +118,11 @@ func FuzzGitHubEventParsers(f *testing.F) {
 		}
 		defer os.Remove(whSecretFile.Name())
 
-		whConfig := &server.WebhookConfig{WebhookSecretFile: whSecretFile.Name()}
+		whConfig := &server.WebhookConfig{
+			WebhookSecrets: server.WebhookSecrets{
+				WebhookSecretFile: whSecretFile.Name(),
+			},
+		}
 
 		s := &Server{}
 		ctx := context.Background()
