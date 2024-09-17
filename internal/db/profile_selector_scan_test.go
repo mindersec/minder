@@ -47,6 +47,20 @@ func TestScan(t *testing.T) {
 				Comment:  "comment1",
 			},
 		},
+		{
+			name:  "Valid input with commas in the selector",
+			input: []byte(fmt.Sprintf("(%s,%s,repository,\"repository.properties['github/primary_language'] in ['TypeScript', 'Go']\",\"comment1\")", selectorId, profileId)),
+			expected: ProfileSelector{
+				ID:        selectorId,
+				ProfileID: profileId,
+				Entity: NullEntities{
+					Valid:    true,
+					Entities: EntitiesRepository,
+				},
+				Selector: "repository.properties['github/primary_language'] in ['TypeScript', 'Go']",
+				Comment:  "comment1",
+			},
+		},
 	}
 
 	for _, tc := range tc {
