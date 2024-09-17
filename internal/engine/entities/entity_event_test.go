@@ -185,58 +185,150 @@ func Test_parseEntityEvent(t *testing.T) {
 	}
 }
 
-func TestEntityInfoWrapper_RepositoryToMessage(t *testing.T) {
+func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 	t.Parallel()
 
 	projectID := uuid.New()
 	repoID := uuid.New()
 	providerID := uuid.New()
-	eiw := NewEntityInfoWrapper().
-		WithProviderID(providerID).
-		WithProjectID(projectID).
-		WithRepository(&pb.Repository{
-			Owner:  "test",
-			RepoId: 123,
-		}).WithRepositoryID(repoID)
-
-	msg, err := eiw.BuildMessage()
-	require.NoError(t, err, "unexpected error")
-
-	assert.Equal(t, providerID.String(), msg.Metadata.Get(ProviderIDEventKey), "provider ID mismatch")
-	assert.Equal(t, RepositoryEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
-	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
-	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
-}
-
-func TestEntityInfoWrapper_VersionedArtifact(t *testing.T) {
-	t.Parallel()
-
-	projectID := uuid.New()
 	artifactID := uuid.New()
-	repoID := uuid.New()
-	providerID := uuid.New()
+	pullRequestID := uuid.New()
 
-	eiw := NewEntityInfoWrapper().
-		WithProviderID(providerID).
-		WithProjectID(projectID).
-		WithArtifact(&pb.Artifact{
-			ArtifactPk: artifactID.String(),
-			Versions: []*pb.ArtifactVersion{
-				{
-					VersionId: 101112,
-				},
+	tests := []struct {
+		name     string
+		eiw      *EntityInfoWrapper
+		expected map[string]string
+	}{
+		{
+			name: "repository event",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithRepository(&pb.Repository{
+					Owner:  "test",
+					RepoId: 123,
+				}).WithRepositoryID(repoID),
+			expected: map[string]string{
+				ProviderIDEventKey:   providerID.String(),
+				EntityTypeEventKey:   RepositoryEventEntityType,
+				ProjectIDEventKey:    projectID.String(),
+				RepositoryIDEventKey: repoID.String(),
 			},
-		}).WithRepositoryID(repoID).
-		WithArtifactID(artifactID)
+		},
+		{
+			name: "repository using generic protobuf message and id",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithProtoMessage(pb.Entity_ENTITY_REPOSITORIES, &pb.Repository{
+					Owner:  "test",
+					RepoId: 123,
+				}).
+				WithID(pb.Entity_ENTITY_REPOSITORIES, repoID),
+			expected: map[string]string{
+				ProviderIDEventKey:   providerID.String(),
+				EntityTypeEventKey:   RepositoryEventEntityType,
+				ProjectIDEventKey:    projectID.String(),
+				RepositoryIDEventKey: repoID.String(),
+			},
+		},
+		{
+			name: "artifact event",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithArtifact(&pb.Artifact{
+					ArtifactPk: artifactID.String(),
+					Versions: []*pb.ArtifactVersion{
+						{
+							VersionId: 101112,
+						},
+					},
+				}).WithRepositoryID(repoID).
+				WithArtifactID(artifactID),
+			expected: map[string]string{
+				ProviderIDEventKey:   providerID.String(),
+				EntityTypeEventKey:   VersionedArtifactEventEntityType,
+				ProjectIDEventKey:    projectID.String(),
+				RepositoryIDEventKey: repoID.String(),
+				ArtifactIDEventKey:   artifactID.String(),
+			},
+		},
+		{
+			name: "artifact using WithID and WithProtoMessage",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithProtoMessage(pb.Entity_ENTITY_ARTIFACTS, &pb.Artifact{
+					ArtifactPk: artifactID.String(),
+					Versions: []*pb.ArtifactVersion{
+						{
+							VersionId: 101112,
+						},
+					},
+				}).
+				WithID(pb.Entity_ENTITY_ARTIFACTS, artifactID),
+			expected: map[string]string{
+				ProviderIDEventKey: providerID.String(),
+				EntityTypeEventKey: VersionedArtifactEventEntityType,
+				ProjectIDEventKey:  projectID.String(),
+				ArtifactIDEventKey: artifactID.String(),
+			},
+		},
+		{
+			name: "pull request using WithID and WithProtoMessage",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithProtoMessage(pb.Entity_ENTITY_PULL_REQUESTS, &pb.PullRequest{
+					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
+					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
+					Number:    3,
+					RepoOwner: "jakubtestorg",
+					RepoName:  "bad-npm",
+				}).
+				WithID(pb.Entity_ENTITY_PULL_REQUESTS, pullRequestID),
+			expected: map[string]string{
+				ProviderIDEventKey:    providerID.String(),
+				EntityTypeEventKey:    PullRequestEventEntityType,
+				ProjectIDEventKey:     projectID.String(),
+				PullRequestIDEventKey: pullRequestID.String(),
+			},
+		},
+		{
+			name: "pull request using WithPullRequest",
+			eiw: NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithPullRequest(&pb.PullRequest{
+					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
+					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
+					Number:    3,
+					RepoOwner: "jakubtestorg",
+					RepoName:  "bad-npm",
+				}).
+				WithPullRequestID(pullRequestID),
+			expected: map[string]string{
+				ProviderIDEventKey:    providerID.String(),
+				EntityTypeEventKey:    PullRequestEventEntityType,
+				ProjectIDEventKey:     projectID.String(),
+				PullRequestIDEventKey: pullRequestID.String(),
+			},
+		},
+	}
 
-	msg, err := eiw.BuildMessage()
-	require.NoError(t, err, "unexpected error")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	assert.Equal(t, VersionedArtifactEventEntityType, msg.Metadata.Get(EntityTypeEventKey), "entity type mismatch")
-	assert.Equal(t, projectID.String(), msg.Metadata.Get(ProjectIDEventKey), "project id mismatch")
-	assert.Equal(t, providerID.String(), msg.Metadata.Get(ProviderIDEventKey), "provider id mismatch")
-	assert.Equal(t, repoID.String(), msg.Metadata.Get(RepositoryIDEventKey), "repository id mismatch")
-	assert.Equal(t, artifactID.String(), msg.Metadata.Get(ArtifactIDEventKey), "artifact id mismatch")
+			msg, err := tt.eiw.BuildMessage()
+			require.NoError(t, err, "unexpected error")
+
+			for key, expectedValue := range tt.expected {
+				assert.Equal(t, expectedValue, msg.Metadata.Get(key), key+" mismatch")
+			}
+		})
+	}
 }
 
 func TestEntityInfoWrapper_FailsWithoutProjectID(t *testing.T) {
