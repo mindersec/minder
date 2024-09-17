@@ -366,7 +366,7 @@ func (g *githubProviderManager) NewOAuthConfig(providerClass db.ProviderClass, c
 	}
 
 	// this is currently only used for testing as github uses well-known endpoints
-	if oauthClientConfig.Endpoint != nil {
+	if oauthClientConfig.Endpoint != nil && oauthClientConfig.Endpoint.TokenURL != "" {
 		oauthConfig.Endpoint = oauth2.Endpoint{
 			TokenURL: oauthClientConfig.Endpoint.TokenURL,
 		}
