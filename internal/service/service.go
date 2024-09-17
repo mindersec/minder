@@ -67,6 +67,8 @@ import (
 
 // AllInOneServerService is a helper function that starts the gRPC and HTTP servers,
 // the eventer, aggregator, the executor, and the reconciler.
+//
+//nolint:gocyclo // This function is expected to be large
 func AllInOneServerService(
 	ctx context.Context,
 	cfg *serverconfig.Config,
@@ -111,6 +113,7 @@ func AllInOneServerService(
 	providerStore := providers.NewProviderStore(store)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
 	propSvc := propService.NewPropertiesService(store)
+	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
 	// webhook handling to make this viable.
@@ -133,30 +136,40 @@ func AllInOneServerService(
 		ghProviders,
 		propSvc,
 	)
-	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
-		cryptoEngine,
-		store,
-	)
 
-	gitlabProviderManager, err := gitlabmanager.NewGitLabProviderClassManager(
-		ctx,
-		cryptoEngine,
-		store,
-		cfg.Provider.GitLab,
-		cfg.WebhookConfig,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create gitlab provider manager: %w", err)
+	provmans := []manager.ProviderClassManager{githubProviderManager}
+
+	if flags.Bool(ctx, featureFlagClient, flags.DockerHubProvider) {
+		dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
+			cryptoEngine,
+			store,
+		)
+		provmans = append(provmans, dockerhubProviderManager)
+	}
+
+	if flags.Bool(ctx, featureFlagClient, flags.GitLabProvider) {
+		gitlabProviderManager, err := gitlabmanager.NewGitLabProviderClassManager(
+			ctx,
+			cryptoEngine,
+			store,
+			cfg.Provider.GitLab,
+			cfg.WebhookConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create gitlab provider manager: %w", err)
+		}
+
+		provmans = append(provmans, gitlabProviderManager)
 	}
 
 	providerManager, closer, err := manager.NewProviderManager(ctx, providerStore,
-		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
+		provmans...)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
 	defer closer()
 
-	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
+	providerAuthManager, err := manager.NewAuthManager(provmans...)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
@@ -164,7 +177,6 @@ func AllInOneServerService(
 	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
-	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	s := controlplane.NewServer(
 		store,
