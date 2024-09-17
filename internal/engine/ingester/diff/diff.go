@@ -79,6 +79,8 @@ func (di *Diff) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest ingests a diff from a pull request in accordance with its type
+//
+//nolint:gocyclo
 func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
