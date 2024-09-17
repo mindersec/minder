@@ -207,7 +207,18 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 			// Error, need a tag
 			panic(fmt.Sprintf("Untagged config struct field %q", field.Name))
 		}
-		valueName := strings.ToLower(prefix + field.Tag.Get("mapstructure"))
+
+		var valueName string
+		// Check if the tag is "squash" and if so, don't add the field name to the prefix
+		if field.Tag.Get("mapstructure") == ",squash" {
+			if strings.HasSuffix(prefix, ".") {
+				valueName = strings.ToLower(prefix[:len(prefix)-1])
+			} else {
+				valueName = strings.ToLower(prefix)
+			}
+		} else {
+			valueName = strings.ToLower(prefix + field.Tag.Get("mapstructure"))
+		}
 		fieldType := field.Type
 
 		// Extract a default value the `default` struct tag
