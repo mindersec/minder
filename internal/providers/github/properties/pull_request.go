@@ -19,6 +19,7 @@ package properties
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -126,12 +127,17 @@ func getPrWrapper(
 ) (map[string]any, error) {
 	_ = isOrg
 
-	owner, name, id, err := getPrWrapperAttrsFromProps(getByProps)
+	owner, name, id64, err := getPrWrapperAttrsFromProps(getByProps)
 	if err != nil {
 		return nil, fmt.Errorf("error getting pr wrapper attributes: %w", err)
 	}
 
-	prReply, result, err := ghCli.PullRequests.Get(ctx, owner, name, int(id))
+	if id64 > math.MaxInt {
+		return nil, fmt.Errorf("pr number is too large")
+	}
+	intId := int(id64)
+
+	prReply, result, err := ghCli.PullRequests.Get(ctx, owner, name, intId)
 	if err != nil {
 		if result != nil && result.StatusCode == http.StatusNotFound {
 			return nil, v1.ErrEntityNotFound
@@ -142,7 +148,7 @@ func getPrWrapper(
 	prProps := map[string]any{
 		// general entity
 		properties.PropertyUpstreamID: prReply.GetID(),
-		properties.PropertyName:       fmt.Sprintf("%s/%s/%d", owner, name, id),
+		properties.PropertyName:       fmt.Sprintf("%s/%s/%d", owner, name, intId),
 		// github-specific
 		PullPropertyURL: prReply.GetHTMLURL(),
 		// our proto representation uses int64 for the number but GH uses int
