@@ -39,11 +39,13 @@ func (c *gitlabClient) GetBaseURL() string {
 }
 
 // NewRequest implements the REST provider interface
-func (c *gitlabClient) NewRequest(method, requestUrl string, body any) (*http.Request, error) {
-	u, err := url.JoinPath(c.glcfg.Endpoint, requestUrl)
+func (c *gitlabClient) NewRequest(method, requestPath string, body any) (*http.Request, error) {
+	base, err := url.Parse(c.glcfg.Endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("failed to join URL: %w", err)
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
 	}
+
+	u := base.JoinPath(requestPath)
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -57,7 +59,7 @@ func (c *gitlabClient) NewRequest(method, requestUrl string, body any) (*http.Re
 	}
 
 	// TODO: Shall we try to use the GitLab client?
-	req, err := http.NewRequest(method, u, buf)
+	req, err := http.NewRequest(method, u.String(), buf)
 	if err != nil {
 		return nil, err
 	}
@@ -89,15 +91,17 @@ type genericRESTClient interface {
 // request here because of the way they form authentication for requests.
 // It would be ideal to use it, so we should consider contributing and making
 // that part more pluggable.
-func glREST[T any](ctx context.Context, cli genericRESTClient, method, requestUrl string, body any, out T) error {
-	req, err := cli.NewRequest(method, requestUrl, body)
+func glRESTGet[T any](ctx context.Context, cli genericRESTClient, path string, out T) error {
+	// NewRequest already has the base URL configured, the path
+	// will get appended to it.
+	req, err := cli.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := cli.Do(ctx, req)
 	if err != nil {
-		return fmt.Errorf("failed to get projects: %w", err)
+		return fmt.Errorf("failed to get resource '%s': %w", path, err)
 	}
 	defer resp.Body.Close()
 
@@ -105,7 +109,7 @@ func glREST[T any](ctx context.Context, cli genericRESTClient, method, requestUr
 		if resp.StatusCode == http.StatusNotFound {
 			return provifv1.ErrEntityNotFound
 		}
-		return fmt.Errorf("failed to get projects: %s", resp.Status)
+		return fmt.Errorf("failed to get resource '%s': %s", path, resp.Status)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {

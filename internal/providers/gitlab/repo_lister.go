@@ -18,7 +18,6 @@ package gitlab
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/url"
 
 	"github.com/rs/zerolog"
@@ -29,7 +28,7 @@ import (
 
 func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
 	groups := []*gitlab.Group{}
-	if err := glREST(ctx, c, http.MethodGet, "groups", nil, &groups); err != nil {
+	if err := glRESTGet(ctx, c, "groups", &groups); err != nil {
 		return nil, fmt.Errorf("failed to get groups: %w", err)
 	}
 
@@ -45,7 +44,7 @@ func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Rep
 		if err != nil {
 			return nil, fmt.Errorf("failed to join URL path for projects: %w", err)
 		}
-		if err := glREST(ctx, c, http.MethodGet, path, nil, &projs); err != nil {
+		if err := glRESTGet(ctx, c, path, &projs); err != nil {
 			return nil, fmt.Errorf("failed to get projects for group %s: %w", g.FullPath, err)
 		}
 
