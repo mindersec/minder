@@ -205,7 +205,7 @@ func (c *gitlabClient) cleanUpStaleWebhooks(ctx context.Context, upstreamID stri
 	}
 
 	hooks := []*gitlab.ProjectHook{}
-	if err := glREST(ctx, c, http.MethodGet, getHooksPath, nil, &hooks); err != nil {
+	if err := glRESTGet(ctx, c, getHooksPath, &hooks); err != nil {
 		return fmt.Errorf("failed to get webhooks: %w", err)
 	}
 
