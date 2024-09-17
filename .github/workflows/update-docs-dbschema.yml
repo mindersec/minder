@@ -27,7 +27,7 @@ jobs:
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@d121e62763d8cc35b5fb1710e887d6e69a52d3a4 # v7.0.2
+        uses: peter-evans/create-pull-request@6cd32fd93684475c31847837f87bb135d40a2b79 # v7.0.3
         with:
           commit-message: Update DB schema
           committer: GitHub <noreply@github.com>
