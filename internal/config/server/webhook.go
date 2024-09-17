@@ -23,10 +23,20 @@ import (
 
 // WebhookConfig is the configuration for our webhook capabilities
 type WebhookConfig struct {
+	// WebhookSecrets is the configuration for the webhook secrets.
+	// This is embedded in the WebhookConfig so that the secrets can be
+	// used in the WebhookConfig, as the GitHub provider needs for now.
+	WebhookSecrets `mapstructure:",squash"`
 	// ExternalWebhookURL is the URL that we will send our webhook to
 	ExternalWebhookURL string `mapstructure:"external_webhook_url"`
 	// ExternalPingURL is the URL that we will send our ping to
 	ExternalPingURL string `mapstructure:"external_ping_url"`
+}
+
+// WebhookSecrets is the configuration for the webhook secrets. this is useful
+// to import in whatever provider configuration that needs to use some webhook
+// secrets.
+type WebhookSecrets struct {
 	// WebhookSecret is the secret that we will use to sign our webhook
 	WebhookSecret string `mapstructure:"webhook_secret"`
 	// WebhookSecretFile is the location of the file containing the webhook secret
@@ -39,7 +49,7 @@ type WebhookConfig struct {
 
 // GetPreviousWebhookSecrets retrieves the previous webhook secrets from a file specified in the WebhookConfig.
 // It reads the contents of the file, splits the data by whitespace, and returns it as a slice of strings.
-func (wc *WebhookConfig) GetPreviousWebhookSecrets() ([]string, error) {
+func (wc *WebhookSecrets) GetPreviousWebhookSecrets() ([]string, error) {
 	data, err := os.ReadFile(wc.PreviousWebhookSecretFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read previous webhook secrets from file: %w", err)
@@ -51,6 +61,6 @@ func (wc *WebhookConfig) GetPreviousWebhookSecrets() ([]string, error) {
 }
 
 // GetWebhookSecret returns the GitHub App's webhook secret
-func (wc *WebhookConfig) GetWebhookSecret() (string, error) {
+func (wc *WebhookSecrets) GetWebhookSecret() (string, error) {
 	return fileOrArg(wc.WebhookSecretFile, wc.WebhookSecret, "webhook secret")
 }

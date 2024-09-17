@@ -57,11 +57,20 @@ type gitlabClient struct {
 	glcfg      *minderv1.GitLabProviderConfig
 	webhookURL string
 	gitConfig  config.GitConfig
+
+	// secret for the webhook. This is stored in the
+	// structure to allow efficient fetching.
+	currentWebhookSecret string
 }
 
 // New creates a new GitLab provider
 // Note that the webhook URL should already contain the provider class in the path
-func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig, webhookURL string) (*gitlabClient, error) {
+func New(
+	cred provifv1.GitLabCredential,
+	cfg *minderv1.GitLabProviderConfig,
+	webhookURL string,
+	currentWebhookSecret string,
+) (*gitlabClient, error) {
 	// TODO: We need a context here.
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
 
@@ -74,10 +83,11 @@ func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig, web
 	}
 
 	return &gitlabClient{
-		cred:       cred,
-		cli:        cli,
-		glcfg:      cfg,
-		webhookURL: webhookURL,
+		cred:                 cred,
+		cli:                  cli,
+		glcfg:                cfg,
+		webhookURL:           webhookURL,
+		currentWebhookSecret: currentWebhookSecret,
 		// TODO: Add git config
 	}, nil
 }
