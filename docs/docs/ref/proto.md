@@ -2378,6 +2378,7 @@ endpoint and how we compare it to the rule.
 | ----- | ---- | ----- | ----------- |
 | ingested | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Ingested points to the data retrieved in the `ingest` section |
 | profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. |
+| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value |
 
 
 

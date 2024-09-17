@@ -1894,6 +1894,9 @@ message RuleType {
 
                 // Profile points to the profile itself.
                 Operator profile = 2;
+
+                // Constant points to a constant value
+                google.protobuf.Value constant = 3;
             }
 
             message Rego {
