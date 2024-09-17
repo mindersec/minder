@@ -24,8 +24,6 @@ import (
 	"net/url"
 	"slices"
 
-	"github.com/rs/zerolog"
-
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
@@ -41,12 +39,6 @@ type providerClassManager struct {
 	glpcfg        *server.GitLabConfig
 	webhookURL    string
 	parentContext context.Context
-
-	// secrets for the webhook. These are stored in the
-	// structure to allow efficient fetching. Rotation
-	// requires a process restart.
-	currentWebhookSecret   string
-	previousWebhookSecrets []string
 }
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
@@ -58,33 +50,17 @@ func NewGitLabProviderClassManager(
 		return nil, errors.New("webhook URL is required")
 	}
 
-	if cfg == nil {
-		return nil, errors.New("gitlab config is required")
-	}
-
 	webhookURL, err := url.JoinPath(webhookURLBase, url.PathEscape(string(db.ProviderClassGitlab)))
 	if err != nil {
 		return nil, fmt.Errorf("error joining webhook URL: %w", err)
 	}
 
-	whSecret, err := cfg.GetWebhookSecret()
-	if err != nil {
-		return nil, fmt.Errorf("error getting webhook secret: %w", err)
-	}
-
-	previousSecrets, err := cfg.GetPreviousWebhookSecrets()
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("previous secrets not loaded")
-	}
-
 	return &providerClassManager{
-		store:                  store,
-		crypteng:               crypteng,
-		glpcfg:                 cfg,
-		webhookURL:             webhookURL,
-		parentContext:          ctx,
-		currentWebhookSecret:   whSecret,
-		previousWebhookSecrets: previousSecrets,
+		store:         store,
+		crypteng:      crypteng,
+		glpcfg:        cfg,
+		webhookURL:    webhookURL,
+		parentContext: ctx,
 	}, nil
 }
 
@@ -115,7 +91,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 		return nil, fmt.Errorf("error parsing gitlab config: %w", err)
 	}
 
-	cli, err := gitlab.New(creds, cfg, g.webhookURL, g.currentWebhookSecret)
+	cli, err := gitlab.New(creds, cfg, g.webhookURL)
 	if err != nil {
 		return nil, fmt.Errorf("error creating gitlab client: %w", err)
 	}
