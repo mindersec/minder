@@ -99,13 +99,14 @@ Selectors for repositories allow you to filter and manage repositories based on 
 
 ## Pull request properties set by the GitHub provider
 
-| Field                   | Description                             | Type   |
-|-------------------------|-----------------------------------------|--------|
-| `github/pull_url`       | The URL of the pull request             | string |
-| `github/pull_number`    | The number of the pull request          | string |
-| `github/pull_author_id` | The author of the pull request          | string |
-| `github/repo_name`      | The github repo name (e.g. `stacklok`). | string |
-| `github/repo_owner`     | The github repo owner (e.g. `minder`).  | string |
+| Field                      | Description                                        | Type   |
+|----------------------------|----------------------------------------------------|--------|
+| `github/pull_url`          | The URL of the pull request                        | string |
+| `github/pull_number`       | The number of the pull request                     | string |
+| `github/pull_author_id`    | The numerical ID of the author of the pull request | int    |
+| `github/pull_author_login` | The github login of the author of the pull request | string |
+| `github/repo_name`         | The github repo name (e.g. `stacklok`).            | string |
+| `github/repo_owner`        | The github repo owner (e.g. `minder`).             | string |
 
 ## Entity provider selectors
 
