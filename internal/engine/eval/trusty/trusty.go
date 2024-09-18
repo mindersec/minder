@@ -273,11 +273,12 @@ func classifyDependency(
 		reasons = append(reasons, TRUSTY_MALICIOUS_PKG)
 	}
 
-	// Note if the packages is deprecated
-	if resp.PackageData.Deprecated {
+	// Note if the packages is deprecated or archived
+	if resp.PackageData.Deprecated || resp.PackageData.Archived {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
-			Str("deprecated", "true").
+			Bool("deprecated", resp.PackageData.Deprecated).
+			Bool("archived", resp.PackageData.Archived).
 			Msgf("deprecated dependency")
 
 		if !ecoConfig.AllowDeprecated {
@@ -285,6 +286,11 @@ func classifyDependency(
 		}
 
 		reasons = append(reasons, TRUSTY_DEPRECATED)
+	} else {
+		logger.Debug().
+			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
+			Bool("deprecated", resp.PackageData.Deprecated).
+			Msgf("not deprecated dependency")
 	}
 
 	packageScore := float64(0)

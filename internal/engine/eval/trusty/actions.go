@@ -61,6 +61,8 @@ Minder analyzed the dependencies introduced in this pull request and detected th
 
 {{ if .Archived }}
 ⚠️ __Archived Package:__ This package is marked as deprecated. Proceed with caution!
+
+Archived packages are no longer updated or maintained. This can lead to security vulnerabilities and compatibility issues.
 {{ end }}
 {{ if .Deprecated }}
 ⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
@@ -139,7 +141,7 @@ const (
 	// TRUSTY_LOW_PROVENANCE Low trust in proof of origin
 	TRUSTY_LOW_PROVENANCE
 
-	// TRUSTY_DEPRECATED means a package was marked upstream as deprecated
+	// TRUSTY_DEPRECATED means a package was marked upstream as deprecated or archived
 	TRUSTY_DEPRECATED
 )
 
