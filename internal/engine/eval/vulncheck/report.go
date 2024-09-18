@@ -81,6 +81,21 @@ const (
 )
 
 const (
+	maliciousVulnFoundTemplate = `Malicious vulnerability found for dependency <tt>{{.Name}}</tt>:
+
+| ID | Summary | Details |
+|----|---------|---------|
+{{- range .Vulns}}
+| [{{.ID}}](https://osv.dev/vulnerability/{{.ID}}) | {{.Summary}} | {{.Details}} |
+{{- end}}
+
+Please review and remove this dependency immediately.`
+
+	maliciousVulnFoundFallbackFmt = `Malicious vulnerability found for dependency %s.
+Please review and remove this dependency immediately.", dep.Dep.Name)`
+)
+
+const (
 	tableVulnerabilitiesHeaderName = "vulnerabilitiesTableHeader"
 	tableVulnerabilitiesHeader     = `<h3>Summary of vulnerabilities found</h3>
 Minder found the following vulnerabilities in this PR:

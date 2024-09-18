@@ -16,11 +16,13 @@
 package vulncheck
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"strings"
+	"text/template"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
@@ -186,6 +188,41 @@ func newReviewPrHandler(
 	return handler, nil
 }
 
+func getMaliciousVulns(vulns []Vulnerability) []Vulnerability {
+	var malicious []Vulnerability
+	for _, vuln := range vulns {
+		if strings.HasPrefix(vuln.ID, "MAL-") {
+			malicious = append(malicious, vuln)
+		}
+	}
+	return malicious
+}
+
+func handleMaliciousVulns(dep *pbinternal.PrDependencies_ContextualDependency, vulns []Vulnerability) string {
+	maliciousVulns := getMaliciousVulns(vulns)
+	if len(maliciousVulns) == 0 {
+		return ""
+	}
+
+	tmpl, err := template.New("maliciousVuln").Parse(maliciousVulnFoundTemplate)
+	if err != nil {
+		return fmt.Sprintf(maliciousVulnFoundFallbackFmt, dep.Dep.Name)
+	}
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, struct {
+		Name  string
+		Vulns []Vulnerability
+	}{
+		Name:  dep.Dep.Name,
+		Vulns: maliciousVulns,
+	})
+	if err != nil {
+		return fmt.Sprintf(maliciousVulnFoundFallbackFmt, dep.Dep.Name)
+	}
+
+	return buf.String()
+}
+
 func (ra *reviewPrHandler) trackVulnerableDep(
 	ctx context.Context,
 	dep *pbinternal.PrDependencies_ContextualDependency,
@@ -204,7 +241,10 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 	case errors.Is(patch.GetFormatterMeta().pkgRegistryLookupError, ErrPkgNotFound):
 		body = pkgRepoInfoNotFound
 	case patch.GetFormatterMeta().pkgRegistryLookupError == nil:
-		if !patch.HasPatchedVersion() {
+		maliciousBody := handleMaliciousVulns(dep, vulnResp.Vulns)
+		if maliciousBody != "" {
+			body = maliciousBody
+		} else if !patch.HasPatchedVersion() {
 			body = fmt.Sprintf(vulnFoundWithNoPatchFmt, dep.Dep.Name)
 		} else {
 			comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
