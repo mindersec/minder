@@ -94,7 +94,7 @@ Archived packages are no longer updated or maintained. This can lead to security
   | Number of git tags or releases | {{ .Provenance.Historical.NumTags }}
   | Versions matched to tags or releases | {{ .Provenance.Historical.MatchedVersions }} |
 
-  {{- end -}}
+  {{- end }}
   {{ if .Provenance.Sigstore }}
 
   __This package has been digitally signed using sigtore.__
@@ -105,8 +105,8 @@ Archived packages are no longer updated or maintained. This can lead to security
   | Cerificate Issuer | {{ .Provenance.Sigstore.Issuer }} |
   | GitHub action workflow | {{ .Provenance.Sigstore.Workflow }} |
   | Rekor (public ledger) entry | {{ .Provenance.Sigstore.RekorURI }} |
-  {{- end -}}
-  </details>
+  {{- end }}
+</details>
 {{- end -}}
 {{ if .Alternatives }}
 <details>
