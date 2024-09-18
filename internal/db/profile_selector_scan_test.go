@@ -22,6 +22,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestScan tests the Scan method of the ProfileSelector struct
+// for more tests that exercise the retrieval of a profile with selectors that also happens to use Scan
+// see TestProfileListWithSelectors
 func TestScan(t *testing.T) {
 	t.Parallel()
 
@@ -58,6 +61,20 @@ func TestScan(t *testing.T) {
 					Entities: EntitiesRepository,
 				},
 				Selector: "repository.properties['github/primary_language'] in ['TypeScript', 'Go']",
+				Comment:  "comment1",
+			},
+		},
+		{
+			name:  "Comment includes uneven quotes",
+			input: []byte(fmt.Sprintf("(%s,%s,repository,\"repository.name == foo\",\"\"comment1\")", selectorId, profileId)),
+			expected: ProfileSelector{
+				ID:        selectorId,
+				ProfileID: profileId,
+				Entity: NullEntities{
+					Valid:    true,
+					Entities: EntitiesRepository,
+				},
+				Selector: "repository.name == foo",
 				Comment:  "comment1",
 			},
 		},

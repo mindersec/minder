@@ -39,6 +39,7 @@ func (s *ProfileSelector) Scan(value interface{}) error {
 
 	// Split the string by commas to get the individual field values
 	cr := csv.NewReader(strings.NewReader(str))
+	cr.LazyQuotes = true // Enable LazyQuotes to allow for uneven number of quotes
 	parts, err := cr.Read()
 	if err != nil {
 		return fmt.Errorf("failed to scan SelectorInfo: %v", err)
