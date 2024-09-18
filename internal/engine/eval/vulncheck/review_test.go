@@ -358,7 +358,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, expStatusBody)
 
-	expCommentBody := vulnFoundWithNoPatch
+	expCommentBody := fmt.Sprintf(vulnFoundWithNoPatchFmt, dep.Dep.Name)
 
 	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
@@ -466,6 +466,8 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 			Message: github.String(reviewBodyDismissCommentText),
 		})
 
+	expCommentBody := fmt.Sprintf(vulnFoundWithNoPatchFmt, dep.Dep.Name)
+
 	mockClient.EXPECT().
 		CreateReview(gomock.Any(), pr.RepoOwner, pr.RepoName, int(pr.Number), &github.PullRequestReviewRequest{
 			CommitID: github.String(commitSHA),
@@ -474,7 +476,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 				{
 					Path: github.String(dep.File.Name),
 					Line: github.Int(1),
-					Body: github.String(vulnFoundWithNoPatch),
+					Body: github.String(expCommentBody),
 				},
 			}}).Return(
 		&github.PullRequestReview{

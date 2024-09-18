@@ -205,12 +205,11 @@ func (ra *reviewPrHandler) trackVulnerableDep(
 		body = pkgRepoInfoNotFound
 	case patch.GetFormatterMeta().pkgRegistryLookupError == nil:
 		if !patch.HasPatchedVersion() {
-			body = vulnFoundWithNoPatch
+			body = fmt.Sprintf(vulnFoundWithNoPatchFmt, dep.Dep.Name)
 		} else {
 			comment := patch.IndentedString(location.leadingWhitespace, location.line, dep.Dep)
 			body = reviewBodyWithSuggestion(comment)
 			lineTo = len(strings.Split(comment, "\n")) - 1
-
 		}
 	default:
 		body = pkgRepoLookupError
