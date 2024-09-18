@@ -44,6 +44,8 @@ const (
 	PullPropertyRepoName = "github/repo_name"
 	// PullPropertyAuthorID is the ID of the author of the pull request
 	PullPropertyAuthorID = "github/pull_author_id"
+	// PullPropertyAuthorLogin is the login of the author of the pull request
+	PullPropertyAuthorLogin = "github/pull_author_login"
 	// PullPropertyAction is an operational property that represents the action that was taken on the pull request
 	PullPropertyAction = "github/pull_action"
 )
@@ -61,6 +63,7 @@ var prPropertyDefinitions = []propertyOrigin{
 			PullPropertyRepoOwner,
 			PullPropertyRepoName,
 			PullPropertyAuthorID,
+			PullPropertyAuthorLogin,
 			PullPropertyAction,
 		},
 		wrapper: getPrWrapper,
@@ -152,11 +155,12 @@ func getPrWrapper(
 		// github-specific
 		PullPropertyURL: prReply.GetHTMLURL(),
 		// our proto representation uses int64 for the number but GH uses int
-		PullPropertyNumber:    int64(prReply.GetNumber()),
-		PullPropertySha:       prReply.GetHead().GetSHA(),
-		PullPropertyRepoOwner: owner,
-		PullPropertyRepoName:  name,
-		PullPropertyAuthorID:  prReply.GetUser().GetID(),
+		PullPropertyNumber:      int64(prReply.GetNumber()),
+		PullPropertySha:         prReply.GetHead().GetSHA(),
+		PullPropertyRepoOwner:   owner,
+		PullPropertyRepoName:    name,
+		PullPropertyAuthorID:    prReply.GetUser().GetID(),
+		PullPropertyAuthorLogin: prReply.GetUser().GetLogin(),
 	}
 
 	return prProps, nil
