@@ -20,6 +20,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/jq"
@@ -65,9 +66,7 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 						},
 					},
 					{
-						Profile: &pb.RuleType_Definition_Eval_JQComparison_Operator{
-							Def: ".b",
-						},
+						Constant: structpb.NewStringValue("b"),
 						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".b",
 						},
@@ -111,11 +110,12 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid nil profile accessor",
+			name: "invalid nil profile and constant accessor",
 			args: args{
 				assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 					{
-						Profile: nil,
+						Profile:  nil,
+						Constant: nil,
 						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".",
 						},
@@ -230,6 +230,23 @@ func TestValidJQEvals(t *testing.T) {
 			},
 		},
 		{
+			name: "valid single rule evaluates constant string",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewStringValue("simple"),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
+				obj: map[string]any{
+					"simple": "simple",
+				},
+			},
+		},
+		{
 			name: "valid single rule evaluates int",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
@@ -245,6 +262,23 @@ func TestValidJQEvals(t *testing.T) {
 				pol: map[string]any{
 					"simple": 1,
 				},
+				obj: map[string]any{
+					"simple": 1,
+				},
+			},
+		},
+		{
+			name: "valid single rule evaluates constant int",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewNumberValue(1),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
 				obj: map[string]any{
 					"simple": 1,
 				},
@@ -272,6 +306,23 @@ func TestValidJQEvals(t *testing.T) {
 			},
 		},
 		{
+			name: "valid single rule evaluates constant bool",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewBoolValue(false),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
+				obj: map[string]any{
+					"simple": false,
+				},
+			},
+		},
+		{
 			name: "valid single rule evaluates array",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
@@ -287,6 +338,29 @@ func TestValidJQEvals(t *testing.T) {
 				pol: map[string]any{
 					"simple": []any{"a", "b", "c"},
 				},
+				obj: map[string]any{
+					"simple": []any{"a", "b", "c"},
+				},
+			},
+		},
+		{
+			name: "valid single rule evaluates constant array",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{
+							structpb.NewStringValue("a"),
+							structpb.NewStringValue("b"),
+							structpb.NewStringValue("c"),
+						},
+					}),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
 				obj: map[string]any{
 					"simple": []any{"a", "b", "c"},
 				},
@@ -444,6 +518,61 @@ func TestValidJQEvalsFailed(t *testing.T) {
 				},
 				obj: map[string]any{
 					"shouldnt_match": "foo",
+				},
+			},
+		},
+		{
+			name: "constant value doesn't match",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewBoolValue(true),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
+				obj: map[string]any{
+					"simple": false,
+				},
+			},
+		},
+		{
+			name: "constant type doesn't match",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewBoolValue(false),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
+				obj: map[string]any{
+					"simple": 123,
+				},
+			},
+		},
+		{
+			name: "constant array doesn't match",
+			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
+				{
+					Constant: structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{
+							structpb.NewStringValue("a"),
+						},
+					}),
+					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
+						Def: ".simple",
+					},
+				},
+			},
+			args: args{
+				pol: map[string]any{},
+				obj: map[string]any{
+					"simple": []any{"a", "b", "d"},
 				},
 			},
 		},

@@ -42,11 +42,13 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 
 	for idx := range assertions {
 		a := assertions[idx]
-		if a.Profile == nil {
-			return nil, fmt.Errorf("missing profile accessor")
+		if a.Profile != nil && a.Constant != nil {
+			return nil, fmt.Errorf("profile and constant accessors are mutually exclusive")
+		} else if a.Profile == nil && a.Constant == nil {
+			return nil, fmt.Errorf("missing profile or constant accessor")
 		}
 
-		if a.Profile.Def == "" {
+		if a.Profile != nil && a.Profile.Def == "" {
 			return nil, fmt.Errorf("missing profile accessor definition")
 		}
 
@@ -72,14 +74,25 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 	obj := res.Object
 
 	for idx := range jqe.assertions {
-		var profileVal, dataVal any
+		var expectedVal, dataVal any
+		var err error
 
 		a := jqe.assertions[idx]
-		profileVal, err := util.JQReadFrom[any](ctx, a.Profile.Def, pol)
-		// we ignore util.ErrNoValueFound because we want to allow the JQ accessor to return the default value
-		// which is fine for DeepEqual
-		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
-			return fmt.Errorf("cannot get values from profile accessor: %w", err)
+
+		// If there is no profile accessor, get the expected value from the constant accessor
+		if a.Profile == nil {
+			expectedVal, err = util.JQReadConstant[any](a.Constant.AsInterface())
+			if err != nil {
+				return fmt.Errorf("cannot get values from profile accessor: %w", err)
+			}
+		} else {
+			// Get the expected value from the profile accessor
+			expectedVal, err = util.JQReadFrom[any](ctx, a.Profile.Def, pol)
+			// we ignore util.ErrNoValueFound because we want to allow the JQ accessor to return the default value
+			// which is fine for DeepEqual
+			if err != nil && !errors.Is(err, util.ErrNoValueFound) {
+				return fmt.Errorf("cannot get values from profile accessor: %w", err)
+			}
 		}
 
 		dataVal, err = util.JQReadFrom[any](ctx, a.Ingested.Def, obj)
@@ -88,9 +101,9 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 		}
 
 		// Deep compare
-		if !reflect.DeepEqual(profileVal, dataVal) {
+		if !reflect.DeepEqual(standardizeNumbers(expectedVal), standardizeNumbers(dataVal)) {
 			msg := fmt.Sprintf("data does not match profile: for assertion %d, got %v, want %v",
-				idx, dataVal, profileVal)
+				idx, dataVal, expectedVal)
 
 			marshalledAssertion, err := json.MarshalIndent(a, "", "  ")
 			if err == nil {
@@ -102,4 +115,22 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 	}
 
 	return nil
+}
+
+// Convert numeric types to float64
+func standardizeNumbers(v any) any {
+	switch v := v.(type) {
+	case int:
+		return float64(v)
+	case int32:
+		return float64(v)
+	case int64:
+		return float64(v)
+	case float32:
+		return float64(v)
+	case float64:
+		return v
+	default:
+		return v
+	}
 }

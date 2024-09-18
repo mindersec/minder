@@ -90,3 +90,13 @@ func JQReadFrom[T any](ctx context.Context, path string, obj any) (T, error) {
 
 	return out, nil
 }
+
+// JQReadConstant gets the typed value from the given constant. Returns an error when the type assertion fails.
+func JQReadConstant[T any](constant any) (T, error) {
+	out, ok := constant.(T)
+	if !ok {
+		return out, fmt.Errorf("could not type assert %v to %v", constant, reflect.TypeOf(out))
+	}
+
+	return out, nil
+}

@@ -3004,6 +3004,9 @@
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
           "description": "Profile points to the profile itself."
+        },
+        "constant": {
+          "title": "Constant points to a constant value"
         }
       }
     },
