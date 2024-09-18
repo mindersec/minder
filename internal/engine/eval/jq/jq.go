@@ -42,7 +42,9 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 
 	for idx := range assertions {
 		a := assertions[idx]
-		if a.Profile == nil && a.Constant == nil {
+		if a.Profile != nil && a.Constant != nil {
+			return nil, fmt.Errorf("profile and constant accessors are mutually exclusive")
+		} else if a.Profile == nil && a.Constant == nil {
 			return nil, fmt.Errorf("missing profile or constant accessor")
 		}
 
@@ -99,7 +101,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 		}
 
 		// Deep compare
-		if !reflect.DeepEqual(numberToFloat64(expectedVal), numberToFloat64(dataVal)) {
+		if !reflect.DeepEqual(standardizeNumbers(expectedVal), standardizeNumbers(dataVal)) {
 			msg := fmt.Sprintf("data does not match profile: for assertion %d, got %v, want %v",
 				idx, dataVal, expectedVal)
 
@@ -116,7 +118,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.R
 }
 
 // Convert numeric types to float64
-func numberToFloat64(v any) any {
+func standardizeNumbers(v any) any {
 	switch v := v.(type) {
 	case int:
 		return float64(v)

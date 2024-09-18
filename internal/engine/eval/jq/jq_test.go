@@ -66,11 +66,7 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 						},
 					},
 					{
-						Constant: &structpb.Value{
-							Kind: &structpb.Value_StringValue{
-								StringValue: "b",
-							},
-						},
+						Constant: structpb.NewStringValue("b"),
 						Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 							Def: ".b",
 						},
@@ -237,11 +233,7 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates constant string",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_StringValue{
-							StringValue: "simple",
-						},
-					},
+					Constant: structpb.NewStringValue("simple"),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -279,11 +271,7 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates constant int",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_NumberValue{
-							NumberValue: 1,
-						},
-					},
+					Constant: structpb.NewNumberValue(1),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -321,11 +309,7 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates constant bool",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_BoolValue{
-							BoolValue: false,
-						},
-					},
+					Constant: structpb.NewBoolValue(false),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -363,29 +347,13 @@ func TestValidJQEvals(t *testing.T) {
 			name: "valid single rule evaluates constant array",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_ListValue{
-							ListValue: &structpb.ListValue{
-								Values: []*structpb.Value{
-									{
-										Kind: &structpb.Value_StringValue{
-											StringValue: "a",
-										},
-									},
-									{
-										Kind: &structpb.Value_StringValue{
-											StringValue: "b",
-										},
-									},
-									{
-										Kind: &structpb.Value_StringValue{
-											StringValue: "c",
-										},
-									},
-								},
-							},
+					Constant: structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{
+							structpb.NewStringValue("a"),
+							structpb.NewStringValue("b"),
+							structpb.NewStringValue("c"),
 						},
-					},
+					}),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -557,11 +525,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "constant value doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_BoolValue{
-							BoolValue: true,
-						},
-					},
+					Constant: structpb.NewBoolValue(true),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -578,11 +542,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "constant type doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_BoolValue{
-							BoolValue: false,
-						},
-					},
+					Constant: structpb.NewBoolValue(false),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
@@ -599,19 +559,11 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			name: "constant array doesn't match",
 			assertions: []*pb.RuleType_Definition_Eval_JQComparison{
 				{
-					Constant: &structpb.Value{
-						Kind: &structpb.Value_ListValue{
-							ListValue: &structpb.ListValue{
-								Values: []*structpb.Value{
-									{
-										Kind: &structpb.Value_StringValue{
-											StringValue: "a",
-										},
-									},
-								},
-							},
+					Constant: structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{
+							structpb.NewStringValue("a"),
 						},
-					},
+					}),
 					Ingested: &pb.RuleType_Definition_Eval_JQComparison_Operator{
 						Def: ".simple",
 					},
