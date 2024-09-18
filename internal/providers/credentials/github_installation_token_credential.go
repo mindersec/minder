@@ -26,6 +26,7 @@ import (
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-github/v63/github"
+	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -50,7 +51,11 @@ func NewGitHubInstallationTokenCredential(
 ) *GitHubInstallationTokenCredential {
 	token, err := generateInstallationAccessToken(ctx, appId, privateKey, endpoint, installationId)
 	if err != nil {
-		fmt.Printf("error generating installation access token: %v", err)
+		zerolog.Ctx(ctx).Error().Err(err).
+			Int64("installation_id", installationId).
+			Int64("app_id", appId).
+			Str("endpoint", endpoint).
+			Msg("error generating installation access token")
 	}
 	return &GitHubInstallationTokenCredential{
 		installationId: installationId,

@@ -19,7 +19,6 @@ package keycloak
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -75,7 +74,7 @@ func TestKeyCloak_Resolve(t *testing.T) {
 			},
 		},
 	}
-	fakeServ := fakeKeycloak.Start()
+	fakeServ := fakeKeycloak.Start(t)
 	t.Cleanup(fakeServ.Close)
 
 	kc, err := NewKeyCloak("", serverconfig.IdentityConfig{
@@ -116,12 +115,14 @@ type fakeKeycloak struct {
 	users map[string]client.UserRepresentation
 }
 
-func (f *fakeKeycloak) Start() *httptest.Server {
+func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
+	t.Helper()
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/admin/realms/stacklok/users/{userid}", f.GetUser)
 	mux.HandleFunc("/admin/realms/stacklok/users", f.GetUserByQuery)
 	mux.HandleFunc("/realms/stacklok/protocol/openid-connect/token", f.GetToken)
-	mux.HandleFunc("/", LogMissing)
+	mux.HandleFunc("/", LogMissing(t))
 
 	return httptest.NewServer(mux)
 }
@@ -167,7 +168,11 @@ func (f *fakeKeycloak) GetUserByQuery(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Not Found", http.StatusInternalServerError)
 }
 
-func LogMissing(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("missing handler for %s\n", r.URL.Path)
-	http.Error(w, "missing handler", http.StatusNotFound)
+func LogMissing(t *testing.T) func(w http.ResponseWriter, r *http.Request) {
+	t.Helper()
+
+	return func(w http.ResponseWriter, r *http.Request) {
+		t.Logf("missing handler for %s\n", r.URL.Path)
+		http.Error(w, "missing handler", http.StatusNotFound)
+	}
 }

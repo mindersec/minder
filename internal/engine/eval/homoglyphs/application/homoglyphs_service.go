@@ -40,6 +40,7 @@ const (
 
 // NewHomoglyphsEvaluator creates a new homoglyphs evaluator
 func NewHomoglyphsEvaluator(
+	ctx context.Context,
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
 	ghClient provifv1.GitHub,
 ) (engif.Evaluator, error) {
@@ -54,7 +55,7 @@ func NewHomoglyphsEvaluator(
 	case invisibleCharacters:
 		return NewInvisibleCharactersEvaluator(ghClient)
 	case mixedScript:
-		return NewMixedScriptEvaluator(ghClient)
+		return NewMixedScriptEvaluator(ctx, ghClient)
 	default:
 		return nil, fmt.Errorf("unsupported homoglyphs type: %s", reh.Type)
 	}

@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	"github.com/rs/zerolog"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
@@ -179,7 +180,10 @@ func (e *Evaluator) checkVulnerabilities(
 ) (bool, error) {
 	ecoConfig := cfg.getEcosystemConfig(dep.Dep.Ecosystem)
 	if ecoConfig == nil {
-		fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
+		zerolog.Ctx(ctx).Info().
+			Str("ecosystem", string(dep.Dep.Ecosystem)).
+			Str("dependency", dep.Dep.Name).
+			Msg("Skipping dependency because ecosystem is not configured")
 		return false, nil
 	}
 

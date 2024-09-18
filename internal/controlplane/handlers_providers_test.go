@@ -258,6 +258,7 @@ func TestCreateProvider(t *testing.T) {
 			require.NoError(t, err)
 
 			fakeServer.mockStore.EXPECT().CreateProvider(gomock.Any(), partialCreateParamsMatcher{
+				t: t,
 				value: db.CreateProviderParams{
 					Name:       scenario.name,
 					ProjectID:  projectID,
@@ -466,6 +467,7 @@ func TestCreateProviderFailures(t *testing.T) {
 
 type partialCreateParamsMatcher struct {
 	value db.CreateProviderParams
+	t     *testing.T
 }
 
 func (p partialCreateParamsMatcher) configMatches(name string, gotBytes json.RawMessage) bool {
@@ -478,7 +480,7 @@ func (p partialCreateParamsMatcher) configMatches(name string, gotBytes json.Raw
 		return false
 	}
 	if !cmp.Equal(exp, got) {
-		fmt.Printf("config mismatch for %s: %s\n", name, cmp.Diff(gotBytes, p.value.Definition))
+		p.t.Logf("config mismatch for %s: %s\n", name, cmp.Diff(gotBytes, p.value.Definition))
 		return false
 	}
 	return true

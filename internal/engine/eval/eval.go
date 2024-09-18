@@ -69,7 +69,7 @@ func NewRuleEvaluator(
 		if err != nil {
 			return nil, errors.New("provider does not implement git trait")
 		}
-		return application.NewHomoglyphsEvaluator(e.GetHomoglyphs(), client)
+		return application.NewHomoglyphsEvaluator(ctx, e.GetHomoglyphs(), client)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", ruletype.Def.Eval.Type)
 	}

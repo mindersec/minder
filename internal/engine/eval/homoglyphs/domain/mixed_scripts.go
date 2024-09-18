@@ -16,10 +16,13 @@ package domain
 
 import (
 	"bufio"
+	"context"
 	"embed"
 	"fmt"
 	"io/fs"
 	"strings"
+
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"
 )
@@ -62,9 +65,9 @@ func (_ *MixedScriptsProcessor) GetFailedReviewText() string {
 }
 
 // NewMixedScriptsProcessor creates a new MixedScriptsProcessor
-func NewMixedScriptsProcessor() (HomoglyphProcessor, error) {
+func NewMixedScriptsProcessor(ctx context.Context) (HomoglyphProcessor, error) {
 	// 7th of Feb, 2024: https://www.unicode.org/Public/UCD/latest/ucd/Scripts.txt
-	runeToScript, err := loadScriptData("resources/scripts.txt")
+	runeToScript, err := loadScriptData(ctx, "resources/scripts.txt")
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +124,7 @@ func (mse *MixedScriptsProcessor) FindMixedScripts(line string) []*Violation {
 // It expects lines in the format "<code>; <script> # <description>", where <code> can be a single character
 // or a range. For each valid line, it updates runeToScript to map characters (or ranges of characters) to their
 // respective scripts. Lines that do not conform to the expected format or contain no script information are skipped.
-func loadScriptData(filePath string) (map[rune]string, error) {
+func loadScriptData(ctx context.Context, filePath string) (map[rune]string, error) {
 	file, err := scriptsContent.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -129,7 +132,11 @@ func loadScriptData(filePath string) (map[rune]string, error) {
 	defer func(file fs.File) {
 		err := file.Close()
 		if err != nil {
-			fmt.Println(err)
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("file", filePath).
+				Str("eval", "mixed_scripts_processor").
+				Str("component", "eval").
+				Msg("failed to close file")
 		}
 	}(file)
 

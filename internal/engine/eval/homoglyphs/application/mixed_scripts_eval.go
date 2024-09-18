@@ -32,8 +32,8 @@ type MixedScriptsEvaluator struct {
 }
 
 // NewMixedScriptEvaluator creates a new mixed scripts evaluator
-func NewMixedScriptEvaluator(ghClient provifv1.GitHub) (*MixedScriptsEvaluator, error) {
-	msProcessor, err := domain.NewMixedScriptsProcessor()
+func NewMixedScriptEvaluator(ctx context.Context, ghClient provifv1.GitHub) (*MixedScriptsEvaluator, error) {
+	msProcessor, err := domain.NewMixedScriptsProcessor(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("could not create mixed scripts processor: %w", err)
 	}
