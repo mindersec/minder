@@ -67,7 +67,7 @@ require (
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.26.2
-	github.com/thomaspoignant/go-feature-flag v1.33.0
+	github.com/thomaspoignant/go-feature-flag v1.34.0
 	github.com/xanzy/go-gitlab v0.109.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yuin/goldmark v1.7.4
