@@ -81,7 +81,7 @@ func runCmdListTags(cmd *cobra.Command, _ []string) error {
 
 	// print the containers
 	for _, container := range containers {
-		fmt.Println(container)
+		cmd.Println(container)
 	}
 
 	return nil

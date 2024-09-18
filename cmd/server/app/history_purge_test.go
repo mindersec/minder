@@ -17,7 +17,6 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 	"unsafe"
@@ -232,7 +231,7 @@ func TestPurgeLoop(t *testing.T) {
 				store = tt.dbSetup(ctrl)
 			}
 
-			err := purgeLoop(ctx, store, tt.threshold, tt.size, tt.dryRun, printf)
+			err := purgeLoop(ctx, store, tt.threshold, tt.size, tt.dryRun, t.Logf)
 			if tt.err {
 				require.Error(t, err)
 				return
@@ -240,10 +239,6 @@ func TestPurgeLoop(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
-}
-
-func printf(format string, a ...any) {
-	fmt.Printf(format, a...)
 }
 
 func TestDeleteEvaluationHistory(t *testing.T) {

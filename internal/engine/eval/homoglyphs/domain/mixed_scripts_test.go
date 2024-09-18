@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -96,7 +97,7 @@ func TestFindMixedScripts(t *testing.T) {
 func TestLoadScriptData(t *testing.T) {
 	t.Parallel()
 
-	gotMap, err := loadScriptData("resources/scripts.txt")
+	gotMap, err := loadScriptData(context.Background(), "resources/scripts.txt")
 	if err != nil {
 		t.Fatalf("loadScriptData returned an error: %v", err)
 	}
