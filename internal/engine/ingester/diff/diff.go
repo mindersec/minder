@@ -19,6 +19,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"math"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -78,6 +79,8 @@ func (di *Diff) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest ingests a diff from a pull request in accordance with its type
+//
+//nolint:gocyclo
 func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
@@ -99,6 +102,9 @@ func (di *Diff) Ingest(
 	case "", pb.DiffTypeDep:
 		allDiffs := make([]*pbinternal.PrDependencies_ContextualDependency, 0)
 		for {
+			if pr.Number > math.MaxInt {
+				return nil, fmt.Errorf("pr number is too large")
+			}
 			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 			if err != nil {
 				return nil, fmt.Errorf("error getting pull request files: %w", err)
@@ -131,6 +137,9 @@ func (di *Diff) Ingest(
 	case pb.DiffTypeFull:
 		allDiffs := make([]*pbinternal.PrContents_File, 0)
 		for {
+			if pr.Number > math.MaxInt {
+				return nil, fmt.Errorf("pr number is too large")
+			}
 			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
 			if err != nil {
 				return nil, fmt.Errorf("error getting pull request files: %w", err)
