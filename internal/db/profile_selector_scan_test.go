@@ -38,7 +38,7 @@ func TestScan(t *testing.T) {
 	}{
 		{
 			name:  "Valid input with all fields",
-			input: []byte(fmt.Sprintf("(%s,%s,repository,\"entity.name == \"\"test/test\"\" && repository.is_fork != true\",\"comment1\")", selectorId, profileId)),
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"entity.name == ""test/test"" && repository.is_fork != true","comment1")`, selectorId, profileId)),
 			expected: ProfileSelector{
 				ID:        selectorId,
 				ProfileID: profileId,
@@ -52,7 +52,7 @@ func TestScan(t *testing.T) {
 		},
 		{
 			name:  "Valid input with commas in the selector",
-			input: []byte(fmt.Sprintf("(%s,%s,repository,\"repository.properties['github/primary_language'] in ['TypeScript', 'Go']\",\"comment1\")", selectorId, profileId)),
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"repository.properties['github/primary_language'] in ['TypeScript', 'Go']","comment1")`, selectorId, profileId)),
 			expected: ProfileSelector{
 				ID:        selectorId,
 				ProfileID: profileId,
@@ -66,7 +66,7 @@ func TestScan(t *testing.T) {
 		},
 		{
 			name:  "Comment includes uneven quotes",
-			input: []byte(fmt.Sprintf("(%s,%s,repository,\"repository.name == foo\",\"\"comment1\")", selectorId, profileId)),
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"repository.name == foo",""comment1")`, selectorId, profileId)),
 			expected: ProfileSelector{
 				ID:        selectorId,
 				ProfileID: profileId,
