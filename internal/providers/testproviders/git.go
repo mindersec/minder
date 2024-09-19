@@ -81,3 +81,11 @@ func (_ *GitProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *
 	// TODO: implement
 	return nil
 }
+
+// ReregisterEntity implements the Provider interface
+func (_ *GitProvider) ReregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	// TODO: implement
+	return nil
+}

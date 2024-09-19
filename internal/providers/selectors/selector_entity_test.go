@@ -155,6 +155,10 @@ func (_ *fullProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ 
 	return nil
 }
 
+func (_ *fullProvider) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
+}
+
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
 	t.Helper()
 
@@ -208,6 +212,10 @@ func (_ *repoOnlyProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, 
 }
 
 func (_ *repoOnlyProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	return nil
+}
+
+func (_ *repoOnlyProvider) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	return nil
 }
 

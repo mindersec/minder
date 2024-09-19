@@ -137,6 +137,20 @@ func (mr *MockProviderMockRecorder) RegisterEntity(ctx, entType, props any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockProvider)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockProvider) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockProviderMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockProvider)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockProvider) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -277,6 +291,20 @@ func (mr *MockGitMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGit)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockGit) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockGitMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockGit)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockGit) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -415,6 +443,20 @@ func (m *MockProtoMessageConverter) RegisterEntity(ctx context.Context, entType 
 func (mr *MockProtoMessageConverterMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockProtoMessageConverter)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// ReregisterEntity mocks base method.
+func (m *MockProtoMessageConverter) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockProtoMessageConverterMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockProtoMessageConverter)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.
@@ -586,6 +628,20 @@ func (mr *MockRESTMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockREST)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockREST) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockRESTMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockREST)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockREST) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -724,6 +780,20 @@ func (m *MockRepoLister) RegisterEntity(ctx context.Context, entType v10.Entity,
 func (mr *MockRepoListerMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockRepoLister)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// ReregisterEntity mocks base method.
+func (m *MockRepoLister) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockRepoListerMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockRepoLister)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.
@@ -1460,6 +1530,20 @@ func (mr *MockGitHubMockRecorder) RegisterEntity(ctx, entType, props any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGitHub)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockGitHub) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockGitHubMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockGitHub)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SetCommitStatus mocks base method.
 func (m *MockGitHub) SetCommitStatus(arg0 context.Context, arg1, arg2, arg3 string, arg4 *github.RepoStatus) (*github.RepoStatus, error) {
 	m.ctrl.T.Helper()
@@ -1702,6 +1786,20 @@ func (mr *MockImageListerMockRecorder) RegisterEntity(ctx, entType, props any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockImageLister)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockImageLister) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockImageListerMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockImageLister)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockImageLister) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -1929,6 +2027,20 @@ func (m *MockOCI) RegisterEntity(ctx context.Context, entType v10.Entity, props 
 func (mr *MockOCIMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockOCI)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// ReregisterEntity mocks base method.
+func (m *MockOCI) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockOCIMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockOCI)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.
