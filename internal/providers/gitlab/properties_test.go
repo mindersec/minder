@@ -24,6 +24,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/xanzy/go-gitlab"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers/credentials"
@@ -252,6 +253,149 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 					assert.Equal(t, wp.RawValue(), gp.RawValue())
 				}
 			}
+		})
+	}
+}
+
+func TestPropertiesToProtoMessage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		entityType minderv1.Entity
+		props      map[string]any
+		expected   protoreflect.ProtoMessage
+		wantErr    bool
+	}{
+		{
+			name:       "empty properties",
+			props:      map[string]any{},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "single non-relevant property",
+			props: map[string]any{
+				"key1": "value1",
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "upstream ID but no other properties",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "1",
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "upstream ID and name",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "1",
+				RepoPropertyProjectName:       "group",
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "upstream ID and namespace",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "1",
+				RepoPropertyNamespace:         "group",
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "missing is_private",
+			props: map[string]any{
+				properties.PropertyUpstreamID: "1",
+				RepoPropertyProjectName:       "group",
+				RepoPropertyNamespace:         "project",
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "missing is_fork",
+			props: map[string]any{
+				properties.PropertyUpstreamID:    "1",
+				RepoPropertyProjectName:          "group",
+				RepoPropertyNamespace:            "project",
+				properties.RepoPropertyIsPrivate: true,
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected:   nil,
+			wantErr:    true,
+		},
+		{
+			name: "valid repository properties",
+			props: map[string]any{
+				properties.PropertyUpstreamID:     "1",
+				properties.PropertyName:           "group/project",
+				RepoPropertyProjectName:           "project",
+				RepoPropertyNamespace:             "group",
+				properties.RepoPropertyIsPrivate:  true,
+				properties.RepoPropertyIsFork:     true,
+				properties.RepoPropertyIsArchived: false,
+			},
+			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
+			expected: &minderv1.Repository{
+				RepoId:    1,
+				Name:      "project",
+				Owner:     "group",
+				IsPrivate: true,
+				IsFork:    true,
+				Properties: MustNewProperties(map[string]any{
+					properties.PropertyUpstreamID:     "1",
+					properties.PropertyName:           "group/project",
+					RepoPropertyProjectName:           "project",
+					RepoPropertyNamespace:             "group",
+					properties.RepoPropertyIsPrivate:  true,
+					properties.RepoPropertyIsFork:     true,
+					properties.RepoPropertyIsArchived: false,
+				}).ToProtoStruct(),
+			},
+		},
+		{
+			name: "invalid entity",
+			props: map[string]any{
+				properties.PropertyUpstreamID:     "1",
+				properties.PropertyName:           "group/project",
+				RepoPropertyProjectName:           "project",
+				RepoPropertyNamespace:             "group",
+				properties.RepoPropertyIsPrivate:  true,
+				properties.RepoPropertyIsFork:     true,
+				properties.RepoPropertyIsArchived: false,
+			},
+			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
+			expected:   nil,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			props := MustNewProperties(tt.props)
+
+			g := &gitlabClient{}
+			result, err := g.PropertiesToProtoMessage(tt.entityType, props)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
