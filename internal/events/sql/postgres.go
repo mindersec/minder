@@ -56,6 +56,7 @@ func BuildPostgreSQLDriver(
 			SchemaAdapter:    watermillsql.DefaultPostgreSQLSchema{},
 			OffsetsAdapter:   watermillsql.DefaultPostgreSQLOffsetsAdapter{},
 			InitializeSchema: true,
+			AckDeadline:      &cfg.SQLPubSub.AckDeadline,
 		},
 		watermill.NewStdLogger(false, false),
 	)
