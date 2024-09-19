@@ -153,8 +153,6 @@ func getAllByProperty(
 	providerID uuid.UUID,
 	qtx db.ExtendQuerier,
 ) ([]db.EntityInstance, error) {
-	l := zerolog.Ctx(ctx).With().Any(propName, propVal).Logger()
-
 	ents, err := qtx.GetTypedEntitiesByPropertyV1(
 		ctx,
 		entities.EntityTypeToDB(entType),
@@ -168,11 +166,6 @@ func getAllByProperty(
 		return nil, ErrEntityNotFound
 	} else if err != nil {
 		return nil, fmt.Errorf("error fetching entities by property: %w", err)
-	}
-
-	if len(ents) == 0 {
-		l.Debug().Msg("no entity found")
-		return nil, ErrEntityNotFound
 	}
 
 	return ents, nil
@@ -191,6 +184,8 @@ func getEntityIdByUpstreamID(
 
 	if len(ents) > 1 {
 		return uuid.Nil, ErrMultipleEntities
+	} else if len(ents) == 0 {
+		return uuid.Nil, ErrEntityNotFound
 	}
 
 	return ents[0].ID, nil
@@ -226,10 +221,7 @@ func matchEntityWithHint(
 			// know the project or provider ID and only have an upstream webhook payload.
 			uuid.Nil, uuid.Nil,
 			qtx)
-		if errors.Is(err, ErrEntityNotFound) {
-			l.Debug().Str("lookupProp", loopupProp).Msg("no entity found")
-			continue
-		} else if err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("failed to get entities by upstream ID: %w", err)
 		}
 
