@@ -218,3 +218,11 @@ func (_ *dockerHubImageLister) DeregisterEntity(
 	// TODO: implement
 	return nil
 }
+
+// ReregisterEntity implements the Provider interface
+func (_ *dockerHubImageLister) ReregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	// TODO: implement
+	return nil
+}

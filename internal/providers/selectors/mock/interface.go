@@ -145,6 +145,20 @@ func (mr *MockRepoSelectorConverterMockRecorder) RepoToSelectorEntity(ctx, repoE
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepoToSelectorEntity", reflect.TypeOf((*MockRepoSelectorConverter)(nil).RepoToSelectorEntity), ctx, repoEntWithProps)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockRepoSelectorConverter) ReregisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockRepoSelectorConverterMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockRepoSelectorConverter)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockRepoSelectorConverter) SupportsEntity(entType v1.Entity) bool {
 	m.ctrl.T.Helper()
@@ -284,6 +298,20 @@ func (mr *MockArtifactSelectorConverterMockRecorder) RegisterEntity(ctx, entType
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).RegisterEntity), ctx, entType, props)
 }
 
+// ReregisterEntity mocks base method.
+func (m *MockArtifactSelectorConverter) ReregisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockArtifactSelectorConverterMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).ReregisterEntity), ctx, entType, props)
+}
+
 // SupportsEntity mocks base method.
 func (m *MockArtifactSelectorConverter) SupportsEntity(entType v1.Entity) bool {
 	m.ctrl.T.Helper()
@@ -421,6 +449,20 @@ func (m *MockPullRequestSelectorConverter) RegisterEntity(ctx context.Context, e
 func (mr *MockPullRequestSelectorConverterMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// ReregisterEntity mocks base method.
+func (m *MockPullRequestSelectorConverter) ReregisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockPullRequestSelectorConverterMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.

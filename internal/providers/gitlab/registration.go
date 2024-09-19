@@ -94,6 +94,32 @@ func (c *gitlabClient) DeregisterEntity(
 	return nil
 }
 
+// ReregisterEntity implements the Provider interface
+func (c *gitlabClient) ReregisterEntity(
+	ctx context.Context, entType minderv1.Entity, props *properties.Properties,
+) error {
+	if !c.SupportsEntity(entType) {
+		return errors.New("unsupported entity type")
+	}
+
+	upstreamID := props.GetProperty(properties.PropertyUpstreamID).GetString()
+	if upstreamID == "" {
+		return errors.New("missing upstream ID")
+	}
+
+	hookID := props.GetProperty(RepoPropertyHookID).GetString()
+	if hookID == "" {
+		return errors.New("missing hook ID")
+	}
+
+	hookURL := props.GetProperty(RepoPropertyHookURL).GetString()
+	if hookURL == "" {
+		return errors.New("missing hook URL")
+	}
+
+	return c.updateWebhook(ctx, upstreamID, hookID, hookURL)
+}
+
 func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*properties.Properties, error) {
 	createHookPath, err := url.JoinPath("projects", upstreamID, "hooks")
 	if err != nil {
@@ -215,6 +241,67 @@ func (c *gitlabClient) cleanUpStaleWebhooks(ctx context.Context, upstreamID stri
 				return fmt.Errorf("failed to delete webhook: %w", err)
 			}
 		}
+	}
+
+	return nil
+}
+
+func (c *gitlabClient) updateWebhook(ctx context.Context, upstreamID, hookID string, hookURL string) error {
+	// We don't need to update the webhook URL, as it's unique for each
+	// registration. We only need to update the secret.
+	updateHookPath, err := url.JoinPath("projects", upstreamID, "hooks", hookID)
+	if err != nil {
+		return fmt.Errorf("failed to join URL path for hook: %w", err)
+	}
+
+	hookURLParsed, err := url.Parse(hookURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse hook URL: %w", err)
+	}
+
+	// We need to extract the UUID from the webhook URL. The UUID is
+	// the last part of the path.
+	hookMinderUUID := hookURLParsed.Path[strings.LastIndex(hookURLParsed.Path, "/")+1:]
+
+	sec, err := webhooksecret.New(c.currentWebhookSecret, hookMinderUUID)
+	if err != nil {
+		return fmt.Errorf("failed to create webhook secret: %w", err)
+	}
+
+	trve := ptr.Ptr(true)
+	hreq := &gitlab.EditProjectHookOptions{
+		URL:                   &hookURL,
+		Token:                 &sec,
+		PushEvents:            trve,
+		TagPushEvents:         trve,
+		MergeRequestsEvents:   trve,
+		ReleasesEvents:        trve,
+		EnableSSLVerification: trve,
+	}
+
+	if err := c.doUpdateWebhook(ctx, updateHookPath, hreq); err != nil {
+		return fmt.Errorf("failed to update webhook: %w", err)
+	}
+
+	return nil
+}
+
+func (c *gitlabClient) doUpdateWebhook(
+	ctx context.Context, updateHookPath string, hreq *gitlab.EditProjectHookOptions,
+) error {
+	req, err := c.NewRequest(http.MethodPut, updateHookPath, hreq)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.Do(ctx, req)
+	if err != nil {
+		return fmt.Errorf("failed to get projects: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	return nil

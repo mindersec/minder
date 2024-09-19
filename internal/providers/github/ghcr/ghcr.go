@@ -177,3 +177,10 @@ func (_ *ImageLister) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *
 	// TODO: implement
 	return nil
 }
+
+// ReregisterEntity implements the Provider interface
+func (_ *ImageLister) ReregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	return nil
+}

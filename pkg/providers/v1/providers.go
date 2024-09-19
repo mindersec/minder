@@ -81,6 +81,11 @@ type Provider interface {
 	// When implementing, try to make this idempotent. That is, if the entity is already deregistered,
 	// (e.g. a webhook is already deleted), then this should not return an error.
 	DeregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+
+	// ReregisterEntity runs the necessary updates to the entity registration. This could be
+	// updating the webhook URL or secret for a particular repository or artifact. This is useful
+	// for secret rotation.
+	ReregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
 }
 
 // Git is the interface for git providers

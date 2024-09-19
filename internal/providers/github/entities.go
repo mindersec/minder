@@ -108,17 +108,7 @@ func (c *GitHub) RegisterEntity(
 	}
 	ping := c.webhookConfig.ExternalPingURL
 
-	jsonCT := "json"
-	newHook := &github.Hook{
-		Config: &github.HookConfig{
-			URL:         ptr.Ptr(webhookURL.String()),
-			ContentType: &jsonCT,
-			Secret:      &secret,
-		},
-		PingURL: &ping,
-		Events:  targetedEvents,
-	}
-
+	newHook := getGitHubWebhook(webhookURL.String(), ping, secret)
 	webhook, err := c.CreateHook(ctx, repoOwner, repoName, newHook)
 	if err != nil {
 		return nil, fmt.Errorf("error creating hook: %w", err)
@@ -168,6 +158,57 @@ func (c *GitHub) DeregisterEntity(ctx context.Context, entityType minderv1.Entit
 	err := c.DeleteHook(ctx, repoOwner, repoName, hookID)
 	if err != nil {
 		return fmt.Errorf("error deleting hook: %w", err)
+	}
+
+	return nil
+}
+
+// ReregisterEntity implements the Provider interface
+func (c *GitHub) ReregisterEntity(
+	ctx context.Context, entityType minderv1.Entity, props *properties.Properties,
+) error {
+	// We only need explicit registration steps for repositories
+	// The rest of the entities are originated from them.
+	if entityType != minderv1.Entity_ENTITY_REPOSITORIES {
+		return nil
+	}
+
+	repoNameP := props.GetProperty(ghprop.RepoPropertyName)
+	if repoNameP == nil {
+		return errors.New("repo name property not found")
+	}
+
+	repoOwnerP := props.GetProperty(ghprop.RepoPropertyOwner)
+	if repoOwnerP == nil {
+		return errors.New("repo owner property not found")
+	}
+
+	hookIDP := props.GetProperty(ghprop.RepoPropertyHookId)
+	if hookIDP == nil {
+		return errors.New("hook ID property not found")
+	}
+
+	hookURL := props.GetProperty(ghprop.RepoPropertyHookUrl)
+	if hookURL == nil {
+		return errors.New("hook URL property not found")
+	}
+
+	ping := c.webhookConfig.ExternalPingURL
+
+	secret, err := c.webhookConfig.GetWebhookSecret()
+	if err != nil {
+		return fmt.Errorf("error getting webhook secret for github provider: %w", err)
+	}
+
+	repoName := repoNameP.GetString()
+	repoOwner := repoOwnerP.GetString()
+	hookID := hookIDP.GetInt64()
+
+	hook := getGitHubWebhook(hookURL.GetString(), ping, secret)
+	_, err = c.EditHook(ctx, repoOwner, repoName, hookID, hook)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("unable to update hook")
+		return fmt.Errorf("unable to update hook: %w", err)
 	}
 
 	return nil
@@ -240,4 +281,16 @@ func ensureGitHubPathInWebhook(u *url.URL) (*url.URL, error) {
 	}
 
 	return u.JoinPath("github"), nil
+}
+
+func getGitHubWebhook(webhookURL, pingURL, secret string) *github.Hook {
+	return &github.Hook{
+		Config: &github.HookConfig{
+			URL:         ptr.Ptr(webhookURL),
+			ContentType: ptr.Ptr("json"),
+			Secret:      &secret,
+		},
+		PingURL: ptr.Ptr(pingURL),
+		Events:  targetedEvents,
+	}
 }
