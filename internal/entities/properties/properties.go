@@ -146,11 +146,20 @@ func (p *Property) AsInt64() (int64, error) {
 		return 0, fmt.Errorf("property is nil")
 	}
 
-	stringVal, err := unwrapTypedValue(p.value, typeInt64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get int64 value: %w", err)
+	switch value := p.value.Kind.(type) {
+	case *structpb.Value_NumberValue:
+		return int64(value.NumberValue), nil
+	case *structpb.Value_StringValue:
+		return strconv.ParseInt(value.StringValue, 10, 64)
+	case *structpb.Value_StructValue:
+		stringVal, err := unwrapTypedValue(p.value, typeInt64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get int64 value: %w", err)
+		}
+		return strconv.ParseInt(stringVal, 10, 64)
+	default:
+		return 0, fmt.Errorf("failed to get int64 value from %T", value)
 	}
-	return strconv.ParseInt(stringVal, 10, 64)
 }
 
 // GetInt64 returns the int64 value, or 0 if the value is not an int64
@@ -171,11 +180,20 @@ func (p *Property) AsUint64() (uint64, error) {
 		return 0, fmt.Errorf("property is nil")
 	}
 
-	stringVal, err := unwrapTypedValue(p.value, typeUint64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get uint64 value: %w", err)
+	switch value := p.value.Kind.(type) {
+	case *structpb.Value_NumberValue:
+		return uint64(value.NumberValue), nil
+	case *structpb.Value_StringValue:
+		return strconv.ParseUint(value.StringValue, 10, 64)
+	case *structpb.Value_StructValue:
+		stringVal, err := unwrapTypedValue(p.value, typeUint64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get uint64 value: %w", err)
+		}
+		return strconv.ParseUint(stringVal, 10, 64)
+	default:
+		return 0, fmt.Errorf("failed to get int64 value from %T", value)
 	}
-	return strconv.ParseUint(stringVal, 10, 64)
 }
 
 // GetUint64 returns the uint64 value, or 0 if the value is not an uint64
@@ -278,6 +296,15 @@ func (p *Properties) Iterate() iter.Seq2[string, *Property] {
 			return yield(key, &v)
 		})
 	}
+}
+
+// String implements the fmt.Stringer interface, for debugging purposes
+func (p *Properties) String() string {
+	data := make([]string, 0, p.props.Size())
+	for k, v := range p.Iterate() {
+		data = append(data, fmt.Sprintf("%s: %v (%T)", k, v.RawValue(), v.RawValue()))
+	}
+	return strings.Join(data, "\n")
 }
 
 // PropertyFilter is a function that filters properties

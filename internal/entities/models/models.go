@@ -16,6 +16,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
@@ -31,6 +33,11 @@ type EntityInstance struct {
 	Name       string
 	ProviderID uuid.UUID
 	ProjectID  uuid.UUID
+}
+
+// String implements fmt.Stringer for debugging purposes
+func (ei EntityInstance) String() string {
+	return fmt.Sprintf("[%s]<%s>: %s / %s (%s)", ei.ProviderID, ei.Type, ei.ProjectID, ei.ID, ei.Name)
 }
 
 // EntityWithProperties represents an entity instance with properties
@@ -59,6 +66,11 @@ func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *propertie
 		Entity:     entity,
 		Properties: props,
 	}
+}
+
+// String implements fmt.Stringer for debugging purposes
+func (ewp EntityWithProperties) String() string {
+	return fmt.Sprintf("ENTITY %s:\n%s", ewp.Entity, ewp.Properties)
 }
 
 // DbPropsToModel converts a slice of db.Property to a properties.Properties instance.
