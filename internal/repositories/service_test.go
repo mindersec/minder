@@ -712,7 +712,7 @@ func withSuccessfulPropFetch(prop *properties.Properties) func(svcMock propSvcMo
 
 func withSuccessfulEntityWithProps(mock propSvcMock) {
 	mock.EXPECT().
-		EntityWithProperties(gomock.Any(), gomock.Any(), gomock.Any()).
+		EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
 			ID:         dbRepo.ID,
 			ProjectID:  projectID,
@@ -722,7 +722,7 @@ func withSuccessfulEntityWithProps(mock propSvcMock) {
 
 func withFailedEntityWithProps(mock propSvcMock) {
 	mock.EXPECT().
-		EntityWithProperties(gomock.Any(), gomock.Any(), gomock.Any()).
+		EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
 }
 

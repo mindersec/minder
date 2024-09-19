@@ -528,7 +528,7 @@ func TestDeleteProvider(t *testing.T) {
 
 	mockprops := propSvc.NewMockPropertiesService(ctrl)
 	mockprops.EXPECT().
-		EntityWithProperties(gomock.Any(), gomock.Any(), nil).
+		EntityWithPropertiesByID(gomock.Any(), gomock.Any(), nil).
 		Return(models.NewEntityWithPropertiesFromInstance(
 			models.EntityInstance{}, nil), nil)
 
@@ -649,7 +649,7 @@ func TestDeleteProviderByID(t *testing.T) {
 
 	mockprops := propSvc.NewMockPropertiesService(ctrl)
 	mockprops.EXPECT().
-		EntityWithProperties(gomock.Any(), gomock.Any(), nil).
+		EntityWithPropertiesByID(gomock.Any(), gomock.Any(), nil).
 		Return(models.NewEntityWithPropertiesFromInstance(
 			models.EntityInstance{}, nil), nil)
 

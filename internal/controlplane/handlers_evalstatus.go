@@ -393,7 +393,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				continue
 			}
 
-			efp, err := s.props.EntityWithProperties(ctx, e.EntityID, nil)
+			efp, err := s.props.EntityWithPropertiesByID(ctx, e.EntityID, nil)
 			if err != nil {
 				if errors.Is(err, propSvc.ErrEntityNotFound) {
 					// If the entity is not found, log and skip

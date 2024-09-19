@@ -235,7 +235,7 @@ func (e *executor) profileEvalStatus(
 	}
 
 	// get the entity with properties by the entity UUID
-	ewp, err := e.propService.EntityWithProperties(ctx, entityID,
+	ewp, err := e.propService.EntityWithPropertiesByID(ctx, entityID,
 		service.CallBuilder().WithStoreOrTransaction(e.querier))
 	if err != nil {
 		return fmt.Errorf("error getting entity with properties: %w", err)

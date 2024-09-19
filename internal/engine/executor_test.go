@@ -325,7 +325,7 @@ default allow = true`,
 
 	mockPropSvc := mockprops.NewMockPropertiesService(ctrl)
 	mockPropSvc.EXPECT().
-		EntityWithProperties(gomock.Any(), repositoryID, gomock.Any()).
+		EntityWithPropertiesByID(gomock.Any(), repositoryID, gomock.Any()).
 		Return(&models.EntityWithProperties{
 			Entity: models.EntityInstance{
 				ID:         repositoryID,

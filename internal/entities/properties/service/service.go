@@ -60,9 +60,19 @@ type PropertiesService interface {
 	EntityWithPropertiesAsProto(
 		ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
 	) (protoreflect.ProtoMessage, error)
-	// EntityWithProperties Fetches an Entity by ID and Project in order to refresh the properties
-	EntityWithProperties(
+	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
+	EntityWithPropertiesByID(
 		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
+	) (*models.EntityWithProperties, error)
+	// EntityWithPropertiesByUpstreamHint fetches an entity by upstream properties
+	// and returns the entity with its properties. It is expected that the caller
+	// does NOT know the project or provider ID. Whatever hints it may have
+	// are to be passed to the hint parameter which will be used in case multiple
+	// entries with the same ID are found.
+	EntityWithPropertiesByUpstreamHint(
+		ctx context.Context,
+		entType minderv1.Entity, getByProps *properties.Properties,
+		hint ByUpstreamHint, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
 	// RetrieveAllProperties fetches all properties for an entity
 	// given a project, provider, and identifying properties.
@@ -290,28 +300,14 @@ func (ps *propertiesService) ReplaceProperty(
 	return err
 }
 
-func (ps *propertiesService) EntityWithProperties(
-	ctx context.Context, entityID uuid.UUID,
+func (ps *propertiesService) getEntityWithProperties(
+	ctx context.Context,
+	ent db.EntityInstance,
 	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
 	q := ps.getStoreOrTransaction(opts)
 
-	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
-	ent, err := q.GetEntityByID(ctx, entityID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrEntityNotFound
-	} else if err != nil {
-		return nil, fmt.Errorf("error getting entity: %w", err)
-	}
-	zerolog.Ctx(ctx).Debug().
-		Str("projectID", ent.ProjectID.String()).
-		Str("providerID", ent.ProviderID.String()).
-		Str("entityType", string(ent.EntityType)).
-		Str("entityName", ent.Name).
-		Str("entityID", ent.ID.String()).
-		Msg("entity found")
-
-	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, ent.ID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to get properties for entity: %w", ErrEntityNotFound)
 	} else if err != nil {
@@ -335,6 +331,75 @@ func (ps *propertiesService) EntityWithProperties(
 	}
 
 	return models.NewEntityWithProperties(ent, props), nil
+}
+
+func (ps *propertiesService) EntityWithPropertiesByID(
+	ctx context.Context, entityID uuid.UUID,
+	opts *CallOptions,
+) (*models.EntityWithProperties, error) {
+	q := ps.getStoreOrTransaction(opts)
+
+	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
+	ent, err := q.GetEntityByID(ctx, entityID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrEntityNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("error getting entity: %w", err)
+	}
+
+	return ps.getEntityWithProperties(ctx, ent, opts)
+}
+
+// ByUpstreamHint is a hint to help find an entity by upstream ID
+// API-wise it should only be exposed in those methods of the service layer
+// that do not know the project or provider ID and are searching for an entity
+// based on upstream properties only.
+// The hint
+type ByUpstreamHint struct {
+	// ProviderImplements is the provider type to search by
+	ProviderImplements db.NullProviderType
+	ProviderClass      db.NullProviderClass
+}
+
+// ToLogDict converts the hint to a log dictionary for use by zerolog
+func (hint *ByUpstreamHint) ToLogDict() *zerolog.Event {
+	dict := zerolog.Dict().
+		Interface("ProviderImplements", hint.ProviderImplements)
+
+	return dict
+}
+
+func (hint *ByUpstreamHint) isSet() bool {
+	return hint.ProviderImplements.Valid || hint.ProviderClass.Valid
+}
+
+func (ps *propertiesService) EntityWithPropertiesByUpstreamHint(
+	ctx context.Context,
+	entType minderv1.Entity,
+	getByProps *properties.Properties,
+	hint ByUpstreamHint,
+	opts *CallOptions,
+) (*models.EntityWithProperties, error) {
+	q := ps.getStoreOrTransaction(opts)
+
+	l := zerolog.Ctx(ctx).With().
+		Dict("getByProps", getByProps.ToLogDict()).
+		Dict("hint", hint.ToLogDict()).
+		Logger()
+
+	l.Debug().Msg("fetching entity with properties by upstream hint")
+
+	ent, err := matchEntityWithHint(ctx, getByProps, entType, &hint, l, q)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get entity ID: %w", err)
+	}
+
+	ewp, err := ps.getEntityWithProperties(ctx, *ent, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	return ewp, nil
 }
 
 // EntityWithPropertiesAsProto converts the entity with properties to a protobuf message

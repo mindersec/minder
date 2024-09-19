@@ -20,6 +20,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/google/uuid"
@@ -143,35 +144,165 @@ func getEntityIdByName(
 	return ent.ID, nil
 }
 
-func getEntityIdByUpstreamID(
-	ctx context.Context, projectId uuid.UUID,
+func getAllByProperty(
+	ctx context.Context,
+	propName string,
+	propVal any,
+	entType minderv1.Entity,
+	projectID uuid.UUID,
 	providerID uuid.UUID,
-	upstreamID string, entType minderv1.Entity,
 	qtx db.ExtendQuerier,
-) (uuid.UUID, error) {
+) ([]db.EntityInstance, error) {
 	ents, err := qtx.GetTypedEntitiesByPropertyV1(
 		ctx,
 		entities.EntityTypeToDB(entType),
-		properties.PropertyUpstreamID,
-		upstreamID,
+		propName,
+		propVal,
 		db.GetTypedEntitiesOptions{
-			ProjectID:  projectId,
+			ProjectID:  projectID,
 			ProviderID: providerID,
 		})
 	if errors.Is(err, sql.ErrNoRows) {
-		return uuid.Nil, ErrEntityNotFound
+		return nil, ErrEntityNotFound
 	} else if err != nil {
-		return uuid.Nil, fmt.Errorf("error fetching entities by property: %w", err)
+		return nil, fmt.Errorf("error fetching entities by property: %w", err)
+	}
+
+	return ents, nil
+}
+
+func getEntityIdByUpstreamID(
+	ctx context.Context,
+	projectID uuid.UUID, providerID uuid.UUID,
+	upstreamID string, entType minderv1.Entity,
+	qtx db.ExtendQuerier,
+) (uuid.UUID, error) {
+	ents, err := getAllByProperty(ctx, properties.PropertyUpstreamID, upstreamID, entType, projectID, providerID, qtx)
+	if err != nil {
+		return uuid.Nil, err
 	}
 
 	if len(ents) > 1 {
 		return uuid.Nil, ErrMultipleEntities
-	} else if len(ents) == 1 {
-		return ents[0].ID, nil
+	} else if len(ents) == 0 {
+		return uuid.Nil, ErrEntityNotFound
 	}
 
-	// no entity found
-	return uuid.Nil, ErrEntityNotFound
+	return ents[0].ID, nil
+}
+
+func matchEntityWithHint(
+	ctx context.Context,
+	props *properties.Properties,
+	entType minderv1.Entity,
+	hint *ByUpstreamHint,
+	l zerolog.Logger,
+	qtx db.ExtendQuerier,
+) (*db.EntityInstance, error) {
+	if !hint.isSet() {
+		return nil, fmt.Errorf("at least one of projectID, providerID or providerImplements must be set in hint")
+	}
+
+	var ents []db.EntityInstance
+	var err error
+
+	lookupOrder := []string{properties.PropertyUpstreamID, properties.PropertyName}
+	for _, loopupProp := range lookupOrder {
+		prop := props.GetProperty(loopupProp)
+		if prop == nil {
+			continue
+		}
+
+		l.Debug().Str("lookupProp", loopupProp).Msg("fetching by property")
+		ents, err = getAllByProperty(ctx,
+			loopupProp, prop.RawValue(), entType,
+			// we search across all projects and providers. This is expected because the lookup properties only
+			// contain upstream properties and the get-with-hint methods are only to be used by callers who don't
+			// know the project or provider ID and only have an upstream webhook payload.
+			uuid.Nil, uuid.Nil,
+			qtx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get entities by upstream ID: %w", err)
+		}
+
+		match, err := findMatchByUpstreamHint(ctx, ents, hint, qtx)
+		if err != nil {
+			if errors.Is(err, ErrEntityNotFound) {
+				l.Error().Msg("no entity matched")
+				continue
+			} else if errors.Is(err, ErrMultipleEntities) {
+				l.Error().Msg("multiple entities matched")
+				return nil, ErrMultipleEntities
+			}
+			return nil, fmt.Errorf("failed to match entity by hint: %w", err)
+		}
+		return match, nil
+	}
+
+	return nil, ErrEntityNotFound
+}
+
+func findMatchByUpstreamHint(
+	ctx context.Context, ents []db.EntityInstance, hint *ByUpstreamHint, qtx db.ExtendQuerier,
+) (*db.EntityInstance, error) {
+	var match *db.EntityInstance
+	for _, ent := range ents {
+		var thisMatch *db.EntityInstance
+		zerolog.Ctx(ctx).Debug().Msgf("matching entity %s", ent.ID.String())
+		if dbEntMatchesUpstreamHint(ctx, ent, hint, qtx) {
+			zerolog.Ctx(ctx).Debug().Msgf("entity %s matched by hint", ent.ID.String())
+			thisMatch = &ent
+		}
+
+		if thisMatch != nil {
+			if match != nil {
+				zerolog.Ctx(ctx).Error().Msg("multiple entities matched")
+				return nil, ErrMultipleEntities
+			}
+			match = thisMatch
+		}
+	}
+
+	if match == nil {
+		zerolog.Ctx(ctx).Debug().Msg("no entity matched")
+		return nil, ErrEntityNotFound
+	}
+
+	return match, nil
+}
+
+func dbEntMatchesUpstreamHint(ctx context.Context, ent db.EntityInstance, hint *ByUpstreamHint, qtx db.ExtendQuerier) bool {
+	logger := zerolog.Ctx(ctx)
+
+	if hint.ProviderImplements.Valid || hint.ProviderClass.Valid {
+		dbProv, err := qtx.GetProviderByID(ctx, ent.ProviderID)
+		if err != nil {
+			logger.Error().
+				Str("providerID", ent.ProviderID.String()).
+				Err(err).
+				Msg("error getting provider by ID")
+			return false
+		}
+
+		if hint.ProviderClass.Valid && dbProv.Class != hint.ProviderClass.ProviderClass {
+			logger.Debug().
+				Str("ProviderID", ent.ProviderID.String()).
+				Str("providerClass", string(dbProv.Class)).
+				Str("hintProviderClass", string(hint.ProviderClass.ProviderClass)).
+				Msg("provider class does not match hint")
+			return false
+		}
+
+		if hint.ProviderImplements.Valid && !slices.Contains(dbProv.Implements, hint.ProviderImplements.ProviderType) {
+			logger.Debug().
+				Str("ProviderID", ent.ProviderID.String()).
+				Str("providerType", string(hint.ProviderImplements.ProviderType)).
+				Msg("provider does not implement hint")
+			return false
+		}
+	}
+
+	return true
 }
 
 func (ps *propertiesService) areDatabasePropertiesValid(
