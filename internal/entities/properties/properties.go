@@ -192,7 +192,7 @@ func (p *Property) AsUint64() (uint64, error) {
 		}
 		return strconv.ParseUint(stringVal, 10, 64)
 	default:
-		return 0, fmt.Errorf("failed to get int64 value from %T", value)
+		return 0, fmt.Errorf("failed to get uint64 value from %T", value)
 	}
 }
 
