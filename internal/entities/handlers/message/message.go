@@ -40,9 +40,9 @@ type EntityHint struct {
 
 // HandleEntityAndDoMessage is a message that is sent to the entity handler to refresh an entity and perform an action.
 type HandleEntityAndDoMessage struct {
-	Entity TypedProps `json:"entity"`
-	Owner  TypedProps `json:"owner"`
-	Hint   EntityHint `json:"hint"`
+	Entity     TypedProps `json:"entity"`
+	Originator TypedProps `json:"owner"`
+	Hint       EntityHint `json:"hint"`
 }
 
 // NewEntityRefreshAndDoMessage creates a new HandleEntityAndDoMessage struct.
@@ -61,7 +61,7 @@ func (e *HandleEntityAndDoMessage) WithEntity(entType v1.Entity, getByProps *pro
 
 // WithOwner sets the owner entity and its properties.
 func (e *HandleEntityAndDoMessage) WithOwner(ownerType v1.Entity, ownerProps *properties.Properties) *HandleEntityAndDoMessage {
-	e.Owner = TypedProps{
+	e.Originator = TypedProps{
 		Type:       ownerType,
 		GetByProps: ownerProps.ToProtoStruct().AsMap(),
 	}

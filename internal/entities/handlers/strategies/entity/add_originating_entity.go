@@ -65,7 +65,7 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 	childEwp, err := db.WithTransaction(a.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
 		parentEwp, err := getEntityInner(
 			ctx,
-			entMsg.Owner.Type, entMsg.Owner.GetByProps, entMsg.Hint,
+			entMsg.Originator.Type, entMsg.Originator.GetByProps, entMsg.Hint,
 			a.propSvc,
 			propertyService.CallBuilder().WithStoreOrTransaction(t))
 		if err != nil {

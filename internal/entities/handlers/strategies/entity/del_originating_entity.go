@@ -75,7 +75,7 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 
 	parentEwp, err := getEntityInner(
 		ctx,
-		entMsg.Owner.Type, entMsg.Owner.GetByProps, entMsg.Hint,
+		entMsg.Originator.Type, entMsg.Originator.GetByProps, entMsg.Hint,
 		d.propSvc,
 		propertyService.CallBuilder().WithStoreOrTransaction(txq))
 	if err != nil {

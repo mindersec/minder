@@ -100,9 +100,9 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			assert.Equal(t, original.Entity.GetByProps, roundTrip.Entity.GetByProps)
 			assert.Equal(t, original.Entity.Type, roundTrip.Entity.Type)
 			assert.Equal(t, original.Hint.ProviderImplementsHint, roundTrip.Hint.ProviderImplementsHint)
-			if original.Owner.Type != v1.Entity_ENTITY_UNSPECIFIED {
-				assert.Equal(t, original.Owner.GetByProps, roundTrip.Owner.GetByProps)
-				assert.Equal(t, original.Owner.Type, roundTrip.Owner.Type)
+			if original.Originator.Type != v1.Entity_ENTITY_UNSPECIFIED {
+				assert.Equal(t, original.Originator.GetByProps, roundTrip.Originator.GetByProps)
+				assert.Equal(t, original.Originator.Type, roundTrip.Originator.Type)
 			}
 		})
 	}
