@@ -53,7 +53,7 @@ var (
 	repoName = "testorg/testrepo"
 	pullName = "testorg/testrepo/789"
 
-	repoEwp = &models.EntityWithProperties{
+	repoEwp = models.EntityWithProperties{
 		Entity: models.EntityInstance{
 			ID:         repoID,
 			Type:       minderv1.Entity_ENTITY_REPOSITORIES,
@@ -71,7 +71,7 @@ var (
 		properties.RepoPropertyIsFork:    false,
 	}
 
-	pullRequestEwp = &models.EntityWithProperties{
+	pullRequestEwp = models.EntityWithProperties{
 		Entity: models.EntityInstance{
 			ID:         pullRequestID,
 			Type:       minderv1.Entity_ENTITY_PULL_REQUESTS,
@@ -116,14 +116,14 @@ func withSuccessfulGetEntityName(name string) func(providerMock) {
 	}
 }
 
-func buildEwp(t *testing.T, ewp *models.EntityWithProperties, propMap map[string]any) *models.EntityWithProperties {
+func buildEwp(t *testing.T, ewp models.EntityWithProperties, propMap map[string]any) *models.EntityWithProperties {
 	t.Helper()
 
 	entProps, err := properties.NewProperties(propMap)
 	require.NoError(t, err)
 	ewp.Properties = entProps
 
-	return ewp
+	return &ewp
 }
 
 func checkRepoMessage(t *testing.T, msg *watermill.Message) {
@@ -245,7 +245,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			providerHint:     "github",
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
-					fixtures.WithSuccessfulEntityByUpstreamHint(repoEwp, githubHint),
+					fixtures.WithSuccessfulEntityByUpstreamHint(&repoEwp, githubHint),
 					fixtures.WithFailedRetrieveAllPropertiesForEntity(service.ErrEntityNotFound),
 				)
 			},
@@ -261,7 +261,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			lookupType:       minderv1.Entity_ENTITY_REPOSITORIES,
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
-					fixtures.WithSuccessfulEntityByUpstreamHint(repoEwp, githubHint),
+					fixtures.WithSuccessfulEntityByUpstreamHint(&repoEwp, githubHint),
 					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
 					fixtures.WithFailedEntityWithPropertiesAsProto(errors.New("fart")),
 				)
