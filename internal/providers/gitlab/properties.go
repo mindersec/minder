@@ -95,6 +95,13 @@ func (c *gitlabClient) PropertiesToProtoMessage(
 	return repoV1FromProperties(props)
 }
 
+// FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
+// This is done so we don't have to deal with conversions in the provider
+// when dealing with entities
+func FormatRepositoryUpstreamID(id int) string {
+	return fmt.Sprintf("%d", id)
+}
+
 func getStringProp(props *properties.Properties, key string) (string, error) {
 	value, err := props.GetProperty(key).AsString()
 	if err != nil {

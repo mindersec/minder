@@ -16,6 +16,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
@@ -26,11 +28,17 @@ import (
 
 // EntityInstance represents an entity instance
 type EntityInstance struct {
-	ID         uuid.UUID
-	Type       minderv1.Entity
-	Name       string
-	ProviderID uuid.UUID
-	ProjectID  uuid.UUID
+	ID             uuid.UUID
+	Type           minderv1.Entity
+	Name           string
+	ProviderID     uuid.UUID
+	ProjectID      uuid.UUID
+	OriginatedFrom uuid.UUID
+}
+
+// String implements fmt.Stringer for debugging purposes
+func (ei EntityInstance) String() string {
+	return fmt.Sprintf("[%s]<%s>: %s / %s (%s)", ei.ProviderID, ei.Type, ei.ProjectID, ei.ID, ei.Name)
 }
 
 // EntityWithProperties represents an entity instance with properties
@@ -41,13 +49,19 @@ type EntityWithProperties struct {
 
 // NewEntityWithProperties creates a new EntityWithProperties instance
 func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) *EntityWithProperties {
+	var originatedFrom uuid.UUID
+	if dbEntity.OriginatedFrom.Valid {
+		originatedFrom = dbEntity.OriginatedFrom.UUID
+	}
+
 	return &EntityWithProperties{
 		Entity: EntityInstance{
-			ID:         dbEntity.ID,
-			Type:       entities.EntityTypeFromDB(dbEntity.EntityType),
-			Name:       dbEntity.Name,
-			ProviderID: dbEntity.ProviderID,
-			ProjectID:  dbEntity.ProjectID,
+			ID:             dbEntity.ID,
+			Type:           entities.EntityTypeFromDB(dbEntity.EntityType),
+			Name:           dbEntity.Name,
+			ProviderID:     dbEntity.ProviderID,
+			ProjectID:      dbEntity.ProjectID,
+			OriginatedFrom: originatedFrom,
 		},
 		Properties: props,
 	}
@@ -59,6 +73,11 @@ func NewEntityWithPropertiesFromInstance(entity EntityInstance, props *propertie
 		Entity:     entity,
 		Properties: props,
 	}
+}
+
+// String implements fmt.Stringer for debugging purposes
+func (ewp EntityWithProperties) String() string {
+	return fmt.Sprintf("ENTITY %s:\n%s", ewp.Entity, ewp.Properties)
 }
 
 // DbPropsToModel converts a slice of db.Property to a properties.Properties instance.

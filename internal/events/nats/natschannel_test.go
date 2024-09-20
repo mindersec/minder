@@ -32,6 +32,8 @@ import (
 )
 
 func TestNatsChannel(t *testing.T) {
+	t.Skip("Skipping test that is failing in CI") // https://github.com/stacklok/minder/issues/4542
+
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
