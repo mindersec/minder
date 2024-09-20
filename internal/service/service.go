@@ -209,6 +209,10 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 	}
+	err = controlplane.SubscribeToAdminEvents(ctx, store, authzClient, cfg, projectDeleter)
+	if err != nil {
+		return fmt.Errorf("unable to subscribe to account events: %w", err)
+	}
 
 	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
 
