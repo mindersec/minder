@@ -20,17 +20,55 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
+	"text/template"
 
 	"github.com/stacklok/minder/internal/db"
+)
+
+const (
+	maxDetailsMessageSize int64 = 1 << 10
 )
 
 // ErrInternal is an error that occurs when there is an internal error in the minder engine.
 var ErrInternal = errors.New("internal minder error")
 
+type limitedWriter struct {
+	w io.Writer
+	n int64
+}
+
+var _ io.Writer = (*limitedWriter)(nil)
+
+func (l *limitedWriter) Write(p []byte) (int, error) {
+	if l.n < 0 {
+		return 0, io.ErrShortBuffer
+	}
+	if int64(len(p)) > l.n {
+		return 0, io.ErrShortBuffer
+	}
+	n, err := l.w.Write(p)
+	l.n -= int64(n)
+	return n, err
+}
+
+// LimitedWriter returns a writer that allows up to `n` bytes being
+// written. If more than `n` total bytes are written,
+// `io.ErrShortBuffer` is returned.
+func LimitedWriter(w io.Writer, n int64) io.Writer {
+	return &limitedWriter{
+		w: w,
+		n: n,
+	}
+}
+
 // EvaluationError is a custom error type for evaluation errors.
 type EvaluationError struct {
-	Base error
-	Msg  string
+	Base         error
+	Msg          string
+	Template     string
+	TemplateArgs any
 }
 
 // Unwrap returns the base error, allowing errors.Is to work with wrapped errors.
@@ -41,6 +79,42 @@ func (e *EvaluationError) Unwrap() error {
 // Error implements the error interface for EvaluationError.
 func (e *EvaluationError) Error() string {
 	return fmt.Sprintf("%v: %s", e.Base, e.Msg)
+}
+
+// Details returns a pretty-printed message detailing the reason of
+// the failure.
+func (e *EvaluationError) Details() string {
+	if e.Template == "" {
+		return e.Msg
+	}
+	tmpl, err := template.New("error").Parse(e.Template)
+	if err != nil {
+		return e.Error()
+	}
+
+	var buf strings.Builder
+	w := LimitedWriter(&buf, maxDetailsMessageSize)
+	if err := tmpl.Execute(w, e.TemplateArgs); err != nil {
+		return e.Error()
+	}
+	return buf.String()
+}
+
+// NewDetailedErrEvaluationFailed creates a new evaluation error with
+// a given error message and a templated detail message.
+func NewDetailedErrEvaluationFailed(
+	tmpl string,
+	tmplArgs any,
+	sfmt string,
+	args ...any,
+) error {
+	formatted := fmt.Sprintf(sfmt, args...)
+	return &EvaluationError{
+		Base:         ErrEvaluationFailed,
+		Msg:          formatted,
+		Template:     tmpl,
+		TemplateArgs: tmplArgs,
+	}
 }
 
 // ErrEvaluationFailed is an error that occurs during evaluation of a rule.
@@ -131,12 +205,15 @@ func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
 // ErrorAsEvalDetails returns the evaluation details for a given error
 func ErrorAsEvalDetails(err error) string {
 	var evalErr *EvaluationError
+	if errors.As(err, &evalErr) && evalErr.Template != "" {
+		return evalErr.Details()
+	}
 	if errors.As(err, &evalErr) {
 		return evalErr.Msg
-	} else if err != nil {
+	}
+	if err != nil {
 		return err.Error()
 	}
-
 	return ""
 }
 

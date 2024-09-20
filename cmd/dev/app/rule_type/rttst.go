@@ -74,7 +74,7 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("remediate-status", "", "", "The previous remediate status (optional)")
 	testCmd.Flags().StringP("remediate-metadata", "", "", "YAML file containing the remediate metadata (optional)")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
-		"Can also be set via the AUTH_TOKEN environment variable.")
+		"Can also be set via the TEST_AUTH_TOKEN environment variable.")
 
 	if err := testCmd.MarkFlagRequired("rule-type"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
