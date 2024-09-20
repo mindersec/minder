@@ -183,10 +183,11 @@ func TestInt64Getters(t *testing.T) {
 	t.Parallel()
 
 	input := map[string]any{
-		"id":         1,
-		"is_private": true,
-		"count":      int64(5),
-		"large":      int64(math.MaxInt64),
+		"id":          1,
+		"is_private":  true,
+		"count":       int64(5),
+		"large":       int64(math.MaxInt64),
+		"from_string": "2",
 	}
 
 	scenarios := []struct {
@@ -221,7 +222,7 @@ func TestInt64Getters(t *testing.T) {
 		{
 			name:      "AsInt64 non-int64 property",
 			propName:  "is_private",
-			errString: "failed to get int64 value: value is not a map",
+			errString: "failed to get int64 value",
 		},
 		{
 			name:     "GetInt64 non-int64 property",
@@ -238,6 +239,28 @@ func TestInt64Getters(t *testing.T) {
 			name:     "GetInt64 large property",
 			propName: "large",
 			expValue: math.MaxInt64,
+			callGet:  true,
+		},
+		{
+			name:     "AsUint64 from int",
+			propName: "id",
+			expValue: 1,
+		},
+		{
+			name:     "AsUint64 from int",
+			propName: "id",
+			expValue: 1,
+			callGet:  true,
+		},
+		{
+			name:     "AsUint64 from string",
+			propName: "from_string",
+			expValue: 2,
+		},
+		{
+			name:     "AsUint64 from string",
+			propName: "from_string",
+			expValue: 2,
 			callGet:  true,
 		},
 	}
@@ -271,10 +294,11 @@ func TestUint64Getters(t *testing.T) {
 	t.Parallel()
 
 	input := map[string]any{
-		"id":         1,
-		"is_private": true,
-		"count":      uint64(5),
-		"large":      uint64(math.MaxUint64),
+		"id":          1,
+		"is_private":  true,
+		"count":       uint64(5),
+		"large":       uint64(math.MaxUint64),
+		"from_string": "2",
 	}
 
 	scenarios := []struct {
@@ -309,7 +333,7 @@ func TestUint64Getters(t *testing.T) {
 		{
 			name:      "AsUint64 non-uint64 property",
 			propName:  "is_private",
-			errString: "failed to get uint64 value: value is not a map",
+			errString: "failed to get uint64 value",
 		},
 		{
 			name:     "GetUint64 non-uint64 property",
@@ -326,6 +350,28 @@ func TestUint64Getters(t *testing.T) {
 			name:     "GetUint64 large property",
 			propName: "large",
 			expValue: math.MaxUint64,
+			callGet:  true,
+		},
+		{
+			name:     "AsUint64 from int",
+			propName: "id",
+			expValue: 1,
+		},
+		{
+			name:     "AsUint64 from int",
+			propName: "id",
+			expValue: 1,
+			callGet:  true,
+		},
+		{
+			name:     "AsUint64 from string",
+			propName: "from_string",
+			expValue: 2,
+		},
+		{
+			name:     "AsUint64 from string",
+			propName: "from_string",
+			expValue: 2,
 			callGet:  true,
 		},
 	}
