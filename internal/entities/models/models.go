@@ -26,11 +26,12 @@ import (
 
 // EntityInstance represents an entity instance
 type EntityInstance struct {
-	ID         uuid.UUID
-	Type       minderv1.Entity
-	Name       string
-	ProviderID uuid.UUID
-	ProjectID  uuid.UUID
+	ID             uuid.UUID
+	Type           minderv1.Entity
+	Name           string
+	ProviderID     uuid.UUID
+	ProjectID      uuid.UUID
+	OriginatedFrom uuid.UUID
 }
 
 // EntityWithProperties represents an entity instance with properties
@@ -41,13 +42,19 @@ type EntityWithProperties struct {
 
 // NewEntityWithProperties creates a new EntityWithProperties instance
 func NewEntityWithProperties(dbEntity db.EntityInstance, props *properties.Properties) *EntityWithProperties {
+	var originatedFrom uuid.UUID
+	if dbEntity.OriginatedFrom.Valid {
+		originatedFrom = dbEntity.OriginatedFrom.UUID
+	}
+
 	return &EntityWithProperties{
 		Entity: EntityInstance{
-			ID:         dbEntity.ID,
-			Type:       entities.EntityTypeFromDB(dbEntity.EntityType),
-			Name:       dbEntity.Name,
-			ProviderID: dbEntity.ProviderID,
-			ProjectID:  dbEntity.ProjectID,
+			ID:             dbEntity.ID,
+			Type:           entities.EntityTypeFromDB(dbEntity.EntityType),
+			Name:           dbEntity.Name,
+			ProviderID:     dbEntity.ProviderID,
+			ProjectID:      dbEntity.ProjectID,
+			OriginatedFrom: originatedFrom,
 		},
 		Properties: props,
 	}

@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/email/noop"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	"github.com/stacklok/minder/internal/entities/handlers"
 	propService "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
@@ -256,6 +257,10 @@ func AllInOneServerService(
 	// Register the installation manager to handle provider installation events
 	im := installations.NewInstallationManager(ghProviders)
 	evt.ConsumeEvents(im)
+
+	// Register the entity refresh manager to handle entity refresh events
+	refresh := handlers.NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(refresh)
 
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer
