@@ -1348,29 +1348,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1380,9 +1358,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1399,29 +1374,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1431,9 +1384,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1450,29 +1400,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1482,9 +1410,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1501,29 +1426,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1533,9 +1436,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1551,29 +1451,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1583,9 +1461,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1602,29 +1477,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1634,9 +1487,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -1652,29 +1502,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1684,9 +1512,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2303,29 +2128,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2335,9 +2138,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2354,29 +2154,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2386,9 +2164,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2405,29 +2180,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2437,9 +2190,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2456,29 +2206,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2488,9 +2216,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2507,29 +2232,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2539,9 +2242,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2558,29 +2258,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2590,9 +2268,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2608,29 +2283,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2640,9 +2293,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2659,29 +2309,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2691,9 +2319,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2710,29 +2335,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2742,9 +2345,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2761,29 +2361,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2793,9 +2371,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2812,29 +2387,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2844,9 +2397,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2863,29 +2413,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2895,9 +2423,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2914,29 +2439,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2946,9 +2449,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -2965,29 +2465,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2997,9 +2475,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3016,29 +2491,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3048,9 +2501,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3067,29 +2517,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3099,9 +2527,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3117,29 +2542,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3149,9 +2552,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3167,29 +2567,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3199,9 +2577,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3228,29 +2603,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3260,9 +2613,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3271,29 +2621,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3303,9 +2631,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 
@@ -3323,29 +2648,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -3361,29 +2664,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -3392,29 +2673,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3424,9 +2683,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3441,29 +2697,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3473,9 +2707,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3490,29 +2721,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3522,9 +2731,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3539,29 +2745,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3571,9 +2755,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3588,29 +2769,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3620,9 +2779,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3637,29 +2793,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3669,9 +2803,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3686,29 +2817,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRepoProto(),
-			),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3718,9 +2827,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 

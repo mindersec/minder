@@ -40,6 +40,7 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/entities/properties/service"
@@ -944,29 +945,7 @@ func (s *Server) processRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	repoEnt, err := s.fetchRepo(ctx, event.GetRepo())
-	if err != nil {
-		return nil, err
-	}
-
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, repoEnt, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
-	}
-
-	pbRepo, ok := pbMsg.(*pb.Repository)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithRepository(pbRepo).
-		WithRepositoryID(repoEnt.Entity.ID)
-
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
+	return s.sendEvaluateRepoMessage(event.GetRepo(), events.TopicQueueRefreshEntityAndEvaluate)
 }
 
 // nolint:gocyclo // This function will be re-simplified real soon
@@ -1250,6 +1229,28 @@ func (_ *Server) repositoryAdded(
 		topic:   events.TopicQueueReconcileEntityAdd,
 		wrapper: event,
 	}, nil
+}
+
+func (_ *Server) sendEvaluateRepoMessage(
+	repo *repo,
+	handler string,
+) (*processingResult, error) {
+	lookByProps, err := properties.NewProperties(map[string]any{
+		// the PropertyUpstreamID is always a string
+		properties.PropertyUpstreamID: strconv.FormatInt(repo.GetID(), 10),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating repository properties: %w", err)
+	}
+
+	entRefresh := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
+
+	return &processingResult{
+			topic:   handler,
+			wrapper: entRefresh},
+		nil
 }
 
 func (s *Server) fetchRepo(
