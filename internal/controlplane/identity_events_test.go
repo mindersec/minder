@@ -98,7 +98,6 @@ func TestHandleEvents(t *testing.T) {
 	HandleEvents(context.Background(), mockStore, authzClient, &c, deleter)
 }
 
-
 func TestHandleAdminEvents(t *testing.T) {
 	t.Parallel()
 
