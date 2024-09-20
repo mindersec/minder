@@ -41,6 +41,12 @@ func getEntityInner(
 			return nil, fmt.Errorf("error scanning provider type: %w", err)
 		}
 	}
+	if hint.ProviderClassHint != "" {
+		svcHint.ProviderClass.Valid = true
+		if err := svcHint.ProviderClass.ProviderClass.Scan(hint.ProviderClassHint); err != nil {
+			return nil, fmt.Errorf("error scanning provider class: %w", err)
+		}
+	}
 
 	lookupProperties, err := properties.NewProperties(entPropMap)
 	if err != nil {
