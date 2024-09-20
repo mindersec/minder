@@ -25,6 +25,7 @@ import (
 	"github.com/rs/zerolog"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -59,7 +60,12 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	if len(vulnerablePackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed("vulnerable packages: %s", strings.Join(vulnerablePackages, ","))
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			templates.VulncheckTemplate,
+			vulnerablePackages,
+			"vulnerable packages: %s",
+			strings.Join(vulnerablePackages, ","),
+		)
 	}
 
 	return nil
