@@ -62,7 +62,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	if len(vulnerablePackages) > 0 {
 		return evalerrors.NewDetailedErrEvaluationFailed(
 			templates.VulncheckTemplate,
-			vulnerablePackages,
+			map[string]any{"packages": vulnerablePackages},
 			"vulnerable packages: %s",
 			strings.Join(vulnerablePackages, ","),
 		)
