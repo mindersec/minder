@@ -91,7 +91,7 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 	}
 
 	outProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID:     fmt.Sprintf("%d", proj.ID),
+		properties.PropertyUpstreamID:     FormatRepositoryUpstreamID(proj.ID),
 		properties.PropertyName:           formatRepoName(owner, proj.Name),
 		properties.RepoPropertyIsPrivate:  proj.Visibility == gitlab.PrivateVisibility,
 		properties.RepoPropertyIsArchived: proj.Archived,

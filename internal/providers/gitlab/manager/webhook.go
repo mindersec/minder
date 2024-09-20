@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	gitlablib "github.com/xanzy/go-gitlab"
 
 	"github.com/stacklok/minder/internal/providers/gitlab/webhooksecret"
 )
@@ -47,13 +48,30 @@ func (m *providerClassManager) GetWebhookHandler() http.Handler {
 			return
 		}
 
-		l.Debug().Msg("received webhook")
+		eventType := gitlablib.HookEventType(r)
+		if eventType == "" {
+			l.Error().Msg("missing X-Gitlab-Event header")
+			http.Error(w, "missing X-Gitlab-Event header", http.StatusBadRequest)
+			return
+		}
+
+		l = l.With().Str("event", string(eventType)).Logger()
+
+		disp := m.getWebhookEventDispatcher(eventType)
+
+		if err := disp(l, r); err != nil {
+			l.Error().Err(err).Msg("error handling webhook event")
+			http.Error(w, "error handling webhook event", http.StatusInternalServerError)
+			return
+		}
+
+		l.Debug().Msg("processed webhook event successfully")
 	})
 }
 
 func (m *providerClassManager) validateRequest(r *http.Request) error {
 	// Validate the webhook secret
-	gltok := r.Header.Get("X-Gitlab-Token")
+	gltok := gitlablib.HookEventToken(r)
 	if gltok == "" {
 		return errors.New("missing X-Gitlab-Token header")
 	}
