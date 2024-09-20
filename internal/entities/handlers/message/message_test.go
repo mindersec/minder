@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/properties"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -31,12 +32,13 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		name         string
-		props        map[string]any
-		entType      v1.Entity
-		ownerProps   map[string]any
-		ownerType    v1.Entity
-		providerHint string
+		name          string
+		props         map[string]any
+		entType       v1.Entity
+		ownerProps    map[string]any
+		ownerType     v1.Entity
+		providerHint  string
+		providerClass string
 	}{
 		{
 			name: "Valid repository entity",
@@ -44,8 +46,9 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 				"id":   "123",
 				"name": "test-repo",
 			},
-			entType:      v1.Entity_ENTITY_REPOSITORIES,
-			providerHint: "github",
+			entType:       v1.Entity_ENTITY_REPOSITORIES,
+			providerHint:  "github",
+			providerClass: string(db.ProviderClassGithub),
 		},
 		{
 			name: "Valid artifact entity",
@@ -57,8 +60,9 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			ownerProps: map[string]any{
 				"id": "123",
 			},
-			ownerType:    v1.Entity_ENTITY_REPOSITORIES,
-			providerHint: "docker",
+			ownerType:     v1.Entity_ENTITY_REPOSITORIES,
+			providerHint:  "docker",
+			providerClass: string(db.ProviderClassDockerhub),
 		},
 		{
 			name: "Valid pull request entity",
@@ -69,8 +73,9 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			ownerProps: map[string]any{
 				"id": "123",
 			},
-			ownerType:    v1.Entity_ENTITY_REPOSITORIES,
-			providerHint: "github",
+			ownerType:     v1.Entity_ENTITY_REPOSITORIES,
+			providerHint:  "github",
+			providerClass: string(db.ProviderClassGithub),
 		},
 	}
 
@@ -83,7 +88,8 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 
 			original := NewEntityRefreshAndDoMessage().
 				WithEntity(sc.entType, props).
-				WithProviderImplementsHint(sc.providerHint)
+				WithProviderImplementsHint(sc.providerHint).
+				WithProviderClassHint(sc.providerClass)
 
 			if sc.ownerProps != nil {
 				ownerProps, err := properties.NewProperties(sc.ownerProps)
@@ -100,6 +106,7 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			assert.Equal(t, original.Entity.GetByProps, roundTrip.Entity.GetByProps)
 			assert.Equal(t, original.Entity.Type, roundTrip.Entity.Type)
 			assert.Equal(t, original.Hint.ProviderImplementsHint, roundTrip.Hint.ProviderImplementsHint)
+			assert.Equal(t, original.Hint.ProviderClassHint, roundTrip.Hint.ProviderClassHint)
 			if original.Originator.Type != v1.Entity_ENTITY_UNSPECIFIED {
 				assert.Equal(t, original.Originator.GetByProps, roundTrip.Originator.GetByProps)
 				assert.Equal(t, original.Originator.Type, roundTrip.Originator.Type)

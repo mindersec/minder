@@ -36,6 +36,7 @@ type TypedProps struct {
 // EntityHint is a hint that is used to help the entity handler find the entity.
 type EntityHint struct {
 	ProviderImplementsHint string `json:"provider_implements_hint"`
+	ProviderClassHint      string `json:"provider_class_hint"`
 }
 
 // HandleEntityAndDoMessage is a message that is sent to the entity handler to refresh an entity and perform an action.
@@ -69,8 +70,16 @@ func (e *HandleEntityAndDoMessage) WithOwner(ownerType v1.Entity, ownerProps *pr
 }
 
 // WithProviderImplementsHint sets the provider hint for the entity that will be used when looking up the entity.
+// to the provider implements hint
 func (e *HandleEntityAndDoMessage) WithProviderImplementsHint(providerHint string) *HandleEntityAndDoMessage {
 	e.Hint.ProviderImplementsHint = providerHint
+	return e
+}
+
+// WithProviderClassHint sets the provider hint for the entity that will be used when looking up the entity.
+// to the provider class
+func (e *HandleEntityAndDoMessage) WithProviderClassHint(providerClassHint string) *HandleEntityAndDoMessage {
+	e.Hint.ProviderClassHint = providerClassHint
 	return e
 }
 
