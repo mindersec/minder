@@ -36,7 +36,7 @@ import (
 )
 
 const (
-	eventFetchInterval     = "@daily"
+	eventFetchInterval     = "@hourly"
 	deleteAccountEventType = "DELETE_ACCOUNT"
 )
 
