@@ -290,15 +290,21 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			if alternative.trustyReply.Summary.Score != nil {
 				score = *alternative.trustyReply.Summary.Score
 			}
+
+			packageUIURL, err := url.JoinPath(
+				constants.TrustyHttpURL,
+				"report",
+				strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+				url.PathEscape(alternative.Dependency.Name))
+			if err != nil {
+				// This is unlikely to happen, but if it does, we skip the package
+				continue
+			}
 			packageData := templatePackageData{
 				Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
 				PackageName: alternative.Dependency.Name,
-				TrustyURL: fmt.Sprintf(
-					"%s%s/%s", constants.TrustyHttpURL,
-					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-					url.PathEscape(alternative.trustyReply.PackageName),
-				),
-				Score: score,
+				TrustyURL:   packageUIURL,
+				Score:       score,
 			}
 
 			// If the package is malicious we list it separately
