@@ -195,7 +195,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating selectors: %w", err)
 	}
 
-	return runEvaluationForRules(cmd, eng, ewp, prov, profSel, remediateStatus, remMetadata, rules, actionEngine)
+	return runEvaluationForRules(cmd, eng, ewp, profSel, remediateStatus, remMetadata, rules, actionEngine)
 }
 
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
@@ -226,7 +226,6 @@ func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *rtengine.RuleTypeEngine,
 	ewp *entModels.EntityWithProperties,
-	provider provifv1.Provider,
 	entitySelectors selectors.Selection,
 	remediateStatus db.RemediationStatusTypes,
 	remMetadata json.RawMessage,
@@ -271,7 +270,7 @@ func runEvaluationForRules(
 		}
 
 		// Perform rule evaluation
-		evalErr := selectAndEval(ctx, eng, provider, inf, ewp, evalStatus, entitySelectors)
+		evalErr := selectAndEval(ctx, eng, inf, ewp, evalStatus, entitySelectors)
 		evalStatus.SetEvalErr(evalErr)
 
 		// Perform the actions, if any
@@ -294,13 +293,12 @@ func runEvaluationForRules(
 func selectAndEval(
 	ctx context.Context,
 	eng *rtengine.RuleTypeEngine,
-	provider provifv1.Provider,
 	inf *entities.EntityInfoWrapper,
 	ewp *entModels.EntityWithProperties,
 	evalStatus *engif.EvalStatusParams,
 	profileSelectors selectors.Selection,
 ) error {
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, inf.Type, ewp)
+	selEnt := provsel.EntityToSelectorEntity(ctx, inf.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}

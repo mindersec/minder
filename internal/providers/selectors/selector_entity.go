@@ -13,143 +13,114 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package selectors provides the conversion of entities to SelectorEntities
 package selectors
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
+	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
-// entityInfoConverter is an interface for converting an entity from an EntityInfoWrapper to a SelectorEntity
-type entityInfoConverter interface {
-	toSelectorEntity(ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
-}
+type toSelectorEntity func(ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
 
-type repositoryInfoConverter struct {
-	converter RepoSelectorConverter
-}
-
-func newRepositoryInfoConverter(provider provifv1.Provider) *repositoryInfoConverter {
-	converter, err := provifv1.As[RepoSelectorConverter](provider)
-	if err != nil {
-		return nil
-	}
-
-	return &repositoryInfoConverter{
-		converter: converter,
-	}
-}
-
-func (rc *repositoryInfoConverter) toSelectorEntity(
-	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if rc == nil {
-		return nil
-	}
-
+func repoToSelectorEntity(
+	_ context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
 	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_REPOSITORIES {
 		return nil
 	}
 
-	return rc.converter.RepoToSelectorEntity(ctx, entityWithProps)
-}
-
-type artifactInfoConverter struct {
-	converter ArtifactSelectorConverter
-}
-
-func newArtifactInfoConverter(provider provifv1.Provider) *artifactInfoConverter {
-	converter, err := provifv1.As[ArtifactSelectorConverter](provider)
-	if err != nil {
-		return nil
+	var isFork *bool
+	if propIsFork, err := entityWithProps.Properties.GetProperty(properties.RepoPropertyIsFork).AsBool(); err == nil {
+		isFork = proto.Bool(propIsFork)
 	}
 
-	return &artifactInfoConverter{
-		converter: converter,
-	}
-}
-
-func (ac *artifactInfoConverter) toSelectorEntity(
-	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if ac == nil {
-		return nil
+	var isPrivate *bool
+	if propIsPrivate, err := entityWithProps.Properties.GetProperty(properties.RepoPropertyIsPrivate).AsBool(); err == nil {
+		isPrivate = proto.Bool(propIsPrivate)
 	}
 
-	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_ARTIFACTS {
-		return nil
-	}
-
-	return ac.converter.ArtifactToSelectorEntity(ctx, entityWithProps)
-}
-
-type pullRequestInfoConverter struct {
-	converter PullRequestSelectorConverter
-}
-
-func newPullRequestInfoConverter(provider provifv1.Provider) *pullRequestInfoConverter {
-	converter, err := provifv1.As[PullRequestSelectorConverter](provider)
-	if err != nil {
-		return nil
-	}
-
-	return &pullRequestInfoConverter{
-		converter: converter,
-	}
-}
-
-func (prc *pullRequestInfoConverter) toSelectorEntity(
-	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if prc == nil {
-		return nil
-	}
-
-	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_PULL_REQUESTS {
-		return nil
-	}
-
-	return prc.converter.PullRequestToSelectorEntity(ctx, entityWithProps)
-}
-
-// converterFactory is a map of entity types to their respective converters
-type converterFactory struct {
-	converters map[minderv1.Entity]entityInfoConverter
-}
-
-// newConverterFactory creates a new converterFactory with the default converters for each entity type
-func newConverterFactory(provider provifv1.Provider) *converterFactory {
-	return &converterFactory{
-		converters: map[minderv1.Entity]entityInfoConverter{
-			minderv1.Entity_ENTITY_REPOSITORIES:  newRepositoryInfoConverter(provider),
-			minderv1.Entity_ENTITY_ARTIFACTS:     newArtifactInfoConverter(provider),
-			minderv1.Entity_ENTITY_PULL_REQUESTS: newPullRequestInfoConverter(provider),
+	return &internalpb.SelectorEntity{
+		EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
+		Name:       entityWithProps.Entity.Name,
+		Entity: &internalpb.SelectorEntity_Repository{
+			Repository: &internalpb.SelectorRepository{
+				Name:       entityWithProps.Entity.Name,
+				IsFork:     isFork,
+				IsPrivate:  isPrivate,
+				Properties: entityWithProps.Properties.ToProtoStruct(),
+			},
 		},
 	}
 }
 
-func (cf *converterFactory) getConverter(entityType minderv1.Entity) (entityInfoConverter, error) {
-	conv, ok := cf.converters[entityType]
-	if !ok {
-		return nil, fmt.Errorf("no converter found for entity type %v", entityType)
+func artifactToSelectorEntity(
+	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_ARTIFACTS {
+		return nil
 	}
 
-	return conv, nil
+	return &internalpb.SelectorEntity{
+		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
+		Name:       entityWithProps.Entity.Name,
+		Entity: &internalpb.SelectorEntity_Artifact{
+			Artifact: &internalpb.SelectorArtifact{
+				Name:       entityWithProps.Entity.Name,
+				Type:       entityWithProps.Properties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
+				Properties: entityWithProps.Properties.ToProtoStruct(),
+			},
+		},
+	}
+}
+
+func pullRequestToSelectorEntity(
+	_ context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
+	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_PULL_REQUESTS {
+		return nil
+	}
+
+	return &internalpb.SelectorEntity{
+		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+		Name:       entityWithProps.Entity.Name,
+		Entity: &internalpb.SelectorEntity_PullRequest{
+			PullRequest: &internalpb.SelectorPullRequest{
+				Name:       entityWithProps.Entity.Name,
+				Properties: entityWithProps.Properties.ToProtoStruct(),
+			},
+		},
+	}
+}
+
+// newConverterFactory creates a new converterFactory with the default converters for each entity type
+func newConverter(entType minderv1.Entity) toSelectorEntity {
+	switch entType { // nolint:exhaustive
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return repoToSelectorEntity
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		return artifactToSelectorEntity
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return pullRequestToSelectorEntity
+	}
+	return nil
 }
 
 // EntityToSelectorEntity converts an entity to a SelectorEntity
 func EntityToSelectorEntity(
 	ctx context.Context,
-	provider provifv1.Provider,
 	entType minderv1.Entity,
 	entityWithProps *models.EntityWithProperties,
 ) *internalpb.SelectorEntity {
-	factory := newConverterFactory(provider)
-	conv, err := factory.getConverter(entType)
-	if err != nil {
+	converter := newConverter(entType)
+	if converter == nil {
+		zerolog.Ctx(ctx).Error().Str("entType", entType.ToString()).Msg("No converter available")
 		return nil
 	}
-	return conv.toSelectorEntity(ctx, entityWithProps)
+	return converter(ctx, entityWithProps)
 }
