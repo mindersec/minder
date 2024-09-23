@@ -32,3 +32,9 @@ const (
 	// RepoPropertyIsFork represents whether the repository is a fork
 	RepoPropertyIsFork = "is_fork"
 )
+
+// Artifact property keys
+const (
+	// ArtifactPropertyType represents the type of the artifact (e.g 'container')
+	ArtifactPropertyType = "type"
+)
