@@ -240,7 +240,7 @@ func (e *executor) profileEvalStatus(
 		return fmt.Errorf("error getting entity with properties: %w", err)
 	}
 
-	selEnt := provsel.EntityToSelectorEntity(ctx, eiw.Type, ewp)
+	selEnt := provsel.EntityToSelectorEntity(ctx, e.querier, eiw.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}

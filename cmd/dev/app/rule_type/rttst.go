@@ -298,7 +298,7 @@ func selectAndEval(
 	evalStatus *engif.EvalStatusParams,
 	profileSelectors selectors.Selection,
 ) error {
-	selEnt := provsel.EntityToSelectorEntity(ctx, inf.Type, ewp)
+	selEnt := provsel.EntityToSelectorEntity(ctx, nil, inf.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}

@@ -18,10 +18,12 @@ package selectors
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
@@ -29,14 +31,22 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-type toSelectorEntity func(ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity
+func buildBaseSelectorEntity(
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider) *internalpb.SelectorEntity {
+	return &internalpb.SelectorEntity{
+		EntityType: entityWithProps.Entity.Type,
+		Name:       entityWithProps.Entity.Name,
+		Provider:   selProv,
+	}
+}
+
+type toSelectorEntity func(
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider,
+) *internalpb.SelectorEntity
 
 func repoToSelectorEntity(
-	_ context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_REPOSITORIES {
-		return nil
-	}
-
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider,
+) *internalpb.SelectorEntity {
 	var isFork *bool
 	if propIsFork, err := entityWithProps.Properties.GetProperty(properties.RepoPropertyIsFork).AsBool(); err == nil {
 		isFork = proto.Bool(propIsFork)
@@ -47,26 +57,22 @@ func repoToSelectorEntity(
 		isPrivate = proto.Bool(propIsPrivate)
 	}
 
-	return &internalpb.SelectorEntity{
-		EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
-		Name:       entityWithProps.Entity.Name,
-		Entity: &internalpb.SelectorEntity_Repository{
-			Repository: &internalpb.SelectorRepository{
-				Name:       entityWithProps.Entity.Name,
-				IsFork:     isFork,
-				IsPrivate:  isPrivate,
-				Properties: entityWithProps.Properties.ToProtoStruct(),
-			},
+	selEnt := buildBaseSelectorEntity(entityWithProps, selProv)
+	selEnt.Entity = &internalpb.SelectorEntity_Repository{
+		Repository: &internalpb.SelectorRepository{
+			Name:       entityWithProps.Entity.Name,
+			IsFork:     isFork,
+			IsPrivate:  isPrivate,
+			Properties: entityWithProps.Properties.ToProtoStruct(),
+			Provider:   selProv,
 		},
 	}
+	return selEnt
 }
 
 func artifactToSelectorEntity(
-	ctx context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_ARTIFACTS {
-		return nil
-	}
-
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider,
+) *internalpb.SelectorEntity {
 	var artifactType string
 	var err error
 	artifactType, err = entityWithProps.Properties.GetProperty(properties.ArtifactPropertyType).AsString()
@@ -74,35 +80,30 @@ func artifactToSelectorEntity(
 		artifactType = entityWithProps.Properties.GetProperty(ghprop.ArtifactPropertyType).GetString()
 	}
 
-	return &internalpb.SelectorEntity{
-		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
-		Name:       entityWithProps.Entity.Name,
-		Entity: &internalpb.SelectorEntity_Artifact{
-			Artifact: &internalpb.SelectorArtifact{
-				Name:       entityWithProps.Entity.Name,
-				Type:       artifactType,
-				Properties: entityWithProps.Properties.ToProtoStruct(),
-			},
+	selEnt := buildBaseSelectorEntity(entityWithProps, selProv)
+	selEnt.Entity = &internalpb.SelectorEntity_Artifact{
+		Artifact: &internalpb.SelectorArtifact{
+			Name:       entityWithProps.Entity.Name,
+			Type:       artifactType,
+			Properties: entityWithProps.Properties.ToProtoStruct(),
+			Provider:   selProv,
 		},
 	}
+	return selEnt
 }
 
 func pullRequestToSelectorEntity(
-	_ context.Context, entityWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {
-	if entityWithProps.Entity.Type != minderv1.Entity_ENTITY_PULL_REQUESTS {
-		return nil
-	}
-
-	return &internalpb.SelectorEntity{
-		EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
-		Name:       entityWithProps.Entity.Name,
-		Entity: &internalpb.SelectorEntity_PullRequest{
-			PullRequest: &internalpb.SelectorPullRequest{
-				Name:       entityWithProps.Entity.Name,
-				Properties: entityWithProps.Properties.ToProtoStruct(),
-			},
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider,
+) *internalpb.SelectorEntity {
+	selEnt := buildBaseSelectorEntity(entityWithProps, selProv)
+	selEnt.Entity = &internalpb.SelectorEntity_PullRequest{
+		PullRequest: &internalpb.SelectorPullRequest{
+			Name:       entityWithProps.Entity.Name,
+			Properties: entityWithProps.Properties.ToProtoStruct(),
+			Provider:   selProv,
 		},
 	}
+	return selEnt
 }
 
 // newConverterFactory creates a new converterFactory with the default converters for each entity type
@@ -118,9 +119,31 @@ func newConverter(entType minderv1.Entity) toSelectorEntity {
 	return nil
 }
 
+func fillProviderInfo(
+	ctx context.Context,
+	querier db.Store,
+	entityWithProps *models.EntityWithProperties,
+) (*internalpb.SelectorProvider, error) {
+	if querier == nil {
+		zerolog.Ctx(ctx).Warn().Msg("No querier, will not fill provider information")
+		return nil, nil
+	}
+
+	dbProv, err := querier.GetProviderByID(ctx, entityWithProps.Entity.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider %s by ID", entityWithProps.Entity.ProviderID.String())
+	}
+
+	return &internalpb.SelectorProvider{
+		Name:  dbProv.Name,
+		Class: string(dbProv.Class),
+	}, nil
+}
+
 // EntityToSelectorEntity converts an entity to a SelectorEntity
 func EntityToSelectorEntity(
 	ctx context.Context,
+	querier db.Store,
 	entType minderv1.Entity,
 	entityWithProps *models.EntityWithProperties,
 ) *internalpb.SelectorEntity {
@@ -129,5 +152,15 @@ func EntityToSelectorEntity(
 		zerolog.Ctx(ctx).Error().Str("entType", entType.ToString()).Msg("No converter available")
 		return nil
 	}
-	return converter(ctx, entityWithProps)
+
+	selProv, err := fillProviderInfo(ctx, querier, entityWithProps)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().
+			Str("providerID", entityWithProps.Entity.ProviderID.String()).
+			Err(err).
+			Msg("Cannot fill provider information")
+		return nil
+	}
+	selEnt := converter(entityWithProps, selProv)
+	return selEnt
 }
