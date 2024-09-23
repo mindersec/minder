@@ -19,10 +19,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
+	internalpb "github.com/stacklok/minder/internal/proto"
 	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -43,14 +47,62 @@ func buildEntityWithProperties(entityType minderv1.Entity, name string, propMap 
 	return entity
 }
 
+func checkProps(t *testing.T, got *structpb.Struct, expected map[string]any) {
+	t.Helper()
+
+	gotMap := got.AsMap()
+	assert.Equal(t, gotMap, expected)
+}
+
+func checkSelEntArtifact(t *testing.T, got, expected *internalpb.SelectorArtifact, propMap map[string]any) {
+	t.Helper()
+
+	assert.Equal(t, got.Name, expected.Name)
+	assert.Equal(t, got.Type, expected.Type)
+	checkProps(t, got.Properties, propMap)
+}
+
+func checkSelEntRepo(t *testing.T, got, expected *internalpb.SelectorRepository, propMap map[string]any) {
+	t.Helper()
+
+	assert.Equal(t, got.Name, expected.Name)
+	assert.Equal(t, got.IsFork, expected.IsFork)
+	checkProps(t, got.Properties, propMap)
+}
+
+func checkSelEntPullRequest(t *testing.T, got, expected *internalpb.SelectorPullRequest, propMap map[string]any) {
+	t.Helper()
+
+	assert.Equal(t, got.Name, expected.Name)
+	checkProps(t, got.Properties, propMap)
+}
+
+func checkSelEnt(t *testing.T, got, expected *internalpb.SelectorEntity, propMap map[string]any) {
+	t.Helper()
+
+	assert.Equal(t, got.EntityType, expected.EntityType)
+	switch got.EntityType { // nolint:exhaustive
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		checkSelEntRepo(t, got.GetRepository(), expected.GetRepository(), propMap)
+	case minderv1.Entity_ENTITY_ARTIFACTS:
+		checkSelEntArtifact(t, got.GetArtifact(), expected.GetArtifact(), propMap)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		checkSelEntPullRequest(t, got.GetPullRequest(), expected.GetPullRequest(), propMap)
+	}
+}
+
 func TestEntityToSelectorEntity(t *testing.T) {
 	t.Parallel()
+
+	trueBool := true
 
 	scenarios := []struct {
 		name        string
 		entityType  minderv1.Entity
 		entityName  string
 		entityProps map[string]any
+		expSelEnt   *internalpb.SelectorEntity
+		checkSelEnt func(proto.Message)
 		success     bool
 	}{
 		{
@@ -65,6 +117,17 @@ func TestEntityToSelectorEntity(t *testing.T) {
 				ghprops.RepoPropertyName:         "testrepo",
 				ghprops.RepoPropertyOwner:        "testorg",
 			},
+			expSelEnt: &internalpb.SelectorEntity{
+				EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
+				Name:       "testorg/testrepo",
+				Entity: &internalpb.SelectorEntity_Repository{
+					Repository: &internalpb.SelectorRepository{
+						Name:      "testorg/testrepo",
+						IsFork:    &trueBool,
+						IsPrivate: &trueBool,
+					},
+				},
+			},
 			success: true,
 		},
 		{
@@ -78,6 +141,16 @@ func TestEntityToSelectorEntity(t *testing.T) {
 				ghprops.ArtifactPropertyType:       "container",
 				ghprops.ArtifactPropertyCreatedAt:  "2024-01-01T00:00:00Z",
 				ghprops.ArtifactPropertyVisibility: "public",
+			},
+			expSelEnt: &internalpb.SelectorEntity{
+				EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
+				Name:       "testorg/testartifact",
+				Entity: &internalpb.SelectorEntity_Artifact{
+					Artifact: &internalpb.SelectorArtifact{
+						Name: "testorg/testartifact",
+						Type: "container",
+					},
+				},
 			},
 			success: true,
 		},
@@ -94,6 +167,15 @@ func TestEntityToSelectorEntity(t *testing.T) {
 				ghprops.PullPropertyRepoName:  "testrepo",
 				ghprops.PullPropertyAuthorID:  "56789",
 				ghprops.PullPropertyAction:    "opened",
+			},
+			expSelEnt: &internalpb.SelectorEntity{
+				EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+				Name:       "testorg/testrepo/12345",
+				Entity: &internalpb.SelectorEntity_PullRequest{
+					PullRequest: &internalpb.SelectorPullRequest{
+						Name: "testorg/testrepo/12345",
+					},
+				},
 			},
 			success: true,
 		},
@@ -115,7 +197,9 @@ func TestEntityToSelectorEntity(t *testing.T) {
 
 			if scenario.success {
 				require.NotNil(t, selEnt)
-				require.Equal(t, scenario.entityType, selEnt.GetEntityType())
+				require.Equal(t, selEnt.GetEntityType(), scenario.entityType)
+				require.Equal(t, selEnt.GetName(), scenario.entityName)
+				checkSelEnt(t, selEnt, scenario.expSelEnt, scenario.entityProps)
 			} else {
 				require.Nil(t, selEnt)
 			}

@@ -67,13 +67,20 @@ func artifactToSelectorEntity(
 		return nil
 	}
 
+	var artifactType string
+	var err error
+	artifactType, err = entityWithProps.Properties.GetProperty(properties.ArtifactPropertyType).AsString()
+	if err != nil {
+		artifactType = entityWithProps.Properties.GetProperty(ghprop.ArtifactPropertyType).GetString()
+	}
+
 	return &internalpb.SelectorEntity{
 		EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
 		Name:       entityWithProps.Entity.Name,
 		Entity: &internalpb.SelectorEntity_Artifact{
 			Artifact: &internalpb.SelectorArtifact{
 				Name:       entityWithProps.Entity.Name,
-				Type:       entityWithProps.Properties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
+				Type:       artifactType,
 				Properties: entityWithProps.Properties.ToProtoStruct(),
 			},
 		},
