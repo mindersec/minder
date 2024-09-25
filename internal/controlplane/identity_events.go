@@ -22,6 +22,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -34,11 +36,11 @@ import (
 )
 
 const (
-	eventFetchInterval     = "@daily"
+	eventFetchInterval     = "@hourly"
 	deleteAccountEventType = "DELETE_ACCOUNT"
 )
 
-// AccountEvent is an event returned by the identity provider
+// AccountEvent is an event returned by Keycloak for user events
 type AccountEvent struct {
 	Time     int64  `json:"time"`
 	Type     string `json:"type"`
@@ -102,6 +104,80 @@ func HandleEvents(
 			err := DeleteUser(ctx, store, authzClient, projectDeleter, event.UserId)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Msgf("events chron: error deleting user account: %v", err)
+			}
+		}
+	}
+}
+
+// AdminEvent is an event returned by Keycloak for admin events -- note the completely different structure
+type AdminEvent struct {
+	Time          int64  `json:"time"`
+	RealmId       string `json:"realmId"`
+	OperationType string `json:"operationType"`
+	ResourceType  string `json:"resourceType"`
+	ResourcePath  string `json:"resourcePath"`
+}
+
+// SubscribeToAdminEvents starts a cron job that periodicalyl fetches admin events from Keycloak.
+// Users who are deleted through the Keycloak API show up as admin events, not normal identity events.
+func SubscribeToAdminEvents(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	cfg *serverconfig.Config,
+	projectDeleter projects.ProjectDeleter,
+) error {
+	c := cron.New()
+	_, err := c.AddFunc(eventFetchInterval, func() {
+		HandleAdminEvents(ctx, store, authzClient, cfg, projectDeleter)
+	})
+	if err != nil {
+		return err
+	}
+	c.Start()
+	return nil
+}
+
+// HandleAdminEvents deletes users where the deletion occurred through the Keycloak API.
+func HandleAdminEvents(
+	ctx context.Context,
+	store db.Store,
+	authzClient authz.Client,
+	cfg *serverconfig.Config,
+	projectDeleter projects.ProjectDeleter,
+) {
+	d := time.Now().Add(time.Duration(10) * time.Minute)
+	ctx, cancel := context.WithDeadline(ctx, d)
+	defer cancel()
+
+	query := url.Values{
+		"operationTypes": []string{"DELETE"},
+		"resourceTypes":  []string{"USER"},
+	}
+	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/admin-events", query, nil)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Msgf("events cron: error getting admin events: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		zerolog.Ctx(ctx).Error().Msgf("events cron: unexpected status code when fetching admin events: %d", resp.StatusCode)
+		return
+	}
+
+	var events []AdminEvent
+	err = json.NewDecoder(resp.Body).Decode(&events)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Msgf("events cron: error decoding admin events: %v", err)
+		return
+	}
+	for _, event := range events {
+		if event.OperationType == "DELETE" && event.ResourceType == "USER" {
+			userId := strings.TrimPrefix(event.ResourcePath, "users/")
+			err := DeleteUser(ctx, store, authzClient, projectDeleter, userId)
+			if err != nil {
+				zerolog.Ctx(ctx).Error().Msgf("events cron: error deleting user account from admin event: %v", err)
 			}
 		}
 	}
