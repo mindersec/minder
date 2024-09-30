@@ -31,6 +31,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/entities/properties/service"
@@ -128,6 +129,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		inf.ProjectID,
 		provider,
 		ingestCache,
+		eoptions.WithFlagsClient(e.featureFlags),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to fetch rule type instances for project: %w", err)

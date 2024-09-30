@@ -25,6 +25,7 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -72,7 +73,10 @@ func (*hook) Print(_ print.Context, msg string) error {
 var _ print.Hook = (*hook)(nil)
 
 // NewRegoEvaluator creates a new rego evaluator
-func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
+func NewRegoEvaluator(
+	cfg *minderv1.RuleType_Definition_Eval_Rego,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse rego config: %w", err)
@@ -88,6 +92,12 @@ func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, 
 			rego.Module(MinderRegoFile, c.Def),
 			rego.Strict(true),
 		},
+	}
+
+	for _, opt := range opts {
+		if err := opt(eval); err != nil {
+			return nil, err
+		}
 	}
 
 	if os.Getenv(EnablePrintEnvVar) == "true" {

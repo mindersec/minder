@@ -24,6 +24,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/ruletypes"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -31,7 +32,7 @@ import (
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
 	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
-	GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error)
+	GetRuleEngine(context.Context, uuid.UUID) (*RuleTypeEngine, error)
 }
 
 type cacheType = map[uuid.UUID]*RuleTypeEngine
@@ -41,6 +42,7 @@ type ruleEngineCache struct {
 	provider    provinfv1.Provider
 	ingestCache ingestcache.Cache
 	engines     cacheType
+	opts        []eoptions.Option
 }
 
 // NewRuleEngineCache creates the rule engine cache
@@ -53,6 +55,7 @@ func NewRuleEngineCache(
 	projectID uuid.UUID,
 	provider provinfv1.Provider,
 	ingestCache ingestcache.Cache,
+	opts ...eoptions.Option,
 ) (Cache, error) {
 	// Get the full project hierarchy
 	hierarchy, err := store.GetParentProjects(ctx, projectID)
@@ -73,17 +76,20 @@ func NewRuleEngineCache(
 	// Populate the cache with rule type engines for the rule types we found.
 	engines := make(cacheType, len(ruleTypes))
 	for _, ruleType := range ruleTypes {
-		ruleEngine, err := cacheRuleEngine(ctx, &ruleType, provider, ingestCache, engines)
+		ruleEngine, err := cacheRuleEngine(ctx, &ruleType, provider, ingestCache, engines, opts...)
 		if err != nil {
 			return nil, err
 		}
 		engines[ruleType.ID] = ruleEngine
 	}
 
-	return &ruleEngineCache{engines: engines}, nil
+	return &ruleEngineCache{engines: engines, opts: opts}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(
+	ctx context.Context,
+	ruleTypeID uuid.UUID,
+) (*RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
@@ -107,7 +113,7 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUI
 	}
 
 	// If we find the rule type, insert into the cache and return.
-	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines)
+	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines, r.opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error while caching rule type engine: %w", err)
 	}
@@ -120,6 +126,7 @@ func cacheRuleEngine(
 	provider provinfv1.Provider,
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
+	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
 	// Parse the rule type
 	pbRuleType, err := ruletypes.RuleTypePBFromDB(ruleType)
@@ -128,7 +135,7 @@ func cacheRuleEngine(
 	}
 
 	// Create the rule type engine
-	ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider)
+	ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

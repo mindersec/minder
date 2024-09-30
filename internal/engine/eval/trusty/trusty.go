@@ -28,6 +28,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -47,7 +48,11 @@ type Evaluator struct {
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
-func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator, error) {
+func NewTrustyEvaluator(
+	ctx context.Context,
+	ghcli provifv1.GitHub,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	if ghcli == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
@@ -67,11 +72,19 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 		BaseURL: trustyEndpoint,
 	})
 
-	return &Evaluator{
+	evaluator := &Evaluator{
 		cli:      ghcli,
 		endpoint: trustyEndpoint,
 		client:   trustyClient,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if err := opt(evaluator); err != nil {
+			return nil, err
+		}
+	}
+
+	return evaluator, nil
 }
 
 // Eval implements the Evaluator interface.

@@ -21,6 +21,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -31,11 +32,23 @@ type InvisibleCharactersEvaluator struct {
 }
 
 // NewInvisibleCharactersEvaluator creates a new invisible characters evaluator
-func NewInvisibleCharactersEvaluator(ghClient provifv1.GitHub) (*InvisibleCharactersEvaluator, error) {
-	return &InvisibleCharactersEvaluator{
+func NewInvisibleCharactersEvaluator(
+	_ context.Context,
+	ghClient provifv1.GitHub,
+	opts ...eoptions.Option,
+) (*InvisibleCharactersEvaluator, error) {
+	evaluator := &InvisibleCharactersEvaluator{
 		processor:     domain.NewInvisibleCharactersProcessor(),
 		reviewHandler: communication.NewGhReviewPrHandler(ghClient),
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if err := opt(evaluator); err != nil {
+			return nil, err
+		}
+	}
+
+	return evaluator, nil
 }
 
 // Eval evaluates the invisible characters rule type
