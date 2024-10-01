@@ -369,7 +369,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			if tt.ownerPropMap != nil {
 				ownerProps, err := properties.NewProperties(tt.ownerPropMap)
 				require.NoError(t, err)
-				entityMsg = entityMsg.WithOwner(tt.ownerType, ownerProps)
+				entityMsg = entityMsg.WithOriginator(tt.ownerType, ownerProps)
 			}
 
 			handlerMsg := watermill.NewMessage(uuid.New().String(), nil)

@@ -60,11 +60,13 @@ func (e *HandleEntityAndDoMessage) WithEntity(entType v1.Entity, getByProps *pro
 	return e
 }
 
-// WithOwner sets the owner entity and its properties.
-func (e *HandleEntityAndDoMessage) WithOwner(ownerType v1.Entity, ownerProps *properties.Properties) *HandleEntityAndDoMessage {
+// WithOriginator sets the owner entity and its properties.
+func (e *HandleEntityAndDoMessage) WithOriginator(
+	originatorType v1.Entity, originatorProps *properties.Properties,
+) *HandleEntityAndDoMessage {
 	e.Originator = TypedProps{
-		Type:       ownerType,
-		GetByProps: ownerProps.ToProtoStruct().AsMap(),
+		Type:       originatorType,
+		GetByProps: originatorProps.ToProtoStruct().AsMap(),
 	}
 	return e
 }
