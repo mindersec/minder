@@ -135,3 +135,13 @@ func WithSuccessfulRetrieveAllProperties(
 			Return(retProps, nil)
 	}
 }
+
+func WithFailedGetEntityWithPropertiesByID(
+	err error,
+) MockPropertyServiceOption {
+	return func(mockPropSvc *mockSvc.MockPropertiesService) {
+		mockPropSvc.EXPECT().
+			EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil, err)
+	}
+}
