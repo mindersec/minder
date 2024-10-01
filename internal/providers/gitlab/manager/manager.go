@@ -142,17 +142,13 @@ func (m *providerClassManager) getProviderCredentials(
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	// TODO: get rid of this once we migrate all secrets to use the new structure
-	var encryptedData crypto.EncryptedData
-	if encToken.EncryptedAccessToken.Valid {
-		encryptedData, err = crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
-		if err != nil {
-			return nil, err
-		}
-	} else if encToken.EncryptedToken.Valid {
-		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken.String)
-	} else {
+	if !encToken.EncryptedAccessToken.Valid {
 		return nil, fmt.Errorf("no secret found for provider %s", encToken.Provider)
+	}
+
+	encryptedData, err := crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
+	if err != nil {
+		return nil, err
 	}
 	decryptedToken, err := m.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
