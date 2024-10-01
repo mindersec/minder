@@ -103,11 +103,9 @@ type Dependency struct {
 
 func (x *Dependency) Reset() {
 	*x = Dependency{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Dependency) String() string {
@@ -118,7 +116,7 @@ func (*Dependency) ProtoMessage() {}
 
 func (x *Dependency) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -165,11 +163,9 @@ type PrDependencies struct {
 
 func (x *PrDependencies) Reset() {
 	*x = PrDependencies{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrDependencies) String() string {
@@ -180,7 +176,7 @@ func (*PrDependencies) ProtoMessage() {}
 
 func (x *PrDependencies) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -220,11 +216,9 @@ type PrContents struct {
 
 func (x *PrContents) Reset() {
 	*x = PrContents{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrContents) String() string {
@@ -235,7 +229,7 @@ func (*PrContents) ProtoMessage() {}
 
 func (x *PrContents) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -277,11 +271,9 @@ type SelectorProvider struct {
 
 func (x *SelectorProvider) Reset() {
 	*x = SelectorProvider{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SelectorProvider) String() string {
@@ -292,7 +284,7 @@ func (*SelectorProvider) ProtoMessage() {}
 
 func (x *SelectorProvider) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -341,11 +333,9 @@ type SelectorRepository struct {
 
 func (x *SelectorRepository) Reset() {
 	*x = SelectorRepository{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SelectorRepository) String() string {
@@ -356,7 +346,7 @@ func (*SelectorRepository) ProtoMessage() {}
 
 func (x *SelectorRepository) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -422,11 +412,9 @@ type SelectorArtifact struct {
 
 func (x *SelectorArtifact) Reset() {
 	*x = SelectorArtifact{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SelectorArtifact) String() string {
@@ -437,7 +425,7 @@ func (*SelectorArtifact) ProtoMessage() {}
 
 func (x *SelectorArtifact) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -495,11 +483,9 @@ type SelectorPullRequest struct {
 
 func (x *SelectorPullRequest) Reset() {
 	*x = SelectorPullRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SelectorPullRequest) String() string {
@@ -510,7 +496,7 @@ func (*SelectorPullRequest) ProtoMessage() {}
 
 func (x *SelectorPullRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -566,11 +552,9 @@ type SelectorEntity struct {
 
 func (x *SelectorEntity) Reset() {
 	*x = SelectorEntity{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *SelectorEntity) String() string {
@@ -581,7 +565,7 @@ func (*SelectorEntity) ProtoMessage() {}
 
 func (x *SelectorEntity) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -678,11 +662,9 @@ type PrDependencies_ContextualDependency struct {
 
 func (x *PrDependencies_ContextualDependency) Reset() {
 	*x = PrDependencies_ContextualDependency{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrDependencies_ContextualDependency) String() string {
@@ -693,7 +675,7 @@ func (*PrDependencies_ContextualDependency) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -733,11 +715,9 @@ type PrDependencies_ContextualDependency_FilePatch struct {
 
 func (x *PrDependencies_ContextualDependency_FilePatch) Reset() {
 	*x = PrDependencies_ContextualDependency_FilePatch{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrDependencies_ContextualDependency_FilePatch) String() string {
@@ -748,7 +728,7 @@ func (*PrDependencies_ContextualDependency_FilePatch) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency_FilePatch) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -789,11 +769,9 @@ type PrContents_File struct {
 
 func (x *PrContents_File) Reset() {
 	*x = PrContents_File{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrContents_File) String() string {
@@ -804,7 +782,7 @@ func (*PrContents_File) ProtoMessage() {}
 
 func (x *PrContents_File) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -853,11 +831,9 @@ type PrContents_File_Line struct {
 
 func (x *PrContents_File_Line) Reset() {
 	*x = PrContents_File_Line{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_internal_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PrContents_File_Line) String() string {
@@ -868,7 +844,7 @@ func (*PrContents_File_Line) ProtoMessage() {}
 
 func (x *PrContents_File_Line) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1090,152 +1066,6 @@ func init() { file_internal_proto_init() }
 func file_internal_proto_init() {
 	if File_internal_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_internal_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*Dependency); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*PrDependencies); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*PrContents); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorProvider); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorRepository); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorArtifact); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorPullRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*SelectorEntity); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*PrDependencies_ContextualDependency); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*PrDependencies_ContextualDependency_FilePatch); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*PrContents_File); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*PrContents_File_Line); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_internal_proto_msgTypes[4].OneofWrappers = []any{}
 	file_internal_proto_msgTypes[7].OneofWrappers = []any{
