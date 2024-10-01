@@ -87,8 +87,8 @@ github.com/ThreeDotsLabs/watermill v1.3.7 h1:NV0PSTmuACVEOV4dMxRnmGXrmbz8U83LENO
 github.com/ThreeDotsLabs/watermill v1.3.7/go.mod h1:lBnrLbxOjeMRgcJbv+UiZr8Ylz8RkJ4m6i/VN/Nk+to=
 github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0 h1:g4uE5Nm3Z6LVB3m+uMgHlN4ne4bDpwf3RJmXYRgMv94=
 github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0/go.mod h1:G8/otZYWLTCeYL2Ww3ujQ7gQ/3+jw5Bj0UtyKn7bBjA=
-github.com/agnivade/levenshtein v1.1.1 h1:QY8M92nrzkmr798gCo3kmMyqXFzdQVpxLlGPRBij0P8=
-github.com/agnivade/levenshtein v1.1.1/go.mod h1:veldBMzWxcCG2ZvUTKD2kJNRdCk5hVbJomOvKkmgYbo=
+github.com/agnivade/levenshtein v1.2.0 h1:U9L4IOT0Y3i0TIlUIDJ7rVUziKi/zPbrJGaFrtYH3SY=
+github.com/agnivade/levenshtein v1.2.0/go.mod h1:QVVI16kDrtSuwcpd0p1+xMC6Z/VfhtCyDIjcwga4/DU=
 github.com/alecthomas/assert/v2 v2.7.0 h1:QtqSACNS3tF7oasA8CU6A6sXZSBDqnm7RfpLl9bZqbE=
 github.com/alecthomas/assert/v2 v2.7.0/go.mod h1:Bze95FyfUr7x34QZrjL+XP+0qgp/zg8yS+TtBj1WA3k=
 github.com/alecthomas/chroma/v2 v2.14.0 h1:R3+wzpnUArGcQz7fCETQBzO5n9IMNi13iIs46aU4V9E=
@@ -255,8 +255,8 @@ github.com/dgraph-io/badger/v3 v3.2103.5 h1:ylPa6qzbjYRQMU6jokoj4wzcaweHylt//CH0
 github.com/dgraph-io/badger/v3 v3.2103.5/go.mod h1:4MPiseMeDQ3FNCYwRbbcBOGJLf5jsE0PPFzRiKjtcdw=
 github.com/dgraph-io/ristretto v0.1.1 h1:6CWw5tJNgpegArSHpNHJKldNeq03FQCwYvfMVWajOK8=
 github.com/dgraph-io/ristretto v0.1.1/go.mod h1:S1GPSBCYCIhmVNfcth17y2zZtQT6wzkzgwUve0VDWWA=
-github.com/dgryski/trifles v0.0.0-20200323201526-dd97f9abfb48 h1:fRzb/w+pyskVMQ+UbP35JkH8yB7MYb4q/qhBarqZE6g=
-github.com/dgryski/trifles v0.0.0-20200323201526-dd97f9abfb48/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
+github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54 h1:SG7nF6SRlWhcT7cNTs5R6Hk4V2lcmLz2NsG2VnInyNo=
+github.com/dgryski/trifles v0.0.0-20230903005119-f50d829f2e54/go.mod h1:if7Fbed8SFyPtHLHbg49SI7NAdJiC5WIA09pe59rfAA=
 github.com/dhui/dktest v0.4.3 h1:wquqUxAFdcUgabAVLvSCOKOlag5cIZuaOjYIBOWdsR0=
 github.com/dhui/dktest v0.4.3/go.mod h1:zNK8IwktWzQRm6I/l2Wjp7MakiyaFWv4G1hjmodmMTs=
 github.com/digitorus/pkcs7 v0.0.0-20230713084857-e76b763bdc49/go.mod h1:SKVExuS+vpu2l9IoOc0RwqE7NYnb0JlcFHFnEJkVDzc=
@@ -745,8 +745,8 @@ github.com/open-feature/go-sdk v1.13.0 h1:D5NXPhhCL0SNR/DRvrTOm/xY7uE9m0zQQEttgK
 github.com/open-feature/go-sdk v1.13.0/go.mod h1:poPa+RFCJumHcb59wgp+tnSyNvMU2C07ykFJ0gczyaM=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0 h1:EFIT5QBQ/T3lNVLmma69SNQbAWBgAl+EtcH0VfrdM7Y=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0/go.mod h1:DpptytCB+FbUIoRjTGtSDEA82aojWC4MIxL8GOK26Rs=
-github.com/open-policy-agent/opa v0.68.0 h1:Jl3U2vXRjwk7JrHmS19U3HZO5qxQRinQbJ2eCJYSqJQ=
-github.com/open-policy-agent/opa v0.68.0/go.mod h1:5E5SvaPwTpwt2WM177I9Z3eT7qUpmOGjk1ZdHs+TZ4w=
+github.com/open-policy-agent/opa v0.69.0 h1:s2igLw2Z6IvGWGuXSfugWkVultDMsM9pXiDuMp7ckWw=
+github.com/open-policy-agent/opa v0.69.0/go.mod h1:+qyXJGkpEJ6kpB1kGo8JSwHtVXbTdsGdQYPWWNYNj+4=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=

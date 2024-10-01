@@ -47,7 +47,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.13.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
-	github.com/open-policy-agent/opa v0.68.0
+	github.com/open-policy-agent/opa v0.69.0
 	github.com/openfga/go-sdk v0.6.0
 	github.com/openfga/openfga v1.6.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -220,7 +220,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.0.0 // indirect
-	github.com/agnivade/levenshtein v1.1.1 // indirect
+	github.com/agnivade/levenshtein v1.2.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
