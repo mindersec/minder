@@ -546,8 +546,8 @@ func TestDeleteProvider(t *testing.T) {
 		},
 		ID:         providerID,
 		Version:    provinfv1.V1,
-		Definition: json.RawMessage(`{"github-app": {}}`),
-		Class:      db.ProviderClassGithubApp,
+		Definition: json.RawMessage(`{"github": {}}`),
+		Class:      db.ProviderClassGithub,
 	}, nil)
 	mockStore.EXPECT().
 		GetAccessTokenByProjectID(gomock.Any(), gomock.Any()).
@@ -671,8 +671,8 @@ func TestDeleteProviderByID(t *testing.T) {
 			db.ProviderTypeGithub,
 		},
 		Version:    provinfv1.V1,
-		Definition: json.RawMessage(`{"github-app": {}}`),
-		Class:      db.ProviderClassGithubApp,
+		Definition: json.RawMessage(`{"github": {}}`),
+		Class:      db.ProviderClassGithub,
 	}, nil)
 	mockStore.EXPECT().DeleteProvider(gomock.Any(), db.DeleteProviderParams{
 		ID:        providerID,
