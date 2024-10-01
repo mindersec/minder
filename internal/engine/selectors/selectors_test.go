@@ -39,12 +39,23 @@ func TestNewSelectorEngine(t *testing.T) {
 	require.NotNil(t, env.entityEnvs[minderv1.Entity_ENTITY_ARTIFACTS])
 }
 
+type testProviderSelectorBuilder func() *internalpb.SelectorProvider
+
+func newGithubProviderSelector() testProviderSelectorBuilder {
+	return func() *internalpb.SelectorProvider {
+		return &internalpb.SelectorProvider{
+			Name:  "my-little-github",
+			Class: "github",
+		}
+	}
+}
+
 type testSelectorEntityBuilder func() *internalpb.SelectorEntity
 type testRepoOption func(selRepo *internalpb.SelectorRepository)
 type testArtifactOption func(selArtifact *internalpb.SelectorArtifact)
 type testPrOption func(selPr *internalpb.SelectorPullRequest)
 
-func newTestArtifactSelectorEntity(artifactOpts ...testArtifactOption) testSelectorEntityBuilder {
+func newTestArtifactSelectorEntity(provSelBld testProviderSelectorBuilder, artifactOpts ...testArtifactOption) testSelectorEntityBuilder {
 	return func() *internalpb.SelectorEntity {
 		artifact := &internalpb.SelectorEntity{
 			EntityType: minderv1.Entity_ENTITY_ARTIFACTS,
@@ -61,11 +72,15 @@ func newTestArtifactSelectorEntity(artifactOpts ...testArtifactOption) testSelec
 			opt(artifact.Entity.(*internalpb.SelectorEntity_Artifact).Artifact)
 		}
 
+		provSel := provSelBld()
+		artifact.Provider = provSel
+		artifact.Entity.(*internalpb.SelectorEntity_Artifact).Artifact.Provider = provSel
+
 		return artifact
 	}
 }
 
-func newTestRepoSelectorEntity(repoOpts ...testRepoOption) testSelectorEntityBuilder {
+func newTestRepoSelectorEntity(provSelBld testProviderSelectorBuilder, repoOpts ...testRepoOption) testSelectorEntityBuilder {
 	return func() *internalpb.SelectorEntity {
 		repo := &internalpb.SelectorEntity{
 			EntityType: minderv1.Entity_ENTITY_REPOSITORIES,
@@ -80,6 +95,10 @@ func newTestRepoSelectorEntity(repoOpts ...testRepoOption) testSelectorEntityBui
 		for _, opt := range repoOpts {
 			opt(repo.Entity.(*internalpb.SelectorEntity_Repository).Repository)
 		}
+
+		provSel := provSelBld()
+		repo.Provider = provSel
+		repo.Entity.(*internalpb.SelectorEntity_Repository).Repository.Provider = provSel
 
 		return repo
 	}
@@ -111,7 +130,17 @@ func prWithProperties(properties map[string]any) testPrOption {
 	}
 }
 
-func newTestPullRequestSelectorEntity(prOpts ...testPrOption) testSelectorEntityBuilder {
+func artifactWithProperties(properties map[string]any) testArtifactOption {
+	return func(selPr *internalpb.SelectorArtifact) {
+		protoProperties, err := structpb.NewStruct(properties)
+		if err != nil {
+			panic(err)
+		}
+		selPr.Properties = protoProperties
+	}
+}
+
+func newTestPullRequestSelectorEntity(provSelBld testProviderSelectorBuilder, prOpts ...testPrOption) testSelectorEntityBuilder {
 	return func() *internalpb.SelectorEntity {
 		pr := &internalpb.SelectorEntity{
 			EntityType: minderv1.Entity_ENTITY_PULL_REQUESTS,
@@ -126,6 +155,10 @@ func newTestPullRequestSelectorEntity(prOpts ...testPrOption) testSelectorEntity
 		for _, opt := range prOpts {
 			opt(pr.Entity.(*internalpb.SelectorEntity_PullRequest).PullRequest)
 		}
+
+		provSel := provSelBld()
+		pr.Provider = provSel
+		pr.Entity.(*internalpb.SelectorEntity_PullRequest).PullRequest.Provider = provSel
 
 		return pr
 	}
@@ -149,7 +182,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 		{
 			name:              "No selectors",
 			exprs:             []models.ProfileSelector{},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -160,7 +193,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.name == 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -171,7 +204,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "artifact.type == 'container'",
 				},
 			},
-			selectorEntityBld: newTestArtifactSelectorEntity(),
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -182,7 +215,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "artifact.type != 'container'",
 				},
 			},
-			selectorEntityBld: newTestArtifactSelectorEntity(),
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -193,7 +226,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -204,7 +237,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "pull_request.name == 'testorg/testrepo/123'",
 				},
 			},
-			selectorEntityBld: newTestPullRequestSelectorEntity(),
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -215,7 +248,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "pull_request.name != 'testorg/testrepo/123'",
 				},
 			},
-			selectorEntityBld: newTestPullRequestSelectorEntity(),
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -226,7 +259,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "entity.name == 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -237,7 +270,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "entity.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -248,7 +281,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "entity.name == 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -259,7 +292,183 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "entity.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider name in repository entity",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.provider.name == 'my-little-github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in repository entity",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.provider.name == 'my-big-github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class in repository entity",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in repository entity",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_REPOSITORIES,
+					Selector: "repository.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider name in generic entity using repo",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.name == 'my-little-github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider name in generic entity using repo",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.name == 'my-big-github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class in generic entity using repo",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in generic entity using repo",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class in generic entity using artifact",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in generic entity using artifact",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class using artifact",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class using artifact",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class in generic entity using pull request",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in generic entity using pull request",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_UNSPECIFIED,
+					Selector: "entity.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
+			selected:          false,
+		},
+		{
+			name: "True expression for provider class in pull request",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
+					Selector: "pull_request.provider.class == 'github'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "False expression for provider class in pull request",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_PULL_REQUESTS,
+					Selector: "pull_request.provider.class == 'gitlab'",
+				},
+			},
+			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -274,7 +483,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "pull_request.name != 'namespace/containername'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -285,7 +494,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.is_fork == true",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector(), withIsFork(true)),
 			selected:          true,
 		},
 		{
@@ -296,7 +505,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.is_fork == true",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(false)),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector(), withIsFork(false)),
 			selected:          false,
 		},
 		{
@@ -307,7 +516,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.is_fork == true",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          false,
 		},
 		{
@@ -318,7 +527,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.is_fork == false",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -329,7 +538,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "artifact.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld:          newTestRepoSelectorEntity(),
+			selectorEntityBld:          newTestRepoSelectorEntity(newGithubProviderSelector()),
 			expectedNewSelectionErrMsg: "undeclared reference to 'artifact'",
 			selected:                   false,
 		},
@@ -341,7 +550,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.name == ",
 				},
 			},
-			selectorEntityBld:       newTestRepoSelectorEntity(),
+			selectorEntityBld:       newTestRepoSelectorEntity(newGithubProviderSelector()),
 			expectedNewSelectionErr: &ParseError{},
 			selected:                false,
 		},
@@ -353,7 +562,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.iamnothere == 'value'",
 				},
 			},
-			selectorEntityBld:          newTestRepoSelectorEntity(),
+			selectorEntityBld:          newTestRepoSelectorEntity(newGithubProviderSelector()),
 			expectedNewSelectionErrMsg: "undefined field 'iamnothere'",
 			expectedNewSelectionErr:    &CheckError{},
 			expectedStructuredErr: &ErrStructure{
@@ -380,6 +589,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": false},
 				}),
@@ -395,6 +605,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"license": "MIT",
 				}),
@@ -410,6 +621,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"license": "BSD",
 				}),
@@ -425,6 +637,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
@@ -440,6 +653,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
@@ -455,7 +669,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.properties.github['is_fork'] != 'true'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			expectedSelectErr: ErrResultUnknown,
 			selected:          false,
 		},
@@ -467,7 +681,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.name == 'testorg/testrepo' || repository.properties.github['is_fork'] != 'true'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{
@@ -482,6 +696,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				WithUnknownPaths("repository.properties"),
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(
+				newGithubProviderSelector(),
 				repoWithProperties(map[string]any{
 					"github": map[string]any{"is_fork": true},
 				}),
@@ -498,6 +713,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestPullRequestSelectorEntity(
+				newGithubProviderSelector(),
 				prWithProperties(map[string]any{
 					"github": map[string]any{"is_draft": false},
 				}),
@@ -513,8 +729,41 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestPullRequestSelectorEntity(
+				newGithubProviderSelector(),
 				prWithProperties(map[string]any{
 					"github": map[string]any{"is_draft": true},
+				}),
+			),
+			selected: false,
+		},
+		{
+			name: "Use an artifact property that is defined and true result",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties.github['type'] == 'container'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newGithubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"github": map[string]any{"type": "container"},
+				}),
+			),
+			selected: true,
+		},
+		{
+			name: "Use an artifact property that is defined and true result",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_ARTIFACTS,
+					Selector: "artifact.properties.github['type'] == 'npm'",
+				},
+			},
+			selectorEntityBld: newTestArtifactSelectorEntity(
+				newGithubProviderSelector(),
+				artifactWithProperties(map[string]any{
+					"github": map[string]any{"type": "container"},
 				}),
 			),
 			selected: false,
@@ -533,7 +782,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.is_fork == false",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector(), withIsFork(true)),
 			index:             1,
 			selected:          false,
 		},
@@ -551,7 +800,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "repository.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector(), withIsFork(true)),
 			index:             1,
 			selected:          false,
 		},
@@ -569,7 +818,7 @@ func TestSelectSelectorEntity(t *testing.T) {
 					Selector: "entity.name != 'testorg/testrepo'",
 				},
 			},
-			selectorEntityBld: newTestRepoSelectorEntity(withIsFork(true)),
+			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector(), withIsFork(true)),
 			index:             1,
 			selected:          false,
 		},
@@ -717,7 +966,7 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 	for _, scenario := range scenarios {
 		env := NewEnv()
 
-		seBuilder := newTestRepoSelectorEntity()
+		seBuilder := newTestRepoSelectorEntity(newGithubProviderSelector())
 		se := seBuilder()
 
 		sels, err := env.NewSelectionFromProfile(se.EntityType, scenario.exprs)

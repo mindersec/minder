@@ -69,6 +69,8 @@ func NewArtifactFetcher() *ArtifactFetcher {
 						// general entity
 						properties.PropertyName,
 						properties.PropertyUpstreamID,
+						// general artifact
+						properties.ArtifactPropertyType,
 						// github-specific
 						ArtifactPropertyName,
 						ArtifactPropertyOwner,
@@ -168,6 +170,8 @@ func getArtifactWrapper(
 		// general entity
 		properties.PropertyUpstreamID: strconv.FormatInt(pkg.GetID(), 10),
 		properties.PropertyName:       getNameFromParams(owner, name),
+		// general artifact
+		properties.ArtifactPropertyType: strings.ToLower(pkg.GetPackageType()),
 		// github-specific
 		ArtifactPropertyName:       pkg.GetName(),
 		ArtifactPropertyOwner:      pkg.GetOwner().GetLogin(),

@@ -30,7 +30,13 @@ func TestNewArtifactFetcher(t *testing.T) {
 	fetcher := NewArtifactFetcher()
 	assert.NotNil(t, fetcher)
 	assert.Len(t, fetcher.propertyOrigins, 1)
-	assert.Len(t, fetcher.propertyOrigins[0].keys, 10)
+	assert.Len(t, fetcher.propertyOrigins[0].keys, 11)
+	// all entities should have these properties
+	assert.Contains(t, fetcher.propertyOrigins[0].keys, properties.PropertyName)
+	assert.Contains(t, fetcher.propertyOrigins[0].keys, properties.PropertyUpstreamID)
+	// all artifacts should have these properties
+	assert.Contains(t, fetcher.propertyOrigins[0].keys, properties.ArtifactPropertyType)
+	// we don't really test for the GH specific properties here
 	assert.Empty(t, fetcher.operationalProperties)
 }
 
