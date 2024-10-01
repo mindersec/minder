@@ -26,6 +26,7 @@ import (
 	"github.com/stacklok/minder/internal/entities/properties"
 	internalpb "github.com/stacklok/minder/internal/proto"
 	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
+	"github.com/stacklok/minder/internal/providers/noop"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -108,6 +109,7 @@ func pullRequestToSelectorEntity(t *testing.T, name, class string, pullRequestEn
 }
 
 type fullProvider struct {
+	noop.Provider
 	name  string
 	class string
 	t     *testing.T
@@ -129,36 +131,6 @@ func (m *fullProvider) PullRequestToSelectorEntity(_ context.Context, pullReques
 	return pullRequestToSelectorEntity(m.t, m.name, m.class, pullRequestEntityWithProps)
 }
 
-func (_ *fullProvider) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-func (_ *fullProvider) FetchProperty(_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-func (_ *fullProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
-}
-
-func (_ *fullProvider) SupportsEntity(_ minderv1.Entity) bool {
-	return false
-}
-
-func (_ *fullProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
-	return nil, nil
-}
-
-func (_ *fullProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
-}
-
-func (_ *fullProvider) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
-}
-
 func newMockProvider(t *testing.T, name, class string) *fullProvider {
 	t.Helper()
 
@@ -170,6 +142,7 @@ func newMockProvider(t *testing.T, name, class string) *fullProvider {
 }
 
 type repoOnlyProvider struct {
+	noop.Provider
 	name  string
 	class string
 	t     *testing.T
@@ -187,36 +160,6 @@ func newRepoOnlyProvider(t *testing.T, name, class string) *repoOnlyProvider {
 
 func (_ *repoOnlyProvider) CanImplement(_ minderv1.ProviderType) bool {
 	return true
-}
-
-func (_ *repoOnlyProvider) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-func (_ *repoOnlyProvider) FetchProperty(_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-func (_ *repoOnlyProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
-}
-
-func (_ *repoOnlyProvider) SupportsEntity(minderv1.Entity) bool {
-	return false
-}
-
-func (_ *repoOnlyProvider) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
-	return nil, nil
-}
-
-func (_ *repoOnlyProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
-}
-
-func (_ *repoOnlyProvider) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
 }
 
 func (m *repoOnlyProvider) RepoToSelectorEntity(_ context.Context, repoEntWithProps *models.EntityWithProperties) *internalpb.SelectorEntity {

@@ -411,11 +411,5 @@ func (_ *propertiesService) EntityWithPropertiesAsProto(
 		return nil, fmt.Errorf("error instantiating provider %s: %w", ewp.Entity.ProviderID.String(), err)
 	}
 
-	converter, err := provifv1.As[provifv1.ProtoMessageConverter](prov)
-	if err != nil {
-		return nil, fmt.Errorf("provider %s doesn't implement ProtoMessageConverter: %w",
-			ewp.Entity.ProviderID.String(), err)
-	}
-
-	return converter.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
+	return prov.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
 }

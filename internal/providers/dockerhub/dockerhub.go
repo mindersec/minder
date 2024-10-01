@@ -25,6 +25,7 @@ import (
 	"path"
 
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/properties"
@@ -225,4 +226,11 @@ func (_ *dockerHubImageLister) ReregisterEntity(
 ) error {
 	// TODO: implement
 	return nil
+}
+
+// PropertiesToProtoMessage implements the Provider interface
+func (_ *dockerHubImageLister) PropertiesToProtoMessage(
+	_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
+	// TODO: Implement
+	return nil, nil
 }
