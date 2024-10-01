@@ -25,6 +25,7 @@ import (
 	"github.com/google/go-github/v63/github"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/verifier/verifyif"
@@ -183,4 +184,10 @@ func (_ *ImageLister) ReregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	return nil
+}
+
+// PropertiesToProtoMessage implements the Provider interface
+func (_ *ImageLister) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
+	// TODO: Implement
+	return nil, nil
 }

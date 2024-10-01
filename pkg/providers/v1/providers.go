@@ -86,6 +86,12 @@ type Provider interface {
 	// updating the webhook URL or secret for a particular repository or artifact. This is useful
 	// for secret rotation.
 	ReregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+
+	// PropertiesToProtoMessage is the interface for converting properties to a proto message
+	// this is temporary until we can get rid of the typed proto messages in EntityInfoWrapper
+	// and the engine. That's also why we just didn't add the method to the generic Provider
+	// interface.
+	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
 }
 
 // Git is the interface for git providers
@@ -94,15 +100,6 @@ type Git interface {
 
 	// Clone clones a git repository
 	Clone(ctx context.Context, url string, branch string) (*git.Repository, error)
-}
-
-// ProtoMessageConverter is the interface for converting properties to a proto message
-// this is temporary until we can get rid of the typed proto messages in EntityInfoWrapper
-// and the engine. That's also why we just didn't add the method to the generic Provider
-// interface.
-type ProtoMessageConverter interface {
-	Provider
-	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
 }
 
 // REST is the trait interface for interacting with an REST API.

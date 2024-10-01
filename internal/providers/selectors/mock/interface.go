@@ -18,6 +18,7 @@ import (
 	proto "github.com/stacklok/minder/internal/proto"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 )
 
 // MockRepoSelectorConverter is a mock of RepoSelectorConverter interface.
@@ -114,6 +115,21 @@ func (m *MockRepoSelectorConverter) GetEntityName(entType v1.Entity, props *prop
 func (mr *MockRepoSelectorConverterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockRepoSelectorConverter)(nil).GetEntityName), entType, props)
+}
+
+// PropertiesToProtoMessage mocks base method.
+func (m *MockRepoSelectorConverter) PropertiesToProtoMessage(entType v1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockRepoSelectorConverterMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockRepoSelectorConverter)(nil).PropertiesToProtoMessage), entType, props)
 }
 
 // RegisterEntity mocks base method.
@@ -283,6 +299,21 @@ func (mr *MockArtifactSelectorConverterMockRecorder) GetEntityName(entType, prop
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).GetEntityName), entType, props)
 }
 
+// PropertiesToProtoMessage mocks base method.
+func (m *MockArtifactSelectorConverter) PropertiesToProtoMessage(entType v1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockArtifactSelectorConverterMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockArtifactSelectorConverter)(nil).PropertiesToProtoMessage), entType, props)
+}
+
 // RegisterEntity mocks base method.
 func (m *MockArtifactSelectorConverter) RegisterEntity(ctx context.Context, entType v1.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -420,6 +451,21 @@ func (m *MockPullRequestSelectorConverter) GetEntityName(entType v1.Entity, prop
 func (mr *MockPullRequestSelectorConverterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).GetEntityName), entType, props)
+}
+
+// PropertiesToProtoMessage mocks base method.
+func (m *MockPullRequestSelectorConverter) PropertiesToProtoMessage(entType v1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockPullRequestSelectorConverterMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockPullRequestSelectorConverter)(nil).PropertiesToProtoMessage), entType, props)
 }
 
 // PullRequestToSelectorEntity mocks base method.
