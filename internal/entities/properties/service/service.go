@@ -190,7 +190,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 	}
 
 	efp.UpdateProperties(props)
-	l.Debug().Msg("properties fetched and updated")
+	l.Debug().Msg("properties fetched")
 	return nil
 }
 
