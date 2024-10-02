@@ -103,7 +103,7 @@ func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) 
 		return nil, fmt.Errorf("provider version not supported")
 	}
 
-	creds, err := g.getProviderCredentials(ctx, config)
+	creds, err := g.getProviderCredentials(ctx, config, class)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch credentials: %w", err)
 	}
@@ -238,14 +238,25 @@ func (g *githubProviderManager) createProviderWithAccessToken(
 func (g *githubProviderManager) getProviderCredentials(
 	ctx context.Context,
 	prov *db.Provider,
+	class db.ProviderClass,
+) (*credentialDetails, error) {
+	if class == db.ProviderClassGithub {
+		return g.getProviderCredentialsWithOAuthToken(ctx, prov)
+	}
+
+	return g.createProviderWithInstallationToken(ctx, prov)
+}
+
+func (g *githubProviderManager) getProviderCredentialsWithOAuthToken(
+	ctx context.Context,
+	prov *db.Provider,
 ) (*credentialDetails, error) {
 	encToken, err := g.store.GetAccessTokenByProjectID(ctx,
 		db.GetAccessTokenByProjectIDParams{Provider: prov.Name, ProjectID: prov.ProjectID})
-	if errors.Is(err, sql.ErrNoRows) {
-		zerolog.Ctx(ctx).Debug().Msg("no access token found for provider")
-		// If we don't have an access token, check if we have an installation ID
-		return g.createProviderWithInstallationToken(ctx, prov)
-	} else if err != nil {
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("provider %s has no access token", prov.Name)
+		}
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
