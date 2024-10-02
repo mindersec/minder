@@ -23,8 +23,11 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/sqlc-dev/pqtype"
+	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
@@ -34,6 +37,10 @@ import (
 	"github.com/stacklok/minder/internal/providers/gitlab"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
+
+// tokenExpirationThreshold is the time before the token expires that we should
+// consider it expired and refresh it.
+var tokenExpirationThreshold = -10 * time.Minute
 
 type providerClassManager struct {
 	store    db.Store
@@ -111,7 +118,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 
 	creds, err := g.getProviderCredentials(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch credentials")
+		return nil, fmt.Errorf("unable to fetch credentials: %w", err)
 	}
 
 	cfg, err := gitlab.ParseV1Config(config.Definition)
@@ -155,6 +162,25 @@ func (m *providerClassManager) getProviderCredentials(
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
 	}
 
+	if tokenNeedsRefresh(decryptedToken) {
+		newtoken, err := m.refreshToken(ctx, decryptedToken.RefreshToken)
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing token: %w", err)
+		}
+
+		if err := m.persistToken(ctx, prov, newtoken); err != nil {
+			return nil, fmt.Errorf("error persisting refreshed token: %w", err)
+		}
+
+		zerolog.Ctx(ctx).Debug().
+			Str("provider", prov.Name).
+			Str("provider_class", string(prov.Class)).
+			Str("project_id", prov.ProjectID.String()).
+			Msg("refreshed token")
+
+		decryptedToken = *newtoken
+	}
+
 	return credentials.NewGitLabTokenCredential(decryptedToken.AccessToken), nil
 }
 
@@ -166,4 +192,70 @@ func (m *providerClassManager) MarshallConfig(
 	}
 
 	return gitlab.MarshalV1Config(config)
+}
+
+func (m *providerClassManager) refreshToken(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	oauthcfg, err := m.NewOAuthConfig(db.ProviderClassGitlab, false)
+	if err != nil {
+		return nil, fmt.Errorf("error creating oauth config: %w", err)
+	}
+
+	newtoken, err := oauthcfg.TokenSource(ctx, &oauth2.Token{
+		RefreshToken: refreshToken,
+	}).Token()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing token: %w", err)
+	}
+
+	return newtoken, nil
+}
+
+func (m *providerClassManager) persistToken(
+	ctx context.Context, prov *db.Provider, token *oauth2.Token,
+) error {
+	encryptedToken, err := m.crypteng.EncryptOAuthToken(token)
+	if err != nil {
+		return fmt.Errorf("error encrypting token: %w", err)
+	}
+
+	serialized, err := encryptedToken.Serialize()
+	if err != nil {
+		return fmt.Errorf("error serializing token: %w", err)
+	}
+
+	err = m.store.WithTransactionErr(func(tx db.ExtendQuerier) error {
+		at, err := tx.GetAccessTokenByProjectID(ctx, db.GetAccessTokenByProjectIDParams{
+			ProjectID: prov.ProjectID,
+			Provider:  prov.Name,
+		})
+		if err != nil {
+			return fmt.Errorf("error getting access token: %w", err)
+		}
+
+		accessTokenParams := db.UpsertAccessTokenParams{
+			ProjectID:       prov.ProjectID,
+			Provider:        prov.Name,
+			OwnerFilter:     at.OwnerFilter,
+			EnrollmentNonce: at.EnrollmentNonce,
+			EncryptedAccessToken: pqtype.NullRawMessage{
+				RawMessage: serialized,
+				Valid:      true,
+			},
+		}
+
+		_, err = tx.UpsertAccessToken(ctx, accessTokenParams)
+		if err != nil {
+			return fmt.Errorf("error inserting access token: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error persisting token: %w", err)
+	}
+
+	return nil
+}
+
+func tokenNeedsRefresh(token oauth2.Token) bool {
+	return !token.Valid() || token.Expiry.UTC().Add(tokenExpirationThreshold).Before(time.Now().UTC())
 }
