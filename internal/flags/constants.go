@@ -22,7 +22,7 @@ const (
 	DockerHubProvider Experiment = "dockerhub_provider"
 	// GitLabProvider enables the GitLab provider.
 	GitLabProvider Experiment = "gitlab_provider"
-	// ImprovedEvalDetails enables improved evaluation details
-	// messages.
-	ImprovedEvalDetails Experiment = "improved_eval_details"
+	// VulnCheckErrorTemplate enables improved evaluation details
+	// messages in the vulncheck rule.
+	VulnCheckErrorTemplate Experiment = "vulncheck_error_template"
 )

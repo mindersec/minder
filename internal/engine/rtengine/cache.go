@@ -86,10 +86,7 @@ func NewRuleEngineCache(
 	return &ruleEngineCache{engines: engines, opts: opts}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(
-	ctx context.Context,
-	ruleTypeID uuid.UUID,
-) (*RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}

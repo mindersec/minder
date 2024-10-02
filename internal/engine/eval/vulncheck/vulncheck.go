@@ -84,7 +84,7 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 	}
 
 	if len(vulnerablePackages) > 0 {
-		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.ImprovedEvalDetails) {
+		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.VulnCheckErrorTemplate) {
 			return evalerrors.NewDetailedErrEvaluationFailed(
 				templates.VulncheckTemplate,
 				map[string]any{"packages": vulnerablePackages},
