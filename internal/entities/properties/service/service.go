@@ -186,7 +186,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 
 	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, opts, l)
 	if err != nil {
-		return fmt.Errorf("error fetching properties for repository: %w", err)
+		return fmt.Errorf("error fetching properties for entity: %w", err)
 	}
 
 	efp.UpdateProperties(props)
