@@ -45,7 +45,10 @@ import (
 func (r *Reconciler) handleRepoReconcilerEvent(msg *message.Message) error {
 	var evt messages.RepoReconcilerEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
-		return fmt.Errorf("error unmarshalling payload: %w", err)
+		// We don't return the event since there's no use
+		// retrying it if it's invalid.
+		log.Printf("error unmarshalling event: %v", err)
+		return nil
 	}
 
 	// validate event
