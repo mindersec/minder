@@ -924,6 +924,21 @@ func (mr *MockStoreMockRecorder) GetChildrenProjects(arg0, arg1 any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), arg0, arg1)
 }
 
+// GetEntitiesByProjectHierarchy mocks base method.
+func (m *MockStore) GetEntitiesByProjectHierarchy(arg0 context.Context, arg1 []uuid.UUID) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntitiesByProjectHierarchy", arg0, arg1)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntitiesByProjectHierarchy indicates an expected call of GetEntitiesByProjectHierarchy.
+func (mr *MockStoreMockRecorder) GetEntitiesByProjectHierarchy(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByProjectHierarchy", reflect.TypeOf((*MockStore)(nil).GetEntitiesByProjectHierarchy), arg0, arg1)
+}
+
 // GetEntitiesByProvider mocks base method.
 func (m *MockStore) GetEntitiesByProvider(arg0 context.Context, arg1 uuid.UUID) ([]db.EntityInstance, error) {
 	m.ctrl.T.Helper()

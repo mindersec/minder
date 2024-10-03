@@ -241,6 +241,44 @@ func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.U
 	return items, nil
 }
 
+const getEntitiesByProjectHierarchy = `-- name: GetEntitiesByProjectHierarchy :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.project_id = ANY($1::uuid[])
+`
+
+// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+func (q *Queries) GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesByProjectHierarchy, pq.Array(projects))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEntitiesByProvider = `-- name: GetEntitiesByProvider :many
 
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
