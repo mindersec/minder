@@ -146,7 +146,7 @@ func HandleAdminEvents(
 	cfg *serverconfig.Config,
 	projectDeleter projects.ProjectDeleter,
 ) {
-	d := time.Now().Add(time.Duration(10) * time.Minute)
+	d := time.Now().Add(time.Duration(5) * time.Minute)
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
 
