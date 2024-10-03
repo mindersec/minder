@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -30,6 +31,7 @@ import (
 // it is used for either the entity or the owner entity.
 type TypedProps struct {
 	Type       v1.Entity      `json:"type"`
+	EntityID   uuid.UUID      `json:"entity_id"`
 	GetByProps map[string]any `json:"get_by_props"`
 }
 
@@ -60,12 +62,20 @@ func (e *HandleEntityAndDoMessage) WithEntity(entType v1.Entity, getByProps *pro
 	return e
 }
 
-// WithOwner sets the owner entity and its properties.
-func (e *HandleEntityAndDoMessage) WithOwner(ownerType v1.Entity, ownerProps *properties.Properties) *HandleEntityAndDoMessage {
+// WithOriginator sets the owner entity and its properties.
+func (e *HandleEntityAndDoMessage) WithOriginator(
+	originatorType v1.Entity, originatorProps *properties.Properties,
+) *HandleEntityAndDoMessage {
 	e.Originator = TypedProps{
-		Type:       ownerType,
-		GetByProps: ownerProps.ToProtoStruct().AsMap(),
+		Type:       originatorType,
+		GetByProps: originatorProps.ToProtoStruct().AsMap(),
 	}
+	return e
+}
+
+// WithEntityID sets the entity ID for the entity that will be used when looking up the entity.
+func (e *HandleEntityAndDoMessage) WithEntityID(entityID uuid.UUID) *HandleEntityAndDoMessage {
+	e.Entity.EntityID = entityID
 	return e
 }
 

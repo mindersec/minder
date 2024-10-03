@@ -43,14 +43,14 @@ func (rp *ReminderProcessor) Register(r events.Registrar) {
 }
 
 func (rp *ReminderProcessor) reminderMessageHandler(msg *message.Message) error {
-	evt, err := remindermessages.RepoReminderEventFromMessage(msg)
+	evt, err := remindermessages.EntityReminderEventFromMessage(msg)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling reminder event: %w", err)
 	}
 
 	log.Info().Msgf("Received reminder event: %v", evt)
 
-	repoReconcileMsg, err := reconcilermessages.NewRepoReconcilerMessage(evt.ProviderID, evt.RepositoryID, evt.Project)
+	repoReconcileMsg, err := reconcilermessages.NewRepoReconcilerMessage(evt.ProviderID, evt.EntityID, evt.Project)
 	if err != nil {
 		return fmt.Errorf("error creating repo reconcile event: %w", err)
 	}

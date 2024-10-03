@@ -109,6 +109,27 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 	return nil
 }
 
+// NewRefreshByIDAndEvaluateHandler creates a new handler that refreshes an entity and evaluates it.
+func NewRefreshByIDAndEvaluateHandler(
+	evt events.Publisher,
+	store db.Store,
+	propSvc propertyService.PropertiesService,
+	provMgr manager.ProviderManager,
+	handlerMiddleware ...watermill.HandlerMiddleware,
+) events.Consumer {
+	return &handleEntityAndDoBase{
+		evt: evt,
+
+		refreshEntity: entStrategies.NewRefreshEntityByIDStrategy(propSvc, provMgr, store),
+		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
+
+		handlerName:        events.TopicQueueRefreshEntityByIDAndEvaluate,
+		forwardHandlerName: events.TopicQueueEntityEvaluate,
+
+		handlerMiddleware: handlerMiddleware,
+	}
+}
+
 // NewRefreshEntityAndEvaluateHandler creates a new handler that refreshes an entity and evaluates it.
 func NewRefreshEntityAndEvaluateHandler(
 	evt events.Publisher,
