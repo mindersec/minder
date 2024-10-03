@@ -16,23 +16,21 @@ _Last updated: June 2024_
 
 ## In progress
 
-* **Register an entire GitHub organization:** instead of individually selecting repositories, you can register a GitHub organization to manage all the repositories within it.
-* **Individual repository selection:** instead of profiles always applying to all repositories, you can select which repositories a profile applies to.
+* **Improved information about alerts:** Improve the verbiage and explanation about the state of rule evaluations, and how you can remediate the problems. 
 * **Enforce license information for dependencies:** Ensure that dependencies in your repositories use licenses that you approve.
-* **Improved user management:** easier ways to invite users to your Minder organization.
-* **Historical evaluation:** provide information about how your security posture has changed over time.
+* **Create policy to manage licenses in PRs:** Add a rule type to block and/or add comments to pull requests based on the licenses of the dependencies they import.
+* **Generalized "provider" support:** Improve the ability for developers to add integration points to Minder to provide custom information about entities in their software development lifecycle.
 
 ## Next
 
-* **Project hierarchies:** Enable users to create nested projects and group repositories within those projects. Projects will inherit profile rules in order to simplify profile and policy management.
 * **Report CVEs, Trusty scores, and license info for ingested SBOMs:** Ingest SBOMS and identify dependencies; show CVEs, Trusty scores, and license information including any changes over time.
 * **Block PRs based on Trusty scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
-* **Create policy to manage licenses in PRs:** Add a rule type to block and/or add comments to pull requests based on the licenses of the dependencies they import.
 * **Policy events:** Provide information about rule evaluation as it changes, and historical rule evaluation.
 * **Generate SBOMs:** Enable users to automatically create and sign SBOMs.
 
 ## Future considerations
 
+* **Project hierarchies:** Enable users to create nested projects and group repositories within those projects. Projects will inherit profile rules in order to simplify profile and policy management.
 * **Automate the generation and signing of SLSA provenance statements:** Enable users to generate SLSA provenance statements (e.g. through SLSA GitHub generator) and sign them with Sigstore.
 * **Register GitLab and Bitbucket repositories:** In addition to managing GitHub repositories, enable users to manage configuration and policy for other source control providers.
 * **Export a Minder 'badge/certification' that shows what practices a project followed:** Create a badge that OSS maintainers and enterprise developers can create and share with others that asserts the Minder practices and policies their projects follow.
