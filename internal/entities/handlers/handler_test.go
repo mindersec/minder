@@ -170,6 +170,15 @@ func refreshEntityHandlerBuilder(
 	return NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
+func refreshByIDHandlerBuilder(
+	evt events.Publisher,
+	store db.Store,
+	propSvc service.PropertiesService,
+	provMgr manager.ProviderManager,
+) events.Consumer {
+	return NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, provMgr)
+}
+
 func addOriginatingEntityHandlerBuilder(
 	evt events.Publisher,
 	store db.Store,
@@ -184,11 +193,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		lookupPropMap        map[string]any
-		lookupType           minderv1.Entity
-		ownerPropMap         map[string]any
-		ownerType            minderv1.Entity
-		providerHint         string
+		messageBuilder       func() *message.HandleEntityAndDoMessage
 		setupPropSvcMocks    func() fixtures.MockPropertyServiceBuilder
 		mockStoreFunc        df.MockStoreBuilder
 		providerManagerSetup func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder
@@ -199,13 +204,57 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		handlerBuilderFn     handlerBuilder
 	}{
 		{
+			name:             "NewRefreshByIDAndEvaluateHandler: successful refresh and publish of an entity",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntityID(repoID)
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				ewp := buildEwp(t, repoEwp, repoPropMap)
+				protoEnt, err := ghprops.RepoV1FromProperties(ewp.Properties)
+				require.NoError(t, err)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(repoID, ewp),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+					fixtures.WithSuccessfulEntityWithPropertiesAsProto(protoEnt),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+			),
+			expectedPublish: true,
+			topic:           events.TopicQueueEntityEvaluate,
+			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshByIDAndEvaluateHandler: nil UUID does not publish",
+			handlerBuilderFn: refreshByIDHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntityID(uuid.Nil)
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService()
+			},
+			mockStoreFunc:   df.NewMockStore(),
+			expectedPublish: false,
+			topic:           events.TopicQueueEntityEvaluate,
+			checkWmMsg:      checkRepoMessage,
+		},
+		{
 			name:             "NewRefreshEntityAndEvaluateHandler: successful refresh and publish of a repo",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
-			lookupPropMap: map[string]any{
-				properties.PropertyUpstreamID: "123",
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
 			},
-			lookupType:   minderv1.Entity_ENTITY_REPOSITORIES,
-			providerHint: "github",
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				ewp := buildEwp(t, repoEwp, repoPropMap)
 				protoEnt, err := ghprops.RepoV1FromProperties(ewp.Properties)
@@ -227,7 +276,15 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to get an entity doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
-			lookupType:       minderv1.Entity_ENTITY_REPOSITORIES,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
 					fixtures.WithFailedEntityByUpstreamHint(service.ErrEntityNotFound),
@@ -241,8 +298,15 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to retrieve all properties doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
-			lookupType:       minderv1.Entity_ENTITY_REPOSITORIES,
-			providerHint:     "github",
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
 					fixtures.WithSuccessfulEntityByUpstreamHint(&repoEwp, githubHint),
@@ -257,8 +321,15 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to convert entity to proto doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
-			providerHint:     "github",
-			lookupType:       minderv1.Entity_ENTITY_REPOSITORIES,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
 					fixtures.WithSuccessfulEntityByUpstreamHint(&repoEwp, githubHint),
@@ -274,16 +345,20 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		{
 			name:             "NewAddOriginatingEntityHandler: Adding a pull request originating entity publishes",
 			handlerBuilderFn: addOriginatingEntityHandlerBuilder,
-			lookupPropMap: map[string]any{
-				properties.PropertyUpstreamID: "789",
-				ghprops.PullPropertyNumber:    int64(789),
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				prProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "789",
+					ghprops.PullPropertyNumber:    int64(789),
+				})
+				originatorProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_PULL_REQUESTS, prProps).
+					WithOriginator(minderv1.Entity_ENTITY_REPOSITORIES, originatorProps).
+					WithProviderImplementsHint("github")
 			},
-			lookupType: minderv1.Entity_ENTITY_PULL_REQUESTS,
-			ownerPropMap: map[string]any{
-				properties.PropertyUpstreamID: "123",
-			},
-			ownerType:    minderv1.Entity_ENTITY_REPOSITORIES,
-			providerHint: "github",
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				pullEwp := buildEwp(t, pullRequestEwp, pullRequestPropMap)
 				pullProtoEnt, err := ghprops.PullRequestV1FromProperties(pullEwp.Properties)
@@ -359,21 +434,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			getByProps, err := properties.NewProperties(tt.lookupPropMap)
-			require.NoError(t, err)
-
-			entityMsg := message.NewEntityRefreshAndDoMessage().
-				WithEntity(tt.lookupType, getByProps).
-				WithProviderImplementsHint(tt.providerHint)
-
-			if tt.ownerPropMap != nil {
-				ownerProps, err := properties.NewProperties(tt.ownerPropMap)
-				require.NoError(t, err)
-				entityMsg = entityMsg.WithOriginator(tt.ownerType, ownerProps)
-			}
+			entityMsg := tt.messageBuilder()
+			require.NotNil(t, entityMsg)
 
 			handlerMsg := watermill.NewMessage(uuid.New().String(), nil)
-			err = entityMsg.ToMessage(handlerMsg)
+			err := entityMsg.ToMessage(handlerMsg)
 			require.NoError(t, err)
 
 			mockPropSvc := tt.setupPropSvcMocks()(ctrl)

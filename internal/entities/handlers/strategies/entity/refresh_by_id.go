@@ -19,6 +19,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/handlers/strategies"
@@ -27,34 +29,37 @@ import (
 	"github.com/stacklok/minder/internal/providers/manager"
 )
 
-type refreshEntityByUpstreamIDStrategy struct {
+type refreshEntityByIDStrategy struct {
 	propSvc propertyService.PropertiesService
 	provMgr manager.ProviderManager
 	store   db.Store
 }
 
-// NewRefreshEntityByUpstreamPropsStrategy creates a new refreshEntityByUpstreamIDStrategy.
-func NewRefreshEntityByUpstreamPropsStrategy(
+// NewRefreshEntityByIDStrategy creates a new getEntityByUpstreamIDStrategy.
+func NewRefreshEntityByIDStrategy(
 	propSvc propertyService.PropertiesService,
-	provMgr manager.ProviderManager,
+	provManager manager.ProviderManager,
 	store db.Store,
 ) strategies.GetEntityStrategy {
-	return &refreshEntityByUpstreamIDStrategy{
+	return &refreshEntityByIDStrategy{
+		provMgr: provManager,
 		propSvc: propSvc,
-		provMgr: provMgr,
 		store:   store,
 	}
 }
 
-// GetEntity refreshes an entity by its upstream ID.
-func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
+// GetEntity gets an entity by its upstream ID.
+func (r *refreshEntityByIDStrategy) GetEntity(
 	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
 ) (*models.EntityWithProperties, error) {
+	if entMsg.Entity.EntityID == uuid.Nil {
+		return nil, fmt.Errorf("entity id is nil")
+	}
+
 	getEnt, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
-		ewp, err := getEntityInner(
-			ctx,
-			entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
-			r.propSvc, propertyService.CallBuilder().WithStoreOrTransaction(t))
+		ewp, err := r.propSvc.EntityWithPropertiesByID(
+			ctx, entMsg.Entity.EntityID,
+			propertyService.CallBuilder().WithStoreOrTransaction(t))
 		if err != nil {
 			return nil, fmt.Errorf("error getting entity: %w", err)
 		}
@@ -63,10 +68,11 @@ func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
 			ctx, ewp, r.provMgr,
 			propertyService.ReadBuilder().WithStoreOrTransaction(t))
 		if err != nil {
-			return nil, fmt.Errorf("error fetching entity: %w", err)
+			return nil, fmt.Errorf("error retrieving properties for entity: %w", err)
 		}
 		return ewp, nil
 	})
+
 	if err != nil {
 		return nil, fmt.Errorf("error refreshing entity: %w", err)
 	}
@@ -75,6 +81,6 @@ func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
 }
 
 // GetName returns the name of the strategy. Used for debugging
-func (_ *refreshEntityByUpstreamIDStrategy) GetName() string {
-	return "refreshEntityByUpstreamIDStrategy"
+func (_ *refreshEntityByIDStrategy) GetName() string {
+	return "getEntityByID"
 }

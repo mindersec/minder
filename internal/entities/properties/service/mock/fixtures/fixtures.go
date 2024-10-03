@@ -70,6 +70,16 @@ func WithFailedEntityByUpstreamHint(
 	}
 }
 
+func WithSuccessfulEntityWithPropertiesByID(
+	entityID uuid.UUID,
+	ewp *models.EntityWithProperties,
+) MockPropertyServiceOption {
+	return func(mockPropSvc *mockSvc.MockPropertiesService) {
+		mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any()).
+			Return(ewp, nil)
+	}
+}
+
 func WithSuccessfulRetrieveAllPropertiesForEntity() MockPropertyServiceOption {
 	return func(mockPropSvc *mockSvc.MockPropertiesService) {
 		mockPropSvc.EXPECT().

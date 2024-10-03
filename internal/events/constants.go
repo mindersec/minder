@@ -42,6 +42,8 @@ const (
 	TopicQueueOriginatingEntityDelete = "originating.entity.delete.event"
 	// TopicQueueGetEntityAndDelete retrieves an entity from the database and schedules it for deletion
 	TopicQueueGetEntityAndDelete = "get.entity.delete.event"
+	// TopicQueueRefreshEntityByIDAndEvaluate makes sure that entity properties are up-to-date and schedules an evaluation
+	TopicQueueRefreshEntityByIDAndEvaluate = "refresh.entity.by.id.evaluate.event"
 	// TopicQueueRefreshEntityAndEvaluate makes sure that entity properties are up-to-date and schedules an evaluation
 	TopicQueueRefreshEntityAndEvaluate = "refresh.entity.evaluate.event"
 	// TopicQueueEntityEvaluate is the topic for entity evaluation events from webhooks
