@@ -71,17 +71,27 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 
 	m := message.NewMessage(uuid.New().String(), nil)
 	if err := entRefresh.ToMessage(m); err != nil {
-		return fmt.Errorf("error creating message: %w", err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error marshalling message")
+		// no point in retrying, so we return nil
+		return nil
+	}
+
+	if evt.EntityID == uuid.Nil {
+		// this might happen if we process old messages during an upgrade, but there's no point in retrying
+		zerolog.Ctx(ctx).Error().Msg("entityID is nil")
+		return nil
 	}
 
 	m.SetContext(ctx)
 	if err := r.evt.Publish(events.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
+		// we retry in case watermill is having a bad day
 		return fmt.Errorf("error publishing message: %w", err)
 	}
 
 	// the code below this line will be refactored in a follow-up PR
 	ewp, err := r.propService.EntityWithPropertiesByID(ctx, evt.EntityID, nil)
 	if err != nil {
+		// database might be down, so we retry
 		log.Printf("error retrieving entity with properties: %v", err)
 		return nil
 	}
@@ -89,6 +99,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 	repoID, err := ewp.Properties.GetProperty(properties.PropertyUpstreamID).AsInt64()
 	if err != nil {
 		log.Printf("error getting property upstreamID: %v", err)
+		// no point in retrying, so we just return nil
 		return nil
 	}
 
@@ -101,6 +112,7 @@ func (r *Reconciler) handleArtifactsReconcilerEvent(ctx context.Context, evt *me
 		return nil
 	}
 	if err != nil {
+		// database might be down, so we retry
 		return fmt.Errorf("error retrieving repository %d in project %s: %w", repoID, evt.Project, err)
 	}
 

@@ -42,6 +42,7 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 		setupPropSvcMocks func() fixtures.MockPropertyServiceBuilder
 		expectedPublish   bool
 		expectedErr       bool
+		entityID          uuid.UUID
 		topic             string
 	}{
 		{
@@ -54,7 +55,17 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 				)
 			},
 			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
+			entityID:        testRepoID,
 			expectedPublish: true,
+			expectedErr:     false,
+		},
+		{
+			name: "event with no upstream ID",
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService()
+			},
+			entityID:        uuid.Nil,
+			expectedPublish: false,
 			expectedErr:     false,
 		},
 	}
@@ -66,7 +77,7 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			msg, err := messages.NewRepoReconcilerMessage(testProviderID, testRepoID, testProjectID)
+			msg, err := messages.NewRepoReconcilerMessage(testProviderID, scenario.entityID, testProjectID)
 			require.NoError(t, err)
 			require.NotNil(t, msg)
 
