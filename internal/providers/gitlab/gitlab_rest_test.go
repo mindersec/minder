@@ -162,7 +162,7 @@ func Test_gitlabClient_NewRequest(t *testing.T) {
 			name:        "invalid URL gets cleaned up",
 			method:      http.MethodGet,
 			requestPath: "..:/invalid-url",
-			wantErr:     false,
+			wantErr:     true,
 		},
 		{
 			name:        "invalid URL parsing error",
@@ -270,6 +270,100 @@ func Test_glRESTGet(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantResult, result)
 			}
+		})
+	}
+}
+
+func Test_getParsedURL(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		endpoint string
+		// This may include query parameters
+		path string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *url.URL
+		wantErr bool
+	}{
+		{
+			name: "valid URL",
+			args: args{
+				endpoint: "http://example.com/v1/api",
+				path:     "/test",
+			},
+			want: &url.URL{
+				Scheme: "http",
+				Host:   "example.com",
+				Path:   "/v1/api/test",
+			},
+		},
+		{
+			name: "valid URL with query parameters",
+			args: args{
+				endpoint: "http://example.com/v1/api",
+				path:     "/test?param1=value1&param2=value2",
+			},
+			want: &url.URL{
+				Scheme:   "http",
+				Host:     "example.com",
+				Path:     "/v1/api/test",
+				RawQuery: "param1=value1&param2=value2",
+			},
+		},
+		{
+			name: "valid URL with fragment identifier",
+			args: args{
+				endpoint: "http://example.com/v1/api",
+				path:     "/test#section",
+			},
+			want: &url.URL{
+				Scheme:   "http",
+				Host:     "example.com",
+				Path:     "/v1/api/test",
+				Fragment: "section",
+			},
+		},
+		{
+			name: "invalid URL",
+			args: args{
+				endpoint: "://example.com:80:80",
+				path:     "/test",
+			},
+			wantErr: true,
+		},
+		{
+			name: "query parameter that needs escaping",
+			args: args{
+				endpoint: "http://example.com",
+				path:     "/test?param1=va lue1",
+			},
+			want: &url.URL{
+				Scheme:   "http",
+				Host:     "example.com",
+				Path:     "test",
+				RawQuery: "param1=va%20lue1",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := getParsedURL(tt.args.endpoint, tt.args.path)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want.Scheme, got.Scheme, "Expected scheme to be equal")
+			assert.Equal(t, tt.want.Host, got.Host, "Expected host to be equal")
+			assert.Equal(t, tt.want.Path, got.Path, "Expected path to be equal")
+			assert.Equal(t, tt.want.Query(), got.Query(), "Expected query to be equal")
+			assert.Equal(t, tt.want.Fragment, got.Fragment, "Expected fragment to be equal")
 		})
 	}
 }

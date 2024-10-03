@@ -40,12 +40,10 @@ func (c *gitlabClient) GetBaseURL() string {
 
 // NewRequest implements the REST provider interface
 func (c *gitlabClient) NewRequest(method, requestPath string, body any) (*http.Request, error) {
-	base, err := url.Parse(c.glcfg.Endpoint)
+	u, err := getParsedURL(c.glcfg.Endpoint, requestPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL: %w", err)
+		return nil, err
 	}
-
-	u := base.JoinPath(requestPath)
 
 	var buf io.ReadWriter
 	if body != nil {
@@ -117,4 +115,27 @@ func glRESTGet[T any](ctx context.Context, cli genericRESTClient, path string, o
 	}
 
 	return nil
+}
+
+func getParsedURL(endpoint, path string) (*url.URL, error) {
+	base, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse URL: %w", err)
+	}
+
+	// Explicitly parse path and query parameters. This is to ensure that
+	// the path is properly escaped and that the query parameters are
+	// properly encoded.
+	parsedPathAndQuery, err := url.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse path: %w", err)
+	}
+
+	u := base.JoinPath(parsedPathAndQuery.Path)
+
+	// These have already been escaped by the URL parser
+	u.RawQuery = parsedPathAndQuery.RawQuery
+	u.Fragment = parsedPathAndQuery.Fragment
+
+	return u, nil
 }
