@@ -162,7 +162,7 @@ func Test_gitlabClient_NewRequest(t *testing.T) {
 			name:        "invalid URL gets cleaned up",
 			method:      http.MethodGet,
 			requestPath: "..:/invalid-url",
-			wantErr:     false,
+			wantErr:     true,
 		},
 		{
 			name:        "invalid URL parsing error",
