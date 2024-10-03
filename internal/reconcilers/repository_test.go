@@ -21,11 +21,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/entities/properties/service/mock/fixtures"
 	"github.com/stacklok/minder/internal/events"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -52,6 +55,34 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 				// soon
 				return fixtures.NewMockPropertiesService(
 					fixtures.WithFailedGetEntityWithPropertiesByID(propSvc.ErrEntityNotFound),
+				)
+			},
+			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
+			entityID:        testRepoID,
+			expectedPublish: true,
+			expectedErr:     false,
+		},
+		{
+			// this is the case for gitlab. We test here that the event is published for the repo, but no errors occur
+			// in this case the current code will issue the reconcile for the repo, but stop without a fatal error
+			// just before reconciling artifacts - we verify that because if we hit the artifacts path, we would have
+			// a bunch of other mocks to call
+			name: "event with string as upstream ID does publish",
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				retProps, err := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "not_an_int",
+				})
+				require.NoError(t, err)
+
+				ewp := &models.EntityWithProperties{
+					Entity: models.EntityInstance{
+						Type: minderv1.Entity_ENTITY_REPOSITORIES,
+						ID:   testRepoID,
+					},
+					Properties: retProps,
+				}
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityWithPropertiesByID(testRepoID, ewp),
 				)
 			},
 			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
