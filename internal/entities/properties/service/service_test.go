@@ -675,7 +675,85 @@ func TestPropertiesService_EntityWithPropertiesByUpstreamHint(t *testing.T) {
 					insertPropertiesFromMap(ctx, t, store, ent.ID, propMap)
 				}
 			},
-			expectedError: ErrMultipleEntities,
+			expectedError: ErrEntityNotFound,
+		},
+		{
+			name:    "Multiple pull requests with the same ID matched by name",
+			entType: minderv1.Entity_ENTITY_PULL_REQUESTS,
+			byPropMap: map[string]any{
+				properties.PropertyUpstreamID: "1",
+				properties.PropertyName:       "test-repo-2-with-pr/1",
+			},
+			hint: ByUpstreamHint{
+				ProviderImplements: db.NullProviderType{
+					ProviderType: db.ProviderTypeGithub,
+					Valid:        true,
+				},
+			},
+			dbSetup: func(t *testing.T, store db.Store) {
+				t.Helper()
+
+				repo1, err := store.CreateEntity(ctx, db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+					Name:       "test-repo-1-with-pr",
+					ProjectID:  tctx.dbProj.ID,
+					ProviderID: tctx.ghAppProvider.ID,
+				})
+				require.NoError(t, err)
+
+				repo2, err := store.CreateEntity(ctx, db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+					Name:       "test-repo-2-with-pr",
+					ProjectID:  tctx.dbProj.ID,
+					ProviderID: tctx.ghAppProvider.ID,
+				})
+				require.NoError(t, err)
+
+				repo1Pr, err := store.CreateEntity(ctx, db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_PULL_REQUESTS),
+					Name:       "test-repo-1-with-pr/1",
+					ProjectID:  tctx.dbProj.ID,
+					ProviderID: tctx.ghAppProvider.ID,
+					OriginatedFrom: uuid.NullUUID{
+						UUID: repo1.ID,
+					},
+				})
+				require.NoError(t, err)
+
+				insertPropertiesFromMap(ctx, t, store,
+					repo1Pr.ID,
+					map[string]any{
+						properties.PropertyUpstreamID: "1",
+						properties.PropertyName:       "test-repo-1-with-pr/1",
+					},
+				)
+
+				repo2Pr, err := store.CreateEntity(ctx, db.CreateEntityParams{
+					EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_PULL_REQUESTS),
+					Name:       "test-repo-2-with-pr/1",
+					ProjectID:  tctx.dbProj.ID,
+					ProviderID: tctx.ghAppProvider.ID,
+					OriginatedFrom: uuid.NullUUID{
+						UUID: repo2.ID,
+					},
+				})
+				require.NoError(t, err)
+
+				insertPropertiesFromMap(ctx, t, store,
+					repo2Pr.ID,
+					map[string]any{
+						properties.PropertyUpstreamID: "1",
+						properties.PropertyName:       "test-repo-2-with-pr/1",
+					},
+				)
+			},
+			checkResult: func(t *testing.T, result *models.EntityWithProperties) {
+				t.Helper()
+				require.NotNil(t, result)
+				require.Equal(t, "test-repo-2-with-pr/1", result.Entity.Name)
+				require.Equal(t, "1", result.Properties.GetProperty(properties.PropertyUpstreamID).GetString())
+				require.Equal(t, tctx.ghAppProvider.ID, result.Entity.ProviderID)
+			},
 		},
 		{
 			name:      "One of multiple entities matched by provider hint",
