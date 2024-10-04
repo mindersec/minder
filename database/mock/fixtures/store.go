@@ -22,6 +22,7 @@ package fixtures
 import (
 	"database/sql"
 	"encoding/json"
+	"slices"
 
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
@@ -219,5 +220,42 @@ func WithSuccessfullGetEntityByID(
 		mockStore.EXPECT().
 			GetEntityByID(gomock.Any(), expID).
 			Return(entity, nil)
+	}
+}
+
+func WithSuccessfulGetEntitiesByProjectHierarchy(
+	entities []db.EntityInstance,
+	expectedProjectIDs []uuid.UUID,
+) func(*mockdb.MockStore) {
+	isSubset := func(actualAny any) bool {
+		actual, ok := actualAny.([]uuid.UUID)
+		if !ok {
+			return false
+		}
+
+		for _, e := range expectedProjectIDs {
+			if !slices.Contains(actual, e) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetEntitiesByProjectHierarchy(
+				gomock.Any(),
+				gomock.Cond(isSubset)).
+			Return(entities, nil)
+	}
+}
+
+func WithFailedGetEntitiesByProjectHierarchy(
+	err error,
+) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetEntitiesByProjectHierarchy(gomock.Any(), gomock.Any()).
+			Return(nil, err)
 	}
 }

@@ -85,6 +85,12 @@ WHERE entity_instances.entity_type = $1
 SELECT * FROM entity_instances
 WHERE entity_instances.provider_id = $1;
 
+-- GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+
+-- name: GetEntitiesByProjectHierarchy :many
+SELECT * FROM entity_instances
+WHERE entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
+
 -- name: GetProperty :one
 SELECT * FROM properties
 WHERE entity_id = $1 AND key = $2;

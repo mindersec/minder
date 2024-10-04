@@ -86,6 +86,8 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByProvider retrieves all entities of a given provider.
 	// this is how one would get all repositories, artifacts, etc. for a given provider.
 	GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error)
