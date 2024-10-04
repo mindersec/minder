@@ -28,15 +28,17 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/trusty"
 	"github.com/stacklok/minder/internal/engine/eval/vulncheck"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
 func NewRuleEvaluator(
 	ctx context.Context,
-	ruletype *pb.RuleType,
+	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	opts ...eoptions.Option,
 ) (engif.Evaluator, error) {
 	e := ruletype.Def.GetEval()
 	if e == nil {
@@ -49,27 +51,27 @@ func NewRuleEvaluator(
 		if ruletype.Def.Eval.GetJq() == nil {
 			return nil, fmt.Errorf("rule type engine missing jq configuration")
 		}
-		return jq.NewJQEvaluator(e.GetJq())
+		return jq.NewJQEvaluator(e.GetJq(), opts...)
 	case rego.RegoEvalType:
-		return rego.NewRegoEvaluator(e.GetRego())
+		return rego.NewRegoEvaluator(e.GetRego(), opts...)
 	case vulncheck.VulncheckEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement github trait")
 		}
-		return vulncheck.NewVulncheckEvaluator(client)
+		return vulncheck.NewVulncheckEvaluator(client, opts...)
 	case trusty.TrustyEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement github trait")
 		}
-		return trusty.NewTrustyEvaluator(ctx, client)
+		return trusty.NewTrustyEvaluator(ctx, client, opts...)
 	case application.HomoglyphsEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement git trait")
 		}
-		return application.NewHomoglyphsEvaluator(ctx, e.GetHomoglyphs(), client)
+		return application.NewHomoglyphsEvaluator(ctx, e.GetHomoglyphs(), client, opts...)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", ruletype.Def.Eval.Type)
 	}

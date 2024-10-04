@@ -25,6 +25,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/util"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -35,7 +36,10 @@ type Evaluator struct {
 }
 
 // NewJQEvaluator creates a new JQ rule data evaluator
-func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Evaluator, error) {
+func NewJQEvaluator(
+	assertions []*pb.RuleType_Definition_Eval_JQComparison,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	if len(assertions) == 0 {
 		return nil, fmt.Errorf("missing jq assertions")
 	}
@@ -61,9 +65,17 @@ func NewJQEvaluator(assertions []*pb.RuleType_Definition_Eval_JQComparison) (*Ev
 		}
 	}
 
-	return &Evaluator{
+	evaluator := &Evaluator{
 		assertions: assertions,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if err := opt(evaluator); err != nil {
+			return nil, err
+		}
+	}
+
+	return evaluator, nil
 }
 
 // Eval calls the jq library to evaluate the rule
