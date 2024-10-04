@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/engcontext"
 	"github.com/stacklok/minder/internal/engine/entities"
 	entmodels "github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/logger"
 	prof "github.com/stacklok/minder/internal/profiles"
@@ -283,6 +284,10 @@ func getRuleEvalEntityInfo(
 	efp *entmodels.EntityWithProperties,
 ) map[string]string {
 	entityInfo := map[string]string{}
+
+	if name := efp.Properties.GetProperty(properties.PropertyName); name != nil {
+		entityInfo["name"] = name.GetString()
+	}
 
 	if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
 		entityInfo["repo_owner"] = owner.GetString()
