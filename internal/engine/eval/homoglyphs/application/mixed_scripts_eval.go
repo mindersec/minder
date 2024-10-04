@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
@@ -58,7 +60,12 @@ func NewMixedScriptEvaluator(
 }
 
 // Eval evaluates the mixed scripts rule type
-func (mse *MixedScriptsEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
+func (mse *MixedScriptsEvaluator) Eval(
+	ctx context.Context,
+	_ map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	hasFoundViolations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
 	if err != nil {
 		return err

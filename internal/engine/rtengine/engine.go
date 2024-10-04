@@ -179,7 +179,7 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, result)
+	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, inf.Entity, result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }

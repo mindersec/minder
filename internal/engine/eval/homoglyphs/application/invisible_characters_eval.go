@@ -17,6 +17,8 @@ package application
 import (
 	"context"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
@@ -52,7 +54,12 @@ func NewInvisibleCharactersEvaluator(
 }
 
 // Eval evaluates the invisible characters rule type
-func (ice *InvisibleCharactersEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
+func (ice *InvisibleCharactersEvaluator) Eval(
+	ctx context.Context,
+	_ map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	hasFoundViolations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {
 		return err

@@ -20,8 +20,19 @@ import (
 	_ "embed"
 )
 
+// RegoDenyByDefaultTemplate is the template for details of the `rego`
+// evaluation engine of type `deny-by-default`.
+//
+// It expects a `status` and a `message` scalar values to be set. It
+// optionally accepts an `entityName` string.
+//
+//go:embed regoDenyByDefaultTemplate.tmpl
+var RegoDenyByDefaultTemplate string
+
 // VulncheckTemplate is the template for evaluation details of the
 // `vulncheck` evaluation engine.
+//
+// It expects a list of strings value named `packages`.
 //
 //go:embed vulncheckTemplate.tmpl
 var VulncheckTemplate string
