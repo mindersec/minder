@@ -232,7 +232,7 @@ func matchEntityWithHint(
 				continue
 			} else if errors.Is(err, ErrMultipleEntities) {
 				l.Error().Msg("multiple entities matched")
-				return nil, ErrMultipleEntities
+				continue
 			}
 			return nil, fmt.Errorf("failed to match entity by hint: %w", err)
 		}
