@@ -25,7 +25,9 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"github.com/stretchr/testify/require"
 
+	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
@@ -534,6 +536,75 @@ func TestReadPackageDescription(t *testing.T) {
 			require.True(t, ok)
 			_, ok = data["activity"]
 			require.True(t, ok)
+		})
+	}
+}
+
+func TestEvaluationDetailRendering(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		msg     string
+		msgArgs []any
+		tmpl    string
+		args    any
+		error   string
+		details string
+	}{
+		// trusty template
+		{
+			name: "trusty template with both malicious and low-scoring packages",
+			msg:  "this is the message",
+			tmpl: templates.TrustyTemplate,
+			args: map[string]any{
+				"maliciousPackages":  []string{"package1", "package2"},
+				"lowScoringPackages": []string{"package2", "package3"},
+			},
+			error:   "evaluation failure: this is the message",
+			details: "Malicious packages:\n* package1\n* package2\nPackages with a low Trusty score:\n* package2\n* package3",
+		},
+		{
+			name: "trusty template with only malicious packages",
+			msg:  "this is the message",
+			tmpl: templates.TrustyTemplate,
+			args: map[string]any{
+				"maliciousPackages":  []string{"package1", "package2"},
+				"lowScoringPackages": []string{},
+			},
+			error:   "evaluation failure: this is the message",
+			details: "Malicious packages:\n* package1\n* package2",
+		},
+		{
+			name: "trusty template with only low-scoring packages",
+			msg:  "this is the message",
+			tmpl: templates.TrustyTemplate,
+			args: map[string]any{
+				"maliciousPackages":  []string{},
+				"lowScoringPackages": []string{"package2", "package3"},
+			},
+			error:   "evaluation failure: this is the message",
+			details: "Packages with a low Trusty score:\n* package2\n* package3",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := evalerrors.NewDetailedErrEvaluationFailed(
+				tt.tmpl,
+				tt.args,
+				tt.msg,
+				tt.msgArgs...,
+			)
+
+			require.Equal(t, tt.error, err.Error())
+			evalErr, ok := err.(*evalerrors.EvaluationError)
+			require.True(t, ok)
+			require.Equal(t, tt.details, evalErr.Details())
 		})
 	}
 }

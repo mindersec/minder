@@ -27,6 +27,7 @@ import (
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -219,8 +220,13 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 		)
 	}
 
-	if failedEvalMsg != "" {
-		return evalerrors.NewErrEvaluationFailed("%s", failedEvalMsg)
+	if len(maliciousPackages) > 0 || len(lowScoringPackages) > 0 {
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			templates.TrustyTemplate,
+			map[string]any{"maliciousPackages": maliciousPackages, "lowScoringPackages": lowScoringPackages},
+			"%s",
+			failedEvalMsg,
+		)
 	}
 
 	return nil

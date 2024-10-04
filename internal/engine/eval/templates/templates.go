@@ -25,3 +25,9 @@ import (
 //
 //go:embed vulncheckTemplate.tmpl
 var VulncheckTemplate string
+
+// TrustyTemplate is the template for evaluation details of the
+// `trusty` evaluation engine.
+//
+//go:embed trustyTemplate.tmpl
+var TrustyTemplate string
