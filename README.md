@@ -8,7 +8,7 @@
 
 # What is Minder?
 
-Minder by [Stacklok](https://stacklok.com/) is an open source platform that helps development teams and open source communities build more
+Minder is an open source platform that helps development teams and open source communities build more
 secure software, and prove to others that what they’ve built is secure. Minder helps project owners proactively manage
 their security posture by providing a set of checks and policies to minimize risk along the software supply chain,
 and attest their security practices to downstream consumers.
@@ -17,7 +17,7 @@ Minder allows users to enroll repositories and define policy to ensure repositor
 consistently and securely. Policies can be set to alert only or auto-remediate. Minder provides a predefined set of
 rules and can also be configured to apply custom rules.
 
-Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, the company behind Minder, also
+Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, a company supporting Minder, also
 provides a free-to-use hosted version of Minder (for public repositories only). Minder is designed to be extensible,
 allowing users to integrate with their existing tooling and processes.
 
@@ -26,14 +26,11 @@ allowing users to integrate with their existing tooling and processes.
 * **Repo configuration and security:** Simplify configuration and management of security settings and policies across repos.
 * **Proactive security enforcement:** Continuously enforce best practice security configurations by setting granular policies to alert only or auto-remediate.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
-* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
+* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [OSV](https://osv.dev/) and [Trusty](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-## Minder Cloud
+## Public Instance
 
-Stacklok, the company behind Minder, provides a [free-to-use SaaS version of Minder](https://cloud.stacklok.com/) that includes a UI (for public repositories only). You can access Minder Cloud documentation [here](https://docs.stacklok.com/minder).
-
-Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
-feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
+Stacklok, a company supporting Minder, provides a free-to-use SaaS version of Minder at api.stacklok.com. This instance is available for public repositories only.
 
 ---
 # Getting Started (< 1 minute)

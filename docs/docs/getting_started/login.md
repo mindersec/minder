@@ -7,7 +7,8 @@ sidebar_position: 20
 
 To start using Minder, you must first log in. Logging in to a Minder server for the first time will create your account.
 
-By default, the Minder CLI will log in to [Minder Cloud](https://cloud.minder.com/), Stacklok's hosted instance of Minder. If you have a separate instance of Minder, you can log in to that server instead.
+By default, the Minder CLI will log in to api.stacklok.com, a free public instance provided by Stacklok. If you have
+your own hosted instance of Minder, you can log in to that server instead.
 
 ## Prerequisites
 
@@ -15,9 +16,9 @@ Before you can log in, you must have [installed the `minder` CLI application](in
 
 ## Logging in to the Stacklok-hosted instance
 
-The `minder` CLI defaults to using the hosted Stacklok environment.  When using the hosted environment, you do not need to set up a server; you simply log in to the Stacklok authentication instance using your GitHub credentials.
+The `minder` CLI defaults to using the hosted Stacklok public instance.  When using the hosted environment, you do not need to set up a server; you simply log in to the Stacklok authentication instance using your GitHub credentials.
 
-You can use the Stacklok hosted environment by running:
+You can use the Stacklok public instance by running:
 
 ```bash
 minder auth login

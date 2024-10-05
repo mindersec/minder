@@ -17,9 +17,6 @@ sidebar_position: 30
 * **Manage all GitHub repositories** - Jul 17, 2024  
     Minder can now (optionally) manage all repositories within a GitHub organization, including new repositories that are created. Administrators can continue to select individual repositories to manage.
 
-* **Minder Web** - Apr 16, 2024  
-    Minder Cloud now has a graphical user interface available at [https://cloud.stacklok.com/](https://cloud.stacklok.com/).
-
 * **Built-in rules** - Apr 6, 2024  
     Minder now includes all the rules in our [sample rules repository](https://github.com/stacklok/minder-rules-and-profiles/) in your new projects automatically. This means that you do not need to clone that repository or add those rule types to make use of them.
 
