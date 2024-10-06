@@ -53,7 +53,10 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			os.Setenv("XDG_CONFIG_HOME", tt.envVar)
+			err := os.Setenv("XDG_CONFIG_HOME", tt.envVar)
+			if err != nil {
+				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
+			}
 			path, err := GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
@@ -143,13 +146,19 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			os.Setenv(MinderAuthTokenEnvVar, tt.envToken)
+			err := os.Setenv(MinderAuthTokenEnvVar, tt.envToken)
+			if err != nil {
+				t.Errorf("error setting MinderAuthTokenEnvVar: %v", err)
+			}
 			conn, err := GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
 			}
 			if conn != nil {
-				conn.Close()
+				err = conn.Close()
+				if err != nil {
+					t.Errorf("error closing connection: %v", err)
+				}
 			}
 		})
 	}
@@ -157,6 +166,7 @@ func TestGetGrpcConnection(t *testing.T) {
 
 // TestSaveCredentials tests the SaveCredentials function
 func TestSaveCredentials(t *testing.T) {
+	t.Parallel()
 	tokens := OpenIdCredentials{
 		AccessToken:          "test_access_token",
 		RefreshToken:         "test_refresh_token",
@@ -186,7 +196,8 @@ func TestSaveCredentials(t *testing.T) {
 		t.Fatalf("error marshaling credentials: %v", err)
 	}
 
-	content, err := os.ReadFile(filePath)
+	fpath := filepath.Clean(filePath)
+	content, err := os.ReadFile(fpath)
 	if err != nil {
 		t.Fatalf("error reading file: %v", err)
 	}
@@ -196,11 +207,15 @@ func TestSaveCredentials(t *testing.T) {
 	}
 
 	// Clean up
-	os.Remove(filePath)
+	err = os.Remove(filePath)
+	if err != nil {
+		t.Fatalf("error removing file: %v", err)
+	}
 }
 
 // TestRemoveCredentials tests the RemoveCredentials function
 func TestRemoveCredentials(t *testing.T) {
+	t.Parallel()
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 	if xdgConfigHome == "" {
 		homeDir, err := os.UserHomeDir()
@@ -236,6 +251,7 @@ func TestRemoveCredentials(t *testing.T) {
 
 // TestRefreshCredentials tests the RefreshCredentials function
 func TestRefreshCredentials(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		refreshToken   string
@@ -284,6 +300,7 @@ func TestRefreshCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, tt.responseBody)
@@ -321,6 +338,7 @@ func TestRevokeToken(t *testing.T) {
 
 // TestGetJsonFromProto tests the GetJsonFromProto function
 func TestGetJsonFromProto(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name          string
 		input         proto.Message
@@ -349,6 +367,7 @@ func TestGetJsonFromProto(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			jsonResult, err := GetJsonFromProto(tt.input)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("GetJsonFromProto() error = %v, expectedError %v", err, tt.expectedError)
@@ -363,6 +382,7 @@ func TestGetJsonFromProto(t *testing.T) {
 
 // TestGetYamlFromProto tests the GetYamlFromProto function
 func TestGetYamlFromProto(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name          string
 		input         proto.Message
@@ -391,6 +411,7 @@ owner: repoOwner
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			yamlResult, err := GetYamlFromProto(tt.input)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("GetYamlFromProto() error = %v, expectedError %v", err, tt.expectedError)
