@@ -6,12 +6,15 @@ package util_test
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -422,6 +425,197 @@ owner: repoOwner
 			}
 		})
 	}
+}
+
+// TestOpenFileArg tests the OpenFileArg function
+func TestOpenFileArg(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name         string
+		filePath     string
+		dashOpen     io.Reader
+		expectedDesc string
+		expectError  bool
+	}{
+		{
+			name:         "Dash as file path",
+			filePath:     "-",
+			dashOpen:     strings.NewReader("dash input"),
+			expectedDesc: "dash input",
+			expectError:  false,
+		},
+		{
+			name:         "Valid file path",
+			filePath:     "testfile.txt",
+			dashOpen:     nil,
+			expectedDesc: "test content",
+			expectError:  false,
+		},
+		{
+			name:         "Invalid file path",
+			filePath:     "nonexistent.txt",
+			dashOpen:     nil,
+			expectedDesc: "",
+			expectError:  true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create a temporary file for testing
+			if tc.filePath == "testfile.txt" {
+				err := os.WriteFile(tc.filePath, []byte(tc.expectedDesc), 0600)
+				assert.NoError(t, err)
+				defer os.Remove(tc.filePath)
+			}
+
+			desc, closer, err := OpenFileArg(tc.filePath, tc.dashOpen)
+			if closer != nil {
+				defer closer()
+			}
+
+			if tc.expectError {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				if tc.filePath == "-" || tc.filePath != "-" {
+					buf := new(strings.Builder)
+					_, err := io.Copy(buf, desc)
+					assert.NoError(t, err)
+					assert.Equal(t, tc.expectedDesc, buf.String())
+				}
+			}
+		})
+	}
+}
+
+// TestExpandFileArgs tests the ExpandFileArgs function.
+func TestExpandFileArgs(t *testing.T) {
+	t.Parallel() // Ensure the test function itself runs in parallel
+
+	tests := []struct {
+		name     string
+		files    []string
+		expected []string
+		wantErr  bool
+	}{
+		{
+			name:     "Single file",
+			files:    []string{"testfile.txt"},
+			expected: []string{"testfile.txt"},
+			wantErr:  false,
+		},
+		{
+			name:     "Single directory",
+			files:    []string{"testdir"},
+			expected: []string{"testdir/file1.txt", "testdir/file2.txt"},
+			wantErr:  false,
+		},
+		{
+			name:     "File and directory",
+			files:    []string{"testfile.txt", "testdir"},
+			expected: []string{"testfile.txt", "testdir/file1.txt", "testdir/file2.txt"},
+			wantErr:  false,
+		},
+		{
+			name:     "File with '-'",
+			files:    []string{"-"},
+			expected: []string{"-"},
+			wantErr:  false,
+		},
+		{
+			name:     "Non-existent file",
+			files:    []string{"nonexistent.txt"},
+			expected: nil,
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create a unique directory for each test
+			testDir := fmt.Sprintf("testdir_%s", sanitizeTestName(tt.name))
+			if err := setupTestFiles(testDir); err != nil {
+				t.Fatalf("Failed to set up test files: %v", err)
+			}
+
+			// Ensure cleanup happens after the test
+			t.Cleanup(func() {
+				cleanupTestFiles(testDir)
+			})
+
+			// Update file paths to include the unique directory
+			for i, file := range tt.files {
+				tt.files[i] = fmt.Sprintf("%s/%s", testDir, file)
+			}
+			for i, file := range tt.expected {
+				tt.expected[i] = fmt.Sprintf("%s/%s", testDir, file)
+			}
+
+			got, err := ExpandFileArgs(tt.files)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ExpandFileArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("ExpandFileArgs() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
+
+// sanitizeTestName replaces spaces and special characters in test names to create valid directory names.
+func sanitizeTestName(name string) string {
+	return strings.ReplaceAll(name, " ", "_")
+}
+
+// setupTestFiles creates test files and directories for the unit tests.
+func setupTestFiles(testDir string) error {
+	if err := os.MkdirAll(fmt.Sprintf("%s/testdir", testDir), 0750); err != nil {
+		return fmt.Errorf("failed to create directory '%s/testdir': %w", testDir, err)
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/testfile.txt", testDir), []byte("test file"), 0600); err != nil {
+		return fmt.Errorf("failed to create file '%s/testfile.txt': %w", testDir, err)
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/testdir/file1.txt", testDir), []byte("file 1"), 0600); err != nil {
+		return fmt.Errorf("failed to create file '%s/testdir/file1.txt': %w", testDir, err)
+	}
+
+	if err := os.WriteFile(fmt.Sprintf("%s/testdir/file2.txt", testDir), []byte("file 2"), 0600); err != nil {
+		return fmt.Errorf("failed to create file '%s/testdir/file2.txt': %w", testDir, err)
+	}
+
+	// Create a file named "-"
+	if err := os.WriteFile(fmt.Sprintf("%s/-", testDir), []byte("dash file"), 0600); err != nil {
+		return fmt.Errorf("failed to create file '%s/-': %w", testDir, err)
+	}
+
+	return nil
+}
+
+// cleanupTestFiles removes test files and directories after the unit tests.
+func cleanupTestFiles(testDir string) {
+	fmt.Printf("Cleaning up test files in %s...\n", testDir)
+
+	retries := 3
+	for i := 0; i < retries; i++ {
+		err := os.RemoveAll(testDir)
+		if err == nil || os.IsNotExist(err) {
+			break
+		}
+		time.Sleep(100 * time.Millisecond) // Wait before retrying
+	}
+	fmt.Printf("Removed directory '%s'\n", testDir)
+
 }
 
 func TestGetConfigValue(t *testing.T) {
