@@ -304,7 +304,7 @@ func TestRefreshCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, tt.responseBody)
 			}))
@@ -332,6 +332,81 @@ func TestRefreshCredentials(t *testing.T) {
 
 // TestLoadCredentials tests the LoadCredentials function
 func TestLoadCredentials(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name           string
+		fileContent    string
+		expectedError  string
+		expectedResult OpenIdCredentials
+	}{
+		{
+			name:        "Successful load",
+			fileContent: `{"access_token":"access_token","refresh_token":"refresh_token","expiry":"2024-10-05T17:46:27+10:00"}`,
+			expectedResult: OpenIdCredentials{
+				AccessToken:          "access_token",
+				RefreshToken:         "refresh_token",
+				AccessTokenExpiresAt: time.Date(2024, 10, 5, 17, 46, 27, 0, time.FixedZone("AEST", 10*60*60)),
+			},
+		},
+		{
+			name:          "Error unmarshaling credentials",
+			fileContent:   `invalid_json`,
+			expectedError: "error unmarshaling credentials: invalid character 'i' looking for beginning of value",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create a unique temporary directory for the test
+			tempDir, err := os.MkdirTemp("", "test_load_credentials_"+tt.name)
+			if err != nil {
+				t.Fatalf("failed to create temp directory: %v", err)
+			}
+			defer os.RemoveAll(tempDir)
+
+			// Create the minder directory inside the temp directory
+			minderDir := filepath.Join(tempDir, "minder")
+			err = os.MkdirAll(minderDir, 0750)
+			if err != nil {
+				t.Fatalf("failed to create minder directory: %v", err)
+			}
+
+			filePath := filepath.Join(minderDir, "credentials.json")
+
+			if tt.fileContent != "" {
+				// Create a temporary file with the specified content
+				err := os.WriteFile(filePath, []byte(tt.fileContent), 0600)
+				if err != nil {
+					t.Fatalf("failed to write test file: %v", err)
+				}
+			}
+
+			// Temporarily override the environment variable for the test
+			originalEnv := os.Getenv("XDG_CONFIG_HOME")
+			err = os.Setenv("XDG_CONFIG_HOME", tempDir)
+			if err != nil {
+				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
+			}
+			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
+
+			result, err := LoadCredentials()
+			if tt.expectedError != "" {
+				if err == nil || err.Error() != tt.expectedError {
+					t.Errorf("expected error %v, got %v", tt.expectedError, err)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("expected no error, got %v", err)
+				}
+				if result.AccessToken != tt.expectedResult.AccessToken || result.RefreshToken != tt.expectedResult.RefreshToken || !result.AccessTokenExpiresAt.Equal(tt.expectedResult.AccessTokenExpiresAt) {
+					t.Errorf("expected result %v, got %v", tt.expectedResult, result)
+				}
+			}
+		})
+	}
 }
 
 // TestRevokeToken tests the RevokeToken function
@@ -496,7 +571,7 @@ func TestOpenFileArg(t *testing.T) {
 
 // TestExpandFileArgs tests the ExpandFileArgs function.
 func TestExpandFileArgs(t *testing.T) {
-	t.Parallel() // Ensure the test function itself runs in parallel
+	t.Parallel()
 
 	tests := []struct {
 		name     string
