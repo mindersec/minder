@@ -109,26 +109,31 @@ func (m *providerClassManager) handleMergeRequest(l zerolog.Logger, r *http.Requ
 		return fmt.Errorf("error decoding merge request event: %w", err)
 	}
 
-	mrID := mergeRequestEvent.ObjectAttributes.IID
+	mrID := mergeRequestEvent.ObjectAttributes.ID
 	if mrID == 0 {
+		return fmt.Errorf("merge request event missing ID")
+	}
+
+	mrIID := mergeRequestEvent.ObjectAttributes.IID
+	if mrIID == 0 {
 		return fmt.Errorf("merge request event missing IID")
 	}
 
-	rawID := mergeRequestEvent.Project.ID
-	if rawID == 0 {
+	rawProjectID := mergeRequestEvent.Project.ID
+	if rawProjectID == 0 {
 		return fmt.Errorf("merge request event missing project ID")
 	}
 
 	switch {
 	case mergeRequestEvent.ObjectAttributes.Action == "open",
 		mergeRequestEvent.ObjectAttributes.Action == "reopen":
-		return m.publishMergeRequestMessage(rawID, mrID,
+		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			events.TopicQueueOriginatingEntityAdd)
 	case mergeRequestEvent.ObjectAttributes.Action == "close":
-		return m.publishMergeRequestMessage(rawID, mrID,
+		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			events.TopicQueueOriginatingEntityDelete)
 	case mergeRequestEvent.ObjectAttributes.Action == "update":
-		return m.publishMergeRequestMessage(rawID, mrID,
+		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			events.TopicQueueRefreshEntityAndEvaluate)
 	default:
 		return nil
@@ -171,13 +176,16 @@ func (m *providerClassManager) publishRefreshAndEvalForGitlabProject(
 	return nil
 }
 
-func (m *providerClassManager) publishMergeRequestMessage(mrID int, rawProjectID int, queueTopic string) error {
+func (m *providerClassManager) publishMergeRequestMessage(
+	mrID, mrIID, rawProjectID int, queueTopic string) error {
 	mrUpstreamID := gitlab.FormatPullRequestUpstreamID(mrID)
+	mrformattedIID := gitlab.FormatPullRequestUpstreamID(mrIID)
 	mrProjectID := gitlab.FormatRepositoryUpstreamID(rawProjectID)
 
 	// Form identifying properties
 	identifyingProps, err := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: mrUpstreamID,
+		gitlab.PullRequestNumber:      mrformattedIID,
 		gitlab.PullRequestProjectID:   mrProjectID,
 	})
 	if err != nil {
