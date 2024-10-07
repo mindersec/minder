@@ -17,19 +17,28 @@
 package gochannel
 
 import (
+	"context"
+
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/pubsub/gochannel"
+	"github.com/alexdrl/zerowater"
+	"github.com/rs/zerolog"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/events/common"
 )
 
 // BuildGoChannelDriver creates a gochannel driver for the eventer
-func BuildGoChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
+func BuildGoChannelDriver(
+	ctx context.Context,
+	cfg *serverconfig.EventConfig,
+) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
+	logger := zerowater.NewZerologLoggerAdapter(zerolog.Ctx(ctx).With().Logger())
+
 	pubsub := gochannel.NewGoChannel(gochannel.Config{
 		OutputChannelBuffer: cfg.GoChannel.BufferSize,
 		Persistent:          cfg.GoChannel.PersistEvents,
-	}, nil)
+	}, logger)
 
 	return pubsub, pubsub, func() {}, nil
 }
