@@ -729,11 +729,9 @@ type RpcOptions struct {
 
 func (x *RpcOptions) Reset() {
 	*x = RpcOptions{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RpcOptions) String() string {
@@ -744,7 +742,7 @@ func (*RpcOptions) ProtoMessage() {}
 
 func (x *RpcOptions) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -799,11 +797,9 @@ type Cursor struct {
 
 func (x *Cursor) Reset() {
 	*x = Cursor{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Cursor) String() string {
@@ -814,7 +810,7 @@ func (*Cursor) ProtoMessage() {}
 
 func (x *Cursor) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -863,11 +859,9 @@ type CursorPage struct {
 
 func (x *CursorPage) Reset() {
 	*x = CursorPage{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CursorPage) String() string {
@@ -878,7 +872,7 @@ func (*CursorPage) ProtoMessage() {}
 
 func (x *CursorPage) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -926,11 +920,9 @@ type ListArtifactsRequest struct {
 
 func (x *ListArtifactsRequest) Reset() {
 	*x = ListArtifactsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListArtifactsRequest) String() string {
@@ -941,7 +933,7 @@ func (*ListArtifactsRequest) ProtoMessage() {}
 
 func (x *ListArtifactsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -987,11 +979,9 @@ type ListArtifactsResponse struct {
 
 func (x *ListArtifactsResponse) Reset() {
 	*x = ListArtifactsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[4]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListArtifactsResponse) String() string {
@@ -1002,7 +992,7 @@ func (*ListArtifactsResponse) ProtoMessage() {}
 
 func (x *ListArtifactsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[4]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1042,11 +1032,9 @@ type Artifact struct {
 
 func (x *Artifact) Reset() {
 	*x = Artifact{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[5]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Artifact) String() string {
@@ -1057,7 +1045,7 @@ func (*Artifact) ProtoMessage() {}
 
 func (x *Artifact) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[5]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1148,11 +1136,9 @@ type ArtifactVersion struct {
 
 func (x *ArtifactVersion) Reset() {
 	*x = ArtifactVersion{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ArtifactVersion) String() string {
@@ -1163,7 +1149,7 @@ func (*ArtifactVersion) ProtoMessage() {}
 
 func (x *ArtifactVersion) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1217,11 +1203,9 @@ type GetArtifactByIdRequest struct {
 
 func (x *GetArtifactByIdRequest) Reset() {
 	*x = GetArtifactByIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[7]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetArtifactByIdRequest) String() string {
@@ -1232,7 +1216,7 @@ func (*GetArtifactByIdRequest) ProtoMessage() {}
 
 func (x *GetArtifactByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[7]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1272,11 +1256,9 @@ type GetArtifactByIdResponse struct {
 
 func (x *GetArtifactByIdResponse) Reset() {
 	*x = GetArtifactByIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[8]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetArtifactByIdResponse) String() string {
@@ -1287,7 +1269,7 @@ func (*GetArtifactByIdResponse) ProtoMessage() {}
 
 func (x *GetArtifactByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[8]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1327,11 +1309,9 @@ type GetArtifactByNameRequest struct {
 
 func (x *GetArtifactByNameRequest) Reset() {
 	*x = GetArtifactByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[9]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetArtifactByNameRequest) String() string {
@@ -1342,7 +1322,7 @@ func (*GetArtifactByNameRequest) ProtoMessage() {}
 
 func (x *GetArtifactByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[9]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1382,11 +1362,9 @@ type GetArtifactByNameResponse struct {
 
 func (x *GetArtifactByNameResponse) Reset() {
 	*x = GetArtifactByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[10]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetArtifactByNameResponse) String() string {
@@ -1397,7 +1375,7 @@ func (*GetArtifactByNameResponse) ProtoMessage() {}
 
 func (x *GetArtifactByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[10]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1445,11 +1423,9 @@ type PullRequest struct {
 
 func (x *PullRequest) Reset() {
 	*x = PullRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[11]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PullRequest) String() string {
@@ -1460,7 +1436,7 @@ func (*PullRequest) ProtoMessage() {}
 
 func (x *PullRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[11]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1547,11 +1523,9 @@ type Release struct {
 
 func (x *Release) Reset() {
 	*x = Release{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[12]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Release) String() string {
@@ -1562,7 +1536,7 @@ func (*Release) ProtoMessage() {}
 
 func (x *Release) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[12]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1585,11 +1559,9 @@ type PipelineRun struct {
 
 func (x *PipelineRun) Reset() {
 	*x = PipelineRun{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[13]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PipelineRun) String() string {
@@ -1600,7 +1572,7 @@ func (*PipelineRun) ProtoMessage() {}
 
 func (x *PipelineRun) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[13]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1623,11 +1595,9 @@ type TaskRun struct {
 
 func (x *TaskRun) Reset() {
 	*x = TaskRun{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *TaskRun) String() string {
@@ -1638,7 +1608,7 @@ func (*TaskRun) ProtoMessage() {}
 
 func (x *TaskRun) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1661,11 +1631,9 @@ type Build struct {
 
 func (x *Build) Reset() {
 	*x = Build{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[15]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Build) String() string {
@@ -1676,7 +1644,7 @@ func (*Build) ProtoMessage() {}
 
 func (x *Build) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[15]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1702,11 +1670,9 @@ type GetInviteDetailsRequest struct {
 
 func (x *GetInviteDetailsRequest) Reset() {
 	*x = GetInviteDetailsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[16]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetInviteDetailsRequest) String() string {
@@ -1717,7 +1683,7 @@ func (*GetInviteDetailsRequest) ProtoMessage() {}
 
 func (x *GetInviteDetailsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[16]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1756,11 +1722,9 @@ type GetInviteDetailsResponse struct {
 
 func (x *GetInviteDetailsResponse) Reset() {
 	*x = GetInviteDetailsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[17]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetInviteDetailsResponse) String() string {
@@ -1771,7 +1735,7 @@ func (*GetInviteDetailsResponse) ProtoMessage() {}
 
 func (x *GetInviteDetailsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[17]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1822,11 +1786,9 @@ type CheckHealthRequest struct {
 
 func (x *CheckHealthRequest) Reset() {
 	*x = CheckHealthRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[18]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckHealthRequest) String() string {
@@ -1837,7 +1799,7 @@ func (*CheckHealthRequest) ProtoMessage() {}
 
 func (x *CheckHealthRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[18]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1862,11 +1824,9 @@ type CheckHealthResponse struct {
 
 func (x *CheckHealthResponse) Reset() {
 	*x = CheckHealthResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[19]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CheckHealthResponse) String() string {
@@ -1877,7 +1837,7 @@ func (*CheckHealthResponse) ProtoMessage() {}
 
 func (x *CheckHealthResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[19]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -1916,11 +1876,9 @@ type GetAuthorizationURLRequest struct {
 
 func (x *GetAuthorizationURLRequest) Reset() {
 	*x = GetAuthorizationURLRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[20]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetAuthorizationURLRequest) String() string {
@@ -1931,7 +1889,7 @@ func (*GetAuthorizationURLRequest) ProtoMessage() {}
 
 func (x *GetAuthorizationURLRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[20]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2006,11 +1964,9 @@ type GetAuthorizationURLResponse struct {
 
 func (x *GetAuthorizationURLResponse) Reset() {
 	*x = GetAuthorizationURLResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[21]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetAuthorizationURLResponse) String() string {
@@ -2021,7 +1977,7 @@ func (*GetAuthorizationURLResponse) ProtoMessage() {}
 
 func (x *GetAuthorizationURLResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[21]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2064,11 +2020,9 @@ type StoreProviderTokenRequest struct {
 
 func (x *StoreProviderTokenRequest) Reset() {
 	*x = StoreProviderTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[22]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *StoreProviderTokenRequest) String() string {
@@ -2079,7 +2033,7 @@ func (*StoreProviderTokenRequest) ProtoMessage() {}
 
 func (x *StoreProviderTokenRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[22]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2131,11 +2085,9 @@ type StoreProviderTokenResponse struct {
 
 func (x *StoreProviderTokenResponse) Reset() {
 	*x = StoreProviderTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[23]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *StoreProviderTokenResponse) String() string {
@@ -2146,7 +2098,7 @@ func (*StoreProviderTokenResponse) ProtoMessage() {}
 
 func (x *StoreProviderTokenResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[23]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2180,11 +2132,9 @@ type Project struct {
 
 func (x *Project) Reset() {
 	*x = Project{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[24]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Project) String() string {
@@ -2195,7 +2145,7 @@ func (*Project) ProtoMessage() {}
 
 func (x *Project) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[24]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2264,11 +2214,9 @@ type ListRemoteRepositoriesFromProviderRequest struct {
 
 func (x *ListRemoteRepositoriesFromProviderRequest) Reset() {
 	*x = ListRemoteRepositoriesFromProviderRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[25]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRemoteRepositoriesFromProviderRequest) String() string {
@@ -2279,7 +2227,7 @@ func (*ListRemoteRepositoriesFromProviderRequest) ProtoMessage() {}
 
 func (x *ListRemoteRepositoriesFromProviderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[25]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2323,11 +2271,9 @@ type ListRemoteRepositoriesFromProviderResponse struct {
 
 func (x *ListRemoteRepositoriesFromProviderResponse) Reset() {
 	*x = ListRemoteRepositoriesFromProviderResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[26]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRemoteRepositoriesFromProviderResponse) String() string {
@@ -2338,7 +2284,7 @@ func (*ListRemoteRepositoriesFromProviderResponse) ProtoMessage() {}
 
 func (x *ListRemoteRepositoriesFromProviderResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[26]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2379,11 +2325,9 @@ type RegistrableUpstreamEntityRef struct {
 
 func (x *RegistrableUpstreamEntityRef) Reset() {
 	*x = RegistrableUpstreamEntityRef{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[27]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RegistrableUpstreamEntityRef) String() string {
@@ -2394,7 +2338,7 @@ func (*RegistrableUpstreamEntityRef) ProtoMessage() {}
 
 func (x *RegistrableUpstreamEntityRef) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[27]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2441,11 +2385,9 @@ type UpstreamRepositoryRef struct {
 
 func (x *UpstreamRepositoryRef) Reset() {
 	*x = UpstreamRepositoryRef{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[28]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpstreamRepositoryRef) String() string {
@@ -2456,7 +2398,7 @@ func (*UpstreamRepositoryRef) ProtoMessage() {}
 
 func (x *UpstreamRepositoryRef) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[28]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2535,11 +2477,9 @@ type Repository struct {
 
 func (x *Repository) Reset() {
 	*x = Repository{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[29]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Repository) String() string {
@@ -2550,7 +2490,7 @@ func (*Repository) ProtoMessage() {}
 
 func (x *Repository) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[29]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2715,11 +2655,9 @@ type RegisterRepositoryRequest struct {
 
 func (x *RegisterRepositoryRequest) Reset() {
 	*x = RegisterRepositoryRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RegisterRepositoryRequest) String() string {
@@ -2730,7 +2668,7 @@ func (*RegisterRepositoryRequest) ProtoMessage() {}
 
 func (x *RegisterRepositoryRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2785,11 +2723,9 @@ type RegisterRepoResult struct {
 
 func (x *RegisterRepoResult) Reset() {
 	*x = RegisterRepoResult{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[31]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RegisterRepoResult) String() string {
@@ -2800,7 +2736,7 @@ func (*RegisterRepoResult) ProtoMessage() {}
 
 func (x *RegisterRepoResult) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[31]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2839,11 +2775,9 @@ type RegisterRepositoryResponse struct {
 
 func (x *RegisterRepositoryResponse) Reset() {
 	*x = RegisterRepositoryResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[32]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RegisterRepositoryResponse) String() string {
@@ -2854,7 +2788,7 @@ func (*RegisterRepositoryResponse) ProtoMessage() {}
 
 func (x *RegisterRepositoryResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[32]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2887,11 +2821,9 @@ type GetRepositoryByIdRequest struct {
 
 func (x *GetRepositoryByIdRequest) Reset() {
 	*x = GetRepositoryByIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[33]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRepositoryByIdRequest) String() string {
@@ -2902,7 +2834,7 @@ func (*GetRepositoryByIdRequest) ProtoMessage() {}
 
 func (x *GetRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[33]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2941,11 +2873,9 @@ type GetRepositoryByIdResponse struct {
 
 func (x *GetRepositoryByIdResponse) Reset() {
 	*x = GetRepositoryByIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[34]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRepositoryByIdResponse) String() string {
@@ -2956,7 +2886,7 @@ func (*GetRepositoryByIdResponse) ProtoMessage() {}
 
 func (x *GetRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -2989,11 +2919,9 @@ type DeleteRepositoryByIdRequest struct {
 
 func (x *DeleteRepositoryByIdRequest) Reset() {
 	*x = DeleteRepositoryByIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[35]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRepositoryByIdRequest) String() string {
@@ -3004,7 +2932,7 @@ func (*DeleteRepositoryByIdRequest) ProtoMessage() {}
 
 func (x *DeleteRepositoryByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3043,11 +2971,9 @@ type DeleteRepositoryByIdResponse struct {
 
 func (x *DeleteRepositoryByIdResponse) Reset() {
 	*x = DeleteRepositoryByIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[36]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRepositoryByIdResponse) String() string {
@@ -3058,7 +2984,7 @@ func (*DeleteRepositoryByIdResponse) ProtoMessage() {}
 
 func (x *DeleteRepositoryByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[36]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3093,11 +3019,9 @@ type GetRepositoryByNameRequest struct {
 
 func (x *GetRepositoryByNameRequest) Reset() {
 	*x = GetRepositoryByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[37]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRepositoryByNameRequest) String() string {
@@ -3108,7 +3032,7 @@ func (*GetRepositoryByNameRequest) ProtoMessage() {}
 
 func (x *GetRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[37]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3155,11 +3079,9 @@ type GetRepositoryByNameResponse struct {
 
 func (x *GetRepositoryByNameResponse) Reset() {
 	*x = GetRepositoryByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[38]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRepositoryByNameResponse) String() string {
@@ -3170,7 +3092,7 @@ func (*GetRepositoryByNameResponse) ProtoMessage() {}
 
 func (x *GetRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3205,11 +3127,9 @@ type DeleteRepositoryByNameRequest struct {
 
 func (x *DeleteRepositoryByNameRequest) Reset() {
 	*x = DeleteRepositoryByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[39]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRepositoryByNameRequest) String() string {
@@ -3220,7 +3140,7 @@ func (*DeleteRepositoryByNameRequest) ProtoMessage() {}
 
 func (x *DeleteRepositoryByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[39]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3267,11 +3187,9 @@ type DeleteRepositoryByNameResponse struct {
 
 func (x *DeleteRepositoryByNameResponse) Reset() {
 	*x = DeleteRepositoryByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[40]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRepositoryByNameResponse) String() string {
@@ -3282,7 +3200,7 @@ func (*DeleteRepositoryByNameResponse) ProtoMessage() {}
 
 func (x *DeleteRepositoryByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[40]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3318,11 +3236,9 @@ type ListRepositoriesRequest struct {
 
 func (x *ListRepositoriesRequest) Reset() {
 	*x = ListRepositoriesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[41]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRepositoriesRequest) String() string {
@@ -3333,7 +3249,7 @@ func (*ListRepositoriesRequest) ProtoMessage() {}
 
 func (x *ListRepositoriesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[41]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3389,11 +3305,9 @@ type ListRepositoriesResponse struct {
 
 func (x *ListRepositoriesResponse) Reset() {
 	*x = ListRepositoriesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[42]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRepositoriesResponse) String() string {
@@ -3404,7 +3318,7 @@ func (*ListRepositoriesResponse) ProtoMessage() {}
 
 func (x *ListRepositoriesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[42]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3444,11 +3358,9 @@ type ReconcileEntityRegistrationRequest struct {
 
 func (x *ReconcileEntityRegistrationRequest) Reset() {
 	*x = ReconcileEntityRegistrationRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[43]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ReconcileEntityRegistrationRequest) String() string {
@@ -3459,7 +3371,7 @@ func (*ReconcileEntityRegistrationRequest) ProtoMessage() {}
 
 func (x *ReconcileEntityRegistrationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[43]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3496,11 +3408,9 @@ type ReconcileEntityRegistrationResponse struct {
 
 func (x *ReconcileEntityRegistrationResponse) Reset() {
 	*x = ReconcileEntityRegistrationResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[44]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ReconcileEntityRegistrationResponse) String() string {
@@ -3511,7 +3421,7 @@ func (*ReconcileEntityRegistrationResponse) ProtoMessage() {}
 
 func (x *ReconcileEntityRegistrationResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[44]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3539,11 +3449,9 @@ type VerifyProviderTokenFromRequest struct {
 
 func (x *VerifyProviderTokenFromRequest) Reset() {
 	*x = VerifyProviderTokenFromRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[45]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyProviderTokenFromRequest) String() string {
@@ -3554,7 +3462,7 @@ func (*VerifyProviderTokenFromRequest) ProtoMessage() {}
 
 func (x *VerifyProviderTokenFromRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[45]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3601,11 +3509,9 @@ type VerifyProviderTokenFromResponse struct {
 
 func (x *VerifyProviderTokenFromResponse) Reset() {
 	*x = VerifyProviderTokenFromResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[46]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyProviderTokenFromResponse) String() string {
@@ -3616,7 +3522,7 @@ func (*VerifyProviderTokenFromResponse) ProtoMessage() {}
 
 func (x *VerifyProviderTokenFromResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[46]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3651,11 +3557,9 @@ type VerifyProviderCredentialRequest struct {
 
 func (x *VerifyProviderCredentialRequest) Reset() {
 	*x = VerifyProviderCredentialRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[47]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyProviderCredentialRequest) String() string {
@@ -3666,7 +3570,7 @@ func (*VerifyProviderCredentialRequest) ProtoMessage() {}
 
 func (x *VerifyProviderCredentialRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[47]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3708,11 +3612,9 @@ type VerifyProviderCredentialResponse struct {
 
 func (x *VerifyProviderCredentialResponse) Reset() {
 	*x = VerifyProviderCredentialResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[48]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[48]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *VerifyProviderCredentialResponse) String() string {
@@ -3723,7 +3625,7 @@ func (*VerifyProviderCredentialResponse) ProtoMessage() {}
 
 func (x *VerifyProviderCredentialResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[48]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3763,11 +3665,9 @@ type BranchProtection struct {
 
 func (x *BranchProtection) Reset() {
 	*x = BranchProtection{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[49]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BranchProtection) String() string {
@@ -3778,7 +3678,7 @@ func (*BranchProtection) ProtoMessage() {}
 
 func (x *BranchProtection) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[49]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3816,11 +3716,9 @@ type CreateUserRequest struct {
 
 func (x *CreateUserRequest) Reset() {
 	*x = CreateUserRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[50]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateUserRequest) String() string {
@@ -3831,7 +3729,7 @@ func (*CreateUserRequest) ProtoMessage() {}
 
 func (x *CreateUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[50]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3865,11 +3763,9 @@ type CreateUserResponse struct {
 
 func (x *CreateUserResponse) Reset() {
 	*x = CreateUserResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[51]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateUserResponse) String() string {
@@ -3880,7 +3776,7 @@ func (*CreateUserResponse) ProtoMessage() {}
 
 func (x *CreateUserResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[51]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3961,11 +3857,9 @@ type DeleteUserRequest struct {
 
 func (x *DeleteUserRequest) Reset() {
 	*x = DeleteUserRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[52]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteUserRequest) String() string {
@@ -3976,7 +3870,7 @@ func (*DeleteUserRequest) ProtoMessage() {}
 
 func (x *DeleteUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[52]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -3999,11 +3893,9 @@ type DeleteUserResponse struct {
 
 func (x *DeleteUserResponse) Reset() {
 	*x = DeleteUserResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[53]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteUserResponse) String() string {
@@ -4014,7 +3906,7 @@ func (*DeleteUserResponse) ProtoMessage() {}
 
 func (x *DeleteUserResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[53]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4043,11 +3935,9 @@ type UserRecord struct {
 
 func (x *UserRecord) Reset() {
 	*x = UserRecord{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[54]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UserRecord) String() string {
@@ -4058,7 +3948,7 @@ func (*UserRecord) ProtoMessage() {}
 
 func (x *UserRecord) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[54]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4113,11 +4003,9 @@ type ProjectRole struct {
 
 func (x *ProjectRole) Reset() {
 	*x = ProjectRole{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[55]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProjectRole) String() string {
@@ -4128,7 +4016,7 @@ func (*ProjectRole) ProtoMessage() {}
 
 func (x *ProjectRole) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[55]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4166,11 +4054,9 @@ type GetUserRequest struct {
 
 func (x *GetUserRequest) Reset() {
 	*x = GetUserRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[56]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetUserRequest) String() string {
@@ -4181,7 +4067,7 @@ func (*GetUserRequest) ProtoMessage() {}
 
 func (x *GetUserRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[56]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4211,11 +4097,9 @@ type GetUserResponse struct {
 
 func (x *GetUserResponse) Reset() {
 	*x = GetUserResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[57]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[57]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetUserResponse) String() string {
@@ -4226,7 +4110,7 @@ func (*GetUserResponse) ProtoMessage() {}
 
 func (x *GetUserResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[57]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4274,11 +4158,9 @@ type CreateProfileRequest struct {
 
 func (x *CreateProfileRequest) Reset() {
 	*x = CreateProfileRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[58]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[58]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProfileRequest) String() string {
@@ -4289,7 +4171,7 @@ func (*CreateProfileRequest) ProtoMessage() {}
 
 func (x *CreateProfileRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[58]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4321,11 +4203,9 @@ type CreateProfileResponse struct {
 
 func (x *CreateProfileResponse) Reset() {
 	*x = CreateProfileResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[59]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[59]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProfileResponse) String() string {
@@ -4336,7 +4216,7 @@ func (*CreateProfileResponse) ProtoMessage() {}
 
 func (x *CreateProfileResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[59]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4368,11 +4248,9 @@ type UpdateProfileRequest struct {
 
 func (x *UpdateProfileRequest) Reset() {
 	*x = UpdateProfileRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[60]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[60]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateProfileRequest) String() string {
@@ -4383,7 +4261,7 @@ func (*UpdateProfileRequest) ProtoMessage() {}
 
 func (x *UpdateProfileRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[60]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4415,11 +4293,9 @@ type UpdateProfileResponse struct {
 
 func (x *UpdateProfileResponse) Reset() {
 	*x = UpdateProfileResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[61]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[61]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateProfileResponse) String() string {
@@ -4430,7 +4306,7 @@ func (*UpdateProfileResponse) ProtoMessage() {}
 
 func (x *UpdateProfileResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[61]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4473,11 +4349,9 @@ type PatchProfileRequest struct {
 
 func (x *PatchProfileRequest) Reset() {
 	*x = PatchProfileRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[62]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[62]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProfileRequest) String() string {
@@ -4488,7 +4362,7 @@ func (*PatchProfileRequest) ProtoMessage() {}
 
 func (x *PatchProfileRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[62]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4541,11 +4415,9 @@ type PatchProfileResponse struct {
 
 func (x *PatchProfileResponse) Reset() {
 	*x = PatchProfileResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[63]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[63]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProfileResponse) String() string {
@@ -4556,7 +4428,7 @@ func (*PatchProfileResponse) ProtoMessage() {}
 
 func (x *PatchProfileResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[63]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4591,11 +4463,9 @@ type DeleteProfileRequest struct {
 
 func (x *DeleteProfileRequest) Reset() {
 	*x = DeleteProfileRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[64]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[64]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProfileRequest) String() string {
@@ -4606,7 +4476,7 @@ func (*DeleteProfileRequest) ProtoMessage() {}
 
 func (x *DeleteProfileRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[64]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4643,11 +4513,9 @@ type DeleteProfileResponse struct {
 
 func (x *DeleteProfileResponse) Reset() {
 	*x = DeleteProfileResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[65]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProfileResponse) String() string {
@@ -4658,7 +4526,7 @@ func (*DeleteProfileResponse) ProtoMessage() {}
 
 func (x *DeleteProfileResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[65]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4691,11 +4559,9 @@ type ListProfilesRequest struct {
 
 func (x *ListProfilesRequest) Reset() {
 	*x = ListProfilesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[66]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[66]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProfilesRequest) String() string {
@@ -4706,7 +4572,7 @@ func (*ListProfilesRequest) ProtoMessage() {}
 
 func (x *ListProfilesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[66]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4745,11 +4611,9 @@ type ListProfilesResponse struct {
 
 func (x *ListProfilesResponse) Reset() {
 	*x = ListProfilesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[67]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[67]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProfilesResponse) String() string {
@@ -4760,7 +4624,7 @@ func (*ListProfilesResponse) ProtoMessage() {}
 
 func (x *ListProfilesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[67]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4796,11 +4660,9 @@ type GetProfileByIdRequest struct {
 
 func (x *GetProfileByIdRequest) Reset() {
 	*x = GetProfileByIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[68]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[68]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileByIdRequest) String() string {
@@ -4811,7 +4673,7 @@ func (*GetProfileByIdRequest) ProtoMessage() {}
 
 func (x *GetProfileByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[68]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4850,11 +4712,9 @@ type GetProfileByIdResponse struct {
 
 func (x *GetProfileByIdResponse) Reset() {
 	*x = GetProfileByIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[69]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileByIdResponse) String() string {
@@ -4865,7 +4725,7 @@ func (*GetProfileByIdResponse) ProtoMessage() {}
 
 func (x *GetProfileByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[69]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4901,11 +4761,9 @@ type GetProfileByNameRequest struct {
 
 func (x *GetProfileByNameRequest) Reset() {
 	*x = GetProfileByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[70]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileByNameRequest) String() string {
@@ -4916,7 +4774,7 @@ func (*GetProfileByNameRequest) ProtoMessage() {}
 
 func (x *GetProfileByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[70]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -4955,11 +4813,9 @@ type GetProfileByNameResponse struct {
 
 func (x *GetProfileByNameResponse) Reset() {
 	*x = GetProfileByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[71]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileByNameResponse) String() string {
@@ -4970,7 +4826,7 @@ func (*GetProfileByNameResponse) ProtoMessage() {}
 
 func (x *GetProfileByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[71]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5012,11 +4868,9 @@ type ProfileStatus struct {
 
 func (x *ProfileStatus) Reset() {
 	*x = ProfileStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[72]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProfileStatus) String() string {
@@ -5027,7 +4881,7 @@ func (*ProfileStatus) ProtoMessage() {}
 
 func (x *ProfileStatus) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[72]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5095,11 +4949,9 @@ type EvalResultAlert struct {
 
 func (x *EvalResultAlert) Reset() {
 	*x = EvalResultAlert{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[73]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvalResultAlert) String() string {
@@ -5110,7 +4962,7 @@ func (*EvalResultAlert) ProtoMessage() {}
 
 func (x *EvalResultAlert) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[73]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5205,11 +5057,9 @@ type RuleEvaluationStatus struct {
 
 func (x *RuleEvaluationStatus) Reset() {
 	*x = RuleEvaluationStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[74]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleEvaluationStatus) String() string {
@@ -5220,7 +5070,7 @@ func (*RuleEvaluationStatus) ProtoMessage() {}
 
 func (x *RuleEvaluationStatus) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[74]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5391,11 +5241,9 @@ type EntityTypedId struct {
 
 func (x *EntityTypedId) Reset() {
 	*x = EntityTypedId{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[75]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[75]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EntityTypedId) String() string {
@@ -5406,7 +5254,7 @@ func (*EntityTypedId) ProtoMessage() {}
 
 func (x *EntityTypedId) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[75]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5456,11 +5304,9 @@ type GetProfileStatusByNameRequest struct {
 
 func (x *GetProfileStatusByNameRequest) Reset() {
 	*x = GetProfileStatusByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[76]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[76]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileStatusByNameRequest) String() string {
@@ -5471,7 +5317,7 @@ func (*GetProfileStatusByNameRequest) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[76]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5549,11 +5395,9 @@ type GetProfileStatusByNameResponse struct {
 
 func (x *GetProfileStatusByNameResponse) Reset() {
 	*x = GetProfileStatusByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[77]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[77]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileStatusByNameResponse) String() string {
@@ -5564,7 +5408,7 @@ func (*GetProfileStatusByNameResponse) ProtoMessage() {}
 
 func (x *GetProfileStatusByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[77]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5604,11 +5448,9 @@ type GetProfileStatusByProjectRequest struct {
 
 func (x *GetProfileStatusByProjectRequest) Reset() {
 	*x = GetProfileStatusByProjectRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[78]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[78]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileStatusByProjectRequest) String() string {
@@ -5619,7 +5461,7 @@ func (*GetProfileStatusByProjectRequest) ProtoMessage() {}
 
 func (x *GetProfileStatusByProjectRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[78]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5652,11 +5494,9 @@ type GetProfileStatusByProjectResponse struct {
 
 func (x *GetProfileStatusByProjectResponse) Reset() {
 	*x = GetProfileStatusByProjectResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[79]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[79]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProfileStatusByProjectResponse) String() string {
@@ -5667,7 +5507,7 @@ func (*GetProfileStatusByProjectResponse) ProtoMessage() {}
 
 func (x *GetProfileStatusByProjectResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[79]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5699,11 +5539,9 @@ type EntityAutoRegistrationConfig struct {
 
 func (x *EntityAutoRegistrationConfig) Reset() {
 	*x = EntityAutoRegistrationConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[80]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[80]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EntityAutoRegistrationConfig) String() string {
@@ -5714,7 +5552,7 @@ func (*EntityAutoRegistrationConfig) ProtoMessage() {}
 
 func (x *EntityAutoRegistrationConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[80]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5750,11 +5588,9 @@ type AutoRegistration struct {
 
 func (x *AutoRegistration) Reset() {
 	*x = AutoRegistration{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[81]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[81]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AutoRegistration) String() string {
@@ -5765,7 +5601,7 @@ func (*AutoRegistration) ProtoMessage() {}
 
 func (x *AutoRegistration) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[81]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5799,11 +5635,9 @@ type ProviderConfig struct {
 
 func (x *ProviderConfig) Reset() {
 	*x = ProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[82]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[82]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProviderConfig) String() string {
@@ -5814,7 +5648,7 @@ func (*ProviderConfig) ProtoMessage() {}
 
 func (x *ProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[82]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5848,11 +5682,9 @@ type RESTProviderConfig struct {
 
 func (x *RESTProviderConfig) Reset() {
 	*x = RESTProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[83]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[83]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RESTProviderConfig) String() string {
@@ -5863,7 +5695,7 @@ func (*RESTProviderConfig) ProtoMessage() {}
 
 func (x *RESTProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[83]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5903,11 +5735,9 @@ type GitHubProviderConfig struct {
 
 func (x *GitHubProviderConfig) Reset() {
 	*x = GitHubProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[84]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[84]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GitHubProviderConfig) String() string {
@@ -5918,7 +5748,7 @@ func (*GitHubProviderConfig) ProtoMessage() {}
 
 func (x *GitHubProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[84]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -5952,11 +5782,9 @@ type GitHubAppProviderConfig struct {
 
 func (x *GitHubAppProviderConfig) Reset() {
 	*x = GitHubAppProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[85]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[85]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GitHubAppProviderConfig) String() string {
@@ -5967,7 +5795,7 @@ func (*GitHubAppProviderConfig) ProtoMessage() {}
 
 func (x *GitHubAppProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[85]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6007,11 +5835,9 @@ type GitLabProviderConfig struct {
 
 func (x *GitLabProviderConfig) Reset() {
 	*x = GitLabProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[86]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[86]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GitLabProviderConfig) String() string {
@@ -6022,7 +5848,7 @@ func (*GitLabProviderConfig) ProtoMessage() {}
 
 func (x *GitLabProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[86]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6065,11 +5891,9 @@ type DockerHubProviderConfig struct {
 
 func (x *DockerHubProviderConfig) Reset() {
 	*x = DockerHubProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[87]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[87]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DockerHubProviderConfig) String() string {
@@ -6080,7 +5904,7 @@ func (*DockerHubProviderConfig) ProtoMessage() {}
 
 func (x *DockerHubProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[87]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6116,11 +5940,9 @@ type GHCRProviderConfig struct {
 
 func (x *GHCRProviderConfig) Reset() {
 	*x = GHCRProviderConfig{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[88]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[88]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GHCRProviderConfig) String() string {
@@ -6131,7 +5953,7 @@ func (*GHCRProviderConfig) ProtoMessage() {}
 
 func (x *GHCRProviderConfig) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[88]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6169,11 +5991,9 @@ type Context struct {
 
 func (x *Context) Reset() {
 	*x = Context{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[89]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[89]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Context) String() string {
@@ -6184,7 +6004,7 @@ func (*Context) ProtoMessage() {}
 
 func (x *Context) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[89]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6234,11 +6054,9 @@ type ContextV2 struct {
 
 func (x *ContextV2) Reset() {
 	*x = ContextV2{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[90]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[90]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ContextV2) String() string {
@@ -6249,7 +6067,7 @@ func (*ContextV2) ProtoMessage() {}
 
 func (x *ContextV2) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[90]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6290,11 +6108,9 @@ type ListRuleTypesRequest struct {
 
 func (x *ListRuleTypesRequest) Reset() {
 	*x = ListRuleTypesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[91]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[91]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRuleTypesRequest) String() string {
@@ -6305,7 +6121,7 @@ func (*ListRuleTypesRequest) ProtoMessage() {}
 
 func (x *ListRuleTypesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[91]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6339,11 +6155,9 @@ type ListRuleTypesResponse struct {
 
 func (x *ListRuleTypesResponse) Reset() {
 	*x = ListRuleTypesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[92]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[92]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRuleTypesResponse) String() string {
@@ -6354,7 +6168,7 @@ func (*ListRuleTypesResponse) ProtoMessage() {}
 
 func (x *ListRuleTypesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[92]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6390,11 +6204,9 @@ type GetRuleTypeByNameRequest struct {
 
 func (x *GetRuleTypeByNameRequest) Reset() {
 	*x = GetRuleTypeByNameRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[93]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[93]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRuleTypeByNameRequest) String() string {
@@ -6405,7 +6217,7 @@ func (*GetRuleTypeByNameRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[93]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6446,11 +6258,9 @@ type GetRuleTypeByNameResponse struct {
 
 func (x *GetRuleTypeByNameResponse) Reset() {
 	*x = GetRuleTypeByNameResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[94]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[94]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRuleTypeByNameResponse) String() string {
@@ -6461,7 +6271,7 @@ func (*GetRuleTypeByNameResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByNameResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[94]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6497,11 +6307,9 @@ type GetRuleTypeByIdRequest struct {
 
 func (x *GetRuleTypeByIdRequest) Reset() {
 	*x = GetRuleTypeByIdRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[95]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[95]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRuleTypeByIdRequest) String() string {
@@ -6512,7 +6320,7 @@ func (*GetRuleTypeByIdRequest) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[95]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6553,11 +6361,9 @@ type GetRuleTypeByIdResponse struct {
 
 func (x *GetRuleTypeByIdResponse) Reset() {
 	*x = GetRuleTypeByIdResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[96]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[96]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetRuleTypeByIdResponse) String() string {
@@ -6568,7 +6374,7 @@ func (*GetRuleTypeByIdResponse) ProtoMessage() {}
 
 func (x *GetRuleTypeByIdResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[96]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6602,11 +6408,9 @@ type CreateRuleTypeRequest struct {
 
 func (x *CreateRuleTypeRequest) Reset() {
 	*x = CreateRuleTypeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[97]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[97]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateRuleTypeRequest) String() string {
@@ -6617,7 +6421,7 @@ func (*CreateRuleTypeRequest) ProtoMessage() {}
 
 func (x *CreateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[97]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6651,11 +6455,9 @@ type CreateRuleTypeResponse struct {
 
 func (x *CreateRuleTypeResponse) Reset() {
 	*x = CreateRuleTypeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[98]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[98]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateRuleTypeResponse) String() string {
@@ -6666,7 +6468,7 @@ func (*CreateRuleTypeResponse) ProtoMessage() {}
 
 func (x *CreateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[98]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6700,11 +6502,9 @@ type UpdateRuleTypeRequest struct {
 
 func (x *UpdateRuleTypeRequest) Reset() {
 	*x = UpdateRuleTypeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[99]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[99]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateRuleTypeRequest) String() string {
@@ -6715,7 +6515,7 @@ func (*UpdateRuleTypeRequest) ProtoMessage() {}
 
 func (x *UpdateRuleTypeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[99]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6749,11 +6549,9 @@ type UpdateRuleTypeResponse struct {
 
 func (x *UpdateRuleTypeResponse) Reset() {
 	*x = UpdateRuleTypeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[100]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[100]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateRuleTypeResponse) String() string {
@@ -6764,7 +6562,7 @@ func (*UpdateRuleTypeResponse) ProtoMessage() {}
 
 func (x *UpdateRuleTypeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[100]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6800,11 +6598,9 @@ type DeleteRuleTypeRequest struct {
 
 func (x *DeleteRuleTypeRequest) Reset() {
 	*x = DeleteRuleTypeRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[101]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[101]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRuleTypeRequest) String() string {
@@ -6815,7 +6611,7 @@ func (*DeleteRuleTypeRequest) ProtoMessage() {}
 
 func (x *DeleteRuleTypeRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[101]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6853,11 +6649,9 @@ type DeleteRuleTypeResponse struct {
 
 func (x *DeleteRuleTypeResponse) Reset() {
 	*x = DeleteRuleTypeResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[102]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[102]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteRuleTypeResponse) String() string {
@@ -6868,7 +6662,7 @@ func (*DeleteRuleTypeResponse) ProtoMessage() {}
 
 func (x *DeleteRuleTypeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[102]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -6909,11 +6703,9 @@ type ListEvaluationResultsRequest struct {
 
 func (x *ListEvaluationResultsRequest) Reset() {
 	*x = ListEvaluationResultsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[103]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[103]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationResultsRequest) String() string {
@@ -6924,7 +6716,7 @@ func (*ListEvaluationResultsRequest) ProtoMessage() {}
 
 func (x *ListEvaluationResultsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[103]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7014,11 +6806,9 @@ type ListEvaluationResultsResponse struct {
 
 func (x *ListEvaluationResultsResponse) Reset() {
 	*x = ListEvaluationResultsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[104]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[104]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationResultsResponse) String() string {
@@ -7029,7 +6819,7 @@ func (*ListEvaluationResultsResponse) ProtoMessage() {}
 
 func (x *ListEvaluationResultsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[104]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7079,11 +6869,9 @@ type RestType struct {
 
 func (x *RestType) Reset() {
 	*x = RestType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[105]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[105]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RestType) String() string {
@@ -7094,7 +6882,7 @@ func (*RestType) ProtoMessage() {}
 
 func (x *RestType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[105]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7162,11 +6950,9 @@ type BuiltinType struct {
 
 func (x *BuiltinType) Reset() {
 	*x = BuiltinType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[106]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[106]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *BuiltinType) String() string {
@@ -7177,7 +6963,7 @@ func (*BuiltinType) ProtoMessage() {}
 
 func (x *BuiltinType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[106]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7208,11 +6994,9 @@ type ArtifactType struct {
 
 func (x *ArtifactType) Reset() {
 	*x = ArtifactType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[107]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[107]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ArtifactType) String() string {
@@ -7223,7 +7007,7 @@ func (*ArtifactType) ProtoMessage() {}
 
 func (x *ArtifactType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[107]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7252,11 +7036,9 @@ type GitType struct {
 
 func (x *GitType) Reset() {
 	*x = GitType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[108]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[108]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GitType) String() string {
@@ -7267,7 +7049,7 @@ func (*GitType) ProtoMessage() {}
 
 func (x *GitType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[108]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7313,11 +7095,9 @@ type DiffType struct {
 
 func (x *DiffType) Reset() {
 	*x = DiffType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[109]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[109]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DiffType) String() string {
@@ -7328,7 +7108,7 @@ func (*DiffType) ProtoMessage() {}
 
 func (x *DiffType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[109]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7369,11 +7149,9 @@ type Severity struct {
 
 func (x *Severity) Reset() {
 	*x = Severity{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[110]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[110]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Severity) String() string {
@@ -7384,7 +7162,7 @@ func (*Severity) ProtoMessage() {}
 
 func (x *Severity) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[110]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7438,11 +7216,9 @@ type RuleType struct {
 
 func (x *RuleType) Reset() {
 	*x = RuleType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[111]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[111]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType) String() string {
@@ -7453,7 +7229,7 @@ func (*RuleType) ProtoMessage() {}
 
 func (x *RuleType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[111]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7590,11 +7366,9 @@ type Profile struct {
 
 func (x *Profile) Reset() {
 	*x = Profile{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[112]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[112]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Profile) String() string {
@@ -7605,7 +7379,7 @@ func (*Profile) ProtoMessage() {}
 
 func (x *Profile) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[112]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7754,11 +7528,9 @@ type ListProjectsRequest struct {
 
 func (x *ListProjectsRequest) Reset() {
 	*x = ListProjectsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[113]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[113]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProjectsRequest) String() string {
@@ -7769,7 +7541,7 @@ func (*ListProjectsRequest) ProtoMessage() {}
 
 func (x *ListProjectsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[113]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7794,11 +7566,9 @@ type ListProjectsResponse struct {
 
 func (x *ListProjectsResponse) Reset() {
 	*x = ListProjectsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[114]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[114]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProjectsResponse) String() string {
@@ -7809,7 +7579,7 @@ func (*ListProjectsResponse) ProtoMessage() {}
 
 func (x *ListProjectsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[114]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7844,11 +7614,9 @@ type CreateProjectRequest struct {
 
 func (x *CreateProjectRequest) Reset() {
 	*x = CreateProjectRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[115]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[115]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProjectRequest) String() string {
@@ -7859,7 +7627,7 @@ func (*CreateProjectRequest) ProtoMessage() {}
 
 func (x *CreateProjectRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[115]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7899,11 +7667,9 @@ type CreateProjectResponse struct {
 
 func (x *CreateProjectResponse) Reset() {
 	*x = CreateProjectResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[116]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[116]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProjectResponse) String() string {
@@ -7914,7 +7680,7 @@ func (*CreateProjectResponse) ProtoMessage() {}
 
 func (x *CreateProjectResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[116]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7947,11 +7713,9 @@ type DeleteProjectRequest struct {
 
 func (x *DeleteProjectRequest) Reset() {
 	*x = DeleteProjectRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[117]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[117]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProjectRequest) String() string {
@@ -7962,7 +7726,7 @@ func (*DeleteProjectRequest) ProtoMessage() {}
 
 func (x *DeleteProjectRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[117]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -7995,11 +7759,9 @@ type DeleteProjectResponse struct {
 
 func (x *DeleteProjectResponse) Reset() {
 	*x = DeleteProjectResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[118]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[118]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProjectResponse) String() string {
@@ -8010,7 +7772,7 @@ func (*DeleteProjectResponse) ProtoMessage() {}
 
 func (x *DeleteProjectResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[118]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8047,11 +7809,9 @@ type UpdateProjectRequest struct {
 
 func (x *UpdateProjectRequest) Reset() {
 	*x = UpdateProjectRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[119]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[119]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateProjectRequest) String() string {
@@ -8062,7 +7822,7 @@ func (*UpdateProjectRequest) ProtoMessage() {}
 
 func (x *UpdateProjectRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[119]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8109,11 +7869,9 @@ type UpdateProjectResponse struct {
 
 func (x *UpdateProjectResponse) Reset() {
 	*x = UpdateProjectResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[120]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[120]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateProjectResponse) String() string {
@@ -8124,7 +7882,7 @@ func (*UpdateProjectResponse) ProtoMessage() {}
 
 func (x *UpdateProjectResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[120]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8159,11 +7917,9 @@ type ProjectPatch struct {
 
 func (x *ProjectPatch) Reset() {
 	*x = ProjectPatch{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[121]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[121]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProjectPatch) String() string {
@@ -8174,7 +7930,7 @@ func (*ProjectPatch) ProtoMessage() {}
 
 func (x *ProjectPatch) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[121]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8219,11 +7975,9 @@ type PatchProjectRequest struct {
 
 func (x *PatchProjectRequest) Reset() {
 	*x = PatchProjectRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[122]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[122]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProjectRequest) String() string {
@@ -8234,7 +7988,7 @@ func (*PatchProjectRequest) ProtoMessage() {}
 
 func (x *PatchProjectRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[122]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8281,11 +8035,9 @@ type PatchProjectResponse struct {
 
 func (x *PatchProjectResponse) Reset() {
 	*x = PatchProjectResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[123]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[123]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProjectResponse) String() string {
@@ -8296,7 +8048,7 @@ func (*PatchProjectResponse) ProtoMessage() {}
 
 func (x *PatchProjectResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[123]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8331,11 +8083,9 @@ type ListChildProjectsRequest struct {
 
 func (x *ListChildProjectsRequest) Reset() {
 	*x = ListChildProjectsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[124]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[124]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListChildProjectsRequest) String() string {
@@ -8346,7 +8096,7 @@ func (*ListChildProjectsRequest) ProtoMessage() {}
 
 func (x *ListChildProjectsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[124]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8385,11 +8135,9 @@ type ListChildProjectsResponse struct {
 
 func (x *ListChildProjectsResponse) Reset() {
 	*x = ListChildProjectsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[125]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[125]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListChildProjectsResponse) String() string {
@@ -8400,7 +8148,7 @@ func (*ListChildProjectsResponse) ProtoMessage() {}
 
 func (x *ListChildProjectsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[125]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8435,11 +8183,9 @@ type CreateEntityReconciliationTaskRequest struct {
 
 func (x *CreateEntityReconciliationTaskRequest) Reset() {
 	*x = CreateEntityReconciliationTaskRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[126]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[126]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateEntityReconciliationTaskRequest) String() string {
@@ -8450,7 +8196,7 @@ func (*CreateEntityReconciliationTaskRequest) ProtoMessage() {}
 
 func (x *CreateEntityReconciliationTaskRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[126]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8487,11 +8233,9 @@ type CreateEntityReconciliationTaskResponse struct {
 
 func (x *CreateEntityReconciliationTaskResponse) Reset() {
 	*x = CreateEntityReconciliationTaskResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[127]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[127]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateEntityReconciliationTaskResponse) String() string {
@@ -8502,7 +8246,7 @@ func (*CreateEntityReconciliationTaskResponse) ProtoMessage() {}
 
 func (x *CreateEntityReconciliationTaskResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[127]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8528,11 +8272,9 @@ type ListRolesRequest struct {
 
 func (x *ListRolesRequest) Reset() {
 	*x = ListRolesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[128]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[128]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRolesRequest) String() string {
@@ -8543,7 +8285,7 @@ func (*ListRolesRequest) ProtoMessage() {}
 
 func (x *ListRolesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[128]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8575,11 +8317,9 @@ type ListRolesResponse struct {
 
 func (x *ListRolesResponse) Reset() {
 	*x = ListRolesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[129]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[129]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRolesResponse) String() string {
@@ -8590,7 +8330,7 @@ func (*ListRolesResponse) ProtoMessage() {}
 
 func (x *ListRolesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[129]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8623,11 +8363,9 @@ type ListRoleAssignmentsRequest struct {
 
 func (x *ListRoleAssignmentsRequest) Reset() {
 	*x = ListRoleAssignmentsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[130]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[130]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRoleAssignmentsRequest) String() string {
@@ -8638,7 +8376,7 @@ func (*ListRoleAssignmentsRequest) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[130]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8675,11 +8413,9 @@ type ListRoleAssignmentsResponse struct {
 
 func (x *ListRoleAssignmentsResponse) Reset() {
 	*x = ListRoleAssignmentsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[131]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[131]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListRoleAssignmentsResponse) String() string {
@@ -8690,7 +8426,7 @@ func (*ListRoleAssignmentsResponse) ProtoMessage() {}
 
 func (x *ListRoleAssignmentsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[131]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8732,11 +8468,9 @@ type AssignRoleRequest struct {
 
 func (x *AssignRoleRequest) Reset() {
 	*x = AssignRoleRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[132]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[132]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AssignRoleRequest) String() string {
@@ -8747,7 +8481,7 @@ func (*AssignRoleRequest) ProtoMessage() {}
 
 func (x *AssignRoleRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[132]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8791,11 +8525,9 @@ type AssignRoleResponse struct {
 
 func (x *AssignRoleResponse) Reset() {
 	*x = AssignRoleResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[133]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[133]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AssignRoleResponse) String() string {
@@ -8806,7 +8538,7 @@ func (*AssignRoleResponse) ProtoMessage() {}
 
 func (x *AssignRoleResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[133]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8854,11 +8586,9 @@ type UpdateRoleRequest struct {
 
 func (x *UpdateRoleRequest) Reset() {
 	*x = UpdateRoleRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[134]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[134]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateRoleRequest) String() string {
@@ -8869,7 +8599,7 @@ func (*UpdateRoleRequest) ProtoMessage() {}
 
 func (x *UpdateRoleRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[134]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8925,11 +8655,9 @@ type UpdateRoleResponse struct {
 
 func (x *UpdateRoleResponse) Reset() {
 	*x = UpdateRoleResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[135]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[135]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpdateRoleResponse) String() string {
@@ -8940,7 +8668,7 @@ func (*UpdateRoleResponse) ProtoMessage() {}
 
 func (x *UpdateRoleResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[135]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -8982,11 +8710,9 @@ type RemoveRoleRequest struct {
 
 func (x *RemoveRoleRequest) Reset() {
 	*x = RemoveRoleRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[136]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[136]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RemoveRoleRequest) String() string {
@@ -8997,7 +8723,7 @@ func (*RemoveRoleRequest) ProtoMessage() {}
 
 func (x *RemoveRoleRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[136]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9039,11 +8765,9 @@ type RemoveRoleResponse struct {
 
 func (x *RemoveRoleResponse) Reset() {
 	*x = RemoveRoleResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[137]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[137]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RemoveRoleResponse) String() string {
@@ -9054,7 +8778,7 @@ func (*RemoveRoleResponse) ProtoMessage() {}
 
 func (x *RemoveRoleResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[137]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9098,11 +8822,9 @@ type Role struct {
 
 func (x *Role) Reset() {
 	*x = Role{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[138]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[138]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Role) String() string {
@@ -9113,7 +8835,7 @@ func (*Role) ProtoMessage() {}
 
 func (x *Role) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[138]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9172,11 +8894,9 @@ type RoleAssignment struct {
 
 func (x *RoleAssignment) Reset() {
 	*x = RoleAssignment{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[139]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[139]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RoleAssignment) String() string {
@@ -9187,7 +8907,7 @@ func (*RoleAssignment) ProtoMessage() {}
 
 func (x *RoleAssignment) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[139]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9259,11 +8979,9 @@ type ListInvitationsRequest struct {
 
 func (x *ListInvitationsRequest) Reset() {
 	*x = ListInvitationsRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[140]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[140]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListInvitationsRequest) String() string {
@@ -9274,7 +8992,7 @@ func (*ListInvitationsRequest) ProtoMessage() {}
 
 func (x *ListInvitationsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[140]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9299,11 +9017,9 @@ type ListInvitationsResponse struct {
 
 func (x *ListInvitationsResponse) Reset() {
 	*x = ListInvitationsResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[141]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[141]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListInvitationsResponse) String() string {
@@ -9314,7 +9030,7 @@ func (*ListInvitationsResponse) ProtoMessage() {}
 
 func (x *ListInvitationsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[141]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9349,11 +9065,9 @@ type ResolveInvitationRequest struct {
 
 func (x *ResolveInvitationRequest) Reset() {
 	*x = ResolveInvitationRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[142]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[142]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ResolveInvitationRequest) String() string {
@@ -9364,7 +9078,7 @@ func (*ResolveInvitationRequest) ProtoMessage() {}
 
 func (x *ResolveInvitationRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[142]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9414,11 +9128,9 @@ type ResolveInvitationResponse struct {
 
 func (x *ResolveInvitationResponse) Reset() {
 	*x = ResolveInvitationResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[143]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[143]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ResolveInvitationResponse) String() string {
@@ -9429,7 +9141,7 @@ func (*ResolveInvitationResponse) ProtoMessage() {}
 
 func (x *ResolveInvitationResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[143]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9521,11 +9233,9 @@ type Invitation struct {
 
 func (x *Invitation) Reset() {
 	*x = Invitation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[144]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[144]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Invitation) String() string {
@@ -9536,7 +9246,7 @@ func (*Invitation) ProtoMessage() {}
 
 func (x *Invitation) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[144]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9648,11 +9358,9 @@ type GetProviderRequest struct {
 
 func (x *GetProviderRequest) Reset() {
 	*x = GetProviderRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[145]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[145]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProviderRequest) String() string {
@@ -9663,7 +9371,7 @@ func (*GetProviderRequest) ProtoMessage() {}
 
 func (x *GetProviderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[145]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9703,11 +9411,9 @@ type GetProviderResponse struct {
 
 func (x *GetProviderResponse) Reset() {
 	*x = GetProviderResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[146]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[146]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetProviderResponse) String() string {
@@ -9718,7 +9424,7 @@ func (*GetProviderResponse) ProtoMessage() {}
 
 func (x *GetProviderResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[146]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9755,11 +9461,9 @@ type ListProvidersRequest struct {
 
 func (x *ListProvidersRequest) Reset() {
 	*x = ListProvidersRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[147]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[147]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProvidersRequest) String() string {
@@ -9770,7 +9474,7 @@ func (*ListProvidersRequest) ProtoMessage() {}
 
 func (x *ListProvidersRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[147]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9818,11 +9522,9 @@ type ListProvidersResponse struct {
 
 func (x *ListProvidersResponse) Reset() {
 	*x = ListProvidersResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[148]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[148]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProvidersResponse) String() string {
@@ -9833,7 +9535,7 @@ func (*ListProvidersResponse) ProtoMessage() {}
 
 func (x *ListProvidersResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[148]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9875,11 +9577,9 @@ type CreateProviderRequest struct {
 
 func (x *CreateProviderRequest) Reset() {
 	*x = CreateProviderRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[149]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[149]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProviderRequest) String() string {
@@ -9890,7 +9590,7 @@ func (*CreateProviderRequest) ProtoMessage() {}
 
 func (x *CreateProviderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[149]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9933,11 +9633,9 @@ type CreateProviderResponse struct {
 
 func (x *CreateProviderResponse) Reset() {
 	*x = CreateProviderResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[150]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[150]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *CreateProviderResponse) String() string {
@@ -9948,7 +9646,7 @@ func (*CreateProviderResponse) ProtoMessage() {}
 
 func (x *CreateProviderResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[150]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -9989,11 +9687,9 @@ type DeleteProviderRequest struct {
 
 func (x *DeleteProviderRequest) Reset() {
 	*x = DeleteProviderRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[151]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[151]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProviderRequest) String() string {
@@ -10004,7 +9700,7 @@ func (*DeleteProviderRequest) ProtoMessage() {}
 
 func (x *DeleteProviderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[151]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10037,11 +9733,9 @@ type DeleteProviderResponse struct {
 
 func (x *DeleteProviderResponse) Reset() {
 	*x = DeleteProviderResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[152]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[152]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProviderResponse) String() string {
@@ -10052,7 +9746,7 @@ func (*DeleteProviderResponse) ProtoMessage() {}
 
 func (x *DeleteProviderResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[152]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10087,11 +9781,9 @@ type DeleteProviderByIDRequest struct {
 
 func (x *DeleteProviderByIDRequest) Reset() {
 	*x = DeleteProviderByIDRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[153]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[153]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProviderByIDRequest) String() string {
@@ -10102,7 +9794,7 @@ func (*DeleteProviderByIDRequest) ProtoMessage() {}
 
 func (x *DeleteProviderByIDRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[153]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10142,11 +9834,9 @@ type DeleteProviderByIDResponse struct {
 
 func (x *DeleteProviderByIDResponse) Reset() {
 	*x = DeleteProviderByIDResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[154]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[154]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DeleteProviderByIDResponse) String() string {
@@ -10157,7 +9847,7 @@ func (*DeleteProviderByIDResponse) ProtoMessage() {}
 
 func (x *DeleteProviderByIDResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[154]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10190,11 +9880,9 @@ type GetUnclaimedProvidersRequest struct {
 
 func (x *GetUnclaimedProvidersRequest) Reset() {
 	*x = GetUnclaimedProvidersRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[155]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[155]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetUnclaimedProvidersRequest) String() string {
@@ -10205,7 +9893,7 @@ func (*GetUnclaimedProvidersRequest) ProtoMessage() {}
 
 func (x *GetUnclaimedProvidersRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[155]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10240,11 +9928,9 @@ type GetUnclaimedProvidersResponse struct {
 
 func (x *GetUnclaimedProvidersResponse) Reset() {
 	*x = GetUnclaimedProvidersResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[156]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[156]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetUnclaimedProvidersResponse) String() string {
@@ -10255,7 +9941,7 @@ func (*GetUnclaimedProvidersResponse) ProtoMessage() {}
 
 func (x *GetUnclaimedProvidersResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[156]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10288,11 +9974,9 @@ type ListProviderClassesRequest struct {
 
 func (x *ListProviderClassesRequest) Reset() {
 	*x = ListProviderClassesRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[157]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[157]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProviderClassesRequest) String() string {
@@ -10303,7 +9987,7 @@ func (*ListProviderClassesRequest) ProtoMessage() {}
 
 func (x *ListProviderClassesRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[157]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10336,11 +10020,9 @@ type ListProviderClassesResponse struct {
 
 func (x *ListProviderClassesResponse) Reset() {
 	*x = ListProviderClassesResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[158]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[158]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListProviderClassesResponse) String() string {
@@ -10351,7 +10033,7 @@ func (*ListProviderClassesResponse) ProtoMessage() {}
 
 func (x *ListProviderClassesResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[158]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10385,11 +10067,9 @@ type PatchProviderRequest struct {
 
 func (x *PatchProviderRequest) Reset() {
 	*x = PatchProviderRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[159]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[159]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProviderRequest) String() string {
@@ -10400,7 +10080,7 @@ func (*PatchProviderRequest) ProtoMessage() {}
 
 func (x *PatchProviderRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[159]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10446,11 +10126,9 @@ type PatchProviderResponse struct {
 
 func (x *PatchProviderResponse) Reset() {
 	*x = PatchProviderResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[160]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[160]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *PatchProviderResponse) String() string {
@@ -10461,7 +10139,7 @@ func (*PatchProviderResponse) ProtoMessage() {}
 
 func (x *PatchProviderResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[160]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10494,11 +10172,9 @@ type AuthorizationParams struct {
 
 func (x *AuthorizationParams) Reset() {
 	*x = AuthorizationParams{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[161]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[161]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *AuthorizationParams) String() string {
@@ -10509,7 +10185,7 @@ func (*AuthorizationParams) ProtoMessage() {}
 
 func (x *AuthorizationParams) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[161]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10544,11 +10220,9 @@ type ProviderParameter struct {
 
 func (x *ProviderParameter) Reset() {
 	*x = ProviderParameter{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[162]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[162]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ProviderParameter) String() string {
@@ -10559,7 +10233,7 @@ func (*ProviderParameter) ProtoMessage() {}
 
 func (x *ProviderParameter) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[162]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10619,11 +10293,9 @@ type GitHubAppParams struct {
 
 func (x *GitHubAppParams) Reset() {
 	*x = GitHubAppParams{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[163]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[163]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GitHubAppParams) String() string {
@@ -10634,7 +10306,7 @@ func (*GitHubAppParams) ProtoMessage() {}
 
 func (x *GitHubAppParams) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[163]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10699,11 +10371,9 @@ type Provider struct {
 
 func (x *Provider) Reset() {
 	*x = Provider{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[164]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[164]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Provider) String() string {
@@ -10714,7 +10384,7 @@ func (*Provider) ProtoMessage() {}
 
 func (x *Provider) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[164]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10804,11 +10474,9 @@ type GetEvaluationHistoryRequest struct {
 
 func (x *GetEvaluationHistoryRequest) Reset() {
 	*x = GetEvaluationHistoryRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[165]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[165]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetEvaluationHistoryRequest) String() string {
@@ -10819,7 +10487,7 @@ func (*GetEvaluationHistoryRequest) ProtoMessage() {}
 
 func (x *GetEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[165]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10881,11 +10549,9 @@ type ListEvaluationHistoryRequest struct {
 
 func (x *ListEvaluationHistoryRequest) Reset() {
 	*x = ListEvaluationHistoryRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[166]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[166]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationHistoryRequest) String() string {
@@ -10896,7 +10562,7 @@ func (*ListEvaluationHistoryRequest) ProtoMessage() {}
 
 func (x *ListEvaluationHistoryRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[166]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -10994,11 +10660,9 @@ type GetEvaluationHistoryResponse struct {
 
 func (x *GetEvaluationHistoryResponse) Reset() {
 	*x = GetEvaluationHistoryResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[167]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[167]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *GetEvaluationHistoryResponse) String() string {
@@ -11009,7 +10673,7 @@ func (*GetEvaluationHistoryResponse) ProtoMessage() {}
 
 func (x *GetEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[167]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11050,11 +10714,9 @@ type ListEvaluationHistoryResponse struct {
 
 func (x *ListEvaluationHistoryResponse) Reset() {
 	*x = ListEvaluationHistoryResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[168]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[168]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationHistoryResponse) String() string {
@@ -11065,7 +10727,7 @@ func (*ListEvaluationHistoryResponse) ProtoMessage() {}
 
 func (x *ListEvaluationHistoryResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[168]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11117,11 +10779,9 @@ type EvaluationHistory struct {
 
 func (x *EvaluationHistory) Reset() {
 	*x = EvaluationHistory{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[169]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[169]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistory) String() string {
@@ -11132,7 +10792,7 @@ func (*EvaluationHistory) ProtoMessage() {}
 
 func (x *EvaluationHistory) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[169]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11211,11 +10871,9 @@ type EvaluationHistoryEntity struct {
 
 func (x *EvaluationHistoryEntity) Reset() {
 	*x = EvaluationHistoryEntity{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[170]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[170]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistoryEntity) String() string {
@@ -11226,7 +10884,7 @@ func (*EvaluationHistoryEntity) ProtoMessage() {}
 
 func (x *EvaluationHistoryEntity) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[170]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11279,11 +10937,9 @@ type EvaluationHistoryRule struct {
 
 func (x *EvaluationHistoryRule) Reset() {
 	*x = EvaluationHistoryRule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[171]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[171]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistoryRule) String() string {
@@ -11294,7 +10950,7 @@ func (*EvaluationHistoryRule) ProtoMessage() {}
 
 func (x *EvaluationHistoryRule) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[171]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11352,11 +11008,9 @@ type EvaluationHistoryStatus struct {
 
 func (x *EvaluationHistoryStatus) Reset() {
 	*x = EvaluationHistoryStatus{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[172]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[172]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistoryStatus) String() string {
@@ -11367,7 +11021,7 @@ func (*EvaluationHistoryStatus) ProtoMessage() {}
 
 func (x *EvaluationHistoryStatus) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[172]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11411,11 +11065,9 @@ type EvaluationHistoryRemediation struct {
 
 func (x *EvaluationHistoryRemediation) Reset() {
 	*x = EvaluationHistoryRemediation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[173]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[173]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistoryRemediation) String() string {
@@ -11426,7 +11078,7 @@ func (*EvaluationHistoryRemediation) ProtoMessage() {}
 
 func (x *EvaluationHistoryRemediation) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[173]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11470,11 +11122,9 @@ type EvaluationHistoryAlert struct {
 
 func (x *EvaluationHistoryAlert) Reset() {
 	*x = EvaluationHistoryAlert{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[174]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[174]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EvaluationHistoryAlert) String() string {
@@ -11485,7 +11135,7 @@ func (*EvaluationHistoryAlert) ProtoMessage() {}
 
 func (x *EvaluationHistoryAlert) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[174]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11535,11 +11185,9 @@ type EntityInstance struct {
 
 func (x *EntityInstance) Reset() {
 	*x = EntityInstance{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[175]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[175]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *EntityInstance) String() string {
@@ -11550,7 +11198,7 @@ func (*EntityInstance) ProtoMessage() {}
 
 func (x *EntityInstance) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[175]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11623,11 +11271,9 @@ type UpstreamEntityRef struct {
 
 func (x *UpstreamEntityRef) Reset() {
 	*x = UpstreamEntityRef{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[176]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[176]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *UpstreamEntityRef) String() string {
@@ -11638,7 +11284,7 @@ func (*UpstreamEntityRef) ProtoMessage() {}
 
 func (x *UpstreamEntityRef) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[176]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11685,11 +11331,9 @@ type RegisterRepoResult_Status struct {
 
 func (x *RegisterRepoResult_Status) Reset() {
 	*x = RegisterRepoResult_Status{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[177]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[177]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RegisterRepoResult_Status) String() string {
@@ -11700,7 +11344,7 @@ func (*RegisterRepoResult_Status) ProtoMessage() {}
 
 func (x *RegisterRepoResult_Status) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[177]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11743,11 +11387,9 @@ type ListEvaluationResultsResponse_EntityProfileEvaluationResults struct {
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) Reset() {
 	*x = ListEvaluationResultsResponse_EntityProfileEvaluationResults{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[180]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[180]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) String() string {
@@ -11758,7 +11400,7 @@ func (*ListEvaluationResultsResponse_EntityProfileEvaluationResults) ProtoMessag
 
 func (x *ListEvaluationResultsResponse_EntityProfileEvaluationResults) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[180]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11798,11 +11440,9 @@ type ListEvaluationResultsResponse_EntityEvaluationResults struct {
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) Reset() {
 	*x = ListEvaluationResultsResponse_EntityEvaluationResults{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[181]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[181]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) String() string {
@@ -11813,7 +11453,7 @@ func (*ListEvaluationResultsResponse_EntityEvaluationResults) ProtoMessage() {}
 
 func (x *ListEvaluationResultsResponse_EntityEvaluationResults) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[181]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11853,11 +11493,9 @@ type RestType_Fallback struct {
 
 func (x *RestType_Fallback) Reset() {
 	*x = RestType_Fallback{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[182]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[182]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RestType_Fallback) String() string {
@@ -11868,7 +11506,7 @@ func (*RestType_Fallback) ProtoMessage() {}
 
 func (x *RestType_Fallback) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[182]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11910,11 +11548,9 @@ type DiffType_Ecosystem struct {
 
 func (x *DiffType_Ecosystem) Reset() {
 	*x = DiffType_Ecosystem{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[183]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[183]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *DiffType_Ecosystem) String() string {
@@ -11925,7 +11561,7 @@ func (*DiffType_Ecosystem) ProtoMessage() {}
 
 func (x *DiffType_Ecosystem) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[183]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -11976,11 +11612,9 @@ type RuleType_Definition struct {
 
 func (x *RuleType_Definition) Reset() {
 	*x = RuleType_Definition{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[184]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[184]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition) String() string {
@@ -11991,7 +11625,7 @@ func (*RuleType_Definition) ProtoMessage() {}
 
 func (x *RuleType_Definition) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[184]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12079,11 +11713,9 @@ type RuleType_Definition_Ingest struct {
 
 func (x *RuleType_Definition_Ingest) Reset() {
 	*x = RuleType_Definition_Ingest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[185]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[185]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Ingest) String() string {
@@ -12094,7 +11726,7 @@ func (*RuleType_Definition_Ingest) ProtoMessage() {}
 
 func (x *RuleType_Definition_Ingest) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[185]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12179,11 +11811,9 @@ type RuleType_Definition_Eval struct {
 
 func (x *RuleType_Definition_Eval) Reset() {
 	*x = RuleType_Definition_Eval{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[186]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[186]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval) String() string {
@@ -12194,7 +11824,7 @@ func (*RuleType_Definition_Eval) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[186]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12264,11 +11894,9 @@ type RuleType_Definition_Remediate struct {
 
 func (x *RuleType_Definition_Remediate) Reset() {
 	*x = RuleType_Definition_Remediate{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[187]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[187]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Remediate) String() string {
@@ -12279,7 +11907,7 @@ func (*RuleType_Definition_Remediate) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[187]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12333,11 +11961,9 @@ type RuleType_Definition_Alert struct {
 
 func (x *RuleType_Definition_Alert) Reset() {
 	*x = RuleType_Definition_Alert{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[188]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[188]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Alert) String() string {
@@ -12348,7 +11974,7 @@ func (*RuleType_Definition_Alert) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[188]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12392,11 +12018,9 @@ type RuleType_Definition_Eval_JQComparison struct {
 
 func (x *RuleType_Definition_Eval_JQComparison) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[189]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[189]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_JQComparison) String() string {
@@ -12407,7 +12031,7 @@ func (*RuleType_Definition_Eval_JQComparison) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[189]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12470,11 +12094,9 @@ type RuleType_Definition_Eval_Rego struct {
 
 func (x *RuleType_Definition_Eval_Rego) Reset() {
 	*x = RuleType_Definition_Eval_Rego{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[190]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[190]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_Rego) String() string {
@@ -12485,7 +12107,7 @@ func (*RuleType_Definition_Eval_Rego) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Rego) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[190]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12529,11 +12151,9 @@ type RuleType_Definition_Eval_Vulncheck struct {
 
 func (x *RuleType_Definition_Eval_Vulncheck) Reset() {
 	*x = RuleType_Definition_Eval_Vulncheck{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[191]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[191]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_Vulncheck) String() string {
@@ -12544,7 +12164,7 @@ func (*RuleType_Definition_Eval_Vulncheck) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Vulncheck) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[191]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12571,11 +12191,9 @@ type RuleType_Definition_Eval_Trusty struct {
 
 func (x *RuleType_Definition_Eval_Trusty) Reset() {
 	*x = RuleType_Definition_Eval_Trusty{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[192]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[192]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_Trusty) String() string {
@@ -12586,7 +12204,7 @@ func (*RuleType_Definition_Eval_Trusty) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Trusty) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[192]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12618,11 +12236,9 @@ type RuleType_Definition_Eval_Homoglyphs struct {
 
 func (x *RuleType_Definition_Eval_Homoglyphs) Reset() {
 	*x = RuleType_Definition_Eval_Homoglyphs{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[193]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[193]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_Homoglyphs) String() string {
@@ -12633,7 +12249,7 @@ func (*RuleType_Definition_Eval_Homoglyphs) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_Homoglyphs) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[193]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12665,11 +12281,9 @@ type RuleType_Definition_Eval_JQComparison_Operator struct {
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) Reset() {
 	*x = RuleType_Definition_Eval_JQComparison_Operator{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[194]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[194]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) String() string {
@@ -12680,7 +12294,7 @@ func (*RuleType_Definition_Eval_JQComparison_Operator) ProtoMessage() {}
 
 func (x *RuleType_Definition_Eval_JQComparison_Operator) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[194]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12712,11 +12326,9 @@ type RuleType_Definition_Remediate_GhBranchProtectionType struct {
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) Reset() {
 	*x = RuleType_Definition_Remediate_GhBranchProtectionType{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[195]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[195]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) String() string {
@@ -12727,7 +12339,7 @@ func (*RuleType_Definition_Remediate_GhBranchProtectionType) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_GhBranchProtectionType) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[195]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12776,11 +12388,9 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[196]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[196]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) String() string {
@@ -12791,7 +12401,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation) ProtoMessage() {}
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[196]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12861,11 +12471,9 @@ type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_Content{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[197]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[197]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) String() string {
@@ -12876,7 +12484,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoMessag
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_Content) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[197]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12930,11 +12538,9 @@ type RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWith
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) Reset() {
 	*x = RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[198]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[198]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) String() string {
@@ -12946,7 +12552,7 @@ func (*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWi
 
 func (x *RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[198]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -12978,11 +12584,9 @@ type RuleType_Definition_Alert_AlertTypeSA struct {
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) Reset() {
 	*x = RuleType_Definition_Alert_AlertTypeSA{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[199]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[199]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) String() string {
@@ -12993,7 +12597,7 @@ func (*RuleType_Definition_Alert_AlertTypeSA) ProtoMessage() {}
 
 func (x *RuleType_Definition_Alert_AlertTypeSA) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[199]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -13035,11 +12639,9 @@ type Profile_Rule struct {
 
 func (x *Profile_Rule) Reset() {
 	*x = Profile_Rule{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[200]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[200]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Profile_Rule) String() string {
@@ -13050,7 +12652,7 @@ func (*Profile_Rule) ProtoMessage() {}
 
 func (x *Profile_Rule) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[200]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -13110,11 +12712,9 @@ type Profile_Selector struct {
 
 func (x *Profile_Selector) Reset() {
 	*x = Profile_Selector{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_minder_v1_minder_proto_msgTypes[201]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
+	mi := &file_minder_v1_minder_proto_msgTypes[201]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
 }
 
 func (x *Profile_Selector) String() string {
@@ -13125,7 +12725,7 @@ func (*Profile_Selector) ProtoMessage() {}
 
 func (x *Profile_Selector) ProtoReflect() protoreflect.Message {
 	mi := &file_minder_v1_minder_proto_msgTypes[201]
-	if protoimpl.UnsafeEnabled && x != nil {
+	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
@@ -16259,2408 +15859,6 @@ func init() { file_minder_v1_minder_proto_init() }
 func file_minder_v1_minder_proto_init() {
 	if File_minder_v1_minder_proto != nil {
 		return
-	}
-	if !protoimpl.UnsafeEnabled {
-		file_minder_v1_minder_proto_msgTypes[0].Exporter = func(v any, i int) any {
-			switch v := v.(*RpcOptions); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[1].Exporter = func(v any, i int) any {
-			switch v := v.(*Cursor); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[2].Exporter = func(v any, i int) any {
-			switch v := v.(*CursorPage); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[3].Exporter = func(v any, i int) any {
-			switch v := v.(*ListArtifactsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[4].Exporter = func(v any, i int) any {
-			switch v := v.(*ListArtifactsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[5].Exporter = func(v any, i int) any {
-			switch v := v.(*Artifact); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[6].Exporter = func(v any, i int) any {
-			switch v := v.(*ArtifactVersion); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[7].Exporter = func(v any, i int) any {
-			switch v := v.(*GetArtifactByIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[8].Exporter = func(v any, i int) any {
-			switch v := v.(*GetArtifactByIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[9].Exporter = func(v any, i int) any {
-			switch v := v.(*GetArtifactByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[10].Exporter = func(v any, i int) any {
-			switch v := v.(*GetArtifactByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[11].Exporter = func(v any, i int) any {
-			switch v := v.(*PullRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[12].Exporter = func(v any, i int) any {
-			switch v := v.(*Release); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[13].Exporter = func(v any, i int) any {
-			switch v := v.(*PipelineRun); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[14].Exporter = func(v any, i int) any {
-			switch v := v.(*TaskRun); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[15].Exporter = func(v any, i int) any {
-			switch v := v.(*Build); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[16].Exporter = func(v any, i int) any {
-			switch v := v.(*GetInviteDetailsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[17].Exporter = func(v any, i int) any {
-			switch v := v.(*GetInviteDetailsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[18].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckHealthRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[19].Exporter = func(v any, i int) any {
-			switch v := v.(*CheckHealthResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[20].Exporter = func(v any, i int) any {
-			switch v := v.(*GetAuthorizationURLRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[21].Exporter = func(v any, i int) any {
-			switch v := v.(*GetAuthorizationURLResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[22].Exporter = func(v any, i int) any {
-			switch v := v.(*StoreProviderTokenRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[23].Exporter = func(v any, i int) any {
-			switch v := v.(*StoreProviderTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[24].Exporter = func(v any, i int) any {
-			switch v := v.(*Project); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[25].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRemoteRepositoriesFromProviderRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[26].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRemoteRepositoriesFromProviderResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[27].Exporter = func(v any, i int) any {
-			switch v := v.(*RegistrableUpstreamEntityRef); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[28].Exporter = func(v any, i int) any {
-			switch v := v.(*UpstreamRepositoryRef); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[29].Exporter = func(v any, i int) any {
-			switch v := v.(*Repository); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[30].Exporter = func(v any, i int) any {
-			switch v := v.(*RegisterRepositoryRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[31].Exporter = func(v any, i int) any {
-			switch v := v.(*RegisterRepoResult); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[32].Exporter = func(v any, i int) any {
-			switch v := v.(*RegisterRepositoryResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[33].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRepositoryByIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[34].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRepositoryByIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[35].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRepositoryByIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[36].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRepositoryByIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[37].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRepositoryByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[38].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRepositoryByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[39].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRepositoryByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[40].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRepositoryByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[41].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRepositoriesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[42].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRepositoriesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[43].Exporter = func(v any, i int) any {
-			switch v := v.(*ReconcileEntityRegistrationRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[44].Exporter = func(v any, i int) any {
-			switch v := v.(*ReconcileEntityRegistrationResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[45].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyProviderTokenFromRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[46].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyProviderTokenFromResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[47].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyProviderCredentialRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[48].Exporter = func(v any, i int) any {
-			switch v := v.(*VerifyProviderCredentialResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[49].Exporter = func(v any, i int) any {
-			switch v := v.(*BranchProtection); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[50].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateUserRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[51].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateUserResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[52].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteUserRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[53].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteUserResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[54].Exporter = func(v any, i int) any {
-			switch v := v.(*UserRecord); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[55].Exporter = func(v any, i int) any {
-			switch v := v.(*ProjectRole); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[56].Exporter = func(v any, i int) any {
-			switch v := v.(*GetUserRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[57].Exporter = func(v any, i int) any {
-			switch v := v.(*GetUserResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[58].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProfileRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[59].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProfileResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[60].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateProfileRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[61].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateProfileResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[62].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProfileRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[63].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProfileResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[64].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProfileRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[65].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProfileResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[66].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProfilesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[67].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProfilesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[68].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileByIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[69].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileByIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[70].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[71].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[72].Exporter = func(v any, i int) any {
-			switch v := v.(*ProfileStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[73].Exporter = func(v any, i int) any {
-			switch v := v.(*EvalResultAlert); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[74].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleEvaluationStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[75].Exporter = func(v any, i int) any {
-			switch v := v.(*EntityTypedId); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[76].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileStatusByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[77].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileStatusByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[78].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileStatusByProjectRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[79].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProfileStatusByProjectResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[80].Exporter = func(v any, i int) any {
-			switch v := v.(*EntityAutoRegistrationConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[81].Exporter = func(v any, i int) any {
-			switch v := v.(*AutoRegistration); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[82].Exporter = func(v any, i int) any {
-			switch v := v.(*ProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[83].Exporter = func(v any, i int) any {
-			switch v := v.(*RESTProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[84].Exporter = func(v any, i int) any {
-			switch v := v.(*GitHubProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[85].Exporter = func(v any, i int) any {
-			switch v := v.(*GitHubAppProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[86].Exporter = func(v any, i int) any {
-			switch v := v.(*GitLabProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[87].Exporter = func(v any, i int) any {
-			switch v := v.(*DockerHubProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[88].Exporter = func(v any, i int) any {
-			switch v := v.(*GHCRProviderConfig); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[89].Exporter = func(v any, i int) any {
-			switch v := v.(*Context); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[90].Exporter = func(v any, i int) any {
-			switch v := v.(*ContextV2); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[91].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRuleTypesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[92].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRuleTypesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[93].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRuleTypeByNameRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[94].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRuleTypeByNameResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[95].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRuleTypeByIdRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[96].Exporter = func(v any, i int) any {
-			switch v := v.(*GetRuleTypeByIdResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[97].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateRuleTypeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[98].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateRuleTypeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[99].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateRuleTypeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[100].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateRuleTypeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[101].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRuleTypeRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[102].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteRuleTypeResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[103].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationResultsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[104].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationResultsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[105].Exporter = func(v any, i int) any {
-			switch v := v.(*RestType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[106].Exporter = func(v any, i int) any {
-			switch v := v.(*BuiltinType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[107].Exporter = func(v any, i int) any {
-			switch v := v.(*ArtifactType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[108].Exporter = func(v any, i int) any {
-			switch v := v.(*GitType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[109].Exporter = func(v any, i int) any {
-			switch v := v.(*DiffType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[110].Exporter = func(v any, i int) any {
-			switch v := v.(*Severity); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[111].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[112].Exporter = func(v any, i int) any {
-			switch v := v.(*Profile); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[113].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProjectsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[114].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProjectsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[115].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProjectRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[116].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProjectResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[117].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProjectRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[118].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProjectResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[119].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateProjectRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[120].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateProjectResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[121].Exporter = func(v any, i int) any {
-			switch v := v.(*ProjectPatch); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[122].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProjectRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[123].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProjectResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[124].Exporter = func(v any, i int) any {
-			switch v := v.(*ListChildProjectsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[125].Exporter = func(v any, i int) any {
-			switch v := v.(*ListChildProjectsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[126].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateEntityReconciliationTaskRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[127].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateEntityReconciliationTaskResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[128].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRolesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[129].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRolesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[130].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRoleAssignmentsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[131].Exporter = func(v any, i int) any {
-			switch v := v.(*ListRoleAssignmentsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[132].Exporter = func(v any, i int) any {
-			switch v := v.(*AssignRoleRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[133].Exporter = func(v any, i int) any {
-			switch v := v.(*AssignRoleResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[134].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateRoleRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[135].Exporter = func(v any, i int) any {
-			switch v := v.(*UpdateRoleResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[136].Exporter = func(v any, i int) any {
-			switch v := v.(*RemoveRoleRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[137].Exporter = func(v any, i int) any {
-			switch v := v.(*RemoveRoleResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[138].Exporter = func(v any, i int) any {
-			switch v := v.(*Role); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[139].Exporter = func(v any, i int) any {
-			switch v := v.(*RoleAssignment); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[140].Exporter = func(v any, i int) any {
-			switch v := v.(*ListInvitationsRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[141].Exporter = func(v any, i int) any {
-			switch v := v.(*ListInvitationsResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[142].Exporter = func(v any, i int) any {
-			switch v := v.(*ResolveInvitationRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[143].Exporter = func(v any, i int) any {
-			switch v := v.(*ResolveInvitationResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[144].Exporter = func(v any, i int) any {
-			switch v := v.(*Invitation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[145].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProviderRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[146].Exporter = func(v any, i int) any {
-			switch v := v.(*GetProviderResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[147].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProvidersRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[148].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProvidersResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[149].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProviderRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[150].Exporter = func(v any, i int) any {
-			switch v := v.(*CreateProviderResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[151].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProviderRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[152].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProviderResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[153].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProviderByIDRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[154].Exporter = func(v any, i int) any {
-			switch v := v.(*DeleteProviderByIDResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[155].Exporter = func(v any, i int) any {
-			switch v := v.(*GetUnclaimedProvidersRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[156].Exporter = func(v any, i int) any {
-			switch v := v.(*GetUnclaimedProvidersResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[157].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProviderClassesRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[158].Exporter = func(v any, i int) any {
-			switch v := v.(*ListProviderClassesResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[159].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProviderRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[160].Exporter = func(v any, i int) any {
-			switch v := v.(*PatchProviderResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[161].Exporter = func(v any, i int) any {
-			switch v := v.(*AuthorizationParams); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[162].Exporter = func(v any, i int) any {
-			switch v := v.(*ProviderParameter); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[163].Exporter = func(v any, i int) any {
-			switch v := v.(*GitHubAppParams); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[164].Exporter = func(v any, i int) any {
-			switch v := v.(*Provider); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[165].Exporter = func(v any, i int) any {
-			switch v := v.(*GetEvaluationHistoryRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[166].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationHistoryRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[167].Exporter = func(v any, i int) any {
-			switch v := v.(*GetEvaluationHistoryResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[168].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationHistoryResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[169].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistory); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[170].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistoryEntity); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[171].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistoryRule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[172].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistoryStatus); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[173].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistoryRemediation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[174].Exporter = func(v any, i int) any {
-			switch v := v.(*EvaluationHistoryAlert); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[175].Exporter = func(v any, i int) any {
-			switch v := v.(*EntityInstance); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[176].Exporter = func(v any, i int) any {
-			switch v := v.(*UpstreamEntityRef); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[177].Exporter = func(v any, i int) any {
-			switch v := v.(*RegisterRepoResult_Status); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[180].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationResultsResponse_EntityProfileEvaluationResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[181].Exporter = func(v any, i int) any {
-			switch v := v.(*ListEvaluationResultsResponse_EntityEvaluationResults); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[182].Exporter = func(v any, i int) any {
-			switch v := v.(*RestType_Fallback); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[183].Exporter = func(v any, i int) any {
-			switch v := v.(*DiffType_Ecosystem); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[184].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[185].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Ingest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[186].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[187].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Remediate); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[188].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Alert); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[189].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_JQComparison); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[190].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_Rego); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[191].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_Vulncheck); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[192].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_Trusty); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[193].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_Homoglyphs); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[194].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Eval_JQComparison_Operator); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[195].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Remediate_GhBranchProtectionType); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[196].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[197].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_Content); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[198].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[199].Exporter = func(v any, i int) any {
-			switch v := v.(*RuleType_Definition_Alert_AlertTypeSA); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[200].Exporter = func(v any, i int) any {
-			switch v := v.(*Profile_Rule); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_minder_v1_minder_proto_msgTypes[201].Exporter = func(v any, i int) any {
-			switch v := v.(*Profile_Selector); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	file_minder_v1_minder_proto_msgTypes[20].OneofWrappers = []any{}
 	file_minder_v1_minder_proto_msgTypes[22].OneofWrappers = []any{}
