@@ -994,15 +994,13 @@ func (_ *Server) processPullRequestEvent(
 
 	repoProps, err := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.GetID()),
-		properties.PropertyName:       ghRepo.GetName(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository properties for PR origination: %w", err)
 	}
 
 	// it is bit of a code smell to use the fetcher here just to format the name
-	fetcher := ghprop.NewPullRequestFetcher()
-	name, err := fetcher.GetName(pullProps)
+	name, err := ghprop.NewPullRequestFetcher().GetName(pullProps)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching pull request name: %w", err)
 	}
