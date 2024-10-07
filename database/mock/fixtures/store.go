@@ -247,6 +247,17 @@ func WithSuccessfulGetEntitiesByProjectHierarchy(
 	}
 }
 
+func WithSuccessfulDeleteEntity(entID, projectID uuid.UUID) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			DeleteEntity(gomock.Any(), db.DeleteEntityParams{
+				ID:        entID,
+				ProjectID: projectID,
+			}).
+			Return(nil)
+	}
+}
+
 func WithFailedGetEntitiesByProjectHierarchy(
 	err error,
 ) func(*mockdb.MockStore) {

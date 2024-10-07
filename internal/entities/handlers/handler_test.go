@@ -205,6 +205,15 @@ func addOriginatingEntityHandlerBuilder(
 	return NewAddOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
+func removeOriginatingEntityHandlerBuilder(
+	evt events.Publisher,
+	store db.Store,
+	propSvc service.PropertiesService,
+	provMgr manager.ProviderManager,
+) events.Consumer {
+	return NewRemoveOriginatingEntityHandler(evt, store, propSvc, provMgr)
+}
+
 func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 	t.Parallel()
 
@@ -444,6 +453,40 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			expectedPublish: true,
 			topic:           events.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkPullRequestMessage,
+		},
+		{
+			name:             "NewRemoveOriginatingEntityHandler: Happy path does not publish",
+			handlerBuilderFn: removeOriginatingEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				prProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "789",
+					ghprops.PullPropertyNumber:    int64(789),
+				})
+				originatorProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_PULL_REQUESTS, prProps).
+					WithOriginator(minderv1.Entity_ENTITY_REPOSITORIES, originatorProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				repoPropsEwp := buildEwp(t, repoEwp, repoPropMap)
+				pullPropsEwp := buildEwp(t, pullRequestEwp, pullRequestPropMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(repoPropsEwp, githubHint),
+					fixtures.WithSuccessfulEntityByUpstreamHint(pullPropsEwp, githubHint),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				df.WithSuccessfulDeletePullRequest(),
+				df.WithSuccessfulDeleteEntity(pullRequestID, projectID),
+			),
+			providerSetup:   newProviderMock(),
+			expectedPublish: false,
 		},
 	}
 
