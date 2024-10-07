@@ -101,15 +101,15 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 	//nolint:exhaustive // We only support two entity types for now.
 	switch entityType {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		return c.getRepoNameFromProperties(props)
+		return getRepoNameFromProperties(props)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		return c.getPullRequestNameFromProperties(props)
+		return getPullRequestNameFromProperties(props)
 	default:
 		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
 }
 
-func (c *gitlabClient) getRepoNameFromProperties(props *properties.Properties) (string, error) {
+func getRepoNameFromProperties(props *properties.Properties) (string, error) {
 	groupName, err := getStringProp(props, RepoPropertyNamespace)
 	if err != nil {
 		return "", err
@@ -123,7 +123,7 @@ func (c *gitlabClient) getRepoNameFromProperties(props *properties.Properties) (
 	return formatRepoName(groupName, projectName), nil
 }
 
-func (c *gitlabClient) getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
+func getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
 	groupName, err := getStringProp(props, RepoPropertyNamespace)
 	if err != nil {
 		return "", err
