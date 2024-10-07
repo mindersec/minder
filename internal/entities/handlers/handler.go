@@ -17,6 +17,9 @@
 package handlers
 
 import (
+	"context"
+	"errors"
+
 	watermill "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
@@ -25,13 +28,23 @@ import (
 	"github.com/stacklok/minder/internal/entities/handlers/strategies"
 	entStrategies "github.com/stacklok/minder/internal/entities/handlers/strategies/entity"
 	msgStrategies "github.com/stacklok/minder/internal/entities/handlers/strategies/message"
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
 	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/manager"
+	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	errPrivateRepoNotAllowed  = errors.New("private repositories are not allowed in this project")
+	errArchivedRepoNotAllowed = errors.New("archived repositories are not evaluated")
 )
 
 type handleEntityAndDoBase struct {
-	evt events.Publisher
+	evt   events.Publisher
+	store db.Store
 
 	refreshEntity strategies.GetEntityStrategy
 	createMessage strategies.MessageCreateStrategy
@@ -89,6 +102,12 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 		l.Debug().Msg("entity not retrieved")
 	}
 
+	err = b.forwardEntityCheck(ctx, ewp)
+	if err != nil {
+		l.Error().Err(err).Msg("not forwarding entity")
+		return nil
+	}
+
 	nextMsg, err := b.createMessage.CreateMessage(ctx, ewp)
 	if err != nil {
 		l.Error().Err(err).Msg("error creating message")
@@ -109,6 +128,27 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 	return nil
 }
 
+func (b *handleEntityAndDoBase) forwardEntityCheck(
+	ctx context.Context,
+	ewp *models.EntityWithProperties) error {
+	if ewp == nil {
+		return nil
+	}
+
+	if ewp.Entity.Type == v1.Entity_ENTITY_REPOSITORIES &&
+		ewp.Properties.GetProperty(properties.RepoPropertyIsPrivate).GetBool() &&
+		!features.ProjectAllowsPrivateRepos(ctx, b.store, ewp.Entity.ProjectID) {
+		return errPrivateRepoNotAllowed
+	}
+
+	if ewp.Entity.Type == v1.Entity_ENTITY_REPOSITORIES &&
+		ewp.Properties.GetProperty(properties.RepoPropertyIsArchived).GetBool() {
+		return errArchivedRepoNotAllowed
+	}
+
+	return nil
+}
+
 // NewRefreshByIDAndEvaluateHandler creates a new handler that refreshes an entity and evaluates it.
 func NewRefreshByIDAndEvaluateHandler(
 	evt events.Publisher,
@@ -118,7 +158,8 @@ func NewRefreshByIDAndEvaluateHandler(
 	handlerMiddleware ...watermill.HandlerMiddleware,
 ) events.Consumer {
 	return &handleEntityAndDoBase{
-		evt: evt,
+		evt:   evt,
+		store: store,
 
 		refreshEntity: entStrategies.NewRefreshEntityByIDStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
@@ -139,7 +180,8 @@ func NewRefreshEntityAndEvaluateHandler(
 	handlerMiddleware ...watermill.HandlerMiddleware,
 ) events.Consumer {
 	return &handleEntityAndDoBase{
-		evt: evt,
+		evt:   evt,
+		store: store,
 
 		refreshEntity: entStrategies.NewRefreshEntityByUpstreamPropsStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
@@ -154,11 +196,13 @@ func NewRefreshEntityAndEvaluateHandler(
 // NewGetEntityAndDeleteHandler creates a new handler that gets an entity and deletes it.
 func NewGetEntityAndDeleteHandler(
 	evt events.Publisher,
+	store db.Store,
 	propSvc propertyService.PropertiesService,
 	handlerMiddleware ...watermill.HandlerMiddleware,
 ) events.Consumer {
 	return &handleEntityAndDoBase{
-		evt: evt,
+		evt:   evt,
+		store: store,
 
 		refreshEntity: entStrategies.NewGetEntityByUpstreamIDStrategy(propSvc),
 		createMessage: msgStrategies.NewToMinderEntity(),
@@ -179,7 +223,8 @@ func NewAddOriginatingEntityHandler(
 	handlerMiddleware ...watermill.HandlerMiddleware,
 ) events.Consumer {
 	return &handleEntityAndDoBase{
-		evt: evt,
+		evt:   evt,
+		store: store,
 
 		refreshEntity: entStrategies.NewAddOriginatingEntityStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
