@@ -70,6 +70,7 @@ func (c *gitlabClient) FetchAllProperties(
 		return nil, fmt.Errorf("entity type %s not supported", entType)
 	}
 
+	//nolint:exhaustive // We only support two entity types for now.
 	switch entType {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
 		return c.getPropertiesForRepo(ctx, getByProps)
@@ -97,6 +98,7 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
 
+	//nolint:exhaustive // We only support two entity types for now.
 	switch entityType {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
 		return c.getRepoNameFromProperties(props)
@@ -148,7 +150,15 @@ func (c *gitlabClient) PropertiesToProtoMessage(
 		return nil, fmt.Errorf("entity type %s is not supported by the gitlab provider", entType)
 	}
 
-	return repoV1FromProperties(props)
+	//nolint:exhaustive // We only support two entity types for now.
+	switch entType {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return repoV1FromProperties(props)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return pullRequestV1FromProperties(props)
+	default:
+		return nil, fmt.Errorf("entity type %s not supported", entType)
+	}
 }
 
 // FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
