@@ -87,7 +87,9 @@ func (e *EvaluationError) Details() string {
 	if e.Template == "" {
 		return e.Msg
 	}
-	tmpl, err := template.New("error").Parse(e.Template)
+	tmpl, err := template.New("error").
+		Option("missingkey=error").
+		Parse(e.Template)
 	if err != nil {
 		return e.Error()
 	}

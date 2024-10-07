@@ -55,7 +55,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -84,7 +84,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -121,7 +121,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -158,7 +158,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -188,7 +188,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -220,7 +220,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -257,7 +257,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -294,7 +294,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -334,7 +334,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -377,7 +377,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -415,7 +415,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -512,7 +512,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -548,7 +548,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -583,7 +583,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -629,7 +629,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -665,7 +665,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -702,7 +702,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -752,7 +752,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: nil,
 		Fs:     fs,
 	})

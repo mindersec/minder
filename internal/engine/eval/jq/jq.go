@@ -23,6 +23,8 @@ import (
 	"fmt"
 	"reflect"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	eoptions "github.com/stacklok/minder/internal/engine/options"
@@ -79,7 +81,7 @@ func NewJQEvaluator(
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *engif.Result) error {
 	if res.Object == nil {
 		return fmt.Errorf("missing object")
 	}

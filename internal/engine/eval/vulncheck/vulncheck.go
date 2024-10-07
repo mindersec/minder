@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/templates"
@@ -77,7 +78,12 @@ func NewVulncheckEvaluator(
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (e *Evaluator) Eval(
+	ctx context.Context,
+	pol map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
 		return err

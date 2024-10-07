@@ -55,7 +55,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -63,7 +63,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -97,7 +97,7 @@ skip {
 	emptyPol := map[string]any{}
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -125,7 +125,7 @@ violations[{"msg": msg}] {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -133,7 +133,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -167,7 +167,7 @@ violations[{"msg": msg}] {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
@@ -206,7 +206,7 @@ allow {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -214,7 +214,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -244,7 +244,7 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -252,7 +252,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -307,7 +307,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
@@ -348,7 +348,7 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -380,7 +380,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	err = e.Eval(context.Background(), pol, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &engif.Result{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
@@ -438,7 +438,7 @@ violations[{"msg": msg}] {`,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{},
+	err = e.Eval(context.Background(), map[string]any{}, nil,
 		&engif.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
@@ -462,7 +462,7 @@ violations[{"msg": msg}] {
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{},
+	err = e.Eval(context.Background(), map[string]any{}, nil,
 		&engif.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
