@@ -177,3 +177,56 @@ func (mr *MockPropertiesServiceMockRecorder) SaveAllProperties(ctx, entityID, pr
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllProperties", reflect.TypeOf((*MockPropertiesService)(nil).SaveAllProperties), ctx, entityID, props, opts)
 }
+
+// MockEntityWithPropertiesFetcher is a mock of EntityWithPropertiesFetcher interface.
+type MockEntityWithPropertiesFetcher struct {
+	ctrl     *gomock.Controller
+	recorder *MockEntityWithPropertiesFetcherMockRecorder
+}
+
+// MockEntityWithPropertiesFetcherMockRecorder is the mock recorder for MockEntityWithPropertiesFetcher.
+type MockEntityWithPropertiesFetcherMockRecorder struct {
+	mock *MockEntityWithPropertiesFetcher
+}
+
+// NewMockEntityWithPropertiesFetcher creates a new mock instance.
+func NewMockEntityWithPropertiesFetcher(ctrl *gomock.Controller) *MockEntityWithPropertiesFetcher {
+	mock := &MockEntityWithPropertiesFetcher{ctrl: ctrl}
+	mock.recorder = &MockEntityWithPropertiesFetcherMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockEntityWithPropertiesFetcher) EXPECT() *MockEntityWithPropertiesFetcherMockRecorder {
+	return m.recorder
+}
+
+// EntityWithPropertiesAsProto mocks base method.
+func (m *MockEntityWithPropertiesFetcher) EntityWithPropertiesAsProto(ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityWithPropertiesAsProto", ctx, ewp, provMgr)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityWithPropertiesAsProto indicates an expected call of EntityWithPropertiesAsProto.
+func (mr *MockEntityWithPropertiesFetcherMockRecorder) EntityWithPropertiesAsProto(ctx, ewp, provMgr any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesAsProto", reflect.TypeOf((*MockEntityWithPropertiesFetcher)(nil).EntityWithPropertiesAsProto), ctx, ewp, provMgr)
+}
+
+// EntityWithPropertiesByID mocks base method.
+func (m *MockEntityWithPropertiesFetcher) EntityWithPropertiesByID(ctx context.Context, entityID uuid.UUID, opts *service.CallOptions) (*models.EntityWithProperties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityWithPropertiesByID", ctx, entityID, opts)
+	ret0, _ := ret[0].(*models.EntityWithProperties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityWithPropertiesByID indicates an expected call of EntityWithPropertiesByID.
+func (mr *MockEntityWithPropertiesFetcherMockRecorder) EntityWithPropertiesByID(ctx, entityID, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesByID", reflect.TypeOf((*MockEntityWithPropertiesFetcher)(nil).EntityWithPropertiesByID), ctx, entityID, opts)
+}

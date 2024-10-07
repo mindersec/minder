@@ -56,14 +56,7 @@ const (
 
 // PropertiesService is the interface for the properties service
 type PropertiesService interface {
-	// EntityWithPropertiesAsProto calls the provider to convert the entity with properties to the appropriate proto message
-	EntityWithPropertiesAsProto(
-		ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
-	) (protoreflect.ProtoMessage, error)
-	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
-	EntityWithPropertiesByID(
-		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
-	) (*models.EntityWithProperties, error)
+	EntityWithPropertiesFetcher
 	// EntityWithPropertiesByUpstreamHint fetches an entity by upstream properties
 	// and returns the entity with its properties. It is expected that the caller
 	// does NOT know the project or provider ID. Whatever hints it may have
@@ -113,6 +106,18 @@ type PropertiesService interface {
 	ReplaceProperty(
 		ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, opts *CallOptions,
 	) error
+}
+
+// EntityWithPropertiesFetcher is a convenience interface for fetching an entity with properties
+type EntityWithPropertiesFetcher interface {
+	// EntityWithPropertiesAsProto calls the provider to convert the entity with properties to the appropriate proto message
+	EntityWithPropertiesAsProto(
+		ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
+	) (protoreflect.ProtoMessage, error)
+	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
+	EntityWithPropertiesByID(
+		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
+	) (*models.EntityWithProperties, error)
 }
 
 type propertiesServiceOption func(*propertiesService)

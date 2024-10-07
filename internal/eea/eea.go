@@ -33,7 +33,10 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/manager"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // EEA is the Event Execution Aggregator
@@ -41,14 +44,20 @@ type EEA struct {
 	querier db.Store
 	evt     events.Publisher
 	cfg     *serverconfig.AggregatorConfig
+
+	entityFetcher service.EntityWithPropertiesFetcher
+	provMan       manager.ProviderManager
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig) *EEA {
+func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig,
+	ef service.EntityWithPropertiesFetcher, provMan manager.ProviderManager) *EEA {
 	return &EEA{
-		querier: querier,
-		evt:     evt,
-		cfg:     cfg,
+		querier:       querier,
+		evt:           evt,
+		cfg:           cfg,
+		entityFetcher: ef,
+		provMan:       provMan,
 	}
 }
 
@@ -222,9 +231,10 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
 			cache.ProjectID, cache.EntityInstanceID)
-		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			continue
-		} else if err != nil {
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, service.ErrEntityNotFound) {
+				continue
+			}
 			return fmt.Errorf("error building entity wrapper: %w", err)
 		}
 
@@ -269,16 +279,30 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	repoID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, r, err := getRepository(ctx, e.querier, projID, repoID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, repoID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting repository: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", repoID, projID)
+	}
+
+	rawRepo, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	r, ok := rawRepo.(*minderv1.Repository)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to repository")
 	}
 
 	return entities.NewEntityInfoWrapper().
 		WithRepository(r).
 		WithRepositoryID(repoID).
 		WithProjectID(projID).
-		WithProviderID(providerID), nil
+		WithProviderID(ent.Entity.ProviderID), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
@@ -304,9 +328,25 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	prID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, repoID, pr, err := getPullRequest(ctx, e.querier, projID, prID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, prID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting pull request: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", prID, projID)
+	}
+
+	repoID := ent.Entity.OriginatedFrom
+
+	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	pr, ok := rawPR.(*minderv1.PullRequest)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to pull request")
 	}
 
 	return entities.NewEntityInfoWrapper().
@@ -314,5 +354,5 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		WithProjectID(projID).
 		WithPullRequest(pr).
 		WithPullRequestID(prID).
-		WithProviderID(providerID), nil
+		WithProviderID(ent.Entity.ProviderID), nil
 }

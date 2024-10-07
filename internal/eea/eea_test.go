@@ -17,7 +17,6 @@ package eea_test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -37,7 +36,12 @@ import (
 	"github.com/stacklok/minder/internal/db/embedded"
 	"github.com/stacklok/minder/internal/eea"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/stacklok/minder/internal/entities/properties"
+	psvc "github.com/stacklok/minder/internal/entities/properties/service"
+	propsvcmock "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/events"
+	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -77,7 +81,10 @@ func TestAggregator(t *testing.T) {
 
 	aggr := eea.NewEEA(testQueries, evt, &serverconfig.AggregatorConfig{
 		LockInterval: eventThreshold,
-	})
+	},
+		// we don't need the properties service for this test. These are only needed
+		// for flushing all
+		nil, nil)
 
 	rateLimitedMessages := newTestPubSub()
 	flushedMessages := newTestPubSub()
@@ -172,20 +179,9 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	require.NoError(t, err, "expected no error when creating provider")
 
 	// setup repo
-	repo, err := testQueries.CreateRepository(ctx, db.CreateRepositoryParams{
-		ProjectID:  proj.ID,
-		Provider:   prov.Name,
-		ProviderID: prov.ID,
-		RepoName:   "test-repo",
-		RepoOwner:  "test-owner",
-		RepoID:     123,
-	})
-	require.NoError(t, err, "expected no error when creating repo")
-
-	_, err = testQueries.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
+	repo, err := testQueries.CreateEntity(ctx, db.CreateEntityParams{
 		EntityType: db.EntitiesRepository,
-		ID:         repo.ID,
-		Name:       repo.RepoName,
+		Name:       "test-repo",
 		ProjectID:  proj.ID,
 		ProviderID: prov.ID,
 	})
@@ -197,16 +193,19 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 func TestFlushAll(t *testing.T) {
 	t.Parallel()
 
+	repoID := uuid.New()
+	prID := uuid.New()
+	projectID := uuid.New()
+	providerID := uuid.New()
+
 	tests := []struct {
-		name        string
-		mockDBSetup func(context.Context, *mockdb.MockStore)
+		name             string
+		mockDBSetup      func(context.Context, *mockdb.MockStore)
+		mockPropSvcSetup func(*propsvcmock.MockEntityWithPropertiesFetcher)
 	}{
 		{
 			name: "flushes one repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				repoID := uuid.New()
-				projectID := uuid.New()
-
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
@@ -218,25 +217,29 @@ func TestFlushAll(t *testing.T) {
 						},
 					}, nil)
 
-				// subsequent repo fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
-
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Nil()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:         repoID,
+							Type:       minderv1.Entity_ENTITY_REPOSITORIES,
+							ProjectID:  projectID,
+							ProviderID: providerID,
+						},
+						Properties: &properties.Properties{},
+					}, nil)
+
+				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&minderv1.Repository{}, nil)
 			},
 		},
 		{
 			name: "flushes one artifact with repo and no project ID in the flush",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				repoID := uuid.New()
 				artID := uuid.New()
-				projectID := uuid.New()
 
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
@@ -269,13 +272,13 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			},
 		},
 		{
 			name: "flushes one artifact with repo and a set project ID in the flush",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				repoID := uuid.New()
 				artID := uuid.New()
-				projectID := uuid.New()
 
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
@@ -307,13 +310,14 @@ func TestFlushAll(t *testing.T) {
 
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
 			},
 		},
 		{
 			name: "flushes one artifact with no repo and a set project ID in the flush",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
 				artID := uuid.New()
-				projectID := uuid.New()
 
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
@@ -337,14 +341,12 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			},
 		},
 		{
 			name: "flushes one PR",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				repoID := uuid.New()
-				prID := uuid.New()
-				projectID := uuid.New()
-
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
@@ -356,21 +358,24 @@ func TestFlushAll(t *testing.T) {
 						},
 					}, nil)
 
-				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
-				mockStore.EXPECT().GetPullRequestByID(ctx, prID).
-					Return(db.PullRequest{
-						ID: prID,
-					}, nil)
-
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(prID), gomock.Nil()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:             prID,
+							Type:           minderv1.Entity_ENTITY_PULL_REQUESTS,
+							ProjectID:      projectID,
+							ProviderID:     providerID,
+							OriginatedFrom: repoID,
+						},
+						Properties: &properties.Properties{},
+					}, nil)
+
+				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&minderv1.PullRequest{}, nil)
 			},
 		},
 	}
@@ -388,6 +393,9 @@ func TestFlushAll(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
+
+			propsvc := propsvcmock.NewMockEntityWithPropertiesFetcher(ctrl)
+			provman := mockmanager.NewMockProviderManager(ctrl)
 
 			evt, err := events.Setup(ctx, &serverconfig.EventConfig{
 				Driver:    "go-channel",
@@ -410,9 +418,10 @@ func TestFlushAll(t *testing.T) {
 			var eventThreshold int64 = 1
 			aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
 				LockInterval: eventThreshold,
-			})
+			}, propsvc, provman)
 
 			tt.mockDBSetup(ctx, mockStore)
+			tt.mockPropSvcSetup(propsvc)
 
 			go func() {
 				t.Log("Flushing all")
@@ -448,7 +457,9 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 	// use in-memory postgres for this test
 	aggr := eea.NewEEA(testQueries, evt, &serverconfig.AggregatorConfig{
 		LockInterval: eventThreshold,
-	})
+	},
+		// These are not used since we're not flushing any entities
+		nil, nil)
 
 	flushedMessages := newTestPubSub()
 
@@ -493,7 +504,9 @@ func TestFlushAllListFlushFails(t *testing.T) {
 	var eventThreshold int64 = 1
 	aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
 		LockInterval: eventThreshold,
-	})
+	},
+		// These are not used since we're not flushing any entities
+		nil, nil)
 
 	mockStore.EXPECT().ListFlushCache(ctx).
 		Return(nil, fmt.Errorf("expected error"))
@@ -517,6 +530,8 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	propsvc := propsvcmock.NewMockEntityWithPropertiesFetcher(ctrl)
+	provman := mockmanager.NewMockProviderManager(ctrl)
 
 	flushedMessages := newTestPubSub()
 
@@ -539,7 +554,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	var eventThreshold int64 = 1
 	aggr := eea.NewEEA(mockStore, evt, &serverconfig.AggregatorConfig{
 		LockInterval: eventThreshold,
-	})
+	}, propsvc, provman)
 
 	repoID := uuid.New()
 	projID := uuid.New()
@@ -556,8 +571,8 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 			},
 		}, nil)
 
-	mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
-		Return(db.Repository{}, sql.ErrNoRows)
+	propsvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Nil()).
+		Return(nil, psvc.ErrEntityNotFound)
 
 	t.Log("Flushing all")
 	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
