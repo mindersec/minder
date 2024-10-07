@@ -152,9 +152,6 @@ func WithSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
 		mockStore.EXPECT().
 			DeletePullRequest(gomock.Any(), gomock.Any()).
 			Return(nil)
-		mockStore.EXPECT().
-			DeleteEntityByName(gomock.Any(), gomock.Any()).
-			Return(nil)
 	}
 }
 
