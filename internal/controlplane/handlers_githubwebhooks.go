@@ -27,7 +27,6 @@ import (
 	"mime"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -948,8 +947,7 @@ func (s *Server) processRepositoryEvent(
 	return s.sendEvaluateRepoMessage(event.GetRepo(), events.TopicQueueRefreshEntityAndEvaluate)
 }
 
-// nolint:gocyclo // This function will be re-simplified real soon
-func (s *Server) processPullRequestEvent(
+func (_ *Server) processPullRequestEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -983,17 +981,8 @@ func (s *Server) processPullRequestEvent(
 	}
 
 	ghRepo := event.GetRepo()
-	repoEnt, err := s.fetchRepo(ctx, &repo{
-		ID:      ghRepo.ID,
-		HTMLURL: ghRepo.HTMLURL,
-		Private: ghRepo.Private,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	pullProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: event.GetPullRequest().GetID(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetPullRequest().GetID()),
 		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
 		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
 		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
@@ -1003,39 +992,46 @@ func (s *Server) processPullRequestEvent(
 		return nil, fmt.Errorf("error creating pull request properties: %w", err)
 	}
 
-	provider, err := s.providerManager.InstantiateFromID(ctx, repoEnt.Entity.ProviderID)
+	repoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.GetID()),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error instantiating provider: %w", err)
+		return nil, fmt.Errorf("error creating repository properties for PR origination: %w", err)
 	}
 
-	prEntWithProps, err := s.reconcilePrWithDb(ctx, provider, repoEnt, pullProps)
-	if errors.Is(err, errNotHandled) {
-		return nil, err
-	} else if err != nil {
-		return nil, fmt.Errorf("error reconciling PR with DB: %w", err)
+	// it is bit of a code smell to use the fetcher here just to format the name
+	name, err := ghprop.NewPullRequestFetcher().GetName(pullProps)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching pull request name: %w", err)
 	}
+	nameProp, err := properties.NewProperty(name)
+	if err != nil {
+		return nil, fmt.Errorf("error creating property for the name: %w", err)
+	}
+	pullProps.SetProperty(properties.PropertyName, nameProp)
+
+	var topic string
+	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
+	case webhookActionEventOpened,
+		webhookActionEventReopened,
+		webhookActionEventSynchronize:
+		topic = events.TopicQueueOriginatingEntityAdd
+	case webhookActionEventClosed:
+		topic = events.TopicQueueOriginatingEntityDelete
+	default:
+		zerolog.Ctx(ctx).Info().Msgf("action %s is not handled for pull requests",
+			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
+		return nil, errNotHandled
+	}
+
+	prMsg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_PULL_REQUESTS, pullProps).
+		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
 	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
 
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, prEntWithProps, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
-	}
-
-	pbPullRequest, ok := pbMsg.(*pb.PullRequest)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithPullRequest(pbPullRequest).
-		WithPullRequestID(prEntWithProps.Entity.ID).
-		WithRepositoryID(repoEnt.Entity.ID)
-
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
+	return &processingResult{topic: topic, wrapper: prMsg}, nil
 }
 
 // processInstallationAppEvent processes events related to changes to
@@ -1237,7 +1233,7 @@ func (_ *Server) sendEvaluateRepoMessage(
 ) (*processingResult, error) {
 	lookByProps, err := properties.NewProperties(map[string]any{
 		// the PropertyUpstreamID is always a string
-		properties.PropertyUpstreamID: strconv.FormatInt(repo.GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository properties: %w", err)
@@ -1429,7 +1425,7 @@ func packageEventToProperties(
 	}
 
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: strconv.FormatInt(*event.Package.ID, 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(*event.Package.ID),
 		// we need these to look up the package properties
 		ghprop.ArtifactPropertyOwner: owner,
 		ghprop.ArtifactPropertyName:  *event.Package.Name,
@@ -1515,137 +1511,4 @@ func updateArtifactVersionFromRegistry(
 		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
 	}
 	return nil
-}
-
-func (s *Server) reconcilePrWithDb(
-	ctx context.Context,
-	provider provifv1.Provider,
-	repoEnt *models.EntityWithProperties,
-	pullProps *properties.Properties,
-) (*models.EntityWithProperties, error) {
-	l := zerolog.Ctx(ctx)
-
-	var retErr error
-	var retPr *models.EntityWithProperties
-
-	pullName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request name: %w", err)
-	}
-
-	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
-	case webhookActionEventOpened,
-		webhookActionEventReopened,
-		webhookActionEventSynchronize:
-		var err error
-		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
-			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
-				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			prEnt, err := t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
-				ID:         dbPr.ID,
-				EntityType: db.EntitiesPullRequest,
-				Name:       pullName,
-				ProjectID:  repoEnt.Entity.ProjectID,
-				ProviderID: repoEnt.Entity.ProviderID,
-				OriginatedFrom: uuid.NullUUID{
-					UUID:  repoEnt.Entity.ID,
-					Valid: true,
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			refreshedProps, err := s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps, t)
-			if err != nil {
-				return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
-			}
-
-			return models.NewEntityWithProperties(prEnt, refreshedProps), nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot upsert PR %d in repo %s: %w",
-				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-				repoEnt.Properties.GetProperty(properties.PropertyName).GetString(),
-				err)
-		}
-		retErr = nil
-	case webhookActionEventClosed:
-		_, err := db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
-			err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
-				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			err = t.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
-				Name:      pullName,
-				ProjectID: repoEnt.Entity.ProjectID,
-			})
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return nil, err
-			}
-
-			return nil, nil
-		})
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("cannot delete PR record %d in repo %s",
-				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-				repoEnt.Properties.GetProperty(properties.PropertyName).GetString())
-		}
-		retPr = nil
-		retErr = errNotHandled
-	default:
-		l.Info().Msgf("action %s is not handled for pull requests",
-			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
-		retPr = nil
-		retErr = errNotHandled
-	}
-
-	return retPr, retErr
-}
-
-func (s *Server) updatePullRequestInfoFromProvider(
-	ctx context.Context,
-	provider provifv1.Provider,
-	repoEnt *models.EntityWithProperties,
-	pullProps *properties.Properties,
-	qtx db.ExtendQuerier,
-) (*properties.Properties, error) {
-	// create properties.Name for the PR
-	prName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request name: %w", err)
-	}
-
-	lookupPropertiesMap := map[string]any{
-		properties.PropertyName:       prName,
-		properties.PropertyUpstreamID: pullProps.GetProperty(properties.PropertyUpstreamID).GetString(),
-	}
-
-	lookupProperties, err := properties.NewProperties(lookupPropertiesMap)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
-
-	prProps, err := s.props.RetrieveAllProperties(ctx, provider,
-		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS,
-		service.ReadBuilder().WithStoreOrTransaction(qtx))
-
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving properties: %w", err)
-	}
-
-	return prProps, nil
 }

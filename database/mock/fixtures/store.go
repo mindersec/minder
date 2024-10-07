@@ -152,9 +152,6 @@ func WithSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
 		mockStore.EXPECT().
 			DeletePullRequest(gomock.Any(), gomock.Any()).
 			Return(nil)
-		mockStore.EXPECT().
-			DeleteEntityByName(gomock.Any(), gomock.Any()).
-			Return(nil)
 	}
 }
 
@@ -247,6 +244,17 @@ func WithSuccessfulGetEntitiesByProjectHierarchy(
 				gomock.Any(),
 				gomock.Cond(isSubset)).
 			Return(entities, nil)
+	}
+}
+
+func WithSuccessfulDeleteEntity(entID, projectID uuid.UUID) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			DeleteEntity(gomock.Any(), db.DeleteEntityParams{
+				ID:        entID,
+				ProjectID: projectID,
+			}).
+			Return(nil)
 	}
 }
 

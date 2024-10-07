@@ -150,7 +150,7 @@ func getPrWrapper(
 
 	prProps := map[string]any{
 		// general entity
-		properties.PropertyUpstreamID: prReply.GetID(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(prReply.GetID()),
 		properties.PropertyName:       fmt.Sprintf("%s/%s/%d", owner, name, intId),
 		// github-specific
 		PullPropertyURL: prReply.GetHTMLURL(),

@@ -82,19 +82,18 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
-	prov, err := d.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
+	childEwp, err := getEntityInner(
+		ctx,
+		entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
+		d.propSvc,
+		propertyService.CallBuilder().WithStoreOrTransaction(txq))
 	if err != nil {
-		return nil, fmt.Errorf("error getting provider: %w", err)
+		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
-	childEntName, err := prov.GetEntityName(entMsg.Entity.Type, childProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting child entity name: %w", err)
-	}
-
-	err = txq.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
-		Name:      childEntName,
-		ProjectID: parentEwp.Entity.ProjectID,
+	err = txq.DeleteEntity(ctx, db.DeleteEntityParams{
+		ID:        childEwp.Entity.ID,
+		ProjectID: childEwp.Entity.ProjectID,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err

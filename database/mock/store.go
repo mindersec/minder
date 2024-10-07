@@ -473,20 +473,6 @@ func (mr *MockStoreMockRecorder) DeleteEntity(arg0, arg1 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntity", reflect.TypeOf((*MockStore)(nil).DeleteEntity), arg0, arg1)
 }
 
-// DeleteEntityByName mocks base method.
-func (m *MockStore) DeleteEntityByName(arg0 context.Context, arg1 db.DeleteEntityByNameParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEntityByName", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteEntityByName indicates an expected call of DeleteEntityByName.
-func (mr *MockStoreMockRecorder) DeleteEntityByName(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityByName", reflect.TypeOf((*MockStore)(nil).DeleteEntityByName), arg0, arg1)
-}
-
 // DeleteEvaluationHistoryByIDs mocks base method.
 func (m *MockStore) DeleteEvaluationHistoryByIDs(arg0 context.Context, arg1 []uuid.UUID) (int64, error) {
 	m.ctrl.T.Helper()
