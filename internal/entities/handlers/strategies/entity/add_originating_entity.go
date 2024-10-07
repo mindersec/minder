@@ -72,17 +72,22 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, fmt.Errorf("error getting parent entity: %w", err)
 		}
 
-		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, childProps, t)
-		if err != nil {
-			return nil, fmt.Errorf("error upserting legacy entity: %w", err)
-		}
-
 		prov, err := a.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting provider: %w", err)
 		}
 
-		childEntName, err := prov.GetEntityName(entMsg.Entity.Type, childProps)
+		upstreamProps, err := prov.FetchAllProperties(ctx, childProps, entMsg.Entity.Type, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving properties: %w", err)
+		}
+
+		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, upstreamProps, t)
+		if err != nil {
+			return nil, fmt.Errorf("error upserting legacy entity: %w", err)
+		}
+
+		childEntName, err := prov.GetEntityName(entMsg.Entity.Type, upstreamProps)
 		if err != nil {
 			return nil, fmt.Errorf("error getting child entity name: %w", err)
 		}
@@ -102,13 +107,14 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, err
 		}
 
-		upstreamProps, err := a.propSvc.RetrieveAllProperties(ctx, prov,
+		// Persist the properties
+		upstreamProps, err = a.propSvc.RetrieveAllProperties(ctx, prov,
 			parentEwp.Entity.ProjectID, parentEwp.Entity.ProviderID,
 			childProps, entMsg.Entity.Type,
 			propertyService.ReadBuilder().WithStoreOrTransaction(t),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
+			return nil, fmt.Errorf("error persisting properties: %w", err)
 		}
 
 		return models.NewEntityWithProperties(childEnt, upstreamProps), nil

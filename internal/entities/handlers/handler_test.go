@@ -98,6 +98,15 @@ type (
 	providerMockBuilder = func(controller *gomock.Controller) providerMock
 )
 
+func getPullRequestProperties() *properties.Properties {
+	props, err := properties.NewProperties(pullRequestPropMap)
+	if err != nil {
+		panic(err)
+	}
+
+	return props
+}
+
 func newProviderMock(opts ...func(providerMock)) providerMockBuilder {
 	return func(ctrl *gomock.Controller) providerMock {
 		mock := mockgithub.NewMockGitHub(ctrl)
@@ -113,6 +122,14 @@ func withSuccessfulGetEntityName(name string) func(providerMock) {
 		mock.EXPECT().
 			GetEntityName(gomock.Any(), gomock.Any()).
 			Return(name, nil)
+	}
+}
+
+func withSuccessfulFetchAllProperties(props *properties.Properties) func(mock providerMock) {
+	return func(mock providerMock) {
+		mock.EXPECT().
+			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(props, nil)
 	}
 }
 
@@ -415,7 +432,10 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 						EntityType: db.EntitiesRepository,
 					}),
 			),
-			providerSetup: newProviderMock(withSuccessfulGetEntityName(pullName)),
+			providerSetup: newProviderMock(
+				withSuccessfulGetEntityName(pullName),
+				withSuccessfulFetchAllProperties(getPullRequestProperties()),
+			),
 			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
 				return provManFixtures.NewProviderManagerMock(
 					provManFixtures.WithSuccessfulInstantiateFromID(prov),
