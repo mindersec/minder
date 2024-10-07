@@ -19,10 +19,11 @@ import (
 	"testing"
 
 	go_github "github.com/google/go-github/v63/github"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/stacklok/minder/internal/providers/github/properties"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestConvertRepositories(t *testing.T) {

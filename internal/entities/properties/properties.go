@@ -18,13 +18,13 @@ package properties
 
 import (
 	"fmt"
-	"iter"
 	"strconv"
 	"strings"
 
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/structpb"
+	"iter"
 )
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
