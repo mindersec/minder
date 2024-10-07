@@ -72,17 +72,30 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, fmt.Errorf("error getting parent entity: %w", err)
 		}
 
-		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, childProps, t)
-		if err != nil {
-			return nil, fmt.Errorf("error upserting legacy entity: %w", err)
-		}
-
 		prov, err := a.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting provider: %w", err)
 		}
 
-		childEntName, err := prov.GetEntityName(entMsg.Entity.Type, childProps)
+		// we don't include the transaction here so we don't fail it.
+		// This will not find anything in the DB and will just return the properties
+		// This gets the properties from the provider so we can continue with
+		// the entity creation.
+		upstreamProps, err := a.propSvc.RetrieveAllProperties(ctx, prov,
+			parentEwp.Entity.ProjectID, parentEwp.Entity.ProviderID,
+			childProps, entMsg.Entity.Type,
+			nil,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving properties: %w", err)
+		}
+
+		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, upstreamProps, t)
+		if err != nil {
+			return nil, fmt.Errorf("error upserting legacy entity: %w", err)
+		}
+
+		childEntName, err := prov.GetEntityName(entMsg.Entity.Type, upstreamProps)
 		if err != nil {
 			return nil, fmt.Errorf("error getting child entity name: %w", err)
 		}
@@ -102,13 +115,14 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, err
 		}
 
-		upstreamProps, err := a.propSvc.RetrieveAllProperties(ctx, prov,
+		// Persist the properties
+		upstreamProps, err = a.propSvc.RetrieveAllProperties(ctx, prov,
 			parentEwp.Entity.ProjectID, parentEwp.Entity.ProviderID,
 			childProps, entMsg.Entity.Type,
 			propertyService.ReadBuilder().WithStoreOrTransaction(t),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
+			return nil, fmt.Errorf("error persisting properties: %w", err)
 		}
 
 		return models.NewEntityWithProperties(childEnt, upstreamProps), nil
