@@ -80,7 +80,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		return engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
-				"status":  "failed",
 				"message": "no results",
 			},
 			"no results",
@@ -94,7 +93,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		return engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
-				"status":  "failed",
 				"message": "no expressions",
 			},
 			"no expressions",
@@ -109,7 +107,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		return engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
-				"status":  "failed",
 				"message": "unable to get result expression",
 			},
 			"unable to get result expression",
@@ -132,7 +129,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		return engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
-				"status":  "failed",
 				"message": "unable to get allow result",
 			},
 			"unable to get allow result",
@@ -144,7 +140,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		return engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
-				"status":  "failed",
 				"message": "allow result is not a bool",
 			},
 			"allow result is not a bool",
@@ -171,7 +166,6 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 	return engerrors.NewDetailedErrEvaluationFailed(
 		templates.RegoDenyByDefaultTemplate,
 		map[string]any{
-			"status":     "failed",
 			"message":    message,
 			"entityName": entityName,
 		},

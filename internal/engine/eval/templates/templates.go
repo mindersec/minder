@@ -23,8 +23,8 @@ import (
 // RegoDenyByDefaultTemplate is the template for details of the `rego`
 // evaluation engine of type `deny-by-default`.
 //
-// It expects a `status` and a `message` scalar values to be set. It
-// optionally accepts an `entityName` string.
+// It expects a `message` scalar values to be set. It optionally
+// accepts an `entityName` string.
 //
 //go:embed regoDenyByDefaultTemplate.tmpl
 var RegoDenyByDefaultTemplate string
