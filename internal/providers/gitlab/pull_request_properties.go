@@ -83,8 +83,8 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 	}
 
 	// Validate - merge request upstream ID must match the one we requested
-	if FormatPullRequestUpstreamID(mr.ID) != uid {
-		return nil, fmt.Errorf("merge request ID mismatch: %s != %s", FormatPullRequestUpstreamID(mr.ID), uid)
+	if res := FormatPullRequestUpstreamID(mr.ID); res != uid {
+		return nil, fmt.Errorf("merge request ID mismatch: %s != %s", res, uid)
 	}
 
 	proj, err := c.getGitLabProject(ctx, pid)

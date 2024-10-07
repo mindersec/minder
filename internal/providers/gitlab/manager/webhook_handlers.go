@@ -111,24 +111,25 @@ func (m *providerClassManager) handleMergeRequest(l zerolog.Logger, r *http.Requ
 
 	mrID := mergeRequestEvent.ObjectAttributes.IID
 	if mrID == 0 {
-		l.Error().Msg("merge request event missing IID")
 		return fmt.Errorf("merge request event missing IID")
 	}
 
 	rawID := mergeRequestEvent.Project.ID
 	if rawID == 0 {
-		l.Error().Msg("merge request event missing project ID")
 		return fmt.Errorf("merge request event missing project ID")
 	}
 
 	switch {
 	case mergeRequestEvent.ObjectAttributes.Action == "open",
 		mergeRequestEvent.ObjectAttributes.Action == "reopen":
-		return m.publishOriginatingOpenMergeRequest(l, rawID, mrID)
+		return m.publishMergeRequestMessage(rawID, mrID,
+			events.TopicQueueOriginatingEntityAdd)
 	case mergeRequestEvent.ObjectAttributes.Action == "close":
-		return m.publishClosedMergeRequest(l, rawID, mrID)
+		return m.publishMergeRequestMessage(rawID, mrID,
+			events.TopicQueueOriginatingEntityDelete)
 	case mergeRequestEvent.ObjectAttributes.Action == "update":
-		return m.publishRefreshAndEvalForMergeRequest(l, rawID, mrID)
+		return m.publishMergeRequestMessage(rawID, mrID,
+			events.TopicQueueRefreshEntityAndEvaluate)
 	default:
 		return nil
 	}
@@ -170,23 +171,7 @@ func (m *providerClassManager) publishRefreshAndEvalForGitlabProject(
 	return nil
 }
 
-func (m *providerClassManager) publishOriginatingOpenMergeRequest(
-	l zerolog.Logger, rawProjectID int, mrID int) error {
-	return m.publishMergeRequestMessage(l, mrID, rawProjectID, events.TopicQueueOriginatingEntityAdd)
-}
-
-func (m *providerClassManager) publishClosedMergeRequest(
-	l zerolog.Logger, rawProjectID int, mrID int) error {
-	return m.publishMergeRequestMessage(l, mrID, rawProjectID, events.TopicQueueOriginatingEntityDelete)
-}
-
-func (m *providerClassManager) publishRefreshAndEvalForMergeRequest(
-	l zerolog.Logger, rawProjectID int, mrID int) error {
-	return m.publishMergeRequestMessage(l, mrID, rawProjectID, events.TopicQueueRefreshEntityAndEvaluate)
-}
-
-func (m *providerClassManager) publishMergeRequestMessage(
-	l zerolog.Logger, mrID int, rawProjectID int, queueTopic string) error {
+func (m *providerClassManager) publishMergeRequestMessage(mrID int, rawProjectID int, queueTopic string) error {
 	mrUpstreamID := gitlab.FormatPullRequestUpstreamID(mrID)
 	mrProjectID := gitlab.FormatRepositoryUpstreamID(rawProjectID)
 
@@ -196,7 +181,6 @@ func (m *providerClassManager) publishMergeRequestMessage(
 		gitlab.PullRequestProjectID:   mrProjectID,
 	})
 	if err != nil {
-		l.Error().Err(err).Msg("error creating identifying properties")
 		return fmt.Errorf("error creating identifying properties: %w", err)
 	}
 
@@ -204,7 +188,6 @@ func (m *providerClassManager) publishMergeRequestMessage(
 		properties.PropertyUpstreamID: mrProjectID,
 	})
 	if err != nil {
-		l.Error().Err(err).Msg("error creating repo identifying properties")
 		return fmt.Errorf("error creating repo identifying properties: %w", err)
 	}
 
@@ -218,14 +201,11 @@ func (m *providerClassManager) publishMergeRequestMessage(
 	msgID := uuid.New().String()
 	msg := message.NewMessage(msgID, nil)
 	if err := outm.ToMessage(msg); err != nil {
-		l.Error().Err(err).Msg("error converting message to protobuf")
 		return fmt.Errorf("error converting message to protobuf: %w", err)
 	}
 
 	// Publish message
-	l.Debug().Str("msg_id", msgID).Msg("publishing refresh and eval message")
 	if err := m.pub.Publish(queueTopic, msg); err != nil {
-		l.Error().Err(err).Msg("error publishing refresh and eval message")
 		return fmt.Errorf("error publishing refresh and eval message: %w", err)
 	}
 
