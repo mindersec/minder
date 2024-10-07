@@ -77,15 +77,7 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, fmt.Errorf("error getting provider: %w", err)
 		}
 
-		// we don't include the transaction here so we don't fail it.
-		// This will not find anything in the DB and will just return the properties
-		// This gets the properties from the provider so we can continue with
-		// the entity creation.
-		upstreamProps, err := a.propSvc.RetrieveAllProperties(ctx, prov,
-			parentEwp.Entity.ProjectID, parentEwp.Entity.ProviderID,
-			childProps, entMsg.Entity.Type,
-			nil,
-		)
+		upstreamProps, err := prov.FetchAllProperties(ctx, childProps, entMsg.Entity.Type, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving properties: %w", err)
 		}
