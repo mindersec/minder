@@ -248,6 +248,9 @@ message PullRequest {
     string action = 7;      // The action that triggered the webhook
 
     Context context = 8;
+
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 9;
 }
 
 // Stubs for the SDLC entities

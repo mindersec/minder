@@ -26,6 +26,7 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// Repository Properties
 const (
 	// RepoPropertyProjectName represents the gitlab project
 	RepoPropertyProjectName = "gitlab/project_name"
@@ -43,6 +44,24 @@ const (
 	RepoPropertyHookURL = "gitlab/hook_url"
 )
 
+// Pull Request Properties
+const (
+	// PullRequestProjectID represents the gitlab project ID
+	PullRequestProjectID = "gitlab/project_id"
+	// PullRequestNumber represents the gitlab merge request number
+	PullRequestNumber = "gitlab/merge_request_number"
+	// PullRequestSourceBranch represents the gitlab source branch
+	PullRequestSourceBranch = "gitlab/source_branch"
+	// PullRequestTargetBranch represents the gitlab target branch
+	PullRequestTargetBranch = "gitlab/target_branch"
+	// PullRequestAuthor represents the gitlab author
+	PullRequestAuthor = "gitlab/author"
+	// PullRequestCommitSHA represents the gitlab commit SHA
+	PullRequestCommitSHA = "gitlab/commit_sha"
+	// PullRequestURL represents the gitlab merge request URL
+	PullRequestURL = "gitlab/merge_request_url"
+)
+
 // FetchAllProperties implements the provider interface
 func (c *gitlabClient) FetchAllProperties(
 	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
@@ -51,7 +70,15 @@ func (c *gitlabClient) FetchAllProperties(
 		return nil, fmt.Errorf("entity type %s not supported", entType)
 	}
 
-	return c.getPropertiesForRepo(ctx, getByProps)
+	//nolint:exhaustive // We only support two entity types for now.
+	switch entType {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return c.getPropertiesForRepo(ctx, getByProps)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return c.getPropertiesForPullRequest(ctx, getByProps)
+	default:
+		return nil, fmt.Errorf("entity type %s not supported", entType)
+	}
 }
 
 // FetchProperty implements the provider interface
@@ -71,6 +98,18 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
 
+	//nolint:exhaustive // We only support two entity types for now.
+	switch entityType {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return getRepoNameFromProperties(props)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return getPullRequestNameFromProperties(props)
+	default:
+		return "", fmt.Errorf("entity type %s not supported", entityType)
+	}
+}
+
+func getRepoNameFromProperties(props *properties.Properties) (string, error) {
 	groupName, err := getStringProp(props, RepoPropertyNamespace)
 	if err != nil {
 		return "", err
@@ -84,6 +123,25 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 	return formatRepoName(groupName, projectName), nil
 }
 
+func getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
+	groupName, err := getStringProp(props, RepoPropertyNamespace)
+	if err != nil {
+		return "", err
+	}
+
+	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	iid, err := getStringProp(props, PullRequestNumber)
+	if err != nil {
+		return "", err
+	}
+
+	return formatPullRequestName(groupName, projectName, iid), nil
+}
+
 // PropertiesToProtoMessage implements the ProtoMessageConverter interface
 func (c *gitlabClient) PropertiesToProtoMessage(
 	entType minderv1.Entity, props *properties.Properties,
@@ -92,13 +150,28 @@ func (c *gitlabClient) PropertiesToProtoMessage(
 		return nil, fmt.Errorf("entity type %s is not supported by the gitlab provider", entType)
 	}
 
-	return repoV1FromProperties(props)
+	//nolint:exhaustive // We only support two entity types for now.
+	switch entType {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
+		return repoV1FromProperties(props)
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		return pullRequestV1FromProperties(props)
+	default:
+		return nil, fmt.Errorf("entity type %s not supported", entType)
+	}
 }
 
 // FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
 // This is done so we don't have to deal with conversions in the provider
 // when dealing with entities
 func FormatRepositoryUpstreamID(id int) string {
+	return fmt.Sprintf("%d", id)
+}
+
+// FormatPullRequestUpstreamID returns the upstream ID for a gitlab merge request
+// This is done so we don't have to deal with conversions in the provider
+// when dealing with entities
+func FormatPullRequestUpstreamID(id int) string {
 	return fmt.Sprintf("%d", id)
 }
 
@@ -113,4 +186,8 @@ func getStringProp(props *properties.Properties, key string) (string, error) {
 
 func formatRepoName(groupName, projectName string) string {
 	return groupName + "/" + projectName
+}
+
+func formatPullRequestName(groupName, projectName, iid string) string {
+	return fmt.Sprintf("%s/%s/%s", groupName, projectName, iid)
 }

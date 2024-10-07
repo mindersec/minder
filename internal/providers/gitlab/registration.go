@@ -42,6 +42,12 @@ func (c *gitlabClient) RegisterEntity(
 		return nil, errors.New("unsupported entity type")
 	}
 
+	if entType != minderv1.Entity_ENTITY_REPOSITORIES {
+		// We only explicitly register repositories
+		// Pull requests are handled via origination
+		return props, nil
+	}
+
 	upstreamID := props.GetProperty(properties.PropertyUpstreamID).GetString()
 	if upstreamID == "" {
 		return nil, errors.New("missing upstream ID")
