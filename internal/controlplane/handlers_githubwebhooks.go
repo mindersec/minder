@@ -27,7 +27,6 @@ import (
 	"mime"
 	"net/http"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -983,7 +982,7 @@ func (_ *Server) processPullRequestEvent(
 
 	ghRepo := event.GetRepo()
 	pullProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: strconv.FormatInt(event.GetPullRequest().GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetPullRequest().GetID()),
 		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
 		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
 		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
@@ -994,7 +993,7 @@ func (_ *Server) processPullRequestEvent(
 	}
 
 	repoProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: strconv.FormatInt(ghRepo.GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.GetID()),
 		properties.PropertyName:       ghRepo.GetName(),
 	})
 	if err != nil {
@@ -1236,7 +1235,7 @@ func (_ *Server) sendEvaluateRepoMessage(
 ) (*processingResult, error) {
 	lookByProps, err := properties.NewProperties(map[string]any{
 		// the PropertyUpstreamID is always a string
-		properties.PropertyUpstreamID: strconv.FormatInt(repo.GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository properties: %w", err)
@@ -1428,7 +1427,7 @@ func packageEventToProperties(
 	}
 
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: strconv.FormatInt(*event.Package.ID, 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(*event.Package.ID),
 		// we need these to look up the package properties
 		ghprop.ArtifactPropertyOwner: owner,
 		ghprop.ArtifactPropertyName:  *event.Package.Name,

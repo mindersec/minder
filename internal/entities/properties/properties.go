@@ -24,8 +24,14 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog"
+	"golang.org/x/exp/constraints"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+// NumericalValueToUpstreamID converts a numerical value to a string for use as an upstream ID
+func NumericalValueToUpstreamID[T constraints.Integer](n T) string {
+	return strconv.FormatInt(int64(n), 10)
+}
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
 // with typed getters and handling of a nil receiver
