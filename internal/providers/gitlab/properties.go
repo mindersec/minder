@@ -26,6 +26,7 @@ import (
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// Repository Properties
 const (
 	// RepoPropertyProjectName represents the gitlab project
 	RepoPropertyProjectName = "gitlab/project_name"
@@ -41,8 +42,14 @@ const (
 	RepoPropertyHookID = "gitlab/hook_id"
 	// RepoPropertyHookURL represents the gitlab repo hook URL
 	RepoPropertyHookURL = "gitlab/hook_url"
+)
+
+// Pull Request Properties
+const (
 	// PullRequestProjectID represents the gitlab project ID
 	PullRequestProjectID = "gitlab/project_id"
+	// PullRequestNumber represents the gitlab merge request number
+	PullRequestNumber = "gitlab/merge_request_number"
 	// PullRequestSourceBranch represents the gitlab source branch
 	PullRequestSourceBranch = "gitlab/source_branch"
 	// PullRequestTargetBranch represents the gitlab target branch
@@ -115,17 +122,17 @@ func (c *gitlabClient) getRepoNameFromProperties(props *properties.Properties) (
 }
 
 func (c *gitlabClient) getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
-	iid, err := getStringProp(props, properties.PropertyUpstreamID)
-	if err != nil {
-		return "", err
-	}
-
 	groupName, err := getStringProp(props, RepoPropertyNamespace)
 	if err != nil {
 		return "", err
 	}
 
 	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	iid, err := getStringProp(props, PullRequestNumber)
 	if err != nil {
 		return "", err
 	}

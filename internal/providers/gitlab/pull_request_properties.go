@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/xanzy/go-gitlab"
@@ -37,12 +38,17 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 		return nil, fmt.Errorf("upstream ID not found or invalid: %w", err)
 	}
 
+	iid, err := getByProps.GetProperty(PullRequestNumber).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("merge request number not found or invalid: %w", err)
+	}
+
 	pid, err := getByProps.GetProperty(PullRequestProjectID).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("project ID not found or invalid: %w", err)
 	}
 
-	mrURLPath := fmt.Sprintf("projects/%s/merge_requests/%s", pid, uid)
+	mrURLPath, err := url.JoinPath("projects", pid, "merge_requests", iid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to join URL path for merge request using upstream ID: %w", err)
 	}
@@ -76,7 +82,12 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	proj, err := c.getGitLabProject(ctx, uid)
+	// Validate - merge request upstream ID must match the one we requested
+	if FormatPullRequestUpstreamID(mr.ID) != uid {
+		return nil, fmt.Errorf("merge request ID mismatch: %s != %s", FormatPullRequestUpstreamID(mr.ID), uid)
+	}
+
+	proj, err := c.getGitLabProject(ctx, pid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get project: %w", err)
 	}
@@ -98,16 +109,19 @@ func gitlabMergeRequestToProperties(mr *gitlab.MergeRequest, proj *gitlab.Projec
 	projName := proj.Name
 
 	outProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: FormatPullRequestUpstreamID(mr.IID),
+		// Unique upstream ID for the merge request
+		properties.PropertyUpstreamID: FormatPullRequestUpstreamID(mr.ID),
 		properties.PropertyName:       formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
 		RepoPropertyNamespace:         ns,
 		RepoPropertyProjectName:       projName,
-		PullRequestProjectID:          FormatRepositoryUpstreamID(proj.ID),
-		PullRequestSourceBranch:       mr.SourceBranch,
-		PullRequestTargetBranch:       mr.TargetBranch,
-		PullRequestCommitSHA:          mr.SHA,
-		PullRequestAuthor:             int64(mr.Author.ID),
-		PullRequestURL:                mr.WebURL,
+		// internal ID of the merge request
+		PullRequestNumber:       FormatPullRequestUpstreamID(mr.IID),
+		PullRequestProjectID:    FormatRepositoryUpstreamID(proj.ID),
+		PullRequestSourceBranch: mr.SourceBranch,
+		PullRequestTargetBranch: mr.TargetBranch,
+		PullRequestCommitSHA:    mr.SHA,
+		PullRequestAuthor:       int64(mr.Author.ID),
+		PullRequestURL:          mr.WebURL,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create properties: %w", err)
@@ -117,9 +131,14 @@ func gitlabMergeRequestToProperties(mr *gitlab.MergeRequest, proj *gitlab.Projec
 }
 
 func pullRequestV1FromProperties(prProps *properties.Properties) (*minderv1.PullRequest, error) {
-	upstreamID, err := prProps.GetProperty(properties.PropertyUpstreamID).AsString()
+	_, err := prProps.GetProperty(properties.PropertyUpstreamID).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get upstream ID: %w", err)
+	}
+
+	iid, err := getStringProp(prProps, PullRequestNumber)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get merge request number: %w", err)
 	}
 
 	ns, err := getStringProp(prProps, RepoPropertyNamespace)
@@ -148,7 +167,7 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*minderv1.Pull
 	}
 
 	// parse UpstreamID to int64
-	id, err := strconv.ParseInt(upstreamID, 10, 64)
+	id, err := strconv.ParseInt(iid, 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse upstream ID: %w", err)
 	}
