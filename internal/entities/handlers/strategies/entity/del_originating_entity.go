@@ -21,13 +21,13 @@ import (
 	"errors"
 	"fmt"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/handlers/strategies"
 	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
 	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -55,11 +55,6 @@ func NewDelOriginatingEntityStrategy(
 func (d *delOriginatingEntityStrategy) GetEntity(
 	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
 ) (*models.EntityWithProperties, error) {
-	childProps, err := properties.NewProperties(entMsg.Entity.GetByProps)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
-
 	tx, err := d.store.BeginTransaction()
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %w", err)
@@ -91,6 +86,11 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
+	prov, err := d.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider: %w", err)
+	}
+
 	err = txq.DeleteEntity(ctx, db.DeleteEntityParams{
 		ID:        childEwp.Entity.ID,
 		ProjectID: childEwp.Entity.ProjectID,
@@ -99,7 +99,12 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, err
 	}
 
-	err = d.deleteLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, childProps, txq)
+	pbEnt, err := prov.PropertiesToProtoMessage(entMsg.Entity.Type, childEwp.Properties)
+	if err != nil {
+		return nil, fmt.Errorf("error converting properties to proto message: %w", err)
+	}
+
+	err = d.deleteLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, pbEnt, txq)
 	if err != nil {
 		return nil, fmt.Errorf("error deleting legacy entity: %w", err)
 	}
@@ -115,21 +120,26 @@ func (_ *delOriginatingEntityStrategy) deleteLegacyEntity(
 	ctx context.Context,
 	entType minderv1.Entity,
 	parentEwp *models.EntityWithProperties,
-	childProps *properties.Properties,
+	pbEnt protoreflect.ProtoMessage,
 	t db.ExtendQuerier,
 ) error {
 	if entType == minderv1.Entity_ENTITY_PULL_REQUESTS {
+		pr, ok := pbEnt.(*minderv1.PullRequest)
+		if !ok {
+			return fmt.Errorf("unexpected proto message type: %T", pbEnt)
+		}
+
 		err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
 			RepositoryID: parentEwp.Entity.ID,
-			PrNumber:     childProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
+			PrNumber:     pr.Number,
 		})
 		if err != nil {
 			return fmt.Errorf("error deleting pull request: %w", err)
 		}
-	} else {
-		return fmt.Errorf("unsupported entity type: %v", entType)
 	}
 
+	// We simply return nil if the entity type is not supported
+	// since it may not be backed by a legacy entity
 	return nil
 }
 
