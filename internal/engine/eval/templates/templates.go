@@ -53,3 +53,11 @@ var TrustyTemplate string
 //
 //go:embed mixedScriptsTemplate.tmpl
 var MixedScriptsTemplate string
+
+// InvisibleCharactersTemplate is the template for details of the `homoglyphs`
+// evaluation engine of type `invisible_characters`.
+//
+// This template expects a list of Violations named `violations`.
+//
+//go:embed invisibleCharactersTemplate.tmpl
+var InvisibleCharactersTemplate string

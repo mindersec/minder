@@ -50,7 +50,7 @@ func (_ *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) 
 		return ""
 	}
 
-	return fmt.Sprintf("- `%U` \n", violation.invisibleChar)
+	return fmt.Sprintf("- `%U` \n", violation.InvisibleChar)
 }
 
 // GetFailedReviewText returns the failed review text for invisible characters
@@ -69,7 +69,7 @@ func (ice *InvisibleCharactersProcessor) FindInvisibleCharacters(line string) []
 	invisibleChars := make([]*Violation, 0)
 	for _, r := range line {
 		if _, exists := ice.invisibleCharacters[r]; exists {
-			invisibleChars = append(invisibleChars, &Violation{invisibleChar: r})
+			invisibleChars = append(invisibleChars, &Violation{InvisibleChar: r})
 		}
 	}
 

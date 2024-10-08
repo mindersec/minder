@@ -16,8 +16,8 @@ package domain
 
 // Violation contains the result of a homoglyph violation
 type Violation struct {
-	// invisibleChar an invisible character found in a line.
-	invisibleChar rune
+	// InvisibleChar an invisible character found in a line.
+	InvisibleChar rune
 
 	// mixedScript is a mixed script found in a line.
 	MixedScript *MixedScriptInfo
