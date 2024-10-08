@@ -884,9 +884,8 @@ func (s *Server) processRelevantRepositoryEvent(
 		repoEvent := messages.NewMinderEvent().
 			WithProjectID(repoEntity.Entity.ProjectID).
 			WithProviderID(repoEntity.Entity.ProviderID).
-			WithEntityType("repository").
-			WithEntityID(repoEntity.Entity.ID).
-			WithAttribute("repoID", repoEntity.Entity.ID.String())
+			WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+			WithEntityID(repoEntity.Entity.ID)
 
 		return &processingResult{
 			topic:   events.TopicQueueReconcileEntityDelete,
@@ -1195,9 +1194,8 @@ func (s *Server) repositoryRemoved(
 	event := messages.NewMinderEvent().
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
-		WithEntityType("repository").
-		WithEntityID(repoEnt.Entity.ID).
-		WithAttribute("repoID", repoEnt.Entity.ID.String())
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+		WithEntityID(repoEnt.Entity.ID)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityDelete,
@@ -1214,12 +1212,19 @@ func (_ *Server) repositoryAdded(
 		return nil, errors.New("invalid repository name")
 	}
 
+	addRepoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
+		properties.PropertyName:       repo.GetFullName(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating repository properties: %w", err)
+	}
+
 	event := messages.NewMinderEvent().
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
-		WithEntityType("repository").
-		WithAttribute("repoName", repo.GetName()).
-		WithAttribute("repoOwner", repo.GetOwner())
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+		WithProperties(addRepoProps)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityAdd,
