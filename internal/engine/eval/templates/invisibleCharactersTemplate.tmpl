@@ -1,0 +1,4 @@
+Invisible characters found:
+{{- range .violations }}
+* {{ printf "%U" .InvisibleChar }}
+{{- end }}
