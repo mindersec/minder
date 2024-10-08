@@ -72,11 +72,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 }
 
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
+// TODO: it would be nice if we could express this in rego over
+// `input.ingested.deps[_].dep`, rather than building this in to core.
 func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
 	var vulnerablePackages []string
 
-	// TODO(jhrozek): Fix this!
-	//nolint:govet
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")

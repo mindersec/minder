@@ -17,15 +17,25 @@ package diff
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"fmt"
 	"math"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/helper/iofs"
+	scalibr "github.com/google/osv-scalibr"
+	"github.com/google/osv-scalibr/extractor"
+	"github.com/google/osv-scalibr/extractor/filesystem/list"
+	scalibr_fs "github.com/google/osv-scalibr/fs"
+	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	purl "github.com/google/osv-scalibr/purl"
+	scalibr_stats "github.com/google/osv-scalibr/stats"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -41,6 +51,7 @@ const (
 	DiffRuleDataIngestType = "diff"
 	prFilesPerPage         = 30
 	wildcard               = "*"
+	scalibrEnabled         = true
 )
 
 // Diff is the diff rule data ingest engine
@@ -91,87 +102,82 @@ func (di *Diff) Ingest(
 		return nil, fmt.Errorf("entity is not a pull request")
 	}
 
-	logger := zerolog.Ctx(ctx).With().
-		Int64("pull-number", pr.Number).
-		Str("repo-owner", pr.RepoOwner).
-		Str("repo-name", pr.RepoName).
-		Logger()
+	// The GitHub Go API takes an int32, but our proto stores an int64; make sure we don't overflow
+	if pr.Number > math.MaxInt {
+		return nil, fmt.Errorf("pr number is too large")
+	}
+	prNumber := int(pr.Number)
 
-	page := 0
 	switch di.cfg.GetType() {
 	case "", pb.DiffTypeDep:
-		allDiffs := make([]*pbinternal.PrDependencies_ContextualDependency, 0)
-		for {
-			if pr.Number > math.MaxInt {
-				return nil, fmt.Errorf("pr number is too large")
-			}
-			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
-			if err != nil {
-				return nil, fmt.Errorf("error getting pull request files: %w", err)
-			}
+		return di.getDepTypeDiff(ctx, prNumber, pr)
 
-			for _, file := range prFiles {
-				fileDiffs, err := di.ingestFileForDepDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL(), logger)
-				if err != nil {
-					return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
-				}
-				allDiffs = append(allDiffs, fileDiffs...)
-			}
-
-			if resp.NextPage == 0 {
-				break
-			}
-
-			page = resp.NextPage
-		}
-
-		return &engif.Result{
-			Object: &pbinternal.PrDependencies{
-				Pr:   pr,
-				Deps: allDiffs,
-			},
-			// NOTE: At this point we're only retrieving the timestamp as the checkpoint.
-			Checkpoint: checkpoints.NewCheckpointV1(time.Now()),
-		}, nil
+	case pb.DiffTypeNewDeps:
+		// TODO: once we've tested some, convert DiffTypeDep to use this algorithm.
+		return di.getScalibrTypeDiff(ctx, prNumber, pr)
 
 	case pb.DiffTypeFull:
-		allDiffs := make([]*pbinternal.PrContents_File, 0)
-		for {
-			if pr.Number > math.MaxInt {
-				return nil, fmt.Errorf("pr number is too large")
-			}
-			prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, int(pr.Number), prFilesPerPage, page)
-			if err != nil {
-				return nil, fmt.Errorf("error getting pull request files: %w", err)
-			}
-
-			for _, file := range prFiles {
-				fileDiffs, err := ingestFileForFullDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL())
-				if err != nil {
-					return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
-				}
-				allDiffs = append(allDiffs, fileDiffs)
-			}
-
-			if resp.NextPage == 0 {
-				break
-			}
-
-			page = resp.NextPage
-		}
-
-		return &engif.Result{
-			Object: &pbinternal.PrContents{
-				Pr:    pr,
-				Files: allDiffs,
-			},
-			// NOTE: At this point we're only retrieving the timestamp as the checkpoint.
-			Checkpoint: checkpoints.NewCheckpointV1Now(),
-		}, nil
+		return di.getFullTypeDiff(ctx, prNumber, pr)
 
 	default:
 		return nil, fmt.Errorf("unknown diff type")
 	}
+}
+
+func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*engif.Result, error) {
+	deps := pbinternal.PrDependencies{Pr: pr}
+	page := 0
+
+	for {
+		prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, prNumber, prFilesPerPage, page)
+		if err != nil {
+			return nil, fmt.Errorf("error getting pull request files: %w", err)
+		}
+
+		for _, file := range prFiles {
+			fileDiffs, err := di.ingestFileForDepDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL(), *zerolog.Ctx(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+			}
+			deps.Deps = append(deps.Deps, fileDiffs...)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		page = resp.NextPage
+	}
+
+	return &engif.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+}
+
+func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*engif.Result, error) {
+	diff := &pbinternal.PrContents{Pr: pr}
+	page := 0
+
+	for {
+		prFiles, resp, err := di.cli.ListFiles(ctx, pr.RepoOwner, pr.RepoName, prNumber, prFilesPerPage, page)
+		if err != nil {
+			return nil, fmt.Errorf("error getting pull request files: %w", err)
+		}
+
+		for _, file := range prFiles {
+			fileDiffs, err := ingestFileForFullDiff(file.GetFilename(), file.GetPatch(), file.GetRawURL())
+			if err != nil {
+				return nil, fmt.Errorf("error ingesting file %s: %w", file.GetFilename(), err)
+			}
+			diff.Files = append(diff.Files, fileDiffs)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		page = resp.NextPage
+	}
+
+	return &engif.Result{Object: &diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func (di *Diff) ingestFileForDepDiff(
@@ -201,6 +207,124 @@ func (di *Diff) ingestFileForDepDiff(
 	}
 
 	return batchCtxDeps, nil
+}
+
+func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullRequest) (*engif.Result, error) {
+	deps := pbinternal.PrDependencies{Pr: pr}
+
+	// TODO: we should be able to just fetch the additional commits between base and target.
+	// Our current Git abstraction isn't quite powerful enough, so we do two shallow clones.
+
+	baseInventory, err := di.scalibrInventory(ctx, pr.BaseCloneUrl, pr.BaseRef)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to clone base from %s at %q: %w", pr.BaseCloneUrl, pr.BaseRef, err)
+	}
+	newInventory, err := di.scalibrInventory(ctx, pr.TargetCloneUrl, pr.TargetRef)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to clone fork from %s at %q: %w", pr.TargetCloneUrl, pr.TargetRef, err)
+	}
+
+	newDeps := setDifference(baseInventory, newInventory, inventorySorter)
+
+	deps.Deps = make([]*pbinternal.PrDependencies_ContextualDependency, 0, len(newDeps))
+	for _, inventory := range newDeps {
+		for _, filename := range inventory.Locations {
+			deps.Deps = append(deps.Deps, &pbinternal.PrDependencies_ContextualDependency{
+				Dep: &pbinternal.Dependency{
+					Ecosystem: inventoryToEcosystem(inventory),
+					Name:      inventory.Name,
+					Version:   inventory.Version,
+				},
+				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
+					Name:     filename,
+					PatchUrl: "", // TODO: do we need this?
+				},
+			})
+		}
+	}
+
+	return &engif.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+}
+
+func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {
+	return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
+}
+
+func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Inventory, error) {
+	clone, err := di.cli.Clone(ctx, repoURL, ref)
+	if err != nil {
+		return nil, err
+	}
+
+	tree, err := clone.Worktree()
+	if err != nil {
+		return nil, err
+	}
+	return scanFs(ctx, tree.Filesystem, map[string]string{})
+}
+
+func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([]*extractor.Inventory, error) {
+	// have to down-cast here, because scalibr needs multiple io/fs types
+	wrapped, ok := iofs.New(memFS).(scalibr_fs.FS)
+	if !ok {
+		return nil, fmt.Errorf("error converting filesystem to ReadDirFS")
+	}
+
+	desiredCaps := scalibr_plugin.Capabilities{
+		OS:            scalibr_plugin.OSAny,
+		Network:       true,
+		DirectFS:      false,
+		RunningSystem: false,
+	}
+
+	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
+	scanConfig := scalibr.ScanConfig{
+		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
+		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
+		FilesystemExtractors: list.FilterByCapabilities(list.Default, &desiredCaps),
+		Capabilities: &desiredCaps,
+		Stats: scalibr_stats.NoopCollector{},
+	}
+
+	scanner := scalibr.New()
+	scanResults := scanner.Scan(ctx, &scanConfig)
+
+	if scanResults == nil || scanResults.Status == nil {
+		return nil, fmt.Errorf("error scanning files: no results")
+	}
+	if scanResults.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
+	}
+
+	return scanResults.Inventories, nil
+}
+
+func inventoryToEcosystem(inventory *extractor.Inventory) pbinternal.DepEcosystem {
+	if inventory == nil {
+		zerolog.Ctx(context.Background()).Warn().Msg("nil ecosystem scanning diffs")
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
+	}
+	// This should be inventory.GetEcosystem()... but there isn't a convenience wrapper yet
+	ecosystem, err := inventory.Extractor.Ecosystem(inventory)
+	if err != nil {
+		zerolog.Ctx(context.Background()).Warn().Err(err).Msg("error getting ecosystem from inventory")
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
+	}
+
+	// Sometimes Scalibr uses the string "PyPI" instead of "pypi" when reporting the ecosystem.
+	switch strings.ToLower(ecosystem) {
+	// N.B. using an enum here abitrarily restricts our ability to add new
+	// ecosystems without a core minder change.  Switching to strings ala
+	// purl might be an improvement.
+	case purl.TypePyPi:
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI
+	case purl.TypeNPM:
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM
+	case purl.TypeGolang, "go":  // Scalibr uses "go" as the ecosystem name sometimes
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO
+	default:
+		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
+	}
 }
 
 // ingestFileForFullDiff processes a given file's patch from a pull request.
@@ -274,4 +398,34 @@ func (di *Diff) getParserForFile(filename string, logger zerolog.Logger) ecosyst
 		Msg("matched ecosystem")
 
 	return newEcosystemParser(eco)
+}
+
+// Computes the set of elements in updated which are not in base.
+// Note: this function may permute (sort) the order of elements in base and updated.
+func setDifference[Slice ~[]E, E any](base Slice, updated Slice, sorter func(a, b E) int) Slice {
+
+	slices.SortFunc(base, sorter)
+	slices.SortFunc(updated, sorter)
+
+	baseIdx, newIdx := 0, 0
+	ret := make(Slice, 0)
+	for baseIdx < len(base) && newIdx < len(updated) {
+		cmpResult := sorter(base[baseIdx], updated[newIdx])
+		if cmpResult < 0 {
+			baseIdx++
+		} else if cmpResult > 0 {
+			ret = append(ret, updated[newIdx])
+			newIdx++
+		} else {
+			baseIdx++
+			newIdx++
+		}
+	}
+	if newIdx < len(updated) {
+		ret = append(ret, updated[newIdx:]...)
+	}
+
+	// TODO: add metric for number of deps scanned vs total deps
+
+	return ret
 }

@@ -248,6 +248,11 @@ message PullRequest {
     string action = 7;      // The action that triggered the webhook
 
     Context context = 8;
+
+    string base_clone_url = 9;    // URL used to clone the base repository
+    string target_clone_url = 10; // URL used to clone the target repository
+    string base_ref = 11;         // The base ref of the PR
+    string target_ref = 12;       // The target ref of the PR
 }
 
 // Stubs for the SDLC entities

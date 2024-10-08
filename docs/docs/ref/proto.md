@@ -1986,6 +1986,10 @@ ProviderConfig contains the generic configuration for a provider.
 | author_id | <TypeLink type="int64">int64</TypeLink> |  | The author of the PR, will be used to check if we can request changes |
 | action | <TypeLink type="string">string</TypeLink> |  | The action that triggered the webhook |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| base_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the base repository |
+| target_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the target repository |
+| base_ref | <TypeLink type="string">string</TypeLink> |  | The base ref of the PR |
+| target_ref | <TypeLink type="string">string</TypeLink> |  | The target ref of the PR |
 
 
 
