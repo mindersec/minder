@@ -45,3 +45,11 @@ var VulncheckTemplate string
 //
 //go:embed trustyTemplate.tmpl
 var TrustyTemplate string
+
+// MixedScriptsTemplate is the template for details of the `homoglyphs`
+// evaluation engine of type `mixed_scripts`.
+//
+// This template expects a list of Violations named `violations`.
+//
+//go:embed mixedScriptsTemplate.tmpl
+var MixedScriptsTemplate string

@@ -23,6 +23,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	eoptions "github.com/stacklok/minder/internal/engine/options"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -66,13 +67,17 @@ func (mse *MixedScriptsEvaluator) Eval(
 	_ protoreflect.ProtoMessage,
 	res *engif.Result,
 ) error {
-	hasFoundViolations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
+	violations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
 	if err != nil {
 		return err
 	}
 
-	if hasFoundViolations {
-		return evalerrors.NewErrEvaluationFailed("found mixed scripts violations")
+	if len(violations) > 0 {
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			templates.MixedScriptsTemplate,
+			map[string]any{"violations": violations},
+			"found mixed scripts violations",
+		)
 	}
 
 	return nil

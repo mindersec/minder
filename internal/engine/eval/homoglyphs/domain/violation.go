@@ -20,5 +20,5 @@ type Violation struct {
 	invisibleChar rune
 
 	// mixedScript is a mixed script found in a line.
-	mixedScript *MixedScriptInfo
+	MixedScript *MixedScriptInfo
 }
