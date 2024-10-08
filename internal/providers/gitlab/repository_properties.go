@@ -30,6 +30,13 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
+// This is done so we don't have to deal with conversions in the provider
+// when dealing with entities
+func FormatRepositoryUpstreamID(id int) string {
+	return fmt.Sprintf("%d", id)
+}
+
 func (c *gitlabClient) getPropertiesForRepo(
 	ctx context.Context, getByProps *properties.Properties,
 ) (*properties.Properties, error) {
@@ -38,7 +45,23 @@ func (c *gitlabClient) getPropertiesForRepo(
 		return nil, fmt.Errorf("upstream ID not found or invalid: %w", err)
 	}
 
-	projectURLPath, err := url.JoinPath("projects", url.PathEscape(uid))
+	proj, err := c.getGitLabProject(ctx, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	outProps, err := gitlabProjectToProperties(proj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert project to properties: %w", err)
+	}
+
+	return getByProps.Merge(outProps), nil
+}
+
+func (c *gitlabClient) getGitLabProject(
+	ctx context.Context, upstreamID string,
+) (*gitlab.Project, error) {
+	projectURLPath, err := url.JoinPath("projects", url.PathEscape(upstreamID))
 	if err != nil {
 		return nil, fmt.Errorf("failed to join URL path for project using upstream ID: %w", err)
 	}
@@ -70,20 +93,14 @@ func (c *gitlabClient) getPropertiesForRepo(
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	outProps, err := gitlabProjectToProperties(proj)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert project to properties: %w", err)
-	}
-
-	return getByProps.Merge(outProps), nil
+	return proj, nil
 }
 
 func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, error) {
-	ns := proj.Namespace
-	if ns == nil {
-		return nil, fmt.Errorf("gitlab project %d has no namespace", proj.ID)
+	owner, err := getGitlabProjectNamespace(proj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get project namespace: %w", err)
 	}
-	owner := ns.Path
 
 	var license string
 	if proj.License != nil {
@@ -107,6 +124,14 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 	}
 
 	return outProps, nil
+}
+
+func getGitlabProjectNamespace(proj *gitlab.Project) (string, error) {
+	if proj.Namespace == nil {
+		return "", fmt.Errorf("gitlab project %d has no namespace", proj.ID)
+	}
+
+	return proj.Namespace.Path, nil
 }
 
 func repoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repository, error) {
@@ -154,4 +179,22 @@ func repoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repo
 	}
 
 	return pbRepo, nil
+}
+
+func getRepoNameFromProperties(props *properties.Properties) (string, error) {
+	groupName, err := getStringProp(props, RepoPropertyNamespace)
+	if err != nil {
+		return "", err
+	}
+
+	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	return formatRepoName(groupName, projectName), nil
+}
+
+func formatRepoName(groupName, projectName string) string {
+	return groupName + "/" + projectName
 }

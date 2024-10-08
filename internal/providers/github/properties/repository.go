@@ -93,7 +93,7 @@ var repoPropertyDefinitions = []propertyOrigin{
 func GitHubRepoToMap(repo *go_github.Repository) map[string]any {
 	repoProps := map[string]any{
 		// general entity
-		properties.PropertyUpstreamID: fmt.Sprintf("%d", repo.GetID()),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 		// general repo
 		properties.RepoPropertyIsPrivate:  repo.GetPrivate(),
 		properties.RepoPropertyIsArchived: repo.GetArchived(),

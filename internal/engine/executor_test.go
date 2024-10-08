@@ -123,7 +123,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				db.ProviderTypeGithub,
 			},
 			Definition: json.RawMessage(`{"github": {}}`),
-		}, nil)
+		}, nil).
+		Times(2) // once for instantiating the provider, once to fill in selectors
 
 	// get access token
 	mockStore.EXPECT().

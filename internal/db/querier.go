@@ -49,8 +49,6 @@ type Querier interface {
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
-	// DeleteEntityByName removes an entity from the entity_instances table for a project.
-	DeleteEntityByName(ctx context.Context, arg DeleteEntityByNameParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
@@ -86,6 +84,8 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByProvider retrieves all entities of a given provider.
 	// this is how one would get all repositories, artifacts, etc. for a given provider.
 	GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error)

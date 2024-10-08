@@ -59,7 +59,9 @@ func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
 			return nil, fmt.Errorf("error getting entity: %w", err)
 		}
 
-		err = r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.provMgr, propertyService.ReadBuilder())
+		err = r.propSvc.RetrieveAllPropertiesForEntity(
+			ctx, ewp, r.provMgr,
+			propertyService.ReadBuilder().WithStoreOrTransaction(t))
 		if err != nil {
 			return nil, fmt.Errorf("error fetching entity: %w", err)
 		}

@@ -41,19 +41,11 @@ SET
 RETURNING *;
 
 -- DeleteEntity removes an entity from the entity_instances table for a project.
-
 -- name: DeleteEntity :exec
 DELETE FROM entity_instances
 WHERE id = $1 AND project_id = $2;
 
--- DeleteEntityByName removes an entity from the entity_instances table for a project.
-
--- name: DeleteEntityByName :exec
-DELETE FROM entity_instances
-WHERE name = sqlc.arg(name) AND project_id = $1;
-
 -- GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
-
 -- name: GetEntityByID :one
 SELECT * FROM entity_instances
 WHERE entity_instances.id = $1
@@ -84,6 +76,12 @@ WHERE entity_instances.entity_type = $1
 -- name: GetEntitiesByProvider :many
 SELECT * FROM entity_instances
 WHERE entity_instances.provider_id = $1;
+
+-- GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+
+-- name: GetEntitiesByProjectHierarchy :many
+SELECT * FROM entity_instances
+WHERE entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
 -- name: GetProperty :one
 SELECT * FROM properties

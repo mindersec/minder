@@ -19,8 +19,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/stacklok/minder/internal/engine/eval/templates"
 )
 
 func TestLegacyEvaluationDetailRendering(t *testing.T) {
@@ -112,15 +110,6 @@ func TestEvaluationDetailRendering(t *testing.T) {
 			args:    strings.Repeat("A", 1025),
 			error:   "evaluation failure: this is the message",
 			details: "evaluation failure: this is the message",
-		},
-		// vulncheck template
-		{
-			name:    "vulncheck template",
-			msg:     "this is the message",
-			tmpl:    templates.VulncheckTemplate,
-			args:    map[string]any{"packages": []string{"boto3", "urllib3", "python-oauth2"}},
-			error:   "evaluation failure: this is the message",
-			details: "Vulnerable packages found:\n* `boto3`\n* `urllib3`\n* `python-oauth2`\n",
 		},
 	}
 

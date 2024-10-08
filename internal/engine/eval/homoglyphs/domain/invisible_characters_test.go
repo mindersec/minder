@@ -39,7 +39,7 @@ func TestFindInvisibleCharacters(t *testing.T) {
 			line:        "Hello,\u200BWorld!",
 			expected: []*Violation{
 				{
-					invisibleChar: '\u200B',
+					InvisibleChar: '\u200B',
 				},
 			},
 		},
@@ -48,13 +48,13 @@ func TestFindInvisibleCharacters(t *testing.T) {
 			line:        "Invisible\u200BText\u200C\u200D",
 			expected: []*Violation{
 				{
-					invisibleChar: '\u200B',
+					InvisibleChar: '\u200B',
 				},
 				{
-					invisibleChar: '\u200C',
+					InvisibleChar: '\u200C',
 				},
 				{
-					invisibleChar: '\u200D',
+					InvisibleChar: '\u200D',
 				},
 			},
 		},

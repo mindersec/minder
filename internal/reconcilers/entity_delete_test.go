@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
 	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -67,9 +68,9 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -89,9 +90,9 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -112,9 +113,9 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -180,6 +181,7 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		nil, // crypto.Engine not used in these tests
 		nil, // manager.ProviderManager not used in these tests
 		repoService,
+		nil, // propertyService.PropertiesService not used in these tests
 	)
 	require.NoError(t, err)
 

@@ -266,8 +266,8 @@ func createReminderMessages(ctx context.Context, repos []db.Repository) ([]*mess
 
 	messages := make([]*message.Message, 0, len(repos))
 	for _, repo := range repos {
-		repoReconcileMessage, err := remindermessages.NewRepoReminderMessage(
-			repo.ProviderID, repo.RepoID, repo.ProjectID,
+		repoReconcileMessage, err := remindermessages.NewEntityReminderMessage(
+			repo.ProviderID, repo.ID, repo.ProjectID,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error creating reminder message: %w", err)

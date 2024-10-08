@@ -15,9 +15,7 @@
 package manager
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -31,36 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/providers/gitlab"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
-
-const (
-	// MaxBytesLimit is the maximum number of bytes to read from the response body
-	// We limit to 1MB to prevent abuse
-	MaxBytesLimit int64 = 1 << 20
-)
-
-// getWebhookEventDispatcher returns the appropriate webhook event dispatcher for the given event type
-// It returns a function that is meant to do the actual handling of the event.
-// Note that we pass the request to the handler function, so we don't even try to
-// parse the request body here unless it's necessary.
-func (m *providerClassManager) getWebhookEventDispatcher(
-	eventType gitlablib.EventType,
-) func(l zerolog.Logger, r *http.Request) error {
-	//nolint:exhaustive // We only handle a subset of the possible events
-	switch eventType {
-	case gitlablib.EventTypePush:
-		return m.handleRepoPush
-	case gitlablib.EventTypeTagPush:
-		return m.handleTagPush
-	default:
-		return m.handleNoop
-	}
-}
-
-// handleNoop is a no-op handler for unhandled webhook events
-func (_ *providerClassManager) handleNoop(l zerolog.Logger, _ *http.Request) error {
-	l.Debug().Msg("unhandled webhook event")
-	return nil
-}
 
 func (m *providerClassManager) handleRepoPush(l zerolog.Logger, r *http.Request) error {
 	l.Debug().Msg("handling push event")
@@ -132,17 +100,4 @@ func (m *providerClassManager) publishRefreshAndEvalForGitlabProject(
 	}
 
 	return nil
-}
-
-func decodeJSONSafe[T any](r io.ReadCloser, v *T) error {
-	rs := wrapSafe(r)
-	defer r.Close()
-
-	dec := json.NewDecoder(rs)
-	return dec.Decode(v)
-}
-
-// wrapSafe wraps the io.Reader in a LimitReader to prevent abuse
-func wrapSafe(r io.Reader) io.Reader {
-	return io.LimitReader(r, MaxBytesLimit)
 }

@@ -280,9 +280,12 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	}
 
 	ftoken := &oauth2.Token{
-		AccessToken:  token.AccessToken,
-		TokenType:    token.TokenType,
-		RefreshToken: "",
+		AccessToken: token.AccessToken,
+		TokenType:   token.TokenType,
+		// These might be empty and that's fine. We'll only
+		// use them if they're present.
+		RefreshToken: token.RefreshToken,
+		Expiry:       token.Expiry,
 	}
 
 	// encode token

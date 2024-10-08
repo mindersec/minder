@@ -98,6 +98,64 @@ func TestHandleEvents(t *testing.T) {
 	HandleEvents(context.Background(), mockStore, authzClient, &c, deleter)
 }
 
+func TestHandleAdminEvents(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/realms/stacklok/protocol/openid-connect/token":
+			tokenHandler(t, w)
+		case "/admin/realms/stacklok/admin-events":
+			adminEventHandler(t, w)
+		default:
+			t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
+		}
+	}))
+	defer server.Close()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+
+	tx := sql.Tx{}
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+	mockStore.EXPECT().
+		GetUserBySubject(gomock.Any(), "existingUserId").
+		Return(db.User{
+			IdentitySubject: "existingUserId",
+		}, nil)
+	mockStore.EXPECT().
+		DeleteUser(gomock.Any(), gomock.Any()).
+		Return(nil)
+	mockStore.EXPECT().Commit(gomock.Any())
+	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
+	mockStore.EXPECT().Rollback(gomock.Any())
+
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+	mockStore.EXPECT().
+		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
+		Return(db.User{}, sql.ErrNoRows)
+	mockStore.EXPECT().Commit(gomock.Any())
+	mockStore.EXPECT().Rollback(gomock.Any())
+
+	c := serverconfig.Config{
+		Identity: serverconfig.IdentityConfigWrapper{
+			Server: serverconfig.IdentityConfig{
+				IssuerUrl:    server.URL,
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+		},
+	}
+	authzClient := &mock.NoopClient{Authorized: true}
+	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
+	HandleAdminEvents(context.Background(), mockStore, authzClient, &c, deleter)
+}
+
 func TestDeleteUserOneProject(t *testing.T) {
 	t.Parallel()
 
@@ -280,6 +338,31 @@ func eventHandler(t *testing.T, w http.ResponseWriter) {
 			RealmId:  "realmId",
 			ClientId: "clientId",
 			UserId:   "alreadyDeletedUserId",
+		},
+	}
+	w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func adminEventHandler(t *testing.T, w http.ResponseWriter) {
+	t.Helper()
+	data := []AdminEvent{
+		{
+			Time:          1697030342912,
+			RealmId:       "realmId",
+			OperationType: "DELETE",
+			ResourceType:  "USER",
+			ResourcePath:  "users/existingUserId",
+		},
+		{
+			Time:          1697030342844,
+			RealmId:       "realmId",
+			OperationType: "DELETE",
+			ResourceType:  "USER",
+			ResourcePath:  "users/alreadyDeletedUserId",
 		},
 	}
 	w.WriteHeader(http.StatusOK)

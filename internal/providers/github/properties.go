@@ -93,6 +93,11 @@ func (c *GitHub) FetchAllProperties(
 }
 
 func filterOperational(cachedProperties *properties.Properties, fetcher properties2.GhPropertyFetcher) *properties.Properties {
+	if cachedProperties == nil {
+		// Nothing to filter
+		return nil
+	}
+
 	operational := fetcher.OperationalProperties()
 	if len(operational) == 0 {
 		return cachedProperties

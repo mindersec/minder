@@ -159,7 +159,6 @@ func (q *Queries) DeleteAllPropertiesForEntity(ctx context.Context, entityID uui
 }
 
 const deleteEntity = `-- name: DeleteEntity :exec
-
 DELETE FROM entity_instances
 WHERE id = $1 AND project_id = $2
 `
@@ -172,23 +171,6 @@ type DeleteEntityParams struct {
 // DeleteEntity removes an entity from the entity_instances table for a project.
 func (q *Queries) DeleteEntity(ctx context.Context, arg DeleteEntityParams) error {
 	_, err := q.db.ExecContext(ctx, deleteEntity, arg.ID, arg.ProjectID)
-	return err
-}
-
-const deleteEntityByName = `-- name: DeleteEntityByName :exec
-
-DELETE FROM entity_instances
-WHERE name = $2 AND project_id = $1
-`
-
-type DeleteEntityByNameParams struct {
-	ProjectID uuid.UUID `json:"project_id"`
-	Name      string    `json:"name"`
-}
-
-// DeleteEntityByName removes an entity from the entity_instances table for a project.
-func (q *Queries) DeleteEntityByName(ctx context.Context, arg DeleteEntityByNameParams) error {
-	_, err := q.db.ExecContext(ctx, deleteEntityByName, arg.ProjectID, arg.Name)
 	return err
 }
 
@@ -227,6 +209,44 @@ func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.U
 			&i.Key,
 			&i.Value,
 			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getEntitiesByProjectHierarchy = `-- name: GetEntitiesByProjectHierarchy :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.project_id = ANY($1::uuid[])
+`
+
+// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+func (q *Queries) GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesByProjectHierarchy, pq.Array(projects))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
 		); err != nil {
 			return nil, err
 		}
@@ -328,7 +348,6 @@ func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypePa
 }
 
 const getEntityByID = `-- name: GetEntityByID :one
-
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
 WHERE entity_instances.id = $1
 LIMIT 1

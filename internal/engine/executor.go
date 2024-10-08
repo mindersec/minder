@@ -31,6 +31,7 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
 	"github.com/stacklok/minder/internal/entities/properties/service"
@@ -128,6 +129,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		inf.ProjectID,
 		provider,
 		ingestCache,
+		eoptions.WithFlagsClient(e.featureFlags),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to fetch rule type instances for project: %w", err)
@@ -145,7 +147,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 	// just store it for all rules without evaluation.
 	for _, profile := range profileAggregates {
 
-		profileEvalStatus := e.profileEvalStatus(ctx, provider, inf, profile)
+		profileEvalStatus := e.profileEvalStatus(ctx, inf, profile)
 
 		for _, rule := range profile.Rules {
 			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache, profileEvalStatus); err != nil {
@@ -212,7 +214,6 @@ func (e *executor) evaluateRule(
 
 func (e *executor) profileEvalStatus(
 	ctx context.Context,
-	provider provinfv1.Provider,
 	eiw *entities.EntityInfoWrapper,
 	aggregate models.ProfileAggregate,
 ) error {
@@ -241,7 +242,7 @@ func (e *executor) profileEvalStatus(
 		return fmt.Errorf("error getting entity with properties: %w", err)
 	}
 
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, eiw.Type, ewp)
+	selEnt := provsel.EntityToSelectorEntity(ctx, e.querier, eiw.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}

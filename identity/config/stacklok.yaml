@@ -21,6 +21,9 @@ eventsEnabled: true
 enabledEventTypes:
   - DELETE_ACCOUNT
 eventsExpiration: 604800
+adminEventsEnabled: true
+attributes:
+  adminEventsExpiration: 604800
 
 # From:
 # Add account deletion capability to stacklok realm (see https://www.keycloak.org/docs/latest/server_admin/#authentication-operations)

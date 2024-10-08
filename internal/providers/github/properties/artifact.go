@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -69,6 +68,8 @@ func NewArtifactFetcher() *ArtifactFetcher {
 						// general entity
 						properties.PropertyName,
 						properties.PropertyUpstreamID,
+						// general artifact
+						properties.ArtifactPropertyType,
 						// github-specific
 						ArtifactPropertyName,
 						ArtifactPropertyOwner,
@@ -166,8 +167,10 @@ func getArtifactWrapper(
 
 	return map[string]any{
 		// general entity
-		properties.PropertyUpstreamID: strconv.FormatInt(pkg.GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(pkg.GetID()),
 		properties.PropertyName:       getNameFromParams(owner, name),
+		// general artifact
+		properties.ArtifactPropertyType: strings.ToLower(pkg.GetPackageType()),
 		// github-specific
 		ArtifactPropertyName:       pkg.GetName(),
 		ArtifactPropertyOwner:      pkg.GetOwner().GetLogin(),

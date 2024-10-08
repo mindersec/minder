@@ -249,10 +249,13 @@ message PullRequest {
 
     Context context = 8;
 
-    string base_clone_url = 9;    // URL used to clone the base repository
-    string target_clone_url = 10; // URL used to clone the target repository
-    string base_ref = 11;         // The base ref of the PR
-    string target_ref = 12;       // The target ref of the PR
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 9;
+
+    string base_clone_url = 10;   // URL used to clone the base repository
+    string target_clone_url = 11; // URL used to clone the target repository
+    string base_ref = 12;         // The base ref of the PR
+    string target_ref = 13;       // The target ref of the PR
 }
 
 // Stubs for the SDLC entities

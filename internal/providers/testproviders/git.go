@@ -15,10 +15,8 @@
 package testproviders
 
 import (
-	"context"
-
-	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers/git"
+	"github.com/stacklok/minder/internal/providers/noop"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -26,6 +24,7 @@ import (
 // GitProvider is a test implementation of the Git provider
 // interface
 type GitProvider struct {
+	noop.Provider
 	*git.Git
 }
 
@@ -42,50 +41,4 @@ var _ provifv1.Provider = (*GitProvider)(nil)
 // CanImplement implements the Provider interface
 func (_ *GitProvider) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT
-}
-
-// FetchAllProperties implements the Provider interface
-func (_ *GitProvider) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-// FetchProperty implements the Provider interface
-func (_ *GitProvider) FetchProperty(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-// GetEntityName implements the Provider interface
-func (_ *GitProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
-}
-
-// SupportsEntity implements the Provider interface
-func (_ *GitProvider) SupportsEntity(_ minderv1.Entity) bool {
-	// TODO: implement
-	return false
-}
-
-// RegisterEntity implements the Provider interface
-func (_ *GitProvider) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	// TODO: implement
-	return nil, nil
-}
-
-// DeregisterEntity implements the Provider interface
-func (_ *GitProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	// TODO: implement
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (_ *GitProvider) ReregisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
-) error {
-	// TODO: implement
-	return nil
 }

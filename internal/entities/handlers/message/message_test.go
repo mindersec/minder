@@ -94,7 +94,7 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			if sc.ownerProps != nil {
 				ownerProps, err := properties.NewProperties(sc.ownerProps)
 				require.NoError(t, err)
-				original.WithOwner(sc.ownerType, ownerProps)
+				original.WithOriginator(sc.ownerType, ownerProps)
 			}
 
 			handlerMsg := message.NewMessage(uuid.New().String(), nil)

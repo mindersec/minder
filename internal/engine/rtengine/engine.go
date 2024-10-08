@@ -29,6 +29,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	"github.com/stacklok/minder/internal/engine/ingester"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/profiles"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -77,6 +78,7 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
 	rval, err := profiles.NewRuleValidator(ruletype)
 	if err != nil {
@@ -88,7 +90,7 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider)
+	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
@@ -177,7 +179,7 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, result)
+	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, inf.Entity, result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }

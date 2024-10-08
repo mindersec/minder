@@ -36,6 +36,9 @@ selection:
   - entity: repository
     selector: repository.properties['github/primary_language'] == 'Go'
     comment: "Only Go repositories"
+  - entity: repository
+    selector: repository.provider.class.contains('github')
+    comment: "Only github repositories"
 ```
 
 Let's break down the example above:
@@ -45,6 +48,8 @@ Let's break down the example above:
   - The first selector filters repositories to include only those that are not forks and whose name starts with stacklok. In other words, those that are part of the stacklok organization.
   - The second selector filters artifacts to include only those provided by `github-app-stacklok`.
   - The third selector filters repositories to include only those with a GPL license and the fourth selector filters repositories to include only those written in Go. These two selectors use the properties map which is provider-specific.
+  - The fourth selector filters repositories to include only that use Go as the primary language.
+  - The fifth selector filters repositories to include only those provided by the GitHub provider. We use the `contains` function to check if the provider class contains the string `github` to cover for both `github` and `github-app` providers.
 
 Below you can find the full list of selectors available for each entity type.
 

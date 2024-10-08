@@ -5,7 +5,17 @@ sidebar_position: 30
 
 # Changelog
 
-This is the changelog for [Minder Cloud](https://cloud.stacklok.com/), the Minder service hosted by [Stacklok](https://stacklok.com/).
+* **Profile selectors** - Sep 9, 2024  
+    You can now specify which repositories a profile applies to using a Common Expression Language (CEL) grammar.
+
+* **Rule evaluation history** - Sep 4, 2024  
+    You can now see how your security rules have applied to your repositories, pull requests, and artifacts throughout time, in addition to their current state.
+
+* **User management** - Aug 5, 2024  
+    Minder organization administrators can now invite additional users to the organization, and can set users permissions.
+
+* **Manage all GitHub repositories** - Jul 17, 2024  
+    Minder can now (optionally) manage all repositories within a GitHub organization, including new repositories that are created. Administrators can continue to select individual repositories to manage.
 
 * **Minder Web** - Apr 16, 2024  
     Minder Cloud now has a graphical user interface available at [https://cloud.stacklok.com/](https://cloud.stacklok.com/).

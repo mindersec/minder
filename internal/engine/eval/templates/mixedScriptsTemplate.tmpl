@@ -1,0 +1,6 @@
+Mixed scripts found:
+{{- range .violations -}}
+{{- if .MixedScript}}
+* Text: `{{ .MixedScript.Text }}`, Scripts: [{{ stringsJoin .MixedScript.ScriptsFound ", " }}]
+{{- end }}
+{{- end -}}

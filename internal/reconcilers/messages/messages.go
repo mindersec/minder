@@ -22,21 +22,27 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
+
+	"github.com/stacklok/minder/internal/entities/properties"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RepoReconcilerEvent is an event that is sent to the reconciler topic
 type RepoReconcilerEvent struct {
 	// Project is the project that the event is relevant to
 	Project uuid.UUID `json:"project"`
-	// Repository is the repository to be reconciled
-	Repository int64 `json:"repository" validate:"gte=0"`
+	// Provider is the provider that the event is relevant to
+	Provider uuid.UUID `json:"provider"`
+	// EntityID is the entity id of the repository to be reconciled
+	EntityID uuid.UUID `json:"entity_id"`
 }
 
 // NewRepoReconcilerMessage creates a new repos init event
-func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid.UUID) (*message.Message, error) {
+func NewRepoReconcilerMessage(providerID uuid.UUID, entityID uuid.UUID, projectID uuid.UUID) (*message.Message, error) {
 	evt := &RepoReconcilerEvent{
-		Repository: repoID,
-		Project:    projectID,
+		Project:  projectID,
+		Provider: providerID,
+		EntityID: entityID,
 	}
 
 	evtStr, err := json.Marshal(evt)
@@ -45,7 +51,6 @@ func NewRepoReconcilerMessage(providerID uuid.UUID, repoID int64, projectID uuid
 	}
 
 	msg := message.NewMessage(uuid.New().String(), evtStr)
-	msg.Metadata.Set("provider_id", providerID.String())
 	return msg, nil
 }
 
@@ -65,18 +70,17 @@ type CoreContext struct {
 // This struct is meant to be used with providers that can push events
 // to Minder, or with providers that Minder can poll.
 type MinderEvent struct {
-	ProviderID uuid.UUID `json:"provider_id" validate:"required"`
-	ProjectID  uuid.UUID `json:"project_id" validate:"required"`
-	EntityType string    `json:"entity_type" validate:"required"`
-	EntityID   uuid.UUID `json:"entity_id"`
-	// TODO: This should really be using actual property keys
-	Entity map[string]any `json:"entity" validate:"required"`
+	ProviderID uuid.UUID       `json:"provider_id" validate:"required"`
+	ProjectID  uuid.UUID       `json:"project_id" validate:"required"`
+	EntityType minderv1.Entity `json:"entity_type" validate:"required"`
+	EntityID   uuid.UUID       `json:"entity_id"`
+	Properties map[string]any  `json:"entity" validate:"required"`
 }
 
 // NewMinderEvent creates a new entity added event.
 func NewMinderEvent() *MinderEvent {
 	return &MinderEvent{
-		Entity: map[string]any{},
+		Properties: map[string]any{},
 	}
 }
 
@@ -92,9 +96,9 @@ func (e *MinderEvent) WithProjectID(projectID uuid.UUID) *MinderEvent {
 	return e
 }
 
-// WithAttribute sets attributes of the entity for a MinderEvent.
-func (e *MinderEvent) WithAttribute(key string, val any) *MinderEvent {
-	e.Entity[key] = val
+// WithProperties adds properties to MinderEvent.
+func (e *MinderEvent) WithProperties(props *properties.Properties) *MinderEvent {
+	e.Properties = props.ToProtoStruct().AsMap()
 	return e
 }
 
@@ -106,7 +110,7 @@ func (e *MinderEvent) WithEntityID(entityID uuid.UUID) *MinderEvent {
 
 // WithEntityType sets the type of the entity. Type of the entity must
 // be meaningful to the Provider.
-func (e *MinderEvent) WithEntityType(entityType string) *MinderEvent {
+func (e *MinderEvent) WithEntityType(entityType minderv1.Entity) *MinderEvent {
 	e.EntityType = entityType
 	return e
 }
@@ -124,7 +128,6 @@ func (e *MinderEvent) ToMessage(msg *message.Message) error {
 	msg.Payload = payload
 	msg.Metadata.Set("providerID", e.ProviderID.String())
 	msg.Metadata.Set("projectID", e.ProjectID.String())
-	msg.Metadata.Set("entityType", e.EntityType)
 
 	return nil
 }

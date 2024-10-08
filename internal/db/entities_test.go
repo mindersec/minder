@@ -19,9 +19,12 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func Test_EntityCrud(t *testing.T) {
@@ -346,4 +349,85 @@ func Test_PropertyHelpers(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrBadPropVersion)
 	})
+}
+
+func Test_GetEntitiesByHierarchy(t *testing.T) {
+	t.Parallel()
+
+	seed := time.Now().UnixNano()
+	org := createRandomOrganization(t)
+
+	proj := createRandomProject(t, org.ID)
+	proj2 := createRandomProject(t, proj.ID)
+	proj3 := createRandomProject(t, proj2.ID)
+	proj4 := createRandomProject(t, proj3.ID)
+
+	prov := createRandomProvider(t, proj.ID)
+
+	entRepo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entRepo)
+
+	entPkg, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj2.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entPkg)
+
+	entPr, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj3.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entPr)
+
+	scenarios := []struct {
+		name            string
+		projects        []uuid.UUID
+		expectedNumEnts int
+	}{
+		{
+			name:            "Get all entities",
+			projects:        []uuid.UUID{proj.ID, proj2.ID, proj3.ID},
+			expectedNumEnts: 3,
+		},
+		{
+			name:            "Get artifact and PR entities",
+			projects:        []uuid.UUID{proj2.ID, proj3.ID},
+			expectedNumEnts: 2,
+		},
+		{
+			name:            "Get PR only",
+			projects:        []uuid.UUID{proj3.ID},
+			expectedNumEnts: 1,
+		},
+		{
+			name:            "empty project",
+			projects:        []uuid.UUID{proj4.ID},
+			expectedNumEnts: 0,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ents, err := testQueries.GetEntitiesByProjectHierarchy(context.Background(), scenario.projects)
+			require.NoError(t, err)
+			require.Len(t, ents, scenario.expectedNumEnts)
+		})
+	}
 }

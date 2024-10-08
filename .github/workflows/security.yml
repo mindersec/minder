@@ -1,28 +1,25 @@
 on:
   workflow_call:
 jobs:
-  code-security-scan:
+  security-scan:
     runs-on: ubuntu-latest
-    name: Code Security Scan
+    name: Security Scan
     steps:
       - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Security Scan
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # master
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - name: Code Security Scan
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # master
         with:
           scan-type: 'fs'
           scanners: vuln,secret
           trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
-  helm-security-scan:
-    runs-on: ubuntu-latest
-    name: Helm Security Scan
-    steps:
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      - name: Security Scan
-        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # master
+
+      - name: Helm Security Scan
+        uses: aquasecurity/trivy-action@f781cce5aab226378ee181d764ab90ea0be3cdd8 # master
+        if: always()
         with:
           scan-type: 'config'
           trivy-config: .trivy.yml

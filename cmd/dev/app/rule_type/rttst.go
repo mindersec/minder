@@ -195,7 +195,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error creating selectors: %w", err)
 	}
 
-	return runEvaluationForRules(cmd, eng, ewp, prov, profSel, remediateStatus, remMetadata, rules, actionEngine)
+	return runEvaluationForRules(cmd, eng, ewp, profSel, remediateStatus, remMetadata, rules, actionEngine, prov)
 }
 
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
@@ -226,12 +226,12 @@ func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *rtengine.RuleTypeEngine,
 	ewp *entModels.EntityWithProperties,
-	provider provifv1.Provider,
 	entitySelectors selectors.Selection,
 	remediateStatus db.RemediationStatusTypes,
 	remMetadata json.RawMessage,
 	frags []*minderv1.Profile_Rule,
 	actionEngine *actions.RuleActionsEngine,
+	prov provifv1.Provider,
 ) error {
 	for _, frag := range frags {
 		val := eng.GetRuleInstanceValidator()
@@ -265,13 +265,13 @@ func runEvaluationForRules(
 		ctx = logger.FromFlags(logConfig).WithContext(ctx)
 
 		// convert to EntityInfoWrapper as that's what the engine operates on
-		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp)
+		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp, prov)
 		if err != nil {
 			return fmt.Errorf("error converting entity to entity info wrapper: %w", err)
 		}
 
 		// Perform rule evaluation
-		evalErr := selectAndEval(ctx, eng, provider, inf, ewp, evalStatus, entitySelectors)
+		evalErr := selectAndEval(ctx, eng, inf, ewp, evalStatus, entitySelectors)
 		evalStatus.SetEvalErr(evalErr)
 
 		// Perform the actions, if any
@@ -294,13 +294,12 @@ func runEvaluationForRules(
 func selectAndEval(
 	ctx context.Context,
 	eng *rtengine.RuleTypeEngine,
-	provider provifv1.Provider,
 	inf *entities.EntityInfoWrapper,
 	ewp *entModels.EntityWithProperties,
 	evalStatus *engif.EvalStatusParams,
 	profileSelectors selectors.Selection,
 ) error {
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, inf.Type, ewp)
+	selEnt := provsel.EntityToSelectorEntity(ctx, nil, inf.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}
@@ -367,19 +366,18 @@ func readEntityWithPropertiesFromFile(
 	}, nil
 }
 
-func entityWithPropertiesToEntityInfoWrapper(ewp *entModels.EntityWithProperties) (*entities.EntityInfoWrapper, error) {
+func entityWithPropertiesToEntityInfoWrapper(
+	ewp *entModels.EntityWithProperties,
+	prov provifv1.Provider,
+) (*entities.EntityInfoWrapper, error) {
 	var ent protoreflect.ProtoMessage
 	var err error
 
-	//nolint:exhaustive
-	switch ewp.Entity.Type {
-	case minderv1.Entity_ENTITY_REPOSITORIES:
-		ent, err = properties.RepoV1FromProperties(ewp.Properties)
-	case minderv1.Entity_ENTITY_ARTIFACTS:
-		ent, err = properties.ArtifactV1FromProperties(ewp.Properties)
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		ent, err = properties.PullRequestV1FromProperties(ewp.Properties)
+	if !prov.SupportsEntity(ewp.Entity.Type) {
+		return nil, fmt.Errorf("provider does not support entity type: %s", ewp.Entity.Type)
 	}
+
+	ent, err = prov.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
 	if err != nil {
 		return nil, fmt.Errorf("error converting properties to entity: %w", err)
 	}

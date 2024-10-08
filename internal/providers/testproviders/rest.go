@@ -19,6 +19,7 @@ import (
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/noop"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -27,6 +28,7 @@ import (
 // RESTProvider is a test implementation of the REST provider
 // interface
 type RESTProvider struct {
+	noop.Provider
 	*http.REST
 }
 

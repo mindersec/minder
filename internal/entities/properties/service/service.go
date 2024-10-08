@@ -186,11 +186,11 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 
 	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, opts, l)
 	if err != nil {
-		return fmt.Errorf("error fetching properties for repository: %w", err)
+		return fmt.Errorf("error fetching properties for entity: %w", err)
 	}
 
 	efp.UpdateProperties(props)
-	l.Debug().Msg("properties fetched and updated")
+	l.Debug().Msg("properties fetched")
 	return nil
 }
 
@@ -411,11 +411,5 @@ func (_ *propertiesService) EntityWithPropertiesAsProto(
 		return nil, fmt.Errorf("error instantiating provider %s: %w", ewp.Entity.ProviderID.String(), err)
 	}
 
-	converter, err := provifv1.As[provifv1.ProtoMessageConverter](prov)
-	if err != nil {
-		return nil, fmt.Errorf("provider %s doesn't implement ProtoMessageConverter: %w",
-			ewp.Entity.ProviderID.String(), err)
-	}
-
-	return converter.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
+	return prov.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
 }

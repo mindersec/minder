@@ -42,7 +42,7 @@ func TestEvaluationDetailRendering(t *testing.T) {
 			tmpl:    templates.VulncheckTemplate,
 			args:    map[string]any{"packages": []string{"boto3", "urllib3", "python-oauth2"}},
 			error:   "evaluation failure: this is the message",
-			details: "Vulnerable packages found:\n* `boto3`\n* `urllib3`\n* `python-oauth2`\n",
+			details: "Vulnerable packages found:\n* boto3\n* urllib3\n* python-oauth2\n",
 		},
 	}
 

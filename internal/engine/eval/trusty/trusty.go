@@ -24,10 +24,13 @@ import (
 	"github.com/rs/zerolog"
 	trusty "github.com/stacklok/trusty-sdk-go/pkg/client"
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -47,7 +50,11 @@ type Evaluator struct {
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
-func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator, error) {
+func NewTrustyEvaluator(
+	ctx context.Context,
+	ghcli provifv1.GitHub,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	if ghcli == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
@@ -67,15 +74,28 @@ func NewTrustyEvaluator(ctx context.Context, ghcli provifv1.GitHub) (*Evaluator,
 		BaseURL: trustyEndpoint,
 	})
 
-	return &Evaluator{
+	evaluator := &Evaluator{
 		cli:      ghcli,
 		endpoint: trustyEndpoint,
 		client:   trustyClient,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if err := opt(evaluator); err != nil {
+			return nil, err
+		}
+	}
+
+	return evaluator, nil
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (e *Evaluator) Eval(
+	ctx context.Context,
+	pol map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
 	if err != nil {
@@ -219,8 +239,13 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 		)
 	}
 
-	if failedEvalMsg != "" {
-		return evalerrors.NewErrEvaluationFailed("%s", failedEvalMsg)
+	if len(maliciousPackages) > 0 || len(lowScoringPackages) > 0 {
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			templates.TrustyTemplate,
+			map[string]any{"maliciousPackages": maliciousPackages, "lowScoringPackages": lowScoringPackages},
+			"%s",
+			failedEvalMsg,
+		)
 	}
 
 	return nil
