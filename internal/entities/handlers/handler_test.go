@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
@@ -130,6 +131,14 @@ func withSuccessfulFetchAllProperties(props *properties.Properties) func(mock pr
 		mock.EXPECT().
 			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(props, nil)
+	}
+}
+
+func WithSuccessfulPropertiesToProtoMessage(proto protoreflect.ProtoMessage) func(mock providerMock) {
+	return func(mock providerMock) {
+		mock.EXPECT().
+			PropertiesToProtoMessage(gomock.Any(), gomock.Any()).
+			Return(proto, nil)
 	}
 }
 
@@ -394,13 +403,8 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return fixtures.NewMockPropertiesService(
 					fixtures.WithSuccessfulEntityByUpstreamHint(repoPropsEwp, githubHint),
-					fixtures.WithSuccessfulRetrieveAllProperties(
-						projectID,
-						providerID,
-						minderv1.Entity_ENTITY_PULL_REQUESTS,
-						pullEwp.Properties,
-					),
 					fixtures.WithSuccessfulEntityWithPropertiesAsProto(pullProtoEnt),
+					fixtures.WithSuccessfulSaveAllProperties(),
 				)
 			},
 			mockStoreFunc: df.NewMockStore(
@@ -444,6 +448,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			providerSetup: newProviderMock(
 				withSuccessfulGetEntityName(pullName),
 				withSuccessfulFetchAllProperties(getPullRequestProperties()),
+				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
+					Number: 789,
+				}),
 			),
 			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
 				return provManFixtures.NewProviderManagerMock(
@@ -485,7 +492,16 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithSuccessfulDeletePullRequest(),
 				df.WithSuccessfulDeleteEntity(pullRequestID, projectID),
 			),
-			providerSetup:   newProviderMock(),
+			providerSetup: newProviderMock(
+				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
+					Number: 789,
+				}),
+			),
+			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+				return provManFixtures.NewProviderManagerMock(
+					provManFixtures.WithSuccessfulInstantiateFromID(prov),
+				)
+			},
 			expectedPublish: false,
 		},
 	}

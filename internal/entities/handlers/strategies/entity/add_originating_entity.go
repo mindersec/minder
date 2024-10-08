@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -28,7 +29,6 @@ import (
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -82,7 +82,12 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, fmt.Errorf("error retrieving properties: %w", err)
 		}
 
-		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, upstreamProps, t)
+		pbEnt, err := prov.PropertiesToProtoMessage(entMsg.Entity.Type, upstreamProps)
+		if err != nil {
+			return nil, fmt.Errorf("error converting properties to proto message: %w", err)
+		}
+
+		legacyId, err := a.upsertLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, pbEnt, t)
 		if err != nil {
 			return nil, fmt.Errorf("error upserting legacy entity: %w", err)
 		}
@@ -92,8 +97,18 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 			return nil, fmt.Errorf("error getting child entity name: %w", err)
 		}
 
+		var entID uuid.UUID
+		if legacyId == uuid.Nil {
+			// If this isn't backed by a legacy ID we generate a new one
+			entID = uuid.New()
+		} else {
+			// If this represents a legacy entity, we use the legacy ID as the entity ID
+			// so we keep the same ID across the system
+			entID = legacyId
+		}
+
 		childEnt, err := t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
-			ID:         legacyId,
+			ID:         entID,
 			EntityType: entities.EntityTypeToDB(entMsg.Entity.Type),
 			Name:       childEntName,
 			ProjectID:  parentEwp.Entity.ProjectID,
@@ -108,10 +123,9 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 		}
 
 		// Persist the properties
-		upstreamProps, err = a.propSvc.RetrieveAllProperties(ctx, prov,
-			parentEwp.Entity.ProjectID, parentEwp.Entity.ProviderID,
-			childProps, entMsg.Entity.Type,
-			propertyService.ReadBuilder().WithStoreOrTransaction(t),
+		err = a.propSvc.SaveAllProperties(ctx, entID,
+			upstreamProps,
+			propertyService.CallBuilder().WithStoreOrTransaction(t),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error persisting properties: %w", err)
@@ -135,16 +149,21 @@ func (_ *addOriginatingEntityStrategy) GetName() string {
 func (_ *addOriginatingEntityStrategy) upsertLegacyEntity(
 	ctx context.Context,
 	entType minderv1.Entity,
-	parentEwp *models.EntityWithProperties, childProps *properties.Properties,
+	parentEwp *models.EntityWithProperties, pbEnt protoreflect.ProtoMessage,
 	t db.ExtendQuerier,
 ) (uuid.UUID, error) {
 	var legacyId uuid.UUID
 
 	switch entType { // nolint:exhaustive
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
+		pr, ok := pbEnt.(*minderv1.PullRequest)
+		if !ok {
+			return uuid.Nil, fmt.Errorf("unexpected proto message type: %T", pbEnt)
+		}
+
 		dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
 			RepositoryID: parentEwp.Entity.ID,
-			PrNumber:     childProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
+			PrNumber:     pr.Number,
 		})
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("error upserting pull request: %w", err)
@@ -157,14 +176,19 @@ func (_ *addOriginatingEntityStrategy) upsertLegacyEntity(
 			return uuid.Nil, fmt.Errorf("error getting provider: %w", err)
 		}
 
+		art, ok := pbEnt.(*minderv1.Artifact)
+		if !ok {
+			return uuid.Nil, fmt.Errorf("unexpected proto message type: %T", pbEnt)
+		}
+
 		dbArtifact, err := t.UpsertArtifact(ctx, db.UpsertArtifactParams{
 			RepositoryID: uuid.NullUUID{
 				UUID:  parentEwp.Entity.ID,
 				Valid: true,
 			},
-			ArtifactName:       childProps.GetProperty(ghprop.ArtifactPropertyName).GetString(),
-			ArtifactType:       childProps.GetProperty(ghprop.ArtifactPropertyType).GetString(),
-			ArtifactVisibility: childProps.GetProperty(ghprop.ArtifactPropertyVisibility).GetString(),
+			ArtifactName:       art.Name,
+			ArtifactType:       art.Type,
+			ArtifactVisibility: art.Visibility,
 			ProjectID:          parentEwp.Entity.ProjectID,
 			ProviderID:         parentEwp.Entity.ProviderID,
 			ProviderName:       dbProv.Name,
