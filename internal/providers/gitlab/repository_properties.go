@@ -30,6 +30,13 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
+// This is done so we don't have to deal with conversions in the provider
+// when dealing with entities
+func FormatRepositoryUpstreamID(id int) string {
+	return fmt.Sprintf("%d", id)
+}
+
 func (c *gitlabClient) getPropertiesForRepo(
 	ctx context.Context, getByProps *properties.Properties,
 ) (*properties.Properties, error) {
@@ -172,4 +179,22 @@ func repoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repo
 	}
 
 	return pbRepo, nil
+}
+
+func getRepoNameFromProperties(props *properties.Properties) (string, error) {
+	groupName, err := getStringProp(props, RepoPropertyNamespace)
+	if err != nil {
+		return "", err
+	}
+
+	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	return formatRepoName(groupName, projectName), nil
+}
+
+func formatRepoName(groupName, projectName string) string {
+	return groupName + "/" + projectName
 }
