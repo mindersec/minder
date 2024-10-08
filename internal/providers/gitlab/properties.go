@@ -109,39 +109,6 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 	}
 }
 
-func getRepoNameFromProperties(props *properties.Properties) (string, error) {
-	groupName, err := getStringProp(props, RepoPropertyNamespace)
-	if err != nil {
-		return "", err
-	}
-
-	projectName, err := getStringProp(props, RepoPropertyProjectName)
-	if err != nil {
-		return "", err
-	}
-
-	return formatRepoName(groupName, projectName), nil
-}
-
-func getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
-	groupName, err := getStringProp(props, RepoPropertyNamespace)
-	if err != nil {
-		return "", err
-	}
-
-	projectName, err := getStringProp(props, RepoPropertyProjectName)
-	if err != nil {
-		return "", err
-	}
-
-	iid, err := getStringProp(props, PullRequestNumber)
-	if err != nil {
-		return "", err
-	}
-
-	return formatPullRequestName(groupName, projectName, iid), nil
-}
-
 // PropertiesToProtoMessage implements the ProtoMessageConverter interface
 func (c *gitlabClient) PropertiesToProtoMessage(
 	entType minderv1.Entity, props *properties.Properties,
@@ -161,20 +128,6 @@ func (c *gitlabClient) PropertiesToProtoMessage(
 	}
 }
 
-// FormatRepositoryUpstreamID returns the upstream ID for a gitlab project
-// This is done so we don't have to deal with conversions in the provider
-// when dealing with entities
-func FormatRepositoryUpstreamID(id int) string {
-	return fmt.Sprintf("%d", id)
-}
-
-// FormatPullRequestUpstreamID returns the upstream ID for a gitlab merge request
-// This is done so we don't have to deal with conversions in the provider
-// when dealing with entities
-func FormatPullRequestUpstreamID(id int) string {
-	return fmt.Sprintf("%d", id)
-}
-
 func getStringProp(props *properties.Properties, key string) (string, error) {
 	value, err := props.GetProperty(key).AsString()
 	if err != nil {
@@ -182,12 +135,4 @@ func getStringProp(props *properties.Properties, key string) (string, error) {
 	}
 
 	return value, nil
-}
-
-func formatRepoName(groupName, projectName string) string {
-	return groupName + "/" + projectName
-}
-
-func formatPullRequestName(groupName, projectName, iid string) string {
-	return fmt.Sprintf("%s/%s/%s", groupName, projectName, iid)
 }

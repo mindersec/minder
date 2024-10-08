@@ -30,6 +30,13 @@ import (
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// FormatPullRequestUpstreamID returns the upstream ID for a gitlab merge request
+// This is done so we don't have to deal with conversions in the provider
+// when dealing with entities
+func FormatPullRequestUpstreamID(id int) string {
+	return fmt.Sprintf("%d", id)
+}
+
 func (c *gitlabClient) getPropertiesForPullRequest(
 	ctx context.Context, getByProps *properties.Properties,
 ) (*properties.Properties, error) {
@@ -183,4 +190,27 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*minderv1.Pull
 	}
 
 	return pbPR, nil
+}
+
+func getPullRequestNameFromProperties(props *properties.Properties) (string, error) {
+	groupName, err := getStringProp(props, RepoPropertyNamespace)
+	if err != nil {
+		return "", err
+	}
+
+	projectName, err := getStringProp(props, RepoPropertyProjectName)
+	if err != nil {
+		return "", err
+	}
+
+	iid, err := getStringProp(props, PullRequestNumber)
+	if err != nil {
+		return "", err
+	}
+
+	return formatPullRequestName(groupName, projectName, iid), nil
+}
+
+func formatPullRequestName(groupName, projectName, iid string) string {
+	return fmt.Sprintf("%s/%s/%s", groupName, projectName, iid)
 }
