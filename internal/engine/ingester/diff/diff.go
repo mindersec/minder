@@ -51,7 +51,6 @@ const (
 	DiffRuleDataIngestType = "diff"
 	prFilesPerPage         = 30
 	wildcard               = "*"
-	scalibrEnabled         = true
 )
 
 // Diff is the diff rule data ingest engine
