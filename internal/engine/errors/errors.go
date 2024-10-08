@@ -89,6 +89,9 @@ func (e *EvaluationError) Details() string {
 	}
 	tmpl, err := template.New("error").
 		Option("missingkey=error").
+		Funcs(template.FuncMap{
+			"stringsJoin": strings.Join,
+		}).
 		Parse(e.Template)
 	if err != nil {
 		return e.Error()

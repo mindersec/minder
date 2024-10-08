@@ -51,7 +51,7 @@ func (_ *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string 
 		return ""
 	}
 
-	return fmt.Sprintf("- Text: `%s`, Scripts: %v\n", violation.mixedScript.text, violation.mixedScript.scriptsFound)
+	return fmt.Sprintf("- Text: `%s`, Scripts: %v\n", violation.MixedScript.Text, violation.MixedScript.ScriptsFound)
 }
 
 // GetPassedReviewText returns the passed review text for mixed scripts
@@ -79,8 +79,8 @@ func NewMixedScriptsProcessor(ctx context.Context) (HomoglyphProcessor, error) {
 
 // MixedScriptInfo contains information about a word that mixes multiple scripts
 type MixedScriptInfo struct {
-	text         string
-	scriptsFound []string
+	Text         string
+	ScriptsFound []string
 }
 
 // FindMixedScripts returns a slice of MixedScriptInfo for words in the input string that
@@ -109,10 +109,10 @@ func (mse *MixedScriptsProcessor) FindMixedScripts(line string) []*Violation {
 			}
 
 			msi := &MixedScriptInfo{
-				text:         word,
-				scriptsFound: scripts,
+				Text:         word,
+				ScriptsFound: scripts,
 			}
-			mixedScripts = append(mixedScripts, &Violation{mixedScript: msi})
+			mixedScripts = append(mixedScripts, &Violation{MixedScript: msi})
 		}
 	}
 

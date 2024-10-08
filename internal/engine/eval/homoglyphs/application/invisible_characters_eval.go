@@ -60,12 +60,12 @@ func (ice *InvisibleCharactersEvaluator) Eval(
 	_ protoreflect.ProtoMessage,
 	res *engif.Result,
 ) error {
-	hasFoundViolations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
+	violations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {
 		return err
 	}
 
-	if hasFoundViolations {
+	if len(violations) > 0 {
 		return evalerrors.NewErrEvaluationFailed("found invisible characters violations")
 	}
 

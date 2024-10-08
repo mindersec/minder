@@ -72,23 +72,26 @@ func evaluateHomoglyphs(
 	processor domain.HomoglyphProcessor,
 	res *engif.Result,
 	reviewHandler *communication.GhReviewPrHandler,
-) (bool, error) {
+) ([]*domain.Violation, error) {
+	// create an empty list of violations
+	var violationsList []*domain.Violation
+
 	if res == nil {
-		return false, fmt.Errorf("result is nil")
+		return violationsList, fmt.Errorf("result is nil")
 	}
 
 	//nolint:govet
 	prContents, ok := res.Object.(*pbinternal.PrContents)
 	if !ok {
-		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
+		return violationsList, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}
 
 	if prContents.Pr == nil || prContents.Files == nil {
-		return false, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
+		return violationsList, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
 	}
 
 	if len(prContents.Files) == 0 {
-		return false, nil
+		return violationsList, nil
 	}
 
 	// Note: This is a mandatory step to reassign certain fields in the handler.
@@ -101,6 +104,7 @@ func evaluateHomoglyphs(
 			if len(violations) == 0 {
 				continue
 			}
+			violationsList = append(violationsList, violations...)
 
 			var commentBody strings.Builder
 			commentBody.WriteString(processor.GetSubCommentText())
@@ -120,8 +124,8 @@ func evaluateHomoglyphs(
 	}
 
 	if len(reviewHandler.GetComments()) > 0 {
-		return true, reviewHandler.SubmitReview(ctx, processor.GetFailedReviewText())
+		return violationsList, reviewHandler.SubmitReview(ctx, processor.GetFailedReviewText())
 	}
 
-	return false, nil
+	return violationsList, nil
 }
