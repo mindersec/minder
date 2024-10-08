@@ -411,9 +411,78 @@ func TestLoadCredentials(t *testing.T) {
 }
 
 // TestRevokeToken tests the RevokeToken function
-// func TestRevokeToken(t *testing.T) {
+func TestRevokeToken(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		token        string
+		issuerUrl    string
+		clientId     string
+		tokenHint    string
+		expectedPath string
+		expectError  bool
+	}{
+		{
+			name:         "Valid token revocation",
+			token:        "test-token",
+			issuerUrl:    "http://localhost:8081",
+			clientId:     "minder-cli",
+			tokenHint:    "refresh_token",
+			expectedPath: "/realms/stacklok/protocol/openid-connect/revoke",
+			expectError:  false,
+		},
+		{
+			name:         "Invalid issuer URL",
+			token:        "test-token",
+			issuerUrl:    "://invalid-url",
+			clientId:     "minder-cli",
+			tokenHint:    "refresh_token",
+			expectedPath: "",
+			expectError:  true,
+		},
+	}
 
-// }
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			var server *httptest.Server
+			if tt.name != "Invalid issuer URL" {
+				server = httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+					if r.URL.Path != tt.expectedPath {
+						t.Errorf("expected path %s, got %s", tt.expectedPath, r.URL.Path)
+					}
+
+					if err := r.ParseForm(); err != nil {
+						t.Fatalf("error parsing form: %v", err)
+					}
+
+					if r.Form.Get("client_id") != tt.clientId {
+						t.Errorf("expected client_id %s, got %s", tt.clientId, r.Form.Get("client_id"))
+					}
+
+					if r.Form.Get("token") != tt.token {
+						t.Errorf("expected token %s, got %s", tt.token, r.Form.Get("token"))
+					}
+
+					if r.Form.Get("token_type_hint") != tt.tokenHint {
+						t.Errorf("expected token_type_hint %s, got %s", tt.tokenHint, r.Form.Get("token_type_hint"))
+					}
+				}))
+				defer server.Close()
+			}
+
+			issuerUrl := tt.issuerUrl
+			if tt.name != "Invalid issuer URL" {
+				issuerUrl = server.URL
+			}
+
+			err := RevokeToken(tt.token, issuerUrl, tt.clientId, tt.tokenHint)
+			if (err != nil) != tt.expectError {
+				t.Errorf("RevokeToken() error = %v, expectError %v", err, tt.expectError)
+			}
+		})
+	}
+}
 
 // TestGetJsonFromProto tests the GetJsonFromProto function
 func TestGetJsonFromProto(t *testing.T) {
