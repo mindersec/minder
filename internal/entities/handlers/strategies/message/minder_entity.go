@@ -41,7 +41,7 @@ func (_ *toMinderEntityStrategy) CreateMessage(_ context.Context, ewp *models.En
 	entEvent := messages.NewMinderEvent().
 		WithProjectID(ewp.Entity.ProjectID).
 		WithProviderID(ewp.Entity.ProviderID).
-		WithEntityType(ewp.Entity.Type.String()).
+		WithEntityType(ewp.Entity.Type).
 		WithEntityID(ewp.Entity.ID)
 
 	err := entEvent.ToMessage(m)

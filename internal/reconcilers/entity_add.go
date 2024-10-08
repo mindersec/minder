@@ -27,6 +27,7 @@ import (
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // handleEntityAddEvent handles the entity add event.
@@ -49,6 +50,11 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		// We don't return the event since there's no use
 		// retrying it if it's invalid.
 		l.Error().Err(err).Msg("error validating event")
+		return nil
+	}
+
+	if event.EntityType != pb.Entity_ENTITY_REPOSITORIES {
+		l.Error().Str("entity_type", event.EntityType.String()).Msg("entity type not supported")
 		return nil
 	}
 

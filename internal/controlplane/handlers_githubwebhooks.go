@@ -884,7 +884,7 @@ func (s *Server) processRelevantRepositoryEvent(
 		repoEvent := messages.NewMinderEvent().
 			WithProjectID(repoEntity.Entity.ProjectID).
 			WithProviderID(repoEntity.Entity.ProviderID).
-			WithEntityType("repository").
+			WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 			WithEntityID(repoEntity.Entity.ID)
 
 		return &processingResult{
@@ -1194,7 +1194,7 @@ func (s *Server) repositoryRemoved(
 	event := messages.NewMinderEvent().
 		WithProjectID(repoEnt.Entity.ProjectID).
 		WithProviderID(repoEnt.Entity.ProviderID).
-		WithEntityType("repository").
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 		WithEntityID(repoEnt.Entity.ID)
 
 	return &processingResult{
@@ -1215,7 +1215,7 @@ func (_ *Server) repositoryAdded(
 	event := messages.NewMinderEvent().
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
-		WithEntityType("repository").
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 		WithAttribute("repoName", repo.GetName()).
 		WithAttribute("repoOwner", repo.GetOwner())
 

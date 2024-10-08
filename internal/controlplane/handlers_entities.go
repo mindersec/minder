@@ -124,7 +124,7 @@ func createEntityMessage(
 	event := messages.NewMinderEvent().
 		WithProjectID(projectID).
 		WithProviderID(providerID).
-		WithEntityType("repository").
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 		WithAttribute("repoName", repoName).
 		WithAttribute("repoOwner", repoOwner)
 

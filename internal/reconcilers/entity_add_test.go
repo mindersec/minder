@@ -63,7 +63,7 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithAttribute("repoName", repoName).
 					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
@@ -85,7 +85,7 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithAttribute("repoName", repoName).
 					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)
@@ -118,7 +118,7 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithAttribute("repoName", repoName).
 					WithAttribute("repoOwner", repoOwner).
 					ToMessage(m)

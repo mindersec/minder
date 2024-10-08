@@ -32,6 +32,7 @@ import (
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
 	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -67,7 +68,7 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithEntityID(repositoryID).
 					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
@@ -89,7 +90,7 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithEntityID(repositoryID).
 					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
@@ -112,7 +113,7 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 					WithEntityID(repositoryID).
 					WithAttribute("repoID", repositoryID.String())
 				err := eiw.ToMessage(m)
