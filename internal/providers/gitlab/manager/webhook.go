@@ -92,6 +92,8 @@ func (m *providerClassManager) getWebhookEventDispatcher(
 		return m.handleTagPush
 	case gitlablib.EventTypeMergeRequest:
 		return m.handleMergeRequest
+	case gitlablib.EventTypeRelease:
+		return m.handleRelease
 	default:
 		return m.handleNoop
 	}
