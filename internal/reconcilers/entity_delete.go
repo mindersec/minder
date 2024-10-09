@@ -15,7 +15,6 @@
 package reconcilers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +23,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -67,7 +67,7 @@ func (r *Reconciler) handleEntityDeleteEvent(msg *message.Message) error {
 	// Remove the entry in the DB. There's no need to clean any webhook we created for this repository, as GitHub
 	// will automatically remove them when the repository is deleted.
 	err := r.repos.DeleteByID(ctx, event.EntityID, event.ProjectID)
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, service.ErrEntityNotFound) {
 		zerolog.Ctx(ctx).Debug().Err(err).
 			Str("entity UUID", event.EntityID.String()).
 			Msg("repository not found")
