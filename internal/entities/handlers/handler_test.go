@@ -24,6 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
@@ -164,7 +165,6 @@ func checkRepoMessage(t *testing.T, msg *watermill.Message) {
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyName].(string), pbrepo.Name)
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyOwner].(string), pbrepo.Owner)
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyId].(int64), pbrepo.RepoId)
-	assert.Equal(t, repoPropMap[properties.RepoPropertyIsPrivate].(bool), pbrepo.IsPrivate)
 	assert.Equal(t, repoPropMap[properties.RepoPropertyIsFork].(bool), pbrepo.IsFork)
 }
 
@@ -307,6 +307,97 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			expectedPublish: true,
 			topic:           events.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: private repo publishes if feature enabled",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				privateRepoMap := maps.Clone(repoPropMap)
+				privateRepoMap[properties.RepoPropertyIsPrivate] = true
+
+				ewp := buildEwp(t, repoEwp, privateRepoMap)
+				protoEnt, err := ghprops.RepoV1FromProperties(ewp.Properties)
+				require.NoError(t, err)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+					fixtures.WithSuccessfulEntityWithPropertiesAsProto(protoEnt),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				df.WithSuccessfulGetFeatureInProject(true),
+			),
+			expectedPublish: true,
+			topic:           events.TopicQueueEntityEvaluate,
+			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: private repo does not publish if feature disabled",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				privateRepoMap := maps.Clone(repoPropMap)
+				privateRepoMap[properties.RepoPropertyIsPrivate] = true
+
+				ewp := buildEwp(t, repoEwp, privateRepoMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				df.WithSuccessfulGetFeatureInProject(false),
+			),
+			expectedPublish: false,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: archived repo does not publish",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				archivedRepoMap := maps.Clone(repoPropMap)
+				archivedRepoMap[properties.RepoPropertyIsArchived] = true
+
+				ewp := buildEwp(t, repoEwp, archivedRepoMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+			),
+			expectedPublish: false,
 		},
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to get an entity doesn't publish",
