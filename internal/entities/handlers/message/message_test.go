@@ -36,6 +36,7 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 		props         map[string]any
 		entType       v1.Entity
 		ownerProps    map[string]any
+		matchProps    map[string]any
 		ownerType     v1.Entity
 		providerHint  string
 		providerClass string
@@ -77,6 +78,18 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			providerHint:  "github",
 			providerClass: string(db.ProviderClassGithub),
 		},
+		{
+			name: "Entity with matching properties",
+			props: map[string]any{
+				"id": "123",
+			},
+			matchProps: map[string]any{
+				"id": "456",
+			},
+			entType:       v1.Entity_ENTITY_REPOSITORIES,
+			providerHint:  "github",
+			providerClass: string(db.ProviderClassGithub),
+		},
 	}
 
 	for _, sc := range scenarios {
@@ -97,6 +110,12 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 				original.WithOriginator(sc.ownerType, ownerProps)
 			}
 
+			if sc.matchProps != nil {
+				matchProps, err := properties.NewProperties(sc.matchProps)
+				require.NoError(t, err)
+				original.WithMatchProps(matchProps)
+			}
+
 			handlerMsg := message.NewMessage(uuid.New().String(), nil)
 			err = original.ToMessage(handlerMsg)
 			require.NoError(t, err)
@@ -110,6 +129,9 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 			if original.Originator.Type != v1.Entity_ENTITY_UNSPECIFIED {
 				assert.Equal(t, original.Originator.GetByProps, roundTrip.Originator.GetByProps)
 				assert.Equal(t, original.Originator.Type, roundTrip.Originator.Type)
+			}
+			if original.MatchProps != nil {
+				assert.Equal(t, original.MatchProps, roundTrip.MatchProps)
 			}
 		})
 	}
