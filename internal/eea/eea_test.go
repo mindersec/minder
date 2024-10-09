@@ -202,7 +202,7 @@ func TestFlushAll(t *testing.T) {
 	tests := []struct {
 		name             string
 		mockDBSetup      func(context.Context, *mockdb.MockStore)
-		mockPropSvcSetup func(*propsvcmock.MockEntityWithPropertiesFetcher)
+		mockPropSvcSetup func(*propsvcmock.MockPropertiesService)
 	}{
 		{
 			name: "flushes one repo",
@@ -221,7 +221,7 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
-			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
 				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
@@ -254,7 +254,7 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
-			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
 				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
@@ -288,7 +288,7 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
-			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
 				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
@@ -321,7 +321,7 @@ func TestFlushAll(t *testing.T) {
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
-			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
 				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(prID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
@@ -354,7 +354,7 @@ func TestFlushAll(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 
-			propsvc := propsvcmock.NewMockEntityWithPropertiesFetcher(ctrl)
+			propsvc := propsvcmock.NewMockPropertiesService(ctrl)
 			provman := mockmanager.NewMockProviderManager(ctrl)
 
 			evt, err := events.Setup(ctx, &serverconfig.EventConfig{
@@ -490,7 +490,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	propsvc := propsvcmock.NewMockEntityWithPropertiesFetcher(ctrl)
+	propsvc := propsvcmock.NewMockPropertiesService(ctrl)
 	provman := mockmanager.NewMockProviderManager(ctrl)
 
 	flushedMessages := newTestPubSub()

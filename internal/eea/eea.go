@@ -44,13 +44,13 @@ type EEA struct {
 	evt     events.Publisher
 	cfg     *serverconfig.AggregatorConfig
 
-	entityFetcher service.EntityWithPropertiesFetcher
+	entityFetcher service.PropertiesService
 	provMan       manager.ProviderManager
 }
 
 // NewEEA creates a new EEA
 func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig,
-	ef service.EntityWithPropertiesFetcher, provMan manager.ProviderManager) *EEA {
+	ef service.PropertiesService, provMan manager.ProviderManager) *EEA {
 	return &EEA{
 		querier:       querier,
 		evt:           evt,
