@@ -93,27 +93,6 @@ func newPropSvcMock(opts ...func(mck propSvcMock)) propSvcMockBuilder {
 	}
 }
 
-func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]any) func(mck propSvcMock) { //nolint:unparam // we will remove the usage soon, no point in changing the helper now
-	retProps, err := properties.NewProperties(retPropsMap)
-	if err != nil {
-		panic(err)
-	}
-
-	return func(mock propSvcMock) {
-		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity, gomock.Any()).
-			Return(retProps, nil)
-	}
-}
-
-func withSuccessArtifactProto() func(mck propSvcMock) {
-	return func(mock propSvcMock) {
-		mock.EXPECT().
-			EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(&v1.Artifact{}, nil)
-	}
-}
-
 func withSuccessRepoProto() func(mck propSvcMock) {
 	return func(mock propSvcMock) {
 		mock.EXPECT().
@@ -679,58 +658,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "123",
-					ghprop.ArtifactPropertyOwner:     "login",
-					ghprop.ArtifactPropertyName:      "package-name",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "123",
-					ghprop.ArtifactPropertyOwner:     "login",
-					ghprop.ArtifactPropertyName:      "package-name",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessArtifactProto(),
-			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("login/package-name"),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -740,9 +671,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -751,58 +679,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
-			mockPropsBld: newPropSvcMock(
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "12345",
-					ghprop.ArtifactPropertyOwner:     "stacklok",
-					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "12345",
-					ghprop.ArtifactPropertyOwner:     "stacklok",
-					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessArtifactProto(),
-			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("stacklok/minder"),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -812,9 +692,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
