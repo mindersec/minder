@@ -216,7 +216,7 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to subscribe to account events: %w", err)
 	}
 
-	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
+	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator, propSvc, providerManager)
 
 	// consume flush-all events
 	evt.ConsumeEvents(aggr)
