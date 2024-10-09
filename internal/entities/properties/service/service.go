@@ -190,7 +190,6 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 	}
 
 	efp.UpdateProperties(props)
-	l.Debug().Msg("properties fetched")
 	return nil
 }
 
@@ -216,7 +215,6 @@ func (ps *propertiesService) RetrieveProperty(
 	// fetch properties from db
 	var dbProp db.Property
 	if entID != uuid.Nil {
-		l.Debug().Str("entityID", entID.String()).Msg("entity found, fetching properties")
 		dbProp, err = ps.store.GetProperty(ctx, db.GetPropertyParams{
 			EntityID: entID,
 			Key:      key,
@@ -230,12 +228,10 @@ func (ps *propertiesService) RetrieveProperty(
 
 	// if exists, turn into our model
 	if ps.isDatabasePropertyValid(dbProp, opts) {
-		l.Info().Msg("properties are valid, skipping provider fetch")
 		return models.DbPropToModel(dbProp)
 	}
 
 	// if not, fetch from provider
-	l.Debug().Msg("properties are not valid, fetching from provider")
 	prop, err := provider.FetchProperty(ctx, lookupProperties, entType, key)
 	if errors.Is(err, provifv1.ErrEntityNotFound) {
 		return nil, fmt.Errorf("failed to fetch upstream property: %w", ErrEntityNotFound)
@@ -339,7 +335,6 @@ func (ps *propertiesService) EntityWithPropertiesByID(
 ) (*models.EntityWithProperties, error) {
 	q := ps.getStoreOrTransaction(opts)
 
-	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("fetching entity with properties")
 	ent, err := q.GetEntityByID(ctx, entityID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrEntityNotFound
@@ -386,8 +381,6 @@ func (ps *propertiesService) EntityWithPropertiesByUpstreamHint(
 		Dict("getByProps", getByProps.ToLogDict()).
 		Dict("hint", hint.ToLogDict()).
 		Logger()
-
-	l.Debug().Msg("fetching entity with properties by upstream hint")
 
 	ent, err := matchEntityWithHint(ctx, getByProps, entType, &hint, l, q)
 	if err != nil {
