@@ -25,6 +25,7 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/constraints"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -220,6 +221,19 @@ func (p *Property) RawValue() any {
 		return nil
 	}
 	return p.value.AsInterface()
+}
+
+// Equal checks if two Properties are equal
+func (p *Property) Equal(other *Property) bool {
+	if p == nil && other == nil {
+		return true
+	}
+
+	if p == nil || other == nil {
+		return false
+	}
+
+	return proto.Equal(p.value, other.value)
 }
 
 // Properties struct that holds the properties map and provides access to Property values
