@@ -6,7 +6,7 @@ require (
 	github.com/bufbuild/buf v1.44.0
 	github.com/daixiang0/gci v0.13.5
 	github.com/deepmap/oapi-codegen/v2 v2.2.0
-	github.com/go-critic/go-critic v0.11.4
+	github.com/go-critic/go-critic v0.11.5
 	github.com/golangci/golangci-lint v1.61.0
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0
