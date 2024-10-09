@@ -85,17 +85,7 @@ func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, erro
 	if remoteUser != nil {
 		return remoteUser, nil
 	}
-
-	// The user doesn't already existing in Keycloak, try to create a user
-	// based on GitHub metadata.  When the user logs in, they should end up
-	// using the pre-created Keycloak identity.
-	ghUser, err := k.lookupGithubUser(ctx, id)
-	if err != nil {
-		// TODO: how to signal GH user does not exist separate from lookup error?
-		return nil, fmt.Errorf("unable to resolve github user: %w", err)
-	}
-
-	return k.createKeycloakUser(ctx, ghUser)
+	return nil, errNotFound
 }
 
 // Validate implements auth.IdentityProvider.
@@ -170,14 +160,6 @@ func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity
 		ret.LastName = *user.LastName
 	}
 	return ret
-}
-
-func (_ *KeyCloak) lookupGithubUser(_ context.Context, _ string) (*auth.Identity, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (_ *KeyCloak) createKeycloakUser(_ context.Context, _ *auth.Identity) (*auth.Identity, error) {
-	return nil, fmt.Errorf("not implemented")
 }
 
 func newAuthorizedClient(kcUrl url.URL, cfg serverconfig.IdentityConfig) (*http.Client, error) {

@@ -6,7 +6,7 @@ require (
 	github.com/ThreeDotsLabs/watermill v1.3.7
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
 	github.com/alexdrl/zerowater v0.0.3
-	github.com/aws/aws-sdk-go-v2 v1.32.1
+	github.com/aws/aws-sdk-go-v2 v1.32.2
 	github.com/aws/aws-sdk-go-v2/config v1.27.42
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.35.1
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
@@ -67,7 +67,7 @@ require (
 	github.com/stacklok/frizbee v0.1.2
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.27.0
+	github.com/styrainc/regal v0.28.0
 	github.com/thomaspoignant/go-feature-flag v1.34.0
 	github.com/xanzy/go-gitlab v0.110.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -107,7 +107,7 @@ require (
 	github.com/Microsoft/hcsshim v0.11.7 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
-	github.com/anderseknert/roast v0.2.0 // indirect
+	github.com/anderseknert/roast v0.4.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect

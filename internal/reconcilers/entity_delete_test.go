@@ -16,7 +16,6 @@ package reconcilers
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"testing"
 
@@ -28,6 +27,7 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
@@ -81,7 +81,7 @@ func TestHandleEntityDelete(t *testing.T) {
 			mockStoreFunc: nil,
 			mockReposFunc: rf.NewRepoService(
 				rf.WithFailedDeleteByID(
-					sql.ErrNoRows,
+					service.ErrEntityNotFound,
 				),
 			),
 			messageFunc: func(t *testing.T) *message.Message {
@@ -151,6 +151,8 @@ func TestHandleEntityDelete(t *testing.T) {
 			// then
 			if tt.err {
 				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -181,7 +183,6 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		nil, // crypto.Engine not used in these tests
 		nil, // manager.ProviderManager not used in these tests
 		repoService,
-		nil, // propertyService.PropertiesService not used in these tests
 	)
 	require.NoError(t, err)
 

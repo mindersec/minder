@@ -21,14 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/entities/properties/service/mock/fixtures"
 	"github.com/stacklok/minder/internal/events"
 	stubeventer "github.com/stacklok/minder/internal/events/stubs"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -41,22 +36,14 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		name              string
-		setupPropSvcMocks func() fixtures.MockPropertyServiceBuilder
-		expectedPublish   bool
-		expectedErr       bool
-		entityID          uuid.UUID
-		topic             string
+		name            string
+		expectedPublish bool
+		expectedErr     bool
+		entityID        uuid.UUID
+		topic           string
 	}{
 		{
-			name: "valid event",
-			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
-				// this just shortcuts the function at the point we will refactor
-				// soon
-				return fixtures.NewMockPropertiesService(
-					fixtures.WithFailedGetEntityWithPropertiesByID(propSvc.ErrEntityNotFound),
-				)
-			},
+			name:            "valid event",
 			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
 			entityID:        testRepoID,
 			expectedPublish: true,
@@ -67,34 +54,14 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 			// in this case the current code will issue the reconcile for the repo, but stop without a fatal error
 			// just before reconciling artifacts - we verify that because if we hit the artifacts path, we would have
 			// a bunch of other mocks to call
-			name: "event with string as upstream ID does publish",
-			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
-				retProps, err := properties.NewProperties(map[string]any{
-					properties.PropertyUpstreamID: "not_an_int",
-				})
-				require.NoError(t, err)
-
-				ewp := &models.EntityWithProperties{
-					Entity: models.EntityInstance{
-						Type: minderv1.Entity_ENTITY_REPOSITORIES,
-						ID:   testRepoID,
-					},
-					Properties: retProps,
-				}
-				return fixtures.NewMockPropertiesService(
-					fixtures.WithSuccessfulEntityWithPropertiesByID(testRepoID, ewp),
-				)
-			},
+			name:            "event with string as upstream ID does publish",
 			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
 			entityID:        testRepoID,
 			expectedPublish: true,
 			expectedErr:     false,
 		},
 		{
-			name: "event with no upstream ID",
-			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
-				return fixtures.NewMockPropertiesService()
-			},
+			name:            "event with no upstream ID",
 			entityID:        uuid.Nil,
 			expectedPublish: false,
 			expectedErr:     false,
@@ -113,9 +80,8 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 			require.NotNil(t, msg)
 
 			stubEventer := &stubeventer.StubEventer{}
-			mockPropSvc := scenario.setupPropSvcMocks()(ctrl)
 
-			reconciler, err := NewReconciler(nil, stubEventer, nil, nil, nil, mockPropSvc)
+			reconciler, err := NewReconciler(nil, stubEventer, nil, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, reconciler)
 

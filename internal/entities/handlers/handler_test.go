@@ -16,6 +16,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
@@ -41,6 +43,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/manager"
 	mock_manager "github.com/stacklok/minder/internal/providers/manager/mock"
 	provManFixtures "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
+	"github.com/stacklok/minder/internal/reconcilers/messages"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -152,6 +155,17 @@ func buildEwp(t *testing.T, ewp models.EntityWithProperties, propMap map[string]
 	return &ewp
 }
 
+func checkRepoEntityMessage(t *testing.T, msg *watermill.Message) {
+	t.Helper()
+
+	var event messages.MinderEvent
+
+	err := json.Unmarshal(msg.Payload, &event)
+	require.NoError(t, err)
+	require.Equal(t, minderv1.Entity_ENTITY_REPOSITORIES, event.EntityType)
+	require.Equal(t, repoID, event.EntityID)
+}
+
 func checkRepoMessage(t *testing.T, msg *watermill.Message) {
 	t.Helper()
 
@@ -164,7 +178,6 @@ func checkRepoMessage(t *testing.T, msg *watermill.Message) {
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyName].(string), pbrepo.Name)
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyOwner].(string), pbrepo.Owner)
 	assert.Equal(t, repoPropMap[ghprops.RepoPropertyId].(int64), pbrepo.RepoId)
-	assert.Equal(t, repoPropMap[properties.RepoPropertyIsPrivate].(bool), pbrepo.IsPrivate)
 	assert.Equal(t, repoPropMap[properties.RepoPropertyIsFork].(bool), pbrepo.IsFork)
 }
 
@@ -221,6 +234,15 @@ func removeOriginatingEntityHandlerBuilder(
 	provMgr manager.ProviderManager,
 ) events.Consumer {
 	return NewRemoveOriginatingEntityHandler(evt, store, propSvc, provMgr)
+}
+
+func getAndDeleteEntityHandlerBuilder(
+	evt events.Publisher,
+	store db.Store,
+	propSvc service.PropertiesService,
+	_ manager.ProviderManager,
+) events.Consumer {
+	return NewGetEntityAndDeleteHandler(evt, store, propSvc)
 }
 
 func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
@@ -307,6 +329,97 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			expectedPublish: true,
 			topic:           events.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: private repo publishes if feature enabled",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				privateRepoMap := maps.Clone(repoPropMap)
+				privateRepoMap[properties.RepoPropertyIsPrivate] = true
+
+				ewp := buildEwp(t, repoEwp, privateRepoMap)
+				protoEnt, err := ghprops.RepoV1FromProperties(ewp.Properties)
+				require.NoError(t, err)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+					fixtures.WithSuccessfulEntityWithPropertiesAsProto(protoEnt),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				df.WithSuccessfulGetFeatureInProject(true),
+			),
+			expectedPublish: true,
+			topic:           events.TopicQueueEntityEvaluate,
+			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: private repo does not publish if feature disabled",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				privateRepoMap := maps.Clone(repoPropMap)
+				privateRepoMap[properties.RepoPropertyIsPrivate] = true
+
+				ewp := buildEwp(t, repoEwp, privateRepoMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				df.WithSuccessfulGetFeatureInProject(false),
+			),
+			expectedPublish: false,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: archived repo does not publish",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				archivedRepoMap := maps.Clone(repoPropMap)
+				archivedRepoMap[properties.RepoPropertyIsArchived] = true
+
+				ewp := buildEwp(t, repoEwp, archivedRepoMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+			),
+			expectedPublish: false,
 		},
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to get an entity doesn't publish",
@@ -501,6 +614,58 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				return provManFixtures.NewProviderManagerMock(
 					provManFixtures.WithSuccessfulInstantiateFromID(prov),
 				)
+			},
+			expectedPublish: false,
+		},
+		{
+			name:             "NewGetEntityAndDeleteHandler: happy path publishes",
+			handlerBuilderFn: getAndDeleteEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				repoPropsEwp := buildEwp(t, repoEwp, repoPropMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(repoPropsEwp, githubHint),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(),
+			providerSetup: newProviderMock(),
+			providerManagerSetup: func(_ provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+				return provManFixtures.NewProviderManagerMock()
+			},
+			expectedPublish: true,
+			checkWmMsg:      checkRepoEntityMessage,
+			topic:           events.TopicQueueReconcileEntityDelete,
+		},
+		{
+			name:             "NewGetEntityAndDeleteHandler: failure to get entity does not publish",
+			handlerBuilderFn: getAndDeleteEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithFailedEntityByUpstreamHint(service.ErrEntityNotFound),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(),
+			providerSetup: newProviderMock(),
+			providerManagerSetup: func(_ provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+				return provManFixtures.NewProviderManagerMock()
 			},
 			expectedPublish: false,
 		},

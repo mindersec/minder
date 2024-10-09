@@ -26,14 +26,12 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
@@ -42,7 +40,6 @@ import (
 	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/github/clients"
@@ -51,7 +48,6 @@ import (
 	ghsvc "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
 	reposvc "github.com/stacklok/minder/internal/repositories"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -673,8 +669,7 @@ func (_ *Server) processPingEvent(
 	l.Debug().Msg("ping received")
 }
 
-//nolint:gocyclo // This function will be re-simplified later on
-func (s *Server) processPackageEvent(
+func (_ *Server) processPackageEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -703,129 +698,24 @@ func (s *Server) processPackageEvent(
 		return nil, errors.New("invalid package: owner is nil")
 	}
 
-	repoEnt, err := s.fetchRepo(ctx, event.Repo)
+	repoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.GetID()),
+		properties.PropertyName:       event.Repo.GetName(),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating repository properties: %w", err)
 	}
-
-	provider, err := s.providerManager.InstantiateFromID(ctx, repoEnt.Entity.ProviderID)
-	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
-	}
-
 	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
 		return nil, fmt.Errorf("error converting package event to properties: %w", err)
 	}
 
-	pkgName, err := provider.GetEntityName(pb.Entity_ENTITY_ARTIFACTS, pkgLookupProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting package name: %w", err)
-	}
+	pkgMsg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_ARTIFACTS, pkgLookupProps).
+		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	var refreshedPkgProperties *properties.Properties
-	ei, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*db.EntityInstance, error) {
-		// we do two property lookups here: this first one will go away once we migrate artifacts to entities
-		// as the only reason is to have the visibility and type of the artifact available.
-		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
-			ctx, provider,
-			repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-			pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS,
-			service.ReadBuilder().WithStoreOrTransaction(tx))
-
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
-		}
-
-		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
-		dbProv, getPrErr := tx.GetProviderByID(ctx, repoEnt.Entity.ProviderID)
-		if getPrErr != nil {
-			return nil, fmt.Errorf("error getting provider: %w", err)
-		}
-
-		dbArtifact, err := tx.UpsertArtifact(ctx, db.UpsertArtifactParams{
-			RepositoryID: uuid.NullUUID{
-				UUID:  repoEnt.Entity.ID,
-				Valid: true,
-			},
-			ArtifactName:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
-			ArtifactType:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
-			ArtifactVisibility: refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyVisibility).GetString(),
-			ProjectID:          repoEnt.Entity.ProjectID,
-			ProviderID:         repoEnt.Entity.ProviderID,
-			ProviderName:       dbProv.Name,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error upserting artifact: %w", err)
-		}
-
-		ent, err := tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
-			ID:         dbArtifact.ID,
-			EntityType: db.EntitiesArtifact,
-			Name:       pkgName,
-			ProjectID:  repoEnt.Entity.ProjectID,
-			ProviderID: repoEnt.Entity.ProviderID,
-			OriginatedFrom: uuid.NullUUID{
-				UUID:  repoEnt.Entity.ID,
-				Valid: true,
-			},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating or ensuring entity: %w", err)
-		}
-
-		// fetch the properties
-		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
-			ctx, provider,
-			ent.ProjectID, ent.ProviderID,
-			refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS,
-			service.ReadBuilder().WithStoreOrTransaction(tx))
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
-		}
-
-		return &ent, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// refresh the version to attach it to the pb representation we send to the evaluation
-	cli, err := provifv1.As[provifv1.GitHub](provider)
-	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
-	}
-
-	version, err := gatherArtifactVersionInfo(ctx, cli, event,
-		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyOwner).GetString(),
-		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
-	}
-
-	ewp := models.NewEntityWithProperties(*ei, refreshedPkgProperties)
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, ewp, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting artifact to protobuf: %w", err)
-	}
-
-	pbArtifact, ok := pbMsg.(*pb.Artifact)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-	pbArtifact.Versions = []*pb.ArtifactVersion{version}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithArtifact(pbArtifact).
-		WithArtifactID(ei.ID).
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithRepositoryID(repoEnt.Entity.ID)
-
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
+	return &processingResult{topic: events.TopicQueueOriginatingEntityAdd, wrapper: pkgMsg}, nil
 }
 
 func (s *Server) processRelevantRepositoryEvent(
@@ -1166,7 +1056,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		// caveat: we're accessing the database once for every
 		// repository, which might be inefficient at scale.
 		res, err := s.repositoryRemoved(
-			ctx,
 			repo,
 		)
 		if errors.Is(err, errRepoNotFound) {
@@ -1183,24 +1072,9 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 }
 
 func (s *Server) repositoryRemoved(
-	ctx context.Context,
 	repo *repo,
 ) (*processingResult, error) {
-	repoEnt, err := s.fetchRepo(ctx, repo)
-	if err != nil && !errors.Is(err, provifv1.ErrEntityNotFound) {
-		return nil, err
-	}
-
-	event := messages.NewMinderEvent().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-		WithEntityID(repoEnt.Entity.ID)
-
-	return &processingResult{
-		topic:   events.TopicQueueReconcileEntityDelete,
-		wrapper: event,
-	}, nil
+	return s.sendEvaluateRepoMessage(repo, events.TopicQueueGetEntityAndDelete)
 }
 
 func (_ *Server) repositoryAdded(
@@ -1436,84 +1310,4 @@ func packageEventToProperties(
 		ghprop.ArtifactPropertyName:  *event.Package.Name,
 		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
 	})
-}
-
-// This routine assumes that all necessary validation is performed on
-// the upper layer and accesses package and repo without checking for
-// nulls.
-func gatherArtifactVersionInfo(
-	ctx context.Context,
-	cli provifv1.GitHub,
-	event *packageEvent,
-	artifactOwnerLogin, artifactName string,
-) (*pb.ArtifactVersion, error) {
-	if event.Package.PackageVersion == nil {
-		return nil, errors.New("invalid package version: nil")
-	}
-
-	pv := event.Package.PackageVersion
-	if pv.ID == nil {
-		return nil, errors.New("invalid package version: id is nil")
-	}
-	if pv.Version == nil {
-		return nil, errors.New("invalid package version: version is nil")
-	}
-	if pv.ContainerMetadata == nil {
-		return nil, errors.New("invalid package version: container metadata is nil")
-	}
-	if pv.ContainerMetadata.Tag == nil {
-		return nil, errors.New("invalid container metadata: tag is nil")
-	}
-	if pv.ContainerMetadata.Tag.Name == nil {
-		return nil, errors.New("invalid container metadata tag: name is nil")
-	}
-
-	version := &pb.ArtifactVersion{
-		VersionId: *pv.ID,
-		Tags:      []string{*pv.ContainerMetadata.Tag.Name},
-		Sha:       *pv.Version,
-	}
-
-	// not all information is in the payload, we need to get it from the container registry
-	// and/or GH API
-	if err := updateArtifactVersionFromRegistry(
-		ctx,
-		cli,
-		artifactOwnerLogin,
-		artifactName,
-		version,
-	); err != nil {
-		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
-	}
-
-	return version, nil
-}
-
-func updateArtifactVersionFromRegistry(
-	ctx context.Context,
-	client provifv1.GitHub,
-	artifactOwnerLogin, artifactName string,
-	version *pb.ArtifactVersion,
-) error {
-	// we'll grab the artifact version from the REST endpoint because we need the visibility
-	// and createdAt fields which are not in the payload
-	ghVersion, err := client.GetPackageVersionById(ctx, artifactOwnerLogin, string(verifyif.ArtifactTypeContainer),
-		artifactName, version.VersionId)
-	if err != nil {
-		return fmt.Errorf("error getting package version from repository: %w", err)
-	}
-
-	tags := ghVersion.Metadata.Container.Tags
-	// if the artifact has no tags, skip it
-	if len(tags) == 0 {
-		return errArtifactVersionSkipped
-	}
-
-	sort.Strings(tags)
-
-	version.Tags = tags
-	if ghVersion.CreatedAt != nil {
-		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
-	}
-	return nil
 }

@@ -53,6 +53,10 @@ func NewToEntityInfoWrapper(
 func (c *toEntityInfoWrapper) CreateMessage(
 	ctx context.Context, ewp *models.EntityWithProperties,
 ) (*message.Message, error) {
+	if ewp == nil {
+		return nil, fmt.Errorf("entity with properties is nil")
+	}
+
 	pbEnt, err := c.propSvc.EntityWithPropertiesAsProto(ctx, ewp, c.provMgr)
 	if err != nil {
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)

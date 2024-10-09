@@ -47,6 +47,7 @@ import (
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	entMsg "github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
@@ -60,7 +61,6 @@ import (
 	mock_repos "github.com/stacklok/minder/internal/repositories/mock"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provif "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -90,27 +90,6 @@ func newPropSvcMock(opts ...func(mck propSvcMock)) propSvcMockBuilder {
 			opt(mck)
 		}
 		return mck
-	}
-}
-
-func withSuccessRetrieveAllProperties(entity v1.Entity, retPropsMap map[string]any) func(mck propSvcMock) { //nolint:unparam // we will remove the usage soon, no point in changing the helper now
-	retProps, err := properties.NewProperties(retPropsMap)
-	if err != nil {
-		panic(err)
-	}
-
-	return func(mock propSvcMock) {
-		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), entity, gomock.Any()).
-			Return(retProps, nil)
-	}
-}
-
-func withSuccessArtifactProto() func(mck propSvcMock) {
-	return func(mock propSvcMock) {
-		mock.EXPECT().
-			EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(&v1.Artifact{}, nil)
 	}
 }
 
@@ -150,24 +129,6 @@ func withSuccessRepoById(repo models.EntityInstance, propMap map[string]any) fun
 		mock.EXPECT().
 			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
 			Return(&ewp, nil)
-	}
-}
-
-func withRepoByIdRepoNotFoundUpstream(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
-	repoProps, err := properties.NewProperties(propMap)
-	if err != nil {
-		panic(err)
-	}
-
-	ewp := models.EntityWithProperties{
-		Entity:     repo,
-		Properties: repoProps,
-	}
-
-	return func(mock repoSvcMock) {
-		mock.EXPECT().
-			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-			Return(&ewp, provif.ErrEntityNotFound)
 	}
 }
 
@@ -679,58 +640,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockPropsBld: newPropSvcMock(
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "123",
-					ghprop.ArtifactPropertyOwner:     "login",
-					ghprop.ArtifactPropertyName:      "package-name",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "123",
-					ghprop.ArtifactPropertyOwner:     "login",
-					ghprop.ArtifactPropertyName:      "package-name",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessArtifactProto(),
-			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("login/package-name"),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -740,9 +653,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -751,58 +661,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
-			mockPropsBld: newPropSvcMock(
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "12345",
-					ghprop.ArtifactPropertyOwner:     "stacklok",
-					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessRetrieveAllProperties(v1.Entity_ENTITY_ARTIFACTS, map[string]any{
-					properties.PropertyUpstreamID:    "12345",
-					ghprop.ArtifactPropertyOwner:     "stacklok",
-					ghprop.ArtifactPropertyName:      "demo-repo-go-debug",
-					ghprop.ArtifactPropertyCreatedAt: "2024-05-22T07:35:16Z",
-				}),
-				withSuccessArtifactProto(),
-			),
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("stacklok/minder"),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -812,9 +674,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
 			},
 		},
 		{
@@ -3161,7 +3020,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
 
@@ -3571,22 +3429,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-			),
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
@@ -3608,13 +3450,13 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
 				timeout := 1 * time.Second
 
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3624,10 +3466,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
-				require.Equal(t, repositoryID, evt.EntityID)
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3637,8 +3479,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err = json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
 			},
 		},
 
