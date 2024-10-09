@@ -19,7 +19,6 @@ package reconcilers
 import (
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
-	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/repositories"
@@ -32,7 +31,6 @@ type Reconciler struct {
 	crypteng        crypto.Engine
 	providerManager manager.ProviderManager
 	repos           repositories.RepositoryService
-	propService     propSvc.PropertiesService
 }
 
 // NewReconciler creates a new reconciler object
@@ -42,7 +40,6 @@ func NewReconciler(
 	cryptoEngine crypto.Engine,
 	providerManager manager.ProviderManager,
 	repositoryService repositories.RepositoryService,
-	propService propSvc.PropertiesService,
 ) (*Reconciler, error) {
 	return &Reconciler{
 		store:           store,
@@ -50,7 +47,6 @@ func NewReconciler(
 		crypteng:        cryptoEngine,
 		providerManager: providerManager,
 		repos:           repositoryService,
-		propService:     propService,
 	}, nil
 }
 

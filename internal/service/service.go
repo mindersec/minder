@@ -253,7 +253,7 @@ func AllInOneServerService(
 	evt.ConsumeEvents(handler)
 
 	// Register the reconciler to handle entity events
-	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos, propSvc)
+	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}

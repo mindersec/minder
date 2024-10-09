@@ -181,7 +181,6 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		nil, // crypto.Engine not used in these tests
 		nil, // manager.ProviderManager not used in these tests
 		repoService,
-		nil, // propertyService.PropertiesService not used in these tests
 	)
 	require.NoError(t, err)
 
