@@ -78,7 +78,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithRepositoryID(repositoryID).
+		}).WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	executor := mockengine.NewMockExecutor(ctrl)

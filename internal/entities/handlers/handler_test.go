@@ -525,7 +525,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithSuccessfulUpsertPullRequestWithParams(
 					db.PullRequest{ID: pullRequestID},
 					db.EntityInstance{
-						ID:         uuid.UUID{},
+						ID:         pullRequestID,
 						EntityType: db.EntitiesPullRequest,
 						Name:       "",
 						ProjectID:  projectID,
@@ -551,12 +551,6 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 						},
 					},
 				),
-				df.WithSuccessfullGetEntityByID(
-					repoID,
-					db.EntityInstance{
-						ID:         repoID,
-						EntityType: db.EntitiesRepository,
-					}),
 			),
 			providerSetup: newProviderMock(
 				withSuccessfulGetEntityName(pullName),

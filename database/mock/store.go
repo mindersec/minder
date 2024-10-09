@@ -1525,7 +1525,7 @@ func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(arg0, arg1 any) *gomock
 }
 
 // GetRuleEvaluationByProfileIdAndRuleType mocks base method.
-func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 sql.NullString, arg3 uuid.NullUUID, arg4 sql.NullString) (*db.ListRuleEvaluationsByProfileIdRow, error) {
+func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(arg0 context.Context, arg1 uuid.UUID, arg2 sql.NullString, arg3 uuid.UUID, arg4 sql.NullString) (*db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRuleEvaluationByProfileIdAndRuleType", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*db.ListRuleEvaluationsByProfileIdRow)
