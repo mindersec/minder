@@ -19,6 +19,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -37,18 +38,11 @@ import (
 // It also assumes the following metadata keys are present:
 //
 // - EntityTypeEventKey - entity_type
-// - ProjectIDEventKey - project_id
-// - RepositoryIDEventKey - repository_id
-// - ArtifactIDEventKey - artifact_id (only for versioned artifacts)
-//
-// Entity type is used to determine the type of the protobuf message
-// and the entity type in the database. It may be one of the following:
-//
-// - RepositoryEventEntityType - repository
-// - VersionedArtifactEventEntityType - versioned_artifact
+// - EntityIDEventKey - entity_id
 type EntityInfoWrapper struct {
 	ProviderID    uuid.UUID
 	ProjectID     uuid.UUID
+	EntityID      uuid.UUID
 	Entity        protoreflect.ProtoMessage
 	Type          minderv1.Entity
 	OwnershipData map[string]string
@@ -57,35 +51,22 @@ type EntityInfoWrapper struct {
 }
 
 const (
-	// RepositoryEventEntityType is the entity type for repositories
-	RepositoryEventEntityType = "repository"
-	// VersionedArtifactEventEntityType is the entity type for versioned artifacts
-	VersionedArtifactEventEntityType = "versioned_artifact"
-	// PullRequestEventEntityType is the entity type for pull requests
-	PullRequestEventEntityType = "pull_request"
-)
-
-const (
 	// EntityTypeEventKey is the key for the entity type
 	EntityTypeEventKey = "entity_type"
+	// EntityIDEventKey is the key for the entity ID
+	// Note that we'll be migrating to this key
+	// and deprecating the other entity ID keys
+	EntityIDEventKey = "entity_id"
 	// ProviderIDEventKey is the key for the provider ID
 	ProviderIDEventKey = "provider_id"
 	// ProjectIDEventKey is the key for the project ID
 	ProjectIDEventKey = "project_id"
-	// RepositoryIDEventKey is the key for the repository ID
-	RepositoryIDEventKey = "repository_id"
-	// ArtifactIDEventKey is the key for the artifact ID
-	ArtifactIDEventKey = "artifact_id"
-	// PullRequestIDEventKey is the key for the pull request ID
-	PullRequestIDEventKey = "pull_request_id"
-	// ReleaseIDEventKey is the key for the pull request ID
-	ReleaseIDEventKey = "release_id"
-	// PipelineRunIDEventKey is the key for a pipeline run
-	PipelineRunIDEventKey = "pipeline_run_id"
-	// TaskRunIDEventKey is the key for a task run
-	TaskRunIDEventKey = "task_run_id"
-	// BuildIDEventKey is the key for a build
-	BuildIDEventKey = "build_run_id"
+	// repositoryIDEventKey is the key for the repository ID
+	repositoryIDEventKey = "repository_id"
+	// artifactIDEventKey is the key for the artifact ID
+	artifactIDEventKey = "artifact_id"
+	// pullRequestIDEventKey is the key for the pull request ID
+	pullRequestIDEventKey = "pull_request_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
 )
@@ -137,34 +118,10 @@ func (eiw *EntityInfoWrapper) WithPullRequest(p *minderv1.PullRequest) *EntityIn
 	return eiw
 }
 
-// WithRelease sets a Release as the entity of the wrapper
-func (eiw *EntityInfoWrapper) WithRelease(r *minderv1.Release) *EntityInfoWrapper {
-	eiw.Type = minderv1.Entity_ENTITY_RELEASE
-	eiw.Entity = r
-
-	return eiw
-}
-
-// WithPipelineRun sets a PipelineRun as the entity of the wrapper
-func (eiw *EntityInfoWrapper) WithPipelineRun(plr *minderv1.PipelineRun) *EntityInfoWrapper {
-	eiw.Type = minderv1.Entity_ENTITY_PIPELINE_RUN
-	eiw.Entity = plr
-
-	return eiw
-}
-
-// WithTaskRun sets a TaskRun as the entity of the wrapper
-func (eiw *EntityInfoWrapper) WithTaskRun(tr *minderv1.TaskRun) *EntityInfoWrapper {
-	eiw.Type = minderv1.Entity_ENTITY_TASK_RUN
-	eiw.Entity = tr
-
-	return eiw
-}
-
-// WithBuild sets a Build as the entity of the wrapper
-func (eiw *EntityInfoWrapper) WithBuild(tr *minderv1.Build) *EntityInfoWrapper {
-	eiw.Type = minderv1.Entity_ENTITY_TASK_RUN
-	eiw.Entity = tr
+// WithEntityInstance sets the entity to an entity instance
+func (eiw *EntityInfoWrapper) WithEntityInstance(etyp minderv1.Entity, ei *minderv1.EntityInstance) *EntityInfoWrapper {
+	eiw.Type = etyp
+	eiw.Entity = ei
 
 	return eiw
 }
@@ -176,51 +133,9 @@ func (eiw *EntityInfoWrapper) WithProjectID(id uuid.UUID) *EntityInfoWrapper {
 	return eiw
 }
 
-// WithRepositoryID sets the repository ID
-func (eiw *EntityInfoWrapper) WithRepositoryID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(RepositoryIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithArtifactID sets the artifact ID
-func (eiw *EntityInfoWrapper) WithArtifactID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(ArtifactIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithPullRequestID sets the pull request ID
-func (eiw *EntityInfoWrapper) WithPullRequestID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(PullRequestIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithReleaseID sets the release ID
-func (eiw *EntityInfoWrapper) WithReleaseID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(ReleaseIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithPipelineRunID sets the pipeline run ID
-func (eiw *EntityInfoWrapper) WithPipelineRunID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(PipelineRunIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithTaskRunID sets the pipeline run ID
-func (eiw *EntityInfoWrapper) WithTaskRunID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(TaskRunIDEventKey, id.String())
-
-	return eiw
-}
-
-// WithBuildID sets the pipeline run ID
-func (eiw *EntityInfoWrapper) WithBuildID(id uuid.UUID) *EntityInfoWrapper {
-	eiw.withID(BuildIDEventKey, id.String())
+// WithID sets the ID for an entity type
+func (eiw *EntityInfoWrapper) WithID(id uuid.UUID) *EntityInfoWrapper {
+	eiw.EntityID = id
 
 	return eiw
 }
@@ -254,6 +169,12 @@ func (eiw *EntityInfoWrapper) AsPullRequest() {
 	eiw.Entity = &minderv1.PullRequest{}
 }
 
+// AsEntityInstance sets the entity type to an entity instance
+func (eiw *EntityInfoWrapper) AsEntityInstance(entityType minderv1.Entity) {
+	eiw.Type = entityType
+	eiw.Entity = &minderv1.EntityInstance{}
+}
+
 // BuildMessage builds a message.Message from the information
 func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 	id, err := uuid.NewUUID()
@@ -285,10 +206,7 @@ func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
 
 // ToMessage sets the information to a message.Message
 func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
-	typ, err := pbEntityTypeToString(eiw.Type)
-	if err != nil {
-		return err
-	}
+	typ := eiw.Type.ToString()
 
 	if eiw.ProjectID == uuid.Nil {
 		return fmt.Errorf("project ID is required")
@@ -296,6 +214,10 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 
 	if eiw.ProviderID == uuid.Nil {
 		return fmt.Errorf("provider ID is required")
+	}
+
+	if eiw.EntityID != uuid.Nil {
+		eiw.withID(EntityIDEventKey, eiw.EntityID.String())
 	}
 
 	if eiw.ExecutionID != nil {
@@ -308,6 +230,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
+	var err error
 	msg.Payload, err = protojson.Marshal(eiw.Entity)
 	if err != nil {
 		return fmt.Errorf("error marshalling repository: %w", err)
@@ -316,42 +239,17 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	return nil
 }
 
-// GetEntityDBIDs returns the repository, artifact and pull request IDs
-// from the ownership data
-func (eiw *EntityInfoWrapper) GetEntityDBIDs() (repoID uuid.NullUUID, artifactID uuid.NullUUID, pullRequestID uuid.NullUUID) {
-	strRepoID, ok := eiw.OwnershipData[RepositoryIDEventKey]
-	if ok {
-		repoID = uuid.NullUUID{
-			UUID:  uuid.MustParse(strRepoID),
-			Valid: true,
-		}
-	}
-
-	strArtifactID, ok := eiw.OwnershipData[ArtifactIDEventKey]
-	if ok {
-		artifactID = uuid.NullUUID{
-			UUID:  uuid.MustParse(strArtifactID),
-			Valid: true,
-		}
-	}
-
-	strPullRequestID, ok := eiw.OwnershipData[PullRequestIDEventKey]
-	if ok {
-		pullRequestID = uuid.NullUUID{
-			UUID:  uuid.MustParse(strPullRequestID),
-			Valid: true,
-		}
-	}
-
-	return repoID, artifactID, pullRequestID
-}
-
 // GetID returns the entity ID.
 func (eiw *EntityInfoWrapper) GetID() (uuid.UUID, error) {
 	if eiw == nil {
 		return uuid.Nil, fmt.Errorf("no entity info wrapper")
 	}
 
+	if eiw.EntityID != uuid.Nil {
+		return eiw.EntityID, nil
+	}
+
+	// Fall back to the ownership data
 	id, ok := eiw.getIDForEntityType(eiw.Type)
 	if ok {
 		return id, nil
@@ -360,6 +258,8 @@ func (eiw *EntityInfoWrapper) GetID() (uuid.UUID, error) {
 	return uuid.Nil, fmt.Errorf("no entity ID found")
 }
 
+// This will be deprecated in the future in favor of relying on the entity ID key.
+// For now, this is just a fallback.
 func (eiw *EntityInfoWrapper) getIDForEntityType(t minderv1.Entity) (uuid.UUID, bool) {
 	key, err := getEntityMetadataKey(t)
 	if err != nil {
@@ -404,15 +304,30 @@ func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) er
 }
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, RepositoryIDEventKey)
+	return eiw.withIDFromMessage(msg, repositoryIDEventKey)
 }
 
 func (eiw *EntityInfoWrapper) withArtifactIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, ArtifactIDEventKey)
+	return eiw.withIDFromMessage(msg, artifactIDEventKey)
 }
 
 func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, PullRequestIDEventKey)
+	return eiw.withIDFromMessage(msg, pullRequestIDEventKey)
+}
+
+func (eiw *EntityInfoWrapper) withEntityInstanceIDFromMessage(msg *message.Message) error {
+	rawEntityID := msg.Metadata.Get(EntityIDEventKey)
+	if rawEntityID == "" {
+		return fmt.Errorf("%s not found in metadata", EntityIDEventKey)
+	}
+
+	entityID, err := uuid.Parse(rawEntityID)
+	if err != nil {
+		return fmt.Errorf("malformed entity id %s", rawEntityID)
+	}
+
+	eiw.EntityID = entityID
+	return nil
 }
 
 // WithExecutionIDFromMessage sets the execution ID from the message
@@ -449,53 +364,21 @@ func (eiw *EntityInfoWrapper) unmarshalEntity(msg *message.Message) error {
 	return protojson.Unmarshal(msg.Payload, eiw.Entity)
 }
 
-func pbEntityTypeToString(t minderv1.Entity) (string, error) {
-	switch t {
-	case minderv1.Entity_ENTITY_REPOSITORIES:
-		return RepositoryEventEntityType, nil
-	case minderv1.Entity_ENTITY_ARTIFACTS:
-		return VersionedArtifactEventEntityType, nil
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		return PullRequestEventEntityType, nil
-	case minderv1.Entity_ENTITY_RELEASE:
-		return "", fmt.Errorf("releases not yet supported")
-	case minderv1.Entity_ENTITY_PIPELINE_RUN:
-		return "", fmt.Errorf("pipeline runs not yet supported")
-	case minderv1.Entity_ENTITY_TASK_RUN:
-		return "", fmt.Errorf("task runs not yet supported")
-	case minderv1.Entity_ENTITY_BUILD:
-		return "", fmt.Errorf("builds not yet supported")
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
-		return "", fmt.Errorf("build environments not yet supported")
-	case minderv1.Entity_ENTITY_UNSPECIFIED:
-		return "", fmt.Errorf("entity type unspecified")
-	default:
-		return "", fmt.Errorf("unknown entity type: %s", t.String())
-	}
-}
-
+// This is only used to get a specific entity ID from the metadata
+// This will be deprecated in the future in favor of relying on the entity ID key
 func getEntityMetadataKey(t minderv1.Entity) (string, error) {
+	//nolint:exhaustive // We want to fail if it's not one of the explicit types
 	switch t {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		return RepositoryIDEventKey, nil
+		return repositoryIDEventKey, nil
 	case minderv1.Entity_ENTITY_ARTIFACTS:
-		return ArtifactIDEventKey, nil
+		return artifactIDEventKey, nil
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		return PullRequestIDEventKey, nil
-	case minderv1.Entity_ENTITY_RELEASE:
-		return ReleaseIDEventKey, nil
-	case minderv1.Entity_ENTITY_PIPELINE_RUN:
-		return PipelineRunIDEventKey, nil
-	case minderv1.Entity_ENTITY_TASK_RUN:
-		return TaskRunIDEventKey, nil
-	case minderv1.Entity_ENTITY_BUILD:
-		return BuildIDEventKey, nil
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
-		return "", fmt.Errorf("build environments not yet supported")
+		return pullRequestIDEventKey, nil
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		return "", fmt.Errorf("entity type unspecified")
 	default:
-		return "", fmt.Errorf("unknown entity type: %s", t.String())
+		return "", fmt.Errorf("unknown or unsupported entity type: %s", t.String())
 	}
 }
 
@@ -509,6 +392,8 @@ func getIDFromMessage(msg *message.Message, key string) (string, error) {
 }
 
 // ParseEntityEvent parses a message.Message and returns an EntityInfoWrapper
+//
+//nolint:gocyclo // This will be simplified once we rely solely on the entity ID key
 func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	out := &EntityInfoWrapper{
 		OwnershipData: make(map[string]string),
@@ -522,32 +407,60 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		return nil, err
 	}
 
+	if err := out.withEntityInstanceIDFromMessage(msg); err != nil {
+		// We don't fail, but instead log the error and continue
+		// We'll fall back to the other entity ID keys.
+		zerolog.Ctx(msg.Context()).Debug().
+			Str("message_id", msg.UUID).
+			Msg("message does not contain entity ID")
+	}
+
 	// We don't always have repo ID (e.g. for artifacts)
 
 	typ := msg.Metadata.Get(EntityTypeEventKey)
-	switch typ {
-	case RepositoryEventEntityType:
+	strtyp := minderv1.EntityFromString(typ)
+
+	//nolint:exhaustive // We have a default case
+	switch strtyp {
+	case minderv1.Entity_ENTITY_REPOSITORIES:
 		out.AsRepository()
-		if err := out.withRepositoryIDFromMessage(msg); err != nil {
-			return nil, err
+		if out.EntityID == uuid.Nil {
+			if err := out.withRepositoryIDFromMessage(msg); err != nil {
+				return nil, err
+			}
 		}
-	case VersionedArtifactEventEntityType:
+	case minderv1.Entity_ENTITY_ARTIFACTS:
 		out.AsArtifact()
-		if err := out.withArtifactIDFromMessage(msg); err != nil {
-			return nil, err
+		if out.EntityID == uuid.Nil {
+			if err := out.withArtifactIDFromMessage(msg); err != nil {
+				return nil, err
+			}
+			//nolint:gosec // The repo is not always present
+			out.withRepositoryIDFromMessage(msg)
 		}
-		//nolint:gosec // The repo is not always present
-		out.withRepositoryIDFromMessage(msg)
-	case PullRequestEventEntityType:
+	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		out.AsPullRequest()
-		if err := out.withPullRequestIDFromMessage(msg); err != nil {
-			return nil, err
+		if out.EntityID == uuid.Nil {
+			if err := out.withPullRequestIDFromMessage(msg); err != nil {
+				return nil, err
+			}
+			if err := out.withRepositoryIDFromMessage(msg); err != nil {
+				return nil, err
+			}
 		}
-		if err := out.withRepositoryIDFromMessage(msg); err != nil {
-			return nil, err
-		}
+	case minderv1.Entity_ENTITY_UNSPECIFIED:
+		return nil, fmt.Errorf("entity type unspecified")
 	default:
-		return nil, fmt.Errorf("unknown entity type: %s", typ)
+		// We can't fall back in this case.
+		if out.EntityID == uuid.Nil {
+			return nil, fmt.Errorf("entity ID not found")
+		}
+
+		// Any other entity type
+		out.AsEntityInstance(strtyp)
+		if err := out.withEntityInstanceIDFromMessage(msg); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := out.unmarshalEntity(msg); err != nil {
@@ -555,15 +468,4 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 	}
 
 	return out, nil
-}
-
-// WithID sets the ID for an entity type
-func (eiw *EntityInfoWrapper) WithID(entType minderv1.Entity, id uuid.UUID) *EntityInfoWrapper {
-	key, err := getEntityMetadataKey(entType)
-	if err != nil {
-		return nil
-	}
-
-	eiw.withID(key, id.String())
-	return eiw
 }

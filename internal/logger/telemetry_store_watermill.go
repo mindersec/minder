@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -75,11 +74,9 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 	// Create a new telemetry store
 	ts := &TelemetryStore{}
 
-	// Get the entity UUID - this is the entity we are processing
-	ent, err := getEntityID(inf)
+	ent, err := inf.GetID()
 	if err != nil {
-		// Return an error but also return the telemetry store so we don't fail the event
-		return ts, fmt.Errorf("error getting entity ID: %w", err)
+		return ts, fmt.Errorf("error getting ID from entity info wrapper: %w", err)
 	}
 
 	// Set the provider and project ID
@@ -103,31 +100,4 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 	}
 
 	return ts, nil
-}
-
-// getEntityID returns the entity ID from the entity info wrapper based on its type.
-func getEntityID(inf *entities.EntityInfoWrapper) (uuid.UUID, error) {
-	repoID, artID, prID := inf.GetEntityDBIDs()
-
-	var ent uuid.UUID
-
-	// In the case of this middleware, we receive entities
-	// to process by the executor.
-	switch inf.Type {
-	case minderv1.Entity_ENTITY_UNSPECIFIED:
-		return uuid.Nil, fmt.Errorf("unspecified entity type")
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS:
-		return uuid.Nil, fmt.Errorf("build environments not supported")
-	case minderv1.Entity_ENTITY_REPOSITORIES:
-		ent = repoID.UUID
-	case minderv1.Entity_ENTITY_ARTIFACTS:
-		ent = artID.UUID
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		ent = prID.UUID
-	case minderv1.Entity_ENTITY_RELEASE, minderv1.Entity_ENTITY_PIPELINE_RUN,
-		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
-		// Noop, see https://github.com/stacklok/minder/issues/3838
-	}
-
-	return ent, nil
 }

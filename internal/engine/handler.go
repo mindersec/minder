@@ -167,6 +167,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 				Str("project", inf.ProjectID.String()).
 				Str("provider_id", inf.ProviderID.String()).
 				Str("entity", inf.Type.String()).
+				Str("entity_id", inf.EntityID.String()).
 				Err(err).Msg("got error while evaluating entity event")
 		}
 

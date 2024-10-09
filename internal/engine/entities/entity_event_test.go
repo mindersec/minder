@@ -55,10 +55,10 @@ func Test_parseEntityEvent(t *testing.T) {
 					Name:   "test",
 					RepoId: 123,
 				},
-				entType:    RepositoryEventEntityType,
+				entType:    pb.Entity_ENTITY_REPOSITORIES.ToString(),
 				projectID:  projectID,
 				providerID: providerID,
-				ownership:  map[string]string{RepositoryIDEventKey: repoID},
+				ownership:  map[string]string{repositoryIDEventKey: repoID},
 			},
 			want: &EntityInfoWrapper{
 				ProjectID: projectID,
@@ -69,7 +69,7 @@ func Test_parseEntityEvent(t *testing.T) {
 				ProviderID: providerID,
 				Type:       pb.Entity_ENTITY_REPOSITORIES,
 				OwnershipData: map[string]string{
-					RepositoryIDEventKey: repoID,
+					repositoryIDEventKey: repoID,
 				},
 			},
 		},
@@ -84,12 +84,12 @@ func Test_parseEntityEvent(t *testing.T) {
 						},
 					},
 				},
-				entType:    VersionedArtifactEventEntityType,
+				entType:    pb.Entity_ENTITY_ARTIFACTS.ToString(),
 				projectID:  projectID,
 				providerID: providerID,
 				ownership: map[string]string{
-					RepositoryIDEventKey: repoID,
-					ArtifactIDEventKey:   artifactID,
+					repositoryIDEventKey: repoID,
+					artifactIDEventKey:   artifactID,
 				},
 			},
 			want: &EntityInfoWrapper{
@@ -105,8 +105,8 @@ func Test_parseEntityEvent(t *testing.T) {
 				ProviderID: providerID,
 				Type:       pb.Entity_ENTITY_ARTIFACTS,
 				OwnershipData: map[string]string{
-					RepositoryIDEventKey: repoID,
-					ArtifactIDEventKey:   artifactID,
+					repositoryIDEventKey: repoID,
+					artifactIDEventKey:   artifactID,
 				},
 			},
 		},
@@ -120,12 +120,12 @@ func Test_parseEntityEvent(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				},
-				entType:    PullRequestEventEntityType,
+				entType:    pb.Entity_ENTITY_PULL_REQUESTS.ToString(),
 				projectID:  projectID,
 				providerID: providerID,
 				ownership: map[string]string{
-					PullRequestIDEventKey: "3",
-					RepositoryIDEventKey:  repoID,
+					pullRequestIDEventKey: "3",
+					repositoryIDEventKey:  repoID,
 				},
 			},
 			want: &EntityInfoWrapper{
@@ -140,8 +140,8 @@ func Test_parseEntityEvent(t *testing.T) {
 				ProviderID: providerID,
 				Type:       pb.Entity_ENTITY_PULL_REQUESTS,
 				OwnershipData: map[string]string{
-					PullRequestIDEventKey: "3",
-					RepositoryIDEventKey:  repoID,
+					pullRequestIDEventKey: "3",
+					repositoryIDEventKey:  repoID,
 				},
 			},
 		},
@@ -158,12 +158,12 @@ func Test_parseEntityEvent(t *testing.T) {
 			msg := message.NewMessage("", marshalledEntity)
 			msg.Metadata.Set(ProjectIDEventKey, tt.args.projectID.String())
 			msg.Metadata.Set(EntityTypeEventKey, tt.args.entType)
-			msg.Metadata.Set(RepositoryIDEventKey, tt.args.ownership["repository_id"])
+			msg.Metadata.Set(repositoryIDEventKey, tt.args.ownership["repository_id"])
 			msg.Metadata.Set(ProviderIDEventKey, tt.args.providerID.String())
-			if tt.args.entType == VersionedArtifactEventEntityType {
-				msg.Metadata.Set(ArtifactIDEventKey, tt.args.ownership["artifact_id"])
-			} else if tt.args.entType == PullRequestEventEntityType {
-				msg.Metadata.Set(PullRequestIDEventKey, tt.args.ownership["pull_request_id"])
+			if tt.args.entType == pb.Entity_ENTITY_ARTIFACTS.ToString() {
+				msg.Metadata.Set(artifactIDEventKey, tt.args.ownership["artifact_id"])
+			} else if tt.args.entType == pb.Entity_ENTITY_PULL_REQUESTS.ToString() {
+				msg.Metadata.Set(pullRequestIDEventKey, tt.args.ownership["pull_request_id"])
 			}
 
 			got, err := ParseEntityEvent(msg)
@@ -207,12 +207,12 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 				WithRepository(&pb.Repository{
 					Owner:  "test",
 					RepoId: 123,
-				}).WithRepositoryID(repoID),
+				}).WithID(repoID),
 			expected: map[string]string{
 				ProviderIDEventKey:   providerID.String(),
-				EntityTypeEventKey:   RepositoryEventEntityType,
+				EntityTypeEventKey:   pb.Entity_ENTITY_REPOSITORIES.ToString(),
 				ProjectIDEventKey:    projectID.String(),
-				RepositoryIDEventKey: repoID.String(),
+				repositoryIDEventKey: repoID.String(),
 			},
 		},
 		{
@@ -224,12 +224,12 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 					Owner:  "test",
 					RepoId: 123,
 				}).
-				WithID(pb.Entity_ENTITY_REPOSITORIES, repoID),
+				WithID(repoID),
 			expected: map[string]string{
 				ProviderIDEventKey:   providerID.String(),
-				EntityTypeEventKey:   RepositoryEventEntityType,
+				EntityTypeEventKey:   pb.Entity_ENTITY_REPOSITORIES.ToString(),
 				ProjectIDEventKey:    projectID.String(),
-				RepositoryIDEventKey: repoID.String(),
+				repositoryIDEventKey: repoID.String(),
 			},
 		},
 		{
@@ -244,14 +244,14 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 							VersionId: 101112,
 						},
 					},
-				}).WithRepositoryID(repoID).
-				WithArtifactID(artifactID),
+				}).
+				WithID(artifactID),
 			expected: map[string]string{
 				ProviderIDEventKey:   providerID.String(),
-				EntityTypeEventKey:   VersionedArtifactEventEntityType,
+				EntityTypeEventKey:   pb.Entity_ENTITY_ARTIFACTS.ToString(),
 				ProjectIDEventKey:    projectID.String(),
-				RepositoryIDEventKey: repoID.String(),
-				ArtifactIDEventKey:   artifactID.String(),
+				repositoryIDEventKey: repoID.String(),
+				artifactIDEventKey:   artifactID.String(),
 			},
 		},
 		{
@@ -267,12 +267,12 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 						},
 					},
 				}).
-				WithID(pb.Entity_ENTITY_ARTIFACTS, artifactID),
+				WithID(artifactID),
 			expected: map[string]string{
 				ProviderIDEventKey: providerID.String(),
-				EntityTypeEventKey: VersionedArtifactEventEntityType,
+				EntityTypeEventKey: pb.Entity_ENTITY_ARTIFACTS.ToString(),
 				ProjectIDEventKey:  projectID.String(),
-				ArtifactIDEventKey: artifactID.String(),
+				artifactIDEventKey: artifactID.String(),
 			},
 		},
 		{
@@ -287,12 +287,12 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				}).
-				WithID(pb.Entity_ENTITY_PULL_REQUESTS, pullRequestID),
+				WithID(pullRequestID),
 			expected: map[string]string{
 				ProviderIDEventKey:    providerID.String(),
-				EntityTypeEventKey:    PullRequestEventEntityType,
+				EntityTypeEventKey:    pb.Entity_ENTITY_PULL_REQUESTS.ToString(),
 				ProjectIDEventKey:     projectID.String(),
-				PullRequestIDEventKey: pullRequestID.String(),
+				pullRequestIDEventKey: pullRequestID.String(),
 			},
 		},
 		{
@@ -307,12 +307,12 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 					RepoOwner: "jakubtestorg",
 					RepoName:  "bad-npm",
 				}).
-				WithPullRequestID(pullRequestID),
+				WithID(pullRequestID),
 			expected: map[string]string{
 				ProviderIDEventKey:    providerID.String(),
-				EntityTypeEventKey:    PullRequestEventEntityType,
+				EntityTypeEventKey:    pb.Entity_ENTITY_PULL_REQUESTS.ToString(),
 				ProjectIDEventKey:     projectID.String(),
-				PullRequestIDEventKey: pullRequestID.String(),
+				pullRequestIDEventKey: pullRequestID.String(),
 			},
 		},
 	}
@@ -339,7 +339,7 @@ func TestEntityInfoWrapper_FailsWithoutProjectID(t *testing.T) {
 		WithRepository(&pb.Repository{
 			Owner:  "test",
 			RepoId: 123,
-		}).WithRepositoryID(uuid.New())
+		}).WithID(uuid.New())
 
 	msg, err := eiw.BuildMessage()
 	t.Logf("OZZ: %+v", msg)
@@ -354,7 +354,7 @@ func TestEntityInfoWrapper_FailsWithoutProvider(t *testing.T) {
 		WithRepository(&pb.Repository{
 			Owner:  "test",
 			RepoId: 123,
-		}).WithRepositoryID(uuid.New())
+		}).WithID(uuid.New())
 
 	_, err := eiw.BuildMessage()
 	require.Error(t, err, "expected error")
@@ -366,7 +366,7 @@ func TestEntityInfoWrapper_FailsWithoutRepository(t *testing.T) {
 	eiw := NewEntityInfoWrapper().
 		WithProviderID(uuid.New()).
 		WithProjectID(uuid.New()).
-		WithRepositoryID(uuid.New())
+		WithID(uuid.New())
 
 	_, err := eiw.BuildMessage()
 	require.Error(t, err, "expected error")

@@ -109,7 +109,7 @@ func TestAggregator(t *testing.T) {
 
 	inf := entities.NewEntityInfoWrapper().
 		WithRepository(&minderv1.Repository{}).
-		WithRepositoryID(repoID).
+		WithID(repoID).
 		WithProjectID(projectID).
 		WithProviderID(providerID)
 

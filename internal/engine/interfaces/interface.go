@@ -108,9 +108,6 @@ type EvalStatusParams struct {
 	Result           *Result
 	Profile          *models.ProfileAggregate
 	Rule             *models.RuleInstance
-	RepoID           uuid.NullUUID
-	ArtifactID       uuid.NullUUID
-	PullRequestID    uuid.NullUUID
 	ProjectID        uuid.UUID
 	ReleaseID        uuid.UUID
 	PipelineRunID    uuid.UUID
@@ -217,17 +214,8 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 		Str("rule_name", e.GetRule().Name).
 		Str("execution_id", e.ExecutionID.String()).
 		Str("rule_type_id", e.Rule.RuleTypeID.String()).
+		Str("entity_id", e.EntityID.String()).
 		Logger()
-	if e.RepoID.Valid {
-		outl = outl.With().Str("repository_id", e.RepoID.UUID.String()).Logger()
-	}
-
-	if e.ArtifactID.Valid {
-		outl = outl.With().Str("artifact_id", e.ArtifactID.UUID.String()).Logger()
-	}
-	if e.PullRequestID.Valid {
-		outl = outl.With().Str("pull_request_id", e.PullRequestID.UUID.String()).Logger()
-	}
 
 	return outl
 }
