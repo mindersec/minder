@@ -38,18 +38,14 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	ghsvc "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	reposvc "github.com/stacklok/minder/internal/repositories"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // errRepoNotFound is returned when a repository is not found
@@ -718,7 +714,7 @@ func (_ *Server) processPackageEvent(
 	return &processingResult{topic: events.TopicQueueOriginatingEntityAdd, wrapper: pkgMsg}, nil
 }
 
-func (s *Server) processRelevantRepositoryEvent(
+func (_ *Server) processRelevantRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -744,66 +740,47 @@ func (s *Server) processRelevantRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	repoEntity, err := s.fetchRepo(ctx, event.GetRepo())
+	lookByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRepo().GetID()),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating repository lookup properties: %w", err)
 	}
 
-	hookId, hasHookErr := repoEntity.Properties.GetProperty(ghprop.RepoPropertyHookId).AsInt64()
+	msg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
+
 	// This only makes sense for "meta" event type
-	if event.GetHookID() != 0 && hasHookErr == nil {
+	if event.GetHookID() != 0 {
 		// Check if the payload webhook ID matches the one we
 		// have stored in the DB for this repository
-		if event.GetHookID() != hookId {
-			// This means we got a deleted event for a
-			// webhook ID that doesn't correspond to the
-			// one we have stored in the DB.
-			return nil, newErrNotHandled("meta event with action %s not handled, hook ID %d does not match stored webhook ID %d",
-				event.GetAction(),
-				event.GetHookID(),
-				hookId,
-			)
+		// If not, this means we got a deleted event for a
+		// webhook ID that doesn't correspond to the
+		// one we have stored in the DB.
+		matchHookProps, err := properties.NewProperties(map[string]any{
+			ghprop.RepoPropertyHookId: event.GetHookID(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating hook match properties: %w", err)
 		}
+		msg = msg.WithMatchProps(matchHookProps)
 	}
+
+	// For all other events exept deletions we issue a refresh event.
+	topic := events.TopicQueueRefreshEntityAndEvaluate
 
 	// For webhook deletions, repository deletions, and repository
 	// transfers, we issue a delete event with the correct message
 	// type.
 	if event.GetAction() == webhookActionEventDeleted ||
 		event.GetAction() == webhookActionEventTransferred {
-		repoEvent := messages.NewMinderEvent().
-			WithProjectID(repoEntity.Entity.ProjectID).
-			WithProviderID(repoEntity.Entity.ProviderID).
-			WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-			WithEntityID(repoEntity.Entity.ID)
-
-		return &processingResult{
-			topic:   events.TopicQueueReconcileEntityDelete,
-			wrapper: repoEvent,
-		}, nil
+		topic = events.TopicQueueGetEntityAndDelete
 	}
-
-	// For all other actions, we trigger an evaluation.
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, repoEntity, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
-	}
-
-	pbRepo, ok := pbMsg.(*pb.Repository)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(repoEntity.Entity.ProjectID).
-		WithProviderID(repoEntity.Entity.ProviderID).
-		WithRepository(pbRepo).
-		WithID(repoEntity.Entity.ID)
 
 	return &processingResult{
-		topic:   events.TopicQueueEntityEvaluate,
-		wrapper: eiw,
+		topic:   topic,
+		wrapper: msg,
 	}, nil
 }
 
@@ -1126,42 +1103,6 @@ func (_ *Server) sendEvaluateRepoMessage(
 			topic:   handler,
 			wrapper: entRefresh},
 		nil
-}
-
-func (s *Server) fetchRepo(
-	ctx context.Context,
-	repo *repo,
-) (*models.EntityWithProperties, error) {
-	l := zerolog.Ctx(ctx)
-
-	repoEnt, err := s.repos.RefreshRepositoryByUpstreamID(ctx, repo.GetID())
-	if err != nil {
-		if errors.Is(err, provifv1.ErrEntityNotFound) {
-			l.Info().Msgf("repository %d not found upstream", repo.GetID())
-			return repoEnt, err
-		} else if errors.Is(err, reposvc.ErrRepoNotFound) {
-			l.Info().Msgf("repository %d not found", repo.GetID())
-			// no use in continuing if the repository doesn't exist
-			return nil, fmt.Errorf("repository %d not found: %w",
-				repo.GetID(),
-				errRepoNotFound,
-			)
-		}
-		return nil, fmt.Errorf("error getting repository: %w", err)
-	}
-
-	if repoEnt.Properties.GetProperty(properties.RepoPropertyIsPrivate).GetBool() {
-		if !features.ProjectAllowsPrivateRepos(ctx, s.store, repoEnt.Entity.ProjectID) {
-			return nil, errRepoIsPrivate
-		}
-	}
-
-	if repoEnt.Entity.ProjectID.String() == "" {
-		return nil, fmt.Errorf("no project found for repository %s: %w",
-			repoEnt.Properties.GetProperty(properties.PropertyName).GetString(), errRepoNotFound)
-	}
-
-	return repoEnt, nil
 }
 
 // NoopWebhookHandler is a no-op handler for webhooks
