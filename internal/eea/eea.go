@@ -29,7 +29,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/artifacts"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
@@ -310,16 +309,30 @@ func (e *EEA) buildArtifactInfoWrapper(
 	artID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, a, err := artifacts.GetArtifact(ctx, e.querier, projID, artID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, artID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", artID, projID)
+	}
+
+	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	a, ok := rawPR.(*minderv1.Artifact)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to artifact")
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithProjectID(projID).
 		WithArtifact(a).
 		WithArtifactID(artID).
-		WithProviderID(providerID)
+		WithProviderID(ent.Entity.ProviderID)
 	return eiw, nil
 }
 

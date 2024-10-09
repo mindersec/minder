@@ -194,6 +194,7 @@ func TestFlushAll(t *testing.T) {
 	t.Parallel()
 
 	repoID := uuid.New()
+	artID := uuid.New()
 	prID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
@@ -237,49 +238,42 @@ func TestFlushAll(t *testing.T) {
 			},
 		},
 		{
-			name: "flushes one artifact with repo and no project ID in the flush",
+			name: "flushes one artifact with repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				artID := uuid.New()
-
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
 							ID:               uuid.New(),
 							Entity:           db.EntitiesArtifact,
-							EntityInstanceID: artID,
-							ProjectID:        projectID,
 							QueuedAt:         time.Now(),
+							ProjectID:        projectID,
+							EntityInstanceID: artID,
 						},
-					}, nil)
-
-				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
-				mockStore.EXPECT().GetArtifactByID(ctx, gomock.Any()).
-					Return(db.Artifact{
-						ID:           artID,
-						ProjectID:    projectID,
-						ProviderName: providerName,
-						ProviderID:   providerID,
-						RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
 					}, nil)
 
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:             artID,
+							Type:           minderv1.Entity_ENTITY_ARTIFACTS,
+							ProjectID:      projectID,
+							ProviderID:     providerID,
+							OriginatedFrom: repoID,
+						},
+						Properties: &properties.Properties{},
+					}, nil)
+
+				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&minderv1.Artifact{}, nil)
 			},
 		},
 		{
-			name: "flushes one artifact with repo and a set project ID in the flush",
+			name: "flushes one artifact with no repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				artID := uuid.New()
-
 				mockStore.EXPECT().ListFlushCache(ctx).
 					Return([]db.FlushCache{
 						{
@@ -291,57 +285,23 @@ func TestFlushAll(t *testing.T) {
 						},
 					}, nil)
 
-				// subsequent artifact fetch for protobuf conversion
-				mockStore.EXPECT().GetRepositoryByIDAndProject(ctx, gomock.Any()).
-					Return(db.Repository{
-						ID:         repoID,
-						ProjectID:  projectID,
-						Provider:   providerName,
-						ProviderID: providerID,
-					}, nil)
-				mockStore.EXPECT().GetArtifactByID(ctx, gomock.Any()).
-					Return(db.Artifact{
-						ID:           artID,
-						ProjectID:    projectID,
-						ProviderName: providerName,
-						ProviderID:   providerID,
-						RepositoryID: uuid.NullUUID{UUID: repoID, Valid: true},
-					}, nil)
-
 				// There should be one flush in the end
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
-			},
-		},
-		{
-			name: "flushes one artifact with no repo and a set project ID in the flush",
-			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
-				artID := uuid.New()
-
-				mockStore.EXPECT().ListFlushCache(ctx).
-					Return([]db.FlushCache{
-						{
-							ID:               uuid.New(),
-							Entity:           db.EntitiesArtifact,
-							QueuedAt:         time.Now(),
-							ProjectID:        projectID,
-							EntityInstanceID: artID,
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:         artID,
+							Type:       minderv1.Entity_ENTITY_ARTIFACTS,
+							ProjectID:  projectID,
+							ProviderID: providerID,
 						},
+						Properties: &properties.Properties{},
 					}, nil)
 
-				mockStore.EXPECT().GetArtifactByID(ctx, gomock.Any()).
-					Return(db.Artifact{
-						ID:           artID,
-						ProjectID:    projectID,
-						ProviderName: providerName,
-						ProviderID:   providerID,
-					}, nil)
-
-				// There should be one flush in the end
-				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
-			},
-			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockEntityWithPropertiesFetcher) {
+				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&minderv1.Artifact{}, nil)
 			},
 		},
 		{
