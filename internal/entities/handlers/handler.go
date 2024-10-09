@@ -102,7 +102,7 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 		l.Debug().Msg("entity not retrieved")
 	}
 
-	err = b.forwardEntityCheck(ctx, ewp)
+	err = b.forwardEntityCheck(ctx, entMsg, ewp)
 	if err != nil {
 		l.Error().Err(err).Msg("not forwarding entity")
 		return nil
@@ -130,11 +130,45 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 
 func (b *handleEntityAndDoBase) forwardEntityCheck(
 	ctx context.Context,
+	entMsg *message.HandleEntityAndDoMessage,
 	ewp *models.EntityWithProperties) error {
 	if ewp == nil {
 		return nil
 	}
 
+	if err := b.matchPropertiesCheck(entMsg, ewp); err != nil {
+		return err
+	}
+
+	return b.repoPrivateOrArchivedCheck(ctx, ewp)
+}
+
+func (_ *handleEntityAndDoBase) matchPropertiesCheck(
+	entMsg *message.HandleEntityAndDoMessage,
+	ewp *models.EntityWithProperties) error {
+	// nothing to match against, so we're good
+	if entMsg.MatchProps == nil {
+		return nil
+	}
+
+	matchProps, err := properties.NewProperties(entMsg.MatchProps)
+	if err != nil {
+		return err
+	}
+
+	for propName, prop := range matchProps.Iterate() {
+		entProp := ewp.Properties.GetProperty(propName)
+		if !prop.Equal(entProp) {
+			return errors.New("properties do not match")
+		}
+	}
+
+	return nil
+}
+
+func (b *handleEntityAndDoBase) repoPrivateOrArchivedCheck(
+	ctx context.Context,
+	ewp *models.EntityWithProperties) error {
 	if ewp.Entity.Type == v1.Entity_ENTITY_REPOSITORIES &&
 		ewp.Properties.GetProperty(properties.RepoPropertyIsPrivate).GetBool() &&
 		!features.ProjectAllowsPrivateRepos(ctx, b.store, ewp.Entity.ProjectID) {
