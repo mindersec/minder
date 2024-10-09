@@ -112,6 +112,8 @@ func TestAggregator(t *testing.T) {
 		WithID(repoID).
 		WithProjectID(projectID).
 		WithProviderID(providerID)
+	msg, err := inf.BuildMessage()
+	require.NoError(t, err, "expected no error when building message")
 
 	<-evt.Running()
 
@@ -121,8 +123,6 @@ func TestAggregator(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			msg, err := inf.BuildMessage()
-			require.NoError(t, err, "expected no error when building message")
 			err = evt.Publish(rateLimitedMessageTopic, msg.Copy())
 			require.NoError(t, err, "expected no error when publishing message")
 		}()

@@ -217,7 +217,7 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	}
 
 	if eiw.EntityID != uuid.Nil {
-		eiw.withID(EntityIDEventKey, eiw.EntityID.String())
+		msg.Metadata.Set(EntityIDEventKey, eiw.EntityID.String())
 	}
 
 	if eiw.ExecutionID != nil {
