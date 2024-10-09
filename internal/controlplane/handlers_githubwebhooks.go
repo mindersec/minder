@@ -1056,7 +1056,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		// caveat: we're accessing the database once for every
 		// repository, which might be inefficient at scale.
 		res, err := s.repositoryRemoved(
-			ctx,
 			repo,
 		)
 		if errors.Is(err, errRepoNotFound) {
@@ -1073,24 +1072,9 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 }
 
 func (s *Server) repositoryRemoved(
-	ctx context.Context,
 	repo *repo,
 ) (*processingResult, error) {
-	repoEnt, err := s.fetchRepo(ctx, repo)
-	if err != nil && !errors.Is(err, provifv1.ErrEntityNotFound) {
-		return nil, err
-	}
-
-	event := messages.NewMinderEvent().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
-		WithEntityID(repoEnt.Entity.ID)
-
-	return &processingResult{
-		topic:   events.TopicQueueReconcileEntityDelete,
-		wrapper: event,
-	}, nil
+	return s.sendEvaluateRepoMessage(repo, events.TopicQueueGetEntityAndDelete)
 }
 
 func (_ *Server) repositoryAdded(

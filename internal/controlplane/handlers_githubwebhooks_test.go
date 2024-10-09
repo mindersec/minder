@@ -47,6 +47,7 @@ import (
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	entMsg "github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
 	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
@@ -60,7 +61,6 @@ import (
 	mock_repos "github.com/stacklok/minder/internal/repositories/mock"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provif "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -129,24 +129,6 @@ func withSuccessRepoById(repo models.EntityInstance, propMap map[string]any) fun
 		mock.EXPECT().
 			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
 			Return(&ewp, nil)
-	}
-}
-
-func withRepoByIdRepoNotFoundUpstream(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
-	repoProps, err := properties.NewProperties(propMap)
-	if err != nil {
-		panic(err)
-	}
-
-	ewp := models.EntityWithProperties{
-		Entity:     repo,
-		Properties: repoProps,
-	}
-
-	return func(mock repoSvcMock) {
-		mock.EXPECT().
-			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-			Return(&ewp, provif.ErrEntityNotFound)
 	}
 }
 
@@ -3038,7 +3020,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
 
@@ -3448,22 +3429,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-			),
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
@@ -3485,13 +3450,13 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
 				timeout := 1 * time.Second
 
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3501,10 +3466,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
-				require.Equal(t, repositoryID, evt.EntityID)
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3514,8 +3479,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err = json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
 			},
 		},
 

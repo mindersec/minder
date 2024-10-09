@@ -276,6 +276,9 @@ func AllInOneServerService(
 	delOriginatingEntity := handlers.NewRemoveOriginatingEntityHandler(evt, store, propSvc, providerManager)
 	evt.ConsumeEvents(delOriginatingEntity)
 
+	getAndDeleteEntity := handlers.NewGetEntityAndDeleteHandler(evt, store, propSvc)
+	evt.ConsumeEvents(getAndDeleteEntity)
+
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer
 	if cfg.Email.AWSSES.Region != "" && cfg.Email.AWSSES.Sender != "" {
