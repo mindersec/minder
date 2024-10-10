@@ -3331,7 +3331,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
-				require.Equal(t, "stacklok/minder", evt.Properties[properties.PropertyName])
+
+				// the name can be either stacklok/minder or stacklok/trusty
+				require.Contains(t, []string{"stacklok/minder", "stacklok/trusty"}, evt.Properties[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
