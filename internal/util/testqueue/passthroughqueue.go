@@ -50,3 +50,8 @@ func (q *PassthroughQueue) Pass(msg *message.Message) error {
 	q.ch <- msg
 	return nil
 }
+
+func (q *PassthroughQueue) Close() error {
+	close(q.ch)
+	return nil
+}
