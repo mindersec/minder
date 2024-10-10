@@ -21,15 +21,12 @@ import (
 	"errors"
 	"fmt"
 
-	"google.golang.org/protobuf/reflect/protoreflect"
-
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/handlers/strategies"
 	"github.com/stacklok/minder/internal/entities/models"
 	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/providers/manager"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type delOriginatingEntityStrategy struct {
@@ -68,7 +65,7 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting querier")
 	}
 
-	parentEwp, err := getEntityInner(
+	_, err = getEntityInner(
 		ctx,
 		entMsg.Originator.Type, entMsg.Originator.GetByProps, entMsg.Hint,
 		d.propSvc,
@@ -86,11 +83,6 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
-	prov, err := d.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
-	if err != nil {
-		return nil, fmt.Errorf("error getting provider: %w", err)
-	}
-
 	err = txq.DeleteEntity(ctx, db.DeleteEntityParams{
 		ID:        childEwp.Entity.ID,
 		ProjectID: childEwp.Entity.ProjectID,
@@ -99,48 +91,11 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, err
 	}
 
-	pbEnt, err := prov.PropertiesToProtoMessage(entMsg.Entity.Type, childEwp.Properties)
-	if err != nil {
-		return nil, fmt.Errorf("error converting properties to proto message: %w", err)
-	}
-
-	err = d.deleteLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, pbEnt, txq)
-	if err != nil {
-		return nil, fmt.Errorf("error deleting legacy entity: %w", err)
-	}
-
 	if err := d.store.Commit(tx); err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	return nil, nil
-}
-
-func (_ *delOriginatingEntityStrategy) deleteLegacyEntity(
-	ctx context.Context,
-	entType minderv1.Entity,
-	parentEwp *models.EntityWithProperties,
-	pbEnt protoreflect.ProtoMessage,
-	t db.ExtendQuerier,
-) error {
-	if entType == minderv1.Entity_ENTITY_PULL_REQUESTS {
-		pr, ok := pbEnt.(*minderv1.PullRequest)
-		if !ok {
-			return fmt.Errorf("unexpected proto message type: %T", pbEnt)
-		}
-
-		err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
-			RepositoryID: parentEwp.Entity.ID,
-			PrNumber:     pr.Number,
-		})
-		if err != nil {
-			return fmt.Errorf("error deleting pull request: %w", err)
-		}
-	}
-
-	// We simply return nil if the entity type is not supported
-	// since it may not be backed by a legacy entity
-	return nil
 }
 
 // GetName returns the name of the strategy. Used for debugging

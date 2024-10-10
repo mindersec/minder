@@ -525,7 +525,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithSuccessfulUpsertPullRequestWithParams(
 					db.PullRequest{ID: pullRequestID},
 					db.EntityInstance{
-						ID:         uuid.UUID{},
+						ID:         pullRequestID,
 						EntityType: db.EntitiesPullRequest,
 						Name:       "",
 						ProjectID:  projectID,
@@ -535,12 +535,8 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 							Valid: true,
 						},
 					},
-					db.UpsertPullRequestParams{
-						PrNumber:     789,
-						RepositoryID: repoID,
-					},
 					db.CreateOrEnsureEntityByIDParams{
-						ID:         pullRequestID,
+						ID:         uuid.New(),
 						EntityType: db.EntitiesPullRequest,
 						Name:       pullName,
 						ProjectID:  projectID,
@@ -551,12 +547,6 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 						},
 					},
 				),
-				df.WithSuccessfullGetEntityByID(
-					repoID,
-					db.EntityInstance{
-						ID:         repoID,
-						EntityType: db.EntitiesRepository,
-					}),
 			),
 			providerSetup: newProviderMock(
 				withSuccessfulGetEntityName(pullName),
@@ -602,18 +592,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
-				df.WithSuccessfulDeletePullRequest(),
 				df.WithSuccessfulDeleteEntity(pullRequestID, projectID),
 			),
-			providerSetup: newProviderMock(
-				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
-					Number: 789,
-				}),
-			),
-			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
-				return provManFixtures.NewProviderManagerMock(
-					provManFixtures.WithSuccessfulInstantiateFromID(prov),
-				)
+			providerSetup: newProviderMock(),
+			providerManagerSetup: func(_ provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+				return provManFixtures.NewProviderManagerMock()
 			},
 			expectedPublish: false,
 		},

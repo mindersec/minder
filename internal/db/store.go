@@ -33,7 +33,7 @@ type GetTypedEntitiesOptions struct {
 type ExtendQuerier interface {
 	Querier
 	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID,
-		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
+		ruleName sql.NullString, entityID uuid.UUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
 	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
 	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
@@ -119,12 +119,15 @@ func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ctx context.Context,
 	profileID uuid.UUID,
 	ruleName sql.NullString,
-	entityID uuid.NullUUID,
+	entityID uuid.UUID,
 	ruleTypeName sql.NullString,
 ) (*ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
-		ProfileID:    profileID,
-		EntityID:     entityID,
+		ProfileID: profileID,
+		EntityID: uuid.NullUUID{
+			UUID:  entityID,
+			Valid: true,
+		},
 		RuleName:     ruleName,
 		RuleTypeName: ruleTypeName,
 	}

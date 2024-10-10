@@ -282,7 +282,6 @@ func (e *executor) releaseLockAndFlush(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 ) {
-	repoID, artID, prID := inf.GetEntityDBIDs()
 	eID, err := inf.GetID()
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error getting entity id")
@@ -293,18 +292,6 @@ func (e *executor) releaseLockAndFlush(
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
 		Str("entity_id", eID.String())
-
-	// TODO: change these to entity_id
-	if repoID.Valid {
-		logger = logger.Str("repo_id", repoID.UUID.String())
-	}
-
-	if artID.Valid {
-		logger = logger.Str("artifact_id", artID.UUID.String())
-	}
-	if prID.Valid {
-		logger = logger.Str("pull_request_id", prID.UUID.String())
-	}
 
 	if err := e.querier.ReleaseLock(ctx, db.ReleaseLockParams{
 		EntityInstanceID: eID,

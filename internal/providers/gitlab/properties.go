@@ -62,6 +62,17 @@ const (
 	PullRequestURL = "gitlab/merge_request_url"
 )
 
+// Release Properties
+const (
+	// ReleasePropertyProjectID represents the gitlab project ID
+	ReleasePropertyProjectID = "gitlab/project_id"
+	// ReleasePropertyTag represents the gitlab release tag name.
+	// NOTE: This is used for release discovery, not for creating releases.
+	ReleasePropertyTag = "gitlab/tag"
+	// ReleasePropertyBranch represents the gitlab release branch
+	ReleasePropertyBranch = "gitlab/branch"
+)
+
 // FetchAllProperties implements the provider interface
 func (c *gitlabClient) FetchAllProperties(
 	ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, _ *properties.Properties,
@@ -76,6 +87,8 @@ func (c *gitlabClient) FetchAllProperties(
 		return c.getPropertiesForRepo(ctx, getByProps)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return c.getPropertiesForPullRequest(ctx, getByProps)
+	case minderv1.Entity_ENTITY_RELEASE:
+		return c.getPropertiesForRelease(ctx, getByProps)
 	default:
 		return nil, fmt.Errorf("entity type %s not supported", entType)
 	}
@@ -104,6 +117,8 @@ func (c *gitlabClient) GetEntityName(entityType minderv1.Entity, props *properti
 		return getRepoNameFromProperties(props)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return getPullRequestNameFromProperties(props)
+	case minderv1.Entity_ENTITY_RELEASE:
+		return getReleaseNameFromProperties(props)
 	default:
 		return "", fmt.Errorf("entity type %s not supported", entityType)
 	}
@@ -123,6 +138,8 @@ func (c *gitlabClient) PropertiesToProtoMessage(
 		return repoV1FromProperties(props)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return pullRequestV1FromProperties(props)
+	case minderv1.Entity_ENTITY_RELEASE:
+		return releaseEntityV1FromProperties(props)
 	default:
 		return nil, fmt.Errorf("entity type %s not supported", entType)
 	}

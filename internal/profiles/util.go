@@ -174,6 +174,10 @@ func TraverseAllRulesForPipeline(p *pb.Profile, fn func(*pb.Profile_Rule) error)
 		return fmt.Errorf("error traversing artifact rules: %w", err)
 	}
 
+	if err := TraverseRules(p.Release, fn); err != nil {
+		return fmt.Errorf("error traversing release rules: %w", err)
+	}
+
 	return nil
 }
 

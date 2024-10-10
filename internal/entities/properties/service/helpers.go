@@ -43,16 +43,12 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 
 	var dbProps []db.Property
 	if entID != uuid.Nil {
-		l = l.With().Str("entityID", entID.String()).Logger()
-		l.Debug().Msg("entity found, fetching properties")
 		// fetch properties from db
 		var err error
 		dbProps, err = qtx.GetAllPropertiesForEntity(ctx, entID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
-	} else {
-		l.Info().Msg("no entity found, skipping properties fetch")
 	}
 
 	// if exists and not expired, turn into our model
@@ -64,13 +60,11 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 			return nil, fmt.Errorf("failed to convert properties: %w", err)
 		}
 		if ps.areDatabasePropertiesValid(dbProps, opts) {
-			l.Info().Msg("properties are valid, skipping provider fetch")
 			return modelProps, nil
 		}
 	}
 
 	// if not, fetch from provider
-	l.Debug().Msg("properties are not valid, fetching from provider")
 	refreshedProps, err := provider.FetchAllProperties(ctx, lookupProperties, entType, modelProps)
 	if errors.Is(err, provifv1.ErrEntityNotFound) {
 		return nil, fmt.Errorf("failed to fetch upstream properties: %w", ErrEntityNotFound)
@@ -91,7 +85,6 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 		return nil, fmt.Errorf("failed to update properties: %w", err)
 	}
 
-	l.Debug().Msg("properties updated")
 	return refreshedProps, nil
 }
 
@@ -213,7 +206,6 @@ func matchEntityWithHint(
 			continue
 		}
 
-		l.Debug().Str("lookupProp", loopupProp).Msg("fetching by property")
 		ents, err = getAllByProperty(ctx,
 			loopupProp, prop.RawValue(), entType,
 			// we search across all projects and providers. This is expected because the lookup properties only
@@ -256,7 +248,6 @@ func findMatchByUpstreamHint(
 
 		if thisMatch != nil {
 			if match != nil {
-				zerolog.Ctx(ctx).Error().Msg("multiple entities matched")
 				return nil, ErrMultipleEntities
 			}
 			match = thisMatch
@@ -264,7 +255,6 @@ func findMatchByUpstreamHint(
 	}
 
 	if match == nil {
-		zerolog.Ctx(ctx).Debug().Msg("no entity matched")
 		return nil, ErrEntityNotFound
 	}
 

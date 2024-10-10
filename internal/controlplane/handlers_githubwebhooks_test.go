@@ -1404,7 +1404,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1455,7 +1455,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1602,7 +1602,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1653,7 +1653,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1704,7 +1704,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1755,7 +1755,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1854,7 +1854,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1944,7 +1944,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 
@@ -3331,7 +3331,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
-				require.Equal(t, "stacklok/minder", evt.Properties[properties.PropertyName])
+
+				// the name can be either stacklok/minder or stacklok/trusty
+				require.Contains(t, []string{"stacklok/minder", "stacklok/trusty"}, evt.Properties[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
