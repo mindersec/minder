@@ -1404,7 +1404,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1455,7 +1455,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1602,7 +1602,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1653,7 +1653,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1704,7 +1704,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1755,7 +1755,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1854,7 +1854,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 		{
@@ -1944,7 +1944,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
 			},
 		},
 
