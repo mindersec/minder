@@ -198,7 +198,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 					Name: "requirements.txt",
 				},
-			}, &pbinternal.PrDependencies_ContextualDependency{
+			}, {
 				Dep: &pbinternal.Dependency{
 					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI,
 					Name:      "requests",
@@ -232,7 +232,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 			}}`,
 		},
 		expectedPackages: []*pbinternal.PrDependencies_ContextualDependency{
-			&pbinternal.PrDependencies_ContextualDependency{
+			{
 				Dep: &pbinternal.Dependency{
 					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 					Name:      "@babel/core",
@@ -241,8 +241,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 					Name: "package-lock.json",
 				},
-			},
-			&pbinternal.PrDependencies_ContextualDependency{
+			}, {
 				Dep: &pbinternal.Dependency{
 					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
 					Name:      "express",
@@ -268,7 +267,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 				")",
 		},
 		expectedPackages: []*pbinternal.PrDependencies_ContextualDependency{
-			&pbinternal.PrDependencies_ContextualDependency{
+			{
 				Dep: &pbinternal.Dependency{
 					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
 					Name:      "github.com/coreos/go-semver",
@@ -277,8 +276,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 				File: &pbinternal.PrDependencies_ContextualDependency_FilePatch{
 					Name: "go.mod",
 				},
-			},
-			&pbinternal.PrDependencies_ContextualDependency{
+			}, {
 				Dep: &pbinternal.Dependency{
 					Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO,
 					Name:      "github.com/gorilla/mux",

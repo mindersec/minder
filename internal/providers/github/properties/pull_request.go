@@ -48,9 +48,9 @@ const (
 	PullPropertyAuthorLogin = "github/pull_author_login"
 	// PullPropertyAction is an operational property that represents the action that was taken on the pull request
 	PullPropertyAction = "github/pull_action"
-	// PullRequestCloneURL is the URL used to clone the repository
+	// PullPropertyBaseCloneURL is the URL used to clone the repository
 	PullPropertyBaseCloneURL = "github/clone_url"
-	// PullRequestTargetURL is the URL used to clone the target repository
+	// PullPropertyTargetCloneURL is the URL used to clone the target repository
 	PullPropertyTargetCloneURL = "github/target_url"
 	// PullPropertyBaseRef is the base ref of the pull request
 	PullPropertyBaseRef = "github/base_ref"
