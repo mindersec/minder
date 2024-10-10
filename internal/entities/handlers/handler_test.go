@@ -536,7 +536,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 						},
 					},
 					db.CreateOrEnsureEntityByIDParams{
-						ID:         pullRequestID,
+						ID:         uuid.New(),
 						EntityType: db.EntitiesPullRequest,
 						Name:       pullName,
 						ProjectID:  projectID,

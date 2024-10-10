@@ -128,14 +128,38 @@ func WithSuccessfulUpsertPullRequest(
 	}
 }
 
+type createOrEnsureEntityByIDParamsMatcher struct {
+	params db.CreateOrEnsureEntityByIDParams
+}
+
+func (m createOrEnsureEntityByIDParamsMatcher) String() string {
+	return "matches CreateOrEnsureEntityByIDParams"
+}
+
+func (m createOrEnsureEntityByIDParamsMatcher) Matches(x interface{}) bool {
+	actual, ok := x.(db.CreateOrEnsureEntityByIDParams)
+	if !ok {
+		return false
+	}
+
+	// Note we don't compare the ID because it might be
+	// dynamically generated
+	return m.params.EntityType == actual.EntityType &&
+		m.params.Name == actual.Name &&
+		m.params.ProjectID == actual.ProjectID &&
+		m.params.ProviderID == actual.ProviderID &&
+		m.params.OriginatedFrom == actual.OriginatedFrom
+}
+
 func WithSuccessfulUpsertPullRequestWithParams(
 	pullRequest db.PullRequest,
 	instance db.EntityInstance,
 	entParams db.CreateOrEnsureEntityByIDParams,
 ) func(*mockdb.MockStore) {
+	coeebipMatcher := createOrEnsureEntityByIDParamsMatcher{params: entParams}
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			CreateOrEnsureEntityByID(gomock.Any(), entParams).
+			CreateOrEnsureEntityByID(gomock.Any(), coeebipMatcher).
 			Return(instance, nil)
 	}
 }
