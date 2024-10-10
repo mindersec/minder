@@ -75,6 +75,8 @@ var rawPushEvent string
 //go:embed test-payloads/branch-protection-configuration-disabled.json
 var rawBranchProtectionConfigurationDisabledEvent string
 
+var timeout time.Duration = 10 * time.Millisecond
+
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
 	mock.Mock
@@ -647,12 +649,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -668,12 +672,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1075,7 +1081,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				var evt messages.MinderEvent
@@ -1084,6 +1089,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1124,7 +1132,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				var evt messages.MinderEvent
@@ -1133,6 +1140,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1174,7 +1184,20 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt messages.MinderEvent
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.NoError(t, validator.New().Struct(&evt))
+				require.Equal(t, providerID, evt.ProviderID)
+				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_rule created",
@@ -1194,12 +1217,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1220,12 +1245,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1246,12 +1273,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1272,12 +1301,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1297,12 +1328,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1323,12 +1356,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1348,12 +1383,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1396,7 +1433,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1405,6 +1441,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1447,7 +1486,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1456,6 +1494,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1495,7 +1536,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				var evt messages.MinderEvent
@@ -1504,6 +1544,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1543,7 +1586,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				var evt messages.MinderEvent
@@ -1552,6 +1594,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1594,7 +1639,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1603,6 +1647,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1645,7 +1692,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1654,6 +1700,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1696,7 +1745,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1705,6 +1753,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1747,7 +1798,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1756,6 +1806,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1795,7 +1848,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				var evt messages.MinderEvent
@@ -1804,6 +1856,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.NoError(t, validator.New().Struct(&evt))
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1846,7 +1901,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1855,6 +1909,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1936,7 +1993,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -1945,6 +2001,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
 				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
 				require.Equal(t, repositoryID.String(), received.Metadata[entities.EntityIDEventKey])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -1965,12 +2024,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1991,12 +2052,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2017,12 +2080,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2043,12 +2108,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2069,12 +2136,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2095,12 +2164,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2120,12 +2191,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2146,12 +2219,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2172,12 +2247,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2198,12 +2275,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2224,12 +2303,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2250,12 +2331,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2276,12 +2359,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2302,12 +2387,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2328,12 +2415,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2354,12 +2443,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2379,12 +2470,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2404,12 +2497,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2440,12 +2535,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2458,12 +2555,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -2483,7 +2582,17 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_configuration disabled",
@@ -2499,7 +2608,17 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_configuration disabled raw event",
@@ -2510,12 +2629,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2534,12 +2655,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2558,12 +2681,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2582,12 +2707,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2606,12 +2733,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2630,12 +2759,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2654,12 +2785,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -2696,12 +2829,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2736,12 +2871,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2776,12 +2913,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2815,12 +2954,14 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2969,6 +3110,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			defer evt.Close()
 
 			pq := testqueue.NewPassthroughQueue(t)
+			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)
@@ -3139,7 +3281,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode:    http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -3147,6 +3288,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
 				require.Equal(t, "github-app", received.Metadata["class"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3160,7 +3304,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode:    http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -3168,6 +3311,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
 				require.Equal(t, "github-app", received.Metadata["class"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3316,7 +3462,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 
 				var evt messages.MinderEvent
 
@@ -3345,6 +3490,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3456,7 +3604,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 
 				var evt entMsg.HandleEntityAndDoMessage
 
@@ -3485,6 +3632,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
 				// we use contains here because the messages can arrive in any order
 				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -3548,6 +3698,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			srv.cfg.WebhookConfig.WebhookSecret = "test"
 
 			pq := testqueue.NewPassthroughQueue(t)
+			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)
