@@ -77,7 +77,7 @@ func (m *providerClassManager) publishReleaseMessage(
 	// Form identifying properties
 	identifyingProps, err := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: mrUpstreamID,
-		gitlab.ReleasePropertyTagName: tag,
+		gitlab.ReleasePropertyTag:     tag,
 		gitlab.PullRequestProjectID:   mrProjectID,
 	})
 	if err != nil {

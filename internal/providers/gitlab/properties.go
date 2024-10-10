@@ -66,9 +66,9 @@ const (
 const (
 	// ReleasePropertyProjectID represents the gitlab project ID
 	ReleasePropertyProjectID = "gitlab/project_id"
-	// ReleasePropertyTagName represents the gitlab release tag name.
+	// ReleasePropertyTag represents the gitlab release tag name.
 	// NOTE: This is used for release discovery, not for creating releases.
-	ReleasePropertyTagName = "gitlab/tag_name"
+	ReleasePropertyTag = "gitlab/tag"
 	// ReleasePropertyBranch represents the gitlab release branch
 	ReleasePropertyBranch = "gitlab/branch"
 )

@@ -53,7 +53,7 @@ func (c *gitlabClient) getPropertiesForRelease(
 		return nil, fmt.Errorf("project ID not found or invalid: %w", err)
 	}
 
-	releaseTagName, err := getByProps.GetProperty(ReleasePropertyTagName).AsString()
+	releaseTagName, err := getByProps.GetProperty(ReleasePropertyTag).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("tag name not found or invalid: %w", err)
 	}
@@ -106,7 +106,7 @@ func (c *gitlabClient) getPropertiesForRelease(
 	// try to guess the branch from the commit refs
 	branch := guessBranchFromCommitRefs(refs, release.TagName)
 
-	outProps, err := gitlabReleaseToProperties(uid, proj, branch)
+	outProps, err := gitlabReleaseToProperties(uid, releaseTagName, proj, branch)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert release to properties: %w", err)
 	}
@@ -202,7 +202,7 @@ func releaseEntityV1FromProperties(props *properties.Properties) (*minderv1.Enti
 }
 
 func getReleaseNameFromProperties(props *properties.Properties) (string, error) {
-	branch, err := props.GetProperty(ReleasePropertyBranch).AsString()
+	branch, err := props.GetProperty(ReleasePropertyTag).AsString()
 	if err != nil {
 		return "", fmt.Errorf("branch not found or invalid: %w", err)
 	}
@@ -221,7 +221,7 @@ func getReleaseNameFromProperties(props *properties.Properties) (string, error) 
 }
 
 func gitlabReleaseToProperties(
-	releaseID string, proj *gitlablib.Project, branch string,
+	releaseID string, releaseTag string, proj *gitlablib.Project, branch string,
 ) (*properties.Properties, error) {
 	ns, err := getGitlabProjectNamespace(proj)
 	if err != nil {
@@ -233,6 +233,7 @@ func gitlabReleaseToProperties(
 	return properties.NewProperties(map[string]interface{}{
 		properties.PropertyUpstreamID: releaseID,
 		ReleasePropertyProjectID:      FormatRepositoryUpstreamID(proj.ID),
+		ReleasePropertyTag:            releaseTag,
 		ReleasePropertyBranch:         branch,
 		RepoPropertyNamespace:         ns,
 		RepoPropertyProjectName:       projName,
