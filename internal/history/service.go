@@ -26,6 +26,7 @@ import (
 
 	"github.com/stacklok/minder/internal/db"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/entities/models"
 	propertiessvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/providers/manager"
 )
@@ -216,22 +217,30 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 
 	propsvc := ehs.propServiceBuilder(qtx)
 
+	entityCache := make(map[uuid.UUID]*models.EntityWithProperties, len(rows))
+
 	data := make([]*OneEvalHistoryAndEntity, 0, len(rows))
 	for _, row := range rows {
-		efp, err := propsvc.EntityWithPropertiesByID(ctx, row.EntityID,
-			propertiessvc.CallBuilder().WithStoreOrTransaction(qtx))
-		if err != nil {
-			return nil, fmt.Errorf("error fetching entity for properties: %w", err)
-		}
+		ewp, ok := entityCache[row.EntityID]
+		if !ok {
+			lookupEwp, err := propsvc.EntityWithPropertiesByID(ctx, row.EntityID,
+				propertiessvc.CallBuilder().WithStoreOrTransaction(qtx))
+			if err != nil {
+				return nil, fmt.Errorf("error fetching entity for properties: %w", err)
+			}
 
-		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager,
-			propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
-		if err != nil {
-			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+			err = propsvc.RetrieveAllPropertiesForEntity(ctx, lookupEwp, ehs.providerManager,
+				propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
+			if err != nil {
+				return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+			}
+
+			entityCache[row.EntityID] = lookupEwp
+			ewp = lookupEwp
 		}
 
 		data = append(data, &OneEvalHistoryAndEntity{
-			EntityWithProperties: efp,
+			EntityWithProperties: ewp,
 			EvalHistoryRow:       row,
 		})
 	}
