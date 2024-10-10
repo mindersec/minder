@@ -229,12 +229,6 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 				return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 			}
 
-			err = propsvc.RetrieveAllPropertiesForEntity(ctx, lookupEwp, ehs.providerManager,
-				propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
-			if err != nil {
-				return nil, fmt.Errorf("error fetching properties for entity: %w", err)
-			}
-
 			entityCache[row.EntityID] = lookupEwp
 			ewp = lookupEwp
 		}
