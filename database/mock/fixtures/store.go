@@ -123,9 +123,6 @@ func WithSuccessfulUpsertPullRequest(
 ) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			UpsertPullRequest(gomock.Any(), gomock.Any()).
-			Return(pullRequest, nil)
-		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
 			Return(db.EntityInstance{}, nil)
 	}
@@ -134,24 +131,12 @@ func WithSuccessfulUpsertPullRequest(
 func WithSuccessfulUpsertPullRequestWithParams(
 	pullRequest db.PullRequest,
 	instance db.EntityInstance,
-	params db.UpsertPullRequestParams,
 	entParams db.CreateOrEnsureEntityByIDParams,
 ) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			UpsertPullRequest(gomock.Any(), params).
-			Return(pullRequest, nil)
-		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), entParams).
 			Return(instance, nil)
-	}
-}
-
-func WithSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			DeletePullRequest(gomock.Any(), gomock.Any()).
-			Return(nil)
 	}
 }
 

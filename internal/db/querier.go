@@ -37,7 +37,6 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProjectWithID(ctx context.Context, arg CreateProjectWithIDParams) (Project, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
-	CreatePullRequest(ctx context.Context, arg CreatePullRequestParams) (PullRequest, error)
 	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSelector(ctx context.Context, arg CreateSelectorParams) (ProfileSelector, error)
@@ -62,7 +61,6 @@ type Querier interface {
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
-	DeletePullRequest(ctx context.Context, arg DeletePullRequestParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
@@ -156,8 +154,6 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	GetPullRequest(ctx context.Context, arg GetPullRequestParams) (PullRequest, error)
-	GetPullRequestByID(ctx context.Context, id uuid.UUID) (PullRequest, error)
 	// avoid using this, where possible use GetRepositoryByIDAndProject instead
 	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
@@ -269,7 +265,6 @@ type Querier interface {
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
-	UpsertPullRequest(ctx context.Context, arg UpsertPullRequestParams) (PullRequest, error)
 	// Copyright 2024 Stacklok, Inc
 	//
 	// Licensed under the Apache License, Version 2.0 (the "License");

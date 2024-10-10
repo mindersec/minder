@@ -535,10 +535,6 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 							Valid: true,
 						},
 					},
-					db.UpsertPullRequestParams{
-						PrNumber:     789,
-						RepositoryID: repoID,
-					},
 					db.CreateOrEnsureEntityByIDParams{
 						ID:         pullRequestID,
 						EntityType: db.EntitiesPullRequest,
@@ -596,18 +592,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
-				df.WithSuccessfulDeletePullRequest(),
 				df.WithSuccessfulDeleteEntity(pullRequestID, projectID),
 			),
-			providerSetup: newProviderMock(
-				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
-					Number: 789,
-				}),
-			),
-			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
-				return provManFixtures.NewProviderManagerMock(
-					provManFixtures.WithSuccessfulInstantiateFromID(prov),
-				)
+			providerSetup: newProviderMock(),
+			providerManagerSetup: func(_ provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+				return provManFixtures.NewProviderManagerMock()
 			},
 			expectedPublish: false,
 		},

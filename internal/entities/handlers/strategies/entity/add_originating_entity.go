@@ -152,24 +152,7 @@ func (_ *addOriginatingEntityStrategy) upsertLegacyEntity(
 	parentEwp *models.EntityWithProperties, pbEnt protoreflect.ProtoMessage,
 	t db.ExtendQuerier,
 ) (uuid.UUID, error) {
-	var legacyId uuid.UUID
-
-	switch entType { // nolint:exhaustive
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		pr, ok := pbEnt.(*minderv1.PullRequest)
-		if !ok {
-			return uuid.Nil, fmt.Errorf("unexpected proto message type: %T", pbEnt)
-		}
-
-		dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
-			RepositoryID: parentEwp.Entity.ID,
-			PrNumber:     pr.Number,
-		})
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("error upserting pull request: %w", err)
-		}
-		legacyId = dbPr.ID
-	case minderv1.Entity_ENTITY_ARTIFACTS:
+	if entType == minderv1.Entity_ENTITY_ARTIFACTS {
 		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
 		dbProv, err := t.GetProviderByID(ctx, parentEwp.Entity.ProviderID)
 		if err != nil {
@@ -196,8 +179,9 @@ func (_ *addOriginatingEntityStrategy) upsertLegacyEntity(
 		if err != nil {
 			return uuid.Nil, fmt.Errorf("error upserting artifact: %w", err)
 		}
-		legacyId = dbArtifact.ID
+
+		return dbArtifact.ID, nil
 	}
 
-	return legacyId, nil
+	return uuid.Nil, nil
 }
