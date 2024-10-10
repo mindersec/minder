@@ -299,7 +299,7 @@ func (e *EEA) buildRepositoryInfoWrapper(
 
 	return entities.NewEntityInfoWrapper().
 		WithRepository(r).
-		WithRepositoryID(repoID).
+		WithID(repoID).
 		WithProjectID(projID).
 		WithProviderID(ent.Entity.ProviderID), nil
 }
@@ -331,7 +331,7 @@ func (e *EEA) buildArtifactInfoWrapper(
 	eiw := entities.NewEntityInfoWrapper().
 		WithProjectID(projID).
 		WithArtifact(a).
-		WithArtifactID(artID).
+		WithID(artID).
 		WithProviderID(ent.Entity.ProviderID)
 	return eiw, nil
 }
@@ -350,8 +350,6 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		return nil, fmt.Errorf("entity %s does not belong to project %s", prID, projID)
 	}
 
-	repoID := ent.Entity.OriginatedFrom
-
 	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
 	if err != nil {
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
@@ -363,9 +361,8 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	}
 
 	return entities.NewEntityInfoWrapper().
-		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithPullRequest(pr).
-		WithPullRequestID(prID).
+		WithID(prID).
 		WithProviderID(ent.Entity.ProviderID), nil
 }

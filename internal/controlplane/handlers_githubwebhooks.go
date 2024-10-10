@@ -799,7 +799,7 @@ func (s *Server) processRelevantRepositoryEvent(
 		WithProjectID(repoEntity.Entity.ProjectID).
 		WithProviderID(repoEntity.Entity.ProviderID).
 		WithRepository(pbRepo).
-		WithRepositoryID(repoEntity.Entity.ID)
+		WithID(repoEntity.Entity.ID)
 
 	return &processingResult{
 		topic:   events.TopicQueueEntityEvaluate,
