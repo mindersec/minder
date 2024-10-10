@@ -34,8 +34,7 @@ import (
 	"github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
-	purl "github.com/google/osv-scalibr/purl"
-	scalibr_stats "github.com/google/osv-scalibr/stats"
+	"github.com/google/osv-scalibr/purl"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -246,7 +245,15 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullReques
 }
 
 func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {
-	return cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
+	// If we compare by name and version first, we can avoid serializing Locations to strings
+	res := cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
+	if res != 0 {
+		return res
+	}
+	// TODO: Locations should probably be sorted, but scalibr is going to export a compare function.
+	aLoc := fmt.Sprintf("%v", a.Locations)
+	bLoc := fmt.Sprintf("%v", b.Locations)
+	return cmp.Compare(aLoc, bLoc)
 }
 
 func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Inventory, error) {
@@ -270,7 +277,7 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	}
 
 	desiredCaps := scalibr_plugin.Capabilities{
-		OS:            scalibr_plugin.OSAny,
+		OS:            scalibr_plugin.OSLinux,
 		Network:       true,
 		DirectFS:      false,
 		RunningSystem: false,
@@ -281,8 +288,7 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
 		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
 		FilesystemExtractors: list.FilterByCapabilities(list.Default, &desiredCaps),
-		Capabilities: &desiredCaps,
-		Stats: scalibr_stats.NoopCollector{},
+		Capabilities:         &desiredCaps,
 	}
 
 	scanner := scalibr.New()
@@ -303,15 +309,16 @@ func inventoryToEcosystem(inventory *extractor.Inventory) pbinternal.DepEcosyste
 		zerolog.Ctx(context.Background()).Warn().Msg("nil ecosystem scanning diffs")
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
 	}
-	// This should be inventory.GetEcosystem()... but there isn't a convenience wrapper yet
-	ecosystem, err := inventory.Extractor.Ecosystem(inventory)
+
+	// This should be inventory.PURL()... but there isn't a convenience wrapper yet
+	package_url, err := inventory.Extractor.ToPURL(inventory)
 	if err != nil {
 		zerolog.Ctx(context.Background()).Warn().Err(err).Msg("error getting ecosystem from inventory")
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
 	}
 
 	// Sometimes Scalibr uses the string "PyPI" instead of "pypi" when reporting the ecosystem.
-	switch strings.ToLower(ecosystem) {
+	switch package_url.Type {
 	// N.B. using an enum here abitrarily restricts our ability to add new
 	// ecosystems without a core minder change.  Switching to strings ala
 	// purl might be an improvement.
@@ -319,7 +326,7 @@ func inventoryToEcosystem(inventory *extractor.Inventory) pbinternal.DepEcosyste
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_PYPI
 	case purl.TypeNPM:
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM
-	case purl.TypeGolang, "go":  // Scalibr uses "go" as the ecosystem name sometimes
+	case purl.TypeGolang:
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_GO
 	default:
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
