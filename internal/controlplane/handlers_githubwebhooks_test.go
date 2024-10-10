@@ -1186,7 +1186,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			),
 			topic:      events.TopicQueueReconcileEntityDelete,
 			statusCode: http.StatusOK,
-			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
 				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)

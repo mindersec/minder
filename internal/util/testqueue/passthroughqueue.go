@@ -51,6 +51,7 @@ func (q *PassthroughQueue) Pass(msg *message.Message) error {
 	return nil
 }
 
+// Close frees closes the channel used as queue.
 func (q *PassthroughQueue) Close() error {
 	close(q.ch)
 	return nil
