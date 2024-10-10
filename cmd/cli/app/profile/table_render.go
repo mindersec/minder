@@ -71,6 +71,9 @@ func RenderProfileTable(p *minderv1.Profile, t table.Table) {
 
 	// pull request
 	renderProfileRow(minderv1.PullRequestEntity, p.PullRequest, t)
+
+	// release
+	renderProfileRow(minderv1.ReleaseEntity, p.Release, t)
 }
 
 func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
