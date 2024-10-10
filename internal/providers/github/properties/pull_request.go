@@ -48,6 +48,14 @@ const (
 	PullPropertyAuthorLogin = "github/pull_author_login"
 	// PullPropertyAction is an operational property that represents the action that was taken on the pull request
 	PullPropertyAction = "github/pull_action"
+	// PullPropertyBaseCloneURL is the URL used to clone the repository
+	PullPropertyBaseCloneURL = "github/clone_url"
+	// PullPropertyTargetCloneURL is the URL used to clone the target repository
+	PullPropertyTargetCloneURL = "github/target_url"
+	// PullPropertyBaseRef is the base ref of the pull request
+	PullPropertyBaseRef = "github/base_ref"
+	// PullPropertyTargetRef is the target ref of the pull request
+	PullPropertyTargetRef = "github/pull_ref"
 )
 
 var prPropertyDefinitions = []propertyOrigin{
@@ -65,6 +73,10 @@ var prPropertyDefinitions = []propertyOrigin{
 			PullPropertyAuthorID,
 			PullPropertyAuthorLogin,
 			PullPropertyAction,
+			PullPropertyBaseCloneURL,
+			PullPropertyTargetCloneURL,
+			PullPropertyBaseRef,
+			PullPropertyTargetRef,
 		},
 		wrapper: getPrWrapper,
 	},
@@ -155,12 +167,16 @@ func getPrWrapper(
 		// github-specific
 		PullPropertyURL: prReply.GetHTMLURL(),
 		// our proto representation uses int64 for the number but GH uses int
-		PullPropertyNumber:      int64(prReply.GetNumber()),
-		PullPropertySha:         prReply.GetHead().GetSHA(),
-		PullPropertyRepoOwner:   owner,
-		PullPropertyRepoName:    name,
-		PullPropertyAuthorID:    prReply.GetUser().GetID(),
-		PullPropertyAuthorLogin: prReply.GetUser().GetLogin(),
+		PullPropertyNumber:         int64(prReply.GetNumber()),
+		PullPropertySha:            prReply.GetHead().GetSHA(),
+		PullPropertyRepoOwner:      owner,
+		PullPropertyRepoName:       name,
+		PullPropertyAuthorID:       prReply.GetUser().GetID(),
+		PullPropertyAuthorLogin:    prReply.GetUser().GetLogin(),
+		PullPropertyBaseCloneURL:   prReply.GetBase().GetRepo().GetCloneURL(),
+		PullPropertyTargetCloneURL: prReply.GetHead().GetRepo().GetCloneURL(),
+		PullPropertyBaseRef:        prReply.GetBase().GetRef(),
+		PullPropertyTargetRef:      prReply.GetHead().GetRef(),
 	}
 
 	return prProps, nil
@@ -185,12 +201,16 @@ func getPrWrapperAttrsFromProps(props *properties.Properties) (string, string, i
 // PullRequestV1FromProperties creates a PullRequestV1 from a properties object
 func PullRequestV1FromProperties(props *properties.Properties) (*minderv1.PullRequest, error) {
 	return &minderv1.PullRequest{
-		Url:       props.GetProperty(PullPropertyURL).GetString(),
-		CommitSha: props.GetProperty(PullPropertySha).GetString(),
-		Number:    props.GetProperty(PullPropertyNumber).GetInt64(),
-		RepoOwner: props.GetProperty(PullPropertyRepoOwner).GetString(),
-		RepoName:  props.GetProperty(PullPropertyRepoName).GetString(),
-		AuthorId:  props.GetProperty(PullPropertyAuthorID).GetInt64(),
-		Action:    props.GetProperty(PullPropertyAction).GetString(),
+		Url:            props.GetProperty(PullPropertyURL).GetString(),
+		CommitSha:      props.GetProperty(PullPropertySha).GetString(),
+		TargetRef:      props.GetProperty(PullPropertyTargetRef).GetString(),
+		BaseRef:        props.GetProperty(PullPropertyBaseRef).GetString(),
+		Number:         props.GetProperty(PullPropertyNumber).GetInt64(),
+		RepoOwner:      props.GetProperty(PullPropertyRepoOwner).GetString(),
+		RepoName:       props.GetProperty(PullPropertyRepoName).GetString(),
+		AuthorId:       props.GetProperty(PullPropertyAuthorID).GetInt64(),
+		Action:         props.GetProperty(PullPropertyAction).GetString(),
+		BaseCloneUrl:   props.GetProperty(PullPropertyBaseCloneURL).GetString(),
+		TargetCloneUrl: props.GetProperty(PullPropertyTargetCloneURL).GetString(),
 	}, nil
 }

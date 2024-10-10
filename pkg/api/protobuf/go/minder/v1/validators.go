@@ -211,7 +211,7 @@ func (diffing *DiffType) Validate() error {
 	}
 
 	switch diffing.GetType() {
-	case "", DiffTypeDep, DiffTypeFull:
+	case "", DiffTypeDep, DiffTypeNewDeps, DiffTypeFull:
 		return nil
 	default:
 		return fmt.Errorf("%w: diffing type is invalid: %s", ErrInvalidRuleTypeDefinition, diffing.GetType())
