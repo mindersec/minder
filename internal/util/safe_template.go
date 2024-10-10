@@ -22,6 +22,7 @@ import (
 	"fmt"
 	htmltemplate "html/template"
 	"io"
+	"reflect"
 	"text/template"
 
 	"github.com/rs/zerolog"
@@ -30,6 +31,17 @@ import (
 var (
 	// ErrExceededSizeLimit is returned when the size limit is exceeded
 	ErrExceededSizeLimit = errors.New("exceeded size limit")
+)
+
+var (
+	// TemplateFuncs is a map of functions that can be used in templates
+	// It introduces two custom functions:
+	// - asMap: converts a structpb (or anything that implements the AsMap function call) to a map
+	// - mapGet: returns the value of a key in a map
+	TemplateFuncs = template.FuncMap{
+		"asMap":  asMap,
+		"mapGet": mapGet,
+	}
 )
 
 // SafeTemplate is a `template` wrapper that ensures that the template is
@@ -44,9 +56,56 @@ type templater interface {
 	Name() string
 }
 
+// This is a utility interface that allows us to accept any type
+type asMapper interface {
+	AsMap() map[string]interface{}
+}
+
+// asMap converts a structpb to a map
+func asMap(s any) (reflect.Value, error) {
+	if s == nil {
+		return reflect.Value{}, fmt.Errorf("asMap called with nil")
+	}
+
+	inspb, ok := s.(asMapper)
+	if !ok {
+		return reflect.Value{}, fmt.Errorf("invalid type: %T", s)
+	}
+
+	return reflect.ValueOf(inspb.AsMap()), nil
+}
+
+// mapGet returns the value of a key in a map
+// The map could be a map[string]interface{} or a asMapper
+// So we need to handle both cases
+func mapGet(m any, key string) (reflect.Value, error) {
+	if m == nil {
+		return reflect.Value{}, fmt.Errorf("map is nil")
+	}
+
+	// Check if the map is a map[string]interface{}
+	if mm, ok := m.(map[string]interface{}); ok {
+		return valueOfKey(mm, key)
+	}
+
+	if mm, ok := m.(asMapper); ok {
+		mm := mm.AsMap()
+		return valueOfKey(mm, key)
+	}
+
+	return reflect.Value{}, fmt.Errorf("invalid type: %T", m)
+}
+
+func valueOfKey(m map[string]interface{}, key string) (reflect.Value, error) {
+	if v, ok := m[key]; ok {
+		return reflect.ValueOf(v), nil
+	}
+	return reflect.Value{}, fmt.Errorf("key not found: %s", key)
+}
+
 // NewSafeTextTemplate creates a new SafeTemplate for text templates
 func NewSafeTextTemplate(tmpl *string, name string) (*SafeTemplate, error) {
-	t, err := parseNewTextTemplate(tmpl, name)
+	t, err := parseNewTextTemplate(tmpl, name, TemplateFuncs)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +117,7 @@ func NewSafeTextTemplate(tmpl *string, name string) (*SafeTemplate, error) {
 
 // NewSafeHTMLTemplate creates a new SafeTemplate for HTML templates
 func NewSafeHTMLTemplate(tmpl *string, name string) (*SafeTemplate, error) {
-	t, err := parseNewHtmlTemplate(tmpl, name)
+	t, err := parseNewHtmlTemplate(tmpl, name, TemplateFuncs)
 	if err != nil {
 		return nil, err
 	}
@@ -96,12 +155,15 @@ func (t *SafeTemplate) Execute(ctx context.Context, w io.Writer, data any, limit
 }
 
 // parseNewTextTemplate parses a named template from a string, ensuring it is not empty
-func parseNewTextTemplate(tmpl *string, name string) (*template.Template, error) {
+func parseNewTextTemplate(tmpl *string, name string, fnmap template.FuncMap) (*template.Template, error) {
 	if tmpl == nil || len(*tmpl) == 0 {
 		return nil, fmt.Errorf("missing template")
 	}
 
 	t := template.New(name).Option("missingkey=error")
+	if fnmap != nil {
+		t = t.Funcs(fnmap)
+	}
 	t, err := t.Parse(*tmpl)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse template: %w", err)
@@ -111,12 +173,15 @@ func parseNewTextTemplate(tmpl *string, name string) (*template.Template, error)
 }
 
 // parseNewHtmlTemplate parses a named template from a string, ensuring it is not empty
-func parseNewHtmlTemplate(tmpl *string, name string) (*htmltemplate.Template, error) {
+func parseNewHtmlTemplate(tmpl *string, name string, fnmap template.FuncMap) (*htmltemplate.Template, error) {
 	if tmpl == nil || len(*tmpl) == 0 {
 		return nil, fmt.Errorf("missing template")
 	}
 
 	t := htmltemplate.New(name).Option("missingkey=error")
+	if fnmap != nil {
+		t = t.Funcs(fnmap)
+	}
 	t, err := t.Parse(*tmpl)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse template: %w", err)
