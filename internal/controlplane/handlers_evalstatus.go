@@ -372,7 +372,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 	profileStatuses = map[uuid.UUID]*minderv1.ProfileStatus{}
 	statusByEntity = map[string]map[uuid.UUID][]*minderv1.RuleEvaluationStatus{}
 
-	psc, err := propSvc.WithEntityCache(s.props, 1000)
+	psc, err := propSvc.WithEntityCache(s.props, 0)
 	if err != nil {
 		return nil, nil, nil,
 			status.Errorf(codes.Internal, "error creating entity cache: %v", err)
