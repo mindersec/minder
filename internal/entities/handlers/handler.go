@@ -40,6 +40,7 @@ import (
 var (
 	errPrivateRepoNotAllowed  = errors.New("private repositories are not allowed in this project")
 	errArchivedRepoNotAllowed = errors.New("archived repositories are not evaluated")
+	errPropsDoNotMatch        = errors.New("properties do not match")
 )
 
 type handleEntityAndDoBase struct {
@@ -102,9 +103,11 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 		l.Debug().Msg("entity not retrieved")
 	}
 
-	err = b.forwardEntityCheck(ctx, ewp)
+	forward, err := b.forwardEntityCheck(ctx, entMsg, ewp)
 	if err != nil {
-		l.Error().Err(err).Msg("not forwarding entity")
+		l.Error().Err(err).Msg("error checking entity")
+		return nil
+	} else if !forward {
 		return nil
 	}
 
@@ -130,11 +133,61 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 
 func (b *handleEntityAndDoBase) forwardEntityCheck(
 	ctx context.Context,
-	ewp *models.EntityWithProperties) error {
+	entMsg *message.HandleEntityAndDoMessage,
+	ewp *models.EntityWithProperties) (bool, error) {
 	if ewp == nil {
+		return true, nil
+	}
+
+	err := b.matchPropertiesCheck(entMsg, ewp)
+	if errors.Is(err, errPropsDoNotMatch) {
+		zerolog.Ctx(ctx).Debug().Err(err).Msg("properties do not match")
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	err = b.repoPrivateOrArchivedCheck(ctx, ewp)
+	if errors.Is(err, errPrivateRepoNotAllowed) || errors.Is(err, errArchivedRepoNotAllowed) {
+		zerolog.Ctx(ctx).Debug().Err(err).Msg("private or archived repo")
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// matchPropertiesCheck checks if the properties of the entity match the properties in the message.
+// this is different from the hint check, which is a check to see if the entity comes from where we expect
+// it to come from. A concrete example is receiving a "meta" event on a webhook we don't manage, in that case
+// we'd want to match on the webhook ID and only proceed if it matches with the webhook ID minder tracks.
+func (_ *handleEntityAndDoBase) matchPropertiesCheck(
+	entMsg *message.HandleEntityAndDoMessage,
+	ewp *models.EntityWithProperties) error {
+	// nothing to match against, so we're good
+	if entMsg.MatchProps == nil {
 		return nil
 	}
 
+	matchProps, err := properties.NewProperties(entMsg.MatchProps)
+	if err != nil {
+		return err
+	}
+
+	for propName, prop := range matchProps.Iterate() {
+		entProp := ewp.Properties.GetProperty(propName)
+		if !prop.Equal(entProp) {
+			return errPropsDoNotMatch
+		}
+	}
+
+	return nil
+}
+
+func (b *handleEntityAndDoBase) repoPrivateOrArchivedCheck(
+	ctx context.Context,
+	ewp *models.EntityWithProperties) error {
 	if ewp.Entity.Type == v1.Entity_ENTITY_REPOSITORIES &&
 		ewp.Properties.GetProperty(properties.RepoPropertyIsPrivate).GetBool() &&
 		!features.ProjectAllowsPrivateRepos(ctx, b.store, ewp.Entity.ProjectID) {

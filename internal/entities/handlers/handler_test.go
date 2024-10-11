@@ -66,11 +66,15 @@ var (
 			ProjectID:  projectID,
 		},
 	}
+
+	repoPropHookID = int64(456)
+
 	repoPropMap = map[string]any{
 		properties.PropertyName:          repoName,
 		ghprops.RepoPropertyName:         "testrepo",
 		ghprops.RepoPropertyOwner:        "testorg",
 		ghprops.RepoPropertyId:           int64(123),
+		ghprops.RepoPropertyHookId:       repoPropHookID,
 		properties.RepoPropertyIsPrivate: false,
 		properties.RepoPropertyIsFork:    false,
 	}
@@ -329,6 +333,71 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			expectedPublish: true,
 			topic:           events.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: if match_props match, publish",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				matchProps, _ := properties.NewProperties(map[string]any{
+					ghprops.RepoPropertyHookId: repoPropHookID,
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithMatchProps(matchProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				ewp := buildEwp(t, repoEwp, repoPropMap)
+				protoEnt, err := ghprops.RepoV1FromProperties(ewp.Properties)
+				require.NoError(t, err)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+					fixtures.WithSuccessfulEntityWithPropertiesAsProto(protoEnt),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+			),
+			expectedPublish: true,
+			topic:           events.TopicQueueEntityEvaluate,
+			checkWmMsg:      checkRepoMessage,
+		},
+		{
+			name:             "NewRefreshEntityAndEvaluateHandler: if match_props don't match, don't publish",
+			handlerBuilderFn: refreshEntityHandlerBuilder,
+			messageBuilder: func() *message.HandleEntityAndDoMessage {
+				getByProps, _ := properties.NewProperties(map[string]any{
+					properties.PropertyUpstreamID: "123",
+				})
+
+				matchProps, _ := properties.NewProperties(map[string]any{
+					ghprops.RepoPropertyHookId: repoPropHookID + 1,
+				})
+
+				return message.NewEntityRefreshAndDoMessage().
+					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
+					WithMatchProps(matchProps).
+					WithProviderImplementsHint("github")
+			},
+			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+				ewp := buildEwp(t, repoEwp, repoPropMap)
+
+				return fixtures.NewMockPropertiesService(
+					fixtures.WithSuccessfulEntityByUpstreamHint(ewp, githubHint),
+					fixtures.WithSuccessfulRetrieveAllPropertiesForEntity(),
+				)
+			},
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+			),
+			expectedPublish: false,
 		},
 		{
 			name:             "NewRefreshEntityAndEvaluateHandler: private repo publishes if feature enabled",
