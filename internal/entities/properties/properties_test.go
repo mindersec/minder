@@ -855,3 +855,57 @@ func TestProperties_ToLogDict(t *testing.T) {
 		require.Equal(t, expectedValue, actualValue)
 	}
 }
+
+func TestProperties_Len(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		p    *Properties
+		want int
+	}{
+		{
+			name: "nil Properties",
+			p:    nil,
+			want: 0,
+		},
+		{
+			name: "empty Properties",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{})
+				return p
+			}(),
+			want: 0,
+		},
+		{
+			name: "Properties with one item",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{"key1": "value1"})
+				return p
+			}(),
+			want: 1,
+		},
+		{
+			name: "Properties with multiple items",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{
+					"key1": "value1",
+					"key2": 42,
+					"key3": true,
+				})
+				return p
+			}(),
+			want: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.p.Len(); got != tt.want {
+				t.Errorf("Properties.Len() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

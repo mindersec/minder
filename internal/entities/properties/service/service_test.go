@@ -1162,3 +1162,99 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 		})
 	}
 }
+
+func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	t.Run("Test caching", func(t *testing.T) {
+		t.Parallel()
+
+		mockDB := mockdb.NewMockStore(ctrl)
+
+		entityID := uuid.New()
+		entityName := "myorg/bad-go"
+
+		entityRet := db.EntityInstance{
+			ID:   entityID,
+			Name: entityName,
+		}
+		propertyRet := []db.Property{
+			{
+				EntityID: entityID,
+				Key:      "name",
+				Value:    []byte(`{"value": "myorg/bad-go", "version": "v1"}`),
+			},
+			{
+				EntityID: entityID,
+				Key:      "is_private",
+				Value:    []byte(`{"value": false, "version": "v1"}`),
+			},
+		}
+
+		// we verify that the entity is only fetched once even though we call the service twice
+		mockDB.EXPECT().
+			GetEntityByID(ctx, entityID).
+			Return(entityRet, nil).
+			Times(1)
+		mockDB.EXPECT().
+			GetAllPropertiesForEntity(ctx, entityID).
+			Return(propertyRet, nil).
+			Times(1)
+
+		ps := NewPropertiesService(mockDB)
+		cps, err := WithEntityCache(ps, 100)
+		require.NoError(t, err)
+
+		t.Log("First call, no cache")
+		result, err := cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, result.Entity.ID, entityID)
+		require.Equal(t, result.Entity.Name, entityName)
+		require.Equal(t, result.Properties.GetProperty("name").GetString(), "myorg/bad-go")
+		require.Equal(t, result.Properties.GetProperty("is_private").GetBool(), false)
+
+		t.Log("Second call, cache hit")
+		result, err = cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.Equal(t, result.Entity.ID, entityID)
+		require.Equal(t, result.Entity.Name, entityName)
+		require.Equal(t, result.Properties.GetProperty("name").GetString(), "myorg/bad-go")
+		require.Equal(t, result.Properties.GetProperty("is_private").GetBool(), false)
+	})
+
+	t.Run("Errors are propagated", func(t *testing.T) {
+		t.Parallel()
+
+		mockDB := mockdb.NewMockStore(ctrl)
+
+		entityID := uuid.New()
+
+		mockDB.EXPECT().
+			GetEntityByID(ctx, entityID).
+			Return(db.EntityInstance{}, ErrEntityNotFound).
+			Times(1)
+
+		ps := NewPropertiesService(mockDB)
+		cps, err := WithEntityCache(ps, 100)
+		require.NoError(t, err)
+
+		result, err := cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		require.ErrorIs(t, err, ErrEntityNotFound)
+		require.Nil(t, result)
+	})
+
+	t.Run("PropertyService is required", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := WithEntityCache(nil, 100)
+		require.Error(t, err)
+	})
+}
