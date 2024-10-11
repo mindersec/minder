@@ -62,8 +62,9 @@ func (m *providerClassManager) handleRelease(l zerolog.Logger, r *http.Request) 
 	case releaseEvent.Action == "update":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
 			events.TopicQueueRefreshEntityAndEvaluate)
-	// We don't handle deletions this way. Instead, a user
-	// would delete the release entity directly.
+	case releaseEvent.Action == "delete":
+		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
+			events.TopicQueueOriginatingEntityDelete)
 	default:
 		return nil
 	}
