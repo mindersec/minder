@@ -43,9 +43,15 @@ type EntityHint struct {
 
 // HandleEntityAndDoMessage is a message that is sent to the entity handler to refresh an entity and perform an action.
 type HandleEntityAndDoMessage struct {
-	Entity     TypedProps     `json:"entity"`
-	Originator TypedProps     `json:"owner"`
-	Hint       EntityHint     `json:"hint"`
+	Entity     TypedProps `json:"entity"`
+	Originator TypedProps `json:"owner"`
+	// Hint is used to help the entity handler find the entity upstream
+	// using the property service. A typical use case is to use the provider
+	// in the hint and an upstream ID in the Entity.GetByProps attribute
+	Hint EntityHint `json:"hint"`
+	// MatchProps is used to match the properties of the found entity. One
+	// use-case is to include the hook ID in the MatchProps to match against
+	// the entity's hook ID to avoid forwading the message to the wrong entity.
 	MatchProps map[string]any `json:"match_props"`
 }
 
