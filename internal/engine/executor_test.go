@@ -293,6 +293,8 @@ default allow = true`,
 		mockStore,
 		ghProviderService,
 		propssvc,
+		metrics.NewNoopMetrics(),
+		nil, // we won't be publishing events
 	)
 
 	providerStore := providers.NewProviderStore(mockStore)

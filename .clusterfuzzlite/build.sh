@@ -26,7 +26,7 @@ mkdir internal/engine/eval/jq/jq_test
 mv internal/engine/eval/jq/fuzz_test.go internal/engine/eval/jq/jq_test/
 compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/eval/jq/jq_test FuzzJqEval FuzzJqEval
 compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/eval/rego FuzzRegoEval FuzzRegoEval
-compile_native_go_fuzzer github.com/mindersec/minder/internal/controlplane FuzzGitHubEventParsers FuzzGitHubEventParsers
+compile_native_go_fuzzer github.com/mindersec/minder/internal/providers/github/webhook FuzzGitHubEventParsers FuzzGitHubEventParsers
 compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/ingester/diff FuzzDiffParse FuzzDiffParse
 compile_native_go_fuzzer github.com/mindersec/minder/internal/crypto FuzzEncryptDecrypt FuzzEncryptDecrypt
 compile_native_go_fuzzer github.com/mindersec/minder/internal/auth/jwt FuzzParseAndValidate FuzzParseAndValidate

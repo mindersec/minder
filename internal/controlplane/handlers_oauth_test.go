@@ -174,6 +174,8 @@ func Test_NewOAuthConfig(t *testing.T) {
 				nil,
 				nil,
 				propssvc,
+				metrics.NewNoopMetrics(),
+				nil,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -617,7 +619,7 @@ func TestProviderCallback(t *testing.T) {
 
 			mockGhProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 			tc.buildStubs(mockGhProviderService)
-			s, _ := newDefaultServer(t, store, nil, nil, clientFactory)
+			s := newDefaultServer(t, store, nil, nil, clientFactory)
 			s.ghProviders = mockGhProviderService
 			s.cfg.Provider = serverconfig.ProviderConfig{
 				GitHub: &serverconfig.GitHubConfig{
@@ -671,6 +673,8 @@ func TestProviderCallback(t *testing.T) {
 				nil,
 				ghClientService,
 				propssvc,
+				metrics.NewNoopMetrics(),
+				nil,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 

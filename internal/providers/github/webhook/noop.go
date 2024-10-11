@@ -12,18 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package manager contains the GitHubProviderClassManager
-package manager
+package webhook
 
 import (
 	"net/http"
 
-	"github.com/mindersec/minder/internal/providers/github/webhook"
+	"github.com/google/go-github/v63/github"
+
+	"github.com/mindersec/minder/internal/controlplane/metrics"
 )
 
-// GetWebhookHandler implements the ProviderManager interface
-// Note that this is where the whole webhook handler is defined and
-// will live.
-func (mgr *githubProviderManager) GetWebhookHandler() http.Handler {
-	return webhook.HandleWebhookEvent(mgr.mt, mgr.publisher, mgr.whconfig)
+// NoopWebhookHandler is a no-op handler for webhooks
+func NoopWebhookHandler(
+	mt metrics.Metrics,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		wes := &metrics.WebhookEventState{
+			Typ:      "unknown",
+			Accepted: false,
+			Error:    true,
+		}
+		defer func() {
+			mt.AddWebhookEventTypeCount(r.Context(), wes)
+		}()
+
+		wes.Typ = github.WebHookType(r)
+		wes.Accepted = true
+		wes.Error = false
+		w.WriteHeader(http.StatusOK)
+	}
 }

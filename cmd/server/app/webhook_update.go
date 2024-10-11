@@ -30,6 +30,7 @@ import (
 
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
@@ -242,6 +243,8 @@ func wireUpProviderManager(
 		store,
 		nil, // ghProviderService not needed here
 		propSvc,
+		metrics.NewNoopMetrics(),
+		nil, // we won't be publishing any messages
 	)
 
 	return manager.NewProviderManager(ctx, providerStore, githubProviderManager)

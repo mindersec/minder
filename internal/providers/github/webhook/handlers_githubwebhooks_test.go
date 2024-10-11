@@ -13,14 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controlplane
+package webhook
 
 import (
 	"bytes"
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	_ "embed"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -28,7 +30,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -45,6 +47,9 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
@@ -53,9 +58,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	gf "github.com/mindersec/minder/internal/providers/github/mock/fixtures"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
-	pf "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
+	ghService "github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
-	mock_repos "github.com/mindersec/minder/internal/repositories/mock"
 	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -81,9 +85,6 @@ type MockClient struct {
 
 type propSvcMock = *mock_service.MockPropertiesService
 type propSvcMockBuilder = func(*gomock.Controller) propSvcMock
-
-type repoSvcMock = *mock_repos.MockRepositoryService
-type repoSvcMockBuilder = func(*gomock.Controller) repoSvcMock
 
 // RunUnitTestSuite runs the unit test suite.
 func RunUnitTestSuite(t *testing.T) {
@@ -120,19 +121,24 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	t := s.T()
 	t.Parallel()
 
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err, "failed to setup eventer")
+	defer evt.Close()
+
 	whSecretFile, err := os.CreateTemp("", "webhooksecret*")
 	require.NoError(t, err, "failed to create temporary file")
 	_, err = whSecretFile.WriteString("test")
 	require.NoError(t, err, "failed to write to temporary file")
 	defer os.Remove(whSecretFile.Name())
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
-	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
-	defer evt.Close()
+	cfg := &serverconfig.WebhookConfig{}
+	cfg.WebhookSecretFile = whSecretFile.Name()
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
@@ -146,7 +152,8 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 
 	<-evt.Running()
 
-	ts := httptest.NewServer(srv.HandleGitHubWebHook())
+	handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	event := github.PingEvent{}
@@ -175,8 +182,11 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err, "failed to setup eventer")
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -192,7 +202,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 
 	<-evt.Running()
 
-	ts := httptest.NewServer(srv.HandleGitHubWebHook())
+	cfg := &serverconfig.WebhookConfig{}
+	handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	event := github.MetaEvent{
@@ -228,16 +240,11 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	prevCredsFile, err := os.CreateTemp("", "prevcreds*")
-	require.NoError(t, err, "failed to create temporary file")
-	_, err = prevCredsFile.WriteString("also-not-our-secret\ntest")
-	require.NoError(t, err, "failed to write to temporary file")
-	defer os.Remove(prevCredsFile.Name())
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
-	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
-	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err, "failed to setup eventer")
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -245,6 +252,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	// This changes because "meta" event can only trigger a
 	// deletion
+
 	evt.Register(events.TopicQueueGetEntityAndDelete, pq.Pass)
 
 	go func() {
@@ -254,7 +262,18 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	<-evt.Running()
 
-	ts := httptest.NewServer(srv.HandleGitHubWebHook())
+	prevCredsFile, err := os.CreateTemp("", "prevcreds*")
+	require.NoError(t, err, "failed to create temporary file")
+	_, err = prevCredsFile.WriteString("also-not-our-secret\ntest")
+	require.NoError(t, err, "failed to write to temporary file")
+	defer os.Remove(prevCredsFile.Name())
+
+	cfg := &serverconfig.WebhookConfig{}
+	cfg.WebhookSecret = "not-our-secret"
+	cfg.PreviousWebhookSecretFile = prevCredsFile.Name()
+
+	handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	event := github.MetaEvent{
@@ -324,8 +343,11 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err, "failed to setup eventer")
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -340,7 +362,11 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 
 	<-evt.Running()
 
-	ts := httptest.NewServer(srv.HandleGitHubWebHook())
+	cfg := &serverconfig.WebhookConfig{}
+
+	handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
+	ts := httptest.NewServer(handler)
+	defer ts.Close()
 
 	event := github.PackageEvent{
 		Action: github.String("published"),
@@ -376,8 +402,11 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
+	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+		Driver:    "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{},
+	})
+	require.NoError(t, err, "failed to setup eventer")
 	defer evt.Close()
 
 	go func() {
@@ -387,7 +416,8 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 
 	<-evt.Running()
 
-	ts := httptest.NewServer(srv.NoopWebhookHandler())
+	handler := NoopWebhookHandler(metrics.NewNoopMetrics())
+	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
 	event := github.MarketplacePurchaseEvent{}
@@ -406,79 +436,20 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 }
 
-func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
-	t := s.T()
-	t.Parallel()
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
-	defer evt.Close()
-
-	pq := testqueue.NewPassthroughQueue(t)
-	queued := pq.GetQueue()
-
-	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
-
-	go func() {
-		err := evt.Run(context.Background())
-		require.NoError(t, err, "failed to run eventer")
-	}()
-
-	<-evt.Running()
-
-	ts := httptest.NewServer(withMaxSizeMiddleware(srv.HandleGitHubWebHook()))
-
-	event := github.PackageEvent{
-		Action: github.String("published"),
-		Repo: &github.Repository{
-			ID:   github.Int64(12345),
-			Name: github.String("mindersec/minder"),
-		},
-		Org: &github.Organization{
-			Login: github.String("stacklok"),
-		},
-	}
-	packageJson, err := json.Marshal(event)
-	require.NoError(t, err, "failed to marshal package event")
-
-	maliciousBody := strings.NewReader(strings.Repeat("1337", 1000000000))
-	maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
-	_ = packageJson
-
-	req, err := http.NewRequest("POST", ts.URL, maliciousBodyReader)
-	require.NoError(t, err, "failed to create request")
-
-	req.Header.Add("X-GitHub-Event", "meta")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
-	require.NoError(t, err, "failed to make request")
-	// We expect OK since we don't want to leak information about registered repositories
-	require.Equal(t, http.StatusBadRequest, resp.StatusCode, "unexpected status code")
-	assert.Len(t, queued, 0)
-}
-
 func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	visibility := "visibility"
-
 	tests := []struct {
-		name          string
-		event         string
-		payload       any
-		rawPayload    []byte
-		mockStoreFunc df.MockStoreBuilder
-		mockRepoBld   repoSvcMockBuilder
-		mockPropsBld  propSvcMockBuilder
-		ghMocks       []func(hubMock gf.GitHubMock)
-		statusCode    int
-		topic         string
-		queued        func(*testing.T, string, <-chan *message.Message)
+		name         string
+		event        string
+		payload      any
+		rawPayload   []byte
+		mockPropsBld propSvcMockBuilder
+		ghMocks      []func(hubMock gf.GitHubMock)
+		statusCode   int
+		topic        string
+		queued       func(*testing.T, string, <-chan *message.Message)
 	}{
 		{
 			name: "ping",
@@ -501,9 +472,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "ping no hook",
@@ -526,9 +496,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
 		},
 		{
 			name: "package published",
@@ -633,10 +602,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package no package",
@@ -652,9 +620,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
 		},
 
 		// Testing package mandatory fields
@@ -689,10 +656,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory package name",
@@ -725,10 +691,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory package type",
@@ -761,10 +726,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory owner",
@@ -794,19 +758,17 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package garbage",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			rawPayload:    []byte("ceci n'est pas une JSON"),
-			mockStoreFunc: df.NewMockStore(),
-			statusCode:    http.StatusInternalServerError,
+			rawPayload: []byte("ceci n'est pas une JSON"),
+			statusCode: http.StatusInternalServerError,
 		},
 
 		// Testing package mandatory fields
@@ -841,10 +803,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory package name",
@@ -877,10 +838,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory package type",
@@ -913,10 +873,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package mandatory owner",
@@ -946,19 +905,17 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusOK,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusOK,
+			queued:     nil,
 		},
 		{
 			name: "package garbage",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#package
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
-			rawPayload:    []byte("ceci n'est pas une JSON"),
-			mockStoreFunc: df.NewMockStore(),
-			statusCode:    http.StatusInternalServerError,
+			rawPayload: []byte("ceci n'est pas une JSON"),
+			statusCode: http.StatusInternalServerError,
 		},
 		{
 			name: "meta",
@@ -2673,10 +2630,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			mockStoreFunc: df.NewMockStore(),
-			topic:         events.TopicQueueEntityEvaluate,
-			statusCode:    http.StatusInternalServerError,
-			queued:        nil,
+			topic:      events.TopicQueueEntityEvaluate,
+			statusCode: http.StatusInternalServerError,
+			queued:     nil,
 		},
 
 		// garbage
@@ -2710,62 +2666,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err, "failed to setup eventer")
+			defer evt.Close()
+
 			prevCredsFile, err := os.CreateTemp("", "prevcreds*")
 			require.NoError(t, err, "failed to create temporary file")
 			_, err = prevCredsFile.WriteString("also-not-our-secret\ntest")
 			require.NoError(t, err, "failed to write to temporary file")
 			defer os.Remove(prevCredsFile.Name())
 
-			ghMocks := []func(gf.GitHubMock){
-				gf.WithSuccessfulGetPackageByName(&github.Package{
-					Visibility: &visibility,
-				}),
-				gf.WithSuccessfulGetPackageVersionById(&github.PackageVersion{
-					Metadata: &github.PackageMetadata{
-						Container: &github.PackageContainerMetadata{
-							Tags: []string{"tag"},
-						},
-					},
-					CreatedAt: &github.Timestamp{},
-				}),
-				gf.WithSuccessfulGetPullRequest(&github.PullRequest{
-					Head: &github.PullRequestBranch{
-						SHA: github.String("sha"),
-					},
-				}),
-			}
-			ghMocks = append(ghMocks, tt.ghMocks...)
-			ghProvider := gf.NewGitHubMock(ghMocks...)
-
-			providerSetup := pf.NewProviderManagerMock(
-				pf.WithSuccessfulInstantiateFromID(ghProvider(ctrl)),
-			)
-
-			var mockStore *mockdb.MockStore
-			if tt.mockStoreFunc != nil {
-				mockStore = tt.mockStoreFunc(ctrl)
-			} else {
-				mockStore = mockdb.NewMockStore(ctrl)
-			}
-
-			var mockRepoSvc *mock_repos.MockRepositoryService
-			if tt.mockRepoBld != nil {
-				mockRepoSvc = tt.mockRepoBld(ctrl)
-			} else {
-				mockRepoSvc = mock_repos.NewMockRepositoryService(ctrl)
-			}
-
-			var mockPropSvc *mock_service.MockPropertiesService
-			if tt.mockPropsBld != nil {
-				mockPropSvc = tt.mockPropsBld(ctrl)
-			} else {
-				mockPropSvc = mock_service.NewMockPropertiesService(ctrl)
-			}
-
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, mockPropSvc, nil)
-			srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
-			srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
-			srv.providerManager = providerSetup(ctrl)
+			cfg := &serverconfig.WebhookConfig{}
+			cfg.WebhookSecret = "not-our-secret"
+			cfg.PreviousWebhookSecretFile = prevCredsFile.Name()
 			defer evt.Close()
 
 			pq := testqueue.NewPassthroughQueue(t)
@@ -2781,7 +2697,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 
 			<-evt.Running()
 
-			ts := httptest.NewServer(http.HandlerFunc(srv.HandleGitHubWebHook()))
+			handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
+			ts := httptest.NewServer(handler)
 			defer ts.Close()
 
 			var packageJson []byte
@@ -3345,9 +3262,15 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			mockRepoSvc := mock_repos.NewMockRepositoryService(ctrl)
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
-			srv.cfg.WebhookConfig.WebhookSecret = "test"
+			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+				Driver:    "go-channel",
+				GoChannel: serverconfig.GoChannelEventConfig{},
+			})
+			require.NoError(t, err, "failed to setup eventer")
+			defer evt.Close()
+
+			cfg := &serverconfig.WebhookConfig{}
+			cfg.WebhookSecret = "test"
 
 			pq := testqueue.NewPassthroughQueue(t)
 			defer pq.Close()
@@ -3362,7 +3285,32 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 			<-evt.Running()
 
-			ts := httptest.NewServer(http.HandlerFunc(srv.HandleGitHubAppWebhook()))
+			var c *serverconfig.Config
+			tokenKeyPath := generateTokenKey(t)
+			c = &serverconfig.Config{
+				Auth: serverconfig.AuthConfig{
+					TokenKey: tokenKeyPath,
+				},
+			}
+
+			eng, err := crypto.NewEngineFromConfig(c)
+			require.NoError(t, err)
+			ghClientService := ghService.NewGithubProviderService(
+				mockStore,
+				eng,
+				metrics.NewNoopMetrics(),
+				// These nil dependencies do not matter for the current tests
+				&serverconfig.ProviderConfig{
+					GitHubApp: &serverconfig.GitHubAppConfig{
+						WebhookSecret: "test",
+					},
+				},
+				nil,
+				nil,
+			)
+
+			handler := HandleGitHubAppWebhook(mockStore, ghClientService, metrics.NewNoopMetrics(), evt)
+			ts := httptest.NewServer(http.HandlerFunc(handler))
 			defer ts.Close()
 
 			var packageJson []byte
@@ -3396,6 +3344,27 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			// TODO: assert payload is Repository protobuf
 		})
 	}
+}
+
+// TODO: deduplicate this function with the one in the other test file
+func generateTokenKey(t *testing.T) string {
+	t.Helper()
+
+	tmpdir := t.TempDir()
+
+	tokenKeyPath := filepath.Join(tmpdir, "/token_key")
+
+	// generate 256-bit key
+	key := make([]byte, 32)
+	_, err := io.ReadFull(rand.Reader, key)
+	require.NoError(t, err)
+	encodedKey := base64.StdEncoding.EncodeToString(key)
+
+	// Write token key to file
+	err = os.WriteFile(tokenKeyPath, []byte(encodedKey), 0600)
+	require.NoError(t, err, "failed to write token key to file")
+
+	return tokenKeyPath
 }
 
 func TestAll(t *testing.T) {

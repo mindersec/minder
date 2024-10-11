@@ -30,9 +30,11 @@ import (
 	"golang.org/x/oauth2/github"
 
 	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -55,6 +57,8 @@ func NewGitHubProviderClassManager(
 	store db.Store,
 	ghService service.GitHubProviderService,
 	propSvc propssvc.PropertiesService,
+	mt metrics.Metrics,
+	publisher events.Publisher,
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
@@ -66,6 +70,8 @@ func NewGitHubProviderClassManager(
 		store:               store,
 		propsSvc:            propSvc,
 		ghService:           ghService,
+		mt:                  mt,
+		publisher:           publisher,
 	}
 }
 
@@ -79,6 +85,8 @@ type githubProviderManager struct {
 	propsSvc            propssvc.PropertiesService
 	store               db.Store
 	ghService           service.GitHubProviderService
+	mt                  metrics.Metrics
+	publisher           events.Publisher
 }
 
 var (
