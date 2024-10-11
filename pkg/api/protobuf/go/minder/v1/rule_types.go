@@ -34,6 +34,9 @@ const (
 	// DiffTypeDep is the diff type for a dependency
 	DiffTypeDep = "dep"
 
+	// DiffTypeNewDeps returns scalibr dependency diffs
+	DiffTypeNewDeps = "new-dep"
+
 	// DiffTypeFull is the diff type for including all files from the PR diff
 	DiffTypeFull = "full"
 )
@@ -62,6 +65,19 @@ func (r *RuleType) WithDefaultDisplayName() *RuleType {
 
 	if r.DisplayName == "" {
 		r.DisplayName = r.Name
+	}
+
+	return r
+}
+
+// WithDefaultShortFailureMessage sets the evaluation failure message if it is not set
+func (r *RuleType) WithDefaultShortFailureMessage() *RuleType {
+	if r == nil {
+		return nil
+	}
+
+	if r.ShortFailureMessage == "" {
+		r.ShortFailureMessage = fmt.Sprintf("Rule %s evaluation failed", r.Name)
 	}
 
 	return r

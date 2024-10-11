@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-url: https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3
-commitSHA: bd9958a63c9b95ccc2bc0cf1eef65a87529aed16
-number: 3
-repo_owner: jakubtestorg
-repo_name:  bad-npm
+github/pull_url: https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3
+github/pull_sha: bd9958a63c9b95ccc2bc0cf1eef65a87529aed16
+github/pull_number: 3
+github/repo_owner: jakubtestorg
+github/repo_name: bad-npm
+github/pull_author_id: 144222806
+github/pull_action: opened
 patches:
   - name: package-lock.json
     patch_Url: https://github.com/jakubtestorg/bad-npm/raw/123/package-lock.json
-authorID: 144222806

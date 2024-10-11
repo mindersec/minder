@@ -634,3 +634,155 @@ func TestFilterRulesForType(t *testing.T) {
 		})
 	}
 }
+
+func TestDeriveProfileNameFromDisplayName(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name                 string
+		profile              *minderv1.Profile
+		existingProfileNames []string
+		expected             string
+	}{
+		{
+			name: "A short DisplayName with whitespace",
+			profile: &minderv1.Profile{
+				Name:        "profile_name",
+				DisplayName: "",
+			},
+			existingProfileNames: []string{},
+			expected:             "profile_name",
+		},
+		{
+			name: "A short DisplayName with whitespace",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My custom profile",
+			},
+			existingProfileNames: []string{},
+			expected:             "my_custom_profile",
+		},
+		{
+			name: "A very long DisplayName with whitespaces and more than 63 characters",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "A very long profile name that is longer than sixty three characters and will be trimmed",
+			},
+			existingProfileNames: []string{},
+			expected:             "a_very_long_profile_name_that_is_longer_than_sixty_three_charac",
+		},
+		{
+			name: "A DisplayName with special characters",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "Profile with !#$() characters",
+			},
+			existingProfileNames: []string{},
+			expected:             "profile_with_characters",
+		},
+		{
+			name: "A DisplayName with alphanumeric values",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My 1st Profile",
+			},
+			existingProfileNames: []string{},
+			expected:             "my_1st_profile",
+		},
+		{
+			name: "A DisplayName with non-alphanumeric characters and leadning & trailing whitespaces",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "  New, Profile! 123. This is a Test Display Name with Special Characters!  ",
+			},
+			existingProfileNames: []string{},
+			expected:             "new_profile_123_this_is_a_test_display_name_with_special_charac",
+		},
+		{
+			name: "A DisplayName with Leading and trailing white spaces",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "   Leading and trailing spaces   ",
+			},
+			existingProfileNames: []string{},
+			expected:             "leading_and_trailing_spaces",
+		},
+		{
+			name: "A DisplayName with mix of upper and low case",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "UPPER CASE to lower case",
+			},
+			existingProfileNames: []string{},
+			expected:             "upper_case_to_lower_case",
+		},
+		{
+			name: "Derived profile name does not exist in the current project",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "custom_profile"},
+			expected:             "my_profile",
+		},
+		{
+			name: "Derived profile name that does exist in the current project",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "my_profile"},
+			expected:             "my_profile-1",
+		},
+		{
+			name: "Derived profile name  which does exist in the current project, when adding a counter to the name",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "My profile",
+			},
+			existingProfileNames: []string{"other_profile", "my_profile", "my_profile-1"},
+			expected:             "my_profile-2",
+		},
+		{
+			name: "Derived profile name for the edge case: name exceeds 63 characters with single digit counter",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
+			},
+			existingProfileNames: []string{"this_is_a_very_long_display_name_that_will_exceed_the_limit_when"},
+			expected:             "this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
+		},
+		{
+			name: "Derived profile name for the edge case: name exceeds 63 characters with double digit counter",
+			profile: &minderv1.Profile{
+				Name:        "",
+				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
+			},
+			existingProfileNames: []string{
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_when",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-2",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-3",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-4",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-5",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-6",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-7",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-8",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-9",
+			},
+			expected: "this_is_a_very_long_display_name_that_will_exceed_the_limit_-10",
+		},
+	}
+
+	for _, tt := range tests {
+
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			result := profiles.DeriveProfileNameFromDisplayName(tt.profile, tt.existingProfileNames)
+			if result != tt.expected {
+				t.Errorf("DeriveProfileNameFromDisplayName: for profile %+v, expected %s, but got %s", tt.profile, tt.expected, result)
+			}
+		})
+	}
+}

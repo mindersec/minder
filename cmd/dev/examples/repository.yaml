@@ -14,11 +14,19 @@
 # limitations under the License.
 
 ---
-owner: stacklok
-name: Demo-Repo-Go
-repoId: 605597568
-HookUrl:
-clone_url: "https://github.com/stacklok/Demo-Repo-Go.git"
+github/repo_name: demo-repo-go
+github/repo_owner: stacklok
+github/repo_id: 605597568
+github/hook_url:
+github/hook_id: 1234
+github/deploy_url:
+github/clone_url: "https://github.com/stacklok/demo-repo-go.git"
+github/hook_type:
+github/hook_name:
+github/hook_uuid:
+github/default_branch: main
+github/license:
+is_private: false
+is_fork: false
 CreatedAt: 2021-03-19T16:00:00Z
 UpdatedAt: 2021-03-19T16:00:00Z
-Registered: true

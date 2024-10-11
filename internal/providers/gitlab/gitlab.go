@@ -19,13 +19,13 @@ package gitlab
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"golang.org/x/oauth2"
 
 	config "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -37,6 +37,7 @@ const Class = "gitlab"
 var Implements = []db.ProviderType{
 	db.ProviderTypeGit,
 	db.ProviderTypeRest,
+	db.ProviderTypeRepoLister,
 }
 
 // AuthorizationFlows is the list of authorization flows that the DockerHub provider supports
@@ -48,28 +49,45 @@ var AuthorizationFlows = []db.AuthorizationFlow{
 // Ensure that the GitLab provider implements the right interfaces
 var _ provifv1.Git = (*gitlabClient)(nil)
 var _ provifv1.REST = (*gitlabClient)(nil)
-
-// var _ provifv1.RepoLister = (*gitlabClient)(nil)
+var _ provifv1.RepoLister = (*gitlabClient)(nil)
 
 type gitlabClient struct {
-	cred      provifv1.GitLabCredential
-	cli       *http.Client
-	glcfg     *minderv1.GitLabProviderConfig
-	gitConfig config.GitConfig
+	cred       provifv1.GitLabCredential
+	cli        *http.Client
+	glcfg      *minderv1.GitLabProviderConfig
+	webhookURL string
+	gitConfig  config.GitConfig
+
+	// secret for the webhook. This is stored in the
+	// structure to allow efficient fetching.
+	currentWebhookSecret string
 }
 
 // New creates a new GitLab provider
-func New(cred provifv1.GitLabCredential, cfg *minderv1.GitLabProviderConfig) (*gitlabClient, error) {
+// Note that the webhook URL should already contain the provider class in the path
+func New(
+	cred provifv1.GitLabCredential,
+	cfg *minderv1.GitLabProviderConfig,
+	webhookURL string,
+	currentWebhookSecret string,
+) (*gitlabClient, error) {
+	// TODO: We need a context here.
 	cli := oauth2.NewClient(context.Background(), cred.GetAsOAuth2TokenSource())
 
 	if cfg.Endpoint == "" {
 		cfg.Endpoint = "https://gitlab.com/api/v4/"
 	}
 
+	if webhookURL == "" {
+		return nil, errors.New("webhook URL is required")
+	}
+
 	return &gitlabClient{
-		cred:  cred,
-		cli:   cli,
-		glcfg: cfg,
+		cred:                 cred,
+		cli:                  cli,
+		glcfg:                cfg,
+		webhookURL:           webhookURL,
+		currentWebhookSecret: currentWebhookSecret,
 		// TODO: Add git config
 	}, nil
 }
@@ -86,6 +104,12 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GitLabProviderConfig, erro
 	if err := json.Unmarshal(rawCfg, &cfg); err != nil {
 		return nil, err
 	}
+
+	if cfg.GitLab == nil {
+		// Return a default but working config
+		return &minderv1.GitLabProviderConfig{}, nil
+	}
+
 	return cfg.GitLab, nil
 }
 
@@ -116,23 +140,9 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 	return c.cred
 }
 
-// FetchAllProperties implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchAllProperties(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
-) (*properties.Properties, error) {
-	return nil, nil
-}
-
-// FetchProperty implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) FetchProperty(
-	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
-	return nil, nil
-}
-
-// GetEntityName implements the provider interface
-// TODO: Implement this
-func (_ *gitlabClient) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
-	return "", nil
+// SupportsEntity implements the Provider interface
+func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
+	return entType == minderv1.Entity_ENTITY_REPOSITORIES ||
+		entType == minderv1.Entity_ENTITY_PULL_REQUESTS ||
+		entType == minderv1.Entity_ENTITY_RELEASE
 }

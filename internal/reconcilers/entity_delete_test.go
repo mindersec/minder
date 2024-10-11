@@ -27,10 +27,12 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/github/mock"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
@@ -66,13 +68,36 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
 			},
+		},
+		{
+			name:          "ignore entity not found - expect no error",
+			mockStoreFunc: nil,
+			mockReposFunc: rf.NewRepoService(
+				rf.WithFailedDeleteByID(
+					service.ErrEntityNotFound,
+				),
+			),
+			messageFunc: func(t *testing.T) *message.Message {
+				t.Helper()
+				m := message.NewMessage(uuid.New().String(), nil)
+				eiw := messages.NewMinderEvent().
+					WithProviderID(providerID).
+					WithProjectID(projectID).
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
+				err := eiw.ToMessage(m)
+				require.NoError(t, err, "invalid message")
+				return m
+			},
+			err: false,
 		},
 		{
 			name:          "db failure",
@@ -88,9 +113,9 @@ func TestHandleEntityDelete(t *testing.T) {
 				eiw := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithEntityID(repositoryID).
-					WithAttribute("repoID", repositoryID.String())
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithEntityID(repositoryID)
+
 				err := eiw.ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -126,6 +151,8 @@ func TestHandleEntityDelete(t *testing.T) {
 			// then
 			if tt.err {
 				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -139,7 +166,7 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		mockStore = tt.mockStoreFunc(ctrl)
 	}
 
-	repoService := mockghrepo.NewMockRepositoryService(ctrl)
+	repoService := mockrepo.NewMockRepositoryService(ctrl)
 	if tt.mockReposFunc != nil {
 		repoService = tt.mockReposFunc(ctrl)
 	}

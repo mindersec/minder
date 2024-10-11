@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"context"
 	"reflect"
 	"sort"
 	"testing"
@@ -49,9 +50,9 @@ func TestFindMixedScripts(t *testing.T) {
 			line:        "Hello Бorld.",
 			expected: []*Violation{
 				{
-					mixedScript: &MixedScriptInfo{
-						text:         "Бorld.",
-						scriptsFound: []string{"Cyrillic", "Latin"},
+					MixedScript: &MixedScriptInfo{
+						Text:         "Бorld.",
+						ScriptsFound: []string{"Cyrillic", "Latin"},
 					},
 				},
 			},
@@ -61,15 +62,15 @@ func TestFindMixedScripts(t *testing.T) {
 			line:        "AБ AБ.",
 			expected: []*Violation{
 				{
-					mixedScript: &MixedScriptInfo{
-						text:         "AБ",
-						scriptsFound: []string{"Cyrillic", "Latin"},
+					MixedScript: &MixedScriptInfo{
+						Text:         "AБ",
+						ScriptsFound: []string{"Cyrillic", "Latin"},
 					},
 				},
 				{
-					mixedScript: &MixedScriptInfo{
-						text:         "AБ.",
-						scriptsFound: []string{"Cyrillic", "Latin"},
+					MixedScript: &MixedScriptInfo{
+						Text:         "AБ.",
+						ScriptsFound: []string{"Cyrillic", "Latin"},
 					},
 				},
 			},
@@ -83,7 +84,7 @@ func TestFindMixedScripts(t *testing.T) {
 
 			got := mse.FindMixedScripts(tt.line)
 			for i := range got {
-				sort.Strings(got[i].mixedScript.scriptsFound)
+				sort.Strings(got[i].MixedScript.ScriptsFound)
 			}
 
 			if !reflect.DeepEqual(got, tt.expected) {
@@ -96,7 +97,7 @@ func TestFindMixedScripts(t *testing.T) {
 func TestLoadScriptData(t *testing.T) {
 	t.Parallel()
 
-	gotMap, err := loadScriptData("resources/scripts.txt")
+	gotMap, err := loadScriptData(context.Background(), "resources/scripts.txt")
 	if err != nil {
 		t.Fatalf("loadScriptData returned an error: %v", err)
 	}

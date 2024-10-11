@@ -61,6 +61,8 @@ Minder analyzed the dependencies introduced in this pull request and detected th
 
 {{ if .Archived }}
 ⚠️ __Archived Package:__ This package is marked as deprecated. Proceed with caution!
+
+Archived packages are no longer updated or maintained. This can lead to security vulnerabilities and compatibility issues.
 {{ end }}
 {{ if .Deprecated }}
 ⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
@@ -92,7 +94,7 @@ Minder analyzed the dependencies introduced in this pull request and detected th
   | Number of git tags or releases | {{ .Provenance.Historical.NumTags }}
   | Versions matched to tags or releases | {{ .Provenance.Historical.MatchedVersions }} |
 
-  {{- end -}}
+  {{- end }}
   {{ if .Provenance.Sigstore }}
 
   __This package has been digitally signed using sigtore.__
@@ -103,8 +105,8 @@ Minder analyzed the dependencies introduced in this pull request and detected th
   | Cerificate Issuer | {{ .Provenance.Sigstore.Issuer }} |
   | GitHub action workflow | {{ .Provenance.Sigstore.Workflow }} |
   | Rekor (public ledger) entry | {{ .Provenance.Sigstore.RekorURI }} |
-  {{- end -}}
-  </details>
+  {{- end }}
+</details>
 {{- end -}}
 {{ if .Alternatives }}
 <details>
@@ -139,7 +141,7 @@ const (
 	// TRUSTY_LOW_PROVENANCE Low trust in proof of origin
 	TRUSTY_LOW_PROVENANCE
 
-	// TRUSTY_DEPRECATED means a package was marked upstream as deprecated
+	// TRUSTY_DEPRECATED means a package was marked upstream as deprecated or archived
 	TRUSTY_DEPRECATED
 )
 
@@ -288,15 +290,21 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			if alternative.trustyReply.Summary.Score != nil {
 				score = *alternative.trustyReply.Summary.Score
 			}
+
+			packageUIURL, err := url.JoinPath(
+				constants.TrustyHttpURL,
+				"report",
+				strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
+				url.PathEscape(alternative.Dependency.Name))
+			if err != nil {
+				// This is unlikely to happen, but if it does, we skip the package
+				continue
+			}
 			packageData := templatePackageData{
 				Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
 				PackageName: alternative.Dependency.Name,
-				TrustyURL: fmt.Sprintf(
-					"%s%s/%s", constants.TrustyHttpURL,
-					strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-					url.PathEscape(alternative.trustyReply.PackageName),
-				),
-				Score: score,
+				TrustyURL:   packageUIURL,
+				Score:       score,
 			}
 
 			// If the package is malicious we list it separately

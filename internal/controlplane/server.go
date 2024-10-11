@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/url"
 	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -28,6 +30,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // Auto-instrumented version of lib/pq
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -56,6 +59,7 @@ import (
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/history"
 	"github.com/stacklok/minder/internal/invites"
@@ -67,7 +71,7 @@ import (
 	"github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/providers/manager"
 	"github.com/stacklok/minder/internal/providers/session"
-	"github.com/stacklok/minder/internal/repositories/github"
+	reposvc "github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
@@ -99,9 +103,10 @@ type Server struct {
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
+	props               propSvc.PropertiesService
 	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
-	repos               github.RepositoryService
+	repos               reposvc.RepositoryService
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
@@ -121,6 +126,7 @@ type Server struct {
 	pb.UnimplementedRepositoryServiceServer
 	pb.UnimplementedProjectsServiceServer
 	pb.UnimplementedProfileServiceServer
+	pb.UnimplementedRuleTypeServiceServer
 	pb.UnimplementedArtifactServiceServer
 	pb.UnimplementedPermissionsServiceServer
 	pb.UnimplementedProvidersServiceServer
@@ -139,7 +145,8 @@ func NewServer(
 	authzClient authz.Client,
 	idClient auth.Resolver,
 	inviteService invites.InviteService,
-	repoService github.RepositoryService,
+	repoService reposvc.RepositoryService,
+	propertyService propSvc.PropertiesService,
 	roleService roles.RoleService,
 	profileService profiles.ProfileService,
 	historyService history.EvaluationHistoryService,
@@ -171,6 +178,7 @@ func NewServer(
 		sessionService:      sessionService,
 		invites:             inviteService,
 		repos:               repoService,
+		props:               propertyService,
 		roles:               roleService,
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
@@ -347,8 +355,25 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 	// This already has _some_ middleware due to the GRPC handling
 	mux.Handle("/", withMaxSizeMiddleware(s.withCORSMiddleware(gwmux)))
 
+	// Register the webhook handlers
+	// Note: The GitHub webhook handler is not registered here.
+	for classpath, handler := range s.providerManager.IterateWebhookHandlers() {
+		classpath = url.PathEscape(classpath)
+		if !strings.HasSuffix(classpath, "/") {
+			classpath += "/"
+		}
+
+		path, err := url.JoinPath("/api/v1/webhook/", classpath)
+		if err != nil {
+			return fmt.Errorf("failed to register webhook handler for %s: %w", classpath, err)
+		}
+
+		zerolog.Ctx(ctx).Debug().Str("class-path", path).Msg("registering provider class webhook handler")
+		mux.Handle(path, otelmw(withMiddleware(handler)))
+	}
+
 	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
+	mux.Handle("/api/v1/webhook/github/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
 	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
 	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
 	mux.Handle("/static/", fs)

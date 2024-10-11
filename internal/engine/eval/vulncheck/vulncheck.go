@@ -22,9 +22,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
+	"github.com/stacklok/minder/internal/flags"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
@@ -36,40 +42,78 @@ const (
 
 // Evaluator is the vulncheck evaluator
 type Evaluator struct {
-	cli provifv1.GitHub
+	cli          provifv1.GitHub
+	featureFlags openfeature.IClient
+}
+
+var _ eoptions.SupportsFlags = (*Evaluator)(nil)
+
+// SetFlagsClient sets the `openfeature` client in the underlying
+// `Evaluator` struct.
+func (e *Evaluator) SetFlagsClient(client openfeature.IClient) error {
+	e.featureFlags = client
+	return nil
 }
 
 // NewVulncheckEvaluator creates a new vulncheck evaluator
-func NewVulncheckEvaluator(ghcli provifv1.GitHub) (*Evaluator, error) {
+func NewVulncheckEvaluator(
+	ghcli provifv1.GitHub,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	if ghcli == nil {
 		return nil, fmt.Errorf("provider builder is nil")
 	}
 
-	return &Evaluator{
+	evaluator := &Evaluator{
 		cli: ghcli,
-	}, nil
+	}
+
+	for _, opt := range opts {
+		if err := opt(evaluator); err != nil {
+			return nil, err
+		}
+	}
+
+	return evaluator, nil
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (e *Evaluator) Eval(
+	ctx context.Context,
+	pol map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
 		return err
 	}
 
 	if len(vulnerablePackages) > 0 {
-		return evalerrors.NewErrEvaluationFailed("vulnerable packages: %s", strings.Join(vulnerablePackages, ","))
+		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.VulnCheckErrorTemplate) {
+			return evalerrors.NewDetailedErrEvaluationFailed(
+				templates.VulncheckTemplate,
+				map[string]any{"packages": vulnerablePackages},
+				"vulnerable packages: %s",
+				strings.Join(vulnerablePackages, ","),
+			)
+		}
+
+		return evalerrors.NewErrEvaluationFailed(
+			"vulnerable packages: %s",
+			strings.Join(vulnerablePackages, ","),
+		)
 	}
 
 	return nil
 }
 
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
+// TODO: it would be nice if we could express this in rego over
+// `input.ingested.deps[_].dep`, rather than building this in to core.
 func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
 	var vulnerablePackages []string
 
-	// TODO(jhrozek): Fix this!
-	//nolint:govet
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")
@@ -179,7 +223,10 @@ func (e *Evaluator) checkVulnerabilities(
 ) (bool, error) {
 	ecoConfig := cfg.getEcosystemConfig(dep.Dep.Ecosystem)
 	if ecoConfig == nil {
-		fmt.Printf("Skipping dependency %s because ecosystem %s is not configured\n", dep.Dep.Name, dep.Dep.Ecosystem)
+		zerolog.Ctx(ctx).Info().
+			Str("ecosystem", string(dep.Dep.Ecosystem)).
+			Str("dependency", dep.Dep.Name).
+			Msg("Skipping dependency because ecosystem is not configured")
 		return false, nil
 	}
 

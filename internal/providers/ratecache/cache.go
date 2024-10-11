@@ -17,12 +17,10 @@ package ratecache
 
 import (
 	"context"
-	"sync"
 	"time"
 
-	xsyncv3 "github.com/puzpuzpuz/xsync/v3"
-
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/util/cache"
 	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -43,98 +41,34 @@ type RestClientCache interface {
 }
 
 type restClientCache struct {
-	cache          *xsyncv3.MapOf[string, cacheEntry]
-	evictionTime   time.Duration
-	ctx            context.Context
-	evictionTicker *time.Ticker
-	closeChan      chan struct{}
-	closeOnce      sync.Once
-}
-
-type cacheEntry struct {
-	value      provinfv1.REST
-	expiration time.Time
+	*cache.ExpiringCache[provinfv1.REST]
 }
 
 var _ RestClientCache = (*restClientCache)(nil)
 
 // NewRestClientCache creates a new REST client cache
 func NewRestClientCache(ctx context.Context) RestClientCache {
-	// We check for expired entries every half of the eviction time
-	evictionDuration := defaultCacheExpiration / 2
 	c := &restClientCache{
-		cache:          xsyncv3.NewMapOf[string, cacheEntry](),
-		evictionTime:   defaultCacheExpiration,
-		ctx:            ctx,
-		evictionTicker: time.NewTicker(evictionDuration),
-		closeChan:      make(chan struct{}),
+		ExpiringCache: cache.NewExpiringCache[provinfv1.REST](ctx, &cache.ExpiringCacheConfig{
+			EvictionTime: defaultCacheExpiration,
+		}),
 	}
 
-	go c.evictExpiredEntriesRoutine(ctx)
 	return c
 }
 
 func (r *restClientCache) Get(owner, token string, provider db.ProviderType) (provinfv1.REST, bool) {
 	key := r.getKey(owner, token, provider)
-	entry, ok := r.cache.Load(key)
-	if !ok || time.Now().After(entry.expiration) {
-		// Entry doesn't exist or has expired
-		return nil, false
-	}
-	return entry.value, true
+	return r.ExpiringCache.Get(key)
 }
 
 func (r *restClientCache) Set(owner, token string, provider db.ProviderType, rest provinfv1.REST) {
-	select {
-	case <-r.ctx.Done():
-		return
-	case <-r.closeChan:
-		return
-	default:
-	}
-
 	key := r.getKey(owner, token, provider)
-	r.cache.Store(key, cacheEntry{
-		value:      rest,
-		expiration: time.Now().Add(r.evictionTime), // Set expiration time
-	})
-}
-
-func (r *restClientCache) Close() {
-	r.closeOnce.Do(func() {
-		defer r.evictionTicker.Stop()
-		close(r.closeChan)
-	})
+	r.ExpiringCache.Set(key, rest)
 }
 
 func (_ *restClientCache) getKey(owner, token string, provider db.ProviderType) string {
 	return owner + token + string(provider)
-}
-
-func (r *restClientCache) evictExpiredEntries() {
-	now := time.Now()
-	r.cache.Range(func(key string, entry cacheEntry) bool {
-		if now.After(entry.expiration) {
-			r.cache.Delete(key)
-		}
-		return true
-	})
-}
-
-func (r *restClientCache) evictExpiredEntriesRoutine(ctx context.Context) {
-	defer r.Close()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		// If ctx is not done but the ticker has expired, this would allow the goroutine to stop
-		// Stopping the ticker does not close the C channel, so we need to check for the closeChan
-		case <-r.closeChan:
-			return
-		case <-r.evictionTicker.C:
-			r.evictExpiredEntries()
-		}
-	}
 }
 
 // NoopRestClientCache is a no-op implementation of the interface used for testing

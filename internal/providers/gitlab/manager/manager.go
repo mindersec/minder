@@ -21,30 +21,82 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
 	"slices"
+	"time"
+
+	"github.com/rs/zerolog"
+	"github.com/sqlc-dev/pqtype"
+	"golang.org/x/oauth2"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/credentials"
 	"github.com/stacklok/minder/internal/providers/gitlab"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
+// tokenExpirationThreshold is the time before the token expires that we should
+// consider it expired and refresh it.
+var tokenExpirationThreshold = -10 * time.Minute
+
 type providerClassManager struct {
 	store    db.Store
 	crypteng crypto.Engine
 	// gitlab provider config
-	glpcfg *server.GitLabConfig
+	glpcfg        *server.GitLabConfig
+	webhookURL    string
+	parentContext context.Context
+	pub           events.Publisher
+
+	// secrets for the webhook. These are stored in the
+	// structure to allow efficient fetching. Rotation
+	// requires a process restart.
+	currentWebhookSecret   string
+	previousWebhookSecrets []string
 }
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
-func NewGitLabProviderClassManager(crypteng crypto.Engine, store db.Store, cfg *server.GitLabConfig) *providerClassManager {
-	return &providerClassManager{
-		store:    store,
-		crypteng: crypteng,
-		glpcfg:   cfg,
+func NewGitLabProviderClassManager(
+	ctx context.Context, crypteng crypto.Engine, store db.Store, pub events.Publisher,
+	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
+) (*providerClassManager, error) {
+	webhookURLBase := wgCfg.ExternalWebhookURL
+	if webhookURLBase == "" {
+		return nil, errors.New("webhook URL is required")
 	}
+
+	if cfg == nil {
+		return nil, errors.New("gitlab config is required")
+	}
+
+	webhookURL, err := url.JoinPath(webhookURLBase, url.PathEscape(string(db.ProviderClassGitlab)))
+	if err != nil {
+		return nil, fmt.Errorf("error joining webhook URL: %w", err)
+	}
+
+	whSecret, err := cfg.GetWebhookSecret()
+	if err != nil {
+		return nil, fmt.Errorf("error getting webhook secret: %w", err)
+	}
+
+	previousSecrets, err := cfg.GetPreviousWebhookSecrets()
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("previous secrets not loaded")
+	}
+
+	return &providerClassManager{
+		store:                  store,
+		crypteng:               crypteng,
+		pub:                    pub,
+		glpcfg:                 cfg,
+		webhookURL:             webhookURL,
+		parentContext:          ctx,
+		currentWebhookSecret:   whSecret,
+		previousWebhookSecrets: previousSecrets,
+	}, nil
 }
 
 // GetSupportedClasses implements the ProviderClassManager interface
@@ -66,7 +118,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 
 	creds, err := g.getProviderCredentials(ctx, config)
 	if err != nil {
-		return nil, fmt.Errorf("unable to fetch credentials")
+		return nil, fmt.Errorf("unable to fetch credentials: %w", err)
 	}
 
 	cfg, err := gitlab.ParseV1Config(config.Definition)
@@ -74,10 +126,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 		return nil, fmt.Errorf("error parsing gitlab config: %w", err)
 	}
 
-	cli, err := gitlab.New(
-		creds,
-		cfg,
-	)
+	cli, err := gitlab.New(creds, cfg, g.webhookURL, g.currentWebhookSecret)
 	if err != nil {
 		return nil, fmt.Errorf("error creating gitlab client: %w", err)
 	}
@@ -100,21 +149,36 @@ func (m *providerClassManager) getProviderCredentials(
 		return nil, fmt.Errorf("error getting credential: %w", err)
 	}
 
-	// TODO: get rid of this once we migrate all secrets to use the new structure
-	var encryptedData crypto.EncryptedData
-	if encToken.EncryptedAccessToken.Valid {
-		encryptedData, err = crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
-		if err != nil {
-			return nil, err
-		}
-	} else if encToken.EncryptedToken.Valid {
-		encryptedData = crypto.NewBackwardsCompatibleEncryptedData(encToken.EncryptedToken.String)
-	} else {
+	if !encToken.EncryptedAccessToken.Valid {
 		return nil, fmt.Errorf("no secret found for provider %s", encToken.Provider)
+	}
+
+	encryptedData, err := crypto.DeserializeEncryptedData(encToken.EncryptedAccessToken.RawMessage)
+	if err != nil {
+		return nil, err
 	}
 	decryptedToken, err := m.crypteng.DecryptOAuthToken(encryptedData)
 	if err != nil {
 		return nil, fmt.Errorf("error decrypting access token: %w", err)
+	}
+
+	if tokenNeedsRefresh(decryptedToken) {
+		newtoken, err := m.refreshToken(ctx, decryptedToken.RefreshToken)
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing token: %w", err)
+		}
+
+		if err := m.persistToken(ctx, prov, newtoken); err != nil {
+			return nil, fmt.Errorf("error persisting refreshed token: %w", err)
+		}
+
+		zerolog.Ctx(ctx).Debug().
+			Str("provider", prov.Name).
+			Str("provider_class", string(prov.Class)).
+			Str("project_id", prov.ProjectID.String()).
+			Msg("refreshed token")
+
+		decryptedToken = *newtoken
 	}
 
 	return credentials.NewGitLabTokenCredential(decryptedToken.AccessToken), nil
@@ -128,4 +192,70 @@ func (m *providerClassManager) MarshallConfig(
 	}
 
 	return gitlab.MarshalV1Config(config)
+}
+
+func (m *providerClassManager) refreshToken(ctx context.Context, refreshToken string) (*oauth2.Token, error) {
+	oauthcfg, err := m.NewOAuthConfig(db.ProviderClassGitlab, false)
+	if err != nil {
+		return nil, fmt.Errorf("error creating oauth config: %w", err)
+	}
+
+	newtoken, err := oauthcfg.TokenSource(ctx, &oauth2.Token{
+		RefreshToken: refreshToken,
+	}).Token()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing token: %w", err)
+	}
+
+	return newtoken, nil
+}
+
+func (m *providerClassManager) persistToken(
+	ctx context.Context, prov *db.Provider, token *oauth2.Token,
+) error {
+	encryptedToken, err := m.crypteng.EncryptOAuthToken(token)
+	if err != nil {
+		return fmt.Errorf("error encrypting token: %w", err)
+	}
+
+	serialized, err := encryptedToken.Serialize()
+	if err != nil {
+		return fmt.Errorf("error serializing token: %w", err)
+	}
+
+	err = m.store.WithTransactionErr(func(tx db.ExtendQuerier) error {
+		at, err := tx.GetAccessTokenByProjectID(ctx, db.GetAccessTokenByProjectIDParams{
+			ProjectID: prov.ProjectID,
+			Provider:  prov.Name,
+		})
+		if err != nil {
+			return fmt.Errorf("error getting access token: %w", err)
+		}
+
+		accessTokenParams := db.UpsertAccessTokenParams{
+			ProjectID:       prov.ProjectID,
+			Provider:        prov.Name,
+			OwnerFilter:     at.OwnerFilter,
+			EnrollmentNonce: at.EnrollmentNonce,
+			EncryptedAccessToken: pqtype.NullRawMessage{
+				RawMessage: serialized,
+				Valid:      true,
+			},
+		}
+
+		_, err = tx.UpsertAccessToken(ctx, accessTokenParams)
+		if err != nil {
+			return fmt.Errorf("error inserting access token: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("error persisting token: %w", err)
+	}
+
+	return nil
+}
+
+func tokenNeedsRefresh(token oauth2.Token) bool {
+	return !token.Valid() || token.Expiry.UTC().Add(tokenExpirationThreshold).Before(time.Now().UTC())
 }

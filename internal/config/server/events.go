@@ -15,7 +15,11 @@
 
 package server
 
-import "github.com/stacklok/minder/internal/config"
+import (
+	"time"
+
+	"github.com/stacklok/minder/internal/config"
+)
 
 // EventConfig is the configuration for minder's eventing system.
 type EventConfig struct {
@@ -50,6 +54,10 @@ type SQLEventConfig struct {
 	// InitSchema is whether or not to initialize the schema
 	InitSchema bool                  `mapstructure:"init_schema" default:"true"`
 	Connection config.DatabaseConfig `mapstructure:"connection" default:"{\"dbname\":\"watermill\"}"`
+	// AckDeadline is the deadline (in seconds) before timing out and re-attempting
+	// a message delivery.  Note that setting this too short can cause messages to
+	// be retried even they should be marked as "poison".
+	AckDeadline time.Duration `mapstructure:"ack_deadline" default:"300s"`
 }
 
 // AggregatorConfig is the configuration for the event aggregator middleware

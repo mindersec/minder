@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -70,8 +71,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 
@@ -94,8 +93,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -148,8 +145,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -170,8 +165,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -210,8 +203,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -264,8 +255,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -286,8 +275,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -326,8 +313,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -380,8 +365,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -402,8 +385,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -464,8 +445,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -489,8 +468,6 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 				require.Equal(t, es1, row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repo1.ID, row.EntityID)
-				require.Equal(t, repo1.RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repo1.RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -601,8 +578,6 @@ func TestListEvaluationHistoryPagination(t *testing.T) {
 				require.Equal(t, ess[9], row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repos[9].ID, row.EntityID)
-				require.Equal(t, repos[9].RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repos[9].RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -646,8 +621,6 @@ func TestListEvaluationHistoryPagination(t *testing.T) {
 				require.Equal(t, ess[0], row.EvaluationID)
 				require.Equal(t, EntitiesRepository, row.EntityType)
 				require.Equal(t, repos[0].ID, row.EntityID)
-				require.Equal(t, repos[0].RepoOwner, row.RepoOwner.String)
-				require.Equal(t, repos[0].RepoName, row.RepoName.String)
 			},
 		},
 		{
@@ -699,6 +672,92 @@ func TestListEvaluationHistoryPagination(t *testing.T) {
 	}
 }
 
+func TestGetEvaluationHistory(t *testing.T) {
+	t.Parallel()
+
+	org := createRandomOrganization(t)
+	proj := createRandomProject(t, org.ID)
+	prov := createRandomProvider(t, proj.ID)
+
+	repos := make([]Repository, 0)
+	for i := 0; i < 10; i++ {
+		repos = append(repos, createRandomRepository(t, proj.ID, prov))
+	}
+	ruleType1 := createRandomRuleType(t, proj.ID)
+	profile1 := createRandomProfile(t, proj.ID, []string{})
+	riID1 := createRandomRuleInstance(
+		t,
+		proj.ID,
+		profile1.ID,
+		ruleType1.ID,
+	)
+
+	ess := make([]uuid.UUID, 0)
+	for i := 0; i < 10; i++ {
+		ere := createRandomEvaluationRuleEntity(t, riID1, repos[i].ID)
+		ess = append(ess, createRandomEvaluationStatus(t, ere))
+	}
+
+	absent, err := uuid.NewRandom()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name   string
+		params GetEvaluationHistoryParams
+		checkf func(*testing.T, GetEvaluationHistoryRow)
+		norows bool
+		error  bool
+	}{
+		{
+			name: "present",
+			params: GetEvaluationHistoryParams{
+				EvaluationID: ess[0],
+				ProjectID:    proj.ID,
+			},
+			checkf: func(t *testing.T, row GetEvaluationHistoryRow) {
+				t.Helper()
+				require.Equal(t, ess[0], row.EvaluationID)
+			},
+		},
+		{
+			name: "absent",
+			params: GetEvaluationHistoryParams{
+				EvaluationID: absent,
+				ProjectID:    proj.ID,
+			},
+			norows: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			row, err := testQueries.GetEvaluationHistory(
+				context.Background(),
+				tt.params,
+			)
+
+			if tt.error {
+				require.Error(t, err)
+				require.Nil(t, row)
+				return
+			}
+
+			if tt.norows {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, sql.ErrNoRows))
+				return
+			}
+
+			require.NoError(t, err)
+			tt.checkf(t, row)
+		})
+	}
+}
+
 func fullRepoName(r Repository) string {
 	return fmt.Sprintf("%s/%s", r.RepoOwner, r.RepoName)
 }
@@ -713,11 +772,7 @@ func createRandomEvaluationRuleEntity(
 	ereID, err := testQueries.InsertEvaluationRuleEntity(
 		context.Background(),
 		InsertEvaluationRuleEntityParams{
-			RuleID: ruleID,
-			RepositoryID: uuid.NullUUID{
-				UUID:  entityID,
-				Valid: true,
-			},
+			RuleID:           ruleID,
 			EntityType:       EntitiesRepository,
 			EntityInstanceID: entityID,
 		},

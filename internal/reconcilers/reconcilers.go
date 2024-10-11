@@ -21,7 +21,7 @@ import (
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/repositories/github"
+	"github.com/stacklok/minder/internal/repositories"
 )
 
 // Reconciler is a helper that reconciles entities
@@ -30,7 +30,7 @@ type Reconciler struct {
 	evt             events.Publisher
 	crypteng        crypto.Engine
 	providerManager manager.ProviderManager
-	repos           github.RepositoryService
+	repos           repositories.RepositoryService
 }
 
 // NewReconciler creates a new reconciler object
@@ -39,7 +39,7 @@ func NewReconciler(
 	evt events.Publisher,
 	cryptoEngine crypto.Engine,
 	providerManager manager.ProviderManager,
-	repositoryService github.RepositoryService,
+	repositoryService repositories.RepositoryService,
 ) (*Reconciler, error) {
 	return &Reconciler{
 		store:           store,

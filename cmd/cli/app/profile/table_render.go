@@ -71,6 +71,9 @@ func RenderProfileTable(p *minderv1.Profile, t table.Table) {
 
 	// pull request
 	renderProfileRow(minderv1.PullRequestEntity, p.PullRequest, t)
+
+	// release
+	renderProfileRow(minderv1.ReleaseEntity, p.Release, t)
 }
 
 func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
@@ -116,7 +119,7 @@ func RenderRuleEvaluationStatusTable(
 	for _, eval := range statuses {
 		t.AddRowWithColor(
 			layouts.NoColor(eval.RuleDescriptionName),
-			layouts.NoColor(eval.RuleDisplayName),
+			layouts.NoColor(eval.RuleTypeName),
 			layouts.NoColor(eval.Entity),
 			common.GetEvalStatusColor(eval.Status),
 			common.GetRemediateStatusColor(eval.RemediationStatus),

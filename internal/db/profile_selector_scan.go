@@ -15,6 +15,7 @@
 package db
 
 import (
+	"encoding/csv"
 	"fmt"
 	"strings"
 )
@@ -37,7 +38,12 @@ func (s *ProfileSelector) Scan(value interface{}) error {
 	str = strings.TrimSuffix(str, ")")
 
 	// Split the string by commas to get the individual field values
-	parts := strings.Split(str, ",")
+	cr := csv.NewReader(strings.NewReader(str))
+	cr.LazyQuotes = true // Enable LazyQuotes to allow for uneven number of quotes
+	parts, err := cr.Read()
+	if err != nil {
+		return fmt.Errorf("failed to scan SelectorInfo: %v", err)
+	}
 
 	// Assign the values to the struct fields
 	if len(parts) != 5 {

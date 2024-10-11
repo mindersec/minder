@@ -58,9 +58,14 @@ func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
 		loggers = append(loggers, os.Stdout)
 	}
 
-	logger := zerolog.New(zerolog.MultiLevelWriter(loggers...)).With().Timestamp().Logger()
+	logger := zerolog.New(zerolog.MultiLevelWriter(loggers...)).With().
+		Caller().
+		Timestamp().
+		Logger()
 
 	// Use this logger when calling zerolog.Ctx(nil), etc
 	zerolog.DefaultContextLogger = &logger
+	log.Logger = logger
+
 	return logger
 }

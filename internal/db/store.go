@@ -23,16 +23,22 @@ import (
 	"github.com/google/uuid"
 )
 
+// GetTypedEntitiesOptions provides options for GetTypedEntitiesByPropertyV1
+type GetTypedEntitiesOptions struct {
+	ProjectID  uuid.UUID
+	ProviderID uuid.UUID
+}
+
 // ExtendQuerier extends the Querier interface with custom queries
 type ExtendQuerier interface {
 	Querier
-	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, entityType NullEntities,
-		ruleName sql.NullString, entityID uuid.NullUUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
+	GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID,
+		ruleName sql.NullString, entityID uuid.UUID, ruleTypeName sql.NullString) (*ListRuleEvaluationsByProfileIdRow, error)
 	UpsertPropertyValueV1(ctx context.Context, params UpsertPropertyValueV1Params) (Property, error)
 	GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error)
 	GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error)
 	GetTypedEntitiesByPropertyV1(
-		ctx context.Context, project uuid.UUID, entType Entities, key string, value any,
+		ctx context.Context, entType Entities, key string, value any, opts GetTypedEntitiesOptions,
 	) ([]EntityInstance, error)
 }
 
@@ -112,15 +118,16 @@ func NewStore(db *sql.DB) Store {
 func (q *Queries) GetRuleEvaluationByProfileIdAndRuleType(
 	ctx context.Context,
 	profileID uuid.UUID,
-	entityType NullEntities,
 	ruleName sql.NullString,
-	entityID uuid.NullUUID,
+	entityID uuid.UUID,
 	ruleTypeName sql.NullString,
 ) (*ListRuleEvaluationsByProfileIdRow, error) {
 	params := ListRuleEvaluationsByProfileIdParams{
-		ProfileID:    profileID,
-		EntityType:   entityType,
-		EntityID:     entityID,
+		ProfileID: profileID,
+		EntityID: uuid.NullUUID{
+			UUID:  entityID,
+			Valid: true,
+		},
 		RuleName:     ruleName,
 		RuleTypeName: ruleTypeName,
 	}

@@ -23,22 +23,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// RepoReminderEvent is an event that is published by the reminder service to trigger repo reconciliation
-type RepoReminderEvent struct {
+// EntityReminderEvent is an event that is published by the reminder service to trigger repo reconciliation
+type EntityReminderEvent struct {
 	// Project is the project that the event is relevant to
 	Project uuid.UUID `json:"project"`
 	// ProviderID is the provider of the repository
 	ProviderID uuid.UUID `json:"provider"`
-	// RepositoryID is id of the repository to be reconciled
-	RepositoryID int64 `json:"repository"`
+	// EntityID is the entity id of the repository to be reconciled
+	EntityID uuid.UUID `json:"entity_id"`
 }
 
-// NewRepoReminderMessage creates a new repo reminder message
-func NewRepoReminderMessage(providerId uuid.UUID, repoID int64, projectID uuid.UUID) (*message.Message, error) {
-	evt := &RepoReminderEvent{
-		Project:      projectID,
-		ProviderID:   providerId,
-		RepositoryID: repoID,
+// NewEntityReminderMessage creates a new repo reminder message
+func NewEntityReminderMessage(providerId uuid.UUID, entityID uuid.UUID, projectID uuid.UUID) (*message.Message, error) {
+	evt := &EntityReminderEvent{
+		Project:    projectID,
+		ProviderID: providerId,
+		EntityID:   entityID,
 	}
 
 	evtStr, err := json.Marshal(evt)
@@ -50,9 +50,9 @@ func NewRepoReminderMessage(providerId uuid.UUID, repoID int64, projectID uuid.U
 	return msg, nil
 }
 
-// RepoReminderEventFromMessage creates a new repo reminder event from a message
-func RepoReminderEventFromMessage(msg *message.Message) (*RepoReminderEvent, error) {
-	var evt RepoReminderEvent
+// EntityReminderEventFromMessage creates a new repo reminder event from a message
+func EntityReminderEventFromMessage(msg *message.Message) (*EntityReminderEvent, error) {
+	var evt EntityReminderEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
 		return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 	}

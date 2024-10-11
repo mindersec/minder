@@ -22,6 +22,7 @@ package fixtures
 import (
 	"database/sql"
 	"encoding/json"
+	"slices"
 
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
@@ -122,22 +123,44 @@ func WithSuccessfulUpsertPullRequest(
 ) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			UpsertPullRequest(gomock.Any(), gomock.Any()).
-			Return(pullRequest, nil)
-		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
 			Return(db.EntityInstance{}, nil)
 	}
 }
 
-func WithSuccessfulDeletePullRequest() func(*mockdb.MockStore) {
+type createOrEnsureEntityByIDParamsMatcher struct {
+	params db.CreateOrEnsureEntityByIDParams
+}
+
+func (m createOrEnsureEntityByIDParamsMatcher) String() string {
+	return "matches CreateOrEnsureEntityByIDParams"
+}
+
+func (m createOrEnsureEntityByIDParamsMatcher) Matches(x interface{}) bool {
+	actual, ok := x.(db.CreateOrEnsureEntityByIDParams)
+	if !ok {
+		return false
+	}
+
+	// Note we don't compare the ID because it might be
+	// dynamically generated
+	return m.params.EntityType == actual.EntityType &&
+		m.params.Name == actual.Name &&
+		m.params.ProjectID == actual.ProjectID &&
+		m.params.ProviderID == actual.ProviderID &&
+		m.params.OriginatedFrom == actual.OriginatedFrom
+}
+
+func WithSuccessfulUpsertPullRequestWithParams(
+	pullRequest db.PullRequest,
+	instance db.EntityInstance,
+	entParams db.CreateOrEnsureEntityByIDParams,
+) func(*mockdb.MockStore) {
+	coeebipMatcher := createOrEnsureEntityByIDParamsMatcher{params: entParams}
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			DeletePullRequest(gomock.Any(), gomock.Any()).
-			Return(nil)
-		mockStore.EXPECT().
-			DeleteEntityByName(gomock.Any(), gomock.Any()).
-			Return(nil)
+			CreateOrEnsureEntityByID(gomock.Any(), coeebipMatcher).
+			Return(instance, nil)
 	}
 }
 
@@ -178,5 +201,78 @@ func WithTransaction() func(*mockdb.MockStore) {
 		mockStore.EXPECT().
 			Rollback(gomock.Any()).
 			Return(nil)
+	}
+}
+
+func WithRollbackTransaction() func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			BeginTransaction().
+			Return(nil, nil)
+		mockStore.EXPECT().
+			GetQuerierWithTransaction(gomock.Any()).
+			Return(mockStore)
+		mockStore.EXPECT().
+			Rollback(gomock.Any()).
+			Return(nil)
+	}
+}
+
+func WithSuccessfullGetEntityByID(
+	expID uuid.UUID,
+	entity db.EntityInstance,
+) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetEntityByID(gomock.Any(), expID).
+			Return(entity, nil)
+	}
+}
+
+func WithSuccessfulGetEntitiesByProjectHierarchy(
+	entities []db.EntityInstance,
+	expectedProjectIDs []uuid.UUID,
+) func(*mockdb.MockStore) {
+	isSubset := func(actualAny any) bool {
+		actual, ok := actualAny.([]uuid.UUID)
+		if !ok {
+			return false
+		}
+
+		for _, e := range expectedProjectIDs {
+			if !slices.Contains(actual, e) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetEntitiesByProjectHierarchy(
+				gomock.Any(),
+				gomock.Cond(isSubset)).
+			Return(entities, nil)
+	}
+}
+
+func WithSuccessfulDeleteEntity(entID, projectID uuid.UUID) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			DeleteEntity(gomock.Any(), db.DeleteEntityParams{
+				ID:        entID,
+				ProjectID: projectID,
+			}).
+			Return(nil)
+	}
+}
+
+func WithFailedGetEntitiesByProjectHierarchy(
+	err error,
+) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetEntitiesByProjectHierarchy(gomock.Any(), gomock.Any()).
+			Return(nil, err)
 	}
 }

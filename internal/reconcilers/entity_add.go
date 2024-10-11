@@ -16,7 +16,6 @@ package reconcilers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -24,8 +23,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // handleEntityAddEvent handles the entity add event.
@@ -51,21 +52,25 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return nil
 	}
 
-	var repoOwner string
-	var repoName string
-	var ok bool
-	if repoOwner, ok = event.Entity["repoOwner"].(string); !ok {
-		return errors.New("invalid repo owner")
+	if event.EntityType != pb.Entity_ENTITY_REPOSITORIES {
+		l.Debug().Str("entity_type", event.EntityType.String()).Msg("unsupported entity type")
+		return nil
 	}
-	if repoName, ok = event.Entity["repoName"].(string); !ok {
-		return errors.New("invalid repo name")
+
+	if len(event.Properties) == 0 {
+		zerolog.Ctx(ctx).Error().Msg("no properties in event")
+		return nil
+	}
+
+	fetchByProps, err := properties.NewProperties(event.Properties)
+	if err != nil {
+		return fmt.Errorf("error creating properties: %w", err)
 	}
 
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_name", repoName).
-		Str("repo_owner", repoOwner).
+		Dict("properties", fetchByProps.ToLogDict()).
 		Logger()
 
 	// Telemetry logging
@@ -77,13 +82,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return fmt.Errorf("error retrieving provider: %w", err)
 	}
 
-	pbRepo, err := r.repos.CreateRepository(
-		ctx,
-		&dbProvider,
-		event.ProjectID,
-		repoOwner,
-		repoName,
-	)
+	pbRepo, err := r.repos.CreateRepository(ctx, &dbProvider, event.ProjectID, fetchByProps)
 	if err != nil {
 		return fmt.Errorf("error add repository from DB: %w", err)
 	}

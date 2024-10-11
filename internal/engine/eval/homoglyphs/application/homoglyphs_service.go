@@ -25,6 +25,7 @@ import (
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	pbinternal "github.com/stacklok/minder/internal/proto"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -40,8 +41,10 @@ const (
 
 // NewHomoglyphsEvaluator creates a new homoglyphs evaluator
 func NewHomoglyphsEvaluator(
+	ctx context.Context,
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
 	ghClient provifv1.GitHub,
+	opts ...eoptions.Option,
 ) (engif.Evaluator, error) {
 	if ghClient == nil {
 		return nil, fmt.Errorf("provider builder is nil")
@@ -52,9 +55,9 @@ func NewHomoglyphsEvaluator(
 
 	switch reh.Type {
 	case invisibleCharacters:
-		return NewInvisibleCharactersEvaluator(ghClient)
+		return NewInvisibleCharactersEvaluator(ctx, ghClient, opts...)
 	case mixedScript:
-		return NewMixedScriptEvaluator(ghClient)
+		return NewMixedScriptEvaluator(ctx, ghClient, opts...)
 	default:
 		return nil, fmt.Errorf("unsupported homoglyphs type: %s", reh.Type)
 	}
@@ -69,23 +72,26 @@ func evaluateHomoglyphs(
 	processor domain.HomoglyphProcessor,
 	res *engif.Result,
 	reviewHandler *communication.GhReviewPrHandler,
-) (bool, error) {
+) ([]*domain.Violation, error) {
+	// create an empty list of violations
+	var violationsList []*domain.Violation
+
 	if res == nil {
-		return false, fmt.Errorf("result is nil")
+		return violationsList, fmt.Errorf("result is nil")
 	}
 
 	//nolint:govet
 	prContents, ok := res.Object.(*pbinternal.PrContents)
 	if !ok {
-		return false, fmt.Errorf("invalid object type for homoglyphs evaluator")
+		return violationsList, fmt.Errorf("invalid object type for homoglyphs evaluator")
 	}
 
 	if prContents.Pr == nil || prContents.Files == nil {
-		return false, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
+		return violationsList, fmt.Errorf("invalid prContents fields: %v, %v", prContents.Pr, prContents.Files)
 	}
 
 	if len(prContents.Files) == 0 {
-		return false, nil
+		return violationsList, nil
 	}
 
 	// Note: This is a mandatory step to reassign certain fields in the handler.
@@ -98,6 +104,7 @@ func evaluateHomoglyphs(
 			if len(violations) == 0 {
 				continue
 			}
+			violationsList = append(violationsList, violations...)
 
 			var commentBody strings.Builder
 			commentBody.WriteString(processor.GetSubCommentText())
@@ -117,8 +124,8 @@ func evaluateHomoglyphs(
 	}
 
 	if len(reviewHandler.GetComments()) > 0 {
-		return true, reviewHandler.SubmitReview(ctx, processor.GetFailedReviewText())
+		return violationsList, reviewHandler.SubmitReview(ctx, processor.GetFailedReviewText())
 	}
 
-	return false, nil
+	return violationsList, nil
 }

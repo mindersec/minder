@@ -19,6 +19,7 @@ import (
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/providers/http"
+	"github.com/stacklok/minder/internal/providers/noop"
 	"github.com/stacklok/minder/internal/providers/telemetry"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -27,6 +28,7 @@ import (
 // RESTProvider is a test implementation of the REST provider
 // interface
 type RESTProvider struct {
+	noop.Provider
 	*http.REST
 }
 
@@ -69,4 +71,32 @@ func (_ *RESTProvider) FetchProperty(
 // GetEntityName implements the Provider interface
 func (_ *RESTProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
+}
+
+// SupportsEntity implements the Provider interface
+func (_ *RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
+	// TODO: implement
+	return false
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *RESTProvider) RegisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
+	// TODO: implement
+	return nil, nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *RESTProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+	// TODO: implement
+	return nil
+}
+
+// ReregisterEntity implements the Provider interface
+func (_ *RESTProvider) ReregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	// TODO: implement
+	return nil
 }

@@ -21,8 +21,11 @@ import (
 	"strings"
 
 	"github.com/open-policy-agent/opa/rego"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/stacklok/minder/internal/engine/errors"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // EvaluationType is the type of evaluation to perform
@@ -60,8 +63,8 @@ func (c ConstraintsViolationsFormat) String() string {
 }
 
 type resultEvaluator interface {
-	getQuery() func(r *rego.Rego)
-	parseResult(rs rego.ResultSet) error
+	getQuery() func(*rego.Rego)
+	parseResult(rego.ResultSet, protoreflect.ProtoMessage) error
 }
 
 type denyByDefaultEvaluator struct {
@@ -71,15 +74,29 @@ func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(RegoQueryPrefix)
 }
 
-func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
+func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage) error {
+	// This usually happens when the provided Rego code is empty
 	if len(rs) == 0 {
-		return engerrors.NewErrEvaluationFailed("no results")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoDenyByDefaultTemplate,
+			map[string]any{
+				"message": "no results",
+			},
+			"no results",
+		)
 	}
 
 	res := rs[0]
 
+	// This usually happens when the provided Rego code is empty
 	if len(res.Expressions) == 0 {
-		return engerrors.NewErrEvaluationFailed("no expressions")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoDenyByDefaultTemplate,
+			map[string]any{
+				"message": "no expressions",
+			},
+			"no expressions",
+		)
 	}
 
 	// get first expression
@@ -87,7 +104,13 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	exprVal := exprRaw.Value
 	expr, ok := exprVal.(map[string]any)
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("unable to get result expression")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoDenyByDefaultTemplate,
+			map[string]any{
+				"message": "unable to get result expression",
+			},
+			"unable to get result expression",
+		)
 	}
 
 	// check if skipped
@@ -103,19 +126,51 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet) error {
 	// check if allowed
 	allowed, ok := expr["allow"]
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("unable to get allow result")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoDenyByDefaultTemplate,
+			map[string]any{
+				"message": "unable to get allow result",
+			},
+			"unable to get allow result",
+		)
 	}
 
 	allowedBool, ok := allowed.(bool)
 	if !ok {
-		return engerrors.NewErrEvaluationFailed("allow result is not a bool")
+		return engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoDenyByDefaultTemplate,
+			map[string]any{
+				"message": "allow result is not a bool",
+			},
+			"allow result is not a bool",
+		)
 	}
 
 	if allowedBool {
 		return nil
 	}
 
-	return engerrors.NewErrEvaluationFailed("denied")
+	// check if custom message was provided
+	var message string
+	msg, ok := expr["message"]
+	if ok {
+		if message, ok = msg.(string); !ok {
+			message = "denied"
+		}
+	}
+	if message == "" {
+		message = "denied"
+	}
+
+	entityName := getEntityName(entity)
+	return engerrors.NewDetailedErrEvaluationFailed(
+		templates.RegoDenyByDefaultTemplate,
+		map[string]any{
+			"message":    message,
+			"entityName": entityName,
+		},
+		"denied",
+	)
 }
 
 type constraintsEvaluator struct {
@@ -126,7 +181,7 @@ func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(fmt.Sprintf("%s.violations[details]", RegoQueryPrefix))
 }
 
-func (c *constraintsEvaluator) parseResult(rs rego.ResultSet) error {
+func (c *constraintsEvaluator) parseResult(rs rego.ResultSet, _ protoreflect.ProtoMessage) error {
 	if len(rs) == 0 {
 		// There were no violations
 		return nil
@@ -247,4 +302,28 @@ func (jrb *jsonResultBuilder) formatResults() error {
 	}
 
 	return engerrors.NewErrEvaluationFailed("%s", string(jsonArray))
+}
+
+func getEntityName(entity protoreflect.ProtoMessage) string {
+	switch inner := entity.(type) {
+	case *minderv1.PullRequest:
+		return fmt.Sprintf("%s/%s#%d",
+			inner.RepoOwner,
+			inner.RepoName,
+			inner.Number,
+		)
+	case *minderv1.Repository:
+		return fmt.Sprintf("%s/%s",
+			inner.Owner,
+			inner.Name,
+		)
+	case *minderv1.Artifact:
+		return fmt.Sprintf("%s/%s (%s)",
+			inner.Owner,
+			inner.Name,
+			inner.Type,
+		)
+	default:
+		return ""
+	}
 }

@@ -20,9 +20,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ThreeDotsLabs/watermill"
 	watermillsql "github.com/ThreeDotsLabs/watermill-sql/v3/pkg/sql"
 	"github.com/ThreeDotsLabs/watermill/message"
+	"github.com/alexdrl/zerowater"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
 	serverconfig "github.com/stacklok/minder/internal/config/server"
@@ -38,13 +39,15 @@ func BuildPostgreSQLDriver(
 		return nil, nil, nil, fmt.Errorf("unable to connect to events database: %w", err)
 	}
 
+	logger := zerowater.NewZerologLoggerAdapter(zerolog.Ctx(ctx).With().Logger())
+
 	publisher, err := watermillsql.NewPublisher(
 		db,
 		watermillsql.PublisherConfig{
 			SchemaAdapter:        watermillsql.DefaultPostgreSQLSchema{},
 			AutoInitializeSchema: true,
 		},
-		watermill.NewStdLogger(false, false),
+		logger,
 	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create SQL publisher: %w", err)
@@ -56,8 +59,9 @@ func BuildPostgreSQLDriver(
 			SchemaAdapter:    watermillsql.DefaultPostgreSQLSchema{},
 			OffsetsAdapter:   watermillsql.DefaultPostgreSQLOffsetsAdapter{},
 			InitializeSchema: true,
+			AckDeadline:      &cfg.SQLPubSub.AckDeadline,
 		},
-		watermill.NewStdLogger(false, false),
+		logger,
 	)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to create SQL subscriber: %w", err)

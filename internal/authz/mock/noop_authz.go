@@ -18,9 +18,9 @@ package mock
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/authz"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -36,8 +36,8 @@ type NoopClient struct {
 var _ authz.Client = &NoopClient{}
 
 // Check implements authz.Client
-func (n *NoopClient) Check(_ context.Context, action string, project uuid.UUID) error {
-	fmt.Printf("noop authz check (%t): %s %s\n", n.Authorized, action, project)
+func (n *NoopClient) Check(ctx context.Context, action string, project uuid.UUID) error {
+	zerolog.Ctx(ctx).Debug().Str("action", action).Str("project", project.String()).Msg("noop authz check")
 	if n.Authorized {
 		return nil
 	}

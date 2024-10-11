@@ -144,17 +144,18 @@ func (_ *ruleTypeService) CreateRuleType(
 		return nil, err
 	}
 
-	ruleType = ruleType.WithDefaultDisplayName()
+	ruleType = ruleType.WithDefaultDisplayName().WithDefaultShortFailureMessage()
 	newDBRecord, err := qtx.CreateRuleType(ctx, db.CreateRuleTypeParams{
-		Name:           ruleTypeName,
-		DisplayName:    ruleType.GetDisplayName(),
-		ProjectID:      projectID,
-		Description:    ruleType.GetDescription(),
-		Definition:     serializedRule,
-		Guidance:       ruleType.GetGuidance(),
-		SeverityValue:  *severity,
-		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
-		ReleasePhase:   *releasePhase,
+		Name:                ruleTypeName,
+		DisplayName:         ruleType.GetDisplayName(),
+		ShortFailureMessage: ruleType.GetShortFailureMessage(),
+		ProjectID:           projectID,
+		Description:         ruleType.GetDescription(),
+		Definition:          serializedRule,
+		Guidance:            ruleType.GetGuidance(),
+		SeverityValue:       *severity,
+		SubscriptionID:      uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
+		ReleasePhase:        *releasePhase,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
@@ -225,14 +226,15 @@ func (_ *ruleTypeService) UpdateRuleType(
 		return nil, err
 	}
 
-	ruleType = ruleType.WithDefaultDisplayName()
+	ruleType = ruleType.WithDefaultDisplayName().WithDefaultShortFailureMessage()
 	updatedRuleType, err := qtx.UpdateRuleType(ctx, db.UpdateRuleTypeParams{
-		ID:            oldRuleType.ID,
-		Description:   ruleType.GetDescription(),
-		Definition:    serializedRule,
-		SeverityValue: *severity,
-		DisplayName:   ruleType.GetDisplayName(),
-		ReleasePhase:  *releasePhase,
+		ID:                  oldRuleType.ID,
+		Description:         ruleType.GetDescription(),
+		Definition:          serializedRule,
+		SeverityValue:       *severity,
+		DisplayName:         ruleType.GetDisplayName(),
+		ShortFailureMessage: ruleType.GetShortFailureMessage(),
+		ReleasePhase:        *releasePhase,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update rule type: %w", err)

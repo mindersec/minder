@@ -56,7 +56,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	if registerAll {
 		if len(inputRepoList) > 0 {
-			fmt.Println("Cannot use --all and --name together")
+			cmd.Println("Cannot use --all and --name together")
 			return nil
 		}
 

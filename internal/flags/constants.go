@@ -18,12 +18,13 @@ package flags
 const (
 	// UserManagement enables user management, i.e. invitations, role assignments, etc.
 	UserManagement Experiment = "user_management"
-	// EvalHistory enables logging of evaluation history in the new tables.
-	EvalHistory Experiment = "eval_history"
 	// DockerHubProvider enables the DockerHub provider.
 	DockerHubProvider Experiment = "dockerhub_provider"
 	// GitLabProvider enables the GitLab provider.
 	GitLabProvider Experiment = "gitlab_provider"
 	// MachineAccounts enables machine accounts (in particular, GitHub Actions) for authorization
 	MachineAccounts Experiment = "machine_accounts"
+	// VulnCheckErrorTemplate enables improved evaluation details
+	// messages in the vulncheck rule.
+	VulnCheckErrorTemplate Experiment = "vulncheck_error_template"
 )

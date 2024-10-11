@@ -41,28 +41,24 @@ SET
 RETURNING *;
 
 -- DeleteEntity removes an entity from the entity_instances table for a project.
-
 -- name: DeleteEntity :exec
 DELETE FROM entity_instances
 WHERE id = $1 AND project_id = $2;
 
--- DeleteEntityByName removes an entity from the entity_instances table for a project.
-
--- name: DeleteEntityByName :exec
-DELETE FROM entity_instances
-WHERE name = sqlc.arg(name) AND project_id = $1;
-
 -- GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
-
 -- name: GetEntityByID :one
 SELECT * FROM entity_instances
-WHERE entity_instances.id = $1 AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[])
+WHERE entity_instances.id = $1
 LIMIT 1;
 
 -- GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 -- name: GetEntityByName :one
 SELECT * FROM entity_instances
-WHERE entity_instances.name = sqlc.arg(name) AND entity_instances.project_id = $1 AND entity_instances.entity_type = $2
+WHERE
+    entity_instances.name = sqlc.arg(name)
+    AND entity_instances.project_id = $1
+    AND entity_instances.entity_type = $2
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
 LIMIT 1;
 
 -- GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
@@ -70,7 +66,22 @@ LIMIT 1;
 
 -- name: GetEntitiesByType :many
 SELECT * FROM entity_instances
-WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.provider_id = sqlc.arg(provider_id)
+    AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
+
+-- GetEntitiesByProvider retrieves all entities of a given provider.
+-- this is how one would get all repositories, artifacts, etc. for a given provider.
+
+-- name: GetEntitiesByProvider :many
+SELECT * FROM entity_instances
+WHERE entity_instances.provider_id = $1;
+
+-- GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
+
+-- name: GetEntitiesByProjectHierarchy :many
+SELECT * FROM entity_instances
+WHERE entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
 -- name: GetProperty :one
 SELECT * FROM properties
@@ -107,5 +118,6 @@ FROM entity_instances ei
          JOIN properties p ON ei.id = p.entity_id
 WHERE ei.entity_type = sqlc.arg(entity_type)
   AND (sqlc.arg(project_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = sqlc.arg(project_id))
+  AND (sqlc.arg(provider_id)::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = sqlc.arg(provider_id))
   AND p.key = sqlc.arg(key)
   AND p.value @> sqlc.arg(value)::jsonb;

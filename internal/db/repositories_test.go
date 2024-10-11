@@ -18,6 +18,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov Provider, opts
 
 	ei, err := testQueries.CreateEntityWithID(context.Background(), CreateEntityWithIDParams{
 		ID:         repo.ID,
-		Name:       arg.RepoName,
+		Name:       fmt.Sprintf("%s/%s", arg.RepoOwner, arg.RepoName),
 		ProjectID:  project,
 		ProviderID: prov.ID,
 		EntityType: EntitiesRepository,

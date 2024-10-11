@@ -23,8 +23,10 @@ import (
 	"strings"
 
 	go_github "github.com/google/go-github/v63/github"
+	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/entities/properties"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
@@ -43,6 +45,8 @@ const (
 	RepoPropertyDefaultBranch = "github/default_branch"
 	// RepoPropertyLicense represents the github repository license
 	RepoPropertyLicense = "github/license"
+	// RepoPropertyPrimaryLanguage represents the github repository language
+	RepoPropertyPrimaryLanguage = "github/primary_language"
 
 	// RepoPropertyHookId represents the github repository hook ID
 	RepoPropertyHookId = "github/hook_id"
@@ -56,13 +60,9 @@ const (
 	RepoPropertyHookUiid = "github/hook_uiid"
 )
 
-type propertyOrigin struct {
-	keys    []string
-	wrapper GhPropertyWrapper
-}
-
 var repoOperationalProperties = []string{
 	RepoPropertyHookId,
+	RepoPropertyHookUrl,
 }
 
 var repoPropertyDefinitions = []propertyOrigin{
@@ -83,19 +83,49 @@ var repoPropertyDefinitions = []propertyOrigin{
 			RepoPropertyCloneURL,
 			RepoPropertyDefaultBranch,
 			RepoPropertyLicense,
+			RepoPropertyPrimaryLanguage,
 		},
 		wrapper: getRepoWrapper,
 	},
 }
 
-func getRepoWrapper(ctx context.Context, ghCli *go_github.Client, name string) (map[string]any, error) {
-	// TODO: this should be a provider interface, even if private
-	slice := strings.Split(name, "/")
-	if len(slice) != 2 {
-		return nil, errors.New("invalid name")
+// GitHubRepoToMap converts a github repository to a map
+func GitHubRepoToMap(repo *go_github.Repository) map[string]any {
+	repoProps := map[string]any{
+		// general entity
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
+		// general repo
+		properties.RepoPropertyIsPrivate:  repo.GetPrivate(),
+		properties.RepoPropertyIsArchived: repo.GetArchived(),
+		properties.RepoPropertyIsFork:     repo.GetFork(),
+		// github-specific
+		RepoPropertyId:              repo.GetID(),
+		RepoPropertyName:            repo.GetName(),
+		RepoPropertyOwner:           repo.GetOwner().GetLogin(),
+		RepoPropertyDeployURL:       repo.GetDeploymentsURL(),
+		RepoPropertyCloneURL:        repo.GetCloneURL(),
+		RepoPropertyDefaultBranch:   repo.GetDefaultBranch(),
+		RepoPropertyLicense:         repo.GetLicense().GetSPDXID(),
+		RepoPropertyPrimaryLanguage: repo.GetLanguage(),
 	}
 
-	repo, result, err := ghCli.Repositories.Get(ctx, slice[0], slice[1])
+	repoProps[properties.PropertyName] = fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
+
+	return repoProps
+}
+
+func getRepoWrapper(
+	ctx context.Context, ghCli *go_github.Client, isOrg bool, getByProps *properties.Properties,
+) (map[string]any, error) {
+	_ = isOrg
+
+	name, owner, err := getNameOwnerFromProps(ctx, getByProps)
+	if err != nil {
+		return nil, fmt.Errorf("error getting name and owner from properties: %w", err)
+	}
+	zerolog.Ctx(ctx).Debug().Str("name", name).Str("owner", owner).Msg("Fetching repository")
+
+	repo, result, err := ghCli.Repositories.Get(ctx, owner, name)
 	if err != nil {
 		if result != nil && result.StatusCode == http.StatusNotFound {
 			return nil, v1.ErrEntityNotFound
@@ -103,71 +133,44 @@ func getRepoWrapper(ctx context.Context, ghCli *go_github.Client, name string) (
 		return nil, err
 	}
 
-	repoProps := map[string]any{
-		// general entity
-		properties.PropertyUpstreamID: fmt.Sprintf("%d", repo.GetID()),
-		// general repo
-		properties.RepoPropertyIsPrivate:  repo.GetPrivate(),
-		properties.RepoPropertyIsArchived: repo.GetArchived(),
-		properties.RepoPropertyIsFork:     repo.GetFork(),
-		// github-specific
-		RepoPropertyId:            repo.GetID(),
-		RepoPropertyName:          repo.GetName(),
-		RepoPropertyOwner:         repo.GetOwner().GetLogin(),
-		RepoPropertyDeployURL:     repo.GetDeploymentsURL(),
-		RepoPropertyCloneURL:      repo.GetCloneURL(),
-		RepoPropertyDefaultBranch: repo.GetDefaultBranch(),
-		RepoPropertyLicense:       repo.GetLicense().GetSPDXID(),
+	return GitHubRepoToMap(repo), nil
+}
+
+func getNameOwnerFromProps(ctx context.Context, props *properties.Properties) (string, string, error) {
+	repoNameP := props.GetProperty(RepoPropertyName)
+	repoOwnerP := props.GetProperty(RepoPropertyOwner)
+	if repoNameP != nil && repoOwnerP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("returning repo properties directly")
+		return repoNameP.GetString(), repoOwnerP.GetString(), nil
 	}
 
-	//repoProps[properties.PropertyName], err = getEntityName(minderv1.Entity_ENTITY_REPOSITORIES, props)
-	repoProps[properties.PropertyName] = fmt.Sprintf("%s/%s", repo.GetOwner().GetLogin(), repo.GetName())
+	repoNameP = props.GetProperty(properties.PropertyName)
+	if repoNameP != nil {
+		zerolog.Ctx(ctx).Debug().Msg("parsing the name")
+		slice := strings.Split(repoNameP.GetString(), "/")
+		if len(slice) != 2 {
+			return "", "", errors.New("invalid repo name")
+		}
 
-	return repoProps, nil
+		return slice[1], slice[0], nil
+	}
+
+	return "", "", errors.New("missing required properties, either repo-name and repo-owner or name")
 }
 
 // RepositoryFetcher is a property fetcher for github repositories
 type RepositoryFetcher struct {
-	propertyOrigins       []propertyOrigin
-	operationalProperties []string
+	propertyFetcherBase
 }
 
 // NewRepositoryFetcher creates a new RepositoryFetcher
 func NewRepositoryFetcher() *RepositoryFetcher {
 	return &RepositoryFetcher{
-		propertyOrigins:       repoPropertyDefinitions,
-		operationalProperties: repoOperationalProperties,
+		propertyFetcherBase: propertyFetcherBase{
+			operationalProperties: repoOperationalProperties,
+			propertyOrigins:       repoPropertyDefinitions,
+		},
 	}
-}
-
-// OperationalProperties returns the operational properties for the repository
-func (_ *RepositoryFetcher) OperationalProperties() []string {
-	return []string{
-		RepoPropertyHookId,
-		RepoPropertyHookUrl,
-	}
-}
-
-// WrapperForProperty returns the property wrapper for the given property key
-func (r *RepositoryFetcher) WrapperForProperty(propertyKey string) GhPropertyWrapper {
-	for _, po := range r.propertyOrigins {
-		for _, k := range po.keys {
-			if k == propertyKey {
-				return po.wrapper
-			}
-		}
-	}
-
-	return nil
-}
-
-// AllPropertyWrappers returns all property wrappers for the repository
-func (r *RepositoryFetcher) AllPropertyWrappers() []GhPropertyWrapper {
-	wrappers := make([]GhPropertyWrapper, 0, len(r.propertyOrigins))
-	for _, po := range r.propertyOrigins {
-		wrappers = append(wrappers, po.wrapper)
-	}
-	return wrappers
 }
 
 // GetName returns the name of the repository
@@ -190,4 +193,51 @@ func (_ *RepositoryFetcher) GetName(props *properties.Properties) (string, error
 	}
 
 	return fmt.Sprintf("%s/%s", repoOwner, repoName), nil
+}
+
+// RepoV1FromProperties creates a minderv1.Repository from a properties.Properties
+func RepoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repository, error) {
+	name, err := repoProperties.GetProperty(RepoPropertyName).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching name property: %w", err)
+	}
+
+	owner, err := repoProperties.GetProperty(RepoPropertyOwner).AsString()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching owner property: %w", err)
+	}
+
+	repoId, err := repoProperties.GetProperty(RepoPropertyId).AsInt64()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repo_id property: %w", err)
+	}
+
+	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_private property: %w", err)
+	}
+
+	isFork, err := repoProperties.GetProperty(properties.RepoPropertyIsFork).AsBool()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching is_fork property: %w", err)
+	}
+
+	pbRepo := &minderv1.Repository{
+		Name:          name,
+		Owner:         owner,
+		RepoId:        repoId,
+		HookId:        repoProperties.GetProperty(RepoPropertyHookId).GetInt64(),
+		HookUrl:       repoProperties.GetProperty(RepoPropertyHookUrl).GetString(),
+		DeployUrl:     repoProperties.GetProperty(RepoPropertyDeployURL).GetString(),
+		CloneUrl:      repoProperties.GetProperty(RepoPropertyCloneURL).GetString(),
+		HookType:      repoProperties.GetProperty(RepoPropertyHookType).GetString(),
+		HookName:      repoProperties.GetProperty(RepoPropertyHookName).GetString(),
+		HookUuid:      repoProperties.GetProperty(RepoPropertyHookUiid).GetString(),
+		IsPrivate:     isPrivate,
+		IsFork:        isFork,
+		DefaultBranch: repoProperties.GetProperty(RepoPropertyDefaultBranch).GetString(),
+		License:       repoProperties.GetProperty(RepoPropertyLicense).GetString(),
+	}
+
+	return pbRepo, nil
 }

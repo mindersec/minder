@@ -60,7 +60,7 @@ func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
 	// We maintain up to 30 days of history, plus any record
 	// that's the latest for any entity/rule pair.
 	threshold := time.Now().UTC().AddDate(0, 0, -30)
-	fmt.Printf("Calculated threshold is %s", threshold)
+	cmd.Printf("Calculated threshold is %s", threshold)
 
 	if err := purgeLoop(ctx, store, threshold, batchSize, dryRun, cmd.Printf); err != nil {
 		cliErrorf(cmd, "failed purging evaluation log: %s", err)

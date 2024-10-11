@@ -17,7 +17,9 @@ package common
 
 import (
 	gogithub "github.com/google/go-github/v63/github"
+	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/stacklok/minder/internal/providers/github/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -29,21 +31,27 @@ func ConvertRepositories(repos []*gogithub.Repository) []*minderv1.Repository {
 		if repo.Archived != nil && *repo.Archived {
 			continue
 		}
-		converted = append(converted, ConvertRepository(repo))
+		propsMap := properties.GitHubRepoToMap(repo)
+		props, err := structpb.NewStruct(propsMap)
+		if err != nil {
+			continue
+		}
+		converted = append(converted, ConvertRepository(repo, props))
 	}
 	return converted
 }
 
 // ConvertRepository converts a GitHub repository to a minder repository
-func ConvertRepository(repo *gogithub.Repository) *minderv1.Repository {
+func ConvertRepository(repo *gogithub.Repository, props *structpb.Struct) *minderv1.Repository {
 	return &minderv1.Repository{
-		Name:      repo.GetName(),
-		Owner:     repo.GetOwner().GetLogin(),
-		RepoId:    repo.GetID(),
-		HookUrl:   repo.GetHooksURL(),
-		DeployUrl: repo.GetDeploymentsURL(),
-		CloneUrl:  repo.GetCloneURL(),
-		IsPrivate: *repo.Private,
-		IsFork:    *repo.Fork,
+		Name:       repo.GetName(),
+		Owner:      repo.GetOwner().GetLogin(),
+		RepoId:     repo.GetID(),
+		HookUrl:    repo.GetHooksURL(),
+		DeployUrl:  repo.GetDeploymentsURL(),
+		CloneUrl:   repo.GetCloneURL(),
+		IsPrivate:  *repo.Private,
+		IsFork:     *repo.Fork,
+		Properties: props,
 	}
 }

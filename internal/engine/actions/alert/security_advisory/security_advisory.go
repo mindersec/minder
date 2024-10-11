@@ -27,9 +27,10 @@ import (
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/profiles/models"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	enginerr "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/interfaces"
@@ -42,7 +43,7 @@ const (
 	// AlertType is the type of the security advisory alert engine
 	AlertType                = "security_advisory"
 	tmplSummaryName          = "summary"
-	tmplSummary              = `minder: profile {{.Profile}} failed with rule {{.Rule}}`
+	tmplSummary              = `minder: profile {{.Profile}} failed`
 	tmplDescriptionNameNoRem = "description_no_remediate"
 	tmplDescriptionNameRem   = "description"
 	// nolint:lll
@@ -142,7 +143,9 @@ func NewSecurityAdvisoryAlert(
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 	// Parse the templates for summary and description
-	sumT, err := htmltemplate.New(tmplSummaryName).Option("missingkey=error").Parse(tmplSummary)
+	sumT, err := htmltemplate.New(tmplSummaryName).
+		Option("missingkey=error").
+		Parse(tmplSummary + " - " + ruleType.ShortFailureMessage)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse summary template: %w", err)
 	}

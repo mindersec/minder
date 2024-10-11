@@ -30,6 +30,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-github/v63/github"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/entities/properties"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
@@ -41,7 +42,7 @@ const (
 )
 
 // ErrEntityNotFound is the error returned when an entity is not found
-var ErrEntityNotFound = errors.New("property not found")
+var ErrEntityNotFound = errors.New("entity not found")
 
 // Provider is the general interface for all providers
 type Provider interface {
@@ -60,6 +61,37 @@ type Provider interface {
 	// The name is used to identify the entity within minder and is how
 	// it will be stored in the database.
 	GetEntityName(entType minderv1.Entity, props *properties.Properties) (string, error)
+
+	// SupportsEntity returns true if the provider supports the given entity type
+	SupportsEntity(entType minderv1.Entity) bool
+
+	// RegisterEntity ensures that the service provider has the necessary information
+	// to know that the entity is handled by Minder. This could be creating a webhook
+	// for a particular repository or artifact.
+	// Note that the provider might choose to update the properties of the entity
+	// adding the information about the registration. e.g. The webhook ID and URL.
+	RegisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) (*properties.Properties, error)
+
+	// DeregisterEntity rolls back the registration of the entity. This could be deleting
+	// a webhook for a particular repository or artifact. Note that this assumes a pre-registered
+	// entity and thus requires the entity to have been registered before. Therefore, you should
+	// either call this after RegisterEntity or after a FetchAllProperties call on an already
+	// registered entity.
+	//
+	// When implementing, try to make this idempotent. That is, if the entity is already deregistered,
+	// (e.g. a webhook is already deleted), then this should not return an error.
+	DeregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+
+	// ReregisterEntity runs the necessary updates to the entity registration. This could be
+	// updating the webhook URL or secret for a particular repository or artifact. This is useful
+	// for secret rotation.
+	ReregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
+
+	// PropertiesToProtoMessage is the interface for converting properties to a proto message
+	// this is temporary until we can get rid of the typed proto messages in EntityInfoWrapper
+	// and the engine. That's also why we just didn't add the method to the generic Provider
+	// interface.
+	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
 }
 
 // Git is the interface for git providers
@@ -138,7 +170,7 @@ type GitHub interface {
 		perPage int, pageNumber int) ([]*github.CommitFile, *github.Response, error)
 	IsOrg() bool
 	ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error)
-	DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error)
+	DeleteHook(ctx context.Context, owner, repo string, id int64) error
 	EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error)
 	CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error)
 	CreateSecurityAdvisory(ctx context.Context, owner, repo, severity, summary, description string,

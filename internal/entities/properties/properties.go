@@ -18,13 +18,21 @@ package properties
 
 import (
 	"fmt"
+	"iter"
 	"strconv"
 	"strings"
 
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/rs/zerolog"
+	"golang.org/x/exp/constraints"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
-	"iter"
 )
+
+// NumericalValueToUpstreamID converts a numerical value to a string for use as an upstream ID
+func NumericalValueToUpstreamID[T constraints.Integer](n T) string {
+	return strconv.FormatInt(int64(n), 10)
+}
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
 // with typed getters and handling of a nil receiver
@@ -145,11 +153,20 @@ func (p *Property) AsInt64() (int64, error) {
 		return 0, fmt.Errorf("property is nil")
 	}
 
-	stringVal, err := unwrapTypedValue(p.value, typeInt64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get int64 value: %w", err)
+	switch value := p.value.Kind.(type) {
+	case *structpb.Value_NumberValue:
+		return int64(value.NumberValue), nil
+	case *structpb.Value_StringValue:
+		return strconv.ParseInt(value.StringValue, 10, 64)
+	case *structpb.Value_StructValue:
+		stringVal, err := unwrapTypedValue(p.value, typeInt64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get int64 value: %w", err)
+		}
+		return strconv.ParseInt(stringVal, 10, 64)
+	default:
+		return 0, fmt.Errorf("failed to get int64 value from %T", value)
 	}
-	return strconv.ParseInt(stringVal, 10, 64)
 }
 
 // GetInt64 returns the int64 value, or 0 if the value is not an int64
@@ -170,11 +187,20 @@ func (p *Property) AsUint64() (uint64, error) {
 		return 0, fmt.Errorf("property is nil")
 	}
 
-	stringVal, err := unwrapTypedValue(p.value, typeUint64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get uint64 value: %w", err)
+	switch value := p.value.Kind.(type) {
+	case *structpb.Value_NumberValue:
+		return uint64(value.NumberValue), nil
+	case *structpb.Value_StringValue:
+		return strconv.ParseUint(value.StringValue, 10, 64)
+	case *structpb.Value_StructValue:
+		stringVal, err := unwrapTypedValue(p.value, typeUint64)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get uint64 value: %w", err)
+		}
+		return strconv.ParseUint(stringVal, 10, 64)
+	default:
+		return 0, fmt.Errorf("failed to get uint64 value from %T", value)
 	}
-	return strconv.ParseUint(stringVal, 10, 64)
 }
 
 // GetUint64 returns the uint64 value, or 0 if the value is not an uint64
@@ -197,17 +223,42 @@ func (p *Property) RawValue() any {
 	return p.value.AsInterface()
 }
 
+// Equal checks if two Properties are equal
+func (p *Property) Equal(other *Property) bool {
+	if p == nil && other == nil {
+		return true
+	}
+
+	if p == nil || other == nil {
+		return false
+	}
+
+	return proto.Equal(p.value, other.value)
+}
+
 // Properties struct that holds the properties map and provides access to Property values
 type Properties struct {
 	props *xsync.MapOf[string, Property]
 }
 
-// NewProperties Properties from a map
-func NewProperties(props map[string]any) (*Properties, error) {
+// newPropertiesOption is a function that configures NewProperties
+type newPropertiesOption func(*newPropertiesConfig)
+
+type newPropertiesConfig struct {
+	skipPrefixCheck bool
+}
+
+// NewProperties creates Properties from a map
+func NewProperties(props map[string]any, opts ...newPropertiesOption) (*Properties, error) {
+	config := &newPropertiesConfig{}
+	for _, opt := range opts {
+		opt(config)
+	}
+
 	propsMap := xsync.NewMapOf[string, Property](xsync.WithPresize(len(props)))
 
 	for key, value := range props {
-		if strings.HasPrefix(key, internalPrefix) {
+		if !config.skipPrefixCheck && strings.HasPrefix(key, internalPrefix) {
 			return nil, fmt.Errorf("property key %s is reserved", key)
 		}
 
@@ -235,6 +286,29 @@ func (p *Properties) GetProperty(key string) *Property {
 	return &prop
 }
 
+// SetProperty sets the Property for a given key
+func (p *Properties) SetProperty(key string, prop *Property) {
+	if p == nil {
+		return
+	}
+
+	p.props.Store(key, *prop)
+}
+
+// SetKeyValue sets the key value pair in the Properties
+func (p *Properties) SetKeyValue(key string, value any) error {
+	if p == nil {
+		return nil
+	}
+
+	prop, err := NewProperty(value)
+	if err != nil {
+		return fmt.Errorf("failed to create property for key %s: %w", key, err)
+	}
+	p.props.Store(key, *prop)
+	return nil
+}
+
 // Iterate implements the seq2 iterator so that the caller can call for key, prop := range Iterate()
 func (p *Properties) Iterate() iter.Seq2[string, *Property] {
 	return func(yield func(string, *Property) bool) {
@@ -242,6 +316,15 @@ func (p *Properties) Iterate() iter.Seq2[string, *Property] {
 			return yield(key, &v)
 		})
 	}
+}
+
+// String implements the fmt.Stringer interface, for debugging purposes
+func (p *Properties) String() string {
+	data := make([]string, 0, p.props.Size())
+	for k, v := range p.Iterate() {
+		data = append(data, fmt.Sprintf("%s: %v (%T)", k, v.RawValue(), v.RawValue()))
+	}
+	return strings.Join(data, "\n")
 }
 
 // PropertyFilter is a function that filters properties
@@ -290,4 +373,48 @@ func (p *Properties) Merge(other *Properties) *Properties {
 	return &Properties{
 		props: propsMap,
 	}
+}
+
+// ToProtoStruct converts the Properties to a protobuf Struct
+func (p *Properties) ToProtoStruct() *structpb.Struct {
+	if p == nil {
+		return nil
+	}
+
+	fields := make(map[string]*structpb.Value)
+
+	p.props.Range(func(key string, prop Property) bool {
+		fields[key] = prop.value
+		return true
+	})
+
+	protoStruct := &structpb.Struct{
+		Fields: fields,
+	}
+
+	return protoStruct
+}
+
+// ToLogDict converts the Properties to a zerolog Dict
+func (p *Properties) ToLogDict() *zerolog.Event {
+	dict := zerolog.Dict()
+
+	if p == nil {
+		return dict
+	}
+
+	p.props.Range(func(key string, prop Property) bool {
+		dict.Interface(key, prop.value.AsInterface())
+		return true
+	})
+
+	return dict
+}
+
+// Len returns the number of properties
+func (p *Properties) Len() int {
+	if p == nil {
+		return 0
+	}
+	return p.props.Size()
 }

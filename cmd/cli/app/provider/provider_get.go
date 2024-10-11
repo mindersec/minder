@@ -79,13 +79,13 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 		if err != nil {
 			return err
 		}
-		fmt.Println(out)
+		cmd.Println(out)
 	case app.YAML:
 		out, err := util.GetYamlFromProto(out.GetProvider())
 		if err != nil {
 			return err
 		}
-		fmt.Println(out)
+		cmd.Println(out)
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
 		p := out.GetProvider()

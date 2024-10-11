@@ -17,7 +17,6 @@ package repo
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,7 +77,7 @@ func reconcileCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		return cli.MessageAndError("Error creating reconciliation task", err)
 	}
 
-	fmt.Println("Reconciliation task created")
+	cmd.Println("Reconciliation task created")
 	return nil
 }
 

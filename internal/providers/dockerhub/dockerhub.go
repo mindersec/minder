@@ -25,6 +25,7 @@ import (
 	"path"
 
 	"golang.org/x/oauth2"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/entities/properties"
@@ -195,4 +196,41 @@ func (_ *dockerHubImageLister) FetchProperty(
 // TODO: Implement this
 func (_ *dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
+}
+
+// SupportsEntity implements the Provider interface
+func (_ *dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
+	// TODO: implement
+	return false
+}
+
+// RegisterEntity implements the Provider interface
+func (_ *dockerHubImageLister) RegisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) (*properties.Properties, error) {
+	// TODO: implement
+	return nil, nil
+}
+
+// DeregisterEntity implements the Provider interface
+func (_ *dockerHubImageLister) DeregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	// TODO: implement
+	return nil
+}
+
+// ReregisterEntity implements the Provider interface
+func (_ *dockerHubImageLister) ReregisterEntity(
+	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+) error {
+	// TODO: implement
+	return nil
+}
+
+// PropertiesToProtoMessage implements the Provider interface
+func (_ *dockerHubImageLister) PropertiesToProtoMessage(
+	_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
+	// TODO: Implement
+	return nil, nil
 }

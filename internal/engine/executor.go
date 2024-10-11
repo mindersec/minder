@@ -31,8 +31,10 @@ import (
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/ingestcache"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/history"
 	minderlogger "github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
@@ -58,6 +60,7 @@ type executor struct {
 	featureFlags    openfeature.IClient
 	profileStore    profiles.ProfileStore
 	selBuilder      selectors.SelectionBuilder
+	propService     service.PropertiesService
 }
 
 // NewExecutor creates a new executor
@@ -69,6 +72,7 @@ func NewExecutor(
 	featureFlags openfeature.IClient,
 	profileStore profiles.ProfileStore,
 	selBuilder selectors.SelectionBuilder,
+	propService service.PropertiesService,
 ) Executor {
 	return &executor{
 		querier:         querier,
@@ -78,6 +82,7 @@ func NewExecutor(
 		featureFlags:    featureFlags,
 		profileStore:    profileStore,
 		selBuilder:      selBuilder,
+		propService:     propService,
 	}
 }
 
@@ -124,6 +129,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		inf.ProjectID,
 		provider,
 		ingestCache,
+		eoptions.WithFlagsClient(e.featureFlags),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to fetch rule type instances for project: %w", err)
@@ -141,7 +147,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 	// just store it for all rules without evaluation.
 	for _, profile := range profileAggregates {
 
-		profileEvalStatus := e.profileEvalStatus(ctx, provider, inf, profile)
+		profileEvalStatus := e.profileEvalStatus(ctx, inf, profile)
 
 		for _, rule := range profile.Rules {
 			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache, profileEvalStatus); err != nil {
@@ -208,19 +214,35 @@ func (e *executor) evaluateRule(
 
 func (e *executor) profileEvalStatus(
 	ctx context.Context,
-	provider provinfv1.Provider,
 	eiw *entities.EntityInfoWrapper,
 	aggregate models.ProfileAggregate,
 ) error {
 	// so far this function only handles selectors. In the future we can extend it to handle other
 	// profile-global evaluations
 
+	if len(aggregate.Selectors) == 0 {
+		return nil
+	}
+
 	selection, err := e.selBuilder.NewSelectionFromProfile(eiw.Type, aggregate.Selectors)
 	if err != nil {
 		return fmt.Errorf("error creating selection from profile: %w", err)
 	}
 
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, eiw.Type, eiw.Entity)
+	// get the entity UUID (the primary key in the database)
+	entityID, err := eiw.GetID()
+	if err != nil {
+		return fmt.Errorf("error getting entity id: %w", err)
+	}
+
+	// get the entity with properties by the entity UUID
+	ewp, err := e.propService.EntityWithPropertiesByID(ctx, entityID,
+		service.CallBuilder().WithStoreOrTransaction(e.querier))
+	if err != nil {
+		return fmt.Errorf("error getting entity with properties: %w", err)
+	}
+
+	selEnt := provsel.EntityToSelectorEntity(ctx, e.querier, eiw.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}
@@ -260,7 +282,6 @@ func (e *executor) releaseLockAndFlush(
 	ctx context.Context,
 	inf *entities.EntityInfoWrapper,
 ) {
-	repoID, artID, prID := inf.GetEntityDBIDs()
 	eID, err := inf.GetID()
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error getting entity id")
@@ -271,18 +292,6 @@ func (e *executor) releaseLockAndFlush(
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
 		Str("entity_id", eID.String())
-
-	// TODO: change these to entity_id
-	if repoID.Valid {
-		logger = logger.Str("repo_id", repoID.UUID.String())
-	}
-
-	if artID.Valid {
-		logger = logger.Str("artifact_id", artID.UUID.String())
-	}
-	if prID.Valid {
-		logger = logger.Str("pull_request_id", prID.UUID.String())
-	}
 
 	if err := e.querier.ReleaseLock(ctx, db.ReleaseLockParams{
 		EntityInstanceID: eID,

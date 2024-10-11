@@ -75,19 +75,3 @@ SELECT COUNT(*) FROM repositories;
 SELECT COUNT(*)
 FROM repositories
 WHERE project_id = $1;
-
--- get a list of repos with webhooks belonging to a provider
--- is used for webhook cleanup during provider deletion
--- name: GetProviderWebhooks :many
-SELECT repo_owner, repo_name, webhook_id FROM repositories
-WHERE webhook_id IS NOT NULL AND provider_id = $1;
-
--- name: GetRepoPathFromArtifactID :one
-SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
-JOIN artifacts AS a ON a.repository_id = r.id
-WHERE a.id = $1;
-
--- name: GetRepoPathFromPullRequestID :one
-SELECT r.repo_owner AS owner , r.repo_name AS name FROM repositories AS r
-JOIN pull_requests AS p ON p.repository_id = r.id
-WHERE p.id = $1;

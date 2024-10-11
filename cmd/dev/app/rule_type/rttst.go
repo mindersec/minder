@@ -37,6 +37,8 @@ import (
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	"github.com/stacklok/minder/internal/engine/rtengine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	entModels "github.com/stacklok/minder/internal/entities/models"
+	entProps "github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/profiles"
 	"github.com/stacklok/minder/internal/profiles/models"
@@ -72,7 +74,7 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("remediate-status", "", "", "The previous remediate status (optional)")
 	testCmd.Flags().StringP("remediate-metadata", "", "", "YAML file containing the remediate metadata (optional)")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
-		"Can also be set via the AUTH_TOKEN environment variable.")
+		"Can also be set via the TEST_AUTH_TOKEN environment variable.")
 
 	if err := testCmd.MarkFlagRequired("rule-type"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -122,7 +124,8 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		Project:  &rootProject,
 	}
 
-	eiw, err := getEiwFromFile(ruletype, epath.Value.String())
+	ewp, err := readEntityWithPropertiesFromFile(
+		epath.Value.String(), uuid.MustParse(rootProject), minderv1.EntityFromString(ruletype.Def.InEntity))
 	if err != nil {
 		return fmt.Errorf("error reading entity from file: %w", err)
 	}
@@ -187,12 +190,12 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
-	profSel, err := getProfileSelectors(eiw.Type, profile)
+	profSel, err := getProfileSelectors(ewp.Entity.Type, profile)
 	if err != nil {
 		return fmt.Errorf("error creating selectors: %w", err)
 	}
 
-	return runEvaluationForRules(cmd, eng, eiw, prov, profSel, remediateStatus, remMetadata, rules, actionEngine)
+	return runEvaluationForRules(cmd, eng, ewp, profSel, remediateStatus, remMetadata, rules, actionEngine, prov)
 }
 
 func getProfileSelectors(entType minderv1.Entity, profile *minderv1.Profile) (selectors.Selection, error) {
@@ -219,30 +222,16 @@ func modelSelectionFromProfileSelector(sel []*minderv1.Profile_Selector) []model
 	return modSel
 }
 
-func getEiwFromFile(ruletype *minderv1.RuleType, epath string) (*entities.EntityInfoWrapper, error) {
-	entType := minderv1.EntityFromString(ruletype.Def.InEntity)
-	ent, err := readEntityFromFile(epath, entType)
-	if err != nil {
-		return nil, fmt.Errorf("error reading entity from file: %w", err)
-	}
-
-	return &entities.EntityInfoWrapper{
-		Entity:      ent,
-		Type:        entType,
-		ExecutionID: &uuid.Nil,
-	}, nil
-}
-
 func runEvaluationForRules(
 	cmd *cobra.Command,
 	eng *rtengine.RuleTypeEngine,
-	inf *entities.EntityInfoWrapper,
-	provider provifv1.Provider,
+	ewp *entModels.EntityWithProperties,
 	entitySelectors selectors.Selection,
 	remediateStatus db.RemediationStatusTypes,
 	remMetadata json.RawMessage,
 	frags []*minderv1.Profile_Rule,
 	actionEngine *actions.RuleActionsEngine,
+	prov provifv1.Provider,
 ) error {
 	for _, frag := range frags {
 		val := eng.GetRuleInstanceValidator()
@@ -275,8 +264,14 @@ func runEvaluationForRules(
 		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
 		ctx = logger.FromFlags(logConfig).WithContext(ctx)
 
+		// convert to EntityInfoWrapper as that's what the engine operates on
+		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp, prov)
+		if err != nil {
+			return fmt.Errorf("error converting entity to entity info wrapper: %w", err)
+		}
+
 		// Perform rule evaluation
-		evalErr := selectAndEval(ctx, eng, provider, inf, evalStatus, entitySelectors)
+		evalErr := selectAndEval(ctx, eng, inf, ewp, evalStatus, entitySelectors)
 		evalStatus.SetEvalErr(evalErr)
 
 		// Perform the actions, if any
@@ -299,12 +294,12 @@ func runEvaluationForRules(
 func selectAndEval(
 	ctx context.Context,
 	eng *rtengine.RuleTypeEngine,
-	provider provifv1.Provider,
 	inf *entities.EntityInfoWrapper,
+	ewp *entModels.EntityWithProperties,
 	evalStatus *engif.EvalStatusParams,
 	profileSelectors selectors.Selection,
 ) error {
-	selEnt := provsel.EntityToSelectorEntity(ctx, provider, inf.Type, inf.Entity)
+	selEnt := provsel.EntityToSelectorEntity(ctx, nil, inf.Type, ewp)
 	if selEnt == nil {
 		return fmt.Errorf("error converting entity to selector entity")
 	}
@@ -333,15 +328,14 @@ func readRuleTypeFromFile(fpath string) (*minderv1.RuleType, error) {
 	return minderv1.ParseRuleType(f)
 }
 
-// readEntityFromFile reads an entity from a file and returns it as a protobuf
-// golang structure.
-// TODO: We probably want to move this code to a utility once we land the server
-// side code.
-func readEntityFromFile(fpath string, entType minderv1.Entity) (protoreflect.ProtoMessage, error) {
+func readEntityWithPropertiesFromFile(
+	fpath string, projectID uuid.UUID, entType minderv1.Entity,
+) (*entModels.EntityWithProperties, error) {
 	f, err := os.Open(filepath.Clean(fpath))
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
+	defer f.Close()
 
 	// We transcode to JSON so we can decode it straight to the protobuf structure
 	w := &bytes.Buffer{}
@@ -349,30 +343,50 @@ func readEntityFromFile(fpath string, entType minderv1.Entity) (protoreflect.Pro
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
 
-	var out protoreflect.ProtoMessage
-
-	switch entType {
-	case minderv1.Entity_ENTITY_REPOSITORIES:
-		out = &minderv1.Repository{}
-	case minderv1.Entity_ENTITY_ARTIFACTS:
-		out = &minderv1.Artifact{}
-	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		out = &minderv1.PullRequest{}
-	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS, minderv1.Entity_ENTITY_RELEASE,
-		minderv1.Entity_ENTITY_PIPELINE_RUN,
-		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
-		return nil, fmt.Errorf("entity type not yet supported")
-	case minderv1.Entity_ENTITY_UNSPECIFIED:
-		return nil, fmt.Errorf("entity type unspecified")
-	default:
-		return nil, fmt.Errorf("unknown entity type: %s", entType)
-	}
-
-	if err := json.NewDecoder(w).Decode(out); err != nil {
+	var propertiesMap map[string]any
+	err = json.Unmarshal(w.Bytes(), &propertiesMap)
+	if err != nil {
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
-	return out, nil
+	props, err := entProps.NewProperties(propertiesMap)
+	if err != nil {
+		return nil, fmt.Errorf("error creating properties: %w", err)
+	}
+
+	return &entModels.EntityWithProperties{
+		Entity: entModels.EntityInstance{
+			ID:         uuid.New(),
+			Type:       entType,
+			Name:       props.GetProperty(entProps.PropertyName).GetString(),
+			ProviderID: uuid.Nil,
+			ProjectID:  projectID,
+		},
+		Properties: props,
+	}, nil
+}
+
+func entityWithPropertiesToEntityInfoWrapper(
+	ewp *entModels.EntityWithProperties,
+	prov provifv1.Provider,
+) (*entities.EntityInfoWrapper, error) {
+	var ent protoreflect.ProtoMessage
+	var err error
+
+	if !prov.SupportsEntity(ewp.Entity.Type) {
+		return nil, fmt.Errorf("provider does not support entity type: %s", ewp.Entity.Type)
+	}
+
+	ent, err = prov.PropertiesToProtoMessage(ewp.Entity.Type, ewp.Properties)
+	if err != nil {
+		return nil, fmt.Errorf("error converting properties to entity: %w", err)
+	}
+
+	return &entities.EntityInfoWrapper{
+		Entity:      ent,
+		Type:        ewp.Entity.Type,
+		ExecutionID: &uuid.Nil,
+	}, nil
 }
 
 func getProvider(pstr string, token string, providerConfigFile string) (provifv1.Provider, error) {
@@ -388,6 +402,7 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			&serverconfig.ProviderConfig{
 				GitHubApp: &serverconfig.GitHubAppConfig{AppName: "test"},
 			},
+			&serverconfig.WebhookConfig{},
 			&ratecache.NoopRestClientCache{},
 			credentials.NewGitHubTokenCredential(token),
 			nil,
@@ -420,7 +435,8 @@ func getProvider(pstr string, token string, providerConfigFile string) (provifv1
 			return nil, fmt.Errorf("error parsing gitlab provider config: %w", err)
 		}
 
-		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg)
+		// We may pass a "fake" webhook URL here as it is not used in the test
+		client, err := gitlab.New(credentials.NewGitLabTokenCredential(token), cfg, "fake", "fake")
 		if err != nil {
 			return nil, fmt.Errorf("error instantiating gitlab provider: %w", err)
 		}

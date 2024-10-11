@@ -21,14 +21,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	ent "github.com/stacklok/minder/internal/entities"
 	"github.com/stacklok/minder/internal/profiles/models"
 )
 
@@ -38,40 +36,18 @@ func (e *executor) createEvalStatusParams(
 	profile *models.ProfileAggregate,
 	rule *models.RuleInstance,
 ) (*engif.EvalStatusParams, error) {
-	repoID, artID, prID := inf.GetEntityDBIDs()
 	eID, err := inf.GetID()
 	if err != nil {
 		return nil, fmt.Errorf("Error getting ID from entity info wrapper")
 	}
 
 	params := &engif.EvalStatusParams{
-		Rule:          rule,
-		Profile:       profile,
-		EntityType:    entities.EntityTypeToDB(inf.Type),
-		EntityID:      eID,
-		RepoID:        repoID,
-		ArtifactID:    artID,
-		PullRequestID: prID,
-		ProjectID:     inf.ProjectID,
-		ExecutionID:   *inf.ExecutionID, // Execution ID is required in the executor.
-	}
-
-	// Prepare params for fetching the current rule evaluation from the database
-	entityType := db.NullEntities{
-		Entities: params.EntityType,
-		Valid:    true,
-	}
-	entityID := uuid.NullUUID{}
-	switch params.EntityType {
-	case db.EntitiesArtifact:
-		entityID = params.ArtifactID
-	case db.EntitiesRepository:
-		entityID = params.RepoID
-	case db.EntitiesPullRequest:
-		entityID = params.PullRequestID
-	case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
-		db.EntitiesTaskRun, db.EntitiesBuild:
-		return nil, fmt.Errorf("entity type not yet supported")
+		Rule:        rule,
+		Profile:     profile,
+		EntityType:  entities.EntityTypeToDB(inf.Type),
+		EntityID:    eID,
+		ProjectID:   inf.ProjectID,
+		ExecutionID: *inf.ExecutionID, // Execution ID is required in the executor.
 	}
 
 	// TODO: once we replace the existing profile state types with the new
@@ -94,9 +70,8 @@ func (e *executor) createEvalStatusParams(
 	// Get the current rule evaluation from the database
 	evalStatus, err := e.querier.GetRuleEvaluationByProfileIdAndRuleType(ctx,
 		params.Profile.ID,
-		entityType,
 		ruleName,
-		entityID,
+		eID,
 		nullableRuleTypeName,
 	)
 	if err != nil {
@@ -135,12 +110,8 @@ func (e *executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	entityID, entityType, err := ent.EntityFromIDs(params.RepoID.UUID, params.ArtifactID.UUID, params.PullRequestID.UUID)
-	if err != nil {
-		return err
-	}
 	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
-	e.metrics.CountEvalStatus(ctx, status, entityType)
+	e.metrics.CountEvalStatus(ctx, status, params.EntityType)
 
 	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
 	e.metrics.CountRemediationStatus(ctx, remediationStatus)
@@ -162,7 +133,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			params.Rule.ID,
 			params.Profile.ID,
 			params.EntityType,
-			entityID,
+			params.EntityID,
 			params.GetEvalErr(),
 			chkpjs,
 		)

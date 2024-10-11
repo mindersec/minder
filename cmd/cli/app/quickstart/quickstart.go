@@ -157,6 +157,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 	var err error
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
+	ruleClient := minderv1.NewRuleTypeServiceClient(conn)
 
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
@@ -195,6 +196,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 		conn = newConn
 		repoClient = minderv1.NewRepositoryServiceClient(conn)
 		profileClient = minderv1.NewProfileServiceClient(conn)
+		ruleClient = minderv1.NewRuleTypeServiceClient(conn)
 	}
 
 	// Step 1 - Confirm enrolling
@@ -293,7 +295,7 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 	defer cancel()
 
 	// Create the rule type in minder
-	_, err = profileClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
+	_, err = ruleClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
 		RuleType: rt,
 	})
 	if err != nil {

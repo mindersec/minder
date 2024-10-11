@@ -108,6 +108,8 @@ message SelectorArtifact {
 message SelectorPullRequest {
   // the full name of the pr, e.g. stacklok/minder-server/123
   string name = 1;
+  // the provider of the pull request
+  SelectorProvider provider = 3;
 
   // provider-specific properties
   google.protobuf.Struct properties = 2;

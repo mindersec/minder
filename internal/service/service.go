@@ -37,6 +37,7 @@ import (
 	"github.com/stacklok/minder/internal/email/noop"
 	"github.com/stacklok/minder/internal/engine"
 	"github.com/stacklok/minder/internal/engine/selectors"
+	"github.com/stacklok/minder/internal/entities/handlers"
 	propService "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/flags"
@@ -60,14 +61,15 @@ import (
 	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
 	"github.com/stacklok/minder/internal/reconcilers"
 	"github.com/stacklok/minder/internal/reminderprocessor"
-	"github.com/stacklok/minder/internal/repositories/github"
-	"github.com/stacklok/minder/internal/repositories/github/webhooks"
+	"github.com/stacklok/minder/internal/repositories"
 	"github.com/stacklok/minder/internal/roles"
 	"github.com/stacklok/minder/internal/ruletypes"
 )
 
 // AllInOneServerService is a helper function that starts the gRPC and HTTP servers,
 // the eventer, aggregator, the executor, and the reconciler.
+//
+//nolint:gocyclo // This function is expected to be large
 func AllInOneServerService(
 	ctx context.Context,
 	cfg *serverconfig.Config,
@@ -97,7 +99,6 @@ func AllInOneServerService(
 	serverconfig.FallbackOAuthClientConfigValues("github", &cfg.Provider.GitHub.OAuthClientConfig)
 	serverconfig.FallbackOAuthClientConfigValues("github-app", &cfg.Provider.GitHubApp.OAuthClientConfig)
 
-	historySvc := history.NewEvaluationHistoryService()
 	inviteSvc := invites.NewInviteService()
 	selChecker := selectors.NewEnv()
 	profileSvc := profiles.NewProfileService(evt, selChecker)
@@ -111,8 +112,9 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	whManager := webhooks.NewWebhookManager(cfg.WebhookConfig)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
+	propSvc := propService.NewPropertiesService(store)
+	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
 	// webhook handling to make this viable.
@@ -128,35 +130,55 @@ func AllInOneServerService(
 		restClientCache,
 		ghClientFactory,
 		&cfg.Provider,
+		&cfg.WebhookConfig,
 		fallbackTokenClient,
 		cryptoEngine,
-		whManager,
 		store,
 		ghProviders,
+		propSvc,
 	)
-	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
-		cryptoEngine,
-		store,
-	)
-	gitlabProviderManager := gitlabmanager.NewGitLabProviderClassManager(
-		cryptoEngine,
-		store,
-		cfg.Provider.GitLab,
-	)
-	providerManager, err := manager.NewProviderManager(providerStore,
-		githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
+
+	provmans := []manager.ProviderClassManager{githubProviderManager}
+
+	if flags.Bool(ctx, featureFlagClient, flags.DockerHubProvider) {
+		dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(
+			cryptoEngine,
+			store,
+		)
+		provmans = append(provmans, dockerhubProviderManager)
+	}
+
+	if flags.Bool(ctx, featureFlagClient, flags.GitLabProvider) {
+		gitlabProviderManager, err := gitlabmanager.NewGitLabProviderClassManager(
+			ctx,
+			cryptoEngine,
+			store,
+			evt,
+			cfg.Provider.GitLab,
+			cfg.WebhookConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create gitlab provider manager: %w", err)
+		}
+
+		provmans = append(provmans, gitlabProviderManager)
+	}
+
+	providerManager, closer, err := manager.NewProviderManager(ctx, providerStore,
+		provmans...)
 	if err != nil {
 		return fmt.Errorf("failed to create provider manager: %w", err)
 	}
-	providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager, gitlabProviderManager)
+	defer closer()
+
+	providerAuthManager, err := manager.NewAuthManager(provmans...)
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
-	propSvc := propService.NewPropertiesService(store)
-	repos := github.NewRepositoryService(whManager, store, propSvc, evt, providerManager)
+	historySvc := history.NewEvaluationHistoryService(providerManager)
+	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
-	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	s := controlplane.NewServer(
 		store,
@@ -169,6 +191,7 @@ func AllInOneServerService(
 		idClient,
 		inviteSvc,
 		repos,
+		propSvc,
 		roleScv,
 		profileSvc,
 		historySvc,
@@ -188,8 +211,12 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 	}
+	err = controlplane.SubscribeToAdminEvents(ctx, store, authzClient, cfg, projectDeleter)
+	if err != nil {
+		return fmt.Errorf("unable to subscribe to account events: %w", err)
+	}
 
-	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
+	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator, propSvc, providerManager)
 
 	// consume flush-all events
 	evt.ConsumeEvents(aggr)
@@ -209,10 +236,11 @@ func AllInOneServerService(
 		store,
 		providerManager,
 		executorMetrics,
-		history.NewEvaluationHistoryService(),
+		historySvc,
 		featureFlagClient,
 		profileStore,
 		selEnv,
+		propSvc,
 	)
 
 	handler := engine.NewExecutorEventHandler(
@@ -234,6 +262,22 @@ func AllInOneServerService(
 	// Register the installation manager to handle provider installation events
 	im := installations.NewInstallationManager(ghProviders)
 	evt.ConsumeEvents(im)
+
+	// Register the entity refresh manager to handle entity refresh events
+	refresh := handlers.NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(refresh)
+
+	refreshById := handlers.NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(refreshById)
+
+	addOriginatingEntity := handlers.NewAddOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(addOriginatingEntity)
+
+	delOriginatingEntity := handlers.NewRemoveOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(delOriginatingEntity)
+
+	getAndDeleteEntity := handlers.NewGetEntityAndDeleteHandler(evt, store, propSvc)
+	evt.ConsumeEvents(getAndDeleteEntity)
 
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer

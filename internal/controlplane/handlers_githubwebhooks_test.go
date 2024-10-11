@@ -46,20 +46,18 @@ import (
 	mockdb "github.com/stacklok/minder/database/mock"
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/models"
+	entMsg "github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/properties"
+	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	ghRepoSvc "github.com/stacklok/minder/internal/repositories/github"
-	mock_github "github.com/stacklok/minder/internal/repositories/github/mock"
+	mock_repos "github.com/stacklok/minder/internal/repositories/mock"
 	"github.com/stacklok/minder/internal/util/testqueue"
 	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provif "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -74,59 +72,18 @@ var rawPushEvent string
 //go:embed test-payloads/branch-protection-configuration-disabled.json
 var rawBranchProtectionConfigurationDisabledEvent string
 
+var timeout time.Duration = 10 * time.Millisecond
+
 // MockClient is a mock implementation of the GitHub client.
 type MockClient struct {
 	mock.Mock
 }
 
-type repoSvcMock = *mock_github.MockRepositoryService
+type propSvcMock = *mock_service.MockPropertiesService
+type propSvcMockBuilder = func(*gomock.Controller) propSvcMock
+
+type repoSvcMock = *mock_repos.MockRepositoryService
 type repoSvcMockBuilder = func(*gomock.Controller) repoSvcMock
-
-func newRepoSvcMock(opts ...func(mck repoSvcMock)) repoSvcMockBuilder {
-	return func(ctrl *gomock.Controller) repoSvcMock {
-		mck := mock_github.NewMockRepositoryService(ctrl)
-		for _, opt := range opts {
-			opt(mck)
-		}
-		return mck
-	}
-}
-
-func withSuccessRepoById(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
-	repoProps, err := properties.NewProperties(propMap)
-	if err != nil {
-		panic(err)
-	}
-
-	ewp := models.EntityWithProperties{
-		Entity:     repo,
-		Properties: repoProps,
-	}
-
-	return func(mock repoSvcMock) {
-		mock.EXPECT().
-			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-			Return(&ewp, nil)
-	}
-}
-
-func withRepoByIdRepoNotFoundUpstream(repo models.EntityInstance, propMap map[string]any) func(mck repoSvcMock) {
-	repoProps, err := properties.NewProperties(propMap)
-	if err != nil {
-		panic(err)
-	}
-
-	ewp := models.EntityWithProperties{
-		Entity:     repo,
-		Properties: repoProps,
-	}
-
-	return func(mock repoSvcMock) {
-		mock.EXPECT().
-			RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-			Return(&ewp, provif.ErrEntityNotFound)
-	}
-}
 
 // RunUnitTestSuite runs the unit test suite.
 func RunUnitTestSuite(t *testing.T) {
@@ -173,7 +130,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecretFile = whSecretFile.Name()
 	defer evt.Close()
 
@@ -219,14 +176,14 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
+	defer pq.Close()
 	queued := pq.GetQueue()
 
-	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
+	evt.Register(events.TopicQueueRefreshEntityAndEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -234,10 +191,6 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	}()
 
 	<-evt.Running()
-
-	mockRepoSvc.EXPECT().
-		RefreshRepositoryByUpstreamID(gomock.Any(), gomock.Any()).
-		Return(nil, ghRepoSvc.ErrRepoNotFound)
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -282,8 +235,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	defer os.Remove(prevCredsFile.Name())
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockRepoSvc := mock_github.NewMockRepositoryService(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 	srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 	defer evt.Close()
@@ -293,7 +245,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 
 	// This changes because "meta" event can only trigger a
 	// deletion
-	evt.Register(events.TopicQueueReconcileEntityDelete, pq.Pass)
+	evt.Register(events.TopicQueueGetEntityAndDelete, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -301,31 +253,6 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	}()
 
 	<-evt.Running()
-
-	repositoryID := uuid.New()
-	projectID := uuid.New()
-	providerID := uuid.New()
-
-	repoProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: "12345",
-		ghprop.RepoPropertyId:         12345,
-	})
-	require.NoError(t, err)
-
-	repoEntityInstance := models.EntityWithProperties{
-		Entity: models.EntityInstance{
-			ID:         repositoryID,
-			Type:       v1.Entity_ENTITY_REPOSITORIES,
-			ProviderID: providerID,
-			ProjectID:  projectID,
-		},
-		Properties: repoProps,
-	}
-
-	mockRepoSvc.EXPECT().
-		RefreshRepositoryByUpstreamID(gomock.Any(), int64(12345)).
-		Return(&repoEntityInstance, nil).
-		AnyTimes()
 
 	ts := httptest.NewServer(srv.HandleGitHubWebHook())
 	defer ts.Close()
@@ -361,15 +288,14 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	assert.Equal(t, "12345", received.Metadata["id"])
 	assert.Equal(t, "meta", received.Metadata["type"])
 	assert.Equal(t, "https://api.github.com/", received.Metadata["source"])
-	var inner messages.MinderEvent
+	var inner entMsg.HandleEntityAndDoMessage
 	err = json.Unmarshal(received.Payload, &inner)
 	require.NoError(t, err)
 	require.NoError(t, validator.New().Struct(&inner))
-	require.Equal(t, providerID, inner.ProviderID)
-	require.Equal(t, projectID, inner.ProjectID)
-	require.Equal(t, repositoryID.String(), inner.Entity["repoID"])
-	require.Equal(t, nil, inner.Entity["repoName"])  // optional
-	require.Equal(t, nil, inner.Entity["repoOwner"]) // optional
+
+	require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, inner.Entity.Type)
+	require.Equal(t, "12345", inner.Entity.GetByProps[properties.PropertyUpstreamID])
+	require.Equal(t, "github", inner.Hint.ProviderImplementsHint)
 
 	// test that if no secret matches we get back a 400
 	req, err = http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
@@ -399,7 +325,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -451,7 +377,7 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	go func() {
@@ -488,7 +414,7 @@ func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	srv, evt := newDefaultServer(t, mockStore, nil, nil)
+	srv, evt := newDefaultServer(t, mockStore, nil, nil, nil)
 	defer evt.Close()
 
 	pq := testqueue.NewPassthroughQueue(t)
@@ -539,10 +465,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	repositoryID := uuid.New()
-	projectID := uuid.New()
-	providerID := uuid.New()
-	artifactID := uuid.New()
 	visibility := "visibility"
 
 	tests := []struct {
@@ -552,6 +474,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 		rawPayload    []byte
 		mockStoreFunc df.MockStoreBuilder
 		mockRepoBld   repoSvcMockBuilder
+		mockPropsBld  propSvcMockBuilder
+		ghMocks       []func(hubMock gf.GitHubMock)
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -614,6 +538,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			payload: &packageEvent{
 				Action: github.String("published"),
 				Package: &pkg{
+					ID:          github.Int64(123),
 					Name:        github.String("package-name"),
 					PackageType: github.String("package-type"),
 					// .package.package_version.container_metadata.tag.name
@@ -637,57 +562,21 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulGetArtifactByID(
-					db.Artifact{
-						ID: artifactID,
-					},
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("login/package-name"),
+			},
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -696,57 +585,21 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "package",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulGetProviderByID(
-					db.Provider{
-						ID: providerID,
-					},
-					providerID,
-				),
-				df.WithSuccessfulGetArtifactByID(
-					db.Artifact{
-						ID: artifactID,
-					},
-				),
-				df.WithSuccessfulUpsertArtifact(
-					db.Artifact{
-						ID: uuid.New(),
-					},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder"),
+			},
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1125,41 +978,25 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.NoError(t, validator.New().Struct(&evt))
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
+
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				matchProps, err := properties.NewProperties(evt.MatchProps)
+				require.NoError(t, err)
+				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1177,41 +1014,25 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.NoError(t, validator.New().Struct(&evt))
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
+
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				matchProps, err := properties.NewProperties(evt.MatchProps)
+				require.NoError(t, err)
+				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1232,28 +1053,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				matchProps, err := properties.NewProperties(evt.MatchProps)
+				require.NoError(t, err)
+				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_rule created",
@@ -1269,38 +1088,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1317,38 +1116,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1365,38 +1144,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1413,38 +1172,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1460,38 +1199,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1508,38 +1227,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1555,38 +1254,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1603,38 +1282,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1651,38 +1315,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1699,41 +1347,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.NoError(t, validator.New().Struct(&evt))
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
+
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1750,41 +1379,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.NoError(t, validator.New().Struct(&evt))
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
+
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1801,38 +1411,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1849,38 +1444,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
-				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1897,38 +1477,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1945,38 +1510,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -1993,41 +1544,21 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.NoError(t, validator.New().Struct(&evt))
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
-				require.Equal(t, nil, evt.Entity["repoName"])  // optional
-				require.Equal(t, nil, evt.Entity["repoOwner"]) // optional
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2044,38 +1575,24 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2093,28 +1610,23 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			// the message is passed on to events.TopicQueueRefreshEntityAndEvaluate
+			// which should discard it (see test there)
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				timeout := 1 * time.Second
+				received := withTimeout(ch, timeout)
+				require.Equal(t, event, received.Metadata["type"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+			},
 		},
 		{
 			name: "repository private repos enabled",
@@ -2131,38 +1643,26 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
+			// the message is passed on to events.TopicQueueRefreshEntityAndEvaluate
+			// which should discard it (see test there)
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
-				require.NotNilf(t, received, "no event received after waiting %s", timeout)
-				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+
+				var evt entMsg.HandleEntityAndDoMessage
+				err := json.Unmarshal(received.Payload, &evt)
+				require.NoError(t, err)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -2179,38 +1679,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2227,38 +1707,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2275,38 +1735,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2323,38 +1763,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2371,38 +1791,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2419,38 +1819,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2466,38 +1846,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2514,38 +1874,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2562,38 +1902,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2610,38 +1930,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2658,38 +1958,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2706,38 +1986,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2754,38 +2014,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2802,38 +2042,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2850,38 +2070,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2898,38 +2098,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2945,38 +2125,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -2992,38 +2152,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3050,38 +2190,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/stacklok/minder"),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3090,38 +2210,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -3139,28 +2239,19 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_configuration disabled",
@@ -3174,66 +2265,37 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "branch_protection_configuration disabled raw event",
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3248,38 +2310,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3294,38 +2336,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3340,38 +2362,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3386,38 +2388,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3432,38 +2414,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3478,38 +2440,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/stacklok/minder",
 				),
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      events.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -3531,6 +2473,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
 					URL:    github.String("url"),
 					Number: github.Int(42),
 					User: &github.User{
@@ -3538,44 +2481,105 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulUpsertPullRequest(
-					db.PullRequest{},
-				),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
 				require.Equal(t, event, received.Metadata["type"])
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
-				require.Equal(t, providerID.String(), received.Metadata["provider_id"])
-				require.Equal(t, projectID.String(), received.Metadata[entities.ProjectIDEventKey])
-				require.Equal(t, repositoryID.String(), received.Metadata["repository_id"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
+		},
+		{
+			name: "pull_request reopened",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
+			event: "pull_request",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
+			payload: &github.PullRequestEvent{
+				Action: github.String("reopened"),
+				Repo: newGitHubRepo(
+					12345,
+					"minder",
+					"stacklok/minder",
+					"https://github.com/stacklok/minder",
+				),
+				Organization: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
+					URL:    github.String("url"),
+					Number: github.Int(42),
+					User: &github.User{
+						ID: github.Int64(42),
+					},
+				},
+			},
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			topic:      events.TopicQueueOriginatingEntityAdd,
+			statusCode: http.StatusOK,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
+		},
+		{
+			name: "pull_request synchronize",
+			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#secret_scanning_alert_location
+			event: "pull_request",
+			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PullRequestEvent
+			payload: &github.PullRequestEvent{
+				Action: github.String("synchronize"),
+				Repo: newGitHubRepo(
+					12345,
+					"minder",
+					"stacklok/minder",
+					"https://github.com/stacklok/minder",
+				),
+				Organization: &github.Organization{
+					Login: github.String("stacklok"),
+				},
+				PullRequest: &github.PullRequest{
+					ID:     github.Int64(1234542),
+					URL:    github.String("url"),
+					Number: github.Int(42),
+					User: &github.User{
+						ID: github.Int64(42),
+					},
+				},
+			},
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			topic:      events.TopicQueueOriginatingEntityAdd,
+			statusCode: http.StatusOK,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3602,32 +2606,22 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			mockStoreFunc: df.NewMockStore(
-				df.WithSuccessfulDeletePullRequest(),
-				df.WithTransaction(),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
+			topic:      events.TopicQueueOriginatingEntityDelete,
 			statusCode: http.StatusOK,
-			queued:     nil,
+			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
+				t.Helper()
+				received := withTimeout(ch, timeout)
+				require.NotNilf(t, received, "no event received after waiting %s", timeout)
+				require.Equal(t, "12345", received.Metadata["id"])
+				require.Equal(t, event, received.Metadata["type"])
+				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
+			},
 		},
 		{
 			name: "pull_request not handled",
@@ -3653,26 +2647,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					},
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withSuccessRepoById(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					},
-					map[string]any{
-						properties.PropertyName:           "stacklok/minder",
-						properties.PropertyUpstreamID:     "12345",
-						properties.RepoPropertyIsArchived: false,
-						properties.RepoPropertyIsPrivate:  false,
-						properties.RepoPropertyIsFork:     false,
-						ghprop.RepoPropertyOwner:          "stacklok",
-						ghprop.RepoPropertyName:           "minder",
-						ghprop.RepoPropertyId:             int64(12345),
-					}),
-			),
-			topic:      events.TopicQueueEntityEvaluate,
+			ghMocks: []func(hubMock gf.GitHubMock){
+				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+			},
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -3739,7 +2716,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			require.NoError(t, err, "failed to write to temporary file")
 			defer os.Remove(prevCredsFile.Name())
 
-			ghProvider := gf.NewGitHubMock(
+			ghMocks := []func(gf.GitHubMock){
 				gf.WithSuccessfulGetPackageByName(&github.Package{
 					Visibility: &visibility,
 				}),
@@ -3756,7 +2733,10 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 						SHA: github.String("sha"),
 					},
 				}),
-			)
+			}
+			ghMocks = append(ghMocks, tt.ghMocks...)
+			ghProvider := gf.NewGitHubMock(ghMocks...)
+
 			providerSetup := pf.NewProviderManagerMock(
 				pf.WithSuccessfulInstantiateFromID(ghProvider(ctrl)),
 			)
@@ -3768,20 +2748,28 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			var mockRepoSvc *mock_github.MockRepositoryService
+			var mockRepoSvc *mock_repos.MockRepositoryService
 			if tt.mockRepoBld != nil {
 				mockRepoSvc = tt.mockRepoBld(ctrl)
 			} else {
-				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
+				mockRepoSvc = mock_repos.NewMockRepositoryService(ctrl)
 			}
 
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+			var mockPropSvc *mock_service.MockPropertiesService
+			if tt.mockPropsBld != nil {
+				mockPropSvc = tt.mockPropsBld(ctrl)
+			} else {
+				mockPropSvc = mock_service.NewMockPropertiesService(ctrl)
+			}
+
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, mockPropSvc, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "not-our-secret"
 			srv.cfg.WebhookConfig.PreviousWebhookSecretFile = prevCredsFile.Name()
 			srv.providerManager = providerSetup(ctrl)
 			defer evt.Close()
 
 			pq := testqueue.NewPassthroughQueue(t)
+			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)
@@ -3833,7 +2821,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	t := s.T()
 	t.Parallel()
 
-	repositoryID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
 
@@ -3846,7 +2833,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 		payload       any
 		rawPayload    []byte
 		mockStoreFunc df.MockStoreBuilder
-		mockRepoBld   repoSvcMockBuilder
 		statusCode    int
 		topic         string
 		queued        func(*testing.T, string, <-chan *message.Message)
@@ -3953,7 +2939,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode:    http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -3961,6 +2946,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
 				require.Equal(t, "github-app", received.Metadata["class"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -3974,7 +2962,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode:    http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
 				require.Equal(t, "12345", received.Metadata["id"])
@@ -3982,6 +2969,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, "https://api.github.com/", received.Metadata["source"])
 				require.Equal(t, "provider_instance_removed", received.Metadata["event"])
 				require.Equal(t, "github-app", received.Metadata["class"])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -4130,7 +3120,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 
 				var evt messages.MinderEvent
 
@@ -4144,6 +3133,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
+
+				// the name can be either stacklok/minder or stacklok/trusty
+				require.Contains(t, []string{"stacklok/minder", "stacklok/trusty"}, evt.Properties[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -4155,6 +3148,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.NoError(t, err)
 				require.Equal(t, providerID, evt.ProviderID)
 				require.Equal(t, projectID, evt.ProjectID)
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 		{
@@ -4241,22 +3237,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			mockRepoBld: newRepoSvcMock(
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-				withRepoByIdRepoNotFoundUpstream(
-					models.EntityInstance{
-						ID:         repositoryID,
-						Type:       v1.Entity_ENTITY_REPOSITORIES,
-						ProviderID: providerID,
-						ProjectID:  projectID,
-					}, nil),
-			),
 			mockStoreFunc: df.NewMockStore(
 				df.WithSuccessfulGetProviderByID(
 					db.Provider{
@@ -4278,13 +3258,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueReconcileEntityDelete,
+			topic:      events.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
-				timeout := 1 * time.Second
 
-				var evt messages.MinderEvent
+				var evt entMsg.HandleEntityAndDoMessage
 
 				received := withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -4294,9 +3273,10 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err := json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -4306,9 +3286,13 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 				err = json.Unmarshal(received.Payload, &evt)
 				require.NoError(t, err)
-				require.Equal(t, providerID, evt.ProviderID)
-				require.Equal(t, projectID, evt.ProjectID)
-				require.Equal(t, repositoryID.String(), evt.Entity["repoID"])
+				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
+				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
+				// we use contains here because the messages can arrive in any order
+				require.Contains(t, []string{"12345", "67890"}, evt.Entity.GetByProps[properties.PropertyUpstreamID])
+
+				received = withTimeout(ch, timeout)
+				require.Nil(t, received)
 			},
 		},
 
@@ -4361,17 +3345,12 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			var mockRepoSvc *mock_github.MockRepositoryService
-			if tt.mockRepoBld != nil {
-				mockRepoSvc = tt.mockRepoBld(ctrl)
-			} else {
-				mockRepoSvc = mock_github.NewMockRepositoryService(ctrl)
-			}
-
-			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil)
+			mockRepoSvc := mock_repos.NewMockRepositoryService(ctrl)
+			srv, evt := newDefaultServer(t, mockStore, mockRepoSvc, nil, nil)
 			srv.cfg.WebhookConfig.WebhookSecret = "test"
 
 			pq := testqueue.NewPassthroughQueue(t)
+			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)

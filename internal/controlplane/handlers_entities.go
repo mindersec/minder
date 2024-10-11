@@ -22,9 +22,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/events"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
@@ -55,8 +57,9 @@ func (s *Server) ReconcileEntityRegistration(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "entity type %s not supported", entityType)
 	}
 
-	providerName := in.GetContext().GetProvider()
-	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(ctx, projectID, db.ProviderTypeRepoLister, providerName)
+	providerNameParam := in.GetContext().GetProvider()
+	provs, errorProvs, err := s.providerManager.BulkInstantiateByTrait(
+		ctx, projectID, db.ProviderTypeRepoLister, providerNameParam)
 	if err != nil {
 		pErr := providers.ErrProviderNotFoundBy{}
 		if errors.As(err, &pErr) {
@@ -65,35 +68,28 @@ func (s *Server) ReconcileEntityRegistration(
 		return nil, providerError(err)
 	}
 
-	for providerName, provider := range provs {
-		// Explicitly fetch the provider here as we need its ID for posting the event.
-		pvr, err := s.providerStore.GetByName(ctx, projectID, providerName)
-		if err != nil {
-			errorProvs = append(errorProvs, providerName)
-			continue
-		}
-
-		repos, err := s.fetchRepositoriesForProvider(ctx, projectID, providerName, provider)
+	for providerID, providerT := range provs {
+		repos, err := s.fetchRepositoriesForProvider(ctx, projectID, providerID, providerT.Name, providerT.Provider)
 		if err != nil {
 			l.Error().
-				Str("providerName", providerName).
+				Str("providerName", providerT.Name).
 				Str("projectID", projectID.String()).
 				Err(err).
 				Msg("error fetching repositories for provider")
-			errorProvs = append(errorProvs, providerName)
+			errorProvs = append(errorProvs, providerT.Name)
 			continue
 		}
 
 		for _, repo := range repos {
-			if repo.Registered {
+			if repo.Repo.Registered {
 				continue
 			}
 
-			msg, err := createEntityMessage(ctx, &l, projectID, pvr.ID, repo.GetName(), repo.GetOwner())
+			msg, err := createEntityMessage(ctx, &l, projectID, providerID, repo.Entity.GetEntity().GetProperties())
 			if err != nil {
 				l.Error().Err(err).
-					Int64("repoID", repo.RepoId).
-					Str("providerName", providerName).
+					Int64("repoID", repo.Repo.RepoId).
+					Str("providerName", providerT.Name).
 					Msg("error creating registration entity message")
 				// This message will not be sent, but we can continue with the rest.
 				continue
@@ -122,19 +118,23 @@ func createEntityMessage(
 	ctx context.Context,
 	l *zerolog.Logger,
 	projectID, providerID uuid.UUID,
-	repoName, repoOwner string,
+	props *structpb.Struct,
 ) (*message.Message, error) {
 	msg := message.NewMessage(uuid.New().String(), nil)
 	msg.SetContext(ctx)
 
+	repoProps, err := properties.NewProperties(props.AsMap())
+	if err != nil {
+		return nil, err
+	}
+
 	event := messages.NewMinderEvent().
 		WithProjectID(projectID).
 		WithProviderID(providerID).
-		WithEntityType("repository").
-		WithAttribute("repoName", repoName).
-		WithAttribute("repoOwner", repoOwner)
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+		WithProperties(repoProps)
 
-	err := event.ToMessage(msg)
+	err = event.ToMessage(msg)
 	if err != nil {
 		l.Error().Err(err).Msg("error marshalling register entities message")
 		return nil, err

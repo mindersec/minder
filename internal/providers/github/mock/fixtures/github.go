@@ -80,3 +80,15 @@ func WithSuccessfulGetPullRequest(pr any) func(mock GitHubMock) {
 			Return(pr, nil)
 	}
 }
+
+func WithSuccessfulGetEntityName(name string) func(mock GitHubMock) {
+	return func(mock GitHubMock) {
+		mock.EXPECT().
+			GetEntityName(
+				gomock.Any(),
+				gomock.Any(),
+			).
+			AnyTimes().
+			Return(name, nil)
+	}
+}

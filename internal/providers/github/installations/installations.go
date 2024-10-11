@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
@@ -89,7 +90,10 @@ func (im *InstallationManager) handleProviderInstanceRemovedEvent(ctx context.Co
 		return fmt.Errorf("failed to unmarshal payload: %w", err)
 	}
 
-	return im.svc.DeleteGitHubAppInstallation(ctx, payload.InstallationID)
+	newCtx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	return im.svc.DeleteGitHubAppInstallation(newCtx, payload.InstallationID)
 }
 
 // InstallationInfoWrapper is a helper struct to gether information

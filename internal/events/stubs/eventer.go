@@ -17,6 +17,7 @@ package stubs
 
 import (
 	"context"
+	"slices"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
@@ -29,7 +30,8 @@ var _ events.Publisher = (*StubEventer)(nil)
 
 // StubEventer is an eventer that's useful for testing.
 type StubEventer struct {
-	Sent []*message.Message
+	Topics []string
+	Sent   []*message.Message
 }
 
 // Close implements events.Interface.
@@ -43,7 +45,10 @@ func (*StubEventer) ConsumeEvents(...events.Consumer) {
 }
 
 // Publish implements events.Interface.
-func (s *StubEventer) Publish(_ string, messages ...*message.Message) error {
+func (s *StubEventer) Publish(topic string, messages ...*message.Message) error {
+	if !slices.Contains(s.Topics, topic) {
+		s.Topics = append(s.Topics, topic)
+	}
 	s.Sent = append(s.Sent, messages...)
 	return nil
 }

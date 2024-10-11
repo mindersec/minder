@@ -19,9 +19,12 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"github.com/stacklok/minder/internal/util/rand"
 )
 
 func Test_EntityCrud(t *testing.T) {
@@ -52,10 +55,7 @@ func Test_EntityCrud(t *testing.T) {
 		require.Equal(t, ent.ProviderID, prov.ID)
 		require.Equal(t, ent.OriginatedFrom, uuid.NullUUID{})
 
-		entGet, err := testQueries.GetEntityByID(context.Background(), GetEntityByIDParams{
-			ID:       ent.ID,
-			Projects: []uuid.UUID{proj.ID},
-		})
+		entGet, err := testQueries.GetEntityByID(context.Background(), ent.ID)
 		require.NoError(t, err)
 		require.Equal(t, entGet, ent)
 
@@ -65,10 +65,7 @@ func Test_EntityCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		entGet, err = testQueries.GetEntityByID(context.Background(), GetEntityByIDParams{
-			ID:       ent.ID,
-			Projects: []uuid.UUID{proj.ID},
-		})
+		entGet, err = testQueries.GetEntityByID(context.Background(), ent.ID)
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		require.Empty(t, entGet)
 	})
@@ -80,6 +77,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       "garbage/nosuchentity",
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		require.Empty(t, ent)
@@ -127,6 +125,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       testEntName,
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, getRepo)
@@ -136,6 +135,7 @@ func Test_EntityCrud(t *testing.T) {
 			ProjectID:  proj.ID,
 			Name:       testEntName,
 			EntityType: EntitiesRepository,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, getRepo)
@@ -209,6 +209,7 @@ func Test_PropertyCrud(t *testing.T) {
 		const testRepoName = "testorg/testrepo_getbyprops"
 		const testArtifactName = "testorg/testartifact_getbyprops"
 
+		t.Log("Creating repository for GetTypedEntitiesByPropertyV1 test")
 		repo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
@@ -233,6 +234,7 @@ func Test_PropertyCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		t.Log("Creating artifact for GetTypedEntitiesByPropertyV1 test")
 		art, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
 			EntityType:     EntitiesArtifact,
 			Name:           testArtifactName,
@@ -250,23 +252,65 @@ func Test_PropertyCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 
+		t.Log("Get by shared key and repo should return the repository")
 		getEnt, err := testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesRepository, "sharedkey", "sharedvalue")
+			context.Background(), EntitiesRepository, "sharedkey", "sharedvalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, repo.ID)
 
+		t.Log("Get by shared key and artifact should return the artifact")
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesArtifact, "sharedkey", "sharedvalue")
+			context.Background(), EntitiesArtifact, "sharedkey", "sharedvalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, art.ID)
 
+		t.Log("Get by repo key and value should return the repository")
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), proj.ID, EntitiesRepository, "repokey", "repovalue")
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID: proj.ID,
+			})
 		require.NoError(t, err)
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Get by repo key, value and provider should return the repository")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Get by repo key, value, project and provider should return the repository")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		t.Log("Getting by key but with wrong provider should return nothing")
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProviderID: uuid.New(),
+			})
+		require.NoError(t, err)
+		require.Empty(t, getEnt)
 	})
 }
 
@@ -305,4 +349,85 @@ func Test_PropertyHelpers(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrBadPropVersion)
 	})
+}
+
+func Test_GetEntitiesByHierarchy(t *testing.T) {
+	t.Parallel()
+
+	seed := time.Now().UnixNano()
+	org := createRandomOrganization(t)
+
+	proj := createRandomProject(t, org.ID)
+	proj2 := createRandomProject(t, proj.ID)
+	proj3 := createRandomProject(t, proj2.ID)
+	proj4 := createRandomProject(t, proj3.ID)
+
+	prov := createRandomProvider(t, proj.ID)
+
+	entRepo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entRepo)
+
+	entPkg, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj2.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entPkg)
+
+	entPr, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		EntityType:     EntitiesRepository,
+		Name:           rand.RandomName(seed),
+		ProjectID:      proj3.ID,
+		ProviderID:     prov.ID,
+		OriginatedFrom: uuid.NullUUID{},
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, entPr)
+
+	scenarios := []struct {
+		name            string
+		projects        []uuid.UUID
+		expectedNumEnts int
+	}{
+		{
+			name:            "Get all entities",
+			projects:        []uuid.UUID{proj.ID, proj2.ID, proj3.ID},
+			expectedNumEnts: 3,
+		},
+		{
+			name:            "Get artifact and PR entities",
+			projects:        []uuid.UUID{proj2.ID, proj3.ID},
+			expectedNumEnts: 2,
+		},
+		{
+			name:            "Get PR only",
+			projects:        []uuid.UUID{proj3.ID},
+			expectedNumEnts: 1,
+		},
+		{
+			name:            "empty project",
+			projects:        []uuid.UUID{proj4.ID},
+			expectedNumEnts: 0,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.name, func(t *testing.T) {
+			t.Parallel()
+
+			ents, err := testQueries.GetEntitiesByProjectHierarchy(context.Background(), scenario.projects)
+			require.NoError(t, err)
+			require.Len(t, ents, scenario.expectedNumEnts)
+		})
+	}
 }

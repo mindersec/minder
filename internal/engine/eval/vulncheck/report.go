@@ -58,7 +58,7 @@ const (
 	Minder analyzed this PR and found it does not add any new vulnerable dependencies.
 	`
 	reviewBodyDismissCommentText = "Previous Minder review was dismissed because the PR was updated"
-	vulnFoundWithNoPatch         = "Vulnerability found, but no patched version exists yet."
+	vulnFoundWithNoPatchFmt      = "Vulnerability found in `%s`, but no patched version exists yet."
 	pkgRepoInfoNotFound          = "Vulnerability found, but package not found in the package database."
 	pkgRepoLookupError           = "Error looking up package in the package database."
 )
@@ -78,6 +78,21 @@ const (
 <hr>
 &#128236; <i>Have feedback on the report? <a href="mailto:info@stacklok.com">Share it here.</a></i>
 `
+)
+
+const (
+	maliciousVulnFoundTemplate = `Malicious vulnerability found for dependency <tt>{{.Name}}</tt>:
+
+| ID | Summary | Details |
+|----|---------|---------|
+{{- range .Vulns}}
+| [{{.ID}}](https://osv.dev/vulnerability/{{.ID}}) | {{.Summary}} | {{.Details}} |
+{{- end}}
+
+Please review and remove this dependency immediately.`
+
+	maliciousVulnFoundFallbackFmt = `Malicious vulnerability found for dependency %s.
+Please review and remove this dependency immediately.", dep.Dep.Name)`
 )
 
 const (

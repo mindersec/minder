@@ -72,7 +72,7 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithRepositoryID(repositoryID)
+		}).WithID(repositoryID)
 
 	msg, err := eiw.BuildMessage()
 	require.NoError(t, err, "expected no error")

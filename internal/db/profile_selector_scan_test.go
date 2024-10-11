@@ -22,6 +22,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestScan tests the Scan method of the ProfileSelector struct
+// for more tests that exercise the retrieval of a profile with selectors that also happens to use Scan
+// see TestProfileListWithSelectors
 func TestScan(t *testing.T) {
 	t.Parallel()
 
@@ -35,7 +38,7 @@ func TestScan(t *testing.T) {
 	}{
 		{
 			name:  "Valid input with all fields",
-			input: []byte(fmt.Sprintf("(%s,%s,repository,\"entity.name == \"\"test/test\"\" && repository.is_fork != true\",\"comment1\")", selectorId, profileId)),
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"entity.name == ""test/test"" && repository.is_fork != true","comment1")`, selectorId, profileId)),
 			expected: ProfileSelector{
 				ID:        selectorId,
 				ProfileID: profileId,
@@ -44,6 +47,34 @@ func TestScan(t *testing.T) {
 					Entities: EntitiesRepository,
 				},
 				Selector: "entity.name == \"test/test\" && repository.is_fork != true",
+				Comment:  "comment1",
+			},
+		},
+		{
+			name:  "Valid input with commas in the selector",
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"repository.properties['github/primary_language'] in ['TypeScript', 'Go']","comment1")`, selectorId, profileId)),
+			expected: ProfileSelector{
+				ID:        selectorId,
+				ProfileID: profileId,
+				Entity: NullEntities{
+					Valid:    true,
+					Entities: EntitiesRepository,
+				},
+				Selector: "repository.properties['github/primary_language'] in ['TypeScript', 'Go']",
+				Comment:  "comment1",
+			},
+		},
+		{
+			name:  "Comment includes uneven quotes",
+			input: []byte(fmt.Sprintf(`(%s,%s,repository,"repository.name == foo",""comment1")`, selectorId, profileId)),
+			expected: ProfileSelector{
+				ID:        selectorId,
+				ProfileID: profileId,
+				Entity: NullEntities{
+					Valid:    true,
+					Entities: EntitiesRepository,
+				},
+				Selector: "repository.name == foo",
 				Comment:  "comment1",
 			},
 		},

@@ -21,8 +21,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -36,6 +38,10 @@ import (
 	"github.com/stacklok/minder/internal/ruletypes"
 	"github.com/stacklok/minder/internal/util"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	maxReadableStringSize = 3 * 1 << 10 // 3kB
 )
 
 var (
@@ -168,7 +174,14 @@ func (s *Server) CreateRuleType(
 	}
 
 	projectID := entityCtx.Project.ID
-	if err := validateGuidance(crt.RuleType.Guidance); err != nil {
+
+	if err := validateSizeAndUTF8(crt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
+	if err := sanitizeMarkdown(crt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
+	if err := validateMarkdown(crt.RuleType.Guidance); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
@@ -201,7 +214,14 @@ func (s *Server) UpdateRuleType(
 	}
 
 	projectID := entityCtx.Project.ID
-	if err := validateGuidance(urt.RuleType.Guidance); err != nil {
+
+	if err := validateSizeAndUTF8(urt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
+	if err := sanitizeMarkdown(urt.RuleType.Guidance); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
+	if err := validateMarkdown(urt.RuleType.Guidance); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
@@ -284,22 +304,55 @@ func (s *Server) DeleteRuleType(
 	return &minderv1.DeleteRuleTypeResponse{}, nil
 }
 
-func validateGuidance(guidance string) error {
+var (
+	allowedPlainChars = []string{"'", "\""}
+	allowedEncodings  = []string{"&#39;", "&#34;"}
+)
+
+func validateSizeAndUTF8(s string) error {
 	// As of the time of this writing, Minder profiles and rules
-	// have a guidance that's less than 10kB long.
-	if len(guidance) > 10*1<<10 {
-		return fmt.Errorf(
-			"%w: guidance too long",
-			errInvalidRuleType,
-		)
+	// have a guidance that's less the maximum allowed size for
+	// human-readable strings.
+	if len(s) > maxReadableStringSize {
+		return errors.New("too long")
 	}
 
-	// The following lines validate that guidance is valid,
-	// parseable markdown. Be mindful that any UTF-8 string is
-	// valid markdown, so this is redundant at the moment. Should
-	// the definition of `guidance` change to bytes, this check
-	// would become much more relevant.
-	md := goldmark.New(
+	if !utf8.ValidString(s) {
+		return errors.New("not valid utf-8")
+	}
+
+	return nil
+}
+
+func sanitizeMarkdown(md string) error {
+	p := bluemonday.StrictPolicy()
+
+	// The following two for loops remove characters that we want
+	// to allow from both the source string and the sanitized
+	// version, so that we can compare the two to verify that no
+	// other HTML content is there.
+	sanitized := p.Sanitize(md)
+	for _, c := range allowedEncodings {
+		sanitized = strings.ReplaceAll(sanitized, c, "")
+	}
+	for _, c := range allowedPlainChars {
+		md = strings.ReplaceAll(md, c, "")
+	}
+
+	if sanitized != md {
+		return fmt.Errorf("%w: value contains html", errInvalidRuleType)
+	}
+
+	return nil
+}
+
+func validateMarkdown(md string) error {
+	// The following lines validate that `md` is valid, parseable
+	// markdown. Be mindful that any UTF-8 string is valid
+	// markdown, so this is redundant at the moment. Should we
+	// accept byte slices in place of strings, this check would
+	// become much more relevant.
+	gm := goldmark.New(
 		// GitHub Flavored Markdown
 		goldmark.WithExtensions(extension.GFM),
 		goldmark.WithParserOptions(
@@ -310,7 +363,7 @@ func validateGuidance(guidance string) error {
 			html.WithXHTML(),
 		),
 	)
-	if err := md.Convert([]byte(guidance), &bytes.Buffer{}); err != nil {
+	if err := gm.Convert([]byte(md), &bytes.Buffer{}); err != nil {
 		return fmt.Errorf(
 			"%w: %s",
 			errInvalidRuleType,

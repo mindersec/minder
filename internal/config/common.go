@@ -34,12 +34,13 @@ import (
 
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
-	Host     string `mapstructure:"dbhost" default:"localhost"`
-	Port     int    `mapstructure:"dbport" default:"5432"`
-	User     string `mapstructure:"dbuser" default:"postgres"`
-	Password string `mapstructure:"dbpass" default:"postgres"`
-	Name     string `mapstructure:"dbname" default:"minder"`
-	SSLMode  string `mapstructure:"sslmode" default:"disable"`
+	Host            string `mapstructure:"dbhost" default:"localhost"`
+	Port            int    `mapstructure:"dbport" default:"5432"`
+	User            string `mapstructure:"dbuser" default:"postgres"`
+	Password        string `mapstructure:"dbpass" default:"postgres"`
+	Name            string `mapstructure:"dbname" default:"minder"`
+	SSLMode         string `mapstructure:"sslmode" default:"disable"`
+	IdleConnections int    `mapstructure:"idle_connections" default:"0"`
 }
 
 // GetDBConnection returns a connection to the database
@@ -52,6 +53,10 @@ func (c *DatabaseConfig) GetDBConnection(ctx context.Context) (*sql.DB, string, 
 	conn, err := splunksql.Open("postgres", uri)
 	if err != nil {
 		return nil, "", err
+	}
+
+	if c.IdleConnections != 0 {
+		conn.SetMaxIdleConns(c.IdleConnections)
 	}
 
 	for i := 0; i < 8; i++ {

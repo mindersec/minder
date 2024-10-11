@@ -126,9 +126,26 @@ func (p *profileService) CreateProfile(
 	}
 
 	// Adds default rule names, if not present
-	PopulateRuleNames(profile)
+	PopulateRuleNames(profile, rulesInProf)
 
 	displayName := profile.GetDisplayName()
+
+	listParams := db.ListProfilesByProjectIDAndLabelParams{
+		ProjectID: projectID,
+	}
+
+	existingProfiles, err := qtx.ListProfilesByProjectIDAndLabel(ctx, listParams)
+	if err != nil {
+		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
+	}
+
+	profileMap := MergeDatabaseListIntoProfiles(existingProfiles)
+
+	existingProfileNames := make([]string, 0, len(profileMap))
+
+	// Derive the profile name from the profile display name
+	name := DeriveProfileNameFromDisplayName(profile, existingProfileNames)
+
 	// if empty use the name
 	if displayName == "" {
 		displayName = profile.GetName()
@@ -136,7 +153,7 @@ func (p *profileService) CreateProfile(
 
 	params := db.CreateProfileParams{
 		ProjectID:      projectID,
-		Name:           profile.GetName(),
+		Name:           name,
 		DisplayName:    displayName,
 		Labels:         profile.GetLabels(),
 		Remediate:      db.ValidateRemediateType(profile.GetRemediate()),
@@ -223,7 +240,7 @@ func (p *profileService) UpdateProfile(
 	}
 
 	// Adds default rule names, if not present
-	PopulateRuleNames(profile)
+	PopulateRuleNames(profile, rules)
 
 	displayName := profile.GetDisplayName()
 	// if empty use the name
@@ -285,7 +302,7 @@ func (p *profileService) UpdateProfile(
 	}
 
 	if err := p.updateSelectors(ctx, updatedProfile.ID, qtx, profile.GetSelection()); err != nil {
-		return nil, status.Errorf(codes.Internal, "error updating profile: %v", err)
+		return nil, err
 	}
 
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: updatedProfile.Name, ID: updatedProfile.ID}
@@ -564,7 +581,7 @@ func upsertRuleInstances(
 	updatedIDs := make([]uuid.UUID, len(newRules))
 	for i, rule := range newRules {
 		// TODO: Clean up this logic once we no longer have to support the old tables.
-		entityRuleTuple, ok := rulesInProf[RuleTypeAndNamePair{
+		ruleIDAndName, ok := rulesInProf[RuleTypeAndNamePair{
 			RuleType: rule.Type,
 			RuleName: rule.Name,
 		}]
@@ -586,7 +603,7 @@ func upsertRuleInstances(
 			ProfileID: profileID,
 			// TODO: Make non nullable in future PR
 			ProjectID:  projectID,
-			RuleTypeID: entityRuleTuple.RuleID,
+			RuleTypeID: ruleIDAndName.RuleID,
 			Name:       rule.Name,
 			EntityType: entityType,
 			Def:        def,

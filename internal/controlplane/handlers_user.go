@@ -89,7 +89,7 @@ func (s *Server) CreateUser(ctx context.Context,
 			}
 		}
 
-		project, err := s.projectCreator.ProvisionSelfEnrolledOAuthProject(
+		project, err := s.projectCreator.ProvisionSelfEnrolledProject(
 			ctx,
 			qtx,
 			baseName,

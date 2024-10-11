@@ -82,6 +82,7 @@ type GitHub struct {
 	delegate             Delegate
 	ghcrwrap             *ghcr.ImageLister
 	gitConfig            config.GitConfig
+	webhookConfig        *config.WebhookConfig
 	propertyFetchers     properties.GhPropertyFetcherFactory
 }
 
@@ -169,6 +170,7 @@ func NewGitHub(
 	cache ratecache.RestClientCache,
 	delegate Delegate,
 	cfg *config.ProviderConfig,
+	whcfg *config.WebhookConfig,
 	propertyFetchers properties.GhPropertyFetcherFactory,
 ) *GitHub {
 	var gitConfig config.GitConfig
@@ -182,6 +184,7 @@ func NewGitHub(
 		delegate:             delegate,
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 		gitConfig:            gitConfig,
+		webhookConfig:        whcfg,
 		propertyFetchers:     propertyFetchers,
 	}
 }
@@ -304,6 +307,7 @@ func (c *GitHub) getPackageVersions(ctx context.Context, owner string, package_t
 		if c.IsOrg() {
 			v, resp, err = c.client.Organizations.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		} else {
+			package_name = url.PathEscape(package_name)
 			v, resp, err = c.client.Users.PackageGetAllVersions(ctx, owner, package_type, package_name, opt)
 		}
 		if err != nil {
@@ -361,6 +365,7 @@ func (c *GitHub) GetPackageVersionById(ctx context.Context, owner string, packag
 			return nil, err
 		}
 	} else {
+		packageName = url.PathEscape(packageName)
 		pkgVersion, _, err = c.client.Users.PackageGetVersion(ctx, owner, packageType, packageName, version)
 		if err != nil {
 			return nil, err
@@ -592,9 +597,20 @@ func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.H
 }
 
 // DeleteHook deletes a specified Hook.
-func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) (*github.Response, error) {
+func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
 	resp, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
-	return resp, err
+	if resp != nil && resp.StatusCode == http.StatusNotFound {
+		// If the hook is not found, we can ignore the
+		// error, user might have deleted it manually.
+		return nil
+	}
+	if resp != nil && resp.StatusCode == http.StatusForbidden {
+		// We ignore deleting webhooks that we're not
+		// allowed to touch. This is usually the case
+		// with repository transfer.
+		return nil
+	}
+	return err
 }
 
 // CreateHook creates a new Hook.

@@ -24,6 +24,9 @@
       "name": "ProfileService"
     },
     {
+      "name": "RuleTypeService"
+    },
+    {
       "name": "EvalResultsService"
     },
     {
@@ -2541,7 +2544,7 @@
     },
     "/api/v1/rule_type": {
       "post": {
-        "operationId": "ProfileService_CreateRuleType",
+        "operationId": "RuleTypeService_CreateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2562,11 +2565,11 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       },
       "put": {
-        "operationId": "ProfileService_UpdateRuleType",
+        "operationId": "RuleTypeService_UpdateRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2587,13 +2590,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_type/name/{name}": {
       "get": {
-        "operationId": "ProfileService_GetRuleTypeByName",
+        "operationId": "RuleTypeService_GetRuleTypeByName",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2633,13 +2636,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_type/{id}": {
       "get": {
-        "operationId": "ProfileService_GetRuleTypeById",
+        "operationId": "RuleTypeService_GetRuleTypeById",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2678,11 +2681,11 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       },
       "delete": {
-        "operationId": "ProfileService_DeleteRuleType",
+        "operationId": "RuleTypeService_DeleteRuleType",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2721,13 +2724,13 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
     "/api/v1/rule_types": {
       "get": {
-        "operationId": "ProfileService_ListRuleTypes",
+        "operationId": "RuleTypeService_ListRuleTypes",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -2759,7 +2762,7 @@
           }
         ],
         "tags": [
-          "ProfileService"
+          "RuleTypeService"
         ]
       }
     },
@@ -3001,6 +3004,9 @@
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
           "description": "Profile points to the profile itself."
+        },
+        "constant": {
+          "title": "Constant points to a constant value"
         }
       }
     },
@@ -3209,6 +3215,10 @@
         },
         "context": {
           "$ref": "#/definitions/v1Context"
+        },
+        "entity": {
+          "$ref": "#/definitions/v1UpstreamEntityRef",
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
         }
       }
     },
@@ -4241,6 +4251,14 @@
             "type": "object",
             "$ref": "#/definitions/v1UpstreamRepositoryRef"
           }
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RegistrableUpstreamEntityRef"
+          },
+          "description": "entities is the same list as the repositories, but it\nuses the new UpstreamEntityRef message. This is what\nwe'll migrate to eventually."
         }
       }
     },
@@ -4636,6 +4654,10 @@
         },
         "context": {
           "$ref": "#/definitions/v1Context"
+        },
+        "entity": {
+          "$ref": "#/definitions/v1UpstreamEntityRef",
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
         }
       }
     },
@@ -4644,6 +4666,18 @@
       "properties": {
         "result": {
           "$ref": "#/definitions/v1RegisterRepoResult"
+        }
+      }
+    },
+    "v1RegistrableUpstreamEntityRef": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1UpstreamEntityRef"
+        },
+        "registered": {
+          "type": "boolean",
+          "description": "True if the entity is already registered in Minder."
         }
       }
     },
@@ -4721,6 +4755,10 @@
         },
         "license": {
           "type": "string"
+        },
+        "properties": {
+          "type": "object",
+          "description": "properties is a map of properties of the entity."
         }
       }
     },
@@ -4942,6 +4980,10 @@
           "type": "string",
           "description": "display_name is the display name of the rule type."
         },
+        "shortFailureMessage": {
+          "type": "string",
+          "description": "short_failure_message is the message to display when the evaluation fails."
+        },
         "context": {
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the rule is evaluated."
@@ -5131,6 +5173,24 @@
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type."
+    },
+    "v1UpstreamEntityRef": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1ContextV2",
+          "title": "context is the context in which the entity is evaluated.\nNote that the context is included here since users of\nthis message may return upstream references from\nmultiple providers"
+        },
+        "type": {
+          "$ref": "#/definitions/v1Entity",
+          "description": "type is the type of the entity."
+        },
+        "properties": {
+          "type": "object",
+          "description": "properties is a map of properties of the entity.\nThis will be used to identify the entity in the upstream system\nand will be a subset of the properties of the entity that will\nbe stored in Minder."
+        }
+      },
+      "description": "UpstreamEntityRef providers enough information for the\nprovider to identify the entity in the upstream system."
     },
     "v1UpstreamRepositoryRef": {
       "type": "object",

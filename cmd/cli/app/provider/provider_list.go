@@ -49,7 +49,7 @@ func init() {
 }
 
 // ListProviderCommand lists the providers available in a specific project
-func ListProviderCommand(ctx context.Context, _ *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 
 	client := minderv1.NewProvidersServiceClient(conn)
 
@@ -86,13 +86,13 @@ func ListProviderCommand(ctx context.Context, _ *cobra.Command, _ []string, conn
 		if err != nil {
 			return err
 		}
-		fmt.Println(out)
+		cmd.Println(out)
 	case app.YAML:
 		out, err := util.GetYamlFromProto(out)
 		if err != nil {
 			return err
 		}
-		fmt.Println(out)
+		cmd.Println(out)
 	case app.Table:
 		t := table.New(table.Simple, layouts.ProviderList, nil)
 		for _, v := range out.Providers {

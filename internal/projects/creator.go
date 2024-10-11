@@ -27,7 +27,6 @@ import (
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/marketplaces"
-	github "github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/pkg/mindpak"
 )
 
@@ -36,14 +35,6 @@ import (
 // 1. Move the delete operations into this interface
 // 2. The interface is very GitHub-specific. It needs to be made more generic.
 type ProjectCreator interface {
-	// ProvisionSelfEnrolledOAuthProject creates the default records, such as projects,
-	// roles and provider for the organization
-	ProvisionSelfEnrolledOAuthProject(
-		ctx context.Context,
-		qtx db.Querier,
-		projectName string,
-		userSub string,
-	) (outproj *db.Project, projerr error)
 
 	// ProvisionSelfEnrolledProject creates the core default components of the project
 	// (project, marketplace subscriptions, etc.) but *does not* create a project.
@@ -77,32 +68,6 @@ var (
 	// ErrProjectAlreadyExists is returned when a project with the same name already exists
 	ErrProjectAlreadyExists = errors.New("project already exists")
 )
-
-func (p *projectCreator) ProvisionSelfEnrolledOAuthProject(
-	ctx context.Context,
-	qtx db.Querier,
-	projectName string,
-	userSub string,
-) (outproj *db.Project, projerr error) {
-	project, err := p.ProvisionSelfEnrolledProject(ctx, qtx, projectName, userSub)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create GitHub provider
-	_, err = qtx.CreateProvider(ctx, db.CreateProviderParams{
-		Name:       github.Github,
-		ProjectID:  project.ID,
-		Class:      db.ProviderClassGithub,
-		Implements: github.OAuthImplements,
-		Definition: json.RawMessage(`{"github": {}}`),
-		AuthFlows:  github.OAuthAuthorizationFlows,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create provider: %v", err)
-	}
-	return project, nil
-}
 
 func (p *projectCreator) ProvisionSelfEnrolledProject(
 	ctx context.Context,

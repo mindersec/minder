@@ -42,6 +42,8 @@ import (
 	"github.com/stacklok/minder/internal/engine/entities"
 	"github.com/stacklok/minder/internal/engine/selectors"
 	mock_selectors "github.com/stacklok/minder/internal/engine/selectors/mock"
+	"github.com/stacklok/minder/internal/entities/models"
+	mockprops "github.com/stacklok/minder/internal/entities/properties/service/mock"
 	"github.com/stacklok/minder/internal/flags"
 	mockhistory "github.com/stacklok/minder/internal/history/mock"
 	"github.com/stacklok/minder/internal/logger"
@@ -107,7 +109,6 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
-		gomock.Any(),
 	).Return(nil, nil)
 
 	mockStore.EXPECT().
@@ -122,7 +123,8 @@ func TestExecutor_handleEntityEvent(t *testing.T) {
 				db.ProviderTypeGithub,
 			},
 			Definition: json.RawMessage(`{"github": {}}`),
-		}, nil)
+		}, nil).
+		Times(2) // once for instantiating the provider, once to fill in selectors
 
 	// get access token
 	mockStore.EXPECT().
@@ -279,20 +281,25 @@ default allow = true`,
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 	)
 
+	propssvc := mockprops.NewMockPropertiesService(ctrl)
+
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		&ratecache.NoopRestClientCache{},
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		&serverconfig.ProviderConfig{},
+		&serverconfig.WebhookConfig{},
 		nil,
 		cryptoEngine,
-		nil,
 		mockStore,
 		ghProviderService,
+		propssvc,
 	)
 
 	providerStore := providers.NewProviderStore(mockStore)
-	providerManager, err := manager.NewProviderManager(providerStore, githubProviderManager)
+	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
 	require.NoError(t, err)
+
+	defer closer()
 
 	execMetrics, err := engine.NewExecutorMetrics(&meters.NoopMeterFactory{})
 	require.NoError(t, err)
@@ -317,6 +324,19 @@ default allow = true`,
 		Return(mockSelection, nil).
 		AnyTimes()
 
+	mockPropSvc := mockprops.NewMockPropertiesService(ctrl)
+	mockPropSvc.EXPECT().
+		EntityWithPropertiesByID(gomock.Any(), repositoryID, gomock.Any()).
+		Return(&models.EntityWithProperties{
+			Entity: models.EntityInstance{
+				ID:         repositoryID,
+				Type:       minderv1.Entity_ENTITY_REPOSITORIES,
+				Name:       "foo/test",
+				ProjectID:  projectID,
+				ProviderID: providerID,
+			},
+		}, nil)
+
 	executor := engine.NewExecutor(
 		mockStore,
 		providerManager,
@@ -325,6 +345,7 @@ default allow = true`,
 		&flags.FakeClient{},
 		profiles.NewProfileStore(mockStore),
 		selectors.NewEnv(),
+		mockPropSvc,
 	)
 
 	eiw := entities.NewEntityInfoWrapper().
@@ -335,7 +356,7 @@ default allow = true`,
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithRepositoryID(repositoryID).
+		}).WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	ts := &logger.TelemetryStore{

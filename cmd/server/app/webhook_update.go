@@ -32,6 +32,7 @@ import (
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/crypto"
 	"github.com/stacklok/minder/internal/db"
+	propssvc "github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/providers"
 	ghprovider "github.com/stacklok/minder/internal/providers/github"
@@ -95,10 +96,11 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	providerManager, err := wireUpProviderManager(cfg, store)
+	providerManager, pmcloser, err := wireUpProviderManager(cmd.Context(), cfg, store)
 	if err != nil {
 		return fmt.Errorf("failed to instantiate provider manager: %w", err)
 	}
+	defer pmcloser()
 
 	for _, provider := range allProviders {
 		if providerName != "" && providerName != provider.Name {
@@ -219,25 +221,30 @@ func updateGithubRepoHooks(
 	return nil
 }
 
-func wireUpProviderManager(cfg *serverconfig.Config, store db.Store) (manager.ProviderManager, error) {
+func wireUpProviderManager(
+	ctx context.Context, cfg *serverconfig.Config, store db.Store,
+) (manager.ProviderManager, func(), error) {
+	noop := func() {}
 	cryptoEng, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create crypto engine: %w", err)
+		return nil, noop, fmt.Errorf("failed to create crypto engine: %w", err)
 	}
 	fallbackTokenClient := ghprovider.NewFallbackTokenClient(cfg.Provider)
 	providerStore := providers.NewProviderStore(store)
+	propSvc := propssvc.NewPropertiesService(store)
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
 		&ratecache.NoopRestClientCache{},
 		clients.NewGitHubClientFactory(telemetry.NewNoopMetrics()),
 		&cfg.Provider,
+		&cfg.WebhookConfig,
 		fallbackTokenClient,
 		cryptoEng,
-		nil, // whManager not needed here (only when creating/delete webhooks)
 		store,
 		nil, // ghProviderService not needed here
+		propSvc,
 	)
 
-	return manager.NewProviderManager(providerStore, githubProviderManager)
+	return manager.NewProviderManager(ctx, providerStore, githubProviderManager)
 }
 
 func getWebhookSecret(cfg *serverconfig.Config) (string, error) {

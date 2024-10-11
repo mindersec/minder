@@ -25,15 +25,22 @@ import (
 
 	df "github.com/stacklok/minder/database/mock/fixtures"
 	db "github.com/stacklok/minder/internal/db"
+	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	rf "github.com/stacklok/minder/internal/repositories/github/mock/fixtures"
+	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
-	repoOwner = "stacklok"
-	repoName  = "minder"
+	repoFullName = "stacklok/minder"
 )
+
+func repoProperties() *properties.Properties {
+	props, _ := properties.NewProperties(map[string]any{
+		properties.PropertyName: repoFullName,
+	})
+	return props
+}
 
 func TestHandleEntityAdd(t *testing.T) {
 	t.Parallel()
@@ -54,8 +61,6 @@ func TestHandleEntityAdd(t *testing.T) {
 			mockReposFunc: rf.NewRepoService(
 				rf.WithSuccessfulCreate(
 					projectID,
-					repoOwner,
-					repoName,
 					&pb.Repository{},
 				),
 			),
@@ -65,9 +70,8 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -87,9 +91,8 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m
@@ -112,8 +115,6 @@ func TestHandleEntityAdd(t *testing.T) {
 				rf.WithFailedCreate(
 					errors.New("oops"),
 					projectID,
-					repoOwner,
-					repoName,
 				),
 			),
 			messageFunc: func(t *testing.T) *message.Message {
@@ -122,9 +123,8 @@ func TestHandleEntityAdd(t *testing.T) {
 				err := messages.NewMinderEvent().
 					WithProviderID(providerID).
 					WithProjectID(projectID).
-					WithEntityType("repository").
-					WithAttribute("repoName", repoName).
-					WithAttribute("repoOwner", repoOwner).
+					WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+					WithProperties(repoProperties()).
 					ToMessage(m)
 				require.NoError(t, err, "invalid message")
 				return m

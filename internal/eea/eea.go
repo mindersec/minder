@@ -29,11 +29,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/artifacts"
 	serverconfig "github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
+	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
+	"github.com/stacklok/minder/internal/providers/manager"
+	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // EEA is the Event Execution Aggregator
@@ -41,14 +43,20 @@ type EEA struct {
 	querier db.Store
 	evt     events.Publisher
 	cfg     *serverconfig.AggregatorConfig
+
+	entityFetcher service.PropertiesService
+	provMan       manager.ProviderManager
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig) *EEA {
+func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig,
+	ef service.PropertiesService, provMan manager.ProviderManager) *EEA {
 	return &EEA{
-		querier: querier,
-		evt:     evt,
-		cfg:     cfg,
+		querier:       querier,
+		evt:           evt,
+		cfg:           cfg,
+		entityFetcher: ef,
+		provMan:       provMan,
 	}
 }
 
@@ -83,7 +91,6 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 		return nil, fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
-	repoID, artifactID, pullRequestID := inf.GetEntityDBIDs()
 	projectID := inf.ProjectID
 
 	logger := zerolog.Ctx(ctx).With().
@@ -97,60 +104,42 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	entityID, err := inf.GetID()
 	if err != nil {
 		logger.Debug().AnErr("error getting entity ID", err).Msgf("Entity ID was not set for event %s", inf.Type)
+		// Nothing we can do after this.
+		return nil, nil
 	}
 
-	// We need to check that the resources still exist before attempting to lock them.
-	// TODO: consider whether we need foreign key checks on the locks.
-	if repoID.Valid {
-		_, err = e.querier.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-			ID:        repoID.UUID,
-			ProjectID: projectID,
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because repository no longer exists")
-				return nil, nil
-			}
-		}
+	logger = logger.With().Str("entity_id", entityID.String()).Logger()
+
+	tx, err := e.querier.BeginTransaction()
+	if err != nil {
+		return nil, fmt.Errorf("error beginning transaction: %w", err)
 	}
-	if artifactID.Valid {
-		_, err := e.querier.GetArtifactByID(ctx, db.GetArtifactByIDParams{
-			ID:        artifactID.UUID,
-			ProjectID: projectID,
-		})
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because artifact no longer exists")
-				return nil, nil
-			}
+	qtx := e.querier.GetQuerierWithTransaction(tx)
+
+	// We'll only attempt to lock if the entity exists.
+	_, err = qtx.GetEntityByID(ctx, entityID)
+	if err != nil {
+		// explicit rollback if entity had an issue.
+		_ = e.querier.Rollback(tx)
+		if errors.Is(err, sql.ErrNoRows) {
+			logger.Debug().Msg("entity not found")
+			return nil, nil
 		}
-	}
-	if pullRequestID.Valid {
-		if _, err := e.querier.GetPullRequestByID(ctx, pullRequestID.UUID); err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				logger.Debug().Msg("Skipping event because pull request no longer exists")
-				return nil, nil
-			}
-		}
+		return nil, fmt.Errorf("error getting entity: %w", err)
 	}
 
-	res, err := e.querier.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
+	res, err := qtx.LockIfThresholdNotExceeded(ctx, db.LockIfThresholdNotExceededParams{
 		Entity:           entities.EntityTypeToDB(inf.Type),
 		EntityInstanceID: entityID,
 		ProjectID:        projectID,
 		Interval:         fmt.Sprintf("%d", e.cfg.LockInterval),
 	})
-
-	if repoID.Valid {
-		logger = logger.With().Str("repository_id", repoID.UUID.String()).Logger()
-	}
-
-	if artifactID.Valid {
-		logger = logger.With().Str("artifact_id", artifactID.UUID.String()).Logger()
-	}
-
-	if pullRequestID.Valid {
-		logger = logger.With().Str("pull_request_id", pullRequestID.UUID.String()).Logger()
+	if err == nil {
+		if err := tx.Commit(); err != nil {
+			return nil, fmt.Errorf("error committing transaction: %w", err)
+		}
+	} else {
+		_ = e.querier.Rollback(tx)
 	}
 
 	// if nothing was retrieved from the database, then we can assume
@@ -241,9 +230,10 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
 			cache.ProjectID, cache.EntityInstanceID)
-		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			continue
-		} else if err != nil {
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, service.ErrEntityNotFound) {
+				continue
+			}
 			return fmt.Errorf("error building entity wrapper: %w", err)
 		}
 
@@ -288,16 +278,30 @@ func (e *EEA) buildRepositoryInfoWrapper(
 	repoID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, r, err := getRepository(ctx, e.querier, projID, repoID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, repoID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting repository: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", repoID, projID)
+	}
+
+	rawRepo, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	r, ok := rawRepo.(*minderv1.Repository)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to repository")
 	}
 
 	return entities.NewEntityInfoWrapper().
 		WithRepository(r).
-		WithRepositoryID(repoID).
+		WithID(repoID).
 		WithProjectID(projID).
-		WithProviderID(providerID), nil
+		WithProviderID(ent.Entity.ProviderID), nil
 }
 
 func (e *EEA) buildArtifactInfoWrapper(
@@ -305,16 +309,30 @@ func (e *EEA) buildArtifactInfoWrapper(
 	artID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, a, err := artifacts.GetArtifact(ctx, e.querier, projID, artID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, artID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting artifact with versions: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", artID, projID)
+	}
+
+	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	a, ok := rawPR.(*minderv1.Artifact)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to artifact")
 	}
 
 	eiw := entities.NewEntityInfoWrapper().
 		WithProjectID(projID).
 		WithArtifact(a).
-		WithArtifactID(artID).
-		WithProviderID(providerID)
+		WithID(artID).
+		WithProviderID(ent.Entity.ProviderID)
 	return eiw, nil
 }
 
@@ -323,15 +341,28 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	prID uuid.UUID,
 	projID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	providerID, repoID, pr, err := getPullRequest(ctx, e.querier, projID, prID)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, prID, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error getting pull request: %w", err)
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", prID, projID)
+	}
+
+	rawPR, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	pr, ok := rawPR.(*minderv1.PullRequest)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to pull request")
 	}
 
 	return entities.NewEntityInfoWrapper().
-		WithRepositoryID(repoID).
 		WithProjectID(projID).
 		WithPullRequest(pr).
-		WithPullRequestID(prID).
-		WithProviderID(providerID), nil
+		WithID(prID).
+		WithProviderID(ent.Entity.ProviderID), nil
 }

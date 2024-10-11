@@ -84,7 +84,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 						ID:   projectID,
 						Name: "subject1",
 					}, nil)
-				store.EXPECT().CreateProvider(gomock.Any(), gomock.Any())
 
 				returnedUser := db.User{
 					ID:              1,

@@ -22,6 +22,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stacklok/minder/internal/util"
 )
@@ -207,4 +209,152 @@ func verybigstring(n int) string {
 		s += "a"
 	}
 	return s
+}
+
+func TestRenderStructPB(t *testing.T) {
+	t.Parallel()
+
+	const limit = 1024
+
+	type args struct {
+		tmpl string
+		s    any
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected string
+		wantErr  bool
+	}{
+		{
+			name: "asMap: valid template",
+			args: args{
+				tmpl: "{{ with $m := asMap . }}{{ $m.name }}{{ end }}",
+				s: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"name": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "test",
+							},
+						},
+					},
+				},
+			},
+			expected: "test",
+			wantErr:  false,
+		},
+		{
+			name: "asMap: using wrong key",
+			args: args{
+				tmpl: "{{ with $m := asMap . }}{{ $m.name2 }}{{ end }}",
+				s: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"name": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "test",
+							},
+						},
+					},
+				},
+			},
+			expected: "",
+			wantErr:  true,
+		},
+		{
+			name: "asMap: using wrong type",
+			args: args{
+				tmpl: "{{ with $m := asMap . }}{{ $m.name }}{{ end }}",
+				s:    "test",
+			},
+			expected: "",
+			wantErr:  true,
+		},
+		{
+			name: "asMap: nil structpb",
+			args: args{
+				tmpl: "{{ with $m := asMap . }}{{ $m.name }}{{ end }}",
+				s:    nil,
+			},
+			expected: "",
+			wantErr:  true,
+		},
+		{
+			name: "mapGet: valid with map[string]any",
+			args: args{
+				tmpl: "{{ mapGet . \"name\" }}",
+				s: map[string]any{
+					"name": "test",
+				},
+			},
+			expected: "test",
+			wantErr:  false,
+		},
+		{
+			name: "mapGet: valid with asMapper",
+			args: args{
+				tmpl: "{{ mapGet . \"name\" }}",
+				s: &structpb.Struct{
+					Fields: map[string]*structpb.Value{
+						"name": {
+							Kind: &structpb.Value_StringValue{
+								StringValue: "test",
+							},
+						},
+					},
+				},
+			},
+			expected: "test",
+			wantErr:  false,
+		},
+		{
+			name: "mapGet: using wrong key",
+			args: args{
+				tmpl: "{{ mapGet . \"name2\" }}",
+				s: map[string]any{
+					"name": "test",
+				},
+			},
+			expected: "",
+			wantErr:  true,
+		},
+		{
+			name: "mapGet: using wrong type",
+			args: args{
+				tmpl: "{{ mapGet . \"name\" }}",
+				s:    "test",
+			},
+			expected: "",
+			wantErr:  true,
+		},
+		{
+			name: "mapGet: nil map",
+			args: args{
+				tmpl: "{{ mapGet . \"name\" }}",
+				s:    nil,
+			},
+			expected: "",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tmpl, err := util.NewSafeTextTemplate(&tt.args.tmpl, "test")
+			// We're not testing the template parsing here
+			require.NoError(t, err, "unexpected error")
+
+			out, err := tmpl.Render(context.Background(), tt.args.s, limit)
+			if tt.wantErr {
+				assert.Error(t, err, "expected error")
+			} else {
+				assert.NoError(t, err, "unexpected error")
+				assert.Equal(t, tt.expected, out, "expected output")
+			}
+		})
+	}
+
 }

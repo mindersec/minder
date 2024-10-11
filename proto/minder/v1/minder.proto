@@ -248,6 +248,14 @@ message PullRequest {
     string action = 7;      // The action that triggered the webhook
 
     Context context = 8;
+
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 9;
+
+    string base_clone_url = 10;   // URL used to clone the base repository
+    string target_clone_url = 11; // URL used to clone the target repository
+    string base_ref = 12;         // The base ref of the PR
+    string target_ref = 13;       // The target ref of the PR
 }
 
 // Stubs for the SDLC entities
@@ -579,7 +587,10 @@ service ProfileService {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROFILE_STATUS_GET
         };
-    }    
+    }
+}
+
+service RuleTypeService {
 
     rpc ListRuleTypes (ListRuleTypesRequest) returns (ListRuleTypesResponse) {
         option (google.api.http) = {
@@ -1035,6 +1046,17 @@ message ListRemoteRepositoriesFromProviderRequest {
 
 message ListRemoteRepositoriesFromProviderResponse {
     repeated UpstreamRepositoryRef results = 1;
+    // entities is the same list as the repositories, but it
+    // uses the new UpstreamEntityRef message. This is what
+    // we'll migrate to eventually.
+    repeated RegistrableUpstreamEntityRef entities = 2;
+}
+
+message RegistrableUpstreamEntityRef {
+    UpstreamEntityRef entity = 1;
+
+    // True if the entity is already registered in Minder.
+    bool registered = 2;
 }
 
 message UpstreamRepositoryRef {
@@ -1070,12 +1092,18 @@ message Repository {
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;
     string license = 19;
+    // properties is a map of properties of the entity.
+    google.protobuf.Struct properties = 20;
 }
 
 message RegisterRepositoryRequest {
     string provider = 1 [deprecated=true];
     UpstreamRepositoryRef repository = 3;
     Context context = 4;
+    // entity is the entity to register. This is the same as the repository
+    // field, but uses the new UpstreamEntityRef message. This is what we'll
+    // migrate to eventually.
+    UpstreamEntityRef entity = 5;
 
     reserved 2; // deprecated project_id
 }
@@ -1813,6 +1841,9 @@ message RuleType {
     // display_name is the display name of the rule type.
     string display_name = 8;
 
+    // short_failure_message is the message to display when the evaluation fails.
+    string short_failure_message = 10;
+
     // context is the context in which the rule is evaluated.
     Context context = 3;
 
@@ -1871,6 +1902,9 @@ message RuleType {
 
                 // Profile points to the profile itself.
                 Operator profile = 2;
+
+                // Constant points to a constant value
+                google.protobuf.Value constant = 3;
             }
 
             message Rego {

@@ -23,8 +23,10 @@ import (
 
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	eoptions "github.com/stacklok/minder/internal/engine/options"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -72,7 +74,10 @@ func (*hook) Print(_ print.Context, msg string) error {
 var _ print.Hook = (*hook)(nil)
 
 // NewRegoEvaluator creates a new rego evaluator
-func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, error) {
+func NewRegoEvaluator(
+	cfg *minderv1.RuleType_Definition_Eval_Rego,
+	opts ...eoptions.Option,
+) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse rego config: %w", err)
@@ -88,6 +93,12 @@ func NewRegoEvaluator(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Evaluator, 
 			rego.Module(MinderRegoFile, c.Def),
 			rego.Strict(true),
 		},
+	}
+
+	for _, opt := range opts {
+		if err := opt(eval); err != nil {
+			return nil, err
+		}
 	}
 
 	if os.Getenv(EnablePrintEnvVar) == "true" {
@@ -106,7 +117,7 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *engif.Result) error {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check
 	// this explicitly.
@@ -130,5 +141,5 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 		return fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
-	return e.reseval.parseResult(rs)
+	return e.reseval.parseResult(rs, entity)
 }

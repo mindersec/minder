@@ -137,12 +137,6 @@ replies with OK
 | GetProfileByName | [GetProfileByNameRequest](#minder-v1-GetProfileByNameRequest) | [GetProfileByNameResponse](#minder-v1-GetProfileByNameResponse) |  |
 | GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#minder-v1-GetProfileStatusByNameResponse) |  |
 | GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#minder-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#minder-v1-GetProfileStatusByProjectResponse) |  |
-| ListRuleTypes | [ListRuleTypesRequest](#minder-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#minder-v1-ListRuleTypesResponse) |  |
-| GetRuleTypeByName | [GetRuleTypeByNameRequest](#minder-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#minder-v1-GetRuleTypeByNameResponse) |  |
-| GetRuleTypeById | [GetRuleTypeByIdRequest](#minder-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#minder-v1-GetRuleTypeByIdResponse) |  |
-| CreateRuleType | [CreateRuleTypeRequest](#minder-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#minder-v1-CreateRuleTypeResponse) |  |
-| UpdateRuleType | [UpdateRuleTypeRequest](#minder-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#minder-v1-UpdateRuleTypeResponse) |  |
-| DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
 
@@ -193,6 +187,21 @@ replies with OK
 | GetRepositoryByName | [GetRepositoryByNameRequest](#minder-v1-GetRepositoryByNameRequest) | [GetRepositoryByNameResponse](#minder-v1-GetRepositoryByNameResponse) |  |
 | DeleteRepositoryById | [DeleteRepositoryByIdRequest](#minder-v1-DeleteRepositoryByIdRequest) | [DeleteRepositoryByIdResponse](#minder-v1-DeleteRepositoryByIdResponse) |  |
 | DeleteRepositoryByName | [DeleteRepositoryByNameRequest](#minder-v1-DeleteRepositoryByNameRequest) | [DeleteRepositoryByNameResponse](#minder-v1-DeleteRepositoryByNameResponse) |  |
+
+
+
+<Service id="minder-v1-RuleTypeService">RuleTypeService</Service>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListRuleTypes | [ListRuleTypesRequest](#minder-v1-ListRuleTypesRequest) | [ListRuleTypesResponse](#minder-v1-ListRuleTypesResponse) |  |
+| GetRuleTypeByName | [GetRuleTypeByNameRequest](#minder-v1-GetRuleTypeByNameRequest) | [GetRuleTypeByNameResponse](#minder-v1-GetRuleTypeByNameResponse) |  |
+| GetRuleTypeById | [GetRuleTypeByIdRequest](#minder-v1-GetRuleTypeByIdRequest) | [GetRuleTypeByIdResponse](#minder-v1-GetRuleTypeByIdResponse) |  |
+| CreateRuleType | [CreateRuleTypeRequest](#minder-v1-CreateRuleTypeRequest) | [CreateRuleTypeResponse](#minder-v1-CreateRuleTypeResponse) |  |
+| UpdateRuleType | [UpdateRuleTypeRequest](#minder-v1-UpdateRuleTypeRequest) | [UpdateRuleTypeResponse](#minder-v1-UpdateRuleTypeResponse) |  |
+| DeleteRuleType | [DeleteRuleTypeRequest](#minder-v1-DeleteRuleTypeRequest) | [DeleteRuleTypeResponse](#minder-v1-DeleteRuleTypeResponse) |  |
 
 
 
@@ -1630,6 +1639,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | results | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> | repeated |  |
+| entities | <TypeLink type="minder-v1-RegistrableUpstreamEntityRef">RegistrableUpstreamEntityRef</TypeLink> | repeated | entities is the same list as the repositories, but it uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. |
 
 
 
@@ -1976,6 +1986,11 @@ ProviderConfig contains the generic configuration for a provider.
 | author_id | <TypeLink type="int64">int64</TypeLink> |  | The author of the PR, will be used to check if we can request changes |
 | action | <TypeLink type="string">string</TypeLink> |  | The action that triggered the webhook |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
+| base_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the base repository |
+| target_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the target repository |
+| base_ref | <TypeLink type="string">string</TypeLink> |  | The base ref of the PR |
+| target_ref | <TypeLink type="string">string</TypeLink> |  | The target ref of the PR |
 
 
 
@@ -2042,6 +2057,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
 | repository | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  | entity is the entity to register. This is the same as the repository field, but uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. |
 
 
 
@@ -2053,6 +2069,18 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | result | <TypeLink type="minder-v1-RegisterRepoResult">RegisterRepoResult</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RegistrableUpstreamEntityRef">RegistrableUpstreamEntityRef</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  |  |
+| registered | <TypeLink type="bool">bool</TypeLink> |  | True if the entity is already registered in Minder. |
 
 
 
@@ -2111,6 +2139,7 @@ Stubs for the SDLC entities
 | updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | default_branch | <TypeLink type="string">string</TypeLink> |  |  |
 | license | <TypeLink type="string">string</TypeLink> |  |  |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
 
 
 
@@ -2266,6 +2295,7 @@ The version is assumed from the folder's version.
 | id | <TypeLink type="string">string</TypeLink> | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule type. |
 | display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the rule type. |
+| short_failure_message | <TypeLink type="string">string</TypeLink> |  | short_failure_message is the message to display when the evaluation fails. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule is evaluated. |
 | def | <TypeLink type="minder-v1-RuleType-Definition">RuleType.Definition</TypeLink> |  | def is the definition of the rule type. |
 | description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |
@@ -2353,6 +2383,7 @@ endpoint and how we compare it to the rule.
 | ----- | ---- | ----- | ----------- |
 | ingested | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Ingested points to the data retrieved in the `ingest` section |
 | profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. |
+| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value |
 
 
 

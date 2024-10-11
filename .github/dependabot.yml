@@ -19,6 +19,12 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      otel:
+        patterns:
+          - "go.opentelemetry.io/otel/*"
+          - "go.opentelemetry.io/contrib/*"
+          - "github.com/signalfx/splunk-otel-go/*"
   - package-ecosystem: "gomod"
     directory: "tools"
     schedule:

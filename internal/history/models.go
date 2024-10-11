@@ -26,6 +26,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/stacklok/minder/internal/db"
+	em "github.com/stacklok/minder/internal/entities/models"
 )
 
 var (
@@ -634,11 +635,18 @@ func NewListEvaluationFilter(opts ...FilterOpt) (ListEvaluationFilter, error) {
 	return filter, nil
 }
 
+// OneEvalHistoryAndEntity is a struct representing a combination of an
+// evaluation and an entity.
+type OneEvalHistoryAndEntity struct {
+	*em.EntityWithProperties
+	EvalHistoryRow db.ListEvaluationHistoryRow
+}
+
 // ListEvaluationHistoryResult is the return value of
 // ListEvaluationHistory function.
 type ListEvaluationHistoryResult struct {
 	// Data is an ordered collection of evaluation events.
-	Data []db.ListEvaluationHistoryRow
+	Data []*OneEvalHistoryAndEntity
 	// Next is an object usable as cursor to fetch the next
 	// page. The page is absent if Next is nil.
 	Next []byte

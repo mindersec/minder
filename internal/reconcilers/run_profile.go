@@ -16,7 +16,6 @@ package reconcilers
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -24,12 +23,9 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/artifacts"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/repositories"
+	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
+	"github.com/stacklok/minder/internal/events"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic
@@ -64,7 +60,8 @@ func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 
 	var evt ProfileInitEvent
 	if err := json.Unmarshal(msg.Payload, &evt); err != nil {
-		return fmt.Errorf("error unmarshalling payload: %w", err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error unmarshalling event")
+		return nil
 	}
 
 	// validate event
@@ -73,7 +70,6 @@ func (r *Reconciler) handleProfileInitEvent(msg *message.Message) error {
 		// We don't return the event since there's no use
 		// retrying it if it's invalid.
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error validating event")
-		log.Printf("error validating event: %v", err)
 		return nil
 	}
 
@@ -92,82 +88,30 @@ func (r *Reconciler) publishProfileInitEvents(
 	ctx context.Context,
 	projectID uuid.UUID,
 ) error {
-	dbrepos, err := r.store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
-			Provider:  sql.NullString{Valid: false},
-			ProjectID: projectID,
-		})
+	ents, err := r.store.GetEntitiesByProjectHierarchy(ctx, []uuid.UUID{projectID})
 	if err != nil {
-		return fmt.Errorf("publishProfileInitEvents: error getting registered repos: %v", err)
+		// we retry in case the database is having a bad day
+		return fmt.Errorf("cannot get entities: %w", err)
 	}
 
-	for _, dbrepo := range dbrepos {
-		// protobufs are our API, so we always execute on these instead of the DB directly.
-		repo := repositories.PBRepositoryFromDB(dbrepo)
-		err := entities.NewEntityInfoWrapper().
-			WithProviderID(dbrepo.ProviderID).
-			WithProjectID(projectID).
-			WithRepository(repo).
-			WithRepositoryID(dbrepo.ID).
-			Publish(r.evt)
+	for _, ent := range ents {
+		entRefresh := entityMessage.NewEntityRefreshAndDoMessage().
+			WithEntityID(ent.ID)
 
-		// This is a non-fatal error, so we'll just log it
-		// and continue
-		if err != nil {
-			return fmt.Errorf("error publishing init event for repo %s: %v", dbrepo.ID, err)
+		m := message.NewMessage(uuid.New().String(), nil)
+		m.SetContext(ctx)
+
+		if err := entRefresh.ToMessage(m); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error marshalling message")
+			// no point in retrying, so we return nil
+			return nil
+		}
+
+		if err := r.evt.Publish(events.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
+			// we retry in case watermill is having a bad day
+			return fmt.Errorf("error publishing message: %w", err)
 		}
 	}
 
-	// after we've initialized repository profiles, let's initialize artifacts
-	// TODO(jakub): this should be done in an iterator of sorts
-	for i := range dbrepos {
-		pdb := &dbrepos[i]
-		err := r.publishArtifactProfileInitEvents(ctx, projectID, pdb)
-		if err != nil {
-			return fmt.Errorf("publishProfileInitEvents: error publishing artifact events: %v", err)
-		}
-	}
-
-	return nil
-}
-
-func (r *Reconciler) publishArtifactProfileInitEvents(
-	ctx context.Context,
-	projectID uuid.UUID,
-	dbrepo *db.Repository,
-) error {
-	dbArtifacts, err := r.store.ListArtifactsByRepoID(ctx, uuid.NullUUID{
-		UUID:  dbrepo.ID,
-		Valid: true,
-	})
-	if err != nil {
-		return fmt.Errorf("error getting artifacts: %w", err)
-	}
-	if len(dbArtifacts) == 0 {
-		zerolog.Ctx(ctx).Debug().Str("repository", dbrepo.ID.String()).Msgf("no artifacts found, skipping")
-		return nil
-	}
-	for _, dbA := range dbArtifacts {
-		// Get the artifact with all its versions as a protobuf
-		_, pbArtifact, err := artifacts.GetArtifact(ctx, r.store, dbrepo.ProjectID, dbA.ID)
-		if err != nil {
-			return fmt.Errorf("error getting artifact versions: %w", err)
-		}
-
-		err = entities.NewEntityInfoWrapper().
-			WithProviderID(dbrepo.ProviderID).
-			WithProjectID(projectID).
-			WithArtifact(pbArtifact).
-			WithRepositoryID(dbrepo.ID).
-			WithArtifactID(dbA.ID).
-			Publish(r.evt)
-
-		// This is a non-fatal error, so we'll just log it
-		// and continue
-		if err != nil {
-			log.Printf("error publishing init event for repo %s: %v", dbrepo.ID, err)
-			continue
-		}
-	}
 	return nil
 }

@@ -20,16 +20,26 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
+	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/providers"
+	"github.com/stacklok/minder/internal/util/cache"
 	v1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+// NameProviderTuple is a tuple of a provider name and the provider instance
+type NameProviderTuple struct {
+	Name     string
+	Provider v1.Provider
+}
 
 // ProviderManager encapsulates operations for manipulating Provider instances
 type ProviderManager interface {
@@ -53,7 +63,7 @@ type ProviderManager interface {
 		projectID uuid.UUID,
 		trait db.ProviderType,
 		name string,
-	) (map[string]v1.Provider, []string, error)
+	) (map[uuid.UUID]NameProviderTuple, []string, error)
 	// DeleteByID deletes the specified instance of the Provider, and
 	// carries out any cleanup needed.
 	DeleteByID(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error
@@ -65,6 +75,8 @@ type ProviderManager interface {
 	// PatchProviderConfig updates the configuration of the specified provider with the specified patch.
 	// All keys in the configMap will overwrite the fields in the provider config.
 	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
+	// IterateWebhookHandlers iterates over the classes and returns the associated webhook handler
+	IterateWebhookHandlers() iter.Seq2[string, http.Handler]
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -82,6 +94,8 @@ type ProviderClassManager interface {
 	// GetSupportedClasses lists the types of Provider class which this manager
 	// can produce.
 	GetSupportedClasses() []db.ProviderClass
+	// GetWebhookHandler returns the webhook handler for the provider class
+	GetWebhookHandler() http.Handler
 }
 
 type classTracker struct {
@@ -125,23 +139,33 @@ func newClassTracker(
 
 type providerManager struct {
 	classTracker
-	store providers.ProviderStore
+	store         providers.ProviderStore
+	providerCache *cache.ExpiringCache[v1.Provider]
 }
 
 // NewProviderManager creates a new instance of ProviderManager
 func NewProviderManager(
+	ctx context.Context,
 	store providers.ProviderStore,
 	classManagers ...ProviderClassManager,
-) (ProviderManager, error) {
+) (ProviderManager, func(), error) {
+	noop := func() {}
 	classes, err := newClassTracker(classManagers...)
 	if err != nil {
-		return nil, fmt.Errorf("error creating class tracker: %w", err)
+		return nil, noop, fmt.Errorf("error creating class tracker: %w", err)
 	}
 
+	pcache := cache.NewExpiringCache[v1.Provider](ctx, &cache.ExpiringCacheConfig{
+		EvictionTime: 1 * time.Minute,
+	})
+
 	return &providerManager{
-		classTracker: *classes,
-		store:        store,
-	}, nil
+			classTracker:  *classes,
+			store:         store,
+			providerCache: pcache,
+		}, func() {
+			pcache.Close()
+		}, nil
 }
 
 func (p *providerManager) CreateFromConfig(
@@ -161,21 +185,43 @@ func (p *providerManager) CreateFromConfig(
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {
+	cachedProv, ok := p.providerCache.Get(providerID.String())
+	if ok {
+		return cachedProv, nil
+	}
+
 	config, err := p.store.GetByID(ctx, providerID)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving db record: %w", err)
 	}
 
-	return p.buildFromDBRecord(ctx, config)
+	builtProv, err := p.buildFromDBRecord(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	p.providerCache.Set(providerID.String(), builtProv)
+	return builtProv, nil
 }
 
 func (p *providerManager) InstantiateFromNameProject(ctx context.Context, name string, projectID uuid.UUID) (v1.Provider, error) {
+	key := fmt.Sprintf("%s-%s", projectID.String(), name)
+	cachedProv, ok := p.providerCache.Get(key)
+	if ok {
+		return cachedProv, nil
+	}
 	config, err := p.store.GetByName(ctx, projectID, name)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving db record: %w", err)
 	}
 
-	return p.buildFromDBRecord(ctx, config)
+	buitProv, err := p.buildFromDBRecord(ctx, config)
+	if err != nil {
+		return nil, err
+	}
+
+	p.providerCache.Set(key, buitProv)
+	return buitProv, nil
 }
 
 func (p *providerManager) BulkInstantiateByTrait(
@@ -183,13 +229,13 @@ func (p *providerManager) BulkInstantiateByTrait(
 	projectID uuid.UUID,
 	trait db.ProviderType,
 	name string,
-) (map[string]v1.Provider, []string, error) {
+) (map[uuid.UUID]NameProviderTuple, []string, error) {
 	providerConfigs, err := p.store.GetByTraitInHierarchy(ctx, projectID, name, trait)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error retrieving db records: %w", err)
 	}
 
-	result := make(map[string]v1.Provider, len(providerConfigs))
+	result := make(map[uuid.UUID]NameProviderTuple, len(providerConfigs))
 	failedProviders := []string{}
 	for _, config := range providerConfigs {
 		provider, err := p.buildFromDBRecord(ctx, &config)
@@ -198,13 +244,17 @@ func (p *providerManager) BulkInstantiateByTrait(
 			failedProviders = append(failedProviders, config.Name)
 			continue
 		}
-		result[config.Name] = provider
+		result[config.ID] = NameProviderTuple{
+			Name:     config.Name,
+			Provider: provider,
+		}
 	}
 
 	return result, failedProviders, nil
 }
 
 func (p *providerManager) DeleteByID(ctx context.Context, providerID uuid.UUID, projectID uuid.UUID) error {
+	defer p.providerCache.Delete(providerID.String())
 	config, err := p.store.GetByIDProject(ctx, providerID, projectID)
 	if err != nil {
 		return fmt.Errorf("error retrieving db record: %w", err)
@@ -214,6 +264,7 @@ func (p *providerManager) DeleteByID(ctx context.Context, providerID uuid.UUID, 
 }
 
 func (p *providerManager) DeleteByName(ctx context.Context, name string, projectID uuid.UUID) error {
+	defer p.providerCache.Delete(fmt.Sprintf("%s-%s", projectID.String(), name))
 	config, err := p.store.GetByNameInSpecificProject(ctx, projectID, name)
 	if err != nil {
 		return fmt.Errorf("error retrieving db record: %w", err)
@@ -246,6 +297,20 @@ func (p *providerManager) PatchProviderConfig(
 	}
 
 	return p.store.Update(ctx, dbProvider.ID, dbProvider.ProjectID, marshalledConfig)
+}
+
+func (p *providerManager) IterateWebhookHandlers() iter.Seq2[string, http.Handler] {
+	return func(yield func(string, http.Handler) bool) {
+		for class, manager := range p.classManagers {
+			handler := manager.GetWebhookHandler()
+			if handler == nil {
+				continue
+			}
+			if !yield(string(class), handler) {
+				break
+			}
+		}
+	}
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {
