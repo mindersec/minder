@@ -112,3 +112,13 @@ func DbPropToModel(dbProp db.Property) (*properties.Property, error) {
 func (e *EntityWithProperties) UpdateProperties(props *properties.Properties) {
 	e.Properties = props
 }
+
+// NeedsPropertyLoad returns true if the entity instance needs properties loaded
+// This is handy to determine if entities exist in the database without their
+// properties being migrated to the central table yet.
+func (e *EntityWithProperties) NeedsPropertyLoad() bool {
+	// We check if there is 2 or less properties.
+	// We check for this number since we might include the
+	// Upstream ID and a name as fallbacks.
+	return e.Properties.Len() <= 2
+}
