@@ -175,7 +175,7 @@ func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRe
 		page = resp.NextPage
 	}
 
-	return &engif.Result{Object: &diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &engif.Result{Object: diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func (di *Diff) ingestFileForDepDiff(
