@@ -372,6 +372,12 @@ func (s *Server) sortEntitiesEvaluationStatus(
 	profileStatuses = map[uuid.UUID]*minderv1.ProfileStatus{}
 	statusByEntity = map[string]map[uuid.UUID][]*minderv1.RuleEvaluationStatus{}
 
+	psc, err := propSvc.WithEntityCache(s.props, 1000)
+	if err != nil {
+		return nil, nil, nil,
+			status.Errorf(codes.Internal, "error creating entity cache: %v", err)
+	}
+
 	for _, p := range profileList {
 		p := p
 		evals, err := store.ListRuleEvaluationsByProfileId(
@@ -393,7 +399,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				continue
 			}
 
-			efp, err := s.props.EntityWithPropertiesByID(ctx, e.EntityID, nil)
+			efp, err := psc.EntityWithPropertiesByID(ctx, e.EntityID, nil)
 			if err != nil {
 				if errors.Is(err, propSvc.ErrEntityNotFound) {
 					// If the entity is not found, log and skip
