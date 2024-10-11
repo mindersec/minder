@@ -68,6 +68,32 @@ func TestEvaluationDetailRendering(t *testing.T) {
 			error:   "evaluation failure: this is the message",
 			details: "evaluation failure: this is the message",
 		},
+
+		// rego/constraints template
+		{
+			name:    "constraints template single failures",
+			msg:     "this is the message",
+			tmpl:    templates.RegoConstraints,
+			args:    map[string]any{"violations": []string{"sole violation"}},
+			error:   "evaluation failure: this is the message",
+			details: "sole violation\n",
+		},
+		{
+			name:    "constraints template multiple failures",
+			msg:     "this is the message",
+			tmpl:    templates.RegoConstraints,
+			args:    map[string]any{"violations": []string{"first violation", "second violation"}},
+			error:   "evaluation failure: this is the message",
+			details: "Multiple failures:\n* first violation\n* second violation\n",
+		},
+		{
+			name:    "violations mandatory",
+			msg:     "this is the message",
+			tmpl:    templates.RegoConstraints,
+			args:    map[string]any{},
+			error:   "evaluation failure: this is the message",
+			details: "evaluation failure: this is the message",
+		},
 	}
 
 	for _, tt := range tests {

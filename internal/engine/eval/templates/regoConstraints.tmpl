@@ -1,0 +1,8 @@
+{{- if gt (len .violations) 1 -}}
+Multiple failures:
+{{- range .violations }}
+* {{ . }}
+{{- end -}}
+{{ else }}
+{{- range .violations }}{{ . }}{{- end }}
+{{- end }}
