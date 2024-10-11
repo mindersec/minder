@@ -40,6 +40,7 @@ import (
 var (
 	errPrivateRepoNotAllowed  = errors.New("private repositories are not allowed in this project")
 	errArchivedRepoNotAllowed = errors.New("archived repositories are not evaluated")
+	errPropsDoNotMatch        = errors.New("properties do not match")
 )
 
 type handleEntityAndDoBase struct {
@@ -102,9 +103,11 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 		l.Debug().Msg("entity not retrieved")
 	}
 
-	err = b.forwardEntityCheck(ctx, entMsg, ewp)
+	forward, err := b.forwardEntityCheck(ctx, entMsg, ewp)
 	if err != nil {
-		l.Error().Err(err).Msg("not forwarding entity")
+		l.Error().Err(err).Msg("error checking entity")
+		return nil
+	} else if !forward {
 		return nil
 	}
 
@@ -131,16 +134,28 @@ func (b *handleEntityAndDoBase) handleRefreshEntityAndDo(msg *watermill.Message)
 func (b *handleEntityAndDoBase) forwardEntityCheck(
 	ctx context.Context,
 	entMsg *message.HandleEntityAndDoMessage,
-	ewp *models.EntityWithProperties) error {
+	ewp *models.EntityWithProperties) (bool, error) {
 	if ewp == nil {
-		return nil
+		return true, nil
 	}
 
-	if err := b.matchPropertiesCheck(entMsg, ewp); err != nil {
-		return err
+	err := b.matchPropertiesCheck(entMsg, ewp)
+	if errors.Is(err, errPropsDoNotMatch) {
+		zerolog.Ctx(ctx).Debug().Err(err).Msg("properties do not match")
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
 
-	return b.repoPrivateOrArchivedCheck(ctx, ewp)
+	err = b.repoPrivateOrArchivedCheck(ctx, ewp)
+	if errors.Is(err, errPrivateRepoNotAllowed) || errors.Is(err, errArchivedRepoNotAllowed) {
+		zerolog.Ctx(ctx).Debug().Err(err).Msg("private or archived repo")
+		return false, nil
+	} else if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (_ *handleEntityAndDoBase) matchPropertiesCheck(
@@ -159,7 +174,7 @@ func (_ *handleEntityAndDoBase) matchPropertiesCheck(
 	for propName, prop := range matchProps.Iterate() {
 		entProp := ewp.Properties.GetProperty(propName)
 		if !prop.Equal(entProp) {
-			return errors.New("properties do not match")
+			return errPropsDoNotMatch
 		}
 	}
 
