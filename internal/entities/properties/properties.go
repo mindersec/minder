@@ -396,3 +396,11 @@ func (p *Properties) ToLogDict() *zerolog.Event {
 
 	return dict
 }
+
+// Len returns the number of properties
+func (p *Properties) Len() int {
+	if p == nil {
+		return 0
+	}
+	return p.props.Size()
+}
