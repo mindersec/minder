@@ -158,6 +158,10 @@ func (b *handleEntityAndDoBase) forwardEntityCheck(
 	return true, nil
 }
 
+// matchPropertiesCheck checks if the properties of the entity match the properties in the message.
+// this is different from the hint check, which is a check to see if the entity comes from where we expect
+// it to come from. A concrete example is receiving a "meta" event on a webhook we don't manage, in that case
+// we'd want to match on the webhook ID and only proceed if it matches with the webhook ID minder tracks.
 func (_ *handleEntityAndDoBase) matchPropertiesCheck(
 	entMsg *message.HandleEntityAndDoMessage,
 	ewp *models.EntityWithProperties) error {
