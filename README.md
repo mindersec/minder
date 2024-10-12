@@ -30,7 +30,7 @@ allowing users to integrate with their existing tooling and processes.
 
 ## Public Instance
 
-Stacklok, a company supporting Minder, provides a free-to-use SaaS version of Minder at api.stacklok.com. This instance is available for public repositories only.
+Stacklok, a company supporting Minder, provides a free-to-use public instance of Minder. This is the default instance used when you use the `minder` CLI. This instance is available for public repositories only.
 
 ---
 # Getting Started (< 1 minute)
