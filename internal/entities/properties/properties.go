@@ -24,8 +24,15 @@ import (
 
 	"github.com/puzpuzpuz/xsync/v3"
 	"github.com/rs/zerolog"
+	"golang.org/x/exp/constraints"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+// NumericalValueToUpstreamID converts a numerical value to a string for use as an upstream ID
+func NumericalValueToUpstreamID[T constraints.Integer](n T) string {
+	return strconv.FormatInt(int64(n), 10)
+}
 
 // Property is a struct that holds a value. It's just a wrapper around structpb.Value
 // with typed getters and handling of a nil receiver
@@ -216,6 +223,19 @@ func (p *Property) RawValue() any {
 	return p.value.AsInterface()
 }
 
+// Equal checks if two Properties are equal
+func (p *Property) Equal(other *Property) bool {
+	if p == nil && other == nil {
+		return true
+	}
+
+	if p == nil || other == nil {
+		return false
+	}
+
+	return proto.Equal(p.value, other.value)
+}
+
 // Properties struct that holds the properties map and provides access to Property values
 type Properties struct {
 	props *xsync.MapOf[string, Property]
@@ -389,4 +409,12 @@ func (p *Properties) ToLogDict() *zerolog.Event {
 	})
 
 	return dict
+}
+
+// Len returns the number of properties
+func (p *Properties) Len() int {
+	if p == nil {
+		return 0
+	}
+	return p.props.Size()
 }

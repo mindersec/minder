@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/templates"
@@ -77,7 +78,12 @@ func NewVulncheckEvaluator(
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Result) error {
+func (e *Evaluator) Eval(
+	ctx context.Context,
+	pol map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
 		return err
@@ -103,11 +109,11 @@ func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, res *engif.Res
 }
 
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
+// TODO: it would be nice if we could express this in rego over
+// `input.ingested.deps[_].dep`, rather than building this in to core.
 func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
 	var vulnerablePackages []string
 
-	// TODO(jhrozek): Fix this!
-	//nolint:govet
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("invalid object type for vulncheck evaluator")

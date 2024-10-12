@@ -17,9 +17,12 @@ package application
 import (
 	"context"
 
+	"google.golang.org/protobuf/reflect/protoreflect"
+
 	evalerrors "github.com/stacklok/minder/internal/engine/errors"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
+	"github.com/stacklok/minder/internal/engine/eval/templates"
 	engif "github.com/stacklok/minder/internal/engine/interfaces"
 	eoptions "github.com/stacklok/minder/internal/engine/options"
 	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
@@ -52,14 +55,23 @@ func NewInvisibleCharactersEvaluator(
 }
 
 // Eval evaluates the invisible characters rule type
-func (ice *InvisibleCharactersEvaluator) Eval(ctx context.Context, _ map[string]any, res *engif.Result) error {
-	hasFoundViolations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
+func (ice *InvisibleCharactersEvaluator) Eval(
+	ctx context.Context,
+	_ map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *engif.Result,
+) error {
+	violations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {
 		return err
 	}
 
-	if hasFoundViolations {
-		return evalerrors.NewErrEvaluationFailed("found invisible characters violations")
+	if len(violations) > 0 {
+		return evalerrors.NewDetailedErrEvaluationFailed(
+			templates.InvisibleCharactersTemplate,
+			map[string]any{"violations": violations},
+			"found invisible characters violations",
+		)
 	}
 
 	return nil

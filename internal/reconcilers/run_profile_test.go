@@ -92,7 +92,7 @@ func Test_handleProfileInitEvent(t *testing.T) {
 			stubEventer := &stubeventer.StubEventer{}
 			mockStore := scenario.setupDbMocks()(ctrl)
 
-			reconciler, err := NewReconciler(mockStore, stubEventer, nil, nil, nil, nil)
+			reconciler, err := NewReconciler(mockStore, stubEventer, nil, nil, nil)
 			require.NoError(t, err)
 			require.NotNil(t, reconciler)
 

@@ -216,22 +216,30 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 
 	propsvc := ehs.propServiceBuilder(qtx)
 
+	psc, err := propertiessvc.WithEntityCache(propsvc, len(rows))
+	if err != nil {
+		return nil, fmt.Errorf("error creating property service with entity cache: %w", err)
+	}
+
 	data := make([]*OneEvalHistoryAndEntity, 0, len(rows))
 	for _, row := range rows {
-		efp, err := propsvc.EntityWithPropertiesByID(ctx, row.EntityID,
+		ewp, err := psc.EntityWithPropertiesByID(ctx, row.EntityID,
 			propertiessvc.CallBuilder().WithStoreOrTransaction(qtx))
 		if err != nil {
 			return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 		}
 
-		err = propsvc.RetrieveAllPropertiesForEntity(ctx, efp, ehs.providerManager,
-			propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
-		if err != nil {
-			return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+		// only reload if we need to
+		if ewp.NeedsPropertyLoad() {
+			err := propsvc.RetrieveAllPropertiesForEntity(ctx, ewp, ehs.providerManager,
+				propertiessvc.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData())
+			if err != nil {
+				return nil, fmt.Errorf("error fetching properties for entity: %w", err)
+			}
 		}
 
 		data = append(data, &OneEvalHistoryAndEntity{
-			EntityWithProperties: efp,
+			EntityWithProperties: ewp,
 			EvalHistoryRow:       row,
 		})
 	}

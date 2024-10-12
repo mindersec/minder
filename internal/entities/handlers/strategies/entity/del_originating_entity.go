@@ -25,11 +25,8 @@ import (
 	"github.com/stacklok/minder/internal/entities/handlers/message"
 	"github.com/stacklok/minder/internal/entities/handlers/strategies"
 	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
 	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	"github.com/stacklok/minder/internal/providers/manager"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type delOriginatingEntityStrategy struct {
@@ -55,11 +52,6 @@ func NewDelOriginatingEntityStrategy(
 func (d *delOriginatingEntityStrategy) GetEntity(
 	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
 ) (*models.EntityWithProperties, error) {
-	childProps, err := properties.NewProperties(entMsg.Entity.GetByProps)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
-
 	tx, err := d.store.BeginTransaction()
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %w", err)
@@ -73,7 +65,7 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting querier")
 	}
 
-	parentEwp, err := getEntityInner(
+	_, err = getEntityInner(
 		ctx,
 		entMsg.Originator.Type, entMsg.Originator.GetByProps, entMsg.Hint,
 		d.propSvc,
@@ -82,27 +74,21 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
-	prov, err := d.provMgr.InstantiateFromID(ctx, parentEwp.Entity.ProviderID)
+	childEwp, err := getEntityInner(
+		ctx,
+		entMsg.Entity.Type, entMsg.Entity.GetByProps, entMsg.Hint,
+		d.propSvc,
+		propertyService.CallBuilder().WithStoreOrTransaction(txq))
 	if err != nil {
-		return nil, fmt.Errorf("error getting provider: %w", err)
+		return nil, fmt.Errorf("error getting parent entity: %w", err)
 	}
 
-	childEntName, err := prov.GetEntityName(entMsg.Entity.Type, childProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting child entity name: %w", err)
-	}
-
-	err = txq.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
-		Name:      childEntName,
-		ProjectID: parentEwp.Entity.ProjectID,
+	err = txq.DeleteEntity(ctx, db.DeleteEntityParams{
+		ID:        childEwp.Entity.ID,
+		ProjectID: childEwp.Entity.ProjectID,
 	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, err
-	}
-
-	err = d.deleteLegacyEntity(ctx, entMsg.Entity.Type, parentEwp, childProps, txq)
-	if err != nil {
-		return nil, fmt.Errorf("error deleting legacy entity: %w", err)
 	}
 
 	if err := d.store.Commit(tx); err != nil {
@@ -110,28 +96,6 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 	}
 
 	return nil, nil
-}
-
-func (_ *delOriginatingEntityStrategy) deleteLegacyEntity(
-	ctx context.Context,
-	entType minderv1.Entity,
-	parentEwp *models.EntityWithProperties,
-	childProps *properties.Properties,
-	t db.ExtendQuerier,
-) error {
-	if entType == minderv1.Entity_ENTITY_PULL_REQUESTS {
-		err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
-			RepositoryID: parentEwp.Entity.ID,
-			PrNumber:     childProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-		})
-		if err != nil {
-			return fmt.Errorf("error deleting pull request: %w", err)
-		}
-	} else {
-		return fmt.Errorf("unsupported entity type: %v", entType)
-	}
-
-	return nil
 }
 
 // GetName returns the name of the strategy. Used for debugging

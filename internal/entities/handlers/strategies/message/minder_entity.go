@@ -36,12 +36,16 @@ func NewToMinderEntity() strategies.MessageCreateStrategy {
 }
 
 func (_ *toMinderEntityStrategy) CreateMessage(_ context.Context, ewp *models.EntityWithProperties) (*watermill.Message, error) {
+	if ewp == nil {
+		return nil, fmt.Errorf("entity with properties is nil")
+	}
+
 	m := watermill.NewMessage(uuid.New().String(), nil)
 
 	entEvent := messages.NewMinderEvent().
 		WithProjectID(ewp.Entity.ProjectID).
 		WithProviderID(ewp.Entity.ProviderID).
-		WithEntityType(ewp.Entity.Type.String()).
+		WithEntityType(ewp.Entity.Type).
 		WithEntityID(ewp.Entity.ID)
 
 	err := entEvent.ToMessage(m)

@@ -45,7 +45,14 @@ type EntityHint struct {
 type HandleEntityAndDoMessage struct {
 	Entity     TypedProps `json:"entity"`
 	Originator TypedProps `json:"owner"`
-	Hint       EntityHint `json:"hint"`
+	// Hint is used to help the entity handler find the entity upstream
+	// using the property service. A typical use case is to use the provider
+	// in the hint and an upstream ID in the Entity.GetByProps attribute
+	Hint EntityHint `json:"hint"`
+	// MatchProps is used to match the properties of the found entity. One
+	// use-case is to include the hook ID in the MatchProps to match against
+	// the entity's hook ID to avoid forwading the message to the wrong entity.
+	MatchProps map[string]any `json:"match_props"`
 }
 
 // NewEntityRefreshAndDoMessage creates a new HandleEntityAndDoMessage struct.
@@ -114,4 +121,11 @@ func (e *HandleEntityAndDoMessage) ToMessage(msg *message.Message) error {
 
 	msg.Payload = payloadBytes
 	return nil
+}
+
+// WithMatchProps sets the properties that must match the properties from the found entity
+// in order to perform the action.
+func (e *HandleEntityAndDoMessage) WithMatchProps(matchProps *properties.Properties) *HandleEntityAndDoMessage {
+	e.MatchProps = matchProps.ToProtoStruct().AsMap()
+	return e
 }

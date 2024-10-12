@@ -356,7 +356,7 @@ default allow = true`,
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithRepositoryID(repositoryID).
+		}).WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	ts := &logger.TelemetryStore{

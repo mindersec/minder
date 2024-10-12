@@ -16,7 +16,6 @@ package reconcilers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -27,6 +26,7 @@ import (
 	"github.com/stacklok/minder/internal/entities/properties"
 	"github.com/stacklok/minder/internal/logger"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
+	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // handleEntityAddEvent handles the entity add event.
@@ -52,22 +52,17 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return nil
 	}
 
-	var repoOwner string
-	var repoName string
-	var ok bool
-	if repoOwner, ok = event.Entity["repoOwner"].(string); !ok {
-		return errors.New("invalid repo owner")
-	}
-	if repoName, ok = event.Entity["repoName"].(string); !ok {
-		return errors.New("invalid repo name")
+	if event.EntityType != pb.Entity_ENTITY_REPOSITORIES {
+		l.Debug().Str("entity_type", event.EntityType.String()).Msg("unsupported entity type")
+		return nil
 	}
 
-	// TODO: This should be using the properties map coming from the event
-	// as-is, but for now we are using the repoOwner and repoName to create
-	// the properties map.
-	fetchByProps, err := properties.NewProperties(map[string]interface{}{
-		properties.PropertyName: fmt.Sprintf("%s/%s", repoOwner, repoName),
-	})
+	if len(event.Properties) == 0 {
+		zerolog.Ctx(ctx).Error().Msg("no properties in event")
+		return nil
+	}
+
+	fetchByProps, err := properties.NewProperties(event.Properties)
 	if err != nil {
 		return fmt.Errorf("error creating properties: %w", err)
 	}
@@ -75,8 +70,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).
 		Str("project_id", event.ProjectID.String()).
-		Str("repo_name", repoName).
-		Str("repo_owner", repoOwner).
+		Dict("properties", fetchByProps.ToLogDict()).
 		Logger()
 
 	// Telemetry logging

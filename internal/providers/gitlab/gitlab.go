@@ -142,5 +142,7 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 
 // SupportsEntity implements the Provider interface
 func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
-	return entType == minderv1.Entity_ENTITY_REPOSITORIES
+	return entType == minderv1.Entity_ENTITY_REPOSITORIES ||
+		entType == minderv1.Entity_ENTITY_PULL_REQUESTS ||
+		entType == minderv1.Entity_ENTITY_RELEASE
 }

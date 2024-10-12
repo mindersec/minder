@@ -145,3 +145,21 @@ func WithFailedGetEntityWithPropertiesByID(
 			Return(nil, err)
 	}
 }
+
+func WithSuccessfulSaveAllProperties() MockPropertyServiceOption {
+	return func(mockPropSvc *mockSvc.MockPropertiesService) {
+		mockPropSvc.EXPECT().
+			SaveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(nil)
+	}
+}
+
+func WithFailedSaveAllProperties(
+	err error,
+) MockPropertyServiceOption {
+	return func(mockPropSvc *mockSvc.MockPropertiesService) {
+		mockPropSvc.EXPECT().
+			SaveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+			Return(err)
+	}
+}

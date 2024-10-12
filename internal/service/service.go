@@ -216,7 +216,7 @@ func AllInOneServerService(
 		return fmt.Errorf("unable to subscribe to account events: %w", err)
 	}
 
-	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator)
+	aggr := eea.NewEEA(store, evt, &cfg.Events.Aggregator, propSvc, providerManager)
 
 	// consume flush-all events
 	evt.ConsumeEvents(aggr)
@@ -253,7 +253,7 @@ func AllInOneServerService(
 	evt.ConsumeEvents(handler)
 
 	// Register the reconciler to handle entity events
-	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos, propSvc)
+	rec, err := reconcilers.NewReconciler(store, evt, cryptoEngine, providerManager, repos)
 	if err != nil {
 		return fmt.Errorf("unable to create reconciler: %w", err)
 	}
@@ -269,6 +269,15 @@ func AllInOneServerService(
 
 	refreshById := handlers.NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, providerManager)
 	evt.ConsumeEvents(refreshById)
+
+	addOriginatingEntity := handlers.NewAddOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(addOriginatingEntity)
+
+	delOriginatingEntity := handlers.NewRemoveOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	evt.ConsumeEvents(delOriginatingEntity)
+
+	getAndDeleteEntity := handlers.NewGetEntityAndDeleteHandler(evt, store, propSvc)
+	evt.ConsumeEvents(getAndDeleteEntity)
 
 	// Register the email manager to handle email invitations
 	var mailClient events.Consumer

@@ -26,35 +26,26 @@ import (
 	"io"
 	"mime"
 	"net/http"
-	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/stacklok/minder/internal/config/server"
 	"github.com/stacklok/minder/internal/controlplane/metrics"
 	"github.com/stacklok/minder/internal/db"
 	"github.com/stacklok/minder/internal/engine/entities"
 	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/models"
 	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/entities/properties/service"
 	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/projects/features"
 	"github.com/stacklok/minder/internal/providers/github/clients"
 	"github.com/stacklok/minder/internal/providers/github/installations"
 	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
 	ghsvc "github.com/stacklok/minder/internal/providers/github/service"
 	"github.com/stacklok/minder/internal/reconcilers/messages"
-	reposvc "github.com/stacklok/minder/internal/repositories"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
 	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
 )
 
 // errRepoNotFound is returned when a repository is not found
@@ -674,8 +665,7 @@ func (_ *Server) processPingEvent(
 	l.Debug().Msg("ping received")
 }
 
-//nolint:gocyclo // This function will be re-simplified later on
-func (s *Server) processPackageEvent(
+func (_ *Server) processPackageEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -704,132 +694,27 @@ func (s *Server) processPackageEvent(
 		return nil, errors.New("invalid package: owner is nil")
 	}
 
-	repoEnt, err := s.fetchRepo(ctx, event.Repo)
+	repoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.GetID()),
+		properties.PropertyName:       event.Repo.GetName(),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating repository properties: %w", err)
 	}
-
-	provider, err := s.providerManager.InstantiateFromID(ctx, repoEnt.Entity.ProviderID)
-	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
-	}
-
 	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
 		return nil, fmt.Errorf("error converting package event to properties: %w", err)
 	}
 
-	pkgName, err := provider.GetEntityName(pb.Entity_ENTITY_ARTIFACTS, pkgLookupProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting package name: %w", err)
-	}
+	pkgMsg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_ARTIFACTS, pkgLookupProps).
+		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	var refreshedPkgProperties *properties.Properties
-	ei, err := db.WithTransaction(s.store, func(tx db.ExtendQuerier) (*db.EntityInstance, error) {
-		// we do two property lookups here: this first one will go away once we migrate artifacts to entities
-		// as the only reason is to have the visibility and type of the artifact available.
-		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
-			ctx, provider,
-			repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-			pkgLookupProps, pb.Entity_ENTITY_ARTIFACTS,
-			service.ReadBuilder().WithStoreOrTransaction(tx))
-
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
-		}
-
-		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
-		dbProv, getPrErr := tx.GetProviderByID(ctx, repoEnt.Entity.ProviderID)
-		if getPrErr != nil {
-			return nil, fmt.Errorf("error getting provider: %w", err)
-		}
-
-		dbArtifact, err := tx.UpsertArtifact(ctx, db.UpsertArtifactParams{
-			RepositoryID: uuid.NullUUID{
-				UUID:  repoEnt.Entity.ID,
-				Valid: true,
-			},
-			ArtifactName:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
-			ArtifactType:       refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyType).GetString(),
-			ArtifactVisibility: refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyVisibility).GetString(),
-			ProjectID:          repoEnt.Entity.ProjectID,
-			ProviderID:         repoEnt.Entity.ProviderID,
-			ProviderName:       dbProv.Name,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error upserting artifact: %w", err)
-		}
-
-		ent, err := tx.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
-			ID:         dbArtifact.ID,
-			EntityType: db.EntitiesArtifact,
-			Name:       pkgName,
-			ProjectID:  repoEnt.Entity.ProjectID,
-			ProviderID: repoEnt.Entity.ProviderID,
-			OriginatedFrom: uuid.NullUUID{
-				UUID:  repoEnt.Entity.ID,
-				Valid: true,
-			},
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating or ensuring entity: %w", err)
-		}
-
-		// fetch the properties
-		refreshedPkgProperties, err = s.props.RetrieveAllProperties(
-			ctx, provider,
-			ent.ProjectID, ent.ProviderID,
-			refreshedPkgProperties, pb.Entity_ENTITY_ARTIFACTS,
-			service.ReadBuilder().WithStoreOrTransaction(tx))
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving properties: %w", err)
-		}
-
-		return &ent, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// refresh the version to attach it to the pb representation we send to the evaluation
-	cli, err := provifv1.As[provifv1.GitHub](provider)
-	if err != nil {
-		l.Error().Err(err).Msg("error instantiating provider")
-		return nil, err
-	}
-
-	version, err := gatherArtifactVersionInfo(ctx, cli, event,
-		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyOwner).GetString(),
-		refreshedPkgProperties.GetProperty(ghprop.ArtifactPropertyName).GetString(),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("error extracting artifact from payload: %w", err)
-	}
-
-	ewp := models.NewEntityWithProperties(*ei, refreshedPkgProperties)
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, ewp, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting artifact to protobuf: %w", err)
-	}
-
-	pbArtifact, ok := pbMsg.(*pb.Artifact)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-	pbArtifact.Versions = []*pb.ArtifactVersion{version}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithArtifact(pbArtifact).
-		WithArtifactID(ei.ID).
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithRepositoryID(repoEnt.Entity.ID)
-
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
+	return &processingResult{topic: events.TopicQueueOriginatingEntityAdd, wrapper: pkgMsg}, nil
 }
 
-func (s *Server) processRelevantRepositoryEvent(
+func (_ *Server) processRelevantRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -855,67 +740,47 @@ func (s *Server) processRelevantRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	repoEntity, err := s.fetchRepo(ctx, event.GetRepo())
+	lookByProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRepo().GetID()),
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating repository lookup properties: %w", err)
 	}
 
-	hookId, hasHookErr := repoEntity.Properties.GetProperty(ghprop.RepoPropertyHookId).AsInt64()
+	msg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
+
 	// This only makes sense for "meta" event type
-	if event.GetHookID() != 0 && hasHookErr == nil {
+	if event.GetHookID() != 0 {
 		// Check if the payload webhook ID matches the one we
 		// have stored in the DB for this repository
-		if event.GetHookID() != hookId {
-			// This means we got a deleted event for a
-			// webhook ID that doesn't correspond to the
-			// one we have stored in the DB.
-			return nil, newErrNotHandled("meta event with action %s not handled, hook ID %d does not match stored webhook ID %d",
-				event.GetAction(),
-				event.GetHookID(),
-				hookId,
-			)
+		// If not, this means we got a deleted event for a
+		// webhook ID that doesn't correspond to the
+		// one we have stored in the DB.
+		matchHookProps, err := properties.NewProperties(map[string]any{
+			ghprop.RepoPropertyHookId: event.GetHookID(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error creating hook match properties: %w", err)
 		}
+		msg = msg.WithMatchProps(matchHookProps)
 	}
+
+	// For all other events exept deletions we issue a refresh event.
+	topic := events.TopicQueueRefreshEntityAndEvaluate
 
 	// For webhook deletions, repository deletions, and repository
 	// transfers, we issue a delete event with the correct message
 	// type.
 	if event.GetAction() == webhookActionEventDeleted ||
 		event.GetAction() == webhookActionEventTransferred {
-		repoEvent := messages.NewMinderEvent().
-			WithProjectID(repoEntity.Entity.ProjectID).
-			WithProviderID(repoEntity.Entity.ProviderID).
-			WithEntityType("repository").
-			WithEntityID(repoEntity.Entity.ID).
-			WithAttribute("repoID", repoEntity.Entity.ID.String())
-
-		return &processingResult{
-			topic:   events.TopicQueueReconcileEntityDelete,
-			wrapper: repoEvent,
-		}, nil
+		topic = events.TopicQueueGetEntityAndDelete
 	}
-
-	// For all other actions, we trigger an evaluation.
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, repoEntity, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
-	}
-
-	pbRepo, ok := pbMsg.(*pb.Repository)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(repoEntity.Entity.ProjectID).
-		WithProviderID(repoEntity.Entity.ProviderID).
-		WithRepository(pbRepo).
-		WithRepositoryID(repoEntity.Entity.ID)
 
 	return &processingResult{
-		topic:   events.TopicQueueEntityEvaluate,
-		wrapper: eiw,
+		topic:   topic,
+		wrapper: msg,
 	}, nil
 }
 
@@ -948,8 +813,7 @@ func (s *Server) processRepositoryEvent(
 	return s.sendEvaluateRepoMessage(event.GetRepo(), events.TopicQueueRefreshEntityAndEvaluate)
 }
 
-// nolint:gocyclo // This function will be re-simplified real soon
-func (s *Server) processPullRequestEvent(
+func (_ *Server) processPullRequestEvent(
 	ctx context.Context,
 	payload []byte,
 ) (*processingResult, error) {
@@ -983,17 +847,8 @@ func (s *Server) processPullRequestEvent(
 	}
 
 	ghRepo := event.GetRepo()
-	repoEnt, err := s.fetchRepo(ctx, &repo{
-		ID:      ghRepo.ID,
-		HTMLURL: ghRepo.HTMLURL,
-		Private: ghRepo.Private,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	pullProps, err := properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: event.GetPullRequest().GetID(),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetPullRequest().GetID()),
 		ghprop.PullPropertyRepoName:   ghRepo.GetName(),
 		ghprop.PullPropertyRepoOwner:  ghRepo.GetOwner(),
 		ghprop.PullPropertyNumber:     event.GetPullRequest().GetNumber(),
@@ -1003,39 +858,46 @@ func (s *Server) processPullRequestEvent(
 		return nil, fmt.Errorf("error creating pull request properties: %w", err)
 	}
 
-	provider, err := s.providerManager.InstantiateFromID(ctx, repoEnt.Entity.ProviderID)
+	repoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(ghRepo.GetID()),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("error instantiating provider: %w", err)
+		return nil, fmt.Errorf("error creating repository properties for PR origination: %w", err)
 	}
 
-	prEntWithProps, err := s.reconcilePrWithDb(ctx, provider, repoEnt, pullProps)
-	if errors.Is(err, errNotHandled) {
-		return nil, err
-	} else if err != nil {
-		return nil, fmt.Errorf("error reconciling PR with DB: %w", err)
+	// it is bit of a code smell to use the fetcher here just to format the name
+	name, err := ghprop.NewPullRequestFetcher().GetName(pullProps)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching pull request name: %w", err)
 	}
+	nameProp, err := properties.NewProperty(name)
+	if err != nil {
+		return nil, fmt.Errorf("error creating property for the name: %w", err)
+	}
+	pullProps.SetProperty(properties.PropertyName, nameProp)
+
+	var topic string
+	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
+	case webhookActionEventOpened,
+		webhookActionEventReopened,
+		webhookActionEventSynchronize:
+		topic = events.TopicQueueOriginatingEntityAdd
+	case webhookActionEventClosed:
+		topic = events.TopicQueueOriginatingEntityDelete
+	default:
+		zerolog.Ctx(ctx).Info().Msgf("action %s is not handled for pull requests",
+			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
+		return nil, errNotHandled
+	}
+
+	prMsg := entityMessage.NewEntityRefreshAndDoMessage().
+		WithEntity(pb.Entity_ENTITY_PULL_REQUESTS, pullProps).
+		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
+		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
 	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
 
-	// protobufs are our API, so we always execute on these instead of the DB directly.
-	pbMsg, err := s.props.EntityWithPropertiesAsProto(ctx, prEntWithProps, s.providerManager)
-	if err != nil {
-		return nil, fmt.Errorf("error converting repository to protobuf: %w", err)
-	}
-
-	pbPullRequest, ok := pbMsg.(*pb.PullRequest)
-	if !ok {
-		return nil, errors.New("error converting proto message to protobuf")
-	}
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithPullRequest(pbPullRequest).
-		WithPullRequestID(prEntWithProps.Entity.ID).
-		WithRepositoryID(repoEnt.Entity.ID)
-
-	return &processingResult{topic: events.TopicQueueEntityEvaluate, wrapper: eiw}, nil
+	return &processingResult{topic: topic, wrapper: prMsg}, nil
 }
 
 // processInstallationAppEvent processes events related to changes to
@@ -1171,7 +1033,6 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 		// caveat: we're accessing the database once for every
 		// repository, which might be inefficient at scale.
 		res, err := s.repositoryRemoved(
-			ctx,
 			repo,
 		)
 		if errors.Is(err, errRepoNotFound) {
@@ -1188,25 +1049,9 @@ func (s *Server) processInstallationRepositoriesAppEvent(
 }
 
 func (s *Server) repositoryRemoved(
-	ctx context.Context,
 	repo *repo,
 ) (*processingResult, error) {
-	repoEnt, err := s.fetchRepo(ctx, repo)
-	if err != nil && !errors.Is(err, provifv1.ErrEntityNotFound) {
-		return nil, err
-	}
-
-	event := messages.NewMinderEvent().
-		WithProjectID(repoEnt.Entity.ProjectID).
-		WithProviderID(repoEnt.Entity.ProviderID).
-		WithEntityType("repository").
-		WithEntityID(repoEnt.Entity.ID).
-		WithAttribute("repoID", repoEnt.Entity.ID.String())
-
-	return &processingResult{
-		topic:   events.TopicQueueReconcileEntityDelete,
-		wrapper: event,
-	}, nil
+	return s.sendEvaluateRepoMessage(repo, events.TopicQueueGetEntityAndDelete)
 }
 
 func (_ *Server) repositoryAdded(
@@ -1218,12 +1063,19 @@ func (_ *Server) repositoryAdded(
 		return nil, errors.New("invalid repository name")
 	}
 
+	addRepoProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
+		properties.PropertyName:       repo.GetFullName(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating repository properties: %w", err)
+	}
+
 	event := messages.NewMinderEvent().
 		WithProjectID(installation.ProjectID.UUID).
 		WithProviderID(installation.ProviderID.UUID).
-		WithEntityType("repository").
-		WithAttribute("repoName", repo.GetName()).
-		WithAttribute("repoOwner", repo.GetOwner())
+		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
+		WithProperties(addRepoProps)
 
 	return &processingResult{
 		topic:   events.TopicQueueReconcileEntityAdd,
@@ -1237,7 +1089,7 @@ func (_ *Server) sendEvaluateRepoMessage(
 ) (*processingResult, error) {
 	lookByProps, err := properties.NewProperties(map[string]any{
 		// the PropertyUpstreamID is always a string
-		properties.PropertyUpstreamID: strconv.FormatInt(repo.GetID(), 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error creating repository properties: %w", err)
@@ -1251,42 +1103,6 @@ func (_ *Server) sendEvaluateRepoMessage(
 			topic:   handler,
 			wrapper: entRefresh},
 		nil
-}
-
-func (s *Server) fetchRepo(
-	ctx context.Context,
-	repo *repo,
-) (*models.EntityWithProperties, error) {
-	l := zerolog.Ctx(ctx)
-
-	repoEnt, err := s.repos.RefreshRepositoryByUpstreamID(ctx, repo.GetID())
-	if err != nil {
-		if errors.Is(err, provifv1.ErrEntityNotFound) {
-			l.Info().Msgf("repository %d not found upstream", repo.GetID())
-			return repoEnt, err
-		} else if errors.Is(err, reposvc.ErrRepoNotFound) {
-			l.Info().Msgf("repository %d not found", repo.GetID())
-			// no use in continuing if the repository doesn't exist
-			return nil, fmt.Errorf("repository %d not found: %w",
-				repo.GetID(),
-				errRepoNotFound,
-			)
-		}
-		return nil, fmt.Errorf("error getting repository: %w", err)
-	}
-
-	if repoEnt.Properties.GetProperty(properties.RepoPropertyIsPrivate).GetBool() {
-		if !features.ProjectAllowsPrivateRepos(ctx, s.store, repoEnt.Entity.ProjectID) {
-			return nil, errRepoIsPrivate
-		}
-	}
-
-	if repoEnt.Entity.ProjectID.String() == "" {
-		return nil, fmt.Errorf("no project found for repository %s: %w",
-			repoEnt.Properties.GetProperty(properties.PropertyName).GetString(), errRepoNotFound)
-	}
-
-	return repoEnt, nil
 }
 
 // NoopWebhookHandler is a no-op handler for webhooks
@@ -1429,223 +1245,10 @@ func packageEventToProperties(
 	}
 
 	return properties.NewProperties(map[string]any{
-		properties.PropertyUpstreamID: strconv.FormatInt(*event.Package.ID, 10),
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(*event.Package.ID),
 		// we need these to look up the package properties
 		ghprop.ArtifactPropertyOwner: owner,
 		ghprop.ArtifactPropertyName:  *event.Package.Name,
 		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
 	})
-}
-
-// This routine assumes that all necessary validation is performed on
-// the upper layer and accesses package and repo without checking for
-// nulls.
-func gatherArtifactVersionInfo(
-	ctx context.Context,
-	cli provifv1.GitHub,
-	event *packageEvent,
-	artifactOwnerLogin, artifactName string,
-) (*pb.ArtifactVersion, error) {
-	if event.Package.PackageVersion == nil {
-		return nil, errors.New("invalid package version: nil")
-	}
-
-	pv := event.Package.PackageVersion
-	if pv.ID == nil {
-		return nil, errors.New("invalid package version: id is nil")
-	}
-	if pv.Version == nil {
-		return nil, errors.New("invalid package version: version is nil")
-	}
-	if pv.ContainerMetadata == nil {
-		return nil, errors.New("invalid package version: container metadata is nil")
-	}
-	if pv.ContainerMetadata.Tag == nil {
-		return nil, errors.New("invalid container metadata: tag is nil")
-	}
-	if pv.ContainerMetadata.Tag.Name == nil {
-		return nil, errors.New("invalid container metadata tag: name is nil")
-	}
-
-	version := &pb.ArtifactVersion{
-		VersionId: *pv.ID,
-		Tags:      []string{*pv.ContainerMetadata.Tag.Name},
-		Sha:       *pv.Version,
-	}
-
-	// not all information is in the payload, we need to get it from the container registry
-	// and/or GH API
-	if err := updateArtifactVersionFromRegistry(
-		ctx,
-		cli,
-		artifactOwnerLogin,
-		artifactName,
-		version,
-	); err != nil {
-		return nil, fmt.Errorf("error getting upstream information for artifact version: %w", err)
-	}
-
-	return version, nil
-}
-
-func updateArtifactVersionFromRegistry(
-	ctx context.Context,
-	client provifv1.GitHub,
-	artifactOwnerLogin, artifactName string,
-	version *pb.ArtifactVersion,
-) error {
-	// we'll grab the artifact version from the REST endpoint because we need the visibility
-	// and createdAt fields which are not in the payload
-	ghVersion, err := client.GetPackageVersionById(ctx, artifactOwnerLogin, string(verifyif.ArtifactTypeContainer),
-		artifactName, version.VersionId)
-	if err != nil {
-		return fmt.Errorf("error getting package version from repository: %w", err)
-	}
-
-	tags := ghVersion.Metadata.Container.Tags
-	// if the artifact has no tags, skip it
-	if len(tags) == 0 {
-		return errArtifactVersionSkipped
-	}
-
-	sort.Strings(tags)
-
-	version.Tags = tags
-	if ghVersion.CreatedAt != nil {
-		version.CreatedAt = timestamppb.New(*ghVersion.CreatedAt.GetTime())
-	}
-	return nil
-}
-
-func (s *Server) reconcilePrWithDb(
-	ctx context.Context,
-	provider provifv1.Provider,
-	repoEnt *models.EntityWithProperties,
-	pullProps *properties.Properties,
-) (*models.EntityWithProperties, error) {
-	l := zerolog.Ctx(ctx)
-
-	var retErr error
-	var retPr *models.EntityWithProperties
-
-	pullName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request name: %w", err)
-	}
-
-	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
-	case webhookActionEventOpened,
-		webhookActionEventReopened,
-		webhookActionEventSynchronize:
-		var err error
-		retPr, err = db.WithTransaction(s.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
-			dbPr, err := t.UpsertPullRequest(ctx, db.UpsertPullRequestParams{
-				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			prEnt, err := t.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
-				ID:         dbPr.ID,
-				EntityType: db.EntitiesPullRequest,
-				Name:       pullName,
-				ProjectID:  repoEnt.Entity.ProjectID,
-				ProviderID: repoEnt.Entity.ProviderID,
-				OriginatedFrom: uuid.NullUUID{
-					UUID:  repoEnt.Entity.ID,
-					Valid: true,
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			refreshedProps, err := s.updatePullRequestInfoFromProvider(ctx, provider, repoEnt, pullProps, t)
-			if err != nil {
-				return nil, fmt.Errorf("error updating pull request information from provider: %w", err)
-			}
-
-			return models.NewEntityWithProperties(prEnt, refreshedProps), nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf(
-				"cannot upsert PR %d in repo %s: %w",
-				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-				repoEnt.Properties.GetProperty(properties.PropertyName).GetString(),
-				err)
-		}
-		retErr = nil
-	case webhookActionEventClosed:
-		_, err := db.WithTransaction(s.store, func(t db.ExtendQuerier) (*db.PullRequest, error) {
-			err := t.DeletePullRequest(ctx, db.DeletePullRequestParams{
-				RepositoryID: repoEnt.Entity.ID,
-				PrNumber:     pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			err = t.DeleteEntityByName(ctx, db.DeleteEntityByNameParams{
-				Name:      pullName,
-				ProjectID: repoEnt.Entity.ProjectID,
-			})
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return nil, err
-			}
-
-			return nil, nil
-		})
-
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("cannot delete PR record %d in repo %s",
-				pullProps.GetProperty(ghprop.PullPropertyNumber).GetInt64(),
-				repoEnt.Properties.GetProperty(properties.PropertyName).GetString())
-		}
-		retPr = nil
-		retErr = errNotHandled
-	default:
-		l.Info().Msgf("action %s is not handled for pull requests",
-			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
-		retPr = nil
-		retErr = errNotHandled
-	}
-
-	return retPr, retErr
-}
-
-func (s *Server) updatePullRequestInfoFromProvider(
-	ctx context.Context,
-	provider provifv1.Provider,
-	repoEnt *models.EntityWithProperties,
-	pullProps *properties.Properties,
-	qtx db.ExtendQuerier,
-) (*properties.Properties, error) {
-	// create properties.Name for the PR
-	prName, err := provider.GetEntityName(pb.Entity_ENTITY_PULL_REQUESTS, pullProps)
-	if err != nil {
-		return nil, fmt.Errorf("error getting pull request name: %w", err)
-	}
-
-	lookupPropertiesMap := map[string]any{
-		properties.PropertyName:       prName,
-		properties.PropertyUpstreamID: pullProps.GetProperty(properties.PropertyUpstreamID).GetString(),
-	}
-
-	lookupProperties, err := properties.NewProperties(lookupPropertiesMap)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
-
-	prProps, err := s.props.RetrieveAllProperties(ctx, provider,
-		repoEnt.Entity.ProjectID, repoEnt.Entity.ProviderID,
-		lookupProperties, pb.Entity_ENTITY_PULL_REQUESTS,
-		service.ReadBuilder().WithStoreOrTransaction(qtx))
-
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving properties: %w", err)
-	}
-
-	return prProps, nil
 }

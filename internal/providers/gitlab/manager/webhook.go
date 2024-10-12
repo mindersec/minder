@@ -15,8 +15,10 @@
 package manager
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
@@ -25,6 +27,12 @@ import (
 	gitlablib "github.com/xanzy/go-gitlab"
 
 	"github.com/stacklok/minder/internal/providers/gitlab/webhooksecret"
+)
+
+const (
+	// MaxBytesLimit is the maximum number of bytes to read from the response body
+	// We limit to 1MB to prevent abuse
+	MaxBytesLimit int64 = 1 << 20
 )
 
 // GetWebhookHandler implements the ProviderManager interface
@@ -69,6 +77,34 @@ func (m *providerClassManager) GetWebhookHandler() http.Handler {
 	})
 }
 
+// getWebhookEventDispatcher returns the appropriate webhook event dispatcher for the given event type
+// It returns a function that is meant to do the actual handling of the event.
+// Note that we pass the request to the handler function, so we don't even try to
+// parse the request body here unless it's necessary.
+func (m *providerClassManager) getWebhookEventDispatcher(
+	eventType gitlablib.EventType,
+) func(l zerolog.Logger, r *http.Request) error {
+	//nolint:exhaustive // We only handle a subset of the possible events
+	switch eventType {
+	case gitlablib.EventTypePush:
+		return m.handleRepoPush
+	case gitlablib.EventTypeTagPush:
+		return m.handleTagPush
+	case gitlablib.EventTypeMergeRequest:
+		return m.handleMergeRequest
+	case gitlablib.EventTypeRelease:
+		return m.handleRelease
+	default:
+		return m.handleNoop
+	}
+}
+
+// handleNoop is a no-op handler for unhandled webhook events
+func (_ *providerClassManager) handleNoop(l zerolog.Logger, _ *http.Request) error {
+	l.Debug().Msg("unhandled webhook event")
+	return nil
+}
+
 func (m *providerClassManager) validateRequest(r *http.Request) error {
 	// Validate the webhook secret
 	gltok := gitlablib.HookEventToken(r)
@@ -111,4 +147,17 @@ func (m *providerClassManager) validateToken(token string, req *http.Request) er
 	}
 
 	return errors.New("invalid webhook token")
+}
+
+func decodeJSONSafe[T any](r io.ReadCloser, v *T) error {
+	rs := wrapSafe(r)
+	defer r.Close()
+
+	dec := json.NewDecoder(rs)
+	return dec.Decode(v)
+}
+
+// wrapSafe wraps the io.Reader in a LimitReader to prevent abuse
+func wrapSafe(r io.Reader) io.Reader {
+	return io.LimitReader(r, MaxBytesLimit)
 }

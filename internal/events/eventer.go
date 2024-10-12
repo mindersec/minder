@@ -153,7 +153,7 @@ func instantiateDriver(
 	switch driver {
 	case GoChannelDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using go-channel driver")
-		return gochannel.BuildGoChannelDriver(cfg)
+		return gochannel.BuildGoChannelDriver(ctx, cfg)
 	case SQLDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)

@@ -53,6 +53,10 @@ func NewToEntityInfoWrapper(
 func (c *toEntityInfoWrapper) CreateMessage(
 	ctx context.Context, ewp *models.EntityWithProperties,
 ) (*message.Message, error) {
+	if ewp == nil {
+		return nil, fmt.Errorf("entity with properties is nil")
+	}
+
 	pbEnt, err := c.propSvc.EntityWithPropertiesAsProto(ctx, ewp, c.provMgr)
 	if err != nil {
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
@@ -64,19 +68,7 @@ func (c *toEntityInfoWrapper) CreateMessage(
 		WithProjectID(ewp.Entity.ProjectID).
 		WithProviderID(ewp.Entity.ProviderID).
 		WithProtoMessage(ewp.Entity.Type, pbEnt).
-		WithID(ewp.Entity.Type, ewp.Entity.ID)
-
-	// in case the entity originated from another entity, add that information as well.
-	// the property service does not provide this information (should it?) so we need to fetch it from the store.
-	// for now we could have hardcoded the entity type as everything originates from a repository,
-	// but this is more flexible.
-	if ewp.Entity.OriginatedFrom != uuid.Nil {
-		dbEnt, err := c.store.GetEntityByID(ctx, ewp.Entity.OriginatedFrom)
-		if err != nil {
-			return nil, fmt.Errorf("error getting originating entity: %w", err)
-		}
-		eiw.WithID(entities.EntityTypeFromDB(dbEnt.EntityType), dbEnt.ID)
-	}
+		WithID(ewp.Entity.ID)
 
 	err = eiw.ToMessage(m)
 	if err != nil {

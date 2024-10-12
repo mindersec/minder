@@ -855,3 +855,201 @@ func TestProperties_ToLogDict(t *testing.T) {
 		require.Equal(t, expectedValue, actualValue)
 	}
 }
+
+func TestProperties_Len(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		p    *Properties
+		want int
+	}{
+		{
+			name: "nil Properties",
+			p:    nil,
+			want: 0,
+		},
+		{
+			name: "empty Properties",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{})
+				return p
+			}(),
+			want: 0,
+		},
+		{
+			name: "Properties with one item",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{"key1": "value1"})
+				return p
+			}(),
+			want: 1,
+		},
+		{
+			name: "Properties with multiple items",
+			p: func() *Properties {
+				p, _ := NewProperties(map[string]any{
+					"key1": "value1",
+					"key2": 42,
+					"key3": true,
+				})
+				return p
+			}(),
+			want: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if got := tt.p.Len(); got != tt.want {
+				t.Errorf("Properties.Len() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_Equal(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		name  string
+		a     any
+		b     any
+		equal bool
+	}{
+		{
+			name:  "equal string",
+			a:     "test",
+			b:     "test",
+			equal: true,
+		},
+		{
+			name:  "different string",
+			a:     "test",
+			b:     "test2",
+			equal: false,
+		},
+		{
+			name:  "equal int64",
+			a:     int64(42),
+			b:     int64(42),
+			equal: true,
+		},
+		{
+			name:  "different int64",
+			a:     int64(42),
+			b:     int64(43),
+			equal: false,
+		},
+		{
+			name:  "equal uint64",
+			a:     uint64(42),
+			b:     uint64(42),
+			equal: true,
+		},
+		{
+			name:  "different uint64",
+			a:     uint64(42),
+			b:     uint64(43),
+			equal: false,
+		},
+		{
+			name:  "equal bool",
+			a:     true,
+			b:     true,
+			equal: true,
+		},
+		{
+			name:  "different bool",
+			a:     true,
+			b:     false,
+			equal: false,
+		},
+		{
+			name:  "equal float64",
+			a:     3.14,
+			b:     3.14,
+			equal: true,
+		},
+		{
+			name:  "different float64",
+			a:     3.14,
+			b:     3.15,
+			equal: false,
+		},
+		{
+			name:  "equal map",
+			a:     map[string]any{"test": "value"},
+			b:     map[string]any{"test": "value"},
+			equal: true,
+		},
+		{
+			name:  "different map",
+			a:     map[string]any{"test": "value"},
+			b:     map[string]any{"test": "value2"},
+			equal: false,
+		},
+		{
+			name:  "equal nil",
+			a:     nil,
+			b:     nil,
+			equal: true,
+		},
+		{
+			name:  "different nil",
+			a:     nil,
+			b:     "test",
+			equal: false,
+		},
+		{
+			name:  "different types",
+			a:     "test",
+			b:     42,
+			equal: false,
+		},
+	}
+
+	for _, s := range scenarios {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			p1, err := NewProperty(s.a)
+			require.NoError(t, err)
+			p2, err := NewProperty(s.b)
+			require.NoError(t, err)
+
+			assert.Equal(t, s.equal, p1.Equal(p2))
+		})
+	}
+}
+
+func TestProperties_Equal_Nils(t *testing.T) {
+	t.Parallel()
+
+	t.Run("both nil", func(t *testing.T) {
+		t.Parallel()
+
+		var p1, p2 *Property
+		assert.True(t, p1.Equal(p2))
+	})
+
+	t.Run("nil parameter", func(t *testing.T) {
+		t.Parallel()
+
+		p1, err := NewProperty("test")
+		require.NoError(t, err)
+		var p2 *Property
+		assert.False(t, p1.Equal(p2))
+	})
+
+	t.Run("nil receiver", func(t *testing.T) {
+		t.Parallel()
+
+		var p1 *Property
+		p2, err := NewProperty("test")
+		require.NoError(t, err)
+		assert.False(t, p1.Equal(p2))
+	})
+}
