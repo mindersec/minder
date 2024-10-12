@@ -22,7 +22,7 @@ Minder can be deployed as a Helm chart and provides a CLI tool ‘minder’. Min
 
 ## Minder Public Instance
 
-Stacklok, a company supporting Minder, provides a free-to-use public instance of Minder at api.stacklok.com. This instance is available for public repositories only.
+Stacklok, a company supporting Minder, provides a free-to-use public instance of Minder. This is the default instance used when you use the `minder` CLI. This instance is available for public repositories only.
 
 ## Status
 
