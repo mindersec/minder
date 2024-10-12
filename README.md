@@ -18,7 +18,7 @@ consistently and securely. Policies can be set to alert only or auto-remediate. 
 rules and can also be configured to apply custom rules.
 
 Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, a company supporting Minder, also
-provides a free-to-use hosted version of Minder (for public repositories only). Minder is designed to be extensible,
+provides a [free-to-use hosted version of Minder (for public repositories only)](#public-instance). Minder is designed to be extensible,
 allowing users to integrate with their existing tooling and processes.
 
 ## Features
