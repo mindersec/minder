@@ -14,7 +14,7 @@ your own hosted instance of Minder, you can log in to that server instead.
 
 Before you can log in, you must have [installed the `minder` CLI application](install_cli).
 
-## Logging in to the Stacklok-hosted instance
+## Logging in to the Minder Public Instance
 
 The `minder` CLI defaults to using the hosted Stacklok public instance.  When using the hosted environment, you do not need to set up a server; you simply log in to the Stacklok authentication instance using your GitHub credentials.
 
