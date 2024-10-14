@@ -136,6 +136,8 @@ func AllInOneServerService(
 		store,
 		ghProviders,
 		propSvc,
+		serverMetrics,
+		evt,
 	)
 
 	provmans := []manager.ProviderClassManager{githubProviderManager}

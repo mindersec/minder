@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package controlplane
+package webhook
 
 import (
 	"bytes"
@@ -124,25 +124,24 @@ func FuzzGitHubEventParsers(f *testing.F) {
 			},
 		}
 
-		s := &Server{}
 		ctx := context.Background()
 
 		switch target % 6 {
 		case 0:
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.processInstallationAppEvent(ctx, rawWHPayload)
+			processInstallationAppEvent(ctx, rawWHPayload)
 		case 1:
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.processRelevantRepositoryEvent(ctx, rawWHPayload)
+			processRelevantRepositoryEvent(ctx, rawWHPayload)
 		case 2:
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.processRepositoryEvent(ctx, rawWHPayload)
+			processRepositoryEvent(ctx, rawWHPayload)
 		case 3:
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.processPackageEvent(ctx, rawWHPayload)
+			processPackageEvent(ctx, rawWHPayload)
 		case 4:
 			//nolint:gosec // The fuzzer does not validate the return values
-			s.processPingEvent(ctx, rawWHPayload)
+			processPingEvent(ctx, rawWHPayload)
 		case 5:
 			//nolint:gosec // The fuzzer does not validate the return values
 			validatePayloadSignature(req, whConfig)

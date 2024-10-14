@@ -39,6 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz/mock"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/crypto/algorithms"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
@@ -95,6 +96,8 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
 
@@ -591,6 +594,8 @@ func TestDeleteProvider(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	ctx := context.Background()
 	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
@@ -714,6 +719,8 @@ func TestDeleteProviderByID(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	ctx := context.Background()
 	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)

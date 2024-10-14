@@ -69,6 +69,7 @@ import (
 	"github.com/mindersec/minder/internal/providers"
 	ghprov "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/service"
+	"github.com/mindersec/minder/internal/providers/github/webhook"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/session"
 	reposvc "github.com/mindersec/minder/internal/repositories"
@@ -372,10 +373,12 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		mux.Handle(path, otelmw(withMiddleware(handler)))
 	}
 
-	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/github/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
-	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
-	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
+	// GitHub is a special case, as it has a separate handler for app events and uses a noop handler
+	// for marketplace events
+	appHandler := webhook.HandleGitHubAppWebhook(s.store, s.ghProviders, s.mt, s.evt)
+	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(appHandler)))
+	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(webhook.NoopWebhookHandler(s.mt))))
+
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)
