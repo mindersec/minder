@@ -26,6 +26,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util"
@@ -124,7 +125,16 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protorefle
 				msg = fmt.Sprintf("%s\nassertion: %s", msg, string(marshalledAssertion))
 			}
 
-			return evalerrors.NewErrEvaluationFailed("%s", msg)
+			return evalerrors.NewDetailedErrEvaluationFailed(
+				templates.JqTemplate,
+				map[string]any{
+					"path":     a.Ingested.Def,
+					"expected": expectedVal,
+					"actual":   dataVal,
+				},
+				"%s",
+				msg,
+			)
 		}
 	}
 

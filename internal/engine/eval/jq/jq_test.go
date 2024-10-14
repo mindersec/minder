@@ -20,10 +20,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -661,6 +663,68 @@ func TestInvalidJQEvals(t *testing.T) {
 			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
 			assert.Error(t, err, "Got unexpected error")
 			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
+		})
+	}
+}
+
+func TestEvaluationDetailRendering(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		msg     string
+		msgArgs []any
+		tmpl    string
+		args    any
+		error   string
+		details string
+	}{
+		// JQ template
+		{
+			name: "JQ template with different actual and expected values",
+			msg:  "this is the message",
+			tmpl: templates.JqTemplate,
+			args: map[string]any{
+				"path":     ".simple",
+				"expected": true,
+				"actual":   false,
+			},
+			error: "evaluation failure: this is the message",
+			details: "The detected configuration does not match the desired configuration:\n" +
+				"Expected \".simple\" to equal true, but was false.",
+		},
+		{
+			name: "JQ template with different actual value equal nil",
+			msg:  "this is the message",
+			tmpl: templates.JqTemplate,
+			args: map[string]any{
+				"path":     ".simple",
+				"expected": 5,
+				"actual":   nil,
+			},
+			error: "evaluation failure: this is the message",
+			details: "The detected configuration does not match the desired configuration:\n" +
+				"Expected \".simple\" to equal 5, but was not set.",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := evalerrors.NewDetailedErrEvaluationFailed(
+				tt.tmpl,
+				tt.args,
+				tt.msg,
+				tt.msgArgs...,
+			)
+
+			require.Equal(t, tt.error, err.Error())
+			evalErr, ok := err.(*evalerrors.EvaluationError)
+			require.True(t, ok)
+			require.Equal(t, tt.details, evalErr.Details())
 		})
 	}
 }

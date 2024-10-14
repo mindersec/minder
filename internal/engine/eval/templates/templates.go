@@ -61,3 +61,10 @@ var MixedScriptsTemplate string
 //
 //go:embed invisibleCharactersTemplate.tmpl
 var InvisibleCharactersTemplate string
+
+// JqTemplate is the template for details of the `jq` evaluation engine.
+//
+// This template expects three parameters, `path`, `expected`, and `actual`, which are strings.
+//
+//go:embed jq.tmpl
+var JqTemplate string
