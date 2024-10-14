@@ -30,6 +30,8 @@ jobs:
             docker run -d --restart=always -p "127.0.0.1:5000:5000" --network bridge --name registry \
             registry:2
           fi
+      - name: Fetch go mod dependencies
+        run: go mod download
       # Run the tests
       - name: Run tests
         env:
@@ -51,6 +53,8 @@ jobs:
         uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
+      - name: Fetch go mod dependencies
+        run: go mod download
       - name: Run coverage
         run: make cover
       - name: Try converting to LCOV
