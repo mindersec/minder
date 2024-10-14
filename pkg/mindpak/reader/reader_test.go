@@ -20,9 +20,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
 )
 
 func TestBundle_GetMetadata(t *testing.T) {

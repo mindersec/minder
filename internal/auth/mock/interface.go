@@ -15,7 +15,7 @@ import (
 	reflect "reflect"
 
 	jwt "github.com/lestrrat-go/jwx/v2/jwt"
-	auth "github.com/stacklok/minder/internal/auth"
+	auth "github.com/mindersec/minder/internal/auth"
 	gomock "go.uber.org/mock/gomock"
 )
 

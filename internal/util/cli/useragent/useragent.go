@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/stacklok/minder/internal/constants"
+	"github.com/mindersec/minder/internal/constants"
 )
 
 // GetUserAgent returns the user agent string for the CLI

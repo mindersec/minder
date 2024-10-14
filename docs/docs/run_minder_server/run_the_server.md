@@ -30,7 +30,7 @@ Once you complete this guide, you will have a Minder server built from source an
 Begin by cloning the Minder repository to get the latest source code. 
 
 ```bash
-git clone git@github.com:stacklok/minder.git
+git clone git@github.com:mindersec/minder.git
 cd minder
 ```
 
@@ -112,9 +112,9 @@ Congratulations! You've set up a Minder server! Now you're all ready to contribu
 
 For more information about the development process, please see the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
 
-For more information on contributing, please see our [Contributing Guide](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md).
+For more information on contributing, please see our [Contributing Guide](https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md).
 
-A list of good first issues can be found in the [Minder GitHub project](https://github.com/stacklok/minder/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22).
+A list of good first issues can be found in the [Minder GitHub project](https://github.com/mindersec/minder/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22).
 
 
 ## Optional Steps

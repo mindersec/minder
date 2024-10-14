@@ -23,15 +23,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/providers/testproviders"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/providers/testproviders"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var (

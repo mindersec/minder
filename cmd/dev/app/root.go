@@ -21,11 +21,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/dev/app/bundles"
-	"github.com/stacklok/minder/cmd/dev/app/image"
-	"github.com/stacklok/minder/cmd/dev/app/rule_type"
-	"github.com/stacklok/minder/cmd/dev/app/testserver"
-	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/mindersec/minder/cmd/dev/app/bundles"
+	"github.com/mindersec/minder/cmd/dev/app/image"
+	"github.com/mindersec/minder/cmd/dev/app/rule_type"
+	"github.com/mindersec/minder/cmd/dev/app/testserver"
+	"github.com/mindersec/minder/internal/util/cli"
 )
 
 // CmdRoot represents the base command when called without any subcommands

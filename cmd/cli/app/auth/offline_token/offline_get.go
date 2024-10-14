@@ -25,9 +25,9 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/mindersec/minder/internal/config"
+	clientconfig "github.com/mindersec/minder/internal/config/client"
+	"github.com/mindersec/minder/internal/util/cli"
 )
 
 // offlineTokenGetCmd represents the offline-token get command

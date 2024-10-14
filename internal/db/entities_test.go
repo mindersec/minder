@@ -24,7 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 func Test_EntityCrud(t *testing.T) {

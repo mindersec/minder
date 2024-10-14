@@ -4,7 +4,7 @@ sidebar_position: 120
 
 # Using Mindev to develop and debug rule types
 
-[Mindev](https://github.com/stacklok/minder/tree/main/cmd/dev) is a tool that helps you develop and debug rule types for Minder. It provides a way to run rule types locally and test them against your codebase.
+[Mindev](https://github.com/mindersec/minder/tree/main/cmd/dev) is a tool that helps you develop and debug rule types for Minder. It provides a way to run rule types locally and test them against your codebase.
 
 While it contains more utilities, this guide focuses on using Mindev to develop and debug rule types.
 
@@ -89,7 +89,7 @@ export AUTH_TOKEN=your_token
 
 Let's evaluate if the `minder` repository has set up dependabot for golang dependencies correctly.
 
-We can get the necessary rule type from the [minder rules and profiles repo](https://github.com/stacklok/minder-rules-and-profiles).
+We can get the necessary rule type from the [minder rules and profiles repo](https://github.com/mindersec/minder-rules-and-profiles).
 
 We'll create a file called `entity.yaml` with the following content:
 
@@ -98,7 +98,7 @@ We'll create a file called `entity.yaml` with the following content:
 name: minder
 owner: stacklok
 repo_id: 624056558
-clone_url: https://github.com/stacklok/minder.git
+clone_url: https://github.com/mindersec/minder.git
 default_branch: main
 ```
 
@@ -123,7 +123,7 @@ repository:
       apply_if_file: go.mod
 ```
 
-This is already available in the [minder rules and profiles repo](https://github.com/stacklok/minder-rules-and-profiles/blob/main/profiles/github/dependabot_go.yaml).
+This is already available in the [minder rules and profiles repo](https://github.com/mindersec/minder-rules-and-profiles/blob/main/profiles/github/dependabot_go.yaml).
 
 Let's set up authentication:
 

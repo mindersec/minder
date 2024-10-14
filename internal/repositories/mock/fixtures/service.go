@@ -23,9 +23,9 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/entities/models"
-	mockghrepo "github.com/stacklok/minder/internal/repositories/mock"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/models"
+	mockghrepo "github.com/mindersec/minder/internal/repositories/mock"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type (

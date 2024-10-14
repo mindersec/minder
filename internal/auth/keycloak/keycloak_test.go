@@ -27,9 +27,9 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/minder/internal/auth/keycloak/client"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/util/ptr"
+	"github.com/mindersec/minder/internal/auth/keycloak/client"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/util/ptr"
 )
 
 func TestKeyCloak_Resolve(t *testing.T) {

@@ -23,8 +23,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/stacklok/minder/internal/db"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // CredentialVerifyParams are the currently supported parameters for credential verification

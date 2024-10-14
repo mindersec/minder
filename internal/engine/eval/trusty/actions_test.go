@@ -21,7 +21,7 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewSummaryPrHandler(t *testing.T) {

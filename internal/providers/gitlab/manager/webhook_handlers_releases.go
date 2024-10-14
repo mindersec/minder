@@ -23,11 +23,11 @@ import (
 	"github.com/rs/zerolog"
 	gitlablib "github.com/xanzy/go-gitlab"
 
-	entmsg "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/gitlab"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/providers/gitlab"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func (m *providerClassManager) handleRelease(l zerolog.Logger, r *http.Request) error {

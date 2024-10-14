@@ -22,10 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/jq"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/jq"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewJQEvaluatorValid(t *testing.T) {

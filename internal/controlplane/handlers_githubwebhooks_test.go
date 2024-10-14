@@ -43,21 +43,21 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	"github.com/stacklok/minder/internal/db"
-	entMsg "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/properties"
-	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/github/installations"
-	gf "github.com/stacklok/minder/internal/providers/github/mock/fixtures"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
-	pf "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	mock_repos "github.com/stacklok/minder/internal/repositories/mock"
-	"github.com/stacklok/minder/internal/util/testqueue"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	"github.com/mindersec/minder/internal/db"
+	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/properties"
+	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/providers/github/installations"
+	gf "github.com/mindersec/minder/internal/providers/github/mock/fixtures"
+	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
+	pf "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	mock_repos "github.com/mindersec/minder/internal/repositories/mock"
+	"github.com/mindersec/minder/internal/util/testqueue"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -199,7 +199,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 		Action: github.String("deleted"),
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/minder"),
+			Name: github.String("mindersec/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -261,7 +261,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 		Action: github.String("deleted"),
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/minder"),
+			Name: github.String("mindersec/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -346,7 +346,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 		Action: github.String("published"),
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/minder"),
+			Name: github.String("mindersec/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -435,7 +435,7 @@ func (s *UnitTestSuite) TestHandleWebHookWithTooLargeRequest() {
 		Action: github.String("published"),
 		Repo: &github.Repository{
 			ID:   github.Int64(12345),
-			Name: github.String("stacklok/minder"),
+			Name: github.String("mindersec/minder"),
 		},
 		Org: &github.Organization{
 			Login: github.String("stacklok"),
@@ -490,8 +490,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Org: &github.Organization{
 					Login: github.String("stacklok"),
@@ -515,8 +515,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Org: &github.Organization{
 					Login: github.String("stacklok"),
@@ -558,8 +558,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
@@ -586,7 +586,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PackageEvent
 			rawPayload: []byte(rawPackageEventPublished),
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder"),
 			},
 			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
@@ -629,8 +629,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -648,8 +648,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -721,8 +721,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -757,8 +757,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -790,8 +790,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -873,8 +873,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -909,8 +909,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -942,8 +942,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 				Repo: &repo{
 					ID:       github.Int64(12345),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			mockStoreFunc: df.NewMockStore(),
@@ -974,8 +974,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1010,8 +1010,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1049,8 +1049,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1084,8 +1084,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1112,8 +1112,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1140,8 +1140,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1168,8 +1168,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1195,8 +1195,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1223,8 +1223,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1250,8 +1250,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1278,8 +1278,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1311,8 +1311,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1343,8 +1343,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1375,8 +1375,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: &github.Repository{
 					ID:       github.Int64(12345),
 					Name:     github.String("minder"),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1407,8 +1407,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1440,8 +1440,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1473,8 +1473,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1506,8 +1506,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1540,8 +1540,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueGetEntityAndDelete,
@@ -1571,8 +1571,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1605,8 +1605,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: &github.Repository{
 					ID:       github.Int64(12345),
 					Name:     github.String("minder"),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 					Private:  github.Bool(true),
 				},
 			},
@@ -1638,8 +1638,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: &github.Repository{
 					ID:       github.Int64(12345),
 					Name:     github.String("minder"),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 					Private:  github.Bool(true),
 				},
 			},
@@ -1675,8 +1675,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1703,8 +1703,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1731,8 +1731,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1759,8 +1759,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1787,8 +1787,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1815,8 +1815,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1842,8 +1842,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1870,8 +1870,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1898,8 +1898,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1926,8 +1926,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1954,8 +1954,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -1982,8 +1982,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2010,8 +2010,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2038,8 +2038,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2066,8 +2066,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2094,8 +2094,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2121,8 +2121,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2148,8 +2148,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repository: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2186,8 +2186,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: &github.PushEventRepository{
 					ID:       github.Int64(12345),
 					Name:     github.String("minder"),
-					FullName: github.String("stacklok/minder"),
-					HTMLURL:  github.String("https://github.com/stacklok/minder"),
+					FullName: github.String("mindersec/minder"),
+					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2235,8 +2235,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("enabled"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2261,8 +2261,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("disabled"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2306,8 +2306,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("disabled"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2332,8 +2332,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("reported"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2358,8 +2358,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("created"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2384,8 +2384,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("deleted"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2410,8 +2410,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("edited"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2436,8 +2436,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action: github.String("created"),
 				Repo: newRepo(
 					12345,
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 			},
 			topic:      events.TopicQueueRefreshEntityAndEvaluate,
@@ -2466,8 +2466,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2482,7 +2482,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
 			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
@@ -2508,8 +2508,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2524,7 +2524,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
 			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
@@ -2550,8 +2550,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2566,7 +2566,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
 			topic:      events.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
@@ -2592,8 +2592,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2607,7 +2607,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
 			topic:      events.TopicQueueOriginatingEntityDelete,
 			statusCode: http.StatusOK,
@@ -2633,8 +2633,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2648,7 +2648,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				},
 			},
 			ghMocks: []func(hubMock gf.GitHubMock){
-				gf.WithSuccessfulGetEntityName("stacklok/minder/42"),
+				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
 			statusCode: http.StatusOK,
 			queued:     nil,
@@ -2666,8 +2666,8 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Organization: &github.Organization{
 					Login: github.String("stacklok"),
@@ -2847,8 +2847,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
@@ -2869,8 +2869,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				Repo: newGitHubRepo(
 					12345,
 					"minder",
-					"stacklok/minder",
-					"https://github.com/stacklok/minder",
+					"mindersec/minder",
+					"https://github.com/mindersec/minder",
 				),
 				Sender: &github.User{
 					Login:   github.String("stacklok"),
@@ -2892,8 +2892,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 				},
 				// Installation field is left blank on
@@ -2922,8 +2922,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 				},
 				Installation: &github.Installation{
@@ -2985,8 +2985,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 				},
 				// Installation field is left blank on
@@ -3015,8 +3015,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 				},
 				// Installation field is left blank on
@@ -3045,8 +3045,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 				},
 				// Installation field is left blank on
@@ -3077,8 +3077,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 					newGitHubRepo(
 						67890,
@@ -3135,8 +3135,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				require.Equal(t, projectID, evt.ProjectID)
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.EntityType)
 
-				// the name can be either stacklok/minder or stacklok/trusty
-				require.Contains(t, []string{"stacklok/minder", "stacklok/trusty"}, evt.Properties[properties.PropertyName])
+				// the name can be either mindersec/minder or stacklok/trusty
+				require.Contains(t, []string{"mindersec/minder", "stacklok/trusty"}, evt.Properties[properties.PropertyName])
 
 				received = withTimeout(ch, timeout)
 				require.NotNilf(t, received, "no event received after waiting %s", timeout)
@@ -3164,8 +3164,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 					newGitHubRepo(
 						67890,
@@ -3219,8 +3219,8 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					newGitHubRepo(
 						12345,
 						"minder",
-						"stacklok/minder",
-						"https://github.com/stacklok/minder",
+						"mindersec/minder",
+						"https://github.com/mindersec/minder",
 					),
 					newGitHubRepo(
 						67890,

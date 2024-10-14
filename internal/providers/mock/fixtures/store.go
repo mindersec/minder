@@ -20,8 +20,8 @@ package fixtures
 
 import (
 	"errors"
-	"github.com/stacklok/minder/internal/db"
-	mockprov "github.com/stacklok/minder/internal/providers/mock"
+	"github.com/mindersec/minder/internal/db"
+	mockprov "github.com/mindersec/minder/internal/providers/mock"
 	"go.uber.org/mock/gomock"
 )
 

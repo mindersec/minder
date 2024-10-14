@@ -14,7 +14,7 @@ jobs:
       - uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
       - run: |
           ko build --platform=linux/amd64,linux/arm64 --push=false ./cmd/server \
-            --image-label=org.opencontainers.image.source=https://github.com/stacklok/minder,org.opencontainers.image.title="Stacklok Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
+            --image-label=org.opencontainers.image.source=https://github.com/mindersec/minder,org.opencontainers.image.title="Stacklok Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
         env:
           KO_DOCKER_REPO: "ko.local"
   check-helm:

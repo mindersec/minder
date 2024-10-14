@@ -20,7 +20,7 @@ package fixtures
 
 import (
 	"errors"
-	mockrulesvc "github.com/stacklok/minder/internal/ruletypes/mock"
+	mockrulesvc "github.com/mindersec/minder/internal/ruletypes/mock"
 	"go.uber.org/mock/gomock"
 )
 

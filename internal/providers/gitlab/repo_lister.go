@@ -23,7 +23,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/xanzy/go-gitlab"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {

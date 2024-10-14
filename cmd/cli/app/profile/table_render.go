@@ -21,10 +21,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stacklok/minder/cmd/cli/app/common"
-	"github.com/stacklok/minder/internal/util/cli/table"
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/cmd/cli/app/common"
+	"github.com/mindersec/minder/internal/util/cli/table"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func marshalStructOrEmpty(v *structpb.Struct) string {

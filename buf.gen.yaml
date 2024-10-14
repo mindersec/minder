@@ -18,17 +18,17 @@ plugins:
   - name: go 
     out: .
     #out: pkg/api/protobuf/go
-    opt: module=github.com/stacklok/minder
+    opt: module=github.com/mindersec/minder
   - name: go-grpc
     out: .
     #out: pkg/api/protobuf/go
     opt:
-      - module=github.com/stacklok/minder
+      - module=github.com/mindersec/minder
   - name: grpc-gateway
     out: .
     #out: pkg/api/protobuf/go
     opt:
-     - module=github.com/stacklok/minder
+     - module=github.com/mindersec/minder
   - name: openapiv2
     out: pkg/api/openapi
     opt:

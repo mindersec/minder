@@ -17,11 +17,11 @@
 package reconcilers
 
 import (
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/repositories"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/repositories"
 )
 
 // Reconciler is a helper that reconciles entities

@@ -22,15 +22,15 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/application"
-	"github.com/stacklok/minder/internal/engine/eval/jq"
-	"github.com/stacklok/minder/internal/engine/eval/rego"
-	"github.com/stacklok/minder/internal/engine/eval/trusty"
-	"github.com/stacklok/minder/internal/engine/eval/vulncheck"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/application"
+	"github.com/mindersec/minder/internal/engine/eval/jq"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/engine/eval/trusty"
+	"github.com/mindersec/minder/internal/engine/eval/vulncheck"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator

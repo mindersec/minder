@@ -18,7 +18,7 @@ package telemetry
 import (
 	"net/http"
 
-	"github.com/stacklok/minder/internal/db"
+	"github.com/mindersec/minder/internal/db"
 )
 
 type noop struct{}

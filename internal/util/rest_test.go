@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/internal/util"
 )
 
 func TestHttpMethodFromString(t *testing.T) {

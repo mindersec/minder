@@ -23,16 +23,16 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/entities"
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval"
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	"github.com/stacklok/minder/internal/engine/ingester"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/profiles"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/entities"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	"github.com/mindersec/minder/internal/engine/ingester"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/profiles"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // RuleMeta is the metadata for a rule

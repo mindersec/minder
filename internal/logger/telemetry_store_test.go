@@ -24,12 +24,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/profiles/models"
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/profiles/models"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {

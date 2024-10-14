@@ -26,13 +26,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	internalpb "github.com/stacklok/minder/internal/proto"
-	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	internalpb "github.com/mindersec/minder/internal/proto"
+	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (

@@ -27,16 +27,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/email"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/util"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/email"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/util"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

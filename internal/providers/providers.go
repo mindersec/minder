@@ -26,13 +26,13 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/exp/slices"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // ErrProviderInvalidConfig is an error type which is returned when a provider configuration is invalid

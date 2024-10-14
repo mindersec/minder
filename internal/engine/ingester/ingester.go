@@ -21,14 +21,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/ingester/artifact"
-	"github.com/stacklok/minder/internal/engine/ingester/builtin"
-	"github.com/stacklok/minder/internal/engine/ingester/diff"
-	"github.com/stacklok/minder/internal/engine/ingester/git"
-	"github.com/stacklok/minder/internal/engine/ingester/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/ingester/artifact"
+	"github.com/mindersec/minder/internal/engine/ingester/builtin"
+	"github.com/mindersec/minder/internal/engine/ingester/diff"
+	"github.com/mindersec/minder/internal/engine/ingester/git"
+	"github.com/mindersec/minder/internal/engine/ingester/rest"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // test that the ingester implementations implements the interface

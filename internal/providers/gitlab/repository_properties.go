@@ -25,9 +25,9 @@ import (
 
 	"github.com/xanzy/go-gitlab"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // FormatRepositoryUpstreamID returns the upstream ID for a gitlab project

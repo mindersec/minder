@@ -19,7 +19,7 @@ package noop
 import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth/jwt"
 )
 
 type noopJwtValidator struct {

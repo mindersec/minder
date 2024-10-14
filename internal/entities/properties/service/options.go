@@ -15,7 +15,7 @@
 
 package service
 
-import "github.com/stacklok/minder/internal/db"
+import "github.com/mindersec/minder/internal/db"
 
 // CallOptions is a struct that contains the options for a service call
 // Since most calls will need to interact with the database, the ExtendQuerier is included

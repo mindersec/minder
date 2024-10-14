@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/constants"
+	"github.com/mindersec/minder/internal/constants"
 )
 
 // DatabaseConfig is the configuration for the database

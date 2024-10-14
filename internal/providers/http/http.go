@@ -23,10 +23,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // REST is the interface for interacting with an REST API.

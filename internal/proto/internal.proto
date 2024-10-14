@@ -21,7 +21,7 @@ package internal;
 import "minder/v1/minder.proto";
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/stacklok/minder/internal/proto";
+option go_package = "github.com/mindersec/minder/internal/proto";
 
 enum DepEcosystem {
   DEP_ECOSYSTEM_UNSPECIFIED = 0;
@@ -78,7 +78,7 @@ message SelectorProvider {
 }
 
 message SelectorRepository {
-  // the full name of the repository, e.g. stacklok/minder
+  // the full name of the repository, e.g. mindersec/minder
   string name = 1;
   // the provider of the repository
   SelectorProvider provider = 2;
@@ -94,7 +94,7 @@ message SelectorRepository {
 }
 
 message SelectorArtifact {
-  // the full name of the artifact, e.g. stacklok/minder-server
+  // the full name of the artifact, e.g. mindersec/minder-server
   string name = 1;
   // the provider of the artifact
   SelectorProvider provider = 2;
@@ -106,7 +106,7 @@ message SelectorArtifact {
 }
 
 message SelectorPullRequest {
-  // the full name of the pr, e.g. stacklok/minder-server/123
+  // the full name of the pr, e.g. mindersec/minder-server/123
   string name = 1;
   // the provider of the pull request
   SelectorProvider provider = 3;

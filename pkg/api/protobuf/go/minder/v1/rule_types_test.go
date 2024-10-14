@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestSeverity_MarshalJSON(t *testing.T) {

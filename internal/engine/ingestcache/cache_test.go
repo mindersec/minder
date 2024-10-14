@@ -20,14 +20,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	"github.com/stacklok/minder/internal/engine/ingester/artifact"
-	"github.com/stacklok/minder/internal/engine/ingester/builtin"
-	"github.com/stacklok/minder/internal/engine/ingester/diff"
-	"github.com/stacklok/minder/internal/engine/ingester/git"
-	"github.com/stacklok/minder/internal/engine/ingester/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	"github.com/mindersec/minder/internal/engine/ingester/artifact"
+	"github.com/mindersec/minder/internal/engine/ingester/builtin"
+	"github.com/mindersec/minder/internal/engine/ingester/diff"
+	"github.com/mindersec/minder/internal/engine/ingester/git"
+	"github.com/mindersec/minder/internal/engine/ingester/rest"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCache(t *testing.T) {

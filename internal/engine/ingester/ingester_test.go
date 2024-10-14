@@ -22,16 +22,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/engine/ingester/artifact"
-	"github.com/stacklok/minder/internal/engine/ingester/builtin"
-	"github.com/stacklok/minder/internal/engine/ingester/git"
-	"github.com/stacklok/minder/internal/engine/ingester/rest"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/ingester/artifact"
+	"github.com/mindersec/minder/internal/engine/ingester/builtin"
+	"github.com/mindersec/minder/internal/engine/ingester/git"
+	"github.com/mindersec/minder/internal/engine/ingester/rest"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewRuleDataIngest(t *testing.T) {

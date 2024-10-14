@@ -23,11 +23,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/pkg/mindpak"
 )
 
 // ProjectCreator encapsulates operations for managing projects

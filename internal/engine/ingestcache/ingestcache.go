@@ -25,7 +25,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
 )
 
 // ErrBuildingCacheKey is the error returned when building a cache key fails

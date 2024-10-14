@@ -25,7 +25,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/minder/internal/db"
+	"github.com/mindersec/minder/internal/db"
 )
 
 // WebhookEventState represents the state of a webhook event

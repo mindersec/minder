@@ -27,16 +27,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/util/rand"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/db/embedded"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/util/rand"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type githubMockBuilder func(*gomock.Controller) *mock_github.MockGitHub

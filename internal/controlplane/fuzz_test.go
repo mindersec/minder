@@ -29,10 +29,10 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v63/github"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/events"
 )
 
 var eventTypes = [23]string{

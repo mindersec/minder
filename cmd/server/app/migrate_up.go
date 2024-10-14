@@ -28,11 +28,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/database"
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/config"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/logger"
+	"github.com/mindersec/minder/database"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/config"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/logger"
 )
 
 // upCmd represents the up command

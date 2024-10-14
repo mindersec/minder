@@ -25,9 +25,9 @@ import (
 	gofeature "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever/fileretriever"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/engine/engcontext"
 )
 
 // Experiment is a type alias for a feature flag experiment, to ensure that all feature flags

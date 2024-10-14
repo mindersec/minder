@@ -24,7 +24,7 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/util"
 )
 
 //go:embed resources/scripts.txt

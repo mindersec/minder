@@ -24,7 +24,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"go.uber.org/mock/gomock"
 
-	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
+	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
 )
 
 var (

@@ -28,10 +28,10 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/util/jsonyaml"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/util/jsonyaml"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)

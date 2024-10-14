@@ -25,9 +25,9 @@ import (
 
 	"golang.org/x/oauth2"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
-	"github.com/stacklok/minder/internal/crypto/keystores"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
+	"github.com/mindersec/minder/internal/crypto/keystores"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

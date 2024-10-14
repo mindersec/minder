@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 const multipleRanges = `

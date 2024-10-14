@@ -19,7 +19,7 @@ package artifact
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app"
 )
 
 // ArtifactCmd is the artifact subcommand

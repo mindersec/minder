@@ -26,8 +26,8 @@ import (
 	"github.com/spf13/cobra/doc"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/util/cli"
 )
 
 // DocsCmd generates documentation

@@ -25,9 +25,9 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

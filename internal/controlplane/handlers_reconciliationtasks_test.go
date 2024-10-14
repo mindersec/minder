@@ -23,12 +23,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	stubeventer "github.com/stacklok/minder/internal/events/stubs"
-	"github.com/stacklok/minder/internal/providers"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/internal/providers"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {

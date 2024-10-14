@@ -17,10 +17,10 @@ package providers
 import (
 	"fmt"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/dockerhub"
-	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/gitlab"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
+	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/gitlab"
 )
 
 // ProviderClassDefinition contains the static fields needed when creating a provider

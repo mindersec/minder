@@ -26,11 +26,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/ruletypes"
-	"github.com/stacklok/minder/internal/util/ptr"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/ruletypes"
+	"github.com/mindersec/minder/internal/util/ptr"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // both create and update are bundled together since the testing harness is

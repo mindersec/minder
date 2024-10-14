@@ -23,8 +23,8 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
 )
 
 func TestUpsertProviderAccessToken(t *testing.T) {

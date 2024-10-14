@@ -24,13 +24,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/auth"
-	mockauth "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/authz/mock"
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth"
+	mockauth "github.com/mindersec/minder/internal/auth/mock"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCreateRoleAssignment(t *testing.T) {

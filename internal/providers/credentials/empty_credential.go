@@ -20,7 +20,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // EmptyCredential is an empty credential whose operations are no-ops

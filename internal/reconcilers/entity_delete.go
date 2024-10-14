@@ -23,10 +23,10 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	minderlogger "github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	minderlogger "github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //nolint:exhaustive

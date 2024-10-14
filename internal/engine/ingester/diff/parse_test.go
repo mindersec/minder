@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 func TestGoParse(t *testing.T) {

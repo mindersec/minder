@@ -23,7 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // PaginationLimit is the maximum number of items that can be returned in a single page

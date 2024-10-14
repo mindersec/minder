@@ -29,7 +29,7 @@ repository:
       required_approving_review_count: 2
 ```
 
-The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles).
+The full example is available in the [examples directory](https://github.com/mindersec/minder-rules-and-profiles).
 
 This profile is checking that secret scanning is enabled for all repositories and that the `main` branch is protected, 
 requiring at least two approvals from code owners before landing a pull request.
@@ -119,7 +119,7 @@ def:
 
 ```
 
-The full example is available in the [examples directory](https://github.com/stacklok/minder-rules-and-profiles)
+The full example is available in the [examples directory](https://github.com/mindersec/minder-rules-and-profiles)
 
 This rule type is checking that secret scanning is enabled for all repositories.
 

@@ -24,13 +24,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/engine/entities"
-	mockengine "github.com/stacklok/minder/internal/engine/mock"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/util/testqueue"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/engine"
+	"github.com/mindersec/minder/internal/engine/entities"
+	mockengine "github.com/mindersec/minder/internal/engine/mock"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/util/testqueue"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {

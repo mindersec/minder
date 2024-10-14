@@ -24,11 +24,11 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engerrors "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities/checkpoints"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/entities/checkpoints"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (

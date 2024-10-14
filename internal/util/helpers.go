@@ -42,7 +42,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
 var (

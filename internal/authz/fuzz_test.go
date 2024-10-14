@@ -22,8 +22,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
 )
 
 //nolint:gosec // This test does not validate return values

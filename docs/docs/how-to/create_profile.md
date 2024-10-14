@@ -16,10 +16,10 @@ The first step to creating a profile is to create the rules that your profile wi
 The Minder team has provided several reference rules for common use cases. To get started quickly, create a rule from
 the set of references.
 
-Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
 ```
-git clone https://github.com/stacklok/minder-rules-and-profiles.git
+git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory you can find all the reference rules and profiles.
@@ -361,4 +361,4 @@ repository:
 ```
 
 You can find the rule definitions used above and many profile examples at
-[minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles) repository.
+[minder-rules-and-profiles](https://github.com/mindersec/minder-rules-and-profiles) repository.

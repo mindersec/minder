@@ -26,11 +26,11 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/util"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/profiles"
+	"github.com/mindersec/minder/internal/util"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestValidatorScenarios(t *testing.T) {

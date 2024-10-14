@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/internal/util"
 )
 
 func TestGetConfigValue(t *testing.T) {

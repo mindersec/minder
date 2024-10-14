@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
+	"github.com/mindersec/minder/internal/config"
+	clientconfig "github.com/mindersec/minder/internal/config/client"
 )
 
 func TestReadClientConfig(t *testing.T) {

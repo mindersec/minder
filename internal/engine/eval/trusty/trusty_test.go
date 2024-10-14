@@ -25,13 +25,13 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestBuildEvalResult(t *testing.T) {

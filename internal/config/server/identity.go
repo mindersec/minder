@@ -26,7 +26,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/stacklok/minder/internal/config"
+	"github.com/mindersec/minder/internal/config"
 )
 
 // IdentityConfigWrapper is the configuration for the identity provider

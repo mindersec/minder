@@ -15,9 +15,9 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	db "github.com/stacklok/minder/internal/db"
-	manager "github.com/stacklok/minder/internal/providers/manager"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	db "github.com/mindersec/minder/internal/db"
+	manager "github.com/mindersec/minder/internal/providers/manager"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )

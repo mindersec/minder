@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	config "github.com/stacklok/minder/internal/config/server"
+	config "github.com/mindersec/minder/internal/config/server"
 )
 
 // Text is the constant for the text format

@@ -35,10 +35,10 @@ In this example, we will use a rule type that checks if a repository has Dependa
 will create a pull request that enables Dependabot. The rule type is called `dependabot_configured.yaml` and is
 one of the reference rule types provided by the Minder team.
 
-Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
 ```bash
-git clone https://github.com/stacklok/minder-rules-and-profiles.git
+git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory, you can find all the reference rules and profiles.

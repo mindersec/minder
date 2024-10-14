@@ -17,7 +17,7 @@ package ingestcache
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
 )
 
 // NoopCache is the interface for the ingest cache.

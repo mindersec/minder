@@ -26,7 +26,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
 )
 
 // BuildPostgreSQLDriver creates a PostgreSQL driver for the eventer

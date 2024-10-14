@@ -23,11 +23,11 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert/noop"
-	"github.com/stacklok/minder/internal/engine/actions/alert/security_advisory"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/actions/alert/noop"
+	"github.com/mindersec/minder/internal/engine/actions/alert/security_advisory"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // ActionType is the type of the alert engine

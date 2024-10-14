@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/stacklok/minder/internal/verifier/sigstore"
-	"github.com/stacklok/minder/internal/verifier/sigstore/container"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
+	"github.com/mindersec/minder/internal/verifier/sigstore"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
 )
 
 const (

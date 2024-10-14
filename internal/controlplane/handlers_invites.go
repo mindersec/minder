@@ -23,10 +23,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/invites"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/invites"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // GetInviteDetails returns the details of an invitation

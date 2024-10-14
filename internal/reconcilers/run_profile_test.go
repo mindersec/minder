@@ -23,10 +23,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	stubeventer "github.com/stacklok/minder/internal/events/stubs"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/events"
+	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 )
 
 var (

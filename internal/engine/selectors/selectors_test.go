@@ -24,9 +24,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/profiles/models"
-	internalpb "github.com/stacklok/minder/internal/proto"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/profiles/models"
+	internalpb "github.com/mindersec/minder/internal/proto"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestNewSelectorEngine(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 type RepositoryOption func(*CreateRepositoryParams)

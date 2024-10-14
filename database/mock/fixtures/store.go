@@ -27,8 +27,8 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/db"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/db"
 )
 
 type (

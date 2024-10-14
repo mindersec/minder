@@ -23,4 +23,4 @@ clean:: ## clean up environment
 
 .PHONY: init-examples
 init-examples: clean ## clone example rules and profiles
-	git clone https://github.com/stacklok/minder-rules-and-profiles.git $(MAKEFILE_DIR_LOCATION)rules-and-profiles || true
+	git clone https://github.com/mindersec/minder-rules-and-profiles.git $(MAKEFILE_DIR_LOCATION)rules-and-profiles || true

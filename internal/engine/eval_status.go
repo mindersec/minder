@@ -23,11 +23,11 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/entities"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/profiles/models"
 )
 
 func (e *executor) createEvalStatusParams(

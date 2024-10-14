@@ -11,7 +11,7 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/stacklok/minder)
+      - prefix(github.com/mindersec/minder)
   revive:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true

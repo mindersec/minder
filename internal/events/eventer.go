@@ -35,11 +35,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/events/common"
-	gochannel "github.com/stacklok/minder/internal/events/gochannel"
-	"github.com/stacklok/minder/internal/events/nats"
-	eventersql "github.com/stacklok/minder/internal/events/sql"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/events/common"
+	gochannel "github.com/mindersec/minder/internal/events/gochannel"
+	"github.com/mindersec/minder/internal/events/nats"
+	eventersql "github.com/mindersec/minder/internal/events/sql"
 )
 
 // eventer is a wrapper over the relevant eventing objects in such

@@ -19,8 +19,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
 )
 
 // BundleSource contains methods for retrieving bundles. Implementations may

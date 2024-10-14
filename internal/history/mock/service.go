@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	history "github.com/stacklok/minder/internal/history"
+	db "github.com/mindersec/minder/internal/db"
+	history "github.com/mindersec/minder/internal/history"
 	gomock "go.uber.org/mock/gomock"
 )
 

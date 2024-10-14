@@ -21,14 +21,14 @@ package fixtures
 
 import (
 	"github.com/google/uuid"
-	"github.com/stacklok/minder/internal/entities/properties"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	mockSvc "github.com/stacklok/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	mockSvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
 )
 
 type (

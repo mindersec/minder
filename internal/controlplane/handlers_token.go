@@ -30,10 +30,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/util"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/util"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TokenValidationInterceptor is a server interceptor that validates the bearer token

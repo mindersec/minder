@@ -21,8 +21,8 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/stacklok/minder/internal/entities/handlers/strategies"
-	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/handlers/strategies"
+	"github.com/mindersec/minder/internal/entities/models"
 )
 
 type createEmpty struct{}

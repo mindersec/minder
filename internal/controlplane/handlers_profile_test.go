@@ -28,15 +28,15 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/engine/selectors"
-	stubeventer "github.com/stacklok/minder/internal/events/stubs"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/util"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/db/embedded"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/engine/selectors"
+	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/internal/profiles"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/util"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //nolint:gocyclo

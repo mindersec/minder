@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak"
 )
 
 func TestPackerInitBundle(t *testing.T) {

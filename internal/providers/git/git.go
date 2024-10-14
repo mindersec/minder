@@ -27,9 +27,9 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/providers/git/memboxfs"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/providers/git/memboxfs"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Git is the struct that contains the GitHub REST API client

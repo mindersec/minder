@@ -19,7 +19,7 @@ package role
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app/project"
+	"github.com/mindersec/minder/cmd/cli/app/project"
 )
 
 // RoleCmd is the root command for the project subcommands

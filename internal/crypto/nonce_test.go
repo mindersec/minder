@@ -17,7 +17,7 @@ package crypto_test
 import (
 	"testing"
 
-	"github.com/stacklok/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/crypto"
 )
 
 func TestGenerateNonce(t *testing.T) {

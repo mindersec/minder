@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	github "github.com/google/go-github/v63/github"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v10 "github.com/stacklok/minder/pkg/providers/v1"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v10 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )

@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"net/url"
 
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Do implements the REST provider interface

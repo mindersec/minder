@@ -23,10 +23,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/rego"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Evaluates a simple query against a simple profile

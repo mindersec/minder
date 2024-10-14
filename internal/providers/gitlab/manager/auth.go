@@ -21,9 +21,9 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/gitlab"
 
-	"github.com/stacklok/minder/internal/db"
-	m "github.com/stacklok/minder/internal/providers/manager"
-	provv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	m "github.com/mindersec/minder/internal/providers/manager"
+	provv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // NewOAuthConfig implements the providerClassOAuthManager interface

@@ -26,10 +26,10 @@ and disable it.
 The rule type is called `branch_protection_allow_force_pushes.yaml` and is one of the reference rule types provided by
 the Minder team.
 
-Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+Fetch all the reference rules by cloning the [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
 ```bash
-git clone https://github.com/stacklok/minder-rules-and-profiles.git
+git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory, you can find all the reference rules and profiles.

@@ -15,7 +15,7 @@
 // Package main provides the entrypoint for the reminder service
 package main
 
-import "github.com/stacklok/minder/cmd/reminder/app"
+import "github.com/mindersec/minder/cmd/reminder/app"
 
 func main() {
 	app.Execute()

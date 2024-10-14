@@ -22,7 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc"
 
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RegisterGatewayHTTPHandlers registers the gateway HTTP handlers

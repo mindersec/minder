@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestMessageJsonEncoding(t *testing.T) {

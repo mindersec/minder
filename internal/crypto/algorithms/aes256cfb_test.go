@@ -19,7 +19,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/crypto/algorithms"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
 )
 
 func TestCFBEncrypt(t *testing.T) {

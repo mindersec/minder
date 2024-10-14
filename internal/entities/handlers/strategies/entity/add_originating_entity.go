@@ -22,15 +22,15 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/handlers/strategies"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/providers/manager"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/handlers/strategies"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/providers/manager"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type addOriginatingEntityStrategy struct {

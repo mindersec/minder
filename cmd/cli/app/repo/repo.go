@@ -19,7 +19,7 @@ package repo
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app"
 )
 
 // RepoCmd is the root command for the repo subcommands

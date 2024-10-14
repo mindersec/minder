@@ -24,11 +24,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz/mock"
-	"github.com/stacklok/minder/internal/db"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/db"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestListProjects(t *testing.T) {

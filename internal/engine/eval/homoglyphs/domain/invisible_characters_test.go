@@ -18,7 +18,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain/resources"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain/resources"
 )
 
 func TestFindInvisibleCharacters(t *testing.T) {

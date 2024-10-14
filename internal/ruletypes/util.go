@@ -19,8 +19,8 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/stacklok/minder/internal/db"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

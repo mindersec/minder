@@ -16,7 +16,7 @@
 // Package main provides the entrypoint for the minder server
 package main
 
-import "github.com/stacklok/minder/cmd/server/app"
+import "github.com/mindersec/minder/cmd/server/app"
 
 func main() {
 	app.Execute()

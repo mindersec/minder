@@ -26,7 +26,7 @@ import (
 	"github.com/rs/zerolog"
 	gitlablib "github.com/xanzy/go-gitlab"
 
-	"github.com/stacklok/minder/internal/providers/gitlab/webhooksecret"
+	"github.com/mindersec/minder/internal/providers/gitlab/webhooksecret"
 )
 
 const (

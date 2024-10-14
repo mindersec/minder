@@ -26,10 +26,10 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

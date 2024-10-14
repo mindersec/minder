@@ -27,8 +27,8 @@ import (
 	"github.com/styrainc/regal/pkg/rules"
 	"gopkg.in/yaml.v3"
 
-	"github.com/stacklok/minder/internal/engine/eval/rego"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CmdLint is the command for linting a rule type definition

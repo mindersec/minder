@@ -24,14 +24,14 @@ import (
 	gogithub "github.com/google/go-github/v63/github"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/github"
-	ghcommon "github.com/stacklok/minder/internal/providers/github/common"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/github"
+	ghcommon "github.com/mindersec/minder/internal/providers/github/common"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // GithubApp is the string that represents the GitHubApp provider

@@ -21,12 +21,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/handlers/strategies"
-	"github.com/stacklok/minder/internal/entities/models"
-	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/handlers/strategies"
+	"github.com/mindersec/minder/internal/entities/models"
+	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/providers/manager"
 )
 
 type refreshEntityByIDStrategy struct {

@@ -18,7 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/crypto/algorithms"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
 )
 
 // EncryptedData represents the structure we use to store encrypted data in the

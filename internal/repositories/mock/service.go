@@ -14,10 +14,10 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	models "github.com/stacklok/minder/internal/entities/models"
-	properties "github.com/stacklok/minder/internal/entities/properties"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	db "github.com/mindersec/minder/internal/db"
+	models "github.com/mindersec/minder/internal/entities/models"
+	properties "github.com/mindersec/minder/internal/entities/properties"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -24,11 +24,11 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/events"
-	minderlogger "github.com/stacklok/minder/internal/logger"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/events"
+	minderlogger "github.com/mindersec/minder/internal/logger"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (

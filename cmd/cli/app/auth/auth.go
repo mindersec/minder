@@ -19,7 +19,7 @@ package auth
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app"
 )
 
 // AuthCmd represents the account command

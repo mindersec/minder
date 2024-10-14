@@ -27,12 +27,12 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	natsserver "github.com/nats-io/nats-server/v2/test"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/events/common"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/events/common"
 )
 
 func TestNatsChannel(t *testing.T) {
-	t.Skip("Skipping test that is failing in CI") // https://github.com/stacklok/minder/issues/4542
+	t.Skip("Skipping test that is failing in CI") // https://github.com/mindersec/minder/issues/4542
 
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()

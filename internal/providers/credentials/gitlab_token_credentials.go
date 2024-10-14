@@ -23,7 +23,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/authn"
 	"golang.org/x/oauth2"
 
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // GitLabTokenCredential is a credential that uses a token

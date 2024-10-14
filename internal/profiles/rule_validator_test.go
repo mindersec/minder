@@ -22,9 +22,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/engine/rtengine"
-	"github.com/stacklok/minder/internal/profiles"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/rtengine"
+	"github.com/mindersec/minder/internal/profiles"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestExampleRulesAreValidatedCorrectly(t *testing.T) {

@@ -22,9 +22,9 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/events"
-	reconcilermessages "github.com/stacklok/minder/internal/reconcilers/messages"
-	remindermessages "github.com/stacklok/minder/internal/reminder/messages"
+	"github.com/mindersec/minder/internal/events"
+	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
+	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
 )
 
 // ReminderProcessor processes the incoming reminders

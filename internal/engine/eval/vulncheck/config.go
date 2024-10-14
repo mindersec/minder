@@ -22,8 +22,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-viper/mapstructure/v2"
 
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 type vulnDbType string

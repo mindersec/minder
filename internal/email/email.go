@@ -26,7 +26,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/authz"
+	"github.com/mindersec/minder/internal/authz"
 )
 
 const (

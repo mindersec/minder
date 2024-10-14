@@ -23,14 +23,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/authz/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/projects"
-	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/projects"
+	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {

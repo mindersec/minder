@@ -22,7 +22,7 @@ import (
 
 	"google.golang.org/protobuf/types/known/structpb"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ProviderConfigUnion is a union type for the different provider configurations

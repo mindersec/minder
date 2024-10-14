@@ -21,8 +21,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/util"
 )
 
 func TestCobraMain(t *testing.T) {

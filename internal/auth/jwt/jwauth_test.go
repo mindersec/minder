@@ -28,7 +28,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
+	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
 )
 
 func TestParseAndValidate(t *testing.T) {

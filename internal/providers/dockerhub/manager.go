@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type providerClassManager struct {

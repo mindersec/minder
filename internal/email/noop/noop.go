@@ -22,8 +22,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/email"
-	"github.com/stacklok/minder/internal/events"
+	"github.com/mindersec/minder/internal/email"
+	"github.com/mindersec/minder/internal/events"
 )
 
 type noop struct {

@@ -34,15 +34,15 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	engerrors "github.com/stacklok/minder/internal/engine/errors"
-	gitclient "github.com/stacklok/minder/internal/providers/git"
-	"github.com/stacklok/minder/internal/providers/github/ghcr"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	gitclient "github.com/mindersec/minder/internal/providers/git"
+	"github.com/mindersec/minder/internal/providers/github/ghcr"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

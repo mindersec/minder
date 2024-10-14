@@ -18,10 +18,10 @@ package entity
 import (
 	"context"
 
-	"github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/handlers/strategies"
-	"github.com/stacklok/minder/internal/entities/models"
-	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/handlers/strategies"
+	"github.com/mindersec/minder/internal/entities/models"
+	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
 )
 
 type getEntityByUpstreamIDStrategy struct {

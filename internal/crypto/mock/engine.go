@@ -12,7 +12,7 @@ package mock_crypto
 import (
 	reflect "reflect"
 
-	crypto "github.com/stacklok/minder/internal/crypto"
+	crypto "github.com/mindersec/minder/internal/crypto"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )

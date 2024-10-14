@@ -14,12 +14,12 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	auth "github.com/stacklok/minder/internal/auth"
-	authz "github.com/stacklok/minder/internal/authz"
-	server "github.com/stacklok/minder/internal/config/server"
-	db "github.com/stacklok/minder/internal/db"
-	events "github.com/stacklok/minder/internal/events"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	auth "github.com/mindersec/minder/internal/auth"
+	authz "github.com/mindersec/minder/internal/authz"
+	server "github.com/mindersec/minder/internal/config/server"
+	db "github.com/mindersec/minder/internal/db"
+	events "github.com/mindersec/minder/internal/events"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 

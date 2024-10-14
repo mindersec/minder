@@ -18,8 +18,8 @@ import (
 	"context"
 	"testing"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // FuzzRegoEval tests for unexpected behavior in e.Eval().

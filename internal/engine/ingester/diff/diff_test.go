@@ -29,9 +29,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestGetEcosystemForFile(t *testing.T) {
