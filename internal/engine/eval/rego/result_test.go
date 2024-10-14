@@ -84,7 +84,7 @@ func TestEvaluationDetailRendering(t *testing.T) {
 			tmpl:    templates.RegoConstraints,
 			args:    map[string]any{"violations": []string{"first violation", "second violation"}},
 			error:   "evaluation failure: this is the message",
-			details: "Multiple failures:\n* first violation\n* second violation\n",
+			details: "Multiple issues:\n* first violation\n* second violation\n",
 		},
 		{
 			name:    "violations mandatory",
