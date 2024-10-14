@@ -262,7 +262,14 @@ func (srb *stringResultBuilder) addResult(msg any) error {
 }
 
 func (srb *stringResultBuilder) formatResults() error {
-	return engerrors.NewErrEvaluationFailed("Evaluation failures: \n - %s", strings.Join(srb.results, "\n - "))
+	return engerrors.NewDetailedErrEvaluationFailed(
+		templates.RegoConstraints,
+		map[string]any{
+			"violations": srb.results,
+		},
+		"Evaluation failures: \n - %s",
+		strings.Join(srb.results, "\n - "),
+	)
 }
 
 type jsonResultBuilder struct {

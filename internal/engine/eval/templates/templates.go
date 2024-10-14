@@ -29,6 +29,14 @@ import (
 //go:embed regoDenyByDefaultTemplate.tmpl
 var RegoDenyByDefaultTemplate string
 
+// RegoConstraints is the template for details of the `rego`
+// evaluation engine of type `constraints`.
+//
+// It expects a list of strings named `violations` to be set.
+//
+//go:embed regoConstraints.tmpl
+var RegoConstraints string
+
 // VulncheckTemplate is the template for evaluation details of the
 // `vulncheck` evaluation engine.
 //
