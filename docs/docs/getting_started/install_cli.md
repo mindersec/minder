@@ -5,7 +5,7 @@ sidebar_position: 10
 
 # Installing the Minder CLI
 
-The open source Minder CLI can communicate with either [Minder Cloud](https://cloud.stacklok.com/), Stacklok's free-to-use, cloud-hosted version of Minder, or with an on-premises version of Minder that has been [set up independently](../run_minder_server/run_the_server).
+The open source Minder CLI can communicate with either [the free public instance provided by Stacklok](../../#minder-public-instance), or with a [self managed server](../run_minder_server/run_the_server).
 
 The `minder` CLI is built for `amd64` and `arm64` architectures on Windows, MacOS, and Linux.
 

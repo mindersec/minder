@@ -91,12 +91,12 @@ const config = {
           respectPrefersColorScheme: false,
         },        
       // Replace with your project's social card
-      image: 'img/Stacklok_darkMode_b.png',
+      image: 'img/Minder_darkMode.png',
       navbar: {
         title: 'Minder docs',
         logo: {
-          alt: 'Stacklok Logo',
-          src: 'img/Stacklok_darkMode_b.png',
+          alt: 'Minder Logo',
+          src: 'img/Minder_darkMode.png',
         },
         items: [
           // {
@@ -131,30 +131,14 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'Website',
-                href: 'https://stacklok.com',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/StackLokHQ',
-              },
-            ],
-          },
-          {
-            title: 'More',
-            items: [
-              {
-                label: 'Blog',
-                to: 'https://www.stacklok.com/blog',
-              },
-              {
                 label: 'GitHub',
                 href: 'https://github.com/stacklok/minder',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Stacklok, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Minder a Series of LF Projects, LLC
+For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,
