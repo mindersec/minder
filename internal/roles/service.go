@@ -26,11 +26,11 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

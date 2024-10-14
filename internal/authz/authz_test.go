@@ -32,9 +32,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	srvconfig "github.com/stacklok/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	srvconfig "github.com/mindersec/minder/internal/config/server"
 )
 
 var (

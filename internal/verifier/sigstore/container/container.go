@@ -42,8 +42,8 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/verify"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/stacklok/minder/internal/verifier/verifyif"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var (

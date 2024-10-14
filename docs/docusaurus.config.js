@@ -109,7 +109,7 @@ const config = {
           //   position: 'right',
           // },
           {
-            href: 'https://github.com/stacklok/minder',
+            href: 'https://github.com/mindersec/minder',
             label: 'GitHub',
             position: 'right',
           },
@@ -132,7 +132,7 @@ const config = {
             items: [
               {
                 label: 'GitHub',
-                href: 'https://github.com/stacklok/minder',
+                href: 'https://github.com/mindersec/minder',
               },
             ],
           },

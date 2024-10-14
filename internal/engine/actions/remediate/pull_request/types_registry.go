@@ -21,9 +21,9 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type fsModifier interface {

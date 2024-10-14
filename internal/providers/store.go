@@ -25,8 +25,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

@@ -12,8 +12,8 @@ package mockbundle
 import (
 	reflect "reflect"
 
-	mindpak "github.com/stacklok/minder/pkg/mindpak"
-	reader "github.com/stacklok/minder/pkg/mindpak/reader"
+	mindpak "github.com/mindersec/minder/pkg/mindpak"
+	reader "github.com/mindersec/minder/pkg/mindpak/reader"
 	gomock "go.uber.org/mock/gomock"
 )
 

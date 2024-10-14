@@ -1,4 +1,4 @@
-module github.com/stacklok/minder
+module github.com/mindersec/minder
 
 go 1.23.1
 

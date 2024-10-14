@@ -21,9 +21,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/events"
-	stubeventer "github.com/stacklok/minder/internal/events/stubs"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/internal/events"
+	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
 )
 
 var (

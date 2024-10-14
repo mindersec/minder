@@ -20,7 +20,7 @@ After the installation of Keycloak, there are specific settings and configuratio
 2) **Client Setup:** Create two separate clients within the realm:
     - **minder-cli:** A client for command-line interactions.
     - **minder-server:** A client for server-side operations.
-3) Identity Provider Linkage: Connect your chosen Identity Provider (e.g., GitHub, Google) to Keycloak. To facilitate this process, you may use the initialization script available at [Minder Identity Initialization Script](https://github.com/stacklok/minder/blob/main/identity/scripts/initialize.sh).
+3) Identity Provider Linkage: Connect your chosen Identity Provider (e.g., GitHub, Google) to Keycloak. To facilitate this process, you may use the initialization script available at [Minder Identity Initialization Script](https://github.com/mindersec/minder/blob/main/identity/scripts/initialize.sh).
 
 ## Postgres Installation
 Minder requires a dedicated Postgres database to store its operational data. The database must have a dedicated user with the necessary privileges and credentials.
@@ -31,7 +31,7 @@ It is recommended to use two distinct database users:
 - One for the Minder server operations.
 - Another solely for database migrations.
 
-You can find our database migration scripts at [Minder Database Migrations](https://github.com/stacklok/minder/tree/main/database/migrations).
+You can find our database migration scripts at [Minder Database Migrations](https://github.com/mindersec/minder/tree/main/database/migrations).
 
 ## Ingress Configuration
 Your ingress controller must be capable of handling both gRPC and HTTP/1 protocols.
@@ -70,7 +70,7 @@ Deploy Minder on Kubernetes
 | db.host | string | `"postgres.postgres"` | Hostname for the database where Minder will store its data |
 | deploymentSettings.extraVolumeMounts | string | `nil` | Additional volume mounts for the deployment |
 | deploymentSettings.extraVolumes | string | `nil` | Additional volumes to mount into the deployment |
-| deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the main Minder deployment |
+| deploymentSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` | Image to use for the main Minder deployment |
 | deploymentSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy for the main deployment |
 | deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | Compute resource requests and limits for the main deployment |
 | deploymentSettings.secrets | object | `{"appSecretName":"minder-github-secrets","authSecretName":"minder-auth-secrets","identitySecretName":"minder-identity-secrets"}` | Names of the secrets for various Minder components |
@@ -79,7 +79,7 @@ Deploy Minder on Kubernetes
 | hpaSettings.metrics | object | `{"cpu":{"targetAverageUtilization":60}}` | Target CPU utilization percentage for HPA to scale |
 | hpaSettings.minReplicas | int | `1` | Minimum number of replicas for HPA |
 | ingress.annotations | object | `{}` | Ingress annotations |
-| migrationSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the migration jobs |
+| migrationSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` | Image to use for the migration jobs |
 | migrationSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy for the migration jobs |
 | migrationSettings.resources | object | `{"limits":{"cpu":1,"memory":"300Mi"},"requests":{"cpu":"200m","memory":"200Mi"}}` | Compute resource requests and limits for the migration jobs |
 | service.grpcPort | int | `8090` | GRPC port for the service to listen on |

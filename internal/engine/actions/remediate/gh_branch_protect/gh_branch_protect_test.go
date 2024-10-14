@@ -26,16 +26,16 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/profiles/models"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	mock_ghclient "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (

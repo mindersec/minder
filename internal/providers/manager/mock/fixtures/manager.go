@@ -20,8 +20,8 @@ package fixtures
 
 import (
 	"errors"
-	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 	"go.uber.org/mock/gomock"
 )
 

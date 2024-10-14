@@ -18,9 +18,9 @@ DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 RUN_DOCKER_NO_TEARDOWN?=false
 
 YQ_BUILD_REPLACE_STRING := 'del(.services.minder.build) | \
-.services.minder.image |= "ko://github.com/stacklok/minder/cmd/server" | \
+.services.minder.image |= "ko://github.com/mindersec/minder/cmd/server" | \
 del(.services.migrate.build) | \
-.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server"'
+.services.migrate.image |= "ko://github.com/mindersec/minder/cmd/server"'
 
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments

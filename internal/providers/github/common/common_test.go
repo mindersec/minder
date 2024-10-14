@@ -22,8 +22,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestConvertRepositories(t *testing.T) {
@@ -40,11 +40,11 @@ func TestConvertRepositories(t *testing.T) {
 					Name:           go_github.String("minder"),
 					Owner:          &go_github.User{Login: go_github.String("owner")},
 					ID:             go_github.Int64(12345),
-					FullName:       go_github.String("stacklok/minder"),
-					HTMLURL:        go_github.String("https://github.com/stacklok/minder"),
-					HooksURL:       go_github.String("https://github.com/stacklok/minder/hooks"),
-					DeploymentsURL: go_github.String("https://github.com/stacklok/minder/deploy"),
-					CloneURL:       go_github.String("https://github.com/stacklok/minder/clone"),
+					FullName:       go_github.String("mindersec/minder"),
+					HTMLURL:        go_github.String("https://github.com/mindersec/minder"),
+					HooksURL:       go_github.String("https://github.com/mindersec/minder/hooks"),
+					DeploymentsURL: go_github.String("https://github.com/mindersec/minder/deploy"),
+					CloneURL:       go_github.String("https://github.com/mindersec/minder/clone"),
 					Private:        go_github.Bool(false),
 					Fork:           go_github.Bool(false),
 					Archived:       go_github.Bool(false),
@@ -55,20 +55,20 @@ func TestConvertRepositories(t *testing.T) {
 					Name:      "minder",
 					Owner:     "owner",
 					RepoId:    12345,
-					HookUrl:   "https://github.com/stacklok/minder/hooks",
-					DeployUrl: "https://github.com/stacklok/minder/deploy",
-					CloneUrl:  "https://github.com/stacklok/minder/clone",
+					HookUrl:   "https://github.com/mindersec/minder/hooks",
+					DeployUrl: "https://github.com/mindersec/minder/deploy",
+					CloneUrl:  "https://github.com/mindersec/minder/clone",
 					IsPrivate: false,
 					IsFork:    false,
 					Properties: gitHubRepoToMap(&go_github.Repository{
 						Name:           go_github.String("minder"),
 						Owner:          &go_github.User{Login: go_github.String("owner")},
 						ID:             go_github.Int64(12345),
-						FullName:       go_github.String("stacklok/minder"),
-						HTMLURL:        go_github.String("https://github.com/stacklok/minder"),
-						HooksURL:       go_github.String("https://github.com/stacklok/minder/hooks"),
-						DeploymentsURL: go_github.String("https://github.com/stacklok/minder/deploy"),
-						CloneURL:       go_github.String("https://github.com/stacklok/minder/clone"),
+						FullName:       go_github.String("mindersec/minder"),
+						HTMLURL:        go_github.String("https://github.com/mindersec/minder"),
+						HooksURL:       go_github.String("https://github.com/mindersec/minder/hooks"),
+						DeploymentsURL: go_github.String("https://github.com/mindersec/minder/deploy"),
+						CloneURL:       go_github.String("https://github.com/mindersec/minder/clone"),
 						Private:        go_github.Bool(false),
 						Fork:           go_github.Bool(false),
 						Archived:       go_github.Bool(false),

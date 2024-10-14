@@ -29,13 +29,13 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"golang.org/x/oauth2"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/gitlab"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/gitlab"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // tokenExpirationThreshold is the time before the token expires that we should

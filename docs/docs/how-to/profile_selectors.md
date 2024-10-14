@@ -59,7 +59,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 
 | Field        | Description                                                                                           | Type             |
 |--------------|-------------------------------------------------------------------------------------------------------|------------------|
-| `name`       | The full name of the repository, e.g. stacklok/minder                                                 | string           |
+| `name`       | The full name of the repository, e.g. mindersec/minder                                                 | string           |
 | `is_fork`    | `true` if the repository is a fork, `nil` if unknown or not applicable to this provider               | bool             |
 | `is_private` | `true` if the repository is private, `nil` if unknown or not applicable to this provider              | bool             |
 | `provider`   | The provider of the repository, for more details see [Provider Selectors](#entity-provider-selectors) | ProviderSelector |
@@ -79,7 +79,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 
 | Field      | Description                                                                                         | Type             |
 |------------|-----------------------------------------------------------------------------------------------------|------------------|
-| `name`     | The full name of the artifact, e.g. stacklok/minder-server                                          | string           |
+| `name`     | The full name of the artifact, e.g. mindersec/minder-server                                          | string           |
 | `type`     | The type of the artifact, e.g. "container"                                                          | string           |
 | `provider` | The provider of the artifact, for more details see [Provider Selectors](#entity-provider-selectors) | ProviderSelector |
 
@@ -92,7 +92,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 | `github/type`       | The type of the artifact, e.g. "container"                                  | string |
 | `github/visibility` | The visibility of the artifact, e.g. "public"                               | string |
 | `github/owner`      | The full name of the artifact owner. Can be a repo or an org.               | string |
-| `github/repo`       | The github repo full name (e.g. `stacklok/minder`). Empty for org packages. | string |
+| `github/repo`       | The github repo full name (e.g. `mindersec/minder`). Empty for org packages. | string |
 | `github/repo_name`  | The github repo name (e.g. `stacklok`). Empty for org packages.             | string |
 | `github/repo_owner` | The github repo owner (e.g. `minder`). Empty for org packages.              | string |
 
@@ -100,7 +100,7 @@ Selectors for repositories allow you to filter and manage repositories based on 
 
 | Field  | Description                                                 | Type   |
 |--------|-------------------------------------------------------------|--------|
-| `name` | The full name of the pull request, e.g. stacklok/minder/123 | string |
+| `name` | The full name of the pull request, e.g. mindersec/minder/123 | string |
 
 ## Pull request properties set by the GitHub provider
 

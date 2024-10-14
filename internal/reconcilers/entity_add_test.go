@@ -23,16 +23,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	db "github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	db "github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (
-	repoFullName = "stacklok/minder"
+	repoFullName = "mindersec/minder"
 )
 
 func repoProperties() *properties.Properties {

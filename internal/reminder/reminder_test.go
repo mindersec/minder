@@ -25,9 +25,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
-	"github.com/stacklok/minder/internal/db"
+	mockdb "github.com/mindersec/minder/database/mock"
+	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
+	"github.com/mindersec/minder/internal/db"
 )
 
 func Test_getRepositoryBatch(t *testing.T) {

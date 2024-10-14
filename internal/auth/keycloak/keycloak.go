@@ -26,10 +26,10 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/keycloak/client"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/util/ptr"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/keycloak/client"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/util/ptr"
 )
 
 // KeyCloak is an implementation of the auth.IdentityProvider interface.

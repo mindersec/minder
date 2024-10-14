@@ -20,9 +20,9 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/stacklok/minder/internal/profiles"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/mindersec/minder/internal/profiles"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/mindpak"
 )
 
 // BundleReader provides a high-level interface for accessing the contents of

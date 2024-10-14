@@ -27,12 +27,12 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/entities/checkpoints"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/stacklok/minder/pkg/rule_methods"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/entities/checkpoints"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/rule_methods"
 )
 
 const (

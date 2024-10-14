@@ -25,8 +25,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
-	"github.com/stacklok/minder/database"
-	"github.com/stacklok/minder/internal/db"
+	"github.com/mindersec/minder/database"
+	"github.com/mindersec/minder/internal/db"
 )
 
 // CancelFunc is a function that can be called to clean up resources.

@@ -24,10 +24,10 @@ import (
 
 	"golang.org/x/oauth2"
 
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Class is the string that represents the GitLab provider class

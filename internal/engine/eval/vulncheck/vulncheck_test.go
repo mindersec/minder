@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
 )
 
 func TestEvaluationDetailRendering(t *testing.T) {

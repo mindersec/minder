@@ -24,8 +24,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/events"
+	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/events"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic

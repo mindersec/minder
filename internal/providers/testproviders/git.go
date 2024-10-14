@@ -15,10 +15,10 @@
 package testproviders
 
 import (
-	"github.com/stacklok/minder/internal/providers/git"
-	"github.com/stacklok/minder/internal/providers/noop"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/providers/git"
+	"github.com/mindersec/minder/internal/providers/noop"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // GitProvider is a test implementation of the Git provider

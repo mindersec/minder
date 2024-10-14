@@ -29,7 +29,7 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // GitHubInstallationTokenCredential is a credential that uses a GitHub installation access token

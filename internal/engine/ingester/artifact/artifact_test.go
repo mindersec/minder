@@ -25,17 +25,17 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
-	mockverify "github.com/stacklok/minder/internal/verifier/verifyif/mock"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
+	mockverify "github.com/mindersec/minder/internal/verifier/verifyif/mock"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func testGithubProvider() (provinfv1.GitHub, error) {

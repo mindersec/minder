@@ -30,15 +30,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/auth"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
-	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
-	"github.com/stacklok/minder/cmd/cli/app/repo"
-	"github.com/stacklok/minder/internal/profiles"
-	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app/auth"
+	"github.com/mindersec/minder/cmd/cli/app/profile"
+	minderprov "github.com/mindersec/minder/cmd/cli/app/provider"
+	"github.com/mindersec/minder/cmd/cli/app/repo"
+	"github.com/mindersec/minder/internal/profiles"
+	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -116,13 +116,13 @@ You can now continue to explore Minder's features by adding or removing more rep
 For more information about Minder, see the following resources:
 
 GitHub:
-* https://github.com/stacklok/minder
+* https://github.com/mindersec/minder
 Official documentation:
 * https://minder-docs.stacklok.dev
 CLI commands:
 * https://minder-docs.stacklok.dev/ref/cli/minder
 Minder Rules & profiles:
-* https://github.com/stacklok/minder-rules-and-profiles
+* https://github.com/mindersec/minder-rules-and-profiles
 
 Thank you for using Minder!
 `

@@ -27,7 +27,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 // Vulnerability is a vulnerability JSON representation

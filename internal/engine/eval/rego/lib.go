@@ -32,7 +32,7 @@ import (
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego

@@ -33,12 +33,12 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/rand"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/internal/util/rand"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Response is the response from the OAuth callback server.

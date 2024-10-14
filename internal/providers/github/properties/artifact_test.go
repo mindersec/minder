@@ -22,7 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/stacklok/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/entities/properties"
 )
 
 func TestNewArtifactFetcher(t *testing.T) {

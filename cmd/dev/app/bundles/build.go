@@ -20,8 +20,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/build"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/build"
 )
 
 // CmdBuild is the build command

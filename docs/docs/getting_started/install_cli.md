@@ -19,7 +19,7 @@ The easiest way to install `minder` for macOS systems is through [Homebrew](http
 brew install stacklok/tap/minder
 ```
 
-Alternatively, you can [download a `.tar.gz` release](https://github.com/stacklok/minder/releases) and unpack it with the following:
+Alternatively, you can [download a `.tar.gz` release](https://github.com/mindersec/minder/releases) and unpack it with the following:
 
 ```bash
 tar -xzf minder_${RELEASE}_darwin_${ARCH}.tar.gz minder
@@ -34,12 +34,12 @@ For Windows, the built-in `winget` tool is the easiest way to install `minder`:
 winget install stacklok.minder
 ```
 
-Alternatively, you can [download a zipfile containing the `minder` CLI](https://github.com/stacklok/minder/releases) and install the binary yourself.
+Alternatively, you can [download a zipfile containing the `minder` CLI](https://github.com/mindersec/minder/releases) and install the binary yourself.
 
 ## Linux
 
-We provide pre-built static binaries for Linux at: https://github.com/stacklok/minder/releases.
+We provide pre-built static binaries for Linux at: https://github.com/mindersec/minder/releases.
 
 ## Building from source
 
-You can also build the `minder` CLI from source using `go install github.com/stacklok/minder/cmd/cli@latest`, or by [following the build instructions in the repository](https://github.com/stacklok/minder#build-from-source).
+You can also build the `minder` CLI from source using `go install github.com/mindersec/minder/cmd/cli@latest`, or by [following the build instructions in the repository](https://github.com/mindersec/minder#build-from-source).

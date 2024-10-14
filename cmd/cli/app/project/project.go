@@ -19,7 +19,7 @@ package project
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app"
 )
 
 // ProjectCmd is the root command for the project subcommands

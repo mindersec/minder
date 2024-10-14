@@ -23,11 +23,11 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app/profile"
+	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var listCmd = &cobra.Command{

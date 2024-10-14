@@ -25,11 +25,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/cli/table"
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
-	"github.com/stacklok/minder/internal/util/ptr"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/internal/util/cli/table"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/internal/util/ptr"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var repoRegisterCmd = &cobra.Command{

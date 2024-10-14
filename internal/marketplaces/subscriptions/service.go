@@ -25,12 +25,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	profsvc "github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/ruletypes"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/internal/db"
+	profsvc "github.com/mindersec/minder/internal/profiles"
+	"github.com/mindersec/minder/internal/ruletypes"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

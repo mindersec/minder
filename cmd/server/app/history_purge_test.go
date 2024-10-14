@@ -25,8 +25,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
 )
 
 // This test ensures that the size of these records is kept upder

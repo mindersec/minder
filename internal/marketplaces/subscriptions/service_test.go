@@ -24,15 +24,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	brf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	"github.com/stacklok/minder/internal/profiles"
-	psf "github.com/stacklok/minder/internal/profiles/mock/fixtures"
-	"github.com/stacklok/minder/internal/ruletypes"
-	rsf "github.com/stacklok/minder/internal/ruletypes/mock/fixtures"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	brf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
+	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
+	"github.com/mindersec/minder/internal/profiles"
+	psf "github.com/mindersec/minder/internal/profiles/mock/fixtures"
+	"github.com/mindersec/minder/internal/ruletypes"
+	rsf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {

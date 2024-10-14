@@ -23,8 +23,8 @@ import (
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var _ fsModifier = (*frizbeeTagResolveModification)(nil)

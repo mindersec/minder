@@ -1,4 +1,4 @@
-module github.com/stacklok/minder/tools
+module github.com/mindersec/minder/tools
 
 go 1.23.1
 
@@ -383,4 +383,4 @@ require (
 	pluginrpc.com/pluginrpc v0.5.0 // indirect
 )
 
-replace github.com/stacklok/minder => ../.
+replace github.com/mindersec/minder => ../.

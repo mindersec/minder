@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entities "github.com/stacklok/minder/internal/engine/entities"
+	entities "github.com/mindersec/minder/internal/engine/entities"
 	gomock "go.uber.org/mock/gomock"
 )
 

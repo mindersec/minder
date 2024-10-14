@@ -21,10 +21,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/config"
+	clientconfig "github.com/mindersec/minder/internal/config/client"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // loginCmd represents the login command

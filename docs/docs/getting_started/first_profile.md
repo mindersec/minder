@@ -21,13 +21,13 @@ In this example, Minder will scan the repositories that you've registered and id
 
 ### Adding rule types
 
-In Minder, the rule type configuration is completely flexible, and you can author them yourself. Because of this, your Minder organization does not have any rule types configured when you create it. You need to configure some, and you can upload some of Minder's already created rules from the [minder-rules-and-profiles repository](https://github.com/stacklok/minder-rules-and-profiles).
+In Minder, the rule type configuration is completely flexible, and you can author them yourself. Because of this, your Minder organization does not have any rule types configured when you create it. You need to configure some, and you can upload some of Minder's already created rules from the [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
-For example, to add a rule type that ensures that secret scanning is enabled, and one that ensures that secret push protection is enabled, you can download the [secret_scanning.yaml](https://github.com/stacklok/minder-rules-and-profiles/blob/main/rule-types/github/secret_scanning.yaml) and [secret_push_protection.yaml](https://github.com/stacklok/minder-rules-and-profiles/blob/main/rule-types/github/secret_push_protection.yaml) rule types.
+For example, to add a rule type that ensures that secret scanning is enabled, and one that ensures that secret push protection is enabled, you can download the [secret_scanning.yaml](https://github.com/mindersec/minder-rules-and-profiles/blob/main/rule-types/github/secret_scanning.yaml) and [secret_push_protection.yaml](https://github.com/mindersec/minder-rules-and-profiles/blob/main/rule-types/github/secret_push_protection.yaml) rule types.
 
 ```bash
-curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_scanning.yaml
-curl -LO https://raw.githubusercontent.com/stacklok/minder-rules-and-profiles/main/rule-types/github/secret_push_protection.yaml
+curl -LO https://raw.githubusercontent.com/mindersec/minder-rules-and-profiles/main/rule-types/github/secret_scanning.yaml
+curl -LO https://raw.githubusercontent.com/mindersec/minder-rules-and-profiles/main/rule-types/github/secret_push_protection.yaml
 ```
 
 Once you've downloaded the rule type configuration from GitHub, you can upload them to your Minder organization.

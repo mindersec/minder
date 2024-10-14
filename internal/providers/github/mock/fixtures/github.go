@@ -19,7 +19,7 @@
 package fixtures
 
 import (
-	ghmock "github.com/stacklok/minder/internal/providers/github/mock"
+	ghmock "github.com/mindersec/minder/internal/providers/github/mock"
 	"go.uber.org/mock/gomock"
 )
 

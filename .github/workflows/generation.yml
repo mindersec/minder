@@ -48,7 +48,7 @@ jobs:
           format: false
           breaking: true
           input: 'proto'
-          breaking_against: "https://github.com/stacklok/minder.git#branch=main,subdir=proto"
+          breaking_against: "https://github.com/mindersec/minder.git#branch=main,subdir=proto"
   sqlc-generation:
     runs-on: ubuntu-latest
     steps:

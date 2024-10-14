@@ -18,9 +18,9 @@ package repositories
 import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util/ptr"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util/ptr"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // PBRepositoryFromDB converts a database repository to a protobuf

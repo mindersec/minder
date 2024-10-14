@@ -28,7 +28,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak"
 )
 
 // Packer handles writing the bundles to archives on disk.

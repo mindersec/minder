@@ -6,7 +6,7 @@ The minder community take security seriously! We appreciate your efforts to disc
 
 ## Reporting a vulnerability
 
-To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/stacklok/minder/security/advisories/new) tab.
+To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/mindersec/minder/security/advisories/new) tab.
 
 If you are unable to access GitHub you can also email us at security@stacklok.com. 
 

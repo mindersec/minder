@@ -14,7 +14,7 @@
 
 package providers
 
-import "github.com/stacklok/minder/internal/db"
+import "github.com/mindersec/minder/internal/db"
 
 // ListProviderClasses returns a list of provider classes.
 func ListProviderClasses() []string {

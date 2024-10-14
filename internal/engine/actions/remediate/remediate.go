@@ -21,13 +21,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/actions/remediate/gh_branch_protect"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/gh_branch_protect"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // ActionType is the type of the remediation engine

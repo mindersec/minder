@@ -25,12 +25,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/logger"
-	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/logger"
+	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CreateEntityReconciliationTask creates a task to reconcile the state of an entity

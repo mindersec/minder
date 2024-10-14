@@ -27,9 +27,9 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/open-feature/go-sdk/openfeature"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/engine/engcontext"
 )
 
 // nolint: tparallel

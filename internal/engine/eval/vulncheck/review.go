@@ -27,9 +27,9 @@ import (
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (

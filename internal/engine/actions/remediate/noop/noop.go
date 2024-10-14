@@ -23,9 +23,9 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/profiles/models"
 )
 
 // Remediator is the structure backing the noop remediator

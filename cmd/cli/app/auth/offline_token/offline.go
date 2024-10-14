@@ -19,7 +19,7 @@ package offline_token
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app/auth"
+	"github.com/mindersec/minder/cmd/cli/app/auth"
 )
 
 // offlineTokenCmd represents the offline-token set of sub-commands

@@ -23,9 +23,9 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	properties2 "github.com/stacklok/minder/internal/providers/github/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	properties2 "github.com/mindersec/minder/internal/providers/github/properties"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // FetchProperty fetches a single property for the given entity

@@ -79,7 +79,7 @@ hpaSettings:
 # Configurable settings for the migration job
 migrationSettings:
   # -- (string) Image to use for the migration job
-  image: ko://github.com/stacklok/minder/cmd/server
+  image: ko://github.com/mindersec/minder/cmd/server
   # -- (string) Image pull policy to use for the migration job
   imagePullPolicy: "IfNotPresent"
   # -- (object) Resources to use for the migration job
@@ -100,7 +100,7 @@ migrationSettings:
 # Configurable settings for the main deployment
 deploymentSettings:
   # -- (string) Image to use for the main deployment
-  image: ko://github.com/stacklok/minder/cmd/server
+  image: ko://github.com/mindersec/minder/cmd/server
   # -- (string) Image pull policy to use for the main deployment
   imagePullPolicy: "IfNotPresent"
   # -- (object) Resources to use for the main deployment
@@ -145,7 +145,7 @@ deploymentSettings:
 
 sessionExpirationPurgeJobSettings:
   schedule: "0 0 * * *"
-  image: ko://github.com/stacklok/minder/cmd/server
+  image: ko://github.com/mindersec/minder/cmd/server
   restartPolicy: "OnFailure"
   imagePullPolicy: "IfNotPresent"
   resources: {}
@@ -157,7 +157,7 @@ sessionExpirationPurgeJobSettings:
 rotateProviderTokensJobSettings:
   # Run daily a couple of hours after the session expiration purge job
   schedule: "0 2 * * *"
-  image: ko://github.com/stacklok/minder/cmd/server
+  image: ko://github.com/mindersec/minder/cmd/server
   restartPolicy: "OnFailure"
   imagePullPolicy: "IfNotPresent"
   resources: {}

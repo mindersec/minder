@@ -19,11 +19,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	propertyService "github.com/stacklok/minder/internal/entities/properties/service"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func getEntityInner(

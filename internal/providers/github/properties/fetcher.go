@@ -21,8 +21,8 @@ import (
 
 	go_github "github.com/google/go-github/v63/github"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // GhPropertyWrapper is a function that fetches a property from the GitHub API

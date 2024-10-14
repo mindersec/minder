@@ -16,10 +16,10 @@
 package fixtures
 
 import (
-	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
-	"github.com/stacklok/minder/pkg/mindpak/sources"
+	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/pkg/mindpak/sources"
 	"go.uber.org/mock/gomock"
 )
 

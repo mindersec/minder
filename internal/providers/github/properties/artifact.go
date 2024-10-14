@@ -28,10 +28,10 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (

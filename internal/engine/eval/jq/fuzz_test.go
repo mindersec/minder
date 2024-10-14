@@ -18,9 +18,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stacklok/minder/internal/engine/eval/jq"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/eval/jq"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func FuzzJqEval(f *testing.F) {

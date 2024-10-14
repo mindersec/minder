@@ -24,10 +24,10 @@ go mod tidy
 #  We create a jq_test directory and move the tests there to make it work.
 mkdir internal/engine/eval/jq/jq_test
 mv internal/engine/eval/jq/fuzz_test.go internal/engine/eval/jq/jq_test/
-compile_native_go_fuzzer github.com/stacklok/minder/internal/engine/eval/jq/jq_test FuzzJqEval FuzzJqEval
-compile_native_go_fuzzer github.com/stacklok/minder/internal/engine/eval/rego FuzzRegoEval FuzzRegoEval
-compile_native_go_fuzzer github.com/stacklok/minder/internal/controlplane FuzzGitHubEventParsers FuzzGitHubEventParsers
-compile_native_go_fuzzer github.com/stacklok/minder/internal/engine/ingester/diff FuzzDiffParse FuzzDiffParse
-compile_native_go_fuzzer github.com/stacklok/minder/internal/crypto FuzzEncryptDecrypt FuzzEncryptDecrypt
-compile_native_go_fuzzer github.com/stacklok/minder/internal/auth/jwt FuzzParseAndValidate FuzzParseAndValidate
-compile_native_go_fuzzer github.com/stacklok/minder/internal/util/cli FuzzRenderMarkdown FuzzRenderMarkdown
+compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/eval/jq/jq_test FuzzJqEval FuzzJqEval
+compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/eval/rego FuzzRegoEval FuzzRegoEval
+compile_native_go_fuzzer github.com/mindersec/minder/internal/controlplane FuzzGitHubEventParsers FuzzGitHubEventParsers
+compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/ingester/diff FuzzDiffParse FuzzDiffParse
+compile_native_go_fuzzer github.com/mindersec/minder/internal/crypto FuzzEncryptDecrypt FuzzEncryptDecrypt
+compile_native_go_fuzzer github.com/mindersec/minder/internal/auth/jwt FuzzParseAndValidate FuzzParseAndValidate
+compile_native_go_fuzzer github.com/mindersec/minder/internal/util/cli FuzzRenderMarkdown FuzzRenderMarkdown

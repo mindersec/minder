@@ -18,7 +18,7 @@ package common
 import (
 	"strings"
 
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 )
 
 const (

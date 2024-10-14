@@ -20,7 +20,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 func TestRandomInt(t *testing.T) {

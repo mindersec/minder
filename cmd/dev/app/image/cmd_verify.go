@@ -23,17 +23,17 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/verifier"
-	"github.com/stacklok/minder/internal/verifier/sigstore"
-	"github.com/stacklok/minder/internal/verifier/sigstore/container"
-	"github.com/stacklok/minder/internal/verifier/verifyif"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/verifier"
+	"github.com/mindersec/minder/internal/verifier/sigstore"
+	"github.com/mindersec/minder/internal/verifier/sigstore/container"
+	"github.com/mindersec/minder/internal/verifier/verifyif"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // CmdVerify is the root command for the container verify subcommands

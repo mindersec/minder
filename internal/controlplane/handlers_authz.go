@@ -27,14 +27,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/flags"
-	"github.com/stacklok/minder/internal/invites"
-	"github.com/stacklok/minder/internal/util"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/internal/invites"
+	"github.com/mindersec/minder/internal/util"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type rpcOptionsKey struct{}

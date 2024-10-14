@@ -20,9 +20,9 @@ import (
 	"context" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // See minder.proto for more detailed documentation

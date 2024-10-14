@@ -19,9 +19,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/util/cache"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util/cache"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

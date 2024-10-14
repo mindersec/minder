@@ -22,8 +22,8 @@ import (
 	"slices"
 	"strings"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	"github.com/stacklok/minder/internal/util"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/internal/util"
 )
 
 var (

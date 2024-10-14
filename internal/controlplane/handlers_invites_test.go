@@ -24,12 +24,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
-	mockidentity "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/projects"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth"
+	mockidentity "github.com/mindersec/minder/internal/auth/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/projects"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestGetInviteDetails(t *testing.T) {

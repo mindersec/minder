@@ -21,7 +21,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/stacklok/minder/internal/events"
+	"github.com/mindersec/minder/internal/events"
 )
 
 // StubEventer is a stub implementation of events.Interface and the events.Publisher interface

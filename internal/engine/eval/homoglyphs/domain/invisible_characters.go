@@ -18,8 +18,8 @@ package domain
 import (
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain/resources"
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/util"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain/resources"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/util"
 )
 
 // InvisibleCharactersProcessor is a processor for the invisible characters rule type

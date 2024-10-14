@@ -29,10 +29,10 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/authz"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/projects"
+	"github.com/mindersec/minder/internal/authz"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/projects"
 )
 
 const (

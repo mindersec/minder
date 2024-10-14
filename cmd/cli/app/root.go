@@ -24,10 +24,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/constants"
-	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/mindersec/minder/internal/config"
+	clientconfig "github.com/mindersec/minder/internal/config/client"
+	"github.com/mindersec/minder/internal/constants"
+	"github.com/mindersec/minder/internal/util/cli"
 )
 
 var (

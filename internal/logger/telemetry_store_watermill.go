@@ -20,8 +20,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/entities"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine/entities"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TelemetryStoreWMMiddleware is a Watermill middleware that
@@ -94,7 +94,7 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		minderv1.Entity_ENTITY_RELEASE, minderv1.Entity_ENTITY_PIPELINE_RUN,
 		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
-		// Noop, see https://github.com/stacklok/minder/issues/3838
+		// Noop, see https://github.com/mindersec/minder/issues/3838
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		// Do nothing
 	}

@@ -19,8 +19,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto/keystores"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto/keystores"
 )
 
 func TestNewKeyStoreFromConfig(t *testing.T) {

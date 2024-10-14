@@ -17,8 +17,8 @@
 package main
 
 import (
-	"github.com/stacklok/minder/cmd/dev/app"
-	_ "github.com/stacklok/minder/cmd/dev/app/rule_type"
+	"github.com/mindersec/minder/cmd/dev/app"
+	_ "github.com/mindersec/minder/cmd/dev/app/rule_type"
 )
 
 func main() {

@@ -25,11 +25,11 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules

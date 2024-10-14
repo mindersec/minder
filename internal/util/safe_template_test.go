@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/internal/util"
 )
 
 func TestParseNewTemplate(t *testing.T) {

@@ -35,12 +35,12 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	mcrypto "github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli/useragent"
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/config"
+	clientconfig "github.com/mindersec/minder/internal/config/client"
+	mcrypto "github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cli/useragent"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 //go:embed html/login_success.html

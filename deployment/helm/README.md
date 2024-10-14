@@ -61,7 +61,7 @@ installed in the namespace specified by your current Kubernetes context.
 | deploymentSettings.affinity | object, optional | `nil` | Allow configuring pod affinity settings |
 | deploymentSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
 | deploymentSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
-| deploymentSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the main deployment |
+| deploymentSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` | Image to use for the main deployment |
 | deploymentSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy to use for the main deployment |
 | deploymentSettings.initContainers | array, optional | `nil` | Additional init containers to run |
 | deploymentSettings.resources | object | `{"limits":{"cpu":4,"memory":"1.5Gi"},"requests":{"cpu":1,"memory":"1Gi"}}` | Resources to use for the main deployment |
@@ -85,14 +85,14 @@ installed in the namespace specified by your current Kubernetes context.
 | ingress.annotations | object, optional | `{}` | annotations to use for the ingress |
 | migrationSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
 | migrationSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
-| migrationSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` | Image to use for the migration job |
+| migrationSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` | Image to use for the migration job |
 | migrationSettings.imagePullPolicy | string | `"IfNotPresent"` | Image pull policy to use for the migration job |
 | migrationSettings.resources | object | `{"limits":{"cpu":1,"memory":"300Mi"},"requests":{"cpu":"200m","memory":"200Mi"}}` | Resources to use for the migration job |
 | migrationSettings.sidecarContainers | array, optional | `nil` | Additional configuration for sidecar containers |
 | rotateProviderTokensJobSettings.extraEnv | list | `[]` |  |
 | rotateProviderTokensJobSettings.extraVolumeMounts | list | `[]` |  |
 | rotateProviderTokensJobSettings.extraVolumes | list | `[]` |  |
-| rotateProviderTokensJobSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
+| rotateProviderTokensJobSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` |  |
 | rotateProviderTokensJobSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
 | rotateProviderTokensJobSettings.resources | object | `{}` |  |
 | rotateProviderTokensJobSettings.restartPolicy | string | `"OnFailure"` |  |
@@ -108,7 +108,7 @@ installed in the namespace specified by your current Kubernetes context.
 | sessionExpirationPurgeJobSettings.extraEnv | list | `[]` |  |
 | sessionExpirationPurgeJobSettings.extraVolumeMounts | list | `[]` |  |
 | sessionExpirationPurgeJobSettings.extraVolumes | list | `[]` |  |
-| sessionExpirationPurgeJobSettings.image | string | `"ko://github.com/stacklok/minder/cmd/server"` |  |
+| sessionExpirationPurgeJobSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` |  |
 | sessionExpirationPurgeJobSettings.imagePullPolicy | string | `"IfNotPresent"` |  |
 | sessionExpirationPurgeJobSettings.resources | object | `{}` |  |
 | sessionExpirationPurgeJobSettings.restartPolicy | string | `"OnFailure"` |  |

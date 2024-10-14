@@ -24,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func TestBuildFilter(t *testing.T) {

@@ -20,8 +20,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/config"
-	"github.com/stacklok/minder/internal/constants"
+	"github.com/mindersec/minder/internal/config"
+	"github.com/mindersec/minder/internal/constants"
 )
 
 // Config is the configuration for the minder cli

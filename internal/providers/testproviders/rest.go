@@ -17,12 +17,12 @@ package testproviders
 import (
 	"context"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/providers/http"
-	"github.com/stacklok/minder/internal/providers/noop"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/providers/http"
+	"github.com/mindersec/minder/internal/providers/noop"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // RESTProvider is a test implementation of the REST provider

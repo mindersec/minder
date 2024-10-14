@@ -21,7 +21,7 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/field_mask.proto";
 
-option go_package = "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1";
+option go_package = "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1";
 
 enum ObjectOwner {
     OBJECT_OWNER_UNSPECIFIED = 0;

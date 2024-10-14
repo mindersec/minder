@@ -19,7 +19,7 @@
 package fixtures
 
 import (
-	mockdb "github.com/stacklok/minder/database/mock"
+	mockdb "github.com/mindersec/minder/database/mock"
 	"go.uber.org/mock/gomock"
 )
 

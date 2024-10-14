@@ -20,8 +20,8 @@ package fixtures
 
 import (
 	"errors"
-	mockprofsvc "github.com/stacklok/minder/internal/profiles/mock"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockprofsvc "github.com/mindersec/minder/internal/profiles/mock"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"go.uber.org/mock/gomock"
 )
 

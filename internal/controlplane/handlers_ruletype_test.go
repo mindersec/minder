@@ -24,11 +24,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	db "github.com/stacklok/minder/internal/db"
-	sf "github.com/stacklok/minder/internal/ruletypes/mock/fixtures"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	db "github.com/mindersec/minder/internal/db"
+	sf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestCreateRuleType(t *testing.T) {

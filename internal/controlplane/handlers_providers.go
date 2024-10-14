@@ -28,14 +28,14 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/util"
-	cursorutil "github.com/stacklok/minder/internal/util/cursor"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/util"
+	cursorutil "github.com/mindersec/minder/internal/util/cursor"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // CreateProvider implements the CreateProvider RPC method.

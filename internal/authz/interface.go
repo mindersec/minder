@@ -22,7 +22,7 @@ import (
 
 	"github.com/google/uuid"
 
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ErrNotAuthorized is the error returned when a user is not authorized to perform an action

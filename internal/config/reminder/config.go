@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/config"
+	"github.com/mindersec/minder/internal/config"
 )
 
 // Config contains the configuration for the reminder service

@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
+	"github.com/mindersec/minder/internal/db"
+	mockprovsvc "github.com/mindersec/minder/internal/providers/github/service/mock"
 )
 
 func testNewInstallationManager(t *testing.T, mockSvc *mockprovsvc.MockGitHubProviderService) *InstallationManager {

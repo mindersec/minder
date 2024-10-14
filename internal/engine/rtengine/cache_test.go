@@ -24,10 +24,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/stacklok/minder/internal/db"
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	"github.com/stacklok/minder/internal/providers/testproviders"
+	"github.com/mindersec/minder/internal/db"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	"github.com/mindersec/minder/internal/providers/testproviders"
 )
 
 func TestGetRuleEngine(t *testing.T) {

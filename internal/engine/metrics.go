@@ -22,8 +22,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/metrics/meters"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/metrics/meters"
 )
 
 // ExecutorMetrics encapsulates metrics operations for the executor

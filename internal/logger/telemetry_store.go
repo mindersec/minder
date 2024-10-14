@@ -21,10 +21,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
 )
 
 type key int

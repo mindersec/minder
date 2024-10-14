@@ -24,15 +24,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ReconcileEntityRegistration reconciles the registration of an entity.

@@ -25,9 +25,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
+	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
 )
 
 // handleRepoReconcilerEvent handles events coming from the reconciler topic

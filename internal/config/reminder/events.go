@@ -16,7 +16,7 @@
 package reminder
 
 import (
-	"github.com/stacklok/minder/internal/config"
+	"github.com/mindersec/minder/internal/config"
 )
 
 // EventConfig is the configuration for reminder's eventing system.

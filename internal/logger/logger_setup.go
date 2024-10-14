@@ -22,8 +22,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/util"
+	config "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/util"
 )
 
 // FromFlags configures logging and returns a logger with settings matching

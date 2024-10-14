@@ -22,7 +22,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/puzpuzpuz/xsync/v3"
 
-	"github.com/stacklok/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/models"
 )
 
 // This uses a persistent entity cache, that is, a cache that is not cleared.

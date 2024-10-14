@@ -22,14 +22,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces"
-	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
-	bsf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	ssf "github.com/stacklok/minder/internal/marketplaces/subscriptions/mock/fixtures"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/sources"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/marketplaces"
+	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
+	bsf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
+	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
+	ssf "github.com/mindersec/minder/internal/marketplaces/subscriptions/mock/fixtures"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/sources"
 )
 
 // scenario structure is same for both tests

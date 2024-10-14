@@ -22,11 +22,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	sub "github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/reader"
-	"github.com/stacklok/minder/pkg/mindpak/sources"
+	"github.com/mindersec/minder/internal/db"
+	sub "github.com/mindersec/minder/internal/marketplaces/subscriptions"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/pkg/mindpak/sources"
 )
 
 // Marketplace encapsulates the operations which allow profiles and rule types

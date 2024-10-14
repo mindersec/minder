@@ -24,15 +24,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	mockrepo "github.com/stacklok/minder/internal/repositories/mock"
-	rf "github.com/stacklok/minder/internal/repositories/mock/fixtures"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
+	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var (

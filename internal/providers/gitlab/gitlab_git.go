@@ -20,7 +20,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 
-	gitclient "github.com/stacklok/minder/internal/providers/git"
+	gitclient "github.com/mindersec/minder/internal/providers/git"
 )
 
 // Implements the Git interface

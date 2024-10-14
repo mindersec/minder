@@ -22,11 +22,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/ruletypes"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/ruletypes"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Cache contains a set of RuleTypeEngine instances

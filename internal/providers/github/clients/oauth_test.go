@@ -29,13 +29,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	github2 "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	github2 "github.com/mindersec/minder/internal/providers/github"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestParseV1OAuthConfig(t *testing.T) {

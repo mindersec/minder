@@ -26,13 +26,13 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (

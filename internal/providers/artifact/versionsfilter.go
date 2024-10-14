@@ -23,8 +23,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/stacklok/minder/internal/verifier"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/verifier"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // BuildFilter builds a container image filter based on the tags and tag regex as well as the creation time

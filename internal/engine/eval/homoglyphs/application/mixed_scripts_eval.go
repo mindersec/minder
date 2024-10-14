@@ -20,13 +20,13 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/communication"
-	"github.com/stacklok/minder/internal/engine/eval/homoglyphs/domain"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
+	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // MixedScriptsEvaluator is the evaluator for the mixed scripts rule type

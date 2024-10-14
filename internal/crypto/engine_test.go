@@ -22,8 +22,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
+	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
 )
 
 //Test both the algorithm and the engine in one test suite

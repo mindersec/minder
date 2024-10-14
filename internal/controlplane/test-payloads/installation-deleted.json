@@ -54,7 +54,7 @@
       "id": 12345,
       "node_id": "node_id",
       "name": "libfixposix",
-      "full_name": "stacklok/minder",
+      "full_name": "mindersec/minder",
       "private": false
     }
   ],

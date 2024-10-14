@@ -24,7 +24,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/events/common"
+	"github.com/mindersec/minder/internal/events/common"
 )
 
 func (r *reminder) setupSQLPublisher(ctx context.Context) (message.Publisher, common.DriverCloser, error) {

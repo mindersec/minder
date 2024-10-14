@@ -25,8 +25,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	em "github.com/stacklok/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/db"
+	em "github.com/mindersec/minder/internal/entities/models"
 )
 
 var (

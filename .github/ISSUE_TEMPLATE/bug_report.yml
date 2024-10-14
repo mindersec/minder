@@ -6,7 +6,7 @@ assignees: "-"
 body:
   - type: markdown
     attributes:
-      value: "To expedite our maintainers' efforts, please search for [duplicate or closed issues](https://github.com/stacklok/minder/issues?q=is%3Aissue+) and familiarize yourself with our [contributing guidelines](https://github.com/stacklok/minder/blob/main/CONTRIBUTING.md)."
+      value: "To expedite our maintainers' efforts, please search for [duplicate or closed issues](https://github.com/mindersec/minder/issues?q=is%3Aissue+) and familiarize yourself with our [contributing guidelines](https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md)."
   - type: textarea
     id: what-happened
     attributes:

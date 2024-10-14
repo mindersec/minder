@@ -22,7 +22,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
 const (

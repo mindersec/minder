@@ -27,7 +27,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 func TestListEvaluationHistoryFilters(t *testing.T) {
@@ -228,7 +228,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Entitynames: []string{"stacklok/minder"},
+				Entitynames: []string{"mindersec/minder"},
 				Projectid:   proj.ID,
 				Size:        5,
 			},
@@ -244,7 +244,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Notentitynames: []string{"stacklok/minder"},
+				Notentitynames: []string{"mindersec/minder"},
 				Projectid:      proj.ID,
 				Size:           5,
 			},
@@ -264,7 +264,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Entitynames: []string{fullRepoName(repo1), "stacklok/minder"},
+				Entitynames: []string{fullRepoName(repo1), "mindersec/minder"},
 				Projectid:   proj.ID,
 				Size:        5,
 			},
@@ -284,7 +284,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Notentitynames: []string{fullRepoName(repo1), "stacklok/minder"},
+				Notentitynames: []string{fullRepoName(repo1), "mindersec/minder"},
 				Projectid:      proj.ID,
 				Size:           5,
 			},
@@ -354,7 +354,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Notprofilenames: []string{"stacklok/minder"},
+				Notprofilenames: []string{"mindersec/minder"},
 				Projectid:       proj.ID,
 				Size:            5,
 			},
@@ -374,7 +374,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Profilenames: []string{profile1.Name, "stacklok/minder"},
+				Profilenames: []string{profile1.Name, "mindersec/minder"},
 				Projectid:    proj.ID,
 				Size:         5,
 			},
@@ -394,7 +394,7 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 					Time:  time.UnixMicro(999999999999999999).UTC(),
 					Valid: true,
 				},
-				Notprofilenames: []string{profile1.Name, "stacklok/minder"},
+				Notprofilenames: []string{profile1.Name, "mindersec/minder"},
 				Projectid:       proj.ID,
 				Size:            5,
 			},

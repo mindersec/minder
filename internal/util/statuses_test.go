@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/util"
+	"github.com/mindersec/minder/internal/util"
 )
 
 func TestNiceStatusCreation(t *testing.T) {

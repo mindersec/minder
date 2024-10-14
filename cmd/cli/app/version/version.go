@@ -19,9 +19,9 @@ package version
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/constants"
-	"github.com/stacklok/minder/internal/util/cli/useragent"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/constants"
+	"github.com/mindersec/minder/internal/util/cli/useragent"
 )
 
 // VersionCmd is the version command

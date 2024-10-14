@@ -20,8 +20,8 @@ import (
 
 	"github.com/rs/zerolog"
 
-	config "github.com/stacklok/minder/internal/config/reminder"
-	"github.com/stacklok/minder/internal/util"
+	config "github.com/mindersec/minder/internal/config/reminder"
+	"github.com/mindersec/minder/internal/util"
 )
 
 // FromFlags creates a new logger from the provided configuration
