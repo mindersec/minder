@@ -27,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/manager"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 func TestAuthManager_NewAuthManager(t *testing.T) {
@@ -90,7 +91,7 @@ func TestAuthManager_NewAuthManager(t *testing.T) {
 	require.NotNil(t, dhClassManager)
 }
 
-func newMockAuthManager(t *testing.T, ctrl *gomock.Controller) (manager.AuthManager, *mockmanager.MockproviderClassOAuthManager, *mockmanager.MockProviderClassManager) {
+func newMockAuthManager(t *testing.T, ctrl *gomock.Controller) (mgrif.AuthManager, *mockmanager.MockproviderClassOAuthManager, *mockmanager.MockProviderClassManager) {
 	t.Helper()
 
 	ghClassManager := mockmanager.NewMockproviderClassOAuthManager(ctrl)
@@ -159,7 +160,7 @@ func TestAuthManager_NewOAuthConfig_Validate_ClassManagerProperties(t *testing.T
 			authManager, ghClassManager, dhClassManager := newMockAuthManager(t, ctrl)
 			scenario.setupMocks(ghClassManager, dhClassManager)
 
-			config, err := authManager.NewOAuthConfig(scenario.providerClass, false)
+			config, err := authManager.NewOAuthConfig(string(scenario.providerClass), false)
 			if scenario.expectedErr != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, scenario.expectedErr)
@@ -169,7 +170,7 @@ func TestAuthManager_NewOAuthConfig_Validate_ClassManagerProperties(t *testing.T
 				require.NotNil(t, config)
 			}
 
-			err = authManager.ValidateCredentials(context.Background(), scenario.providerClass, credentials.NewOAuth2TokenCredential("token"))
+			err = authManager.ValidateCredentials(context.Background(), string(scenario.providerClass), credentials.NewOAuth2TokenCredential("token"))
 			if scenario.expectedErr != "" {
 				require.Error(t, err)
 				require.ErrorContains(t, err, scenario.expectedErr)
@@ -194,14 +195,14 @@ func TestAuthManager_ValidateCredentials(t *testing.T) {
 	ghClassManager.EXPECT().ValidateCredentials(
 		gomock.Any(),
 		credentials.NewGitHubTokenCredential("ghtoken"),
-		&manager.CredentialVerifyParams{
+		&mgrif.CredentialVerifyParams{
 			RemoteUser: "remoteuser",
 		})
 
 	err := authManager.ValidateCredentials(context.Background(),
-		db.ProviderClassGithub,
+		string(db.ProviderClassGithub),
 		credentials.NewGitHubTokenCredential("ghtoken"),
-		manager.WithRemoteUser("remoteuser"),
+		mgrif.WithRemoteUser("remoteuser"),
 	)
 	require.NoError(t, err)
 }

@@ -182,7 +182,7 @@ func Test_NewOAuthConfig(t *testing.T) {
 			providerAuthManager, err := manager.NewAuthManager(githubProviderManager, dockerhubProviderManager)
 			require.NoError(t, err)
 
-			config, err := providerAuthManager.NewOAuthConfig(scenario.providerClass, scenario.cli)
+			config, err := providerAuthManager.NewOAuthConfig(string(scenario.providerClass), scenario.cli)
 			if scenario.err == "" {
 				require.NoError(t, err)
 				require.NotNil(t, config)

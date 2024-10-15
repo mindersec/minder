@@ -64,6 +64,7 @@ import (
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/roles"
 	"github.com/mindersec/minder/internal/ruletypes"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 // AllInOneServerService is a helper function that starts the gRPC and HTTP servers,
@@ -140,7 +141,7 @@ func AllInOneServerService(
 		evt,
 	)
 
-	provmans := []manager.ProviderClassManager{githubProviderManager}
+	provmans := []mgrif.ProviderClassManager{githubProviderManager}
 
 	if flags.Bool(ctx, featureFlagClient, flags.DockerHubProvider) {
 		dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(

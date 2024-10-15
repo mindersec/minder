@@ -31,6 +31,7 @@ import (
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util/cache"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -79,30 +80,11 @@ type ProviderManager interface {
 	IterateWebhookHandlers() iter.Seq2[string, http.Handler]
 }
 
-// ProviderClassManager describes an interface for creating instances of a
-// specific Provider class. The idea is that ProviderManager determines the
-// class of the Provider, and delegates to the appropraite ProviderClassManager
-type ProviderClassManager interface {
-	providerClassAuthManager
-
-	// MarshallConfig validates the config and marshalls it into a format that can be stored in the database
-	MarshallConfig(ctx context.Context, class db.ProviderClass, config json.RawMessage) (json.RawMessage, error)
-	// Build creates an instance of Provider based on the config in the DB
-	Build(ctx context.Context, config *db.Provider) (v1.Provider, error)
-	// Delete deletes an instance of this provider
-	Delete(ctx context.Context, config *db.Provider) error
-	// GetSupportedClasses lists the types of Provider class which this manager
-	// can produce.
-	GetSupportedClasses() []db.ProviderClass
-	// GetWebhookHandler returns the webhook handler for the provider class
-	GetWebhookHandler() http.Handler
-}
-
 type classTracker struct {
-	classManagers map[db.ProviderClass]ProviderClassManager
+	classManagers map[db.ProviderClass]mgrif.ProviderClassManager
 }
 
-func (p *classTracker) getClassManager(class db.ProviderClass) (ProviderClassManager, error) {
+func (p *classTracker) getClassManager(class db.ProviderClass) (mgrif.ProviderClassManager, error) {
 	manager, ok := p.classManagers[class]
 	if !ok {
 		return nil, fmt.Errorf("unexpected provider class: %s", class)
@@ -111,9 +93,9 @@ func (p *classTracker) getClassManager(class db.ProviderClass) (ProviderClassMan
 }
 
 func newClassTracker(
-	classManagers ...ProviderClassManager,
+	classManagers ...mgrif.ProviderClassManager,
 ) (*classTracker, error) {
-	classes := make(map[db.ProviderClass]ProviderClassManager)
+	classes := make(map[db.ProviderClass]mgrif.ProviderClassManager)
 
 	for _, factory := range classManagers {
 		supportedClasses := factory.GetSupportedClasses()
@@ -147,7 +129,7 @@ type providerManager struct {
 func NewProviderManager(
 	ctx context.Context,
 	store providers.ProviderStore,
-	classManagers ...ProviderClassManager,
+	classManagers ...mgrif.ProviderClassManager,
 ) (ProviderManager, func(), error) {
 	noop := func() {}
 	classes, err := newClassTracker(classManagers...)

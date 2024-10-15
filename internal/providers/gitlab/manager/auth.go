@@ -22,8 +22,8 @@ import (
 	"golang.org/x/oauth2/gitlab"
 
 	"github.com/mindersec/minder/internal/db"
-	m "github.com/mindersec/minder/internal/providers/manager"
 	provv1 "github.com/mindersec/minder/pkg/providers/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 // NewOAuthConfig implements the providerClassOAuthManager interface
@@ -55,7 +55,7 @@ func (g *providerClassManager) NewOAuthConfig(_ db.ProviderClass, cli bool) (*oa
 
 // ValidateCredentials implements the providerClassOAuthManager interface
 func (_ *providerClassManager) ValidateCredentials(
-	_ context.Context, cred provv1.Credential, _ *m.CredentialVerifyParams,
+	_ context.Context, cred provv1.Credential, _ *mgrif.CredentialVerifyParams,
 ) error {
 	tokenCred, ok := cred.(provv1.OAuth2TokenCredential)
 	if !ok {

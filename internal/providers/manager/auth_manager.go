@@ -25,37 +25,14 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
-// CredentialVerifyParams are the currently supported parameters for credential verification
-type CredentialVerifyParams struct {
-	RemoteUser string
-}
-
-// CredentialVerifyOptFn is a function that sets options for credential verification
-type CredentialVerifyOptFn func(*CredentialVerifyParams)
-
-// WithRemoteUser sets the remote user for the credential verification
-func WithRemoteUser(remoteUser string) CredentialVerifyOptFn {
-	return func(params *CredentialVerifyParams) {
-		params.RemoteUser = remoteUser
-	}
-}
-
-// AuthManager is the interface for managing authentication with provider classes
-type AuthManager interface {
-	NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error)
-	ValidateCredentials(ctx context.Context, providerClass db.ProviderClass, cred v1.Credential, opts ...CredentialVerifyOptFn) error
-}
-
-type providerClassAuthManager interface {
-}
-
 type providerClassOAuthManager interface {
-	ProviderClassManager
+	mgrif.ProviderClassManager
 
-	NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error)
-	ValidateCredentials(ctx context.Context, cred v1.Credential, params *CredentialVerifyParams) error
+	NewOAuthConfig(providerClass string, cli bool) (*oauth2.Config, error)
+	ValidateCredentials(ctx context.Context, cred v1.Credential, params *mgrif.CredentialVerifyParams) error
 }
 
 type authManager struct {
@@ -64,8 +41,8 @@ type authManager struct {
 
 // NewAuthManager creates a new AuthManager for managing authentication with providers classes
 func NewAuthManager(
-	classManagers ...ProviderClassManager,
-) (AuthManager, error) {
+	classManagers ...mgrif.ProviderClassManager,
+) (mgrif.AuthManager, error) {
 	classes, err := newClassTracker(classManagers...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating class tracker: %w", err)
@@ -76,8 +53,8 @@ func NewAuthManager(
 	}, nil
 }
 
-func (a *authManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
-	manager, err := a.getClassManager(providerClass)
+func (a *authManager) NewOAuthConfig(providerClass string, cli bool) (*oauth2.Config, error) {
+	manager, err := a.getClassManager(db.ProviderClass(providerClass))
 	if err != nil {
 		return nil, fmt.Errorf("error getting class manager: %w", err)
 	}
@@ -91,9 +68,9 @@ func (a *authManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (
 }
 
 func (a *authManager) ValidateCredentials(
-	ctx context.Context, providerClass db.ProviderClass, cred v1.Credential, opts ...CredentialVerifyOptFn,
+	ctx context.Context, providerClass string, cred v1.Credential, opts ...mgrif.CredentialVerifyOptFn,
 ) error {
-	manager, err := a.getClassManager(providerClass)
+	manager, err := a.getClassManager(db.ProviderClass(providerClass))
 	if err != nil {
 		return fmt.Errorf("error getting class manager: %w", err)
 	}
@@ -103,7 +80,7 @@ func (a *authManager) ValidateCredentials(
 		return fmt.Errorf("class manager does not implement OAuthManager")
 	}
 
-	var verifyParams CredentialVerifyParams
+	var verifyParams mgrif.CredentialVerifyParams
 
 	for _, opt := range opts {
 		opt(&verifyParams)

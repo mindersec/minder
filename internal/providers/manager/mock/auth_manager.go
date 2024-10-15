@@ -16,91 +16,11 @@ import (
 	reflect "reflect"
 
 	db "github.com/mindersec/minder/internal/db"
-	manager "github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	manager "github.com/mindersec/minder/pkg/providers/v1/manager"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
-
-// MockAuthManager is a mock of AuthManager interface.
-type MockAuthManager struct {
-	ctrl     *gomock.Controller
-	recorder *MockAuthManagerMockRecorder
-}
-
-// MockAuthManagerMockRecorder is the mock recorder for MockAuthManager.
-type MockAuthManagerMockRecorder struct {
-	mock *MockAuthManager
-}
-
-// NewMockAuthManager creates a new mock instance.
-func NewMockAuthManager(ctrl *gomock.Controller) *MockAuthManager {
-	mock := &MockAuthManager{ctrl: ctrl}
-	mock.recorder = &MockAuthManagerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAuthManager) EXPECT() *MockAuthManagerMockRecorder {
-	return m.recorder
-}
-
-// NewOAuthConfig mocks base method.
-func (m *MockAuthManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewOAuthConfig", providerClass, cli)
-	ret0, _ := ret[0].(*oauth2.Config)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// NewOAuthConfig indicates an expected call of NewOAuthConfig.
-func (mr *MockAuthManagerMockRecorder) NewOAuthConfig(providerClass, cli any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewOAuthConfig", reflect.TypeOf((*MockAuthManager)(nil).NewOAuthConfig), providerClass, cli)
-}
-
-// ValidateCredentials mocks base method.
-func (m *MockAuthManager) ValidateCredentials(ctx context.Context, providerClass db.ProviderClass, cred v1.Credential, opts ...manager.CredentialVerifyOptFn) error {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, providerClass, cred}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ValidateCredentials", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateCredentials indicates an expected call of ValidateCredentials.
-func (mr *MockAuthManagerMockRecorder) ValidateCredentials(ctx, providerClass, cred any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, providerClass, cred}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCredentials", reflect.TypeOf((*MockAuthManager)(nil).ValidateCredentials), varargs...)
-}
-
-// MockproviderClassAuthManager is a mock of providerClassAuthManager interface.
-type MockproviderClassAuthManager struct {
-	ctrl     *gomock.Controller
-	recorder *MockproviderClassAuthManagerMockRecorder
-}
-
-// MockproviderClassAuthManagerMockRecorder is the mock recorder for MockproviderClassAuthManager.
-type MockproviderClassAuthManagerMockRecorder struct {
-	mock *MockproviderClassAuthManager
-}
-
-// NewMockproviderClassAuthManager creates a new mock instance.
-func NewMockproviderClassAuthManager(ctrl *gomock.Controller) *MockproviderClassAuthManager {
-	mock := &MockproviderClassAuthManager{ctrl: ctrl}
-	mock.recorder = &MockproviderClassAuthManagerMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockproviderClassAuthManager) EXPECT() *MockproviderClassAuthManagerMockRecorder {
-	return m.recorder
-}
 
 // MockproviderClassOAuthManager is a mock of providerClassOAuthManager interface.
 type MockproviderClassOAuthManager struct {
@@ -198,7 +118,7 @@ func (mr *MockproviderClassOAuthManagerMockRecorder) MarshallConfig(ctx, class, 
 }
 
 // NewOAuthConfig mocks base method.
-func (m *MockproviderClassOAuthManager) NewOAuthConfig(providerClass db.ProviderClass, cli bool) (*oauth2.Config, error) {
+func (m *MockproviderClassOAuthManager) NewOAuthConfig(providerClass string, cli bool) (*oauth2.Config, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NewOAuthConfig", providerClass, cli)
 	ret0, _ := ret[0].(*oauth2.Config)

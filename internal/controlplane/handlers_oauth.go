@@ -46,9 +46,9 @@ import (
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/service"
-	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization
@@ -170,7 +170,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	// Create a new OAuth2 config for the given provider
-	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(db.ProviderClass(providerClass), req.Cli)
+	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(providerClass, req.Cli)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	logger.BusinessRecord(ctx).Project = stateData.ProjectID
 	logger.BusinessRecord(ctx).Provider = provider
 
-	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
+	token, err := s.exchangeCodeForToken(ctx, provider, code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
@@ -270,7 +270,7 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 	// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
 	s.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
 	err = s.providerAuthManager.ValidateCredentials(
-		ctx, db.ProviderClass(provider), tokenCred, manager.WithRemoteUser(stateData.RemoteUser.String))
+		ctx, provider, tokenCred, mgrif.WithRemoteUser(stateData.RemoteUser.String))
 	if errors.Is(err, service.ErrInvalidTokenIdentity) {
 		return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
 			"The provided login token was associated with a different user.")
@@ -372,7 +372,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		return err
 	}
 
-	token, err := s.exchangeCodeForToken(ctx, db.ProviderClass(provider), code)
+	token, err := s.exchangeCodeForToken(ctx, provider, code)
 	if err != nil {
 		return fmt.Errorf("error exchanging code for token: %w", err)
 	}
@@ -470,7 +470,7 @@ func (s *Server) getValidSessionState(ctx context.Context, state string) (db.Get
 	return stateData, nil
 }
 
-func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass db.ProviderClass, code string) (*oauth2.Token, error) {
+func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass string, code string) (*oauth2.Token, error) {
 	// generate a new OAuth2 config for the given provider
 	oauthConfig, err := s.providerAuthManager.NewOAuthConfig(providerClass, true)
 	if err != nil {
@@ -528,7 +528,7 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 	}
 
 	// validate token
-	err = s.providerAuthManager.ValidateCredentials(ctx, provider.Class, in.AccessToken)
+	err = s.providerAuthManager.ValidateCredentials(ctx, string(provider.Class), in.AccessToken)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token provided: %v", err)
 	}

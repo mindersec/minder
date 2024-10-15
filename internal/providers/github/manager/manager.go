@@ -40,9 +40,9 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/github/service"
-	m "github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	mgrif "github.com/mindersec/minder/pkg/providers/v1/manager"
 )
 
 // NewGitHubProviderClassManager creates an instance of ProviderClassManager
@@ -59,7 +59,7 @@ func NewGitHubProviderClassManager(
 	propSvc propssvc.PropertiesService,
 	mt metrics.Metrics,
 	publisher events.Publisher,
-) m.ProviderClassManager {
+) mgrif.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
 		ghClientFactory:     ghClientFactory,
@@ -423,7 +423,7 @@ func githubAppOauthConfig(redirectUrlBase string) *oauth2.Config {
 }
 
 func (g *githubProviderManager) ValidateCredentials(
-	ctx context.Context, cred v1.Credential, params *m.CredentialVerifyParams,
+	ctx context.Context, cred v1.Credential, params *mgrif.CredentialVerifyParams,
 ) error {
 	tokenCred, ok := cred.(v1.OAuth2TokenCredential)
 	if !ok {
