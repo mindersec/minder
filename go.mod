@@ -48,7 +48,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.13.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
-	github.com/open-policy-agent/opa v0.68.0
+	github.com/open-policy-agent/opa v0.69.0
 	github.com/openfga/go-sdk v0.6.1
 	github.com/openfga/openfga v1.6.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -67,7 +67,7 @@ require (
 	github.com/stacklok/frizbee v0.1.3
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.27.0
+	github.com/styrainc/regal v0.28.0
 	github.com/thomaspoignant/go-feature-flag v1.34.0
 	github.com/xanzy/go-gitlab v0.112.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -107,7 +107,7 @@ require (
 	github.com/Microsoft/hcsshim v0.11.7 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20230627203149-c72ef8859ca9 // indirect
-	github.com/anderseknert/roast v0.3.0 // indirect
+	github.com/anderseknert/roast v0.4.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -130,7 +130,7 @@ require (
 	github.com/containerd/containerd v1.7.22 // indirect
 	github.com/containerd/containerd/api v1.7.19 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
-	github.com/containerd/errdefs v0.1.0 // indirect
+	github.com/containerd/errdefs v0.2.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
