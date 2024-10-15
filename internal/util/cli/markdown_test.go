@@ -45,7 +45,7 @@ func TestRenderMarkdown(t *testing.T) {
 		{
 			name:     "html tags",
 			input:    "<div>foo</div>",
-			expected: "\n\n",
+			expected: "\n  foo\n",
 		},
 		{
 			name:     "xss",
