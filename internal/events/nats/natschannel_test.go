@@ -32,8 +32,6 @@ import (
 )
 
 func TestNatsChannel(t *testing.T) {
-	t.Skip("Skipping test that is failing in CI") // https://github.com/mindersec/minder/issues/4542
-
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
@@ -54,6 +52,7 @@ func TestNatsChannel(t *testing.T) {
 	m1.Metadata.Set("foo", "bar")
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
+	m4 := message.NewMessage("456", []byte(`{"msg":"ni hao"}`))
 
 	pub1, sub1, closer1, out1, err := buildDriverPair(ctx, cfg)
 	if err != nil {
@@ -75,11 +74,18 @@ func TestNatsChannel(t *testing.T) {
 	if err := pub2.Publish("test", m2); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
+	// There is some asynchronous machinery in Publish which can cause
+	// the last message published be dropped if the following Close call
+	// is within a few milliseconds of the Publish call.
+	time.Sleep(5 * time.Millisecond)
 	// Don't let sub1 see the last message, even though it's published by pub1.
 	if err := sub1.Close(); err != nil {
 		t.Fatalf("failed to close sub1: %v", err)
 	}
-	if err := pub1.Publish("test", m3); err != nil {
+	if err := pub2.Publish("test", m3); err != nil {
+		t.Fatalf("failed to publish message: %v", err)
+	}
+	if err := pub1.Publish("test", m4); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
 
@@ -93,7 +99,7 @@ func TestNatsChannel(t *testing.T) {
 	// meaningful in a multi-process world).
 	results := make([]*message.Message, 0, 7)
 loop:
-	for i := 0; i < 7; i++ {
+	for i := 0; len(results) < 4; i++ {
 		select {
 		case m := <-out1:
 			results = append(results, m)
@@ -101,26 +107,28 @@ loop:
 		case m := <-out2:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
-		case <-time.After(25 * time.Second):
+		case <-time.After(5 * time.Second):
 			t.Logf("timeout waiting for message %d", i)
 			break loop
 		}
-	}
-	slices.SortFunc(results, func(a, b *message.Message) int {
-		return bytes.Compare(a.Payload, b.Payload)
-	})
-	// We sometimes get message duplicates.  Retransmissions are okay; deduplicate them.
-	results = slices.CompactFunc(results, func(a, b *message.Message) bool {
-		return bytes.Equal(a.Payload, b.Payload)
-	})
 
-	if len(results) != 3 {
-		t.Fatalf("expected 3 messages, got %d: %+v", len(results), results)
+		slices.SortFunc(results, func(a, b *message.Message) int {
+			return bytes.Compare(a.Payload, b.Payload)
+		})
+		// We sometimes get message duplicates.  Retransmissions are okay; deduplicate them.
+		results = slices.CompactFunc(results, func(a, b *message.Message) bool {
+			return bytes.Equal(a.Payload, b.Payload)
+		})
+	}
+
+	if len(results) != 4 {
+		t.Fatalf("expected 4 messages, got %d: %+v", len(results), results)
 	}
 
 	expectMessageEqual(t, m1, results[0])
 	expectMessageEqual(t, m2, results[1])
 	expectMessageEqual(t, m3, results[2])
+	expectMessageEqual(t, m4, results[3])
 }
 
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
