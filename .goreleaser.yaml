@@ -104,7 +104,7 @@ release:
   # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
   prerelease: auto
   github:
-    owner: stacklok
+    owner: mindersec
     name: minder
 # This section defines how and which artifacts we want to sign for the release.
 signs:
