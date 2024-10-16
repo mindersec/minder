@@ -15,10 +15,10 @@ import (
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules
@@ -70,7 +70,7 @@ func NewJQEvaluator(
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *engif.Result) error {
+func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *interfaces.Result) error {
 	if res.Object == nil {
 		return fmt.Errorf("missing object")
 	}

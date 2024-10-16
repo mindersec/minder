@@ -24,7 +24,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/engine/rtengine"
 	"github.com/mindersec/minder/internal/engine/selectors"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
@@ -41,6 +40,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -149,7 +149,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	off := "off"
 	profile.Alert = &off
 
-	rules, err := rtengine.GetRulesFromProfileOfType(profile, ruletype)
+	rules, err := profiles.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -300,7 +300,7 @@ func selectAndEval(
 
 	var evalErr error
 	if selected {
-		evalErr = eng.Eval(ctx, inf, evalStatus)
+		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {
 		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}

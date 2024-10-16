@@ -17,10 +17,10 @@ import (
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/flags"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -71,7 +71,7 @@ func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *engif.Result,
+	res *interfaces.Result,
 ) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
@@ -100,7 +100,7 @@ func (e *Evaluator) Eval(
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
 // TODO: it would be nice if we could express this in rego over
 // `input.ingested.deps[_].dep`, rather than building this in to core.
-func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
+func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *interfaces.Result) ([]string, error) {
 	var vulnerablePackages []string
 
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)

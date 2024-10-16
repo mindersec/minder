@@ -7,8 +7,8 @@ import (
 	"context"
 	"testing"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // FuzzRegoEval tests for unexpected behavior in e.Eval().
@@ -31,7 +31,7 @@ func FuzzRegoEval(f *testing.F) {
 		// The fuzzer tests for unexpected behavior, so it is not
 		// important what e.Eval() returns.
 		//nolint:gosec // Ignore the return values from e.Eval()
-		e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+		e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 			Object: map[string]any{
 				"data": data,
 			},

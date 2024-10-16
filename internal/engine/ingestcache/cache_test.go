@@ -15,15 +15,15 @@ import (
 	"github.com/mindersec/minder/internal/engine/ingester/diff"
 	"github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/engine/ingester/rest"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func TestCache(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		in0 engif.Ingester
+		in0 interfaces.Ingester
 		in1 protoreflect.ProtoMessage
 		in2 map[string]any
 	}
@@ -115,7 +115,7 @@ func TestCache(t *testing.T) {
 			_, ok := cache.Get(tt.args.in0, tt.args.in1, tt.args.in2)
 			require.False(t, ok, "cache should be empty")
 
-			res := &engif.Result{
+			res := &interfaces.Result{
 				Object: map[string]any{
 					"foo": "bar",
 				},
@@ -139,7 +139,7 @@ func TestCache(t *testing.T) {
 			_, ok := cache.Get(tt.args.in0, tt.args.in1, tt.args.in2)
 			require.False(t, ok, "cache should be empty")
 
-			res := &engif.Result{
+			res := &interfaces.Result{
 				Object: map[string]any{
 					"foo": "bar",
 				},

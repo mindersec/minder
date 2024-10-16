@@ -6,7 +6,7 @@ package ingestcache
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // NoopCache is the interface for the ingest cache.
@@ -20,18 +20,18 @@ func NewNoopCache() Cache {
 
 // Get implements the Cache interface but does nothing
 func (*NoopCache) Get(
-	_ engif.Ingester,
+	_ interfaces.Ingester,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
-) (*engif.Result, bool) {
+) (*interfaces.Result, bool) {
 	return nil, false
 }
 
 // Set implements the Cache interface but does nothing
 func (*NoopCache) Set(
-	_ engif.Ingester,
+	_ interfaces.Ingester,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
-	_ *engif.Result,
+	_ *interfaces.Result,
 ) {
 }

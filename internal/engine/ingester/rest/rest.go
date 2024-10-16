@@ -18,10 +18,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -105,7 +105,9 @@ func (rdi *Ingestor) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest calls the REST endpoint and returns the data
-func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
+func (rdi *Ingestor) Ingest(
+	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any,
+) (*interfaces.Result, error) {
 	retp := &EndpointTemplateParams{
 		Entity: ent,
 		Params: params,
@@ -143,7 +145,7 @@ func (rdi *Ingestor) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, 
 		return nil, fmt.Errorf("cannot parse body: %w", err)
 	}
 
-	return &engif.Result{
+	return &interfaces.Result{
 		Object:     data,
 		Checkpoint: checkpoints.NewCheckpointV1Now().WithHTTP(endpoint, rdi.method),
 	}, nil

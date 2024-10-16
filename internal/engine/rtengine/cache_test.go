@@ -17,6 +17,7 @@ import (
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/providers/testproviders"
+	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 )
 
 func TestGetRuleEngine(t *testing.T) {
@@ -30,7 +31,7 @@ func TestGetRuleEngine(t *testing.T) {
 	}{
 		{
 			Name:  "Retrieves rule engine from cache",
-			Cache: cacheType{ruleTypeID: &RuleTypeEngine{}},
+			Cache: cacheType{ruleTypeID: &rtengine2.RuleTypeEngine{}},
 		},
 		{
 			Name:          "Returns error when rule type does not exist",

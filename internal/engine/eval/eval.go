@@ -15,9 +15,9 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/eval/trusty"
 	"github.com/mindersec/minder/internal/engine/eval/vulncheck"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -27,7 +27,7 @@ func NewRuleEvaluator(
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
 	opts ...eoptions.Option,
-) (engif.Evaluator, error) {
+) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
 	if e == nil {
 		return nil, fmt.Errorf("rule type missing eval configuration")

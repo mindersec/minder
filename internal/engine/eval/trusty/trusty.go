@@ -18,9 +18,9 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -83,7 +83,7 @@ func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *engif.Result,
+	res *interfaces.Result,
 ) error {
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
@@ -161,7 +161,7 @@ func getEcosystemConfig(
 }
 
 // readPullRequestDependencies returns the dependencies found in theingestion results
-func readPullRequestDependencies(res *engif.Result) (*pbinternal.PrDependencies, error) {
+func readPullRequestDependencies(res *interfaces.Result) (*pbinternal.PrDependencies, error) {
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")

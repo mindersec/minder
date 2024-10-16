@@ -461,3 +461,26 @@ func selectorsToProfile(
 		})
 	}
 }
+
+// GetRulesFromProfileOfType returns the rules from the profile of the given type
+func GetRulesFromProfileOfType(p *pb.Profile, rt *pb.RuleType) ([]*pb.Profile_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, pb.EntityFromString(rt.Def.InEntity))
+	if err != nil {
+		return nil, fmt.Errorf("error getting rules for entity: %w", err)
+	}
+
+	rules := []*pb.Profile_Rule{}
+	err = TraverseRules(contextualRules, func(r *pb.Profile_Rule) error {
+		if r.Type == rt.Name {
+			rules = append(rules, r)
+		}
+		return nil
+	})
+
+	// This shouldn't happen
+	if err != nil {
+		return nil, fmt.Errorf("error traversing rules: %w", err)
+	}
+
+	return rules, nil
+}

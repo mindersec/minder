@@ -17,9 +17,9 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -183,11 +183,11 @@ func TestReadPullRequestDependencies(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name    string
-		sut     *engif.Result
+		sut     *interfaces.Result
 		mustErr bool
 	}{
-		{name: "normal", sut: &engif.Result{Object: &pbinternal.PrDependencies{}}, mustErr: false},
-		{name: "invalid-object", sut: &engif.Result{Object: context.Background()}, mustErr: true},
+		{name: "normal", sut: &interfaces.Result{Object: &pbinternal.PrDependencies{}}, mustErr: false},
+		{name: "invalid-object", sut: &interfaces.Result{Object: context.Background()}, mustErr: true},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

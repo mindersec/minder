@@ -12,8 +12,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -48,7 +48,7 @@ func (ice *InvisibleCharactersEvaluator) Eval(
 	ctx context.Context,
 	_ map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *engif.Result,
+	res *interfaces.Result,
 ) error {
 	violations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {

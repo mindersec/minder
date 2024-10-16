@@ -12,8 +12,8 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func TestFileExistsWithExistingFile(t *testing.T) {
@@ -43,7 +43,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -72,7 +72,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -109,7 +109,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -146,7 +146,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -176,7 +176,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -208,7 +208,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -245,7 +245,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -282,7 +282,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -322,7 +322,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -365,7 +365,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -403,7 +403,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -500,7 +500,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -536,7 +536,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -571,7 +571,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -617,7 +617,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -653,7 +653,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -690,7 +690,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -740,7 +740,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})

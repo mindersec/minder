@@ -37,6 +37,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -613,7 +614,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating test worktree")
 
 			evalParams.SetIngestResult(
-				&interfaces.Result{
+				&interfaces2.Result{
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})
