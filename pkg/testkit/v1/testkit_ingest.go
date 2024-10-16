@@ -43,6 +43,11 @@ func (tk *TestKit) Ingest(
 	return nil, ErrIngestUnimplemented
 }
 
+// ShouldOverrideIngest returns true if the ingester should override the ingest
+func (tk *TestKit) ShouldOverrideIngest() bool {
+	return tk.ingestType == git.GitRuleDataIngestType
+}
+
 // GetType returns the type of the ingester
 func (_ *TestKit) GetType() string {
 	return "testkit"
