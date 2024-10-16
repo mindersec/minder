@@ -250,6 +250,9 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
+		// This adds `Grpc-Metadata-Request-Id` to the
+		// response.
+		logger.RequestIDInterceptor("request-id"),
 		logger.Interceptor(s.cfg.LoggingConfig),
 		TokenValidationInterceptor,
 		EntityContextProjectInterceptor,

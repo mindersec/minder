@@ -21,6 +21,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -97,6 +98,26 @@ func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 
 		// Note: Zerolog makes it hard to add attributes in multiple calls.
 		logMsg.Dict("Attributes", attrs).Send()
+
+		return resp, err
+	}
+}
+
+// RequestIDInterceptor traces request ids.
+//
+// It's job is to add a request id (UUID) to the context so that all
+// subsequent logs inherit it, making it easier to track down problems
+// on a per-request basis. It also sends back it back in a header.
+func RequestIDInterceptor(headerSuffix string) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		rID := uuid.New().String()
+		ctx = zerolog.Ctx(ctx).With().Str("request_id", rID).Logger().WithContext(ctx)
+
+		resp, err := handler(ctx, req)
+
+		if err := grpc.SendHeader(ctx, metadata.Pairs(headerSuffix, rID)); err != nil {
+			zerolog.Ctx(ctx).Trace().Err(err).Msg("unable to attach request id to trailer")
+		}
 
 		return resp, err
 	}
