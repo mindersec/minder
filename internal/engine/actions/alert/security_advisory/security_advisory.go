@@ -48,6 +48,8 @@ const (
 	tmplDescriptionNameRem   = "description"
 	// nolint:lll
 	tmplPart1Top = `
+{{.EvaluationError}}
+
 Minder has detected a potential security exposure in your repository - **{{.Repository}}**.
 This exposure has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
@@ -126,6 +128,7 @@ type templateParamsSA struct {
 	Guidance        string
 	RuleRemediation string
 	Name            string
+	EvaluationError string
 }
 
 type alertMetadata struct {
@@ -373,6 +376,8 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 		return nil, fmt.Errorf("error executing summary template: %w", err)
 	}
 	result.Summary = summaryStr.String()
+
+	result.Template.EvaluationError = enginerr.ErrorAsEvalDetails(params.GetEvalErr())
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
