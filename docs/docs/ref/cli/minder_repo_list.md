@@ -31,6 +31,7 @@ minder repo list [flags]
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -j, --project string           ID of the project
   -p, --provider string          Name of the provider, i.e. github
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO

@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rego_test
 
@@ -25,8 +13,8 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // Evaluates a simple query against a simple profile
@@ -55,7 +43,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -63,7 +51,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -97,7 +85,7 @@ skip {
 	emptyPol := map[string]any{}
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -125,7 +113,7 @@ violations[{"msg": msg}] {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -133,7 +121,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -167,7 +155,7 @@ violations[{"msg": msg}] {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
@@ -206,7 +194,7 @@ allow {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -214,7 +202,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -244,7 +232,7 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -252,7 +240,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -307,7 +295,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
@@ -348,7 +336,7 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -380,7 +368,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &engif.Result{
+	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
@@ -439,7 +427,7 @@ violations[{"msg": msg}] {`,
 	require.NoError(t, err, "could not create evaluator")
 
 	err = e.Eval(context.Background(), map[string]any{}, nil,
-		&engif.Result{Object: map[string]any{}})
+		&interfaces.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
 
@@ -463,6 +451,6 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not create evaluator")
 
 	err = e.Eval(context.Background(), map[string]any{}, nil,
-		&engif.Result{Object: map[string]any{}})
+		&interfaces.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
