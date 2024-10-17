@@ -161,7 +161,9 @@ func TestParseRuleConfig(t *testing.T) {
 		},
 		{
 			"invalid-config", map[string]any{
-				"hey": "you",
+				"ecosystem_config": []string{
+					"hey",
+				},
 			}, true,
 		},
 	} {
@@ -595,5 +597,12 @@ func TestEvaluationDetailRendering(t *testing.T) {
 			require.True(t, ok)
 			require.Equal(t, tt.details, evalErr.Details())
 		})
+	}
+}
+
+func defaultConfig() *config {
+	return &config{
+		Action:          defaultAction,
+		EcosystemConfig: defaultEcosystemConfig,
 	}
 }

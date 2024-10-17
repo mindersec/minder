@@ -19,6 +19,39 @@ type vulnDbType string
 
 const (
 	vulnDbTypeOsv vulnDbType = "osv"
+	defaultAction            = pr_actions.ActionReviewPr
+)
+
+var (
+	defaultEcosystemConfig = []ecosystemConfig{
+		{
+			Name:       "npm",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://registry.npmjs.org",
+			},
+		},
+		{
+			Name:       "pypi",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://pypi.org/pypi",
+			},
+		},
+		{
+			Name:       "go",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://proxy.golang.org",
+			},
+			SumRepository: packageRepository{
+				Url: "https://sum.golang.org",
+			},
+		},
+	}
 )
 
 type packageRepository struct {
@@ -41,45 +74,20 @@ type config struct {
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
 }
 
-func defaultConfig() *config {
-	return &config{
-		Action: pr_actions.ActionReviewPr,
-		EcosystemConfig: []ecosystemConfig{
-			{
-				Name:       "npm",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://registry.npmjs.org",
-				},
-			},
-			{
-				Name:       "pypi",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://pypi.org/pypi",
-				},
-			},
-			{
-				Name:       "go",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://proxy.golang.org",
-				},
-				SumRepository: packageRepository{
-					Url: "https://sum.golang.org",
-				},
-			},
-		},
+func populateDefaultsIfEmpty(ruleCfg map[string]any) {
+	if ruleCfg["ecosystem_config"] == nil {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	} else if ecoCfg, ok := ruleCfg["ecosystem_config"].([]interface{}); ok && len(ecoCfg) == 0 {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	}
+
+	if ruleCfg["action"] == nil {
+		ruleCfg["action"] = defaultAction
 	}
 }
 
 func parseConfig(ruleCfg map[string]any) (*config, error) {
-	if len(ruleCfg) == 0 {
-		return defaultConfig(), nil
-	}
+	populateDefaultsIfEmpty(ruleCfg)
 
 	var conf config
 	validate := validator.New(validator.WithRequiredStructEnabled())
