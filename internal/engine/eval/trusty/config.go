@@ -19,7 +19,32 @@ var (
 	// SummaryScore is the score to use for the summary score
 	SummaryScore = "score"
 	// DefaultScore is the default score to use
-	DefaultScore = ""
+	DefaultScore           = ""
+	defaultAction          = pr_actions.ActionReviewPr
+	defaultEcosystemConfig = []ecosystemConfig{
+		{
+			Name:            "npm",
+			Score:           5.0,
+			Provenance:      5.0,
+			Activity:        5.0,
+			AllowMalicious:  false,
+			AllowDeprecated: false,
+		},
+		{
+			Name:            "pypi",
+			Score:           5.0,
+			Provenance:      5.0,
+			Activity:        5.0,
+			AllowDeprecated: false,
+		},
+		{
+			Name:            "go",
+			Score:           5.0,
+			Provenance:      5.0,
+			Activity:        5.0,
+			AllowDeprecated: false,
+		},
+	}
 )
 
 type ecosystemConfig struct {
@@ -50,40 +75,19 @@ type config struct {
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
 }
 
-func defaultConfig() *config {
-	return &config{
-		Action: pr_actions.ActionReviewPr,
-		EcosystemConfig: []ecosystemConfig{
-			{
-				Name:            "npm",
-				Score:           5.0,
-				Provenance:      5.0,
-				Activity:        5.0,
-				AllowMalicious:  false,
-				AllowDeprecated: false,
-			},
-			{
-				Name:            "pypi",
-				Score:           5.0,
-				Provenance:      5.0,
-				Activity:        5.0,
-				AllowDeprecated: false,
-			},
-			{
-				Name:            "go",
-				Score:           5.0,
-				Provenance:      5.0,
-				Activity:        5.0,
-				AllowDeprecated: false,
-			},
-		},
+func populateDefaultsIfEmpty(ruleCfg map[string]any) {
+	if ruleCfg["ecosystem_config"] == nil {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	} else if ecoCfg, ok := ruleCfg["ecosystem_config"].([]interface{}); ok && len(ecoCfg) == 0 {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	}
+	if ruleCfg["action"] == nil {
+		ruleCfg["action"] = defaultAction
 	}
 }
 
 func parseConfig(ruleCfg map[string]any) (*config, error) {
-	if len(ruleCfg) == 0 {
-		return defaultConfig(), nil
-	}
+	populateDefaultsIfEmpty(ruleCfg)
 
 	var conf config
 	validate := validator.New(validator.WithRequiredStructEnabled())
