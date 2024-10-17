@@ -119,19 +119,8 @@ type Querier interface {
 	GetInvitationsByEmail(ctx context.Context, email string) ([]GetInvitationsByEmailRow, error)
 	// GetInvitationsByEmailAndProject retrieves all invitations by email and project.
 	GetInvitationsByEmailAndProject(ctx context.Context, arg GetInvitationsByEmailAndProjectParams) ([]GetInvitationsByEmailAndProjectRow, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLatestEvalStateForRuleEntityParams) (EvaluationStatus, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
@@ -246,38 +235,16 @@ type Querier interface {
 	UpdateSelector(ctx context.Context, arg UpdateSelectorParams) (ProfileSelector, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	// Bundles --
 	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	UpsertRuleInstance(ctx context.Context, arg UpsertRuleInstanceParams) (uuid.UUID, error)
 }
 

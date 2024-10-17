@@ -1,0 +1,4 @@
+/*
+  SPDX-FileCopyrightText: Copyright YYYY The Minder Authors
+  SPDX-License-Identifier: Apache-2.0
+*/

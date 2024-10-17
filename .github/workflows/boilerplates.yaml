@@ -1,0 +1,50 @@
+# SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+name: Boilerplate
+
+on:
+  pull_request:
+    branches: [ 'main', 'release-*' ]
+
+jobs:
+
+  check:
+    name: Boilerplate Check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        extension:
+        - go
+        - sh
+        - yaml
+        - yml
+        - html
+        - css
+
+        include:
+        - extension: go
+          language: Go
+        - extension: sh
+          language: Bash
+        - extension: yaml
+          language: YAML
+        - extension: yml
+          language: YAML
+        - extension: html
+          language: HTML
+        - extension: css
+          language: CSS
+        - extension: sql
+          language: SQL
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - uses: chainguard-dev/actions/boilerplate@main
+        with:
+          extension: ${{ matrix.extension }}
+          language: ${{ matrix.language }}
+          exclude: "/mock/|internal/db/|client.gen.go|.pb(.gw)?.go|docs/docs/|internal/auth/keycloak/client/"
