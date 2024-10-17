@@ -34,6 +34,7 @@ minder profile status list [flags]
   -n, --name string              Profile name to get profile status for
   -o, --output string            Output format (one of json,yaml,table) (default "table")
   -j, --project string           ID of the project
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO
