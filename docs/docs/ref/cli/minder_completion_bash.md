@@ -55,6 +55,7 @@ minder completion bash
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO
