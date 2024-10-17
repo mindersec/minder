@@ -41,20 +41,6 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-# This section defines how to release to homebrew.
-brews:
-  - homepage: 'https://github.com/mindersec/minder'
-    description: 'minder is the client CLI for interacting with Minder by Stacklok.'
-    directory: Formula
-    commit_author:
-      name: stacklokbot
-      email: info@stacklok.com
-    repository:
-      owner: stacklok
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    test: |
-      system "#{bin}/minder --help"
 # This section defines how to release to winget.
 winget:
   - name: minder
