@@ -17,6 +17,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -58,7 +59,7 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 			return nil
 		}
 
-		if filepath.Ext(path) != ".yaml" && filepath.Ext(path) != ".yml" {
+		if !cli.IsYAMLFileAndNotATest(path) {
 			return nil
 		}
 
