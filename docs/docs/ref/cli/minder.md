@@ -20,6 +20,7 @@ https://docs.stacklok.com/minder
   -h, --help                     help for minder
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO

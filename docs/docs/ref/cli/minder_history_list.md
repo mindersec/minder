@@ -40,6 +40,7 @@ minder history list [flags]
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -o, --output string            Output format (one of json,yaml,table) (default "table")
   -j, --project string           ID of the project
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO
