@@ -62,7 +62,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 				err := rval.ValidateRuleDefAgainstSchema(ruleCall.Def.AsMap())
 				require.NoError(t, err, "failed to validate rule definition for rule type %s", path)
 
-				err = rval.ValidateParamsAgainstSchema(ruleCall.GetParams())
+				err = rval.ValidateParamsAgainstSchema(ruleCall.GetParams().AsMap())
 				require.NoError(t, err, "failed to validate rule parameters for rule type %s", path)
 			}
 

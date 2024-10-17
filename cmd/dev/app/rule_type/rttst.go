@@ -230,7 +230,7 @@ func runEvaluationForRules(
 		}
 		cmd.Printf("Profile valid according to the JSON schema!\n")
 
-		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
+		if err := val.ValidateParamsAgainstSchema(frag.GetParams().AsMap()); err != nil {
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 

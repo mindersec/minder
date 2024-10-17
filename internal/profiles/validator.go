@@ -132,7 +132,7 @@ func (_ *Validator) validateRuleParams(
 			return fmt.Errorf("error validating rule: %w", err)
 		}
 
-		if err := ruleValidator.ValidateParamsAgainstSchema(profileRule.GetParams()); err != nil {
+		if err := ruleValidator.ValidateParamsAgainstSchema(profileRule.GetParams().AsMap()); err != nil {
 			return fmt.Errorf("error validating rule params: %w", err)
 		}
 
