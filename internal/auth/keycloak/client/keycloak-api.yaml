@@ -1,6 +1,3 @@
-# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
-# SPDX-License-Identifier: Apache-2.0
-
 ---
 openapi: 3.0.3
 info:
