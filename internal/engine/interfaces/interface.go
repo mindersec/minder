@@ -9,60 +9,15 @@ import (
 	"context"
 	"encoding/json"
 
-	billy "github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-git/v5/storage"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	"github.com/mindersec/minder/internal/profiles/models"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
-
-// Ingester is the interface for a rule type ingester
-type Ingester interface {
-	// Ingest does the actual data ingestion for a rule type
-	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*Result, error)
-	// GetType returns the type of the ingester
-	GetType() string
-	// GetConfig returns the config for the ingester
-	GetConfig() protoreflect.ProtoMessage
-}
-
-// Evaluator is the interface for a rule type evaluator
-type Evaluator interface {
-	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) error
-}
-
-// Result is the result of an ingester
-type Result struct {
-	// Object is the object that was ingested. Normally comes from an external
-	// system like an HTTP server.
-	Object any
-	// Fs is the filesystem that was created as a result of the ingestion. This
-	// is normally used by the evaluator to do rule evaluation. The filesystem
-	// may be a git repo, or a memory filesystem.
-	Fs billy.Filesystem
-	// Storer is the git storer that was created as a result of the ingestion.
-	// FIXME: It might be cleaner to either wrap both Fs and Storer in a struct
-	// or pass out the git.Repository structure instead of the storer.
-	Storer storage.Storer
-
-	// Checkpoint is the checkpoint at which the ingestion was done. This is
-	// used to persist the state of the entity at ingestion time.
-	Checkpoint *checkpoints.CheckpointEnvelopeV1
-}
-
-// GetCheckpoint returns the checkpoint of the result
-func (r *Result) GetCheckpoint() *checkpoints.CheckpointEnvelopeV1 {
-	if r == nil {
-		return nil
-	}
-
-	return r.Checkpoint
-}
 
 // ActionType represents the type of action, i.e., remediate, alert, etc.
 type ActionType string
@@ -93,7 +48,7 @@ const (
 // a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
 // other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
-	Result           *Result
+	Result           *interfaces.Result
 	Profile          *models.ProfileAggregate
 	Rule             *models.RuleInstance
 	ProjectID        uuid.UUID
@@ -113,7 +68,7 @@ type EvalStatusParams struct {
 // Ensure EvalStatusParams implements the necessary interfaces
 var _ ActionsParams = (*EvalStatusParams)(nil)
 var _ EvalParamsReader = (*EvalStatusParams)(nil)
-var _ EvalParamsReadWriter = (*EvalStatusParams)(nil)
+var _ interfaces.ResultSink = (*EvalStatusParams)(nil)
 
 // GetEvalErr returns the evaluation error
 func (e *EvalStatusParams) GetEvalErr() error {
@@ -185,12 +140,12 @@ func (e *EvalStatusParams) GetProfile() *models.ProfileAggregate {
 }
 
 // SetIngestResult sets the result of the ingestion for use later on in the actions
-func (e *EvalStatusParams) SetIngestResult(res *Result) {
+func (e *EvalStatusParams) SetIngestResult(res *interfaces.Result) {
 	e.Result = res
 }
 
 // GetIngestResult returns the result of the ingestion, if any
-func (e *EvalStatusParams) GetIngestResult() *Result {
+func (e *EvalStatusParams) GetIngestResult() *interfaces.Result {
 	return e.Result
 }
 
@@ -211,18 +166,13 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 // EvalParamsReader is the interface used for a rule type evaluator
 type EvalParamsReader interface {
 	GetRule() *models.RuleInstance
-	GetIngestResult() *Result
-}
-
-// EvalParamsReadWriter is the interface used for a rule type engine, allows setting the ingestion result
-type EvalParamsReadWriter interface {
-	EvalParamsReader
-	SetIngestResult(*Result)
+	GetIngestResult() *interfaces.Result
 }
 
 // ActionsParams is the interface used for processing a rule type action
 type ActionsParams interface {
 	EvalParamsReader
+	interfaces.ResultSink
 	GetActionsOnOff() map[ActionType]models.ActionOpt
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error

@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/providers/github/properties"
@@ -25,6 +24,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -176,7 +176,7 @@ func TestRestIngest(t *testing.T) {
 		newIngArgs  newRestIngestArgs
 		ingArgs     ingestArgs
 		testHandler http.HandlerFunc
-		ingResultFn func() *engif.Result
+		ingResultFn func() *interfaces.Result
 		wantErr     bool
 	}{
 		{
@@ -205,13 +205,13 @@ func TestRestIngest(t *testing.T) {
 				assert.NoError(t, err, "unexpected error writing response")
 				writer.WriteHeader(http.StatusOK)
 			},
-			ingResultFn: func() *engif.Result {
+			ingResultFn: func() *interfaces.Result {
 				var jReply any
 				if err := json.NewDecoder(strings.NewReader(validProtectionReply)).Decode(&jReply); err != nil {
 					return nil
 				}
 
-				return &engif.Result{
+				return &interfaces.Result{
 					Object: jReply,
 				}
 			},
@@ -247,13 +247,13 @@ func TestRestIngest(t *testing.T) {
 
 				writer.WriteHeader(http.StatusNotFound)
 			},
-			ingResultFn: func() *engif.Result {
+			ingResultFn: func() *interfaces.Result {
 				var jReply any
 				if err := json.NewDecoder(strings.NewReader(notFoundReply)).Decode(&jReply); err != nil {
 					return nil
 				}
 
-				return &engif.Result{
+				return &interfaces.Result{
 					Object: jReply,
 				}
 			},

@@ -8,7 +8,7 @@ package options
 import (
 	"github.com/open-feature/go-sdk/openfeature"
 
-	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // SupportsFlags interface advertises the fact that the implementer

@@ -15,13 +15,13 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -84,7 +84,7 @@ func (i *Ingest) Ingest(
 	ctx context.Context,
 	ent proto.Message,
 	params map[string]any,
-) (*engif.Result, error) {
+) (*interfaces.Result, error) {
 	cfg, err := configFromParams(params)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (i *Ingest) Ingest(
 		return nil, err
 	}
 
-	return &engif.Result{
+	return &interfaces.Result{
 		Object: applicable,
 		// We would ideally return an artifact's digest here, but
 		// the current state of the artifact ingester is actually evaluating

@@ -15,16 +15,17 @@ import (
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/ruletypes"
+	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
 	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
-	GetRuleEngine(context.Context, uuid.UUID) (*RuleTypeEngine, error)
+	GetRuleEngine(context.Context, uuid.UUID) (*rtengine2.RuleTypeEngine, error)
 }
 
-type cacheType = map[uuid.UUID]*RuleTypeEngine
+type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
 
 type ruleEngineCache struct {
 	store       db.Store
@@ -75,7 +76,7 @@ func NewRuleEngineCache(
 	return &ruleEngineCache{engines: engines, opts: opts}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
@@ -113,7 +114,7 @@ func cacheRuleEngine(
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
 	opts ...eoptions.Option,
-) (*RuleTypeEngine, error) {
+) (*rtengine2.RuleTypeEngine, error) {
 	// Parse the rule type
 	pbRuleType, err := ruletypes.RuleTypePBFromDB(ruleType)
 	if err != nil {
@@ -121,7 +122,7 @@ func cacheRuleEngine(
 	}
 
 	// Create the rule type engine
-	ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
+	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

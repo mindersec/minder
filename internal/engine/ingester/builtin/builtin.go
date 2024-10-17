@@ -16,10 +16,10 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	"github.com/mindersec/minder/pkg/rule_methods"
 )
 
@@ -61,7 +61,7 @@ func (idi *BuiltinRuleDataIngest) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest calls the builtin method and populates the data to be returned
-func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
+func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
 	method, err := idi.ruleMethods.GetMethod(idi.method)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get method: %w", err)
@@ -98,7 +98,7 @@ func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.P
 		return nil, fmt.Errorf("cannot unmarshal json: %w", err)
 	}
 
-	return &engif.Result{
+	return &interfaces.Result{
 		Object:     resultObj,
 		Checkpoint: checkpoints.NewCheckpointV1Now(),
 	}, nil

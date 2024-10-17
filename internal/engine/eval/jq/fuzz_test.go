@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/mindersec/minder/internal/engine/eval/jq"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func FuzzJqEval(f *testing.F) {
@@ -38,6 +38,6 @@ func FuzzJqEval(f *testing.F) {
 		}
 
 		//nolint:gosec // Do not validate the return values so ignore them
-		jqe.Eval(context.Background(), pol, nil, &engif.Result{Object: obj})
+		jqe.Eval(context.Background(), pol, nil, &interfaces.Result{Object: obj})
 	})
 }

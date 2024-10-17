@@ -13,9 +13,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -58,7 +58,7 @@ func (gi *Git) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo
-func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*engif.Result, error) {
+func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
@@ -102,7 +102,7 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 		WithBranch(branch).
 		WithCommitHash(hsh.String())
 
-	return &engif.Result{
+	return &interfaces.Result{
 		Object:     nil,
 		Fs:         wt.Filesystem,
 		Storer:     r.Storer,

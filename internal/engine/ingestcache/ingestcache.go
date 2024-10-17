@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // ErrBuildingCacheKey is the error returned when building a cache key fails
@@ -22,22 +22,22 @@ var ErrBuildingCacheKey = errors.New("error building cache key")
 
 type cache struct {
 	// cache is the actual cache
-	cache *xsync.MapOf[string, *engif.Result]
+	cache *xsync.MapOf[string, *interfaces.Result]
 }
 
 // NewCache returns a new cache
 func NewCache() Cache {
 	return &cache{
-		cache: xsync.NewMapOf[string, *engif.Result](),
+		cache: xsync.NewMapOf[string, *interfaces.Result](),
 	}
 }
 
 // Get attempts to get a result from the cache
 func (c *cache) Get(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-) (*engif.Result, bool) {
+) (*interfaces.Result, bool) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
 		// TODO we might want to log this
@@ -50,10 +50,10 @@ func (c *cache) Get(
 
 // Set sets a result in the cache
 func (c *cache) Set(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-	result *engif.Result,
+	result *interfaces.Result,
 ) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *cache) Set(
 }
 
 func buildCacheKey(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	ruleparams map[string]any,
 ) (string, error) {

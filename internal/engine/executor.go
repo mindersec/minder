@@ -186,7 +186,13 @@ func (e *executor) evaluateRule(
 	if profileEvalStatus != nil {
 		evalErr = profileEvalStatus
 	} else {
-		evalErr = ruleEngine.Eval(ctx, inf, evalParams)
+		// enrich the logger with the entity type and execution ID
+		ctx := zerolog.Ctx(ctx).With().
+			Str("entity_type", inf.Type.ToString()).
+			Str("execution_id", inf.ExecutionID.String()).
+			Logger().WithContext(ctx)
+		evalErr = ruleEngine.Eval(ctx, inf.Entity, evalParams.GetRule().Def, evalParams.GetRule().Params, evalParams)
+
 	}
 	evalParams.SetEvalErr(evalErr)
 

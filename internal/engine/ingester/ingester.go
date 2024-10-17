@@ -14,20 +14,20 @@ import (
 	"github.com/mindersec/minder/internal/engine/ingester/diff"
 	"github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/engine/ingester/rest"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // test that the ingester implementations implements the interface
 // this would be probably nicer in the implementation file, but that would cause an import loop
-var _ engif.Ingester = (*artifact.Ingest)(nil)
-var _ engif.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
-var _ engif.Ingester = (*rest.Ingestor)(nil)
+var _ interfaces.Ingester = (*artifact.Ingest)(nil)
+var _ interfaces.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
+var _ interfaces.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (engif.Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces.Ingester, error) {
 	ing := rt.Def.GetIngest()
 
 	switch ing.GetType() {
