@@ -54,7 +54,7 @@ Choose your preferred method to install `minder`:
 Make sure you have [Homebrew](https://brew.sh/) installed.
 
 ```bash
-brew install stacklok/tap/minder
+brew install minder
 ```
 
 ### Windows (Winget)

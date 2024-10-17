@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package artifact provides the artifact ingestion engine
 package artifact
@@ -27,13 +15,13 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -96,7 +84,7 @@ func (i *Ingest) Ingest(
 	ctx context.Context,
 	ent proto.Message,
 	params map[string]any,
-) (*engif.Result, error) {
+) (*interfaces.Result, error) {
 	cfg, err := configFromParams(params)
 	if err != nil {
 		return nil, err
@@ -114,7 +102,7 @@ func (i *Ingest) Ingest(
 		return nil, err
 	}
 
-	return &engif.Result{
+	return &interfaces.Result{
 		Object: applicable,
 		// We would ideally return an artifact's digest here, but
 		// the current state of the artifact ingester is actually evaluating

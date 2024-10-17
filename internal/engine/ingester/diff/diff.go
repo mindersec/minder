@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package diff provides the diff rule data ingest engine
 package diff
@@ -38,10 +27,10 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/entities/checkpoints"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -94,7 +83,7 @@ func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	_ map[string]any,
-) (*engif.Result, error) {
+) (*interfaces.Result, error) {
 	pr, ok := ent.(*pb.PullRequest)
 	if !ok {
 		return nil, fmt.Errorf("entity is not a pull request")
@@ -122,7 +111,7 @@ func (di *Diff) Ingest(
 	}
 }
 
-func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*engif.Result, error) {
+func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*interfaces.Result, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 	page := 0
 
@@ -147,10 +136,10 @@ func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullReq
 		page = resp.NextPage
 	}
 
-	return &engif.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
-func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*engif.Result, error) {
+func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*interfaces.Result, error) {
 	diff := &pbinternal.PrContents{Pr: pr}
 	page := 0
 
@@ -175,7 +164,7 @@ func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRe
 		page = resp.NextPage
 	}
 
-	return &engif.Result{Object: diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Result{Object: diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func (di *Diff) ingestFileForDepDiff(
@@ -207,7 +196,7 @@ func (di *Diff) ingestFileForDepDiff(
 	return batchCtxDeps, nil
 }
 
-func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullRequest) (*engif.Result, error) {
+func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullRequest) (*interfaces.Result, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 
 	// TODO: we should be able to just fetch the additional commits between base and target.
@@ -241,7 +230,7 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullReques
 		}
 	}
 
-	return &engif.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {
