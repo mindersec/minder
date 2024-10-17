@@ -92,6 +92,10 @@ func shouldSkipFile(f string) bool {
 	ext := filepath.Ext(f)
 	switch ext {
 	case ".yaml", ".yml", ".json":
+		if cli.IsTestFile(f) {
+			// Skip test files.
+			return true
+		}
 		return false
 	default:
 		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
