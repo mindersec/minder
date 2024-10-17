@@ -29,7 +29,7 @@ import (
 	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	engifv1 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -75,7 +75,7 @@ type Remediator struct {
 }
 
 type paramsPR struct {
-	ingested   *interfaces2.Result
+	ingested   *engifv1.Result
 	repo       *pb.Repository
 	title      string
 	modifier   fsModifier
