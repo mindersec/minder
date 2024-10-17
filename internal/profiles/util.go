@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package profiles
 
@@ -471,4 +460,27 @@ func selectorsToProfile(
 			Description: s.Comment,
 		})
 	}
+}
+
+// GetRulesFromProfileOfType returns the rules from the profile of the given type
+func GetRulesFromProfileOfType(p *pb.Profile, rt *pb.RuleType) ([]*pb.Profile_Rule, error) {
+	contextualRules, err := GetRulesForEntity(p, pb.EntityFromString(rt.Def.InEntity))
+	if err != nil {
+		return nil, fmt.Errorf("error getting rules for entity: %w", err)
+	}
+
+	rules := []*pb.Profile_Rule{}
+	err = TraverseRules(contextualRules, func(r *pb.Profile_Rule) error {
+		if r.Type == rt.Name {
+			rules = append(rules, r)
+		}
+		return nil
+	})
+
+	// This shouldn't happen
+	if err != nil {
+		return nil, fmt.Errorf("error traversing rules: %w", err)
+	}
+
+	return rules, nil
 }

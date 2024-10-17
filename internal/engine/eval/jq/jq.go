@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package jq provides the jq profile evaluator
 package jq
@@ -27,10 +15,10 @@ import (
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules
@@ -82,7 +70,7 @@ func NewJQEvaluator(
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *engif.Result) error {
+func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *interfaces.Result) error {
 	if res.Object == nil {
 		return fmt.Errorf("missing object")
 	}

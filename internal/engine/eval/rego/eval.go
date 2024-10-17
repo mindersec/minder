@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package rego provides the rego rule evaluator
 package rego
@@ -25,9 +13,9 @@ import (
 	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 const (
@@ -117,7 +105,9 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 }
 
 // Eval implements the Evaluator interface.
-func (e *Evaluator) Eval(ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *engif.Result) error {
+func (e *Evaluator) Eval(
+	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Result,
+) error {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check
 	// this explicitly.

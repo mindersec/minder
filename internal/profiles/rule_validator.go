@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package profiles
 
@@ -20,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/xeipuuv/gojsonschema"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -76,19 +63,12 @@ func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualProfile map[strin
 
 // ValidateParamsAgainstSchema validates the given parameters against the
 // schema for this rule type
-func (r *RuleValidator) ValidateParamsAgainstSchema(params *structpb.Struct) error {
+func (r *RuleValidator) ValidateParamsAgainstSchema(params map[string]any) error {
 	if r.paramSchema == nil {
 		return nil
 	}
 
-	if params == nil {
-		return &RuleValidationError{
-			RuleType: r.ruleTypeName,
-			Err:      "params cannot be nil",
-		}
-	}
-
-	if err := validateAgainstSchema(r.paramSchema, params.AsMap()); err != nil {
+	if err := validateAgainstSchema(r.paramSchema, params); err != nil {
 		return &RuleValidationError{
 			RuleType: r.ruleTypeName,
 			Err:      err.Error(),

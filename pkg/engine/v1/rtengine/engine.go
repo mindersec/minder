@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package rtengine contains the rule type engine
 package rtengine
@@ -22,16 +11,16 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/engine/entities"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/engine/ingester"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/profiles"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -61,10 +50,10 @@ type RuleTypeEngine struct {
 	Meta RuleMeta
 
 	// ingester is the rule data ingest engine
-	ingester engif.Ingester
+	ingester interfaces.Ingester
 
 	// ruleEvaluator is the rule evaluator
-	ruleEvaluator engif.Evaluator
+	ruleEvaluator interfaces.Evaluator
 
 	ruleValidator *profiles.RuleValidator
 
@@ -142,35 +131,34 @@ func (r *RuleTypeEngine) GetRuleType() *minderv1.RuleType {
 // Eval runs the rule type engine against the given entity
 func (r *RuleTypeEngine) Eval(
 	ctx context.Context,
-	inf *entities.EntityInfoWrapper,
-	params engif.EvalParamsReadWriter,
+	entity protoreflect.ProtoMessage,
+	ruleDef map[string]any,
+	ruleParams map[string]any,
+	params interfaces.ResultSink,
 ) (finalErr error) {
+	logger := zerolog.Ctx(ctx)
 	defer func() {
 		if r := recover(); r != nil {
-			zerolog.Ctx(ctx).Error().Interface("recovered", r).
+			logger.Error().Interface("recovered", r).
 				Bytes("stack", debug.Stack()).
 				Msg("panic in rule type engine")
 			finalErr = enginerr.ErrInternal
 		}
 	}()
 
-	logger := zerolog.Ctx(ctx).With().
-		Str("entity_type", inf.Type.ToString()).
-		Str("execution_id", inf.ExecutionID.String()).Logger()
-
 	logger.Info().Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
-	result, ok := r.ingestCache.Get(r.ingester, inf.Entity, params.GetRule().Params)
+	result, ok := r.ingestCache.Get(r.ingester, entity, ruleParams)
 	if !ok {
 		var err error
 		// Ingest the data needed for the rule evaluation
-		result, err = r.ingester.Ingest(ctx, inf.Entity, params.GetRule().Params)
+		result, err = r.ingester.Ingest(ctx, entity, ruleParams)
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
 			return fmt.Errorf("error ingesting data: %w", err)
 		}
-		r.ingestCache.Set(r.ingester, inf.Entity, params.GetRule().Params, result)
+		r.ingestCache.Set(r.ingester, entity, ruleParams, result)
 	} else {
 		logger.Info().Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
 	}
@@ -179,30 +167,14 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.ruleEvaluator.Eval(ctx, params.GetRule().Def, inf.Entity, result)
+	err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return err
 }
 
-// GetRulesFromProfileOfType returns the rules from the profile of the given type
-func GetRulesFromProfileOfType(p *minderv1.Profile, rt *minderv1.RuleType) ([]*minderv1.Profile_Rule, error) {
-	contextualRules, err := profiles.GetRulesForEntity(p, minderv1.EntityFromString(rt.Def.InEntity))
-	if err != nil {
-		return nil, fmt.Errorf("error getting rules for entity: %w", err)
-	}
-
-	rules := []*minderv1.Profile_Rule{}
-	err = profiles.TraverseRules(contextualRules, func(r *minderv1.Profile_Rule) error {
-		if r.Type == rt.Name {
-			rules = append(rules, r)
-		}
-		return nil
-	})
-
-	// This shouldn't happen
-	if err != nil {
-		return nil, fmt.Errorf("error traversing rules: %w", err)
-	}
-
-	return rules, nil
+// WithCustomIngester sets a custom ingester for the rule type engine. This is handy for testing
+// but should not be used in production.
+func (r *RuleTypeEngine) WithCustomIngester(ing interfaces.Ingester) *RuleTypeEngine {
+	r.ingester = ing
+	return r
 }
