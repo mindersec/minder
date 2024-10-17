@@ -16,7 +16,7 @@ You can install `minder` using one of the following methods:
 The easiest way to install `minder` for macOS systems is through [Homebrew](https://brew.sh/):
 
 ```bash
-brew install stacklok/tap/minder
+brew install minder
 ```
 
 Alternatively, you can [download a `.tar.gz` release](https://github.com/mindersec/minder/releases) and unpack it with the following:
