@@ -27,6 +27,7 @@ import (
 type MockProviderManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderManagerMockRecorder is the mock recorder for MockProviderManager.
@@ -167,6 +168,7 @@ func (mr *MockProviderManagerMockRecorder) PatchProviderConfig(ctx, providerName
 type MockProviderClassManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderClassManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderClassManagerMockRecorder is the mock recorder for MockProviderClassManager.

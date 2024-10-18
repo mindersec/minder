@@ -22,6 +22,7 @@ import (
 type MockGitHubClientFactory struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubClientFactoryMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubClientFactoryMockRecorder is the mock recorder for MockGitHubClientFactory.
