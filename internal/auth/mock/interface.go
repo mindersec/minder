@@ -23,6 +23,7 @@ import (
 type MockResolver struct {
 	ctrl     *gomock.Controller
 	recorder *MockResolverMockRecorder
+	isgomock struct{}
 }
 
 // MockResolverMockRecorder is the mock recorder for MockResolver.
@@ -76,6 +77,7 @@ func (mr *MockResolverMockRecorder) Validate(ctx, token any) *gomock.Call {
 type MockIdentityProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockIdentityProviderMockRecorder
+	isgomock struct{}
 }
 
 // MockIdentityProviderMockRecorder is the mock recorder for MockIdentityProvider.

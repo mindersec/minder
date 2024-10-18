@@ -22,6 +22,7 @@ import (
 type MockRegistrar struct {
 	ctrl     *gomock.Controller
 	recorder *MockRegistrarMockRecorder
+	isgomock struct{}
 }
 
 // MockRegistrarMockRecorder is the mock recorder for MockRegistrar.
@@ -62,6 +63,7 @@ func (mr *MockRegistrarMockRecorder) Register(topic, handler any, mdw ...any) *g
 type MockConsumer struct {
 	ctrl     *gomock.Controller
 	recorder *MockConsumerMockRecorder
+	isgomock struct{}
 }
 
 // MockConsumerMockRecorder is the mock recorder for MockConsumer.
@@ -97,6 +99,7 @@ func (mr *MockConsumerMockRecorder) Register(arg0 any) *gomock.Call {
 type MockAggregatorMiddleware struct {
 	ctrl     *gomock.Controller
 	recorder *MockAggregatorMiddlewareMockRecorder
+	isgomock struct{}
 }
 
 // MockAggregatorMiddlewareMockRecorder is the mock recorder for MockAggregatorMiddleware.
@@ -134,6 +137,7 @@ func (mr *MockAggregatorMiddlewareMockRecorder) AggregateMiddleware(h any) *gomo
 type MockPublisher struct {
 	ctrl     *gomock.Controller
 	recorder *MockPublisherMockRecorder
+	isgomock struct{}
 }
 
 // MockPublisherMockRecorder is the mock recorder for MockPublisher.
@@ -176,6 +180,7 @@ func (mr *MockPublisherMockRecorder) Publish(topic any, messages ...any) *gomock
 type MockService struct {
 	ctrl     *gomock.Controller
 	recorder *MockServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockServiceMockRecorder is the mock recorder for MockService.
@@ -257,6 +262,7 @@ func (mr *MockServiceMockRecorder) Running() *gomock.Call {
 type MockInterface struct {
 	ctrl     *gomock.Controller
 	recorder *MockInterfaceMockRecorder
+	isgomock struct{}
 }
 
 // MockInterfaceMockRecorder is the mock recorder for MockInterface.

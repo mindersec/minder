@@ -23,6 +23,7 @@ import (
 type MockProviderSessionService struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderSessionServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderSessionServiceMockRecorder is the mock recorder for MockProviderSessionService.
@@ -61,6 +62,7 @@ func (mr *MockProviderSessionServiceMockRecorder) CreateProviderFromSessionState
 type MockproviderByNameGetter struct {
 	ctrl     *gomock.Controller
 	recorder *MockproviderByNameGetterMockRecorder
+	isgomock struct{}
 }
 
 // MockproviderByNameGetterMockRecorder is the mock recorder for MockproviderByNameGetter.
@@ -99,6 +101,7 @@ func (mr *MockproviderByNameGetterMockRecorder) GetByName(ctx, projectID, name a
 type MockdbSessionStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockdbSessionStoreMockRecorder
+	isgomock struct{}
 }
 
 // MockdbSessionStoreMockRecorder is the mock recorder for MockdbSessionStore.

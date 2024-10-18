@@ -26,6 +26,7 @@ import (
 type MockAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockAuthManagerMockRecorder is the mock recorder for MockAuthManager.
@@ -83,6 +84,7 @@ func (mr *MockAuthManagerMockRecorder) ValidateCredentials(ctx, providerClass, c
 type MockproviderClassAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockproviderClassAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockproviderClassAuthManagerMockRecorder is the mock recorder for MockproviderClassAuthManager.
@@ -106,6 +108,7 @@ func (m *MockproviderClassAuthManager) EXPECT() *MockproviderClassAuthManagerMoc
 type MockproviderClassOAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockproviderClassOAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockproviderClassOAuthManagerMockRecorder is the mock recorder for MockproviderClassOAuthManager.

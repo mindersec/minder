@@ -23,6 +23,7 @@ import (
 type MockSelectionBuilder struct {
 	ctrl     *gomock.Controller
 	recorder *MockSelectionBuilderMockRecorder
+	isgomock struct{}
 }
 
 // MockSelectionBuilderMockRecorder is the mock recorder for MockSelectionBuilder.
@@ -61,6 +62,7 @@ func (mr *MockSelectionBuilderMockRecorder) NewSelectionFromProfile(arg0, arg1 a
 type MockSelectionChecker struct {
 	ctrl     *gomock.Controller
 	recorder *MockSelectionCheckerMockRecorder
+	isgomock struct{}
 }
 
 // MockSelectionCheckerMockRecorder is the mock recorder for MockSelectionChecker.
@@ -98,6 +100,7 @@ func (mr *MockSelectionCheckerMockRecorder) CheckSelector(arg0 any) *gomock.Call
 type MockSelection struct {
 	ctrl     *gomock.Controller
 	recorder *MockSelectionMockRecorder
+	isgomock struct{}
 }
 
 // MockSelectionMockRecorder is the mock recorder for MockSelection.
