@@ -21,6 +21,7 @@ import (
 type MockBundleReader struct {
 	ctrl     *gomock.Controller
 	recorder *MockBundleReaderMockRecorder
+	isgomock struct{}
 }
 
 // MockBundleReaderMockRecorder is the mock recorder for MockBundleReader.
