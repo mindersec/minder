@@ -64,7 +64,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
-	github.com/stacklok/frizbee v0.1.3
+	github.com/stacklok/frizbee v0.1.4
 	github.com/stacklok/trusty-sdk-go v0.2.1
 	github.com/stretchr/testify v1.9.0
 	github.com/styrainc/regal v0.27.0
