@@ -67,7 +67,7 @@ func TestAggregator(t *testing.T) {
 
 	projectID, repoID := createNeededEntities(ctx, t, testQueries)
 
-	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+	evt, err := events.Setup(ctx, nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BufferSize:                     concurrentEvents,
@@ -357,7 +357,7 @@ func TestFlushAll(t *testing.T) {
 			propsvc := propsvcmock.NewMockPropertiesService(ctrl)
 			provman := mockmanager.NewMockProviderManager(ctrl)
 
-			evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+			evt, err := events.Setup(ctx, nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -406,7 +406,7 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 	require.NoError(t, err, "expected no error when creating embedded store")
 	t.Cleanup(td)
 
-	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+	evt, err := events.Setup(ctx, nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -445,7 +445,7 @@ func TestFlushAllListFlushFails(t *testing.T) {
 
 	flushedMessages := newTestPubSub()
 
-	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+	evt, err := events.Setup(ctx, nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -495,7 +495,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 
 	flushedMessages := newTestPubSub()
 
-	evt, err := events.Setup(ctx, &serverconfig.EventConfig{
+	evt, err := events.Setup(ctx, nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})

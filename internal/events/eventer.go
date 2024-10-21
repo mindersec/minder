@@ -30,6 +30,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/alexdrl/zerowater"
+	"github.com/open-feature/go-sdk/openfeature"
 	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
@@ -56,6 +57,8 @@ type eventer struct {
 	closer common.DriverCloser
 }
 
+const metricComponent = "eventer"
+
 var _ Publisher = (*eventer)(nil)
 var _ Service = (*eventer)(nil)
 
@@ -68,7 +71,7 @@ var _ Registrar = (*eventer)(nil)
 var _ message.Publisher = (*eventer)(nil)
 
 // Setup creates an eventer object which isolates the watermill setup code
-func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (Interface, error) {
+func Setup(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfig.EventConfig) (Interface, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
@@ -90,14 +93,14 @@ func Setup(ctx context.Context, cfg *serverconfig.EventConfig) (Interface, error
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 	zerolog.Ctx(ctx).Info().Msg("Router Metrics registered")
 
-	meter := otel.Meter("eventer")
+	meter := otel.Meter(metricComponent)
 	metricInstruments, err := initMetricsInstruments(meter)
 	if err != nil {
 		return nil, err
 	}
 	zerolog.Ctx(ctx).Info().Msg("Metrics Instruments registered")
 
-	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg)
+	pub, sub, cl, err := instantiateDriver(ctx, cfg.Driver, cfg, flagClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
@@ -149,6 +152,7 @@ func instantiateDriver(
 	ctx context.Context,
 	driver string,
 	cfg *serverconfig.EventConfig,
+	flagClient openfeature.IClient,
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
 	switch driver {
 	case GoChannelDriver:
@@ -160,6 +164,9 @@ func instantiateDriver(
 	case NATSDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
 		return nats.BuildNatsChannelDriver(cfg)
+	case FlaggedDriver:
+		zerolog.Ctx(ctx).Info().Msg("Using Flagged driver")
+		return makeFlaggedDriver(ctx, cfg, flagClient)
 	default:
 		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)

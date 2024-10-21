@@ -90,7 +90,7 @@ func newDefaultServer(
 ) *Server {
 	t.Helper()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := events.Setup(context.Background(), nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})

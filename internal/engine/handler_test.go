@@ -49,7 +49,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	// -- end expectations
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := events.Setup(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,

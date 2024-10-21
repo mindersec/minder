@@ -25,6 +25,9 @@ import (
 type EventConfig struct {
 	// Driver is the driver used to store events
 	Driver string `mapstructure:"driver" default:"go-channel"`
+	// Flags is the configuration for selecting multiple publishing drivers
+	// via the "alternate_message_driver" feature flag.
+	Flags FlagDriverConfig `mapstructure:"flags"`
 	// RouterCloseTimeout is the timeout for closing the router in seconds
 	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
 	// GoChannel is the configuration for the go channel event driver
@@ -76,4 +79,17 @@ type NatsConfig struct {
 	// Queue is the name of the queue group to join when consuming messages
 	// queue groups allow multiple process to round-robin process messages.
 	Queue string `mapstructure:"queue" default:"minder"`
+}
+
+// FlagDriverConfig holds the configuration for selecting multiple publishing drivers
+// when using feature flags to migrate from one publishing mechanism to another.
+// When using the "flagged" driver, events will be read from _both_ drivers, but
+// published to the driver selected by the flag configuration.
+type FlagDriverConfig struct {
+	// MainDriver is the default driver used to publish events if not selected
+	// by the feature flag.
+	MainDriver string `mapstructure:"main_driver" default:""`
+	// AlternateDriver is a driver used to publish events selected by the
+	// feature flag.
+	AlternateDriver string `mapstructure:"alternate_driver" default:""`
 }

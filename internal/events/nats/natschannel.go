@@ -24,8 +24,10 @@ import (
 	"sync"
 
 	"github.com/ThreeDotsLabs/watermill/message"
+	ce_observability "github.com/cloudevents/sdk-go/observability/opentelemetry/v2/client"
 	cejsm "github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2"
 	cloudevents "github.com/cloudevents/sdk-go/v2"
+	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
 
@@ -110,7 +112,8 @@ func (c *cloudEventsNatsAdapter) ensureTopic(ctx context.Context, topic string, 
 		return nil, err
 	}
 
-	ceSub, err := cloudevents.NewClient(consumer)
+	ceSub, err := cloudevents.NewClient(consumer,
+		client.WithObservabilityService(ce_observability.NewOTelObservabilityService()))
 	if err != nil {
 		_ = consumer.Close(ctx)
 		return nil, err
@@ -198,7 +201,7 @@ func (c *cloudEventsNatsAdapter) Publish(topic string, messages ...*message.Mess
 	ctx := context.Background()
 	subject := fmt.Sprintf("%s.%s", c.cfg.Prefix, topic)
 
-	state, err := c.ensureTopic(ctx, subject, "sender") // subject)
+	state, err := c.ensureTopic(ctx, subject, "sender")
 	if err != nil {
 		return fmt.Errorf("Error creating topic %q: %w", subject, err)
 	}

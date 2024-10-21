@@ -25,4 +25,6 @@ const (
 	// VulnCheckErrorTemplate enables improved evaluation details
 	// messages in the vulncheck rule.
 	VulnCheckErrorTemplate Experiment = "vulncheck_error_template"
+	// AlternateMessageDriver enables an an alternate message driver.
+	AlternateMessageDriver Experiment = "alternate_message_driver"
 )

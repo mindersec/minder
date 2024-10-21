@@ -84,13 +84,14 @@ func AllInOneServerService(
 	meterFactory meters.MeterFactory,
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
+	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
+	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
-	evt, err := events.Setup(ctx, &cfg.Events)
+	evt, err := events.Setup(ctx, featureFlagClient, &cfg.Events)
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
 
-	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
 	cryptoEngine, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create crypto engine: %w", err)
@@ -114,7 +115,6 @@ func AllInOneServerService(
 	providerStore := providers.NewProviderStore(store)
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
 	propSvc := propService.NewPropertiesService(store)
-	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
 	// webhook handling to make this viable.
