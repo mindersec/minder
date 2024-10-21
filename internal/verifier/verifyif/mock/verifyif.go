@@ -21,6 +21,7 @@ import (
 type MockArtifactVerifier struct {
 	ctrl     *gomock.Controller
 	recorder *MockArtifactVerifierMockRecorder
+	isgomock struct{}
 }
 
 // MockArtifactVerifierMockRecorder is the mock recorder for MockArtifactVerifier.

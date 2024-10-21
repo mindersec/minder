@@ -38,9 +38,12 @@ import (
 	"github.com/mindersec/minder/internal/flags"
 )
 
+// Test_flaggedDriver_Publish tests both publish and consume of messages
+// through the flaggedDriver.  It uses the exported OpenTelemetry metrics
+// to verify where messages were published and received; this ends up
+// touching global state, so it is not parallel.
+// nolint: paralleltest,tparallel
 func Test_flaggedDriver_Publish(t *testing.T) {
-	// t.Parallel()
-
 	experimentProject := uuid.New()
 
 	flagFile := filepath.Clean(filepath.Join(t.TempDir(), "testflags.yaml"))

@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rule_type
 
@@ -35,7 +24,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/engine/rtengine"
 	"github.com/mindersec/minder/internal/engine/selectors"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
@@ -52,6 +40,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -160,7 +149,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	off := "off"
 	profile.Alert = &off
 
-	rules, err := rtengine.GetRulesFromProfileOfType(profile, ruletype)
+	rules, err := profiles.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -241,7 +230,7 @@ func runEvaluationForRules(
 		}
 		cmd.Printf("Profile valid according to the JSON schema!\n")
 
-		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
+		if err := val.ValidateParamsAgainstSchema(frag.GetParams().AsMap()); err != nil {
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 
@@ -311,7 +300,7 @@ func selectAndEval(
 
 	var evalErr error
 	if selected {
-		evalErr = eng.Eval(ctx, inf, evalStatus)
+		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {
 		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}

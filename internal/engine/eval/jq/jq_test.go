@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package jq_test
 
@@ -26,8 +14,8 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func TestNewJQEvaluatorValid(t *testing.T) {
@@ -378,7 +366,7 @@ func TestValidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
+			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
 			assert.NoError(t, err, "Got unexpected error")
 		})
 	}
@@ -588,7 +576,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
+			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
 			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
@@ -660,7 +648,7 @@ func TestInvalidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
+			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
 			assert.Error(t, err, "Got unexpected error")
 			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})

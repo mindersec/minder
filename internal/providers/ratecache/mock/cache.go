@@ -21,6 +21,7 @@ import (
 type MockRestClientCache struct {
 	ctrl     *gomock.Controller
 	recorder *MockRestClientCacheMockRecorder
+	isgomock struct{}
 }
 
 // MockRestClientCacheMockRecorder is the mock recorder for MockRestClientCache.

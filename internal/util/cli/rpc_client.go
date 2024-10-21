@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package cli contains utility for the cli
 package cli
@@ -34,6 +22,7 @@ import (
 	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/mindersec/minder/internal/config"
 	clientconfig "github.com/mindersec/minder/internal/config/client"
@@ -52,8 +41,28 @@ var accessDeniedHtml []byte
 //go:embed html/generic_failure.html
 var genericAuthFailure []byte
 
+func requestIDInterceptor(printer func(string, ...interface{})) grpc.UnaryClientInterceptor {
+	return func(
+		ctx context.Context,
+		method string,
+		req any,
+		reply any,
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		var header metadata.MD
+		opts = append(opts, grpc.Header(&header))
+		err := invoker(ctx, method, req, reply, cc, opts...)
+		if len(header.Get("request-id")) != 0 {
+			printer("Request ID: %s\n", header.Get("request-id")[0])
+		}
+		return err
+	}
+}
+
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
-func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
+func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)
@@ -67,8 +76,21 @@ func GrpcForCommand(v *viper.Viper) (*grpc.ClientConn, error) {
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
 
+	opts := []grpc.DialOption{}
+	opts = append(opts, grpc.WithUserAgent(useragent.GetUserAgent()))
+
+	if viper.GetBool("verbose") {
+		opts = append(opts, grpc.WithUnaryInterceptor(requestIDInterceptor(cmd.PrintErrf)))
+	}
+
 	return util.GetGrpcConnection(
-		grpcHost, grpcPort, allowInsecure, issuerUrl, clientId, grpc.WithUserAgent(useragent.GetUserAgent()))
+		grpcHost,
+		grpcPort,
+		allowInsecure,
+		issuerUrl,
+		clientId,
+		opts...,
+	)
 }
 
 // EnsureCredentials is a PreRunE function to ensure that the user

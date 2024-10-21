@@ -1,17 +1,5 @@
-#
-# Copyright 2023 Stacklok, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
 
 # exclude auto-generated DB code as well as mocks
 # in future, we may want to parse these from a file instead of hardcoding them
@@ -34,6 +22,13 @@ test-silent: clean init-examples ## run tests in a silent mode (errors only outp
 .PHONY: cover
 cover: init-examples ## display test coverage
 	go test -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp -race ./...
+	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
+	rm coverage.out.tmp
+	go tool cover -func=coverage.out
+
+.PHONY: test-cover-silent
+test-cover-silent: clean init-examples  ## Run test coverage in a silent mode (errors only output)
+	go test -json -race -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp ./... | gotestfmt -hide "all"
 	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
 	rm coverage.out.tmp
 	go tool cover -func=coverage.out

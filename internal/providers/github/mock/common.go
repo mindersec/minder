@@ -24,6 +24,7 @@ import (
 type MockClientService struct {
 	ctrl     *gomock.Controller
 	recorder *MockClientServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockClientServiceMockRecorder is the mock recorder for MockClientService.
@@ -124,6 +125,7 @@ func (mr *MockClientServiceMockRecorder) ListUserInstallations(ctx, token any) *
 type MockDelegate struct {
 	ctrl     *gomock.Controller
 	recorder *MockDelegateMockRecorder
+	isgomock struct{}
 }
 
 // MockDelegateMockRecorder is the mock recorder for MockDelegate.
