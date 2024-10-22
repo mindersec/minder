@@ -4,6 +4,7 @@
 package rego
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -19,7 +20,9 @@ import (
 	"github.com/open-policy-agent/opa/types"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
+	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -32,6 +35,7 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileRead,
 	FileWalk,
 	ListGithubActions,
+	JQEvalBoolExpression,
 }
 
 func instantiateRegoLib(res *interfaces.Result) []func(*rego.Rego) {
@@ -403,6 +407,49 @@ func FileHTTPType(res *interfaces.Result) func(*rego.Rego) {
 			httpTyp := http.DetectContentType(buffer[:n])
 			astHTTPTyp := ast.String(httpTyp)
 			return ast.NewTerm(astHTTPTyp), nil
+		},
+	)
+}
+
+// JQEvalBoolExpression is a rego function that converts YAML to JSON and runs a jq query on it.
+// The query is a string in jq format that returns a boolean.
+// It returns a boolean indicating whether the jq query matches the JSON.
+// It takes two arguments: the YAML content as a string, and the jq query as a string.
+// It's exposed as `jq.exists`.
+func JQEvalBoolExpression(_ *interfaces.Result) func(*rego.Rego) {
+	return rego.Function2(
+		&rego.Function{
+			Name: "jq.eval.bool.in.yaml",
+			// The function takes two arguments: the YAML content as a string, and the jq query as a string (types.S)
+			// It returns a boolean (types.B)
+			Decl: types.NewFunction(types.Args(types.S, types.S), types.B),
+		},
+		func(_ rego.BuiltinContext, yamlContent *ast.Term, query *ast.Term) (*ast.Term, error) {
+			var yamlStr, jqQuery string
+
+			// Convert the YAML input from the term into a string
+			if err := ast.As(yamlContent.Value, &yamlStr); err != nil {
+				return nil, err
+			}
+
+			// Convert the jq query input from the term into a string
+			if err := ast.As(query.Value, &jqQuery); err != nil {
+				return nil, err
+			}
+
+			// Convert the YAML string into a Go map
+			var jsonObj any
+			err := yaml.Unmarshal([]byte(yamlStr), &jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
+			}
+
+			doesMatch, err := util.JQEvalBoolExpression(context.TODO(), jqQuery, jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error running jq query: %w", err)
+			}
+
+			return ast.BooleanTerm(doesMatch), nil
 		},
 	)
 }
