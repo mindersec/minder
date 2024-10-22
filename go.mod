@@ -20,7 +20,7 @@ require (
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.0
 	github.com/fergusstrange/embedded-postgres v1.29.0
-	github.com/go-git/go-billy/v5 v5.5.1-0.20240927131424-c1ee0b97d109
+	github.com/go-git/go-billy/v5 v5.6.0
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/go-viper/mapstructure/v2 v2.2.1
