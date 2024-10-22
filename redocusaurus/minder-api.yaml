@@ -3703,6 +3703,12 @@ definitions:
   v1RuleType:
     type: object
     properties:
+      version:
+        type: string
+        description: version is the version of the rule type API.
+      type:
+        type: string
+        description: type is the type of the rule.
       id:
         type: string
         description: |-
