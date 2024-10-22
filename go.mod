@@ -49,7 +49,7 @@ require (
 	github.com/open-feature/go-sdk v1.13.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
 	github.com/open-policy-agent/opa v0.68.0
-	github.com/openfga/go-sdk v0.6.1
+	github.com/openfga/go-sdk v0.6.2
 	github.com/openfga/openfga v1.6.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.20.5
