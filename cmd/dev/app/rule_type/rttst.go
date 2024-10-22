@@ -314,7 +314,13 @@ func readRuleTypeFromFile(fpath string) (*minderv1.RuleType, error) {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	return minderv1.ParseRuleType(f)
+	rt := &minderv1.RuleType{}
+	err = minderv1.ParseResource(f, rt)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing rule type: %w", err)
+	}
+
+	return rt, nil
 }
 
 func readEntityWithPropertiesFromFile(

@@ -2292,6 +2292,8 @@ The version is assumed from the folder's version.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the rule type API. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the rule. |
 | id | <TypeLink type="string">string</TypeLink> | optional | id is the id of the rule type. This is mostly optional and is set by the server. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the rule type. |
 | display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the rule type. |

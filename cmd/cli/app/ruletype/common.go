@@ -38,8 +38,12 @@ func execOnOneRuleType(
 	}
 	defer closer()
 
-	r, err := minderv1.ParseRuleType(reader)
-	if err != nil {
+	r := &minderv1.RuleType{}
+	if err := minderv1.ParseResource(reader, r); err != nil {
+		if minderv1.YouMayHaveTheWrongResource(err) {
+			// We'll skip the file if it's not a rule type
+			return nil
+		}
 		return fmt.Errorf("error parsing rule type: %w", err)
 	}
 

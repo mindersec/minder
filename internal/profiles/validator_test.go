@@ -283,8 +283,8 @@ func loadRawRuleTypeDef() (json.RawMessage, error) {
 	}
 	defer f.Close()
 
-	ruleType, err := minderv1.ParseRuleType(f)
-	if err != nil {
+	ruleType := &minderv1.RuleType{}
+	if err := minderv1.ParseResource(f, ruleType); err != nil {
 		return nil, err
 	}
 
