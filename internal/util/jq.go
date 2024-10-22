@@ -47,6 +47,33 @@ func jQReadAsAny(ctx context.Context, path string, obj any) (any, error) {
 	return out, nil
 }
 
+// JQEvalBoolExpression evaluates the given path on the object and returns the string value
+// the path is the accessor path in jq format which must return a boolean value.
+func JQEvalBoolExpression(ctx context.Context, path string, obj any) (bool, error) {
+	accessor, err := gojq.Parse(path)
+	if err != nil {
+		return false, fmt.Errorf("data parse: cannot parse key: %w", err)
+	}
+
+	iter := accessor.RunWithContext(ctx, obj)
+	v, ok := iter.Next()
+	if !ok {
+		// No values returned
+		return false, nil
+	}
+
+	if err, ok := v.(error); ok {
+		return false, fmt.Errorf("error processing JQ statement: %w", err)
+	}
+
+	// If the value is not a boolean, return an error
+	if _, ok := v.(bool); !ok {
+		return false, fmt.Errorf("expected boolean value, got %v", reflect.TypeOf(v))
+	}
+
+	return v.(bool), nil
+}
+
 // ErrNoValueFound is an error that is returned when the accessor doesn't find anything
 var ErrNoValueFound = errors.New("evaluation error")
 
