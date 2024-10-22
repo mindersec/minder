@@ -248,8 +248,8 @@ github.com/containerd/containerd/api v1.7.19 h1:VWbJL+8Ap4Ju2mx9c9qS1uFSB1OVYr5J
 github.com/containerd/containerd/api v1.7.19/go.mod h1:fwGavl3LNwAV5ilJ0sbrABL44AQxmNjDRcwheXDb6Ig=
 github.com/containerd/continuity v0.4.3 h1:6HVkalIp+2u1ZLH1J/pYX2oBVXlJZvh1X1A7bEZ9Su8=
 github.com/containerd/continuity v0.4.3/go.mod h1:F6PTNCKepoxEaXLQp3wDAjygEnImnZ/7o4JzpodfroQ=
-github.com/containerd/errdefs v0.1.0 h1:m0wCRBiu1WJT/Fr+iOoQHMQS/eP5myQ8lCv4Dz5ZURM=
-github.com/containerd/errdefs v0.1.0/go.mod h1:YgWiiHtLmSeBrvpw+UfPijzbLaB77mEG1WwJTDETIV0=
+github.com/containerd/errdefs v0.2.0 h1:XllDESRfJtVrMwMmR2mCabxyvBK4UlbyyiWI3MvRw0o=
+github.com/containerd/errdefs v0.2.0/go.mod h1:C28ixlj3dKhQS9hsQ13b+HIb4X7+s2G4FYhbSPcRDLM=
 github.com/containerd/fifo v1.1.0 h1:4I2mbh5stb1u6ycIABlBw9zgtlK8viPI9QkQNRQEEmY=
 github.com/containerd/fifo v1.1.0/go.mod h1:bmC4NWMbXlt2EZ0Hc7Fx7QzTFxgPID13eH0Qu+MAb2o=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
@@ -805,8 +805,8 @@ github.com/open-feature/go-sdk v1.13.1 h1:RJbS70eyi7Jd3Zm5bFnaahNKNDXn+RAVnctpGu
 github.com/open-feature/go-sdk v1.13.1/go.mod h1:O8r4mhgeRIsjJ0ZBXlnE0BtbT/79W44gQceR7K8KYgo=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0 h1:EFIT5QBQ/T3lNVLmma69SNQbAWBgAl+EtcH0VfrdM7Y=
 github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0/go.mod h1:DpptytCB+FbUIoRjTGtSDEA82aojWC4MIxL8GOK26Rs=
-github.com/open-policy-agent/opa v0.68.0 h1:Jl3U2vXRjwk7JrHmS19U3HZO5qxQRinQbJ2eCJYSqJQ=
-github.com/open-policy-agent/opa v0.68.0/go.mod h1:5E5SvaPwTpwt2WM177I9Z3eT7qUpmOGjk1ZdHs+TZ4w=
+github.com/open-policy-agent/opa v0.69.0 h1:s2igLw2Z6IvGWGuXSfugWkVultDMsM9pXiDuMp7ckWw=
+github.com/open-policy-agent/opa v0.69.0/go.mod h1:+qyXJGkpEJ6kpB1kGo8JSwHtVXbTdsGdQYPWWNYNj+4=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQb2IpWsCzug=
