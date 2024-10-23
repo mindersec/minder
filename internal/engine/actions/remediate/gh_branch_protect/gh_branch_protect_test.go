@@ -208,6 +208,43 @@ func TestBranchProtectionRemediate(t *testing.T) {
 			},
 		},
 		{
+			name: "No branch parameter required",
+			newRemArgs: &newBranchProtectionRemediateArgs{
+				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
+					Patch: reviewCountPatch,
+				},
+				actionType: TestActionTypeValid,
+			},
+			remArgs: &remediateArgs{
+				remAction: models.ActionOptOn,
+				ent: &pb.Repository{
+					Owner: repoOwner,
+					Name:  repoName,
+					DefaultBranch: "main",
+				},
+				pol: map[string]any{
+					"required_approving_review_count": 2,
+				},
+			},
+			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+				mockGitHub.EXPECT().
+					GetBranchProtection(gomock.Any(), repoOwner, repoName, "main").
+					Return(nil, github.ErrBranchNotProtected)
+				mockGitHub.EXPECT().
+					UpdateBranchProtection(gomock.Any(), repoOwner, repoName, "main",
+						// nested pointers to structs confuse gmock
+						eqProtectionRequest(
+							&github.ProtectionRequest{
+								RequiredPullRequestReviews: &github.PullRequestReviewsEnforcementRequest{
+									RequiredApprovingReviewCount: 2,
+								},
+							},
+						),
+					).
+					Return(nil)
+			},
+		},
+		{
 			name: "Some protection was in place, remediator merges the patch",
 			newRemArgs: &newBranchProtectionRemediateArgs{
 				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
