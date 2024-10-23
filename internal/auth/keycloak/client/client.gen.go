@@ -303,14 +303,15 @@ type UserRepresentation struct {
 
 // UserSessionRepresentation defines model for UserSessionRepresentation.
 type UserSessionRepresentation struct {
-	Clients    *map[string]string `json:"clients,omitempty"`
-	Id         *string            `json:"id,omitempty"`
-	IpAddress  *string            `json:"ipAddress,omitempty"`
-	LastAccess *int64             `json:"lastAccess,omitempty"`
-	RememberMe *bool              `json:"rememberMe,omitempty"`
-	Start      *int64             `json:"start,omitempty"`
-	UserId     *string            `json:"userId,omitempty"`
-	Username   *string            `json:"username,omitempty"`
+	Clients       *map[string]string `json:"clients,omitempty"`
+	Id            *string            `json:"id,omitempty"`
+	IpAddress     *string            `json:"ipAddress,omitempty"`
+	LastAccess    *int64             `json:"lastAccess,omitempty"`
+	RememberMe    *bool              `json:"rememberMe,omitempty"`
+	Start         *int64             `json:"start,omitempty"`
+	TransientUser *bool              `json:"transientUser,omitempty"`
+	UserId        *string            `json:"userId,omitempty"`
+	Username      *string            `json:"username,omitempty"`
 }
 
 // GetAdminRealmsRealmUsersParams defines parameters for GetAdminRealmsRealmUsers.
@@ -648,6 +649,9 @@ type ClientInterface interface {
 
 	// GetAdminRealmsRealmUsersUserIdSessions request
 	GetAdminRealmsRealmUsersUserIdSessions(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmUsersUserIdUnmanagedAttributes request
+	GetAdminRealmsRealmUsersUserIdUnmanagedAttributes(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetAdminRealmsRealmUsers(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1120,6 +1124,18 @@ func (c *Client) PutAdminRealmsRealmUsersUserIdSendVerifyEmail(ctx context.Conte
 
 func (c *Client) GetAdminRealmsRealmUsersUserIdSessions(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAdminRealmsRealmUsersUserIdSessionsRequest(c.Server, realm, userId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmUsersUserIdUnmanagedAttributes(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmUsersUserIdUnmanagedAttributesRequest(c.Server, realm, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -3229,6 +3245,47 @@ func NewGetAdminRealmsRealmUsersUserIdSessionsRequest(server string, realm strin
 	return req, nil
 }
 
+// NewGetAdminRealmsRealmUsersUserIdUnmanagedAttributesRequest generates requests for GetAdminRealmsRealmUsersUserIdUnmanagedAttributes
+func NewGetAdminRealmsRealmUsersUserIdUnmanagedAttributesRequest(server string, realm string, userId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "realm", runtime.ParamLocationPath, realm)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "user-id", runtime.ParamLocationPath, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/users/%s/unmanagedAttributes", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -3384,6 +3441,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetAdminRealmsRealmUsersUserIdSessionsWithResponse request
 	GetAdminRealmsRealmUsersUserIdSessionsWithResponse(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersUserIdSessionsResponse, error)
+
+	// GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse request
+	GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse, error)
 }
 
 type GetAdminRealmsRealmUsersResponse struct {
@@ -4094,6 +4154,28 @@ func (r GetAdminRealmsRealmUsersUserIdSessionsResponse) StatusCode() int {
 	return 0
 }
 
+type GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string][]string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetAdminRealmsRealmUsersWithResponse request returning *GetAdminRealmsRealmUsersResponse
 func (c *ClientWithResponses) GetAdminRealmsRealmUsersWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersResponse, error) {
 	rsp, err := c.GetAdminRealmsRealmUsers(ctx, realm, params, reqEditors...)
@@ -4445,6 +4527,15 @@ func (c *ClientWithResponses) GetAdminRealmsRealmUsersUserIdSessionsWithResponse
 		return nil, err
 	}
 	return ParseGetAdminRealmsRealmUsersUserIdSessionsResponse(rsp)
+}
+
+// GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse request returning *GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmUsersUserIdUnmanagedAttributes(ctx, realm, userId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse(rsp)
 }
 
 // ParseGetAdminRealmsRealmUsersResponse parses an HTTP response from a GetAdminRealmsRealmUsersWithResponse call
@@ -5115,6 +5206,32 @@ func ParseGetAdminRealmsRealmUsersUserIdSessionsResponse(rsp *http.Response) (*G
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []UserSessionRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse parses an HTTP response from a GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse call
+func ParseGetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse(rsp *http.Response) (*GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string][]string
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
