@@ -63,13 +63,20 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	for _, f := range files {
-		if shouldSkipFile(f) {
+		if shouldSkipFile(f.Path) {
 			continue
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, createFunc); err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error creating rule type from %s", f), err)
+		if err = execOnOneRuleType(cmd.Context(), table, f.Path, os.Stdin, project, createFunc); err != nil {
+			// We swallow errors if you're loading a directory to avoid failing
+			// on test files.
+			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
+				cmd.PrintErrf("Skipping file %s: not a rule type\n", f.Path)
+				// We'll skip the file if it's not a rule type
+				continue
+			}
+			return cli.MessageAndError(fmt.Sprintf("Error creating rule type from %s", f.Path), err)
 		}
 	}
 

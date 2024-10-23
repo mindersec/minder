@@ -99,7 +99,7 @@ func ParseResource(r io.Reader, rm ResourceMeta) error {
 	}
 
 	if err := json.NewDecoder(w).Decode(rm); err != nil {
-		return fmt.Errorf("error decoding json: %w", err)
+		return errors.Join(ErrNotAResource, fmt.Errorf("error decoding resource: %w", err))
 	}
 
 	if err := Validate(rm); err != nil {
