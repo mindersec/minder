@@ -244,3 +244,74 @@ func TestJQReadFromAccessorInvalid(t *testing.T) {
 	assert.Error(t, err, "Expected JQReadFrom() to return an error")
 	assert.Nil(t, o, "Expected JQReadFrom() to return nil")
 }
+
+func TestJQExists_Simple(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	obj := map[string]any{
+		"name": "example",
+		"age":  30,
+	}
+
+	path := ".name == \"example\""
+
+	found, err := util.JQEvalBoolExpression(ctx, path, obj)
+
+	assert.NoError(t, err)
+	assert.True(t, found, "Expected to find 'example' value in the object")
+}
+
+func TestJQExists_SimpleKeyValue(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	obj := map[string]any{
+		"on": "pull_request_target",
+	}
+
+	path := ".on == \"pull_request_target\""
+
+	found, err := util.JQEvalBoolExpression(ctx, path, obj)
+
+	assert.NoError(t, err)
+	assert.True(t, found, "Expected to find 'pull_request_target' value")
+}
+
+func TestJQExists_NotFound(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	obj := map[string]any{
+		"on": map[string]any{
+			"push":              []any{"main"},
+			"workflow_dispatch": map[string]any{},
+		},
+	}
+
+	path := ".. | select(. == \"pull_request_target\")"
+
+	found, err := util.JQEvalBoolExpression(ctx, path, obj)
+
+	assert.NoError(t, err)
+	assert.False(t, found, "Expected not to find 'pull_request_target'")
+}
+
+func TestJQExists_InvalidJQPath(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	obj := map[string]any{
+		"on": map[string]any{
+			"push":              []any{"main"},
+			"workflow_dispatch": map[string]any{},
+		},
+	}
+
+	path := "invalid jq path"
+
+	found, err := util.JQEvalBoolExpression(ctx, path, obj)
+
+	assert.Error(t, err, "Expected an error due to invalid JQ path")
+	assert.False(t, found, "Expected result to be false due to error")
+}

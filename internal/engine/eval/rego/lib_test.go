@@ -5,7 +5,10 @@ package rego_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	memfs "github.com/go-git/go-billy/v5/memfs"
 	"github.com/stretchr/testify/require"
@@ -745,4 +748,261 @@ allow {
 		Fs:     fs,
 	})
 	require.NoError(t, err, "could not evaluate")
+}
+
+func TestJQIsTrue(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		yaml    string
+		matches bool
+	}{
+		{
+			name: "match a string",
+			yaml: `
+on:
+  pull_request_target
+`,
+			matches: true,
+		},
+		{
+			name: "don't match a different string",
+			yaml: `
+on:
+  push
+`,
+			matches: false,
+		},
+		{
+			name: "match an array",
+			yaml: `
+on:
+  - pull_request_target
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an array without pull_request_target",
+			yaml: `
+on:
+  - push
+`,
+			matches: false,
+		},
+		{
+			name: "match an array with multiple elements",
+			yaml: `
+on:
+  - pull_request_target
+  - push
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an array with multiple elements without pull_request_target",
+			yaml: `
+on:
+  - push
+  - workflow_dispatch
+`,
+			matches: false,
+		},
+		{
+			name: "match an object",
+			yaml: `
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an object without pull_request_target",
+			yaml: `
+on:
+  push:
+    branches: [main]
+`,
+			matches: false,
+		},
+		{
+			name: "match a complex object",
+			yaml: `
+on:
+  push:
+    branches: [master]
+  pull_request_target:
+    types: [opened, synchronize]
+`,
+			matches: true,
+		},
+		{
+			name: "don't match a complex object without pull_request_target",
+			yaml: `
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+`,
+			matches: false,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			const jqQuery = `.on | (type == "string" and . == "pull_request_target") or (type == "object" and has("pull_request_target")) or (type == "array" and any(.[]; . == "pull_request_target"))`
+
+			fs := memfs.New()
+
+			// Create a unique file name for each test
+			workflowFile := fmt.Sprintf("workflow_%d.yaml", time.Now().UnixNano())
+			f, err := fs.Create(workflowFile)
+			require.NoError(t, err, "could not create file in memfs")
+
+			_, err = f.Write([]byte(s.yaml))
+			require.NoError(t, err, "could not write to file in memfs")
+			err = f.Close()
+			require.NoError(t, err, "could not close file in memfs")
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+	workflowstr := file.read("%s")
+    parsed := parse_yaml(workflowstr)
+	jq.is_true(parsed, %q)
+}`, workflowFile, jqQuery)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			emptyPol := map[string]any{}
+
+			var evalErr *engerrors.EvaluationError
+			err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+				Object: nil,
+				Fs:     fs,
+			})
+			if s.matches {
+				require.NoError(t, err, "expected the policy to be allowed")
+			} else if !errors.As(err, &evalErr) {
+				t.Fatalf("expected the policy to be denied by default, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestParseYaml(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		yaml    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple key-value",
+			yaml: "foo: bar",
+			want: `{"foo": "bar"}`,
+		},
+		{
+			name: "nested structure",
+			yaml: `
+foo:
+  bar:
+    baz: qux`,
+			want: `{"foo": {"bar": {"baz": "qux"}}}`,
+		},
+		{
+			name: "yaml with 'on' key",
+			yaml: `
+on: push
+name: test`,
+			want: `{"on": "push", "name": "test"}`,
+		},
+		{
+			name: "complex github workflow",
+			yaml: `
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]`,
+			want: `{"on": {"push": {"branches": ["main"]}, "pull_request": {"branches": ["main"]}}}`,
+		},
+		{
+			name: "array values",
+			yaml: `
+items:
+  - foo
+  - bar
+  - baz`,
+			want: `{"items": ["foo", "bar", "baz"]}`,
+		},
+		{
+			name: "mixed types",
+			yaml: `
+string: hello
+number: 42
+boolean: true
+null_value: null
+array: [1, 2, 3]`,
+			want: `{"string": "hello", "number": 42, "boolean": true, "null_value": null, "array": [1, 2, 3]}`,
+		},
+		{
+			name:    "invalid yaml",
+			yaml:    "foo: [bar: invalid",
+			want:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+    parsed := parse_yaml(%q)
+    expected := json.unmarshal(%q)
+    parsed == expected
+}`, s.yaml, s.want)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+
+			if s.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }
