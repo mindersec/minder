@@ -750,7 +750,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 }
 
-func TestJQExistsInYAML(t *testing.T) {
+func TestJQIsTrue(t *testing.T) {
 	t.Parallel()
 
 	scenario := []struct {
@@ -879,7 +879,8 @@ default allow = false
 
 allow {
 	workflowstr := file.read("%s")
-	jq.eval.bool.in.yaml(workflowstr, %q)
+    parsed := parse_yaml(workflowstr)
+	jq.is_true(parsed, %q)
 }`, workflowFile, jqQuery)
 
 			e, err := rego.NewRegoEvaluator(
@@ -901,6 +902,106 @@ allow {
 				require.NoError(t, err, "expected the policy to be allowed")
 			} else if !errors.As(err, &evalErr) {
 				t.Fatalf("expected the policy to be denied by default, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestParseYaml(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		yaml    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple key-value",
+			yaml: "foo: bar",
+			want: `{"foo": "bar"}`,
+		},
+		{
+			name: "nested structure",
+			yaml: `
+foo:
+  bar:
+    baz: qux`,
+			want: `{"foo": {"bar": {"baz": "qux"}}}`,
+		},
+		{
+			name: "yaml with 'on' key",
+			yaml: `
+on: push
+name: test`,
+			want: `{"on": "push", "name": "test"}`,
+		},
+		{
+			name: "complex github workflow",
+			yaml: `
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]`,
+			want: `{"on": {"push": {"branches": ["main"]}, "pull_request": {"branches": ["main"]}}}`,
+		},
+		{
+			name: "array values",
+			yaml: `
+items:
+  - foo
+  - bar
+  - baz`,
+			want: `{"items": ["foo", "bar", "baz"]}`,
+		},
+		{
+			name: "mixed types",
+			yaml: `
+string: hello
+number: 42
+boolean: true
+null_value: null
+array: [1, 2, 3]`,
+			want: `{"string": "hello", "number": 42, "boolean": true, "null_value": null, "array": [1, 2, 3]}`,
+		},
+		{
+			name:    "invalid yaml",
+			yaml:    "foo: [bar: invalid",
+			want:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+    parsed := parse_yaml(%q)
+    expected := json.unmarshal(%q)
+    parsed == expected
+}`, s.yaml, s.want)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+
+			if s.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
