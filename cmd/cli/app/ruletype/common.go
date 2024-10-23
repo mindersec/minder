@@ -40,10 +40,6 @@ func execOnOneRuleType(
 
 	r := &minderv1.RuleType{}
 	if err := minderv1.ParseResource(reader, r); err != nil {
-		if minderv1.YouMayHaveTheWrongResource(err) {
-			// We'll skip the file if it's not a rule type
-			return nil
-		}
 		return fmt.Errorf("error parsing rule type: %w", err)
 	}
 
@@ -96,10 +92,6 @@ func shouldSkipFile(f string) bool {
 	ext := filepath.Ext(f)
 	switch ext {
 	case ".yaml", ".yml", ".json":
-		if cli.IsTestFile(f) {
-			// Skip test files.
-			return true
-		}
 		return false
 	default:
 		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
