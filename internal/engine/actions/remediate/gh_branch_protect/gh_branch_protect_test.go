@@ -218,8 +218,8 @@ func TestBranchProtectionRemediate(t *testing.T) {
 			remArgs: &remediateArgs{
 				remAction: models.ActionOptOn,
 				ent: &pb.Repository{
-					Owner: repoOwner,
-					Name:  repoName,
+					Owner:         repoOwner,
+					Name:          repoName,
 					DefaultBranch: "main",
 				},
 				pol: map[string]any{
