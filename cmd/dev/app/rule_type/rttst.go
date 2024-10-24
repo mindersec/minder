@@ -25,7 +25,6 @@ import (
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/credentials"
@@ -251,7 +250,7 @@ func runEvaluationForRules(
 		// Enable logging for the engine
 		ctx := context.Background()
 		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
-		ctx = logger.FromFlags(logConfig).WithContext(ctx)
+		ctx = serverconfig.LoggerFromConfigFlags(logConfig).WithContext(ctx)
 
 		// convert to EntityInfoWrapper as that's what the engine operates on
 		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp, prov)
