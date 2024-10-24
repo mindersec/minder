@@ -12,10 +12,10 @@ package mock_selectors
 import (
 	reflect "reflect"
 
-	selectors "github.com/mindersec/minder/internal/engine/selectors"
 	models "github.com/mindersec/minder/internal/profiles/models"
 	proto "github.com/mindersec/minder/internal/proto"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	selectors "github.com/mindersec/minder/pkg/engine/selectors"
 	gomock "go.uber.org/mock/gomock"
 )
 
