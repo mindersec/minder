@@ -15,10 +15,10 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {

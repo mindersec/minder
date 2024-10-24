@@ -22,7 +22,6 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers"
 	ghprovider "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -30,6 +29,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/pkg/logger"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

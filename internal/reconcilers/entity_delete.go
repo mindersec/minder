@@ -13,9 +13,9 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/entities/properties/service"
-	minderlogger "github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	minderlogger "github.com/mindersec/minder/pkg/logger"
 )
 
 //nolint:exhaustive

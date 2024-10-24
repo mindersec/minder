@@ -15,9 +15,9 @@ import (
 
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 // ProjectDeleter encapsulates operations for deleting projects

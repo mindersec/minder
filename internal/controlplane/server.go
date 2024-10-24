@@ -51,7 +51,6 @@ import (
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
@@ -65,6 +64,7 @@ import (
 	"github.com/mindersec/minder/internal/ruletypes"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 const metricsPath = "/metrics"

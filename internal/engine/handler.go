@@ -16,8 +16,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/events"
-	minderlogger "github.com/mindersec/minder/internal/logger"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	minderlogger "github.com/mindersec/minder/pkg/logger"
 )
 
 const (

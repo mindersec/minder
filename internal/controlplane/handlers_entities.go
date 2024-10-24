@@ -17,11 +17,11 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/events"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 // ReconcileEntityRegistration reconciles the registration of an entity.

@@ -17,8 +17,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/profiles/models"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {

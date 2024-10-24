@@ -19,12 +19,12 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/events"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

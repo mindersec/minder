@@ -17,7 +17,7 @@ import (
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 // purgeCmd represents the `encryption purge-sessions` command

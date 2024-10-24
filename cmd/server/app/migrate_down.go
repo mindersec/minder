@@ -15,7 +15,7 @@ import (
 	"github.com/mindersec/minder/database"
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/pkg/logger"
 )
 
 var downCmd = &cobra.Command{

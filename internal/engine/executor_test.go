@@ -35,7 +35,6 @@ import (
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/flags"
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/providers"
@@ -46,6 +45,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/logger"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
