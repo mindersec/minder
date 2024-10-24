@@ -5,7 +5,7 @@
 package fixtures
 
 import (
-	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
+	mockbundle "github.com/mindersec/minder/pkg/marketplaces/bundles/mock"
 	"github.com/mindersec/minder/pkg/mindpak"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
 	"github.com/mindersec/minder/pkg/mindpak/sources"

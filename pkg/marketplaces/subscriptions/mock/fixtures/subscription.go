@@ -10,7 +10,7 @@ package fixtures
 import (
 	"errors"
 
-	mocksubscription "github.com/mindersec/minder/internal/marketplaces/subscriptions/mock"
+	mocksubscription "github.com/mindersec/minder/pkg/marketplaces/subscriptions/mock"
 	"go.uber.org/mock/gomock"
 )
 

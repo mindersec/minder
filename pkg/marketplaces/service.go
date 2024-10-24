@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
-	sub "github.com/mindersec/minder/internal/marketplaces/subscriptions"
+	sub "github.com/mindersec/minder/pkg/marketplaces/subscriptions"
 	"github.com/mindersec/minder/pkg/mindpak"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
 	"github.com/mindersec/minder/pkg/mindpak/sources"

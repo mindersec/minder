@@ -10,8 +10,8 @@ package fixtures
 import (
 	"errors"
 
-	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockbundle "github.com/mindersec/minder/pkg/marketplaces/bundles/mock"
 	"github.com/mindersec/minder/pkg/mindpak"
 	"go.uber.org/mock/gomock"
 )
