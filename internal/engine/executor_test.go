@@ -28,8 +28,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/entities"
-	"github.com/mindersec/minder/internal/engine/selectors"
-	mock_selectors "github.com/mindersec/minder/internal/engine/selectors/mock"
 	"github.com/mindersec/minder/internal/entities/models"
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/flags"
@@ -46,6 +44,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/engine/selectors"
+	mock_selectors "github.com/mindersec/minder/pkg/engine/selectors/mock"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

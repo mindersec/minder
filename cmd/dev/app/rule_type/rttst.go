@@ -23,7 +23,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/engine/selectors"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/logger"
@@ -40,6 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
