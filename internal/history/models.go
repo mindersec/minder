@@ -14,8 +14,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/mindersec/minder/internal/db"
 	em "github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 var (

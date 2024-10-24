@@ -7,10 +7,10 @@ package reconcilers
 
 import (
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/repositories"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // Reconciler is a helper that reconciles entities

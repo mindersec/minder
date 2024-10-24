@@ -28,7 +28,6 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	mcrypto "github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/logger"
@@ -38,6 +37,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization

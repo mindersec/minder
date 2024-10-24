@@ -15,7 +15,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	crypto "github.com/mindersec/minder/internal/crypto"
-	db "github.com/mindersec/minder/internal/db"
+	db "github.com/mindersec/minder/pkg/db"
 	gomock "go.uber.org/mock/gomock"
 )
 

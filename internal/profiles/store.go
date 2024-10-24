@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/profiles/models"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // ProfileStore encapsulates operations for fetching ProfileAggregates

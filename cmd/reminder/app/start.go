@@ -16,9 +16,9 @@ import (
 
 	"github.com/mindersec/minder/internal/config"
 	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/reminder"
 	"github.com/mindersec/minder/internal/reminder/logger"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 var startCmd = &cobra.Command{

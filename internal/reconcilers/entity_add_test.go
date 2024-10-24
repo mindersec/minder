@@ -13,11 +13,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	db "github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	db "github.com/mindersec/minder/pkg/db"
 )
 
 var (

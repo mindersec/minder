@@ -19,12 +19,12 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/email"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

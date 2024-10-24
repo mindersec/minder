@@ -15,11 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mindersec/minder/internal/db"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/manager"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	"github.com/mindersec/minder/internal/providers/mock/fixtures"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 type configMatcher struct {

@@ -19,8 +19,8 @@ import (
 
 	"github.com/mindersec/minder/internal/authz"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 const (

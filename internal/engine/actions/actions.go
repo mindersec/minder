@@ -15,7 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
@@ -23,6 +22,7 @@ import (
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/profiles/models"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

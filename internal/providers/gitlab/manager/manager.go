@@ -20,10 +20,10 @@ import (
 
 	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/gitlab"
+	"github.com/mindersec/minder/pkg/db"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

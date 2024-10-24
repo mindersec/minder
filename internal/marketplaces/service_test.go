@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/marketplaces"
 	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
 	bsf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
 	ssf "github.com/mindersec/minder/internal/marketplaces/subscriptions/mock/fixtures"
+	dbf "github.com/mindersec/minder/pkg/db/fixtures"
 	"github.com/mindersec/minder/pkg/mindpak"
 	"github.com/mindersec/minder/pkg/mindpak/sources"
 )

@@ -19,7 +19,6 @@ import (
 	"github.com/mindersec/minder/internal/controlplane"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/eea"
 	"github.com/mindersec/minder/internal/email/awsses"
 	"github.com/mindersec/minder/internal/email/noop"
@@ -52,6 +51,7 @@ import (
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/roles"
 	"github.com/mindersec/minder/internal/ruletypes"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // AllInOneServerService is a helper function that starts the gRPC and HTTP servers,

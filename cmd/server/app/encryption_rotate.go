@@ -18,8 +18,8 @@ import (
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // number of secrets to re-encrypt per batch

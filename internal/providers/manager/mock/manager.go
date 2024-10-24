@@ -17,8 +17,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/mindersec/minder/internal/db"
 	manager "github.com/mindersec/minder/internal/providers/manager"
+	db "github.com/mindersec/minder/pkg/db"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )

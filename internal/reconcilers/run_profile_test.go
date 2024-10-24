@@ -13,9 +13,9 @@ import (
 	"go.uber.org/mock/gomock"
 
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 var (

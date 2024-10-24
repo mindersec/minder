@@ -11,10 +11,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/ruletypes"
+	"github.com/mindersec/minder/pkg/db"
 	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
