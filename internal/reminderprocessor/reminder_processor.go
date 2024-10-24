@@ -13,20 +13,21 @@ import (
 	"github.com/mindersec/minder/internal/events"
 	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 // ReminderProcessor processes the incoming reminders
 type ReminderProcessor struct {
-	evt events.Interface
+	evt pkgevents.Interface
 }
 
 // NewReminderProcessor creates a new ReminderProcessor
-func NewReminderProcessor(evt events.Interface) *ReminderProcessor {
+func NewReminderProcessor(evt pkgevents.Interface) *ReminderProcessor {
 	return &ReminderProcessor{evt: evt}
 }
 
 // Register implements the Consumer interface.
-func (rp *ReminderProcessor) Register(r events.Registrar) {
+func (rp *ReminderProcessor) Register(r pkgevents.Registrar) {
 	r.Register(events.TopicQueueRepoReminder, rp.reminderMessageHandler)
 }
 

@@ -30,6 +30,7 @@ import (
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -72,13 +73,13 @@ type ProfileService interface {
 }
 
 type profileService struct {
-	publisher events.Publisher
+	publisher pkgevents.Publisher
 	validator *Validator
 }
 
 // NewProfileService creates an instance of ProfileService
 func NewProfileService(
-	publisher events.Publisher,
+	publisher pkgevents.Publisher,
 	selChecker selectors.SelectionChecker,
 ) ProfileService {
 	return &profileService{

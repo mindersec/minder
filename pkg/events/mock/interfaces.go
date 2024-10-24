@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	message "github.com/ThreeDotsLabs/watermill/message"
-	events "github.com/mindersec/minder/internal/events"
+	events "github.com/mindersec/minder/pkg/events"
 	gomock "go.uber.org/mock/gomock"
 )
 

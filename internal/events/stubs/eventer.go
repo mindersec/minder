@@ -10,7 +10,7 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/events"
 )
 
 // StubEventer is a stub implementation of events.Interface and the events.Publisher interface

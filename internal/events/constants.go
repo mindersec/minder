@@ -19,8 +19,10 @@ const (
 )
 
 const (
-	metricsNamespace = "minder"
-	metricsSubsystem = "eventer"
+	// MetricsNamespace is the namespace for the metrics
+	MetricsNamespace = "minder"
+	// MetricsSubsystem is the subsystem for the metrics
+	MetricsSubsystem = "eventer"
 )
 
 const (
