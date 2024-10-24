@@ -20,13 +20,13 @@ import (
 	authjwt "github.com/mindersec/minder/internal/auth/jwt"
 	mockauth "github.com/mindersec/minder/internal/auth/mock"
 	"github.com/mindersec/minder/internal/authz"
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/email"
 	mockevents "github.com/mindersec/minder/internal/events/mock"
 	"github.com/mindersec/minder/internal/projects"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestCreateInvite(t *testing.T) {

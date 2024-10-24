@@ -10,13 +10,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/config/server"
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	gitengine "github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	gitclient "github.com/mindersec/minder/internal/providers/git"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config/server"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

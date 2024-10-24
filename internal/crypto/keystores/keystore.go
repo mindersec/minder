@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // KeyStore represents a struct which stores or can fetch encryption keys.

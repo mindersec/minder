@@ -24,12 +24,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/mindersec/minder/internal/config"
-	clientconfig "github.com/mindersec/minder/internal/config/client"
 	mcrypto "github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/useragent"
 	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/config"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 //go:embed html/login_success.html

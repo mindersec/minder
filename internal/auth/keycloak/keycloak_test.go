@@ -16,8 +16,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/mindersec/minder/internal/auth/keycloak/client"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/util/ptr"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestKeyCloak_Resolve(t *testing.T) {

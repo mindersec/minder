@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/config"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // HTTPServerConfig is the configuration for the HTTP server

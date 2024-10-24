@@ -11,8 +11,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	config "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/util"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 // FromFlags configures logging and returns a logger with settings matching

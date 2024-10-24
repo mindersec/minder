@@ -17,8 +17,8 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/events/common"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // BuildNatsChannelDriver creates a new event driver using

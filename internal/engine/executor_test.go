@@ -21,7 +21,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
@@ -46,6 +45,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -35,7 +35,6 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
@@ -50,6 +49,7 @@ import (
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 //go:embed test-payloads/installation-deleted.json

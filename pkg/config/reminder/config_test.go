@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/config"
-	"github.com/mindersec/minder/internal/config/reminder"
+	"github.com/mindersec/minder/pkg/config"
+	"github.com/mindersec/minder/pkg/config/reminder"
 )
 
 func TestValidateConfig(t *testing.T) {

@@ -15,13 +15,13 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 var (

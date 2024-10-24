@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/config"
-	clientconfig "github.com/mindersec/minder/internal/config/client"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/config"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 var tokenCmd = &cobra.Command{
