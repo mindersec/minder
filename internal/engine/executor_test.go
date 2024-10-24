@@ -24,7 +24,6 @@ import (
 	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
@@ -46,6 +45,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

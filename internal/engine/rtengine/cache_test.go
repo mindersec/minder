@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mindersec/minder/internal/db"
-	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/providers/testproviders"
+	"github.com/mindersec/minder/pkg/db"
+	dbf "github.com/mindersec/minder/pkg/db/fixtures"
 	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 )
 

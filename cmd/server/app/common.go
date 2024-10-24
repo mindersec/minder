@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // This file contains logic shared between different commands.

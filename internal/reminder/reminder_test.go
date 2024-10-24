@@ -16,7 +16,7 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
-	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func Test_getRepositoryBatch(t *testing.T) {

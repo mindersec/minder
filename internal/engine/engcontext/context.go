@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 type key int

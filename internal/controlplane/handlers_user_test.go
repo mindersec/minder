@@ -29,7 +29,6 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/marketplaces"
@@ -37,6 +36,7 @@ import (
 	"github.com/mindersec/minder/internal/providers"
 	mockprov "github.com/mindersec/minder/internal/providers/github/service/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 const (

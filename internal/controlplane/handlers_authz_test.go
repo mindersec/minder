@@ -34,7 +34,6 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
 	mockinvites "github.com/mindersec/minder/internal/invites/mock"
@@ -42,6 +41,7 @@ import (
 	mockroles "github.com/mindersec/minder/internal/roles/mock"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // Mock for HasProtoContext

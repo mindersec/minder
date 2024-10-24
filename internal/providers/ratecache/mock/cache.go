@@ -12,7 +12,7 @@ package mock_ratecache
 import (
 	reflect "reflect"
 
-	db "github.com/mindersec/minder/internal/db"
+	db "github.com/mindersec/minder/pkg/db"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )

@@ -14,7 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 var _ http.RoundTripper = (*instrumentedRoundTripper)(nil)

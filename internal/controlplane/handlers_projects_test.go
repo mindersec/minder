@@ -16,8 +16,8 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz/mock"
-	"github.com/mindersec/minder/internal/db"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestListProjects(t *testing.T) {

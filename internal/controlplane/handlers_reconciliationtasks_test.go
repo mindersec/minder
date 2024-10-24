@@ -13,11 +13,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	"github.com/mindersec/minder/internal/providers"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {

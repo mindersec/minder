@@ -14,10 +14,10 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/mindersec/minder/internal/db"
 	models "github.com/mindersec/minder/internal/entities/models"
 	properties "github.com/mindersec/minder/internal/entities/properties"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	db "github.com/mindersec/minder/pkg/db"
 	gomock "go.uber.org/mock/gomock"
 )
 

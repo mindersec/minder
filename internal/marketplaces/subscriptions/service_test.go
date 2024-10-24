@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mindersec/minder/internal/db"
-	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	brf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
 	"github.com/mindersec/minder/internal/profiles"
 	psf "github.com/mindersec/minder/internal/profiles/mock/fixtures"
 	"github.com/mindersec/minder/internal/ruletypes"
 	rsf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
+	"github.com/mindersec/minder/pkg/db"
+	dbf "github.com/mindersec/minder/pkg/db/fixtures"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
 )
 

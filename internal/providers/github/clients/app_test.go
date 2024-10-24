@@ -21,13 +21,13 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	config "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	github2 "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestParseV1AppConfig(t *testing.T) {

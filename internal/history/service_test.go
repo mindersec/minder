@@ -14,12 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mindersec/minder/internal/db"
-	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	propsSvcMock "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	pmMock "github.com/mindersec/minder/internal/providers/manager/mock"
+	"github.com/mindersec/minder/pkg/db"
+	dbf "github.com/mindersec/minder/pkg/db/fixtures"
 )
 
 func TestStoreEvaluationStatus(t *testing.T) {

@@ -24,12 +24,12 @@ import (
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
-	"github.com/mindersec/minder/internal/db/embedded"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/service"
+	"github.com/mindersec/minder/pkg/db/embedded"
 )
 
 // CmdTestServer starts a test server for integration testing.

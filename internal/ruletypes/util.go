@@ -8,8 +8,8 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // RuleDefFromDB converts a rule type definition from the database to a protobuf

@@ -16,11 +16,11 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/selectors"
 	"github.com/mindersec/minder/internal/ruletypes"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // Validator encapsulates the logic for validating profiles
