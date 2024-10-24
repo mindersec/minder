@@ -18,9 +18,9 @@ import (
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/engine/ingester"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
-	"github.com/mindersec/minder/internal/profiles"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/profiles"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
