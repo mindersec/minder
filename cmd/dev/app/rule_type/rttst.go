@@ -28,8 +28,6 @@ import (
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/profiles"
-	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -41,6 +39,8 @@ import (
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

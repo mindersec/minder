@@ -15,8 +15,8 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
-	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 // ActionType represents the type of action, i.e., remediate, alert, etc.

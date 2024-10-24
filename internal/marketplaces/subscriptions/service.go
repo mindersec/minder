@@ -15,11 +15,11 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
-	profsvc "github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/ruletypes"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/mindpak"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
+	profsvc "github.com/mindersec/minder/pkg/profiles"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

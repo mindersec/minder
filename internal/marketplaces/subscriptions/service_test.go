@@ -17,11 +17,11 @@ import (
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	brf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
 	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
-	"github.com/mindersec/minder/internal/profiles"
-	psf "github.com/mindersec/minder/internal/profiles/mock/fixtures"
 	"github.com/mindersec/minder/internal/ruletypes"
 	rsf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/pkg/profiles"
+	psf "github.com/mindersec/minder/pkg/profiles/mock/fixtures"
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {

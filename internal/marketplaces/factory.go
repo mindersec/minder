@@ -10,10 +10,10 @@ import (
 
 	"github.com/mindersec/minder/internal/config/server"
 	sub "github.com/mindersec/minder/internal/marketplaces/subscriptions"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/ruletypes"
 	"github.com/mindersec/minder/pkg/mindpak"
 	src "github.com/mindersec/minder/pkg/mindpak/sources"
+	"github.com/mindersec/minder/pkg/profiles"
 )
 
 // NewMarketplaceFromServiceConfig takes the Minder service config and
