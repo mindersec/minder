@@ -118,20 +118,20 @@ func (r *GhBranchProtectRemediator) Do(
 	}
 
 	branch, err := util.JQReadFrom[string](ctx, ".branch", params.GetRule().Params)
-	if err != nil {
+	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
 		return nil, fmt.Errorf("error reading branch from params: %w", err)
-	}
-
-	// This check avoids passing around an empty branch name which
-	// causes issues down the road. Besides, it does not make
-	// sense to protect what does not exist. (cit. Ozz 2024-05-27)
-	if branch == "" && repo.DefaultBranch == "" {
-		return nil, fmt.Errorf("both rule param and default branch names are empty: %w", engerrors.ErrActionSkipped)
 	}
 	// This sets the branch to the default one of the repository
 	// in case no branch is configured via rule parameters.
 	if branch == "" {
 		branch = repo.DefaultBranch
+	}
+
+	// This check avoids passing around an empty branch name which
+	// causes issues down the road. Besides, it does not make
+	// sense to protect what does not exist. (cit. Ozz 2024-05-27)
+	if branch == "" {
+		return nil, fmt.Errorf("both rule param branch name and repo default branch are empty: %w", engerrors.ErrActionSkipped)
 	}
 
 	// get the current protection
