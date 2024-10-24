@@ -3,7 +3,19 @@
 
 package reminder
 
+import (
+	"github.com/mindersec/minder/internal/util"
+	"github.com/rs/zerolog"
+	"os"
+)
+
 // LoggingConfig is the configuration for the logger
 type LoggingConfig struct {
 	Level string `mapstructure:"level" default:"info"`
+}
+
+// LoggerFromConfigFlags creates a new logger from the provided configuration
+func LoggerFromConfigFlags(cfg LoggingConfig) zerolog.Logger {
+	level := util.ViperLogLevelToZerologLevel(cfg.Level)
+	return zerolog.New(os.Stdout).Level(level).With().Timestamp().Logger()
 }

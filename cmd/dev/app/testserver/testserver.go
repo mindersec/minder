@@ -23,7 +23,6 @@ import (
 	mockauthz "github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db/embedded"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
@@ -54,7 +53,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 	defer cancel()
 
-	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+	ctx = serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 	l := zerolog.Ctx(ctx)
 	l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 

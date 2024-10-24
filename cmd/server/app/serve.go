@@ -47,7 +47,7 @@ var serveCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+		ctx = serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 		l := zerolog.Ctx(ctx)
 		l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 

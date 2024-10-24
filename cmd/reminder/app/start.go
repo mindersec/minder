@@ -16,7 +16,6 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/reminder"
-	"github.com/mindersec/minder/internal/reminder/logger"
 	"github.com/mindersec/minder/pkg/config"
 	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 )
@@ -42,7 +41,7 @@ func start(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error validating config: %w", err)
 	}
 
-	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+	ctx = reminderconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 
 	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 	if err != nil {

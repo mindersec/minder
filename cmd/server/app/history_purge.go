@@ -15,7 +15,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
@@ -37,7 +36,7 @@ func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
 		cliErrorf(cmd, "unable to read config: %s", err)
 	}
 
-	ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
+	ctx := serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(context.Background())
 
 	// instantiate `db.Store` so we can run queries
 	store, closer, err := wireUpDB(ctx, cfg)
