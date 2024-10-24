@@ -27,10 +27,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/events/common"
 	"github.com/mindersec/minder/internal/flags"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 type flaggedDriver struct {

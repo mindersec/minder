@@ -33,9 +33,9 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // Test_flaggedDriver_Publish tests both publish and consume of messages
