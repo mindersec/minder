@@ -19,6 +19,8 @@ jobs:
           go-version-file: 'go.mod'
       - name: Install ko
         uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
+        with:
+          version: v0.16.0
       - name: Copy server-config.yaml
         run: cp config/server-config.yaml.example server-config.yaml
       - name: Start containers
