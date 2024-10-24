@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 
-	"github.com/mindersec/minder/internal/config"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // GitHubAppConfig is the configuration for the GitHub App providers

@@ -6,7 +6,7 @@ package server
 import (
 	"time"
 
-	"github.com/mindersec/minder/internal/config"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // EventConfig is the configuration for minder's eventing system.

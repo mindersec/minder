@@ -21,8 +21,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mindersec/minder/internal/config"
 	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // ErrWrappedCLIError is an error that wraps another error and provides a message used from within the CLI

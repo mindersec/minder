@@ -21,8 +21,8 @@ import (
 	"k8s.io/client-go/transport"
 
 	"github.com/mindersec/minder/internal/auth/jwt"
-	srvconfig "github.com/mindersec/minder/internal/config/server"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	srvconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 var (

@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/entities"
@@ -40,6 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )

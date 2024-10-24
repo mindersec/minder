@@ -15,8 +15,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	natsserver "github.com/nats-io/nats-server/v2/test"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/events/common"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestNatsChannel(t *testing.T) {

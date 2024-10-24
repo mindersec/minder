@@ -16,8 +16,8 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/providers/git/memboxfs"
+	"github.com/mindersec/minder/pkg/config/server"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

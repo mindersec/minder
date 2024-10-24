@@ -16,8 +16,8 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/mindersec/minder/internal/auth/jwt"
-	config "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 // nolint: tparallel

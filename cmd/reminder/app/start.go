@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/mindersec/minder/internal/config"
-	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/reminder"
 	"github.com/mindersec/minder/internal/reminder/logger"
+	"github.com/mindersec/minder/pkg/config"
+	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 )
 
 var startCmd = &cobra.Command{

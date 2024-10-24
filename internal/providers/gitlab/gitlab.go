@@ -12,9 +12,9 @@ import (
 
 	"golang.org/x/oauth2"
 
-	config "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	config "github.com/mindersec/minder/pkg/config/server"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

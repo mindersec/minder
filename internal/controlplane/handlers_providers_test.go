@@ -27,7 +27,6 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz/mock"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/crypto/algorithms"
@@ -44,6 +43,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -30,7 +30,6 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
 	mockauthz "github.com/mindersec/minder/internal/authz/mock"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
@@ -40,6 +39,7 @@ import (
 	ghService "github.com/mindersec/minder/internal/providers/github/service"
 	mock_reposvc "github.com/mindersec/minder/internal/repositories/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 const bufSize = 1024 * 1024
