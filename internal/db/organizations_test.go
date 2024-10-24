@@ -13,7 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/util/rand"
 )
 
 // A helper function to create a random organization

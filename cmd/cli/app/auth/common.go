@@ -12,11 +12,11 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
-	"github.com/mindersec/minder/internal/util/cli"
-	"github.com/mindersec/minder/internal/util/cli/table"
-	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
+	"github.com/mindersec/minder/pkg/util/cli"
+	"github.com/mindersec/minder/pkg/util/cli/table"
+	"github.com/mindersec/minder/pkg/util/cli/table/layouts"
 )
 
 func userRegistered(ctx context.Context, client minderv1.UserServiceClient) (bool, *minderv1.GetUserResponse, error) {

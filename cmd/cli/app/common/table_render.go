@@ -7,7 +7,7 @@ package common
 import (
 	"strings"
 
-	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/pkg/util/cli/table/layouts"
 )
 
 const (

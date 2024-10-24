@@ -25,8 +25,8 @@ import (
 	"github.com/mindersec/minder/internal/history"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/ruletypes"
-	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 const (

@@ -48,8 +48,8 @@ import (
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	ghService "github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
-	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util/testqueue"
 )
 
 //go:embed test-payloads/installation-deleted.json

@@ -17,8 +17,8 @@ import (
 
 	"github.com/mindersec/minder/internal/entities/properties"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
-	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 var (

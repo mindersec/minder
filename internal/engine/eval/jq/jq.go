@@ -16,9 +16,9 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // Evaluator is an Evaluator that uses the jq library to evaluate rules

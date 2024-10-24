@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/util/cache"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util/cache"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

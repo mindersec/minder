@@ -27,8 +27,8 @@ import (
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // CreateUser is a service for user self registration

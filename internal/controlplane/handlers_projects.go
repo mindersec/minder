@@ -20,8 +20,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/projects/features"
-	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // ListProjects returns the list of projects for the current user

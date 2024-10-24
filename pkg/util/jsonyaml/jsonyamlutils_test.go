@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mindersec/minder/internal/util/jsonyaml"
+	"github.com/mindersec/minder/pkg/util/jsonyaml"
 )
 
 func TestConvertYAMLToJSON(t *testing.T) {

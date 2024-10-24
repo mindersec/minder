@@ -11,10 +11,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/internal/profiles"
-	"github.com/mindersec/minder/internal/util"
-	"github.com/mindersec/minder/internal/util/cli"
-	"github.com/mindersec/minder/internal/util/cli/table"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
+	"github.com/mindersec/minder/pkg/util/cli"
+	"github.com/mindersec/minder/pkg/util/cli/table"
 )
 
 // ExecOnOneProfile is a helper function to execute a function on a single profile

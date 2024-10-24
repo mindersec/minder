@@ -17,4 +17,4 @@ compile_native_go_fuzzer github.com/mindersec/minder/internal/providers/github/w
 compile_native_go_fuzzer github.com/mindersec/minder/internal/engine/ingester/diff FuzzDiffParse FuzzDiffParse
 compile_native_go_fuzzer github.com/mindersec/minder/internal/crypto FuzzEncryptDecrypt FuzzEncryptDecrypt
 compile_native_go_fuzzer github.com/mindersec/minder/internal/auth/jwt FuzzParseAndValidate FuzzParseAndValidate
-compile_native_go_fuzzer github.com/mindersec/minder/internal/util/cli FuzzRenderMarkdown FuzzRenderMarkdown
+compile_native_go_fuzzer github.com/mindersec/minder/pkg/util/cli FuzzRenderMarkdown FuzzRenderMarkdown

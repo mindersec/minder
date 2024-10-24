@@ -15,7 +15,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/rs/zerolog/log"
 
-	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 type fsEntry struct {

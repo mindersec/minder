@@ -18,7 +18,7 @@ import (
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/config"
 	clientconfig "github.com/mindersec/minder/internal/config/client"
-	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/util/cli"
 )
 
 // SetProjectCmd is the cd command

@@ -32,9 +32,9 @@ import (
 	reposvc "github.com/mindersec/minder/internal/repositories"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
-	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 func TestServer_RegisterRepository(t *testing.T) {

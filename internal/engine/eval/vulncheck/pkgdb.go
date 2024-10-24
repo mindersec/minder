@@ -17,7 +17,7 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // ErrPkgNotFound is returned when the package is not found in the package repository

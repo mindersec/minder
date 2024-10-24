@@ -22,8 +22,8 @@ import (
 	"github.com/stacklok/frizbee/pkg/utils/config"
 	"gopkg.in/yaml.v3"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego

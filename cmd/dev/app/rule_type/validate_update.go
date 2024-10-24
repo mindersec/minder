@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/mindersec/minder/internal/util/schemaupdate"
+	"github.com/mindersec/minder/pkg/util/schemaupdate"
 )
 
 // CmdValidateUpdate is the command for validating an update of a rule type definition

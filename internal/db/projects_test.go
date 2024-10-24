@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/util/rand"
 )
 
 func createRandomProject(t *testing.T, orgID uuid.UUID) Project {

@@ -14,9 +14,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 func TestGitProvider(t *testing.T) {

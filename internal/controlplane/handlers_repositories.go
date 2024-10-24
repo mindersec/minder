@@ -25,11 +25,11 @@ import (
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/repositories"
-	"github.com/mindersec/minder/internal/util"
-	cursorutil "github.com/mindersec/minder/internal/util/cursor"
-	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util"
+	cursorutil "github.com/mindersec/minder/pkg/util/cursor"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 // maxFetchLimit is the maximum number of repositories that can be fetched from the database in one call

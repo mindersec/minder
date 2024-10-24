@@ -25,8 +25,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/ruletypes"
-	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 var (

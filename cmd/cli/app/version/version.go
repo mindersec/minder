@@ -9,7 +9,7 @@ import (
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/constants"
-	"github.com/mindersec/minder/internal/util/cli/useragent"
+	"github.com/mindersec/minder/pkg/util/cli/useragent"
 )
 
 // VersionCmd is the version command

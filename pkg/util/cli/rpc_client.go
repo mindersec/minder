@@ -27,9 +27,9 @@ import (
 	"github.com/mindersec/minder/internal/config"
 	clientconfig "github.com/mindersec/minder/internal/config/client"
 	mcrypto "github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/util"
-	"github.com/mindersec/minder/internal/util/cli/useragent"
-	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/util"
+	"github.com/mindersec/minder/pkg/util/cli/useragent"
+	"github.com/mindersec/minder/pkg/util/rand"
 )
 
 //go:embed html/login_success.html

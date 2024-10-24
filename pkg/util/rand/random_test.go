@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/util/rand"
 )
 
 func TestRandomInt(t *testing.T) {

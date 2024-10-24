@@ -36,8 +36,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/providers/manager"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // GetAuthorizationURL returns the URL to redirect the user to for authorization

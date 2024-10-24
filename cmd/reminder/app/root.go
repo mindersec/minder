@@ -17,7 +17,7 @@ import (
 
 	"github.com/mindersec/minder/internal/config"
 	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
-	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/util/cli"
 )
 
 var (

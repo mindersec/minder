@@ -27,9 +27,9 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	pf "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
 	"github.com/mindersec/minder/internal/repositories"
-	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 func TestRepositoryService_CreateRepository(t *testing.T) {

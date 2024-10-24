@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog"
 
 	config "github.com/mindersec/minder/internal/config/reminder"
-	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // FromFlags creates a new logger from the provided configuration

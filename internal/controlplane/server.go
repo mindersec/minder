@@ -63,8 +63,8 @@ import (
 	reposvc "github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/roles"
 	"github.com/mindersec/minder/internal/ruletypes"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 const metricsPath = "/metrics"

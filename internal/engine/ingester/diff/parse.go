@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 var (

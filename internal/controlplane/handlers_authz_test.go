@@ -40,8 +40,8 @@ import (
 	mockinvites "github.com/mindersec/minder/internal/invites/mock"
 	"github.com/mindersec/minder/internal/roles"
 	mockroles "github.com/mindersec/minder/internal/roles/mock"
-	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // Mock for HasProtoContext

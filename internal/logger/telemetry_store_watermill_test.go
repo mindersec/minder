@@ -17,8 +17,8 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/util/testqueue"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util/testqueue"
 )
 
 func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {

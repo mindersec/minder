@@ -22,9 +22,9 @@ import (
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/profiles/models"
 	mindergh "github.com/mindersec/minder/internal/providers/github"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 const (

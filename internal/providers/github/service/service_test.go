@@ -40,7 +40,7 @@ import (
 	mockclients "github.com/mindersec/minder/internal/providers/github/clients/mock"
 	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/telemetry"
-	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/util/rand"
 )
 
 type testMocks struct {

@@ -18,8 +18,8 @@ import (
 
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/gitlab/webhooksecret"
-	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 // RegisterEntity implements the Provider interface

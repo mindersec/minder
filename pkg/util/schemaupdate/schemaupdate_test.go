@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/util/schemaupdate"
+	"github.com/mindersec/minder/pkg/util/schemaupdate"
 )
 
 func TestValidateSchemaUpdate(t *testing.T) {

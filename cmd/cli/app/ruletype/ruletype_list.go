@@ -13,9 +13,9 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/internal/util"
-	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
+	"github.com/mindersec/minder/pkg/util/cli"
 )
 
 var listCmd = &cobra.Command{

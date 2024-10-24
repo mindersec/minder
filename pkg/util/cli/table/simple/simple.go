@@ -9,7 +9,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/pkg/util/cli/table/layouts"
 )
 
 // Table is a wrapper around tablewriter.Table

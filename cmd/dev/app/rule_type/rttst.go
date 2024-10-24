@@ -38,10 +38,10 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	"github.com/mindersec/minder/internal/providers/telemetry"
-	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/util/jsonyaml"
 )
 
 // CmdTest is the root command for the rule subcommands

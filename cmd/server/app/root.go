@@ -15,7 +15,7 @@ import (
 
 	"github.com/mindersec/minder/internal/config"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/util/cli"
 )
 
 var (

@@ -17,7 +17,7 @@ import (
 
 	"github.com/mindersec/minder/internal/auth/keycloak/client"
 	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/util/ptr"
+	"github.com/mindersec/minder/pkg/util/ptr"
 )
 
 func TestKeyCloak_Resolve(t *testing.T) {

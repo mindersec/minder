@@ -5,8 +5,8 @@
 package table
 
 import (
-	"github.com/mindersec/minder/internal/util/cli/table/layouts"
-	"github.com/mindersec/minder/internal/util/cli/table/simple"
+	"github.com/mindersec/minder/pkg/util/cli/table/layouts"
+	"github.com/mindersec/minder/pkg/util/cli/table/simple"
 )
 
 const (

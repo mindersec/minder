@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli"
+	"github.com/stacklok/minder/pkg/util"
+	"github.com/stacklok/minder/pkg/util/cli"
 	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
 )
 

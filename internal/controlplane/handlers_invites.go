@@ -14,8 +14,8 @@ import (
 
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/projects"
-	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/util"
 )
 
 // GetInviteDetails returns the details of an invitation
