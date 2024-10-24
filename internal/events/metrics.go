@@ -13,7 +13,14 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
+// MessageInstruments contains the metrics instruments for the events package
+type MessageInstruments struct {
+	// message processing time duration histogram
+	messageProcessingTimeHistogram metric.Int64Histogram
+}
+
+// RecordMetrics is a middleware that records metrics for message processing time
+func RecordMetrics(instruments *MessageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
 			var processingTime time.Duration
@@ -41,13 +48,14 @@ func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) 
 	return metricsFunc
 }
 
-func initMetricsInstruments(meter metric.Meter) (*messageInstruments, error) {
+// InitMetricsInstruments initializes the metrics instruments for the events package
+func InitMetricsInstruments(meter metric.Meter) (*MessageInstruments, error) {
 	histogram, err := createProcessingLatencyHistogram(meter)
 	if err != nil {
 		return nil, err
 	}
 
-	return &messageInstruments{
+	return &MessageInstruments{
 		messageProcessingTimeHistogram: histogram,
 	}, nil
 }

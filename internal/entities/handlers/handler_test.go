@@ -33,6 +33,7 @@ import (
 	provManFixtures "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -186,54 +187,54 @@ func checkPullRequestMessage(t *testing.T, msg *watermill.Message) {
 }
 
 type handlerBuilder func(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer
+) pkgevents.Consumer
 
 func refreshEntityHandlerBuilder(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) pkgevents.Consumer {
 	return NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func refreshByIDHandlerBuilder(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) pkgevents.Consumer {
 	return NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func addOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) pkgevents.Consumer {
 	return NewAddOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func removeOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) pkgevents.Consumer {
 	return NewRemoveOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func getAndDeleteEntityHandlerBuilder(
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	_ manager.ProviderManager,
-) events.Consumer {
+) pkgevents.Consumer {
 	return NewGetEntityAndDeleteHandler(evt, store, propSvc)
 }
 

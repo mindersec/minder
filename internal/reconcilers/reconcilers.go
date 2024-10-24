@@ -11,12 +11,13 @@ import (
 	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/repositories"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 // Reconciler is a helper that reconciles entities
 type Reconciler struct {
 	store           db.Store
-	evt             events.Publisher
+	evt             pkgevents.Publisher
 	crypteng        crypto.Engine
 	providerManager manager.ProviderManager
 	repos           repositories.RepositoryService
@@ -25,7 +26,7 @@ type Reconciler struct {
 // NewReconciler creates a new reconciler object
 func NewReconciler(
 	store db.Store,
-	evt events.Publisher,
+	evt pkgevents.Publisher,
 	cryptoEngine crypto.Engine,
 	providerManager manager.ProviderManager,
 	repositoryService repositories.RepositoryService,
@@ -40,7 +41,7 @@ func NewReconciler(
 }
 
 // Register implements the Consumer interface.
-func (r *Reconciler) Register(reg events.Registrar) {
+func (r *Reconciler) Register(reg pkgevents.Registrar) {
 	reg.Register(events.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
 	reg.Register(events.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
 	reg.Register(events.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)

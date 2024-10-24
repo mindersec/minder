@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/util/testqueue"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
@@ -38,7 +39,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	// -- end expectations
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := pkgevents.New(context.Background(), &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,

@@ -29,7 +29,6 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects"
@@ -37,6 +36,7 @@ import (
 	mockprov "github.com/mindersec/minder/internal/providers/github/service/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 const (
@@ -439,7 +439,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := pkgevents.New(context.Background(), &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

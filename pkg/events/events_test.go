@@ -17,11 +17,12 @@ import (
 
 	"github.com/mindersec/minder/internal/events"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	pkgevents "github.com/mindersec/minder/pkg/events"
 )
 
 type fakeConsumer struct {
 	topics            []string
-	makeHandler       func(string, chan eventPair) events.Handler
+	makeHandler       func(string, chan eventPair) pkgevents.Handler
 	shouldFailHandler bool
 	// Filled in by test later
 	out chan eventPair
@@ -39,13 +40,13 @@ func driverConfig() *serverconfig.EventConfig {
 	}
 }
 
-func (f *fakeConsumer) Register(r events.Registrar) {
+func (f *fakeConsumer) Register(r pkgevents.Registrar) {
 	for _, t := range f.topics {
 		r.Register(t, f.makeHandler(t, f.out))
 	}
 }
 
-func fakeHandler(id string, out chan eventPair) events.Handler {
+func fakeHandler(id string, out chan eventPair) pkgevents.Handler {
 	return func(msg *message.Message) error {
 		ctx := msg.Context()
 		select {
@@ -56,7 +57,7 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 	}
 }
 
-func countFailuresHandler(counter *int) events.Handler {
+func countFailuresHandler(counter *int) pkgevents.Handler {
 	return func(_ *message.Message) error {
 		*counter++
 		return errors.New("handler always fails")
@@ -116,7 +117,7 @@ func TestEventer(t *testing.T) {
 					// This looks silly, but we need to generate a unique name for
 					// the second handler on topic "a".  In real usage, each Consumer
 					// will register a different function.
-					makeHandler: func(_ string, out chan eventPair) events.Handler {
+					makeHandler: func(_ string, out chan eventPair) pkgevents.Handler {
 						return func(msg *message.Message) error {
 							out <- eventPair{"other", msg.Copy()}
 							return nil
@@ -227,14 +228,14 @@ var setupMu sync.Mutex
 // We currently use the global meter provider, so reset it for each test.
 // Since this is global, we use a global mutex to ensure we don't enter setup
 // concurrently.
-func setupEventerWithMetricReader(ctx context.Context) (events.Interface, *metric.ManualReader, error) {
+func setupEventerWithMetricReader(ctx context.Context) (pkgevents.Interface, *metric.ManualReader, error) {
 	setupMu.Lock()
 	defer setupMu.Unlock()
 	oldMeter := otel.GetMeterProvider()
 	defer otel.SetMeterProvider(oldMeter)
 	metricReader := metric.NewManualReader()
 	otel.SetMeterProvider(metric.NewMeterProvider(metric.WithReader(metricReader)))
-	eventer, err := events.Setup(ctx, driverConfig())
+	eventer, err := pkgevents.New(ctx, driverConfig())
 	return eventer, metricReader, err
 }
 
@@ -249,8 +250,8 @@ func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounter *int) {
 	}
 }
 
-func makeFailingHandler(counter *int) func(_ string, _ chan eventPair) events.Handler {
-	return func(_ string, _ chan eventPair) events.Handler {
+func makeFailingHandler(counter *int) func(_ string, _ chan eventPair) pkgevents.Handler {
+	return func(_ string, _ chan eventPair) pkgevents.Handler {
 		return countFailuresHandler(counter)
 	}
 }
