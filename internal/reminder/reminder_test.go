@@ -15,8 +15,8 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
 	"github.com/mindersec/minder/internal/db"
+	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 )
 
 func Test_getRepositoryBatch(t *testing.T) {

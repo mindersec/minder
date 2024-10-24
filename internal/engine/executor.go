@@ -22,7 +22,6 @@ import (
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/engine/rtengine"
-	"github.com/mindersec/minder/internal/engine/selectors"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/history"
 	minderlogger "github.com/mindersec/minder/internal/logger"
@@ -31,6 +30,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/selectors"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

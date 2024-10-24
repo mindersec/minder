@@ -19,8 +19,6 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/auth/keycloak"
 	"github.com/mindersec/minder/internal/authz"
-	"github.com/mindersec/minder/internal/config"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	cpmetrics "github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
@@ -28,6 +26,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/service"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 var serveCmd = &cobra.Command{
@@ -47,7 +47,7 @@ var serveCmd = &cobra.Command{
 			os.Exit(0)
 		}
 
-		ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+		ctx = serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 		l := zerolog.Ctx(ctx)
 		l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 

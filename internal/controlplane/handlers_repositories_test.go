@@ -18,7 +18,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -34,6 +33,7 @@ import (
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config/server"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

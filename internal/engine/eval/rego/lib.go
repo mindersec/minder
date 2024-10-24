@@ -4,6 +4,7 @@
 package rego
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -19,7 +20,9 @@ import (
 	"github.com/open-policy-agent/opa/types"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
+	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -32,6 +35,8 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileRead,
 	FileWalk,
 	ListGithubActions,
+	ParseYaml,
+	JQIsTrue,
 }
 
 func instantiateRegoLib(res *interfaces.Result) []func(*rego.Rego) {
@@ -403,6 +408,77 @@ func FileHTTPType(res *interfaces.Result) func(*rego.Rego) {
 			httpTyp := http.DetectContentType(buffer[:n])
 			astHTTPTyp := ast.String(httpTyp)
 			return ast.NewTerm(astHTTPTyp), nil
+		},
+	)
+}
+
+// JQIsTrue is a rego function that accepts parsed YAML data and runs a jq query on it.
+// The query is a string in jq format that returns a boolean.
+// It returns a boolean indicating whether the jq query matches the parsed YAML data.
+// It takes two arguments: the parsed YAML data as an AST term, and the jq query as a string.
+// It's exposed as `jq.is_true`.
+func JQIsTrue(_ *interfaces.Result) func(*rego.Rego) {
+	return rego.Function2(
+		&rego.Function{
+			Name: "jq.is_true",
+			// The function takes two arguments: parsed YAML data and the jq query string
+			Decl: types.NewFunction(types.Args(types.A, types.S), types.B),
+		},
+		func(_ rego.BuiltinContext, parsedYaml *ast.Term, query *ast.Term) (*ast.Term, error) {
+			var jqQuery string
+			if err := ast.As(query.Value, &jqQuery); err != nil {
+				return nil, err
+			}
+
+			// Convert the AST value back to a Go interface{}
+			jsonObj, err := ast.JSON(parsedYaml.Value)
+			if err != nil {
+				return nil, fmt.Errorf("error converting AST to JSON: %w", err)
+			}
+
+			doesMatch, err := util.JQEvalBoolExpression(context.TODO(), jqQuery, jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error running jq query: %w", err)
+			}
+
+			return ast.BooleanTerm(doesMatch), nil
+		},
+	)
+}
+
+// ParseYaml is a rego function that parses a YAML string into a structured data format.
+// It takes one argument: the YAML content as a string.
+// It returns the parsed YAML data as an AST term.
+// It's exposed as `parse_yaml`.
+func ParseYaml(_ *interfaces.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "parse_yaml",
+			// Takes one string argument (the YAML content) and returns any type
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		func(_ rego.BuiltinContext, yamlContent *ast.Term) (*ast.Term, error) {
+			var yamlStr string
+
+			// Convert the YAML input from the term into a string
+			if err := ast.As(yamlContent.Value, &yamlStr); err != nil {
+				return nil, err
+			}
+
+			// Convert the YAML string into a Go map
+			var jsonObj any
+			err := yaml.Unmarshal([]byte(yamlStr), &jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
+			}
+
+			// Convert the Go value to an ast.Value
+			value, err := ast.InterfaceToValue(jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error converting to AST value: %w", err)
+			}
+
+			return ast.NewTerm(value), nil
 		},
 	)
 }

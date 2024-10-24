@@ -15,8 +15,8 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	db "github.com/mindersec/minder/internal/db"
-	sf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
 
 func TestCreateRuleType(t *testing.T) {

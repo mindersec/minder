@@ -269,8 +269,9 @@ func quickstartCommand(
 		return cli.MessageAndError("error opening rule type", err)
 	}
 
-	rt, err := minderv1.ParseRuleType(reader)
-	if err != nil {
+	rt := &minderv1.RuleType{}
+
+	if err := minderv1.ParseResource(reader, rt); err != nil {
 		return cli.MessageAndError("error parsing rule type", err)
 	}
 

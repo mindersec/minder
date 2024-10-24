@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package logger
+package server
 
 import (
 	"io"
@@ -11,14 +11,28 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	config "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/util"
 )
 
-// FromFlags configures logging and returns a logger with settings matching
-// the supplied cfg.  It also performs some global initialization, because
+// Text is the constant for the text format
+const Text = "text"
+
+// LoggingConfig is the configuration for the logging package
+type LoggingConfig struct {
+	Level   string `mapstructure:"level" default:"debug"`
+	Format  string `mapstructure:"format" default:"json"`
+	LogFile string `mapstructure:"logFile" default:""`
+
+	// LogPayloads controls whether message payloads are ever logged.
+	// For debugging purposes, it may be useful to log the payloads that result
+	// in error conditions, but could also leak PII.
+	LogPayloads bool `mapstructure:"logPayloads" default:"false"`
+}
+
+// LoggerFromConfigFlags configures logging and returns a logger with settings matching
+// the supplied cfg. It also performs some global initialization, because
 // that's how zerolog works.
-func FromFlags(cfg config.LoggingConfig) zerolog.Logger {
+func LoggerFromConfigFlags(cfg LoggingConfig) zerolog.Logger {
 	zlevel := util.ViperLogLevelToZerologLevel(cfg.Level)
 	zerolog.SetGlobalLevel(zlevel)
 

@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 // GetUserForGitHubId looks up a user in Keycloak by their GitHub ID.  This is a temporary

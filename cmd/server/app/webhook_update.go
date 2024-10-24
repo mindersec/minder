@@ -16,13 +16,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/config"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers"
 	ghprovider "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -30,6 +27,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -60,7 +59,7 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to read config: %w", err)
 	}
 
-	ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
+	ctx := serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(context.Background())
 
 	providerName := cmd.Flag("provider").Value.String()
 

@@ -13,9 +13,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/database"
-	"github.com/mindersec/minder/internal/config"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
-	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 var downCmd = &cobra.Command{
@@ -28,7 +27,7 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("unable to read config: %w", err)
 		}
 
-		ctx := logger.FromFlags(cfg.LoggingConfig).WithContext(context.Background())
+		ctx := serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(context.Background())
 
 		// Database configuration
 		dbConn, connString, err := cfg.Database.GetDBConnection(ctx)

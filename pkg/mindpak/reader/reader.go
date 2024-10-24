@@ -103,8 +103,8 @@ func (b *bundleReader) ForEachRuleType(fn func(*v1.RuleType) error) error {
 		}
 
 		// parse rule type from YAML
-		parsedRuleType, err := v1.ParseRuleType(file)
-		if err != nil {
+		parsedRuleType := &v1.RuleType{}
+		if err := v1.ParseResource(file, parsedRuleType); err != nil {
 			return fmt.Errorf("error parsing rule type yaml: %w", err)
 		}
 		if err = file.Close(); err != nil {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 func FuzzEncryptDecrypt(f *testing.F) {

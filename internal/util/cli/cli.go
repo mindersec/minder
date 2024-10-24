@@ -21,8 +21,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mindersec/minder/internal/config"
 	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // ErrWrappedCLIError is an error that wraps another error and provides a message used from within the CLI
@@ -233,11 +233,5 @@ func GetRelevantCLIConfigPath(v *viper.Viper) string {
 
 // IsYAMLFileAndNotATest checks if a file is a YAML file and not a test file
 func IsYAMLFileAndNotATest(path string) bool {
-	return (filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml") &&
-		!IsTestFile(path)
-}
-
-// IsTestFile checks if a file is a test file. Test files are YAML files ending with .test.yaml or .test.yml
-func IsTestFile(path string) bool {
-	return strings.HasSuffix(path, ".test.yaml") || strings.HasSuffix(path, ".test.yml")
+	return (filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml")
 }

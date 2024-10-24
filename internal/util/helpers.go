@@ -406,14 +406,23 @@ func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), e
 	return desc, closer, nil
 }
 
+// ExpandedFile is a struct to hold a file path and whether it was expanded
+type ExpandedFile struct {
+	Path     string
+	Expanded bool
+}
+
 // ExpandFileArgs expands a list of file arguments into a list of files.
 // If the file list contains "-" or regular files, it will leave them as-is.
 // If the file list contains directories, it will expand them into a list of files.
-func ExpandFileArgs(files []string) ([]string, error) {
-	var expandedFiles []string
+func ExpandFileArgs(files []string) ([]ExpandedFile, error) {
+	var expandedFiles []ExpandedFile
 	for _, f := range files {
 		if f == "-" {
-			expandedFiles = append(expandedFiles, f)
+			expandedFiles = append(expandedFiles, ExpandedFile{
+				Path:     f,
+				Expanded: false,
+			})
 			continue
 		}
 		f = filepath.Clean(f)
@@ -430,7 +439,10 @@ func ExpandFileArgs(files []string) ([]string, error) {
 				}
 
 				if !info.IsDir() {
-					expandedFiles = append(expandedFiles, path)
+					expandedFiles = append(expandedFiles, ExpandedFile{
+						Path:     path,
+						Expanded: true,
+					})
 				}
 
 				return nil
@@ -440,7 +452,10 @@ func ExpandFileArgs(files []string) ([]string, error) {
 			}
 		} else {
 			// add file
-			expandedFiles = append(expandedFiles, f)
+			expandedFiles = append(expandedFiles, ExpandedFile{
+				Path:     f,
+				Expanded: false,
+			})
 		}
 	}
 

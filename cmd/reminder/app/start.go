@@ -14,11 +14,10 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/mindersec/minder/internal/config"
-	reminderconfig "github.com/mindersec/minder/internal/config/reminder"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/reminder"
-	"github.com/mindersec/minder/internal/reminder/logger"
+	"github.com/mindersec/minder/pkg/config"
+	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 )
 
 var startCmd = &cobra.Command{
@@ -42,7 +41,7 @@ func start(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("error validating config: %w", err)
 	}
 
-	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+	ctx = reminderconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 
 	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 	if err != nil {

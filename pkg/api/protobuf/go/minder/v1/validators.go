@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
 var (
@@ -23,6 +25,10 @@ var (
 	ErrBadDNSStyleName = errors.New(
 		"name may only contain letters, numbers, hyphens and underscores, and is limited to a maximum of 63 characters",
 	)
+)
+
+var (
+	validate = validator.New(validator.WithRequiredStructEnabled())
 )
 
 // Validator is an interface which allows for the validation of a struct.

@@ -44,8 +44,8 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 			defer f.Close()
 
 			t.Log("parsing rule type", path)
-			rt, err := minderv1.ParseRuleType(f)
-			require.NoError(t, err, "failed to parse rule type %s", path)
+			rt := &minderv1.RuleType{}
+			require.NoError(t, minderv1.ParseResource(f, rt), "failed to parse rule type %s", path)
 			require.NotNil(t, rt, "failed to parse rule type %s", path)
 
 			require.NoError(t, rt.Validate(), "failed to validate rule type %s", path)

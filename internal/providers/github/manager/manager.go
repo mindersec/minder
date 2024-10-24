@@ -18,7 +18,6 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
@@ -31,6 +30,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/service"
 	m "github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/pkg/config/server"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

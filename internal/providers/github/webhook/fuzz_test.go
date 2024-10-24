@@ -17,10 +17,10 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/go-github/v63/github"
 
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 var eventTypes = [23]string{

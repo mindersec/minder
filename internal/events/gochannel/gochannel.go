@@ -12,8 +12,8 @@ import (
 	"github.com/alexdrl/zerowater"
 	"github.com/rs/zerolog"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/events/common"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // BuildGoChannelDriver creates a gochannel driver for the eventer

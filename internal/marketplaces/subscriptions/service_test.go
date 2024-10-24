@@ -19,9 +19,9 @@ import (
 	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
 	"github.com/mindersec/minder/internal/profiles"
 	psf "github.com/mindersec/minder/internal/profiles/mock/fixtures"
-	"github.com/mindersec/minder/internal/ruletypes"
-	rsf "github.com/mindersec/minder/internal/ruletypes/mock/fixtures"
 	"github.com/mindersec/minder/pkg/mindpak/reader"
+	"github.com/mindersec/minder/pkg/ruletypes"
+	rsf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
 
 func TestSubscriptionService_Subscribe(t *testing.T) {

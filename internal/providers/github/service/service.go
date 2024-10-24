@@ -20,7 +20,6 @@ import (
 	"github.com/rs/zerolog"
 	"golang.org/x/oauth2"
 
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
@@ -28,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/credentials"
 	ghprov "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

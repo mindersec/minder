@@ -33,7 +33,6 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
@@ -51,6 +50,7 @@ import (
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	"github.com/mindersec/minder/internal/providers/session"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -22,7 +22,7 @@ import (
 
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
-	srvconfig "github.com/mindersec/minder/internal/config/server"
+	srvconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 var (

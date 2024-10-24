@@ -21,15 +21,14 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	noopauth "github.com/mindersec/minder/internal/auth/jwt/noop"
 	mockauthz "github.com/mindersec/minder/internal/authz/mock"
-	"github.com/mindersec/minder/internal/config"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db/embedded"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/service"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // CmdTestServer starts a test server for integration testing.
@@ -54,7 +53,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 	defer cancel()
 
-	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+	ctx = serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 	l := zerolog.Ctx(ctx)
 	l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 

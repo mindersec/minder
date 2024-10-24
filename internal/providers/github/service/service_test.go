@@ -29,7 +29,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 
-	"github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -41,6 +40,7 @@ import (
 	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/rand"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 type testMocks struct {

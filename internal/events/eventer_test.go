@@ -15,8 +15,8 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/events"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 type fakeConsumer struct {

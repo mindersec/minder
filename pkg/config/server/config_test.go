@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/config"
-	serverconfig "github.com/mindersec/minder/internal/config/server"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestReadValidConfig(t *testing.T) {

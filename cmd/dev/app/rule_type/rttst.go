@@ -17,17 +17,14 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	serverconfig "github.com/mindersec/minder/internal/config/server"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/engine/selectors"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/credentials"
@@ -40,6 +37,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -251,7 +250,7 @@ func runEvaluationForRules(
 		// Enable logging for the engine
 		ctx := context.Background()
 		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
-		ctx = logger.FromFlags(logConfig).WithContext(ctx)
+		ctx = serverconfig.LoggerFromConfigFlags(logConfig).WithContext(ctx)
 
 		// convert to EntityInfoWrapper as that's what the engine operates on
 		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp, prov)
@@ -314,7 +313,13 @@ func readRuleTypeFromFile(fpath string) (*minderv1.RuleType, error) {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	return minderv1.ParseRuleType(f)
+	rt := &minderv1.RuleType{}
+	err = minderv1.ParseResource(f, rt)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing rule type: %w", err)
+	}
+
+	return rt, nil
 }
 
 func readEntityWithPropertiesFromFile(

@@ -4,7 +4,7 @@
 package reminder
 
 import (
-	"github.com/mindersec/minder/internal/config"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // EventConfig is the configuration for reminder's eventing system.
