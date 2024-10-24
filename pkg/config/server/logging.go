@@ -4,12 +4,14 @@
 package server
 
 import (
-	"github.com/mindersec/minder/internal/util"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+
+	"github.com/mindersec/minder/internal/util"
 )
 
 // Text is the constant for the text format

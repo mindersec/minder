@@ -4,9 +4,11 @@
 package reminder
 
 import (
-	"github.com/mindersec/minder/internal/util"
-	"github.com/rs/zerolog"
 	"os"
+
+	"github.com/rs/zerolog"
+
+	"github.com/mindersec/minder/internal/util"
 )
 
 // LoggingConfig is the configuration for the logger
