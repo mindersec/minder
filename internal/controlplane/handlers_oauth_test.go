@@ -38,7 +38,6 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
 	mockclients "github.com/mindersec/minder/internal/providers/github/clients/mock"
@@ -51,6 +50,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/session"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -378,7 +378,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -890,7 +890,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -1046,7 +1046,7 @@ func TestVerifyProviderCredential(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

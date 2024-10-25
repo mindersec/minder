@@ -11,13 +11,15 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func recordMetrics(instruments *messageInstruments) func(h message.HandlerFunc) message.HandlerFunc {
 	metricsFunc := func(h message.HandlerFunc) message.HandlerFunc {
 		return func(msg *message.Message) ([]*message.Message, error) {
 			var processingTime time.Duration
-			if publishedAt := msg.Metadata.Get(PublishedKey); publishedAt != "" {
+			if publishedAt := msg.Metadata.Get(constants.PublishedKey); publishedAt != "" {
 				if parsedTime, err := time.Parse(time.RFC3339, publishedAt); err == nil {
 					processingTime = time.Since(parsedTime)
 				}

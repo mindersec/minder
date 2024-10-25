@@ -23,10 +23,10 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/email"
-	mockevents "github.com/mindersec/minder/internal/events/mock"
 	"github.com/mindersec/minder/internal/projects"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
+	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
 
 func TestCreateInvite(t *testing.T) {

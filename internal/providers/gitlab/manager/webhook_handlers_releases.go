@@ -14,9 +14,9 @@ import (
 
 	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func (m *providerClassManager) handleRelease(l zerolog.Logger, r *http.Request) error {
@@ -47,13 +47,13 @@ func (m *providerClassManager) handleRelease(l zerolog.Logger, r *http.Request) 
 	switch {
 	case releaseEvent.Action == "create":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
-			events.TopicQueueOriginatingEntityAdd)
+			constants.TopicQueueOriginatingEntityAdd)
 	case releaseEvent.Action == "update":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
-			events.TopicQueueRefreshEntityAndEvaluate)
+			constants.TopicQueueRefreshEntityAndEvaluate)
 	case releaseEvent.Action == "delete":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
-			events.TopicQueueOriginatingEntityDelete)
+			constants.TopicQueueOriginatingEntityDelete)
 	default:
 		return nil
 	}

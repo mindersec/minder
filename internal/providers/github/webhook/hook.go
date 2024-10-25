@@ -22,10 +22,11 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 const (
@@ -66,7 +67,7 @@ type processingResult struct {
 // HandleWebhookEvent is the main entry point for processing github webhook events
 func HandleWebhookEvent(
 	mt metrics.Metrics,
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 	whconfig *server.WebhookConfig,
 ) http.HandlerFunc {
 	// the function handles incoming GitHub webhooks
@@ -105,15 +106,15 @@ func HandleWebhookEvent(
 
 		// TODO: extract sender and event time from payload portably
 		m := message.NewMessage(uuid.New().String(), nil)
-		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
-		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
-		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
+		m.Metadata.Set(constants.ProviderDeliveryIdKey, github.DeliveryID(r))
+		m.Metadata.Set(constants.ProviderTypeKey, string(db.ProviderTypeGithub))
+		m.Metadata.Set(constants.ProviderSourceKey, "https://api.github.com/") // TODO: handle other sources
+		m.Metadata.Set(constants.GithubWebhookEventTypeKey, wes.Typ)
 
 		l = l.With().
-			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
-			Str("providertype", m.Metadata[events.ProviderTypeKey]).
-			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			Str("webhook-event-type", m.Metadata[constants.GithubWebhookEventTypeKey]).
+			Str("providertype", m.Metadata[constants.ProviderTypeKey]).
+			Str("upstream-delivery-id", m.Metadata[constants.ProviderDeliveryIdKey]).
 			// This is added for consistency with how
 			// watermill tracks message UUID when logging.
 			Str("message_uuid", m.UUID).

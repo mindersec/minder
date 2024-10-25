@@ -22,7 +22,6 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
 	"github.com/mindersec/minder/internal/reconcilers"
@@ -30,6 +29,8 @@ import (
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -72,13 +73,13 @@ type ProfileService interface {
 }
 
 type profileService struct {
-	publisher events.Publisher
+	publisher interfaces.Publisher
 	validator *Validator
 }
 
 // NewProfileService creates an instance of ProfileService
 func NewProfileService(
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 	selChecker selectors.SelectionChecker,
 ) ProfileService {
 	return &profileService{
@@ -419,7 +420,7 @@ func (p *profileService) sendNewProfileEvent(
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := p.publisher.Publish(events.TopicQueueReconcileProfileInit, msg); err != nil {
+	if err := p.publisher.Publish(constants.TopicQueueReconcileProfileInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 }

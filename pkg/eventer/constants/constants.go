@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package events
+// Package constants contains constants used by the eventer package.
+package constants
 
 // Metadata added to Messages
 const (
@@ -19,8 +20,10 @@ const (
 )
 
 const (
-	metricsNamespace = "minder"
-	metricsSubsystem = "eventer"
+	// MetricsNamespace is the namespace for all metrics emitted by the eventer
+	MetricsNamespace = "minder"
+	// MetricsSubsystem is the subsystem for all metrics emitted by the eventer
+	MetricsSubsystem = "eventer"
 )
 
 const (

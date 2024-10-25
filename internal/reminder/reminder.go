@@ -16,10 +16,10 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/events/common"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
 	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // Interface is an interface over the reminder service
@@ -143,7 +143,7 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
-	err = r.eventPublisher.Publish(events.TopicQueueRepoReminder, messages...)
+	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
 	}

@@ -15,9 +15,9 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // repoEvent represents any event related to a repository.
@@ -125,7 +125,7 @@ func processRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	return sendEvaluateRepoMessage(event.GetRepo(), events.TopicQueueRefreshEntityAndEvaluate)
+	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate)
 }
 
 func sendEvaluateRepoMessage(
@@ -204,14 +204,14 @@ func processRelevantRepositoryEvent(
 	}
 
 	// For all other events exept deletions we issue a refresh event.
-	topic := events.TopicQueueRefreshEntityAndEvaluate
+	topic := constants.TopicQueueRefreshEntityAndEvaluate
 
 	// For webhook deletions, repository deletions, and repository
 	// transfers, we issue a delete event with the correct message
 	// type.
 	if event.GetAction() == webhookActionEventDeleted ||
 		event.GetAction() == webhookActionEventTransferred {
-		topic = events.TopicQueueGetEntityAndDelete
+		topic = constants.TopicQueueGetEntityAndDelete
 	}
 
 	return &processingResult{

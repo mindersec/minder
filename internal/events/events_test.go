@@ -15,13 +15,15 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	"github.com/mindersec/minder/internal/events"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 type fakeConsumer struct {
 	topics            []string
-	makeHandler       func(string, chan eventPair) events.Handler
+	makeHandler       func(string, chan eventPair) interfaces.Handler
 	shouldFailHandler bool
 	// Filled in by test later
 	out chan eventPair
@@ -39,13 +41,13 @@ func driverConfig() *serverconfig.EventConfig {
 	}
 }
 
-func (f *fakeConsumer) Register(r events.Registrar) {
+func (f *fakeConsumer) Register(r interfaces.Registrar) {
 	for _, t := range f.topics {
 		r.Register(t, f.makeHandler(t, f.out))
 	}
 }
 
-func fakeHandler(id string, out chan eventPair) events.Handler {
+func fakeHandler(id string, out chan eventPair) interfaces.Handler {
 	return func(msg *message.Message) error {
 		ctx := msg.Context()
 		select {
@@ -56,7 +58,7 @@ func fakeHandler(id string, out chan eventPair) events.Handler {
 	}
 }
 
-func countFailuresHandler(counter *int) events.Handler {
+func countFailuresHandler(counter *int) interfaces.Handler {
 	return func(_ *message.Message) error {
 		*counter++
 		return errors.New("handler always fails")
@@ -116,7 +118,7 @@ func TestEventer(t *testing.T) {
 					// This looks silly, but we need to generate a unique name for
 					// the second handler on topic "a".  In real usage, each Consumer
 					// will register a different function.
-					makeHandler: func(_ string, out chan eventPair) events.Handler {
+					makeHandler: func(_ string, out chan eventPair) interfaces.Handler {
 						return func(msg *message.Message) error {
 							out <- eventPair{"other", msg.Copy()}
 							return nil
@@ -129,7 +131,7 @@ func TestEventer(t *testing.T) {
 			name:    "handler fails, message goes to DLQ",
 			publish: []eventPair{{"test_dlq", &message.Message{Metadata: map[string]string{}}}},
 			want: map[string][]message.Message{
-				events.DeadLetterQueueTopic: {{}},
+				constants.DeadLetterQueueTopic: {{}},
 			},
 			consumers: []fakeConsumer{
 				{
@@ -137,7 +139,7 @@ func TestEventer(t *testing.T) {
 					shouldFailHandler: true,
 				},
 				{
-					topics:      []string{events.DeadLetterQueueTopic},
+					topics:      []string{constants.DeadLetterQueueTopic},
 					makeHandler: fakeHandler,
 				},
 			},
@@ -227,15 +229,15 @@ var setupMu sync.Mutex
 // We currently use the global meter provider, so reset it for each test.
 // Since this is global, we use a global mutex to ensure we don't enter setup
 // concurrently.
-func setupEventerWithMetricReader(ctx context.Context) (events.Interface, *metric.ManualReader, error) {
+func setupEventerWithMetricReader(ctx context.Context) (interfaces.Interface, *metric.ManualReader, error) {
 	setupMu.Lock()
 	defer setupMu.Unlock()
 	oldMeter := otel.GetMeterProvider()
 	defer otel.SetMeterProvider(oldMeter)
 	metricReader := metric.NewManualReader()
 	otel.SetMeterProvider(metric.NewMeterProvider(metric.WithReader(metricReader)))
-	eventer, err := events.Setup(ctx, driverConfig())
-	return eventer, metricReader, err
+	ev, err := eventer.New(ctx, nil, driverConfig())
+	return ev, metricReader, err
 }
 
 func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounter *int) {
@@ -249,8 +251,8 @@ func setupConsumer(c *fakeConsumer, out chan eventPair, failureCounter *int) {
 	}
 }
 
-func makeFailingHandler(counter *int) func(_ string, _ chan eventPair) events.Handler {
-	return func(_ string, _ chan eventPair) events.Handler {
+func makeFailingHandler(counter *int) func(_ string, _ chan eventPair) interfaces.Handler {
+	return func(_ string, _ chan eventPair) interfaces.Handler {
 		return countFailuresHandler(counter)
 	}
 }
