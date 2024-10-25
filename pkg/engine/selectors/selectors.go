@@ -19,9 +19,9 @@ import (
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
 
-	"github.com/mindersec/minder/internal/profiles/models"
 	internalpb "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 var (

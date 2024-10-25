@@ -31,7 +31,6 @@ import (
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/metrics/meters"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
@@ -51,6 +50,7 @@ import (
 	"github.com/mindersec/minder/internal/roles"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 

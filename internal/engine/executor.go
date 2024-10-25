@@ -25,12 +25,12 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/history"
 	minderlogger "github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/profiles"
-	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/manager"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -34,7 +34,6 @@ import (
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	ghmanager "github.com/mindersec/minder/internal/providers/github/manager"
@@ -46,6 +45,7 @@ import (
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	mock_selectors "github.com/mindersec/minder/pkg/engine/selectors/mock"
+	"github.com/mindersec/minder/pkg/profiles"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

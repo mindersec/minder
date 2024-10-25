@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 
 	sub "github.com/mindersec/minder/internal/marketplaces/subscriptions"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/mindpak"
 	src "github.com/mindersec/minder/pkg/mindpak/sources"
+	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
