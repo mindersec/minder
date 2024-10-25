@@ -236,7 +236,7 @@ func setupEventerWithMetricReader(ctx context.Context) (interfaces.Interface, *m
 	defer otel.SetMeterProvider(oldMeter)
 	metricReader := metric.NewManualReader()
 	otel.SetMeterProvider(metric.NewMeterProvider(metric.WithReader(metricReader)))
-	ev, err := eventer.New(ctx, driverConfig())
+	ev, err := eventer.New(ctx, nil, driverConfig())
 	return ev, metricReader, err
 }
 

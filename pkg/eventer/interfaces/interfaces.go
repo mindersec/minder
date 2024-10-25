@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package interfaces provides the interfaces for the eventer object
+// Package interfaces provides the interfaces for the eventer package.
 package interfaces
 
 import (

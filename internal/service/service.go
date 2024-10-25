@@ -74,7 +74,7 @@ func AllInOneServerService(
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
 
-	evt, err := eventer.New(ctx, &cfg.Events)
+	evt, err := eventer.New(ctx, nil, &cfg.Events)
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}

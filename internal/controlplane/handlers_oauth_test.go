@@ -378,7 +378,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -890,7 +890,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -1046,7 +1046,7 @@ func TestVerifyProviderCredential(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

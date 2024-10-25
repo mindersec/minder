@@ -18,6 +18,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/ThreeDotsLabs/watermill/message/router/middleware"
 	"github.com/alexdrl/zerowater"
+	"github.com/open-feature/go-sdk/openfeature"
 	promgo "github.com/prometheus/client_golang/prometheus"
 	"github.com/rs/zerolog"
 	"go.opentelemetry.io/otel"
@@ -58,7 +59,7 @@ type messageInstruments struct {
 }
 
 // NewEventer creates an eventer object which isolates the watermill setup code
-func NewEventer(ctx context.Context, cfg *serverconfig.EventConfig) (interfaces.Interface, error) {
+func NewEventer(ctx context.Context, _ openfeature.IClient, cfg *serverconfig.EventConfig) (interfaces.Interface, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}

@@ -439,7 +439,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
