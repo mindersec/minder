@@ -27,11 +27,11 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties"
 	psvc "github.com/mindersec/minder/internal/entities/properties/service"
 	propsvcmock "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/internal/events"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 const (
@@ -87,7 +87,7 @@ func TestAggregator(t *testing.T) {
 	aggr.Register(evt)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
 
 	go func() {
 		t.Log("Running eventer")
@@ -134,7 +134,7 @@ func TestAggregator(t *testing.T) {
 			msg, err := inf.BuildMessage()
 			require.NoError(t, err, "expected no error when building message")
 
-			err = evt.Publish(events.TopicQueueEntityFlush, msg.Copy())
+			err = evt.Publish(constants.TopicQueueEntityFlush, msg.Copy())
 			require.NoError(t, err, "expected no error when publishing message")
 		}()
 	}
@@ -353,7 +353,7 @@ func TestFlushAll(t *testing.T) {
 			require.NoError(t, err)
 
 			flushedMessages := newTestPubSub()
-			evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
+			evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 			go func() {
 				t.Log("Running eventer")
@@ -413,7 +413,7 @@ func TestFlushAllListFlushIsEmpty(t *testing.T) {
 	flushedMessages := newTestPubSub()
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
+	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add, aggr.AggregateMiddleware)
 
 	t.Log("Flushing all")
 	require.NoError(t, aggr.FlushAll(ctx), "expected no error")
@@ -441,7 +441,7 @@ func TestFlushAllListFlushFails(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
+	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 	go func() {
 		t.Log("Running eventer")
@@ -491,7 +491,7 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 	require.NoError(t, err)
 
 	// This tests that flushing sends messages to the executor engine
-	evt.Register(events.TopicQueueEntityEvaluate, flushedMessages.Add)
+	evt.Register(constants.TopicQueueEntityEvaluate, flushedMessages.Add)
 
 	go func() {
 		t.Log("Running eventer")

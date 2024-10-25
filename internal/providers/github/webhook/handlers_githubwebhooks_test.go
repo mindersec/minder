@@ -41,7 +41,6 @@ import (
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	gf "github.com/mindersec/minder/internal/providers/github/mock/fixtures"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
@@ -51,6 +50,7 @@ import (
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -132,7 +132,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
+	evt.Register(constants.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -182,7 +182,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	defer pq.Close()
 	queued := pq.GetQueue()
 
-	evt.Register(events.TopicQueueRefreshEntityAndEvaluate, pq.Pass)
+	evt.Register(constants.TopicQueueRefreshEntityAndEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -242,7 +242,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	// This changes because "meta" event can only trigger a
 	// deletion
 
-	evt.Register(events.TopicQueueGetEntityAndDelete, pq.Pass)
+	evt.Register(constants.TopicQueueGetEntityAndDelete, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -342,7 +342,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt.Register(events.TopicQueueEntityEvaluate, pq.Pass)
+	evt.Register(constants.TopicQueueEntityEvaluate, pq.Pass)
 
 	go func() {
 		err := evt.Run(context.Background())
@@ -461,7 +461,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://github.com/apps"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -485,7 +485,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL: github.String("https://example.com/random/url"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -523,7 +523,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("login/package-name"),
 			},
-			topic:      events.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -546,7 +546,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder"),
 			},
-			topic:      events.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -591,7 +591,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -609,7 +609,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 		},
 
@@ -645,7 +645,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -680,7 +680,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -715,7 +715,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -747,7 +747,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -792,7 +792,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://example.com/random/url"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -827,7 +827,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -862,7 +862,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -894,7 +894,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -924,7 +924,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -960,7 +960,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -999,7 +999,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1034,7 +1034,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1062,7 +1062,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1090,7 +1090,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1118,7 +1118,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1145,7 +1145,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1173,7 +1173,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1200,7 +1200,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1228,7 +1228,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1261,7 +1261,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1293,7 +1293,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1325,7 +1325,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1357,7 +1357,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1390,7 +1390,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1423,7 +1423,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1456,7 +1456,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1490,7 +1490,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, _ string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1521,7 +1521,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1556,7 +1556,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			// the message is passed on to events.TopicQueueRefreshEntityAndEvaluate
 			// which should discard it (see test there)
@@ -1589,7 +1589,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Private:  github.Bool(true),
 				},
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			// the message is passed on to events.TopicQueueRefreshEntityAndEvaluate
 			// which should discard it (see test there)
@@ -1625,7 +1625,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1653,7 +1653,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1681,7 +1681,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1709,7 +1709,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1737,7 +1737,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1765,7 +1765,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1792,7 +1792,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1820,7 +1820,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1848,7 +1848,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1876,7 +1876,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1904,7 +1904,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1932,7 +1932,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1960,7 +1960,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -1988,7 +1988,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2016,7 +2016,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2044,7 +2044,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2071,7 +2071,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2098,7 +2098,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2118,7 +2118,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "org_block",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#OrgBlockEvent
 			payload:    &github.OrgBlockEvent{},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 			queued:     nil,
 		},
@@ -2136,7 +2136,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					HTMLURL:  github.String("https://github.com/mindersec/minder"),
 				},
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2156,7 +2156,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			event: "push",
 			// https://pkg.go.dev/github.com/google/go-github/v62@v62.0.0/github#PushEvent
 			rawPayload: []byte(rawPushEvent),
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2185,7 +2185,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2211,7 +2211,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2230,7 +2230,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			// https://docs.github.com/en/webhooks/webhook-events-and-payloads#branch_protection_configuration
 			event:      "branch_protection_configuration",
 			rawPayload: []byte(rawBranchProtectionConfigurationDisabledEvent),
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2256,7 +2256,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2282,7 +2282,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2308,7 +2308,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2334,7 +2334,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2360,7 +2360,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2386,7 +2386,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					"https://github.com/mindersec/minder",
 				),
 			},
-			topic:      events.TopicQueueRefreshEntityAndEvaluate,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2430,7 +2430,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
-			topic:      events.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2472,7 +2472,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
-			topic:      events.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2514,7 +2514,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
-			topic:      events.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueOriginatingEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2555,7 +2555,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
-			topic:      events.TopicQueueOriginatingEntityDelete,
+			topic:      constants.TopicQueueOriginatingEntityDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -2619,7 +2619,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 					Login: github.String("stacklok"),
 				},
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusInternalServerError,
 			queued:     nil,
 		},
@@ -2632,7 +2632,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action:  github.String("created"),
 				Garbage: github.String("garbage"),
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 		},
 		{
@@ -2642,7 +2642,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				Action:  github.String("created"),
 				Garbage: github.String("garbage"),
 			},
-			topic:      events.TopicQueueEntityEvaluate,
+			topic:      constants.TopicQueueEntityEvaluate,
 			statusCode: http.StatusOK,
 		},
 	}
@@ -3022,7 +3022,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueReconcileEntityAdd,
+			topic:      constants.TopicQueueReconcileEntityAdd,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()
@@ -3109,7 +3109,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueReconcileEntityAdd,
+			topic:      constants.TopicQueueReconcileEntityAdd,
 			statusCode: http.StatusOK,
 			//nolint:thelper
 			queued: nil,
@@ -3164,7 +3164,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 					},
 					54321),
 			),
-			topic:      events.TopicQueueGetEntityAndDelete,
+			topic:      constants.TopicQueueGetEntityAndDelete,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()

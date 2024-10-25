@@ -28,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/events/nats"
 	eventersql "github.com/mindersec/minder/internal/events/sql"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -77,8 +78,8 @@ func NewEventer(ctx context.Context, cfg *serverconfig.EventConfig) (interfaces.
 
 	metricsBuilder := metrics.NewPrometheusMetricsBuilder(
 		promgo.DefaultRegisterer,
-		metricsNamespace,
-		metricsSubsystem)
+		constants.MetricsNamespace,
+		constants.MetricsSubsystem)
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 	zerolog.Ctx(ctx).Info().Msg("Router Metrics registered")
 
@@ -94,7 +95,7 @@ func NewEventer(ctx context.Context, cfg *serverconfig.EventConfig) (interfaces.
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
-	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
+	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, constants.DeadLetterQueueTopic)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
 	}
@@ -143,13 +144,13 @@ func instantiateDriver(
 	cfg *serverconfig.EventConfig,
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
 	switch driver {
-	case GoChannelDriver:
+	case constants.GoChannelDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using go-channel driver")
 		return gochannel.BuildGoChannelDriver(ctx, cfg)
-	case SQLDriver:
+	case constants.SQLDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
-	case NATSDriver:
+	case constants.NATSDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
 		return nats.BuildNatsChannelDriver(cfg)
 	default:
@@ -190,7 +191,7 @@ func (e *eventer) Publish(topic string, messages ...*message.Message) error {
 				"component":    "eventer",
 				"function":     "Publish",
 			})
-			msg.Metadata.Set(PublishedKey, time.Now().Format(time.RFC3339))
+			msg.Metadata.Set(constants.PublishedKey, time.Now().Format(time.RFC3339))
 		}
 	}
 

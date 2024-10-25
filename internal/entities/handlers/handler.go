@@ -19,10 +19,10 @@ import (
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties"
 	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -206,8 +206,8 @@ func NewRefreshByIDAndEvaluateHandler(
 		refreshEntity: entStrategies.NewRefreshEntityByIDStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
 
-		handlerName:        events.TopicQueueRefreshEntityByIDAndEvaluate,
-		forwardHandlerName: events.TopicQueueEntityEvaluate,
+		handlerName:        constants.TopicQueueRefreshEntityByIDAndEvaluate,
+		forwardHandlerName: constants.TopicQueueEntityEvaluate,
 
 		handlerMiddleware: handlerMiddleware,
 	}
@@ -228,8 +228,8 @@ func NewRefreshEntityAndEvaluateHandler(
 		refreshEntity: entStrategies.NewRefreshEntityByUpstreamPropsStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
 
-		handlerName:        events.TopicQueueRefreshEntityAndEvaluate,
-		forwardHandlerName: events.TopicQueueEntityEvaluate,
+		handlerName:        constants.TopicQueueRefreshEntityAndEvaluate,
+		forwardHandlerName: constants.TopicQueueEntityEvaluate,
 
 		handlerMiddleware: handlerMiddleware,
 	}
@@ -249,8 +249,8 @@ func NewGetEntityAndDeleteHandler(
 		refreshEntity: entStrategies.NewGetEntityByUpstreamIDStrategy(propSvc),
 		createMessage: msgStrategies.NewToMinderEntity(),
 
-		handlerName:        events.TopicQueueGetEntityAndDelete,
-		forwardHandlerName: events.TopicQueueReconcileEntityDelete,
+		handlerName:        constants.TopicQueueGetEntityAndDelete,
+		forwardHandlerName: constants.TopicQueueReconcileEntityDelete,
 
 		handlerMiddleware: handlerMiddleware,
 	}
@@ -271,8 +271,8 @@ func NewAddOriginatingEntityHandler(
 		refreshEntity: entStrategies.NewAddOriginatingEntityStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
 
-		handlerName:        events.TopicQueueOriginatingEntityAdd,
-		forwardHandlerName: events.TopicQueueEntityEvaluate,
+		handlerName:        constants.TopicQueueOriginatingEntityAdd,
+		forwardHandlerName: constants.TopicQueueEntityEvaluate,
 
 		handlerMiddleware: handlerMiddleware,
 	}
@@ -292,7 +292,7 @@ func NewRemoveOriginatingEntityHandler(
 		refreshEntity: entStrategies.NewDelOriginatingEntityStrategy(propSvc, provMgr, store),
 		createMessage: msgStrategies.NewCreateEmpty(),
 
-		handlerName: events.TopicQueueOriginatingEntityDelete,
+		handlerName: constants.TopicQueueOriginatingEntityDelete,
 
 		handlerMiddleware: handlerMiddleware,
 	}

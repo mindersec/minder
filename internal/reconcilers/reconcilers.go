@@ -8,9 +8,9 @@ package reconcilers
 import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/repositories"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -42,8 +42,8 @@ func NewReconciler(
 
 // Register implements the Consumer interface.
 func (r *Reconciler) Register(reg interfaces.Registrar) {
-	reg.Register(events.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
-	reg.Register(events.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
-	reg.Register(events.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)
-	reg.Register(events.TopicQueueReconcileEntityAdd, r.handleEntityAddEvent)
+	reg.Register(constants.TopicQueueReconcileRepoInit, r.handleRepoReconcilerEvent)
+	reg.Register(constants.TopicQueueReconcileProfileInit, r.handleProfileInitEvent)
+	reg.Register(constants.TopicQueueReconcileEntityDelete, r.handleEntityDeleteEvent)
+	reg.Register(constants.TopicQueueReconcileEntityAdd, r.handleEntityAddEvent)
 }

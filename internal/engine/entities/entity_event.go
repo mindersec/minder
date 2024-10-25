@@ -12,8 +12,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/events"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -187,7 +187,7 @@ func (eiw *EntityInfoWrapper) Publish(evt interfaces.Publisher) error {
 		return err
 	}
 
-	if err := evt.Publish(events.TopicQueueEntityEvaluate, msg); err != nil {
+	if err := evt.Publish(constants.TopicQueueEntityEvaluate, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 

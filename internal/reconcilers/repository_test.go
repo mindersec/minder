@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mindersec/minder/internal/events"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 var (
@@ -33,7 +33,7 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 	}{
 		{
 			name:            "valid event",
-			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
+			topic:           constants.TopicQueueRefreshEntityByIDAndEvaluate,
 			entityID:        testRepoID,
 			expectedPublish: true,
 			expectedErr:     false,
@@ -44,7 +44,7 @@ func Test_handleRepoReconcilerEvent(t *testing.T) {
 			// just before reconciling artifacts - we verify that because if we hit the artifacts path, we would have
 			// a bunch of other mocks to call
 			name:            "event with string as upstream ID does publish",
-			topic:           events.TopicQueueRefreshEntityByIDAndEvaluate,
+			topic:           constants.TopicQueueRefreshEntityByIDAndEvaluate,
 			entityID:        testRepoID,
 			expectedPublish: true,
 			expectedErr:     false,

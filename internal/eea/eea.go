@@ -20,10 +20,10 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/manager"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -51,7 +51,7 @@ func NewEEA(querier db.Store, evt interfaces.Publisher, cfg *serverconfig.Aggreg
 
 // Register implements the Consumer interface.
 func (e *EEA) Register(r interfaces.Registrar) {
-	r.Register(events.TopicQueueEntityFlush, e.FlushMessageHandler)
+	r.Register(constants.TopicQueueEntityFlush, e.FlushMessageHandler)
 }
 
 // AggregateMiddleware will pass on the event to the executor engine

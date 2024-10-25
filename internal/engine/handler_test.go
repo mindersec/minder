@@ -16,11 +16,11 @@ import (
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/engine/entities"
 	mockengine "github.com/mindersec/minder/internal/engine/mock"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/util/testqueue"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
@@ -52,7 +52,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	go func() {
 		t.Log("Running eventer")
-		evt.Register(events.TopicQueueEntityFlush, pq.Pass)
+		evt.Register(constants.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()

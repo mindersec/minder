@@ -15,9 +15,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 
-	"github.com/mindersec/minder/internal/events"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -131,7 +131,7 @@ func TestEventer(t *testing.T) {
 			name:    "handler fails, message goes to DLQ",
 			publish: []eventPair{{"test_dlq", &message.Message{Metadata: map[string]string{}}}},
 			want: map[string][]message.Message{
-				events.DeadLetterQueueTopic: {{}},
+				constants.DeadLetterQueueTopic: {{}},
 			},
 			consumers: []fakeConsumer{
 				{
@@ -139,7 +139,7 @@ func TestEventer(t *testing.T) {
 					shouldFailHandler: true,
 				},
 				{
-					topics:      []string{events.DeadLetterQueueTopic},
+					topics:      []string{constants.DeadLetterQueueTopic},
 					makeHandler: fakeHandler,
 				},
 			},

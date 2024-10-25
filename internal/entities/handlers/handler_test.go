@@ -24,7 +24,6 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/entities/properties/service/mock/fixtures"
-	"github.com/mindersec/minder/internal/events"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
@@ -33,6 +32,7 @@ import (
 	provManFixtures "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -275,7 +275,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -290,7 +290,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			mockStoreFunc:   df.NewMockStore(),
 			expectedPublish: false,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -320,7 +320,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -355,7 +355,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -419,7 +419,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithSuccessfulGetFeatureInProject(true),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -619,7 +619,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				)
 			},
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkPullRequestMessage,
 		},
 		{
@@ -684,7 +684,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			expectedPublish: true,
 			checkWmMsg:      checkRepoEntityMessage,
-			topic:           events.TopicQueueReconcileEntityDelete,
+			topic:           constants.TopicQueueReconcileEntityDelete,
 		},
 		{
 			name:             "NewGetEntityAndDeleteHandler: failure to get entity does not publish",

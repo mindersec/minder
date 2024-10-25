@@ -14,8 +14,8 @@ import (
 
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 var (
@@ -94,7 +94,7 @@ func Test_handleProfileInitEvent(t *testing.T) {
 
 			require.Equal(t, scenario.numPublish, len(stubEventer.Sent))
 			if scenario.numPublish > 0 {
-				require.Contains(t, stubEventer.Topics, events.TopicQueueRefreshEntityByIDAndEvaluate)
+				require.Contains(t, stubEventer.Topics, constants.TopicQueueRefreshEntityByIDAndEvaluate)
 			}
 		})
 	}

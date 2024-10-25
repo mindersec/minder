@@ -10,9 +10,9 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog/log"
 
-	"github.com/mindersec/minder/internal/events"
 	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
@@ -28,7 +28,7 @@ func NewReminderProcessor(evt interfaces.Interface) *ReminderProcessor {
 
 // Register implements the Consumer interface.
 func (rp *ReminderProcessor) Register(r interfaces.Registrar) {
-	r.Register(events.TopicQueueRepoReminder, rp.reminderMessageHandler)
+	r.Register(constants.TopicQueueRepoReminder, rp.reminderMessageHandler)
 }
 
 func (rp *ReminderProcessor) reminderMessageHandler(msg *message.Message) error {
@@ -45,7 +45,7 @@ func (rp *ReminderProcessor) reminderMessageHandler(msg *message.Message) error 
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := rp.evt.Publish(events.TopicQueueReconcileRepoInit, repoReconcileMsg); err != nil {
+	if err := rp.evt.Publish(constants.TopicQueueReconcileRepoInit, repoReconcileMsg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 	return nil

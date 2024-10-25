@@ -18,13 +18,13 @@ import (
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -395,7 +395,7 @@ func (r *repositoryService) pushReconcilerEvent(entityID uuid.UUID, projectID uu
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err = r.eventProducer.Publish(events.TopicQueueReconcileRepoInit, msg); err != nil {
+	if err = r.eventProducer.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 

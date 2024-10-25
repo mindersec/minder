@@ -19,8 +19,8 @@ import (
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 var eventTypes = [23]string{
@@ -89,10 +89,10 @@ func FuzzGitHubEventParsers(f *testing.F) {
 		wes.Typ = github.WebHookType(req)
 
 		m := message.NewMessage("", nil)
-		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(req))
-		m.Metadata.Set(events.ProviderTypeKey, string(db.ProviderTypeGithub))
-		m.Metadata.Set(events.ProviderSourceKey, "")
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
+		m.Metadata.Set(constants.ProviderDeliveryIdKey, github.DeliveryID(req))
+		m.Metadata.Set(constants.ProviderTypeKey, string(db.ProviderTypeGithub))
+		m.Metadata.Set(constants.ProviderSourceKey, "")
+		m.Metadata.Set(constants.GithubWebhookEventTypeKey, wes.Typ)
 
 		// Create whConfig
 		whSecretFile, err := os.CreateTemp("", "webhooksecret*")
