@@ -47,11 +47,9 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
 	ghprov "github.com/mindersec/minder/internal/providers/github"
@@ -64,6 +62,8 @@ import (
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -81,7 +81,7 @@ var (
 type Server struct {
 	store        db.Store
 	cfg          *serverconfig.Config
-	evt          events.Publisher
+	evt          interfaces.Publisher
 	mt           metrics.Metrics
 	grpcServer   *grpc.Server
 	jwt          jwt.Validator
@@ -126,7 +126,7 @@ type Server struct {
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	cfg *serverconfig.Config,
 	serverMetrics metrics.Metrics,
 	jwtValidator jwt.Validator,

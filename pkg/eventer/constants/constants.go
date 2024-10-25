@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package events
+// Package constants contains constants used by the eventer package.
+package constants
 
 // Metadata added to Messages
 const (
@@ -17,11 +18,6 @@ const (
 
 	DeadLetterQueueTopic = "dead_letter_queue"
 	PublishedKey         = "published_at"
-)
-
-const (
-	metricsNamespace = "minder"
-	metricsSubsystem = "eventer"
 )
 
 const (

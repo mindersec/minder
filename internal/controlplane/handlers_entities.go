@@ -16,12 +16,12 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // ReconcileEntityRegistration reconciles the registration of an entity.
@@ -100,7 +100,7 @@ func (s *Server) ReconcileEntityRegistration(
 
 func (s *Server) publishEntityMessage(l *zerolog.Logger, msg *message.Message) error {
 	l.Info().Str("messageID", msg.UUID).Msg("publishing register entities message for execution")
-	return s.evt.Publish(events.TopicQueueReconcileEntityAdd, msg)
+	return s.evt.Publish(constants.TopicQueueReconcileEntityAdd, msg)
 }
 
 func createEntityMessage(

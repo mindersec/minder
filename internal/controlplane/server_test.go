@@ -33,13 +33,13 @@ import (
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers"
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	ghService "github.com/mindersec/minder/internal/providers/github/service"
 	mock_reposvc "github.com/mindersec/minder/internal/repositories/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 const bufSize = 1024 * 1024
@@ -78,7 +78,7 @@ func newDefaultServer(
 ) *Server {
 	t.Helper()
 
-	evt, err := events.Setup(context.Background(), nil, &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})

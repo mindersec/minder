@@ -12,8 +12,9 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/events"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // EntityInfoWrapper is a helper struct to gather information
@@ -180,13 +181,13 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 }
 
 // Publish builds a message.Message and publishes it to the event bus
-func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
+func (eiw *EntityInfoWrapper) Publish(evt interfaces.Publisher) error {
 	msg, err := eiw.BuildMessage()
 	if err != nil {
 		return err
 	}
 
-	if err := evt.Publish(events.TopicQueueEntityEvaluate, msg); err != nil {
+	if err := evt.Publish(constants.TopicQueueEntityEvaluate, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 

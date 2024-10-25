@@ -14,9 +14,9 @@ import (
 
 	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func (m *providerClassManager) handleMergeRequest(l zerolog.Logger, r *http.Request) error {
@@ -47,13 +47,13 @@ func (m *providerClassManager) handleMergeRequest(l zerolog.Logger, r *http.Requ
 	case mergeRequestEvent.ObjectAttributes.Action == "open",
 		mergeRequestEvent.ObjectAttributes.Action == "reopen":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
-			events.TopicQueueOriginatingEntityAdd)
+			constants.TopicQueueOriginatingEntityAdd)
 	case mergeRequestEvent.ObjectAttributes.Action == "close":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
-			events.TopicQueueOriginatingEntityDelete)
+			constants.TopicQueueOriginatingEntityDelete)
 	case mergeRequestEvent.ObjectAttributes.Action == "update":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
-			events.TopicQueueRefreshEntityAndEvaluate)
+			constants.TopicQueueRefreshEntityAndEvaluate)
 	default:
 		return nil
 	}

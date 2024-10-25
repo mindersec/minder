@@ -14,9 +14,9 @@ import (
 
 	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func (m *providerClassManager) handleRepoPush(l zerolog.Logger, r *http.Request) error {
@@ -83,7 +83,7 @@ func (m *providerClassManager) publishRefreshAndEvalForGitlabProject(
 
 	// Publish message
 	l.Debug().Str("msg_id", msgID).Msg("publishing refresh and eval message")
-	if err := m.pub.Publish(events.TopicQueueRefreshEntityAndEvaluate, msg); err != nil {
+	if err := m.pub.Publish(constants.TopicQueueRefreshEntityAndEvaluate, msg); err != nil {
 		l.Error().Err(err).Msg("error publishing refresh and eval message")
 		return fmt.Errorf("error publishing refresh and eval message: %w", err)
 	}

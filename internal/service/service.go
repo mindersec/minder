@@ -25,13 +25,11 @@ import (
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/metrics/meters"
-	"github.com/mindersec/minder/internal/profiles"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
@@ -51,6 +49,9 @@ import (
 	"github.com/mindersec/minder/internal/roles"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -75,7 +76,7 @@ func AllInOneServerService(
 	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
 	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
-	evt, err := events.Setup(ctx, featureFlagClient, &cfg.Events)
+	evt, err := eventer.New(ctx, nil, &cfg.Events)
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
@@ -270,7 +271,7 @@ func AllInOneServerService(
 	evt.ConsumeEvents(getAndDeleteEntity)
 
 	// Register the email manager to handle email invitations
-	var mailClient events.Consumer
+	var mailClient interfaces.Consumer
 	if cfg.Email.AWSSES.Region != "" && cfg.Email.AWSSES.Sender != "" {
 		// If AWS SES is configured, use it to send emails
 		mailClient, err = awsses.New(ctx, cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package events provides the eventer object which is responsible for setting up the watermill router
+// Package events provide the eventer object which is responsible for setting up the watermill router
 // and handling the incoming events
 package events
 
@@ -25,11 +25,19 @@ import (
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/mindersec/minder/internal/events/common"
-	gochannel "github.com/mindersec/minder/internal/events/gochannel"
+	"github.com/mindersec/minder/internal/events/gochannel"
 	"github.com/mindersec/minder/internal/events/nats"
 	eventersql "github.com/mindersec/minder/internal/events/sql"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
+
+// Ensure that the eventer implements the interfaces
+var _ interfaces.Publisher = (*eventer)(nil)
+var _ interfaces.Service = (*eventer)(nil)
+var _ interfaces.Registrar = (*eventer)(nil)
+var _ message.Publisher = (*eventer)(nil)
 
 // eventer is a wrapper over the relevant eventing objects in such
 // a way that they can be easily accessible and configurable.
@@ -45,21 +53,23 @@ type eventer struct {
 	closer common.DriverCloser
 }
 
-const metricComponent = "eventer"
-
-var _ Publisher = (*eventer)(nil)
-var _ Service = (*eventer)(nil)
-
 type messageInstruments struct {
 	// message processing time duration histogram
 	messageProcessingTimeHistogram metric.Int64Histogram
 }
 
-var _ Registrar = (*eventer)(nil)
-var _ message.Publisher = (*eventer)(nil)
+const (
+	// metricsNamespace is the namespace for all metrics emitted by the eventer
+	metricsNamespace = "minder"
+	// metricsSubsystem is the subsystem for all metrics emitted by the eventer
+	metricsSubsystem = "eventer"
+)
 
-// Setup creates an eventer object which isolates the watermill setup code
-func Setup(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfig.EventConfig) (Interface, error) {
+// NewEventer creates an eventer object which isolates the watermill setup code
+func NewEventer(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfig.EventConfig) (interfaces.Interface, error) {
+	if cfg == nil {
+		return nil, errors.New("event config is nil")
+	}
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
@@ -81,7 +91,7 @@ func Setup(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfi
 	metricsBuilder.AddPrometheusRouterMetrics(router)
 	zerolog.Ctx(ctx).Info().Msg("Router Metrics registered")
 
-	meter := otel.Meter(metricComponent)
+	meter := otel.Meter(metricsSubsystem)
 	metricInstruments, err := initMetricsInstruments(meter)
 	if err != nil {
 		return nil, err
@@ -93,7 +103,7 @@ func Setup(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfi
 		return nil, fmt.Errorf("failed instantiating driver: %w", err)
 	}
 
-	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, DeadLetterQueueTopic)
+	poisonQueueMiddleware, err := middleware.PoisonQueue(pub, constants.DeadLetterQueueTopic)
 	if err != nil {
 		return nil, fmt.Errorf("failed instantiating poison queue: %w", err)
 	}
@@ -143,16 +153,16 @@ func instantiateDriver(
 	flagClient openfeature.IClient,
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
 	switch driver {
-	case GoChannelDriver:
+	case constants.GoChannelDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using go-channel driver")
 		return gochannel.BuildGoChannelDriver(ctx, cfg)
-	case SQLDriver:
+	case constants.SQLDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using SQL driver")
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
-	case NATSDriver:
+	case constants.NATSDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
 		return nats.BuildNatsChannelDriver(cfg)
-	case FlaggedDriver:
+	case constants.FlaggedDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using Flagged driver")
 		return makeFlaggedDriver(ctx, cfg, flagClient)
 	default:
@@ -193,7 +203,7 @@ func (e *eventer) Publish(topic string, messages ...*message.Message) error {
 				"component":    "eventer",
 				"function":     "Publish",
 			})
-			msg.Metadata.Set(PublishedKey, time.Now().Format(time.RFC3339))
+			msg.Metadata.Set(constants.PublishedKey, time.Now().Format(time.RFC3339))
 		}
 	}
 
@@ -241,7 +251,7 @@ func (e *eventer) Register(
 }
 
 // ConsumeEvents allows registration of multiple consumers easily
-func (e *eventer) ConsumeEvents(consumers ...Consumer) {
+func (e *eventer) ConsumeEvents(consumers ...interfaces.Consumer) {
 	for _, c := range consumers {
 		c.Register(e)
 	}

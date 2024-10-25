@@ -33,13 +33,27 @@ mindev ruletype help
 
 ## Linting
 
-To lint your rule type, run:
+`ruletype lint` will evaluate the rule, without running it against any
+external resources. This will allow you to identify syntax errors
+quickly.  To lint your rule type, run:
 
 ```bash
 mindev ruletype lint -f path/to/rule-type.yaml
 ```
 
+This will give you basic validations on the rule type file.
+
 ## Running a rule type
+
+`ruletype test` will execute a rule against an external resource. This
+will allow you to test a single rule. You must provide a rule type to
+evaluate, the profile to evaluate it in the context of, and the information
+about the entity to evaluate.
+
+The entity type must match the rule's `def.in_entity` type; the entity
+is defined as a set of YAML properties in the entity file; for example,
+if you're testing a rule type that's targetted towards a repository,
+the YAML must match the repository schema.
 
 To run a rule type, use the following command:
 
@@ -68,21 +82,33 @@ The values needed must match an entity's protobuf definition. for instance, for 
 
 ```yaml
 ---
-name: <name of the repo>
-owner: <owner of the repo>
-repo_id: <upstream ID>
-clone_url: <clone URL>
-default_branch: <default branch>
+github/repo_name: <name of the repo>
+github/repo_owner: <owner of the repo>
+github/repo_id: <upstream ID>
+github/clone_url: <clone URL>
+github/default_branch: <default branch>
+is_private: <true/false>
+is_fork: <true/false>
 ```
 
 Minder is able to use these values to check the current state of the repository and evaluate the rule type.
+
+You can see examples of the schema for each entity in the
+[entity examples](https://github.com/mindersec/minder/tree/main/cmd/dev/examples) folder.
 
 ## Authentication
 
 If the rule type requires authentication, you can use the following environment variable:
 
 ```bash
-export AUTH_TOKEN=your_token
+export TEST_AUTH_TOKEN=your_token
+```
+
+You can use [`gh` (the GitHub CLI)](https://github.com/cli/cli) to
+produce a GitHub auth token. For example:
+
+```bash
+TEST_AUTH_TOKEN=$(gh auth token) mindev ruletype test -e /path/to/entity -p /path/to/profile -r /path/to/rule
 ```
 
 ### Example
@@ -95,11 +121,13 @@ We'll create a file called `entity.yaml` with the following content:
 
 ```yaml
 ---
-name: minder
-owner: stacklok
-repo_id: 624056558
-clone_url: https://github.com/mindersec/minder.git
-default_branch: main
+github/repo_name: minder
+github/repo_owner: stacklok
+github/repo_id: 624056558
+github/clone_url: https://github.com/mindersec/minder.git
+github/default_branch: main
+is_private: false
+is_fork: false
 ```
 
 We'll use the readily available profile for dependabot for golang dependencies:

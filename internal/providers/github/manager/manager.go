@@ -22,7 +22,6 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -31,6 +30,7 @@ import (
 	m "github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -47,7 +47,7 @@ func NewGitHubProviderClassManager(
 	ghService service.GitHubProviderService,
 	propSvc propssvc.PropertiesService,
 	mt metrics.Metrics,
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
@@ -75,7 +75,7 @@ type githubProviderManager struct {
 	store               db.Store
 	ghService           service.GitHubProviderService
 	mt                  metrics.Metrics
-	publisher           events.Publisher
+	publisher           interfaces.Publisher
 }
 
 var (

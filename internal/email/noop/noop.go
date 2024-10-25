@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/email"
-	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 type noop struct {
@@ -24,7 +24,7 @@ func New() *noop {
 }
 
 // Register implements the Consumer interface.
-func (_ *noop) Register(reg events.Registrar) {
+func (_ *noop) Register(reg interfaces.Registrar) {
 	reg.Register(email.TopicQueueInviteEmail, func(msg *message.Message) error {
 		var e email.MailEventPayload
 

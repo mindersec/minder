@@ -24,10 +24,10 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/logger"
-	prof "github.com/mindersec/minder/internal/profiles"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	prof "github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 

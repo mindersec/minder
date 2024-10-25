@@ -36,6 +36,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // Test_flaggedDriver_Publish tests both publish and consume of messages
@@ -121,10 +122,10 @@ alternate_message_driver:
 
 			config := serverconfig.Config{
 				Events: serverconfig.EventConfig{
-					Driver: FlaggedDriver,
+					Driver: constants.FlaggedDriver,
 					Flags: serverconfig.FlagDriverConfig{
-						MainDriver:      GoChannelDriver,
-						AlternateDriver: GoChannelDriver,
+						MainDriver:      constants.GoChannelDriver,
+						AlternateDriver: constants.GoChannelDriver,
 					},
 					GoChannel: serverconfig.GoChannelEventConfig{
 						BlockPublishUntilSubscriberAck: false,
@@ -142,7 +143,7 @@ alternate_message_driver:
 			sendMsg := message.NewMessage("test-id", []byte(t.Name()))
 			sendMsg.SetContext(tt.messageContext())
 
-			eventer, err := Setup(ctx, flagClient, &config.Events)
+			eventer, err := NewEventer(ctx, flagClient, &config.Events)
 			if err != nil {
 				t.Fatalf("failed to setup eventer: %v", err)
 			}

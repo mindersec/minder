@@ -15,9 +15,9 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // packageEvent represent any event related to a repository and one of
@@ -124,7 +124,7 @@ func processPackageEvent(
 		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	return &processingResult{topic: events.TopicQueueOriginatingEntityAdd, wrapper: pkgMsg}, nil
+	return &processingResult{topic: constants.TopicQueueOriginatingEntityAdd, wrapper: pkgMsg}, nil
 }
 
 // This routine assumes that all necessary validation is performed on

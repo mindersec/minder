@@ -121,7 +121,7 @@ func (f *flaggedDriver) Close() error {
 
 func makeFlaggedDriver(ctx context.Context, cfg *serverconfig.EventConfig, flagClient openfeature.IClient,
 ) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
-	meter := otel.Meter(metricComponent)
+	meter := otel.Meter(metricsSubsystem)
 	publishedMessages, err := meter.Int64Counter("events_published")
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("Failed to create published messages counter: %w", err)

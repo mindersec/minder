@@ -13,12 +13,12 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	mockevents "github.com/mindersec/minder/internal/events/mock"
 	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
 	"github.com/mindersec/minder/internal/providers/manager"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
 
 func TestServer_ReconcileEntityRegistration(t *testing.T) {

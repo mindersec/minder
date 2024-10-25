@@ -9,9 +9,9 @@ import (
 	"io/fs"
 	"strings"
 
-	"github.com/mindersec/minder/internal/profiles"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/profiles"
 )
 
 // BundleReader provides a high-level interface for accessing the contents of

@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/email"
-	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 const (
@@ -47,7 +47,7 @@ func New(ctx context.Context, sender, region string) (*awsSES, error) {
 }
 
 // Register implements the Consumer interface.
-func (a *awsSES) Register(reg events.Registrar) {
+func (a *awsSES) Register(reg interfaces.Registrar) {
 	reg.Register(email.TopicQueueInviteEmail, func(msg *message.Message) error {
 		var e email.MailEventPayload
 

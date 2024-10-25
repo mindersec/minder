@@ -25,12 +25,12 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/history"
 	minderlogger "github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/profiles"
-	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/manager"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -78,12 +78,15 @@ func NewExecutor(
 // EvalEntityEvent evaluates the entity specified in the EntityInfoWrapper
 // against all relevant rules in the project hierarchy.
 func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-	logger := zerolog.Ctx(ctx).Info().
+	logger := zerolog.Ctx(ctx).With().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
 		Str("provider_id", inf.ProviderID.String()).
-		Str("project_id", inf.ProjectID.String())
-	logger.Msg("entity evaluation - started")
+		Str("project_id", inf.ProjectID.String()).
+		Logger()
+	logger.Info().Msg("entity evaluation - started")
+	// Propagate info to remaining log messages
+	ctx = logger.WithContext(ctx)
 
 	// track the time taken to evaluate each entity
 	entityStartTime := time.Now()

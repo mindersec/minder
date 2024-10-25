@@ -14,7 +14,7 @@ import (
 	"github.com/rs/zerolog"
 
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // ProfileInitEvent is an event that is sent to the reconciler topic
@@ -96,7 +96,7 @@ func (r *Reconciler) publishProfileInitEvents(
 			return nil
 		}
 
-		if err := r.evt.Publish(events.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
+		if err := r.evt.Publish(constants.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
 			// we retry in case watermill is having a bad day
 			return fmt.Errorf("error publishing message: %w", err)
 		}

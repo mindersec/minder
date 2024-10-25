@@ -25,8 +25,6 @@ import (
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	entModels "github.com/mindersec/minder/internal/entities/models"
 	entProps "github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/profiles"
-	"github.com/mindersec/minder/internal/profiles/models"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/dockerhub"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -40,6 +38,8 @@ import (
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -14,7 +14,7 @@ import (
 
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/internal/profiles/models"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 // Remediator is the structure backing the noop remediator

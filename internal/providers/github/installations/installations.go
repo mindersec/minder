@@ -16,8 +16,8 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/github/service"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 const (
@@ -55,7 +55,7 @@ func NewInstallationManager(
 }
 
 // Register implements the Consumer interface.
-func (im *InstallationManager) Register(reg events.Registrar) {
+func (im *InstallationManager) Register(reg interfaces.Registrar) {
 	reg.Register(ProviderInstallationTopic, im.handleProviderInstallationEvent)
 }
 

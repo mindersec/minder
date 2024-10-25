@@ -15,8 +15,8 @@ import (
 	"github.com/rs/zerolog/log"
 
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // handleRepoReconcilerEvent handles events coming from the reconciler topic
@@ -64,7 +64,7 @@ func (r *Reconciler) handleRepositoryReconcilerEvent(ctx context.Context, evt *m
 	}
 
 	m.SetContext(ctx)
-	if err := r.evt.Publish(events.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
+	if err := r.evt.Publish(constants.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
 		// we retry in case watermill is having a bad day
 		return fmt.Errorf("error publishing message: %w", err)
 	}

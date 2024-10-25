@@ -14,9 +14,9 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // pullRequestEvent are events related to pull requests issued around
@@ -142,9 +142,9 @@ func processPullRequestEvent(
 	case webhookActionEventOpened,
 		webhookActionEventReopened,
 		webhookActionEventSynchronize:
-		topic = events.TopicQueueOriginatingEntityAdd
+		topic = constants.TopicQueueOriginatingEntityAdd
 	case webhookActionEventClosed:
-		topic = events.TopicQueueOriginatingEntityDelete
+		topic = constants.TopicQueueOriginatingEntityDelete
 	default:
 		zerolog.Ctx(ctx).Info().Msgf("action %s is not handled for pull requests",
 			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())

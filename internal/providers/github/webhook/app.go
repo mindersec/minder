@@ -20,12 +20,13 @@ import (
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/properties"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // installationEvent are events related the GitHub App. Minder uses
@@ -104,7 +105,7 @@ func HandleGitHubAppWebhook(
 	store db.Store,
 	ghService service.GitHubProviderService,
 	mt metrics.Metrics,
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -129,15 +130,15 @@ func HandleGitHubAppWebhook(
 		wes.Typ = github.WebHookType(r)
 
 		m := message.NewMessage(uuid.New().String(), nil)
-		m.Metadata.Set(events.ProviderDeliveryIdKey, github.DeliveryID(r))
+		m.Metadata.Set(constants.ProviderDeliveryIdKey, github.DeliveryID(r))
 		// TODO: handle other sources
-		m.Metadata.Set(events.ProviderSourceKey, "https://api.github.com/")
-		m.Metadata.Set(events.GithubWebhookEventTypeKey, wes.Typ)
+		m.Metadata.Set(constants.ProviderSourceKey, "https://api.github.com/")
+		m.Metadata.Set(constants.GithubWebhookEventTypeKey, wes.Typ)
 
 		l = l.With().
-			Str("webhook-event-type", m.Metadata[events.GithubWebhookEventTypeKey]).
-			Str("providertype", m.Metadata[events.ProviderTypeKey]).
-			Str("upstream-delivery-id", m.Metadata[events.ProviderDeliveryIdKey]).
+			Str("webhook-event-type", m.Metadata[constants.GithubWebhookEventTypeKey]).
+			Str("providertype", m.Metadata[constants.ProviderTypeKey]).
+			Str("upstream-delivery-id", m.Metadata[constants.ProviderDeliveryIdKey]).
 			// This is added for consistency with how
 			// watermill tracks message UUID when logging.
 			Str("message_uuid", m.UUID).
@@ -356,7 +357,7 @@ func processInstallationRepositoriesAppEvent(
 func repositoryRemoved(
 	repo *repo,
 ) (*processingResult, error) {
-	return sendEvaluateRepoMessage(repo, events.TopicQueueGetEntityAndDelete)
+	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
 }
 
 func repositoryAdded(
@@ -383,7 +384,7 @@ func repositoryAdded(
 		WithProperties(addRepoProps)
 
 	return &processingResult{
-		topic:   events.TopicQueueReconcileEntityAdd,
+		topic:   constants.TopicQueueReconcileEntityAdd,
 		wrapper: event,
 	}, nil
 }
