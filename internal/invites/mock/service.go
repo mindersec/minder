@@ -16,9 +16,9 @@ import (
 	uuid "github.com/google/uuid"
 	auth "github.com/mindersec/minder/internal/auth"
 	authz "github.com/mindersec/minder/internal/authz"
-	db "github.com/mindersec/minder/internal/db"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	server "github.com/mindersec/minder/pkg/config/server"
+	db "github.com/mindersec/minder/pkg/db"
 	interfaces "github.com/mindersec/minder/pkg/eventer/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )

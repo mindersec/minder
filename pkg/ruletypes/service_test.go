@@ -15,10 +15,10 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/db"
-	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
+	dbf "github.com/mindersec/minder/pkg/db/fixtures"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 

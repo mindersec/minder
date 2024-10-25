@@ -3,7 +3,7 @@
 
 package providers
 
-import "github.com/mindersec/minder/internal/db"
+import "github.com/mindersec/minder/pkg/db"
 
 // ListProviderClasses returns a list of provider classes.
 func ListProviderClasses() []string {

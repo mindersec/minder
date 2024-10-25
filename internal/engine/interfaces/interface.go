@@ -13,8 +13,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/db"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )

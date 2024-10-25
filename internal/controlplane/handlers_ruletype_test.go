@@ -14,8 +14,8 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	db "github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	db "github.com/mindersec/minder/pkg/db"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
 

@@ -12,10 +12,10 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/manager"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestAuthManager_NewAuthManager(t *testing.T) {

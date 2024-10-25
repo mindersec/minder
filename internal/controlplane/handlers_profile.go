@@ -17,7 +17,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
@@ -27,6 +26,7 @@ import (
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	prof "github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )

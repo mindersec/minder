@@ -16,9 +16,9 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth"
 	mockidentity "github.com/mindersec/minder/internal/auth/mock"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/projects"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestGetInviteDetails(t *testing.T) {

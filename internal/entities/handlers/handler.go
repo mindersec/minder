@@ -11,7 +11,6 @@ import (
 	watermill "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/handlers/strategies"
 	entStrategies "github.com/mindersec/minder/internal/entities/handlers/strategies/entity"
@@ -22,6 +21,7 @@ import (
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )

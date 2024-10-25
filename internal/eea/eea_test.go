@@ -19,8 +19,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/db/embedded"
 	"github.com/mindersec/minder/internal/eea"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -30,6 +28,8 @@ import (
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
+	"github.com/mindersec/minder/pkg/db/embedded"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )

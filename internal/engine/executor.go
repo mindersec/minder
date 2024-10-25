@@ -12,7 +12,6 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
@@ -28,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/profiles/models"

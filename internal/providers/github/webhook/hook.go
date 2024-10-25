@@ -19,12 +19,12 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )

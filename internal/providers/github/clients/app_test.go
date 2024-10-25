@@ -20,7 +20,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	github2 "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/properties"
@@ -28,6 +27,7 @@ import (
 	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestParseV1AppConfig(t *testing.T) {

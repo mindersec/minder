@@ -18,13 +18,13 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )

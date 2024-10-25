@@ -16,8 +16,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/db/embedded"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties"
@@ -25,6 +23,8 @@ import (
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util/rand"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
+	"github.com/mindersec/minder/pkg/db/embedded"
 )
 
 type githubMockBuilder func(*gomock.Controller) *mock_github.MockGitHub

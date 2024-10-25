@@ -20,7 +20,6 @@ import (
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
@@ -30,6 +29,7 @@ import (
 	m "github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )

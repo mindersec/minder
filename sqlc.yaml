@@ -8,7 +8,7 @@ sql:
     engine: "postgresql"
     gen:
       go:
-        out: "./internal/db/"
+        out: "./pkg/db/"
         package: "db"
         emit_json_tags: true
         emit_prepared_queries: false

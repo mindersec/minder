@@ -17,7 +17,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 type (

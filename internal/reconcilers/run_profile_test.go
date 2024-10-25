@@ -13,8 +13,8 @@ import (
 	"go.uber.org/mock/gomock"
 
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	"github.com/mindersec/minder/internal/db"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 

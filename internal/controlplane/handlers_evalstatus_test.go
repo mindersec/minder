@@ -12,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/mindersec/minder/internal/db"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/history"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 func TestBuildEvalResultAlertFromLRERow(t *testing.T) {

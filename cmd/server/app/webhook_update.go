@@ -18,7 +18,6 @@ import (
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers"
 	ghprovider "github.com/mindersec/minder/internal/providers/github"
@@ -29,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

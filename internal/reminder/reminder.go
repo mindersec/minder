@@ -15,10 +15,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/events/common"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
 	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 

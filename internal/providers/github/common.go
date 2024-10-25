@@ -23,7 +23,6 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/mindersec/minder/internal/db"
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	gitclient "github.com/mindersec/minder/internal/providers/git"
 	"github.com/mindersec/minder/internal/providers/github/ghcr"
@@ -31,6 +30,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

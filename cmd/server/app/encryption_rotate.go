@@ -16,9 +16,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 )
 
 // number of secrets to re-encrypt per batch

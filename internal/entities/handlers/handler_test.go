@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	df "github.com/mindersec/minder/database/mock/fixtures"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -32,6 +31,7 @@ import (
 	provManFixtures "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"

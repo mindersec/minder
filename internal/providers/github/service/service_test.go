@@ -31,8 +31,6 @@ import (
 
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
-	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/db/embedded"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -41,6 +39,8 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/util/rand"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
+	"github.com/mindersec/minder/pkg/db/embedded"
 )
 
 type testMocks struct {

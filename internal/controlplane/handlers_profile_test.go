@@ -17,13 +17,13 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/db/embedded"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/db"
+	"github.com/mindersec/minder/pkg/db/embedded"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/profiles"
 )

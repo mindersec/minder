@@ -12,10 +12,10 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/db"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )
 

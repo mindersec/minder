@@ -31,7 +31,6 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/crypto/algorithms"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
@@ -44,6 +43,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/db"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
