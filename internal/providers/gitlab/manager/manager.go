@@ -20,10 +20,10 @@ import (
 
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -38,7 +38,7 @@ type providerClassManager struct {
 	glpcfg        *server.GitLabConfig
 	webhookURL    string
 	parentContext context.Context
-	pub           events.Publisher
+	pub           interfaces.Publisher
 
 	// secrets for the webhook. These are stored in the
 	// structure to allow efficient fetching. Rotation
@@ -49,7 +49,7 @@ type providerClassManager struct {
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
 func NewGitLabProviderClassManager(
-	ctx context.Context, crypteng crypto.Engine, store db.Store, pub events.Publisher,
+	ctx context.Context, crypteng crypto.Engine, store db.Store, pub interfaces.Publisher,
 	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
 ) (*providerClassManager, error) {
 	webhookURLBase := wgCfg.ExternalWebhookURL

@@ -25,6 +25,7 @@ import (
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -95,7 +96,7 @@ var (
 
 type repositoryService struct {
 	store           db.Store
-	eventProducer   events.Publisher
+	eventProducer   interfaces.Publisher
 	providerManager manager.ProviderManager
 	propSvc         service.PropertiesService
 }
@@ -104,7 +105,7 @@ type repositoryService struct {
 func NewRepositoryService(
 	store db.Store,
 	propSvc service.PropertiesService,
-	eventProducer events.Publisher,
+	eventProducer interfaces.Publisher,
 	providerManager manager.ProviderManager,
 ) RepositoryService {
 	return &repositoryService{

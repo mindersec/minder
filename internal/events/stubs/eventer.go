@@ -10,12 +10,12 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/mindersec/minder/internal/events"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // StubEventer is a stub implementation of events.Interface and the events.Publisher interface
-var _ events.Interface = (*StubEventer)(nil)
-var _ events.Publisher = (*StubEventer)(nil)
+var _ interfaces.Interface = (*StubEventer)(nil)
+var _ interfaces.Publisher = (*StubEventer)(nil)
 
 // StubEventer is an eventer that's useful for testing.
 type StubEventer struct {
@@ -29,7 +29,7 @@ func (*StubEventer) Close() error {
 }
 
 // ConsumeEvents implements events.Interface.
-func (*StubEventer) ConsumeEvents(...events.Consumer) {
+func (*StubEventer) ConsumeEvents(...interfaces.Consumer) {
 	panic("unimplemented")
 }
 

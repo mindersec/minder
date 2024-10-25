@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package events
+// Package interfaces provides the interfaces for the eventer object
+package interfaces
 
 import (
 	"context"

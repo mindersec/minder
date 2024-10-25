@@ -20,11 +20,11 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/email"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -32,12 +32,12 @@ import (
 // InviteService encapsulates the methods to manage user invites to a project
 type InviteService interface {
 	// CreateInvite creates a new user invite
-	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
 	// UpdateInvite updates the invite status
-	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
@@ -55,7 +55,7 @@ func NewInviteService() InviteService {
 	return &inviteService{}
 }
 
-func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
@@ -229,7 +229,7 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 	}, nil
 }
 
-func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 

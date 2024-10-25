@@ -24,12 +24,13 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // EEA is the Event Execution Aggregator
 type EEA struct {
 	querier db.Store
-	evt     events.Publisher
+	evt     interfaces.Publisher
 	cfg     *serverconfig.AggregatorConfig
 
 	entityFetcher service.PropertiesService
@@ -37,7 +38,7 @@ type EEA struct {
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig,
+func NewEEA(querier db.Store, evt interfaces.Publisher, cfg *serverconfig.AggregatorConfig,
 	ef service.PropertiesService, provMan manager.ProviderManager) *EEA {
 	return &EEA{
 		querier:       querier,
@@ -49,7 +50,7 @@ func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.Aggregator
 }
 
 // Register implements the Consumer interface.
-func (e *EEA) Register(r events.Registrar) {
+func (e *EEA) Register(r interfaces.Registrar) {
 	r.Register(events.TopicQueueEntityFlush, e.FlushMessageHandler)
 }
 

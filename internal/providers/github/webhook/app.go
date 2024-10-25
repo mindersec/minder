@@ -26,6 +26,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // installationEvent are events related the GitHub App. Minder uses
@@ -104,7 +105,7 @@ func HandleGitHubAppWebhook(
 	store db.Store,
 	ghService service.GitHubProviderService,
 	mt metrics.Metrics,
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()

@@ -21,7 +21,6 @@ import (
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	mockevents "github.com/mindersec/minder/internal/events/mock"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -29,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

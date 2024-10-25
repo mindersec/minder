@@ -33,6 +33,7 @@ import (
 	provManFixtures "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -186,54 +187,54 @@ func checkPullRequestMessage(t *testing.T, msg *watermill.Message) {
 }
 
 type handlerBuilder func(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer
+) interfaces.Consumer
 
 func refreshEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func refreshByIDHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func addOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewAddOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func removeOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRemoveOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func getAndDeleteEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	_ manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewGetEntityAndDeleteHandler(evt, store, propSvc)
 }
 

@@ -14,11 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mindersec/minder/internal/engine/entities"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util/testqueue"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
@@ -33,7 +33,7 @@ func TestTelemetryStoreWMMiddlewareLogsRepositoryInfo(t *testing.T) {
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,

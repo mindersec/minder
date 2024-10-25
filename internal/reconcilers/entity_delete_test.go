@@ -16,12 +16,12 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	"github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/internal/events"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	mockrepo "github.com/mindersec/minder/internal/repositories/mock"
 	rf "github.com/mindersec/minder/internal/repositories/mock/fixtures"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 var (
@@ -160,7 +160,7 @@ func setUp(t *testing.T, tt testCase, ctrl *gomock.Controller) *Reconciler {
 		repoService = tt.mockReposFunc(ctrl)
 	}
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})

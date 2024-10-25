@@ -50,6 +50,7 @@ import (
 	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 //go:embed test-payloads/installation-deleted.json
@@ -112,7 +113,7 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -170,7 +171,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -228,7 +229,7 @@ func (s *UnitTestSuite) TestHandleWebHookRepository() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -331,7 +332,7 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -390,7 +391,7 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -2654,7 +2655,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -3250,7 +3251,7 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 				mockStore = mockdb.NewMockStore(ctrl)
 			}
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

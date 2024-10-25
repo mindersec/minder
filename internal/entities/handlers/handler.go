@@ -23,6 +23,7 @@ import (
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 var (
@@ -32,7 +33,7 @@ var (
 )
 
 type handleEntityAndDoBase struct {
-	evt   events.Publisher
+	evt   interfaces.Publisher
 	store db.Store
 
 	refreshEntity strategies.GetEntityStrategy
@@ -45,7 +46,7 @@ type handleEntityAndDoBase struct {
 }
 
 // Register satisfies the events.Consumer interface.
-func (b *handleEntityAndDoBase) Register(r events.Registrar) {
+func (b *handleEntityAndDoBase) Register(r interfaces.Registrar) {
 	r.Register(b.handlerName, b.handleRefreshEntityAndDo, b.handlerMiddleware...)
 }
 
@@ -192,12 +193,12 @@ func (b *handleEntityAndDoBase) repoPrivateOrArchivedCheck(
 
 // NewRefreshByIDAndEvaluateHandler creates a new handler that refreshes an entity and evaluates it.
 func NewRefreshByIDAndEvaluateHandler(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	provMgr manager.ProviderManager,
 	handlerMiddleware ...watermill.HandlerMiddleware,
-) events.Consumer {
+) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt:   evt,
 		store: store,
@@ -214,12 +215,12 @@ func NewRefreshByIDAndEvaluateHandler(
 
 // NewRefreshEntityAndEvaluateHandler creates a new handler that refreshes an entity and evaluates it.
 func NewRefreshEntityAndEvaluateHandler(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	provMgr manager.ProviderManager,
 	handlerMiddleware ...watermill.HandlerMiddleware,
-) events.Consumer {
+) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt:   evt,
 		store: store,
@@ -236,11 +237,11 @@ func NewRefreshEntityAndEvaluateHandler(
 
 // NewGetEntityAndDeleteHandler creates a new handler that gets an entity and deletes it.
 func NewGetEntityAndDeleteHandler(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	handlerMiddleware ...watermill.HandlerMiddleware,
-) events.Consumer {
+) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt:   evt,
 		store: store,
@@ -257,12 +258,12 @@ func NewGetEntityAndDeleteHandler(
 
 // NewAddOriginatingEntityHandler creates a new handler that adds an originating entity.
 func NewAddOriginatingEntityHandler(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	provMgr manager.ProviderManager,
 	handlerMiddleware ...watermill.HandlerMiddleware,
-) events.Consumer {
+) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt:   evt,
 		store: store,
@@ -279,12 +280,12 @@ func NewAddOriginatingEntityHandler(
 
 // NewRemoveOriginatingEntityHandler creates a new handler that removes an originating entity.
 func NewRemoveOriginatingEntityHandler(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	provMgr manager.ProviderManager,
 	handlerMiddleware ...watermill.HandlerMiddleware,
-) events.Consumer {
+) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt: evt,
 

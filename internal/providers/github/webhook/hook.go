@@ -26,6 +26,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 const (
@@ -66,7 +67,7 @@ type processingResult struct {
 // HandleWebhookEvent is the main entry point for processing github webhook events
 func HandleWebhookEvent(
 	mt metrics.Metrics,
-	publisher events.Publisher,
+	publisher interfaces.Publisher,
 	whconfig *server.WebhookConfig,
 ) http.HandlerFunc {
 	// the function handles incoming GitHub webhooks
