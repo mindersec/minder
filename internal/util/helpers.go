@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"math"
 	"net/http"
 	"net/url"
@@ -415,7 +414,7 @@ type ExpandedFile struct {
 // ExpandFileArgs expands a list of file arguments into a list of files.
 // If the file list contains "-" or regular files, it will leave them as-is.
 // If the file list contains directories, it will expand them into a list of files.
-func ExpandFileArgs(files []string) ([]ExpandedFile, error) {
+func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
 	var expandedFiles []ExpandedFile
 	for _, f := range files {
 		if f == "-" {
@@ -425,37 +424,32 @@ func ExpandFileArgs(files []string) ([]ExpandedFile, error) {
 			})
 			continue
 		}
+
 		f = filepath.Clean(f)
 		fi, err := os.Stat(f)
 		if err != nil {
 			return nil, fmt.Errorf("error getting file info: %w", err)
 		}
 
-		if fi.IsDir() {
-			// expand directory
-			err := filepath.Walk(f, func(path string, info fs.FileInfo, err error) error {
-				if err != nil {
-					return fmt.Errorf("error walking directory: %w", err)
-				}
-
-				if !info.IsDir() {
-					expandedFiles = append(expandedFiles, ExpandedFile{
-						Path:     path,
-						Expanded: true,
-					})
-				}
-
-				return nil
-			})
-			if err != nil {
-				return nil, fmt.Errorf("error walking directory: %w", err)
+		expanded := fi.IsDir()
+		err = filepath.Walk(f, func(path string, info os.FileInfo, walkerr error) error {
+			if walkerr != nil {
+				return fmt.Errorf("error walking path %s: %w", path, walkerr)
 			}
-		} else {
-			// add file
+
+			if info.IsDir() {
+				return nil
+			}
+
 			expandedFiles = append(expandedFiles, ExpandedFile{
-				Path:     f,
-				Expanded: false,
+				Path:     path,
+				Expanded: expanded,
 			})
+
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error walking directory: %w", err)
 		}
 	}
 
