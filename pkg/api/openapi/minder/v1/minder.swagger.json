@@ -3198,7 +3198,11 @@
         },
         "method": {
           "type": "string",
-          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA"
+          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA\n-- minder.yq.evaluate - evaluates a yq expression on a file"
+        },
+        "params": {
+          "type": "object",
+          "description": "params are unstructured parameters passed to the method. These are optional\nand evaluated by the method."
         },
         "actionsReplaceTagsWithSha": {
           "$ref": "#/definitions/PullRequestRemediationActionsReplaceTagsWithSha",
