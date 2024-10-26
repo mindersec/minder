@@ -35,8 +35,10 @@ func TestValidateConfig(t *testing.T) {
 					MinElapsed: parseTimeDuration(t, "1h"),
 				},
 				EventConfig: reminder.EventConfig{
-					Connection: config.DatabaseConfig{
-						Port: 8080,
+					SQLPubConfig: reminder.SQLPubConfig{
+						Connection: config.DatabaseConfig{
+							Port: 8080,
+						},
 					},
 				},
 			},
@@ -153,10 +155,10 @@ func TestSetViperDefaults(t *testing.T) {
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.interval")))
 	require.Equal(t, 100, v.GetInt("recurrence.batch_size"))
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.min_elapsed")))
-	require.Equal(t, "reminder", v.GetString("events.sql_connection.dbname"))
-	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql_connection.dbhost"))
-	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql_connection.dbhost"))
-	require.Equal(t, "postgres", v.GetString("events.sql_connection.dbuser"))
+	require.Equal(t, "reminder", v.GetString("events.sql.connection.dbname"))
+	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql.connection.dbhost"))
+	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql.connection.dbhost"))
+	require.Equal(t, "postgres", v.GetString("events.sql.connection.dbuser"))
 }
 
 // TestOverrideConfigByEnvVar tests that the configuration can be overridden by environment variables

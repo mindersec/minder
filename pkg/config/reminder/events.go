@@ -9,8 +9,15 @@ import (
 
 // EventConfig is the configuration for reminder's eventing system.
 type EventConfig struct {
+	Driver       string            `mapstructure:"driver" default:"sql"`
+	SQLPubConfig SQLPubConfig      `mapstructure:"sql"`
+	NatsConfig   config.NatsConfig `mapstructure:"nats"`
+}
+
+// SQLPubConfig is the configuration for the SQL publisher
+type SQLPubConfig struct {
 	// Connection is the configuration for the SQL event driver
 	//
 	// nolint: lll
-	Connection config.DatabaseConfig `mapstructure:"sql_connection" default:"{\"dbname\":\"reminder\",\"dbhost\":\"reminder-event-postgres\"}"`
+	Connection config.DatabaseConfig `mapstructure:"connection" default:"{\"dbname\":\"reminder\",\"dbhost\":\"reminder-event-postgres\"}"`
 }

@@ -59,7 +59,7 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msgf("initial repository cursor: %s", r.repositoryCursor)
 
-	pub, cl, err := r.setupSQLPublisher(ctx)
+	pub, cl, err := r.getMessagePublisher(ctx)
 	if err != nil {
 		return nil, err
 	}

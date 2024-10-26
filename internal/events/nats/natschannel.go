@@ -19,20 +19,24 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/events/common"
-	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/config"
 )
 
 // BuildNatsChannelDriver creates a new event driver using
 // CloudEvents with the NATS-JetStream transport
-func BuildNatsChannelDriver(cfg *serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
-	adapter := &cloudEventsNatsAdapter{cfg: &cfg.Nats}
+func BuildNatsChannelDriver(cfg *config.NatsConfig) (message.Publisher, message.Subscriber, common.DriverCloser, error) {
+	if cfg == nil {
+		return nil, nil, nil, fmt.Errorf("NATS config is nil")
+	}
+
+	adapter := &cloudEventsNatsAdapter{cfg: cfg}
 	return adapter, adapter, func() {}, nil
 }
 
 // CloudEventsNatsPublisher actually consumes a _set_ of NATS topics,
 // because CloudEvents-Jetstream has a separate Consumer for each topic
 type cloudEventsNatsAdapter struct {
-	cfg  *serverconfig.NatsConfig
+	cfg  *config.NatsConfig
 	lock sync.Mutex
 	// Keep a cache of the topics we subscribe/publish to
 	topics map[string]topicState

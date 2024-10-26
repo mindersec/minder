@@ -150,7 +150,7 @@ func instantiateDriver(
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
 	case constants.NATSDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
-		return nats.BuildNatsChannelDriver(cfg)
+		return nats.BuildNatsChannelDriver(&cfg.Nats)
 	default:
 		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)
