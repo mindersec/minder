@@ -63,9 +63,6 @@ func NewEventer(ctx context.Context, _ openfeature.IClient, cfg *serverconfig.Ev
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
-	if cfg == nil {
-		return nil, errors.New("event config is nil")
-	}
 
 	l := zerowater.NewZerologLoggerAdapter(
 		zerolog.Ctx(ctx).With().Str("component", "watermill").Logger())
