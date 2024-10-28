@@ -13,28 +13,25 @@ func TestIsValidField(t *testing.T) {
 		expectedErr    bool
 		expectedErrMsg string
 	}{
-		// Test case 1: Empty string
-		{"", true, "string is empty"},
-
-		// Test case 2: Valid plain text
+		// Test case 1: Valid plain text
 		{"Just plain text", false, ""},
 
-		// Test case 3: String with HTML tags
+		// Test case 2: String with HTML tags
 		{"<b>Bold Text</b>", true, "string <b>Bold Text</b> contains HTML injection"},
 
-		// Test case 4: String with HTML entity
+		// Test case 3: String with HTML entity
 		{"This is a test &amp; example.", true, "string This is a test &amp; example. contains HTML injection"},
 
-		// Test case 5: String with multiple HTML entities
+		// Test case 4: String with multiple HTML entities
 		{"This &amp; that &lt; should &gt; work.", true, "string This &amp; that &lt; should &gt; work. contains HTML injection"},
 
-		// Test case 7: Valid URL (no HTML or JavaScript injection)
+		// Test case 5: Valid URL (no HTML or JavaScript injection)
 		{"https://example.com", false, ""},
 
-		// Test case 8: Mixed content with HTML and JS
+		// Test case 6: Mixed content with HTML and JS
 		{"Hello <b>World</b> onload=alert('test');", true, "string Hello <b>World</b> onload=alert('test'); contains HTML injection"},
 
-		// Test case 11: HTML-style comment
+		// Test case 7: HTML-style comment
 		{"<!-- This is a comment -->", true, "string <!-- This is a comment --> contains HTML injection"},
 	}
 

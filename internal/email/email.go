@@ -152,10 +152,6 @@ func getEmailSubject(project string) string {
 
 // isValidField checks if the string is empty or contains HTML or JavaScript injection
 func isValidField(str string) error {
-	if str == "" {
-		return fmt.Errorf("string is empty")
-	}
-
 	// Check for HTML content
 	escapedHTML := template.HTMLEscapeString(str)
 	if escapedHTML != str {
