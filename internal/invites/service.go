@@ -6,6 +6,7 @@ package invites
 import (
 	"context"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"time"
 
@@ -59,6 +60,10 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
+	// Validate the email address
+	if !isEmail(inviteeEmail) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid email address")
+	}
 	// Get the sponsor's user information (current user)
 	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
@@ -162,6 +167,11 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 
 func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID,
 	authzRole authz.Role, inviteeEmail string) (*minder.Invitation, error) {
+	// Validate the email address
+	if !isEmail(inviteeEmail) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid email address")
+	}
+
 	// Get all invitations for this email and project
 	invitesToRemove, err := qtx.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
 		Email:   inviteeEmail,
@@ -232,7 +242,10 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
-
+	// Validate the email address
+	if !isEmail(inviteeEmail) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid email address")
+	}
 	// Get the sponsor's user information (current user)
 	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
@@ -341,4 +354,10 @@ func getInviteUrl(emailCfg serverconfig.EmailConfig, userInvite db.UserInvite) (
 		}
 	}
 	return inviteURL, nil
+}
+
+// isEmail is used to validate if the email is a valid email address
+func isEmail(emailString string) bool {
+	_, err := mail.ParseAddress(emailString)
+	return err == nil
 }
