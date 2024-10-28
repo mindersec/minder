@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -29,15 +29,6 @@ const (
 	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 	// EmailBodyMaxLength is the maximum length of the email body
 	EmailBodyMaxLength = 10000
-)
-
-var (
-	// htmlTagRegex is a regex to match HTML tags
-	htmlTagRegex = regexp.MustCompile(`<\/?[a-z][\s\S]*?>`)
-	// htmlEntityRegex is a regex to match HTML entities
-	htmlEntityRegex = regexp.MustCompile(`&[a-zA-Z0-9#]+;`)
-	// htmlCommentRegex is a regex to match HTML comments
-	htmlCommentRegex = regexp.MustCompile(`<!--[\s\S]*?-->`)
 )
 
 // MailEventPayload is the event payload for sending an invitation email
@@ -150,16 +141,24 @@ func getEmailSubject(project string) string {
 	return fmt.Sprintf("You have been invited to join the %s organization in Minder", project)
 }
 
-// isValidField checks if a string contains HTML tags, entities, or comments.
+// isValidField checks if the string is empty or contains HTML or JavaScript injection
 func isValidField(str string) error {
 	if str == "" {
 		return fmt.Errorf("string is empty")
 	}
 
-	// Check for HTML tags, entities, or comments
-	if htmlTagRegex.MatchString(str) || htmlEntityRegex.MatchString(str) || htmlCommentRegex.MatchString(str) {
-		return fmt.Errorf("string %s contains HTML tags, entities, or comments", str)
+	// Check for HTML content
+	escapedHTML := template.HTMLEscapeString(str)
+	if escapedHTML != str {
+		return fmt.Errorf("string %s contains HTML injection", str)
 	}
+
+	// Check for JavaScript content separately
+	escapedJS := template.JSEscaper(str)
+	if escapedJS != str {
+		return fmt.Errorf("string %s contains JavaScript injection", str)
+	}
+
 	return nil
 }
 
@@ -179,7 +178,7 @@ func validateDataSourceTemplate(s interface{}) error {
 			// Execute your function on the field value
 			err := isValidField(strVal)
 			if err != nil {
-				return fmt.Errorf("field %s is empty or contains HTML injection - %s", v.Type().Field(i).Name, strVal)
+				return fmt.Errorf("field %s failed validation - %s", v.Type().Field(i).Name, strVal)
 			}
 		}
 	}

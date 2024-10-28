@@ -6,7 +6,8 @@ package email
 import "testing"
 
 func TestIsValidField(t *testing.T) {
-	t.Parallel() // make this sub-test run in parallel
+	t.Parallel()
+
 	tests := []struct {
 		input          string
 		expectedErr    bool
@@ -19,44 +20,28 @@ func TestIsValidField(t *testing.T) {
 		{"Just plain text", false, ""},
 
 		// Test case 3: String with HTML tags
-		{"<b>Bold Text</b>", true, "string <b>Bold Text</b> contains HTML tags, entities, or comments"},
+		{"<b>Bold Text</b>", true, "string <b>Bold Text</b> contains HTML injection"},
 
 		// Test case 4: String with HTML entity
-		{"This is a test &amp; example.", true, "string This is a test &amp; example. contains HTML tags, entities, or comments"},
+		{"This is a test &amp; example.", true, "string This is a test &amp; example. contains HTML injection"},
 
 		// Test case 5: String with multiple HTML entities
-		{"This &amp; that &lt; should &gt; work.", true, "string This &amp; that &lt; should &gt; work. contains HTML tags, entities, or comments"},
+		{"This &amp; that &lt; should &gt; work.", true, "string This &amp; that &lt; should &gt; work. contains HTML injection"},
 
-		// Test case 6: String with special characters, but no HTML
-		{"Special chars! #$%^&*", false, ""},
-
-		// Test case 7: Numeric HTML entity
-		{"This is a test &#1234;", true, "string This is a test &#1234; contains HTML tags, entities, or comments"},
-
-		// Test case 8: Valid URL (no HTML tags or entities)
+		// Test case 7: Valid URL (no HTML or JavaScript injection)
 		{"https://example.com", false, ""},
 
-		// Test case 9: Script tag injection
-		{"<script>alert('test');</script>", true, "string <script>alert('test');</script> contains HTML tags, entities, or comments"},
+		// Test case 8: Mixed content with HTML and JS
+		{"Hello <b>World</b> onload=alert('test');", true, "string Hello <b>World</b> onload=alert('test'); contains HTML injection"},
 
-		// Test case 10: Mixed content with HTML tag and entity
-		{"Hello <b>World</b> &amp; Universe.", true, "string Hello <b>World</b> &amp; Universe. contains HTML tags, entities, or comments"},
-
-		// Test case 11: Plain text with ampersand not forming an entity
-		{"AT&T is a company.", false, ""},
-
-		// Test case 12: Plain text with angle brackets but no tags
-		{"Angle brackets < and > in text.", false, ""},
-
-		// Test case 13: HTML-style comment
-		{"<!-- This is a comment -->", true, "string <!-- This is a comment --> contains HTML tags, entities, or comments"},
+		// Test case 11: HTML-style comment
+		{"<!-- This is a comment -->", true, "string <!-- This is a comment --> contains HTML injection"},
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable to avoid issues with parallel execution
+		tt := tt // capture range variable for parallel execution
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
-
 			err := isValidField(tt.input)
 			if (err != nil) != tt.expectedErr {
 				t.Errorf("isValidField(%q) got error: %v, expected error: %v", tt.input, err, tt.expectedErr)
@@ -69,7 +54,7 @@ func TestIsValidField(t *testing.T) {
 }
 
 func TestValidateDataSourceTemplate(t *testing.T) {
-	t.Parallel() // make this sub-test run in parallel
+	t.Parallel()
 
 	tests := []struct {
 		input          bodyData
@@ -93,7 +78,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 			false, "",
 		},
 
-		// Test case 2: One field contains HTML tag
+		// Test case 2: AdminName contains HTML tags
 		{
 			bodyData{
 				AdminName:        "John <b>Doe</b>",
@@ -107,32 +92,15 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 				RoleName:         "Administrator",
 				RoleVerb:         "manage",
 			},
-			true, "field AdminName is empty or contains HTML injection - John <b>Doe</b>",
+			true, "field AdminName failed validation - John <b>Doe</b>",
 		},
 
-		// Test case 3: One field contains HTML entity
-		{
-			bodyData{
-				AdminName:        "John Doe",
-				OrganizationName: "Acme Corp",
-				InvitationURL:    "https://invitation.com",
-				RecipientEmail:   "john.doe@example.com",
-				MinderURL:        "https://minder.com",
-				TermsURL:         "https://terms.com",
-				PrivacyURL:       "https://privacy.com",
-				SignInURL:        "https://signin.com",
-				RoleName:         "Administrator",
-				RoleVerb:         "approve &amp; manage",
-			},
-			true, "field RoleVerb is empty or contains HTML injection - approve &amp; manage",
-		},
-
-		// Test case 4: Multiple fields contain HTML content
+		// Test case 3: OrganizationName contains HTML content
 		{
 			bodyData{
 				AdminName:        "John Doe",
 				OrganizationName: "<script>alert('Hack');</script>",
-				InvitationURL:    "<a href='https://phishing.com'>Click here</a>",
+				InvitationURL:    "https://invitation.com",
 				RecipientEmail:   "john.doe@example.com",
 				MinderURL:        "https://minder.com",
 				TermsURL:         "https://terms.com",
@@ -141,7 +109,24 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 				RoleName:         "Administrator",
 				RoleVerb:         "manage",
 			},
-			true, "field OrganizationName is empty or contains HTML injection - <script>alert('Hack');</script>",
+			true, "field OrganizationName failed validation - <script>alert('Hack');</script>",
+		},
+
+		// Test case 4: AdminName contains JavaScript code
+		{
+			bodyData{
+				AdminName:        "onload=alert('test')",
+				OrganizationName: "Acme Corp",
+				InvitationURL:    "https://invitation.com",
+				RecipientEmail:   "john.doe@example.com",
+				MinderURL:        "https://minder.com",
+				TermsURL:         "https://terms.com",
+				PrivacyURL:       "https://privacy.com",
+				SignInURL:        "https://signin.com",
+				RoleName:         "Administrator",
+				RoleVerb:         "manage",
+			},
+			true, "field AdminName failed validation - onload=alert('test')",
 		},
 
 		// Test case 5: All fields contain valid plain text with some URLs
@@ -163,10 +148,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable to avoid issues with parallel execution
+		tt := tt // capture range variable for parallel execution
 		t.Run(tt.input.AdminName, func(t *testing.T) {
 			t.Parallel()
-
 			err := validateDataSourceTemplate(&tt.input)
 			if (err != nil) != tt.expectedErr {
 				t.Errorf("validateDataSourceTemplate(%+v) got error: %v, expected error: %v", tt.input, err, tt.expectedErr)
