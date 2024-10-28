@@ -66,7 +66,8 @@ const (
 )
 
 // NewEventer creates an eventer object which isolates the watermill setup code
-func NewEventer(ctx context.Context, flagClient openfeature.IClient, cfg *serverconfig.EventConfig) (interfaces.Interface, error) {
+func NewEventer(
+	ctx context.Context, flagClient openfeature.IClient, cfg *serverconfig.EventConfig) (interfaces.Interface, error) {
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
