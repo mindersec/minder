@@ -6,6 +6,7 @@ package profiles_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,6 +31,11 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 
 		// skip non-yaml files
 		if filepath.Ext(path) != ".yaml" {
+			return nil
+		}
+
+		// skip test files
+		if strings.HasSuffix(path, ".test.yaml") || strings.HasSuffix(path, ".test.yml") {
 			return nil
 		}
 
