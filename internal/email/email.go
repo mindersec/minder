@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -27,6 +29,15 @@ const (
 	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 	// EmailBodyMaxLength is the maximum length of the email body
 	EmailBodyMaxLength = 10000
+)
+
+var (
+	// htmlTagRegex is a regex to match HTML tags
+	htmlTagRegex = regexp.MustCompile(`<\/?[a-z][\s\S]*?>`)
+	// htmlEntityRegex is a regex to match HTML entities
+	htmlEntityRegex = regexp.MustCompile(`&[a-zA-Z0-9#]+;`)
+	// htmlCommentRegex is a regex to match HTML comments
+	htmlCommentRegex = regexp.MustCompile(`<!--[\s\S]*?-->`)
 )
 
 // MailEventPayload is the event payload for sending an invitation email
@@ -73,6 +84,13 @@ func NewMessage(
 		SignInURL:        minderURLBase,
 		RoleName:         role,
 		RoleVerb:         authz.AllRolesVerbs[authz.Role(role)],
+	}
+
+	// Validate the data source template for HTML injection attacks or empty fields
+	err = validateDataSourceTemplate(&data)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error validating data source")
+		return nil, fmt.Errorf("error validating data source: %w", err)
 	}
 
 	// Create the payload
@@ -130,4 +148,40 @@ func getEmailBodyText(ctx context.Context, data bodyData) string {
 // getEmailSubject returns the subject for the email based on the message payload
 func getEmailSubject(project string) string {
 	return fmt.Sprintf("You have been invited to join the %s organization in Minder", project)
+}
+
+// isValidField checks if a string contains HTML tags, entities, or comments.
+func isValidField(str string) error {
+	if str == "" {
+		return fmt.Errorf("string is empty")
+	}
+
+	// Check for HTML tags, entities, or comments
+	if htmlTagRegex.MatchString(str) || htmlEntityRegex.MatchString(str) || htmlCommentRegex.MatchString(str) {
+		return fmt.Errorf("string %s contains HTML tags, entities, or comments", str)
+	}
+	return nil
+}
+
+// validateDataSourceTemplate validates the template data source for HTML injection attacks
+func validateDataSourceTemplate(s interface{}) error {
+	// Get the reflect.Value of the pointer to the struct
+	v := reflect.ValueOf(s).Elem()
+
+	// Iterate over the fields of the struct
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+
+		// Check if the field is settable and of kind string
+		if field.CanSet() && field.Kind() == reflect.String {
+			strVal := field.String()
+
+			// Execute your function on the field value
+			err := isValidField(strVal)
+			if err != nil {
+				return fmt.Errorf("field %s is empty or contains HTML injection - %s", v.Type().Field(i).Name, strVal)
+			}
+		}
+	}
+	return nil
 }

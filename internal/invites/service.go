@@ -137,7 +137,7 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 			identity.Human(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error generating UUID: %w", err)
+			return nil, fmt.Errorf("error creating email message: %w", err)
 		}
 		err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
 		if err != nil {
@@ -318,7 +318,7 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		sponsorDisplay,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error generating UUID: %w", err)
+		return nil, fmt.Errorf("error creating email message: %w", err)
 	}
 
 	err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
@@ -356,7 +356,7 @@ func getInviteUrl(emailCfg serverconfig.EmailConfig, userInvite db.UserInvite) (
 	return inviteURL, nil
 }
 
-// isEmail is used to validate if the email is a valid email address
+// isEmail is used to validate if the email is a valid email address according to RFC 5322
 func isEmail(emailString string) bool {
 	_, err := mail.ParseAddress(emailString)
 	return err == nil
