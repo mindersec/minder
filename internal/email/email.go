@@ -84,12 +84,21 @@ func NewMessage(
 		return nil, fmt.Errorf("error validating data source: %w", err)
 	}
 
+	// Create the HTML and text bodies
+	strBodyHTML, err := getEmailBodyHTML(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("error creating HTML body for email: %w", err)
+	}
+	strBodyText, err := getEmailBodyText(ctx, data)
+	if err != nil {
+		return nil, fmt.Errorf("error creating text body for email: %w", err)
+	}
 	// Create the payload
 	payload, err := json.Marshal(MailEventPayload{
 		Address:  inviteeEmail,
 		Subject:  getEmailSubject(projectDisplay),
-		BodyHTML: getEmailBodyHTML(ctx, data),
-		BodyText: getEmailBodyText(ctx, data),
+		BodyHTML: strBodyHTML,
+		BodyText: strBodyText,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling payload for email event: %w", err)
@@ -101,7 +110,7 @@ func NewMessage(
 
 // getHTMLBodyString returns the HTML body for the email based on the message payload.
 // If there is an error creating the HTML body, it will try to return the text body instead
-func getEmailBodyHTML(ctx context.Context, data bodyData) string {
+func getEmailBodyHTML(ctx context.Context, data bodyData) (string, error) {
 	var b strings.Builder
 	bHTML := bodyHTML
 
@@ -115,25 +124,25 @@ func getEmailBodyHTML(ctx context.Context, data bodyData) string {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error executing the HTML template for email invitations")
 		return getEmailBodyText(ctx, data)
 	}
-	return b.String()
+	return b.String(), nil
 }
 
 // getTextBodyString returns the text body for the email based on the message payload
-func getEmailBodyText(ctx context.Context, data bodyData) string {
+func getEmailBodyText(ctx context.Context, data bodyData) (string, error) {
 	var b strings.Builder
 	bText := bodyText
 
 	bodyTextTmpl, err := util.NewSafeHTMLTemplate(&bText, "body-invite-text")
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating the text template for email invitations")
-		return ""
+		return "", err
 	}
 	err = bodyTextTmpl.Execute(ctx, &b, data, EmailBodyMaxLength)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error executing the text template for email invitations")
-		return ""
+		return "", err
 	}
-	return b.String()
+	return b.String(), nil
 }
 
 // getEmailSubject returns the subject for the email based on the message payload
