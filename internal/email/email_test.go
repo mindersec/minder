@@ -3,7 +3,11 @@
 
 package email
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 func TestIsValidField(t *testing.T) {
 	t.Parallel()
@@ -33,6 +37,9 @@ func TestIsValidField(t *testing.T) {
 
 		// Test case 7: HTML-style comment
 		{"<!-- This is a comment -->", true, "string <!-- This is a comment --> contains HTML injection"},
+
+		// Test case 8: ensure allowed length is less than 200 characters
+		{strings.Repeat("a", MaxFieldLength+1), true, fmt.Sprintf("field value %s is more than %d characters", strings.Repeat("a", MaxFieldLength+1), MaxFieldLength)},
 	}
 
 	for _, tt := range tests {
@@ -148,7 +155,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		tt := tt // capture range variable for parallel execution
 		t.Run(tt.input.AdminName, func(t *testing.T) {
 			t.Parallel()
-			err := validateDataSourceTemplate(&tt.input)
+			err := tt.input.Validate()
 			if (err != nil) != tt.expectedErr {
 				t.Errorf("validateDataSourceTemplate(%+v) got error: %v, expected error: %v", tt.input, err, tt.expectedErr)
 			}

@@ -8,13 +8,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"reflect"
 	"strings"
-	"text/template"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
-	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/util"
@@ -27,8 +26,10 @@ const (
 	DefaultMinderTermsURL = "https://stacklok.com/stacklok-terms-of-service"
 	// DefaultMinderPrivacyURL is the default privacy URL for minder
 	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
-	// EmailBodyMaxLength is the maximum length of the email body
-	EmailBodyMaxLength = 10000
+	// BodyMaxLength is the maximum length of the email body
+	BodyMaxLength = 10000
+	// MaxFieldLength is the maximum length of a string field
+	MaxFieldLength = 200
 )
 
 // MailEventPayload is the event payload for sending an invitation email
@@ -60,7 +61,7 @@ func NewMessage(
 	// Generate a new message UUID
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return nil, fmt.Errorf("error generating UUID: %w", err)
+		return nil, err
 	}
 
 	// Populate the template data source
@@ -78,25 +79,27 @@ func NewMessage(
 	}
 
 	// Validate the data source template for HTML injection attacks or empty fields
-	err = validateDataSourceTemplate(&data)
+	err = data.Validate()
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error validating data source")
-		return nil, fmt.Errorf("error validating data source: %w", err)
+		return nil, err
 	}
-
 	// Create the HTML and text bodies
-	strBodyHTML, err := getEmailBodyHTML(ctx, data)
+	strBodyHTML, err := data.GetEmailBodyHTML(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error creating HTML body for email: %w", err)
+		return nil, err
 	}
-	strBodyText, err := getEmailBodyText(ctx, data)
+	strBodyText, err := data.GetEmailBodyText(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error creating text body for email: %w", err)
+		return nil, err
+	}
+	strSubject, err := data.GetEmailSubject()
+	if err != nil {
+		return nil, err
 	}
 	// Create the payload
 	payload, err := json.Marshal(MailEventPayload{
 		Address:  inviteeEmail,
-		Subject:  getEmailSubject(projectDisplay),
+		Subject:  strSubject,
 		BodyHTML: strBodyHTML,
 		BodyText: strBodyText,
 	})
@@ -108,50 +111,55 @@ func NewMessage(
 	return message.NewMessage(id.String(), payload), nil
 }
 
-// getHTMLBodyString returns the HTML body for the email based on the message payload.
+// GetEmailBodyHTML returns the HTML body for the email based on the message payload.
 // If there is an error creating the HTML body, it will try to return the text body instead
-func getEmailBodyHTML(ctx context.Context, data bodyData) (string, error) {
-	var b strings.Builder
+func (b *bodyData) GetEmailBodyHTML(ctx context.Context) (string, error) {
+	var builder strings.Builder
 	bHTML := bodyHTML
 
 	bodyHTMLTmpl, err := util.NewSafeHTMLTemplate(&bHTML, "body-invite-html")
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating the HTML template for email invitations")
-		return getEmailBodyText(ctx, data)
+		return "", err
 	}
-	err = bodyHTMLTmpl.Execute(ctx, &b, data, EmailBodyMaxLength)
+	err = bodyHTMLTmpl.Execute(ctx, &builder, b, BodyMaxLength)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error executing the HTML template for email invitations")
-		return getEmailBodyText(ctx, data)
+		return "", err
 	}
-	return b.String(), nil
+	return builder.String(), nil
 }
 
-// getTextBodyString returns the text body for the email based on the message payload
-func getEmailBodyText(ctx context.Context, data bodyData) (string, error) {
-	var b strings.Builder
+// GetEmailBodyText returns the text body for the email based on the message payload
+func (b *bodyData) GetEmailBodyText(ctx context.Context) (string, error) {
+	var builder strings.Builder
 	bText := bodyText
 
 	bodyTextTmpl, err := util.NewSafeHTMLTemplate(&bText, "body-invite-text")
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating the text template for email invitations")
 		return "", err
 	}
-	err = bodyTextTmpl.Execute(ctx, &b, data, EmailBodyMaxLength)
+	err = bodyTextTmpl.Execute(ctx, &builder, b, BodyMaxLength)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error executing the text template for email invitations")
 		return "", err
 	}
-	return b.String(), nil
+	return builder.String(), nil
 }
 
-// getEmailSubject returns the subject for the email based on the message payload
-func getEmailSubject(project string) string {
-	return fmt.Sprintf("You have been invited to join the %s organization in Minder", project)
+// GetEmailSubject returns the subject for the email based on the message payload
+func (b *bodyData) GetEmailSubject() (string, error) {
+	err := isValidField(b.OrganizationName)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("You have been invited to join the %s organization in Minder", b.OrganizationName), nil
 }
 
 // isValidField checks if the string is empty or contains HTML or JavaScript injection
+// If we detect any HTML or JavaScript injection, we want to return an error rather than escaping the content
 func isValidField(str string) error {
+	// Check string length
+	if len(str) > MaxFieldLength {
+		return fmt.Errorf("field value %s is more than %d characters", str, MaxFieldLength)
+	}
 	// Check for HTML content
 	escapedHTML := template.HTMLEscapeString(str)
 	if escapedHTML != str {
@@ -167,24 +175,23 @@ func isValidField(str string) error {
 	return nil
 }
 
-// validateDataSourceTemplate validates the template data source for HTML injection attacks
-func validateDataSourceTemplate(s interface{}) error {
-	// Get the reflect.Value of the pointer to the struct
-	v := reflect.ValueOf(s).Elem()
-
+// Validate validates the template data source for HTML injection attacks
+func (b *bodyData) Validate() error {
+	v := reflect.ValueOf(b).Elem()
 	// Iterate over the fields of the struct
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
-
-		// Check if the field is settable and of kind string
-		if field.CanSet() && field.Kind() == reflect.String {
+		// Check if the field is settable and of kind and type string
+		if field.CanSet() && field.Kind() == reflect.String && field.Type() == reflect.TypeOf("") {
 			strVal := field.String()
-
 			// Execute your function on the field value
 			err := isValidField(strVal)
 			if err != nil {
 				return fmt.Errorf("field %s failed validation - %s", v.Type().Field(i).Name, strVal)
 			}
+		} else {
+			// Return an error if the field is not settable or not a string
+			return fmt.Errorf("field %s is not settable or a string", v.Type().Field(i).Name)
 		}
 	}
 	return nil
