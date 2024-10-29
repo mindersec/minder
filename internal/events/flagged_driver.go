@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package events
 
@@ -49,8 +37,8 @@ type flaggedDriver struct {
 // driver, otherwise it is published to the base driver.
 func (f *flaggedDriver) Publish(topic string, messages ...*message.Message) error {
 	// Each message has its own context, so they _could_ be in different flag treatments
+	emptyContext := engcontext.EntityContext{}
 	for _, m := range messages {
-		emptyContext := engcontext.EntityContext{}
 		if engcontext.EntityFromContext(m.Context()) == emptyContext {
 			zerolog.Ctx(m.Context()).Warn().Str("stack", string(debug.Stack())).Msg("No entity in context")
 		}
@@ -101,6 +89,8 @@ func (f *flaggedDriver) Subscribe(ctx context.Context, topic string) (<-chan *me
 				}
 				out <- msg
 				f.readMessages.Add(ctx, 1, metric.WithAttributes(attribute.Bool("experiment", true)))
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()
@@ -137,6 +127,7 @@ func makeFlaggedDriver(ctx context.Context, cfg *serverconfig.EventConfig, flagC
 	}
 	experimentPub, experimentSub, experimentCloser, err := instantiateDriver(ctx, cfg.Flags.AlternateDriver, cfg, flagClient)
 	if err != nil {
+		baseCloser()
 		return nil, nil, nil, fmt.Errorf("Failed to instantiate experiment: %w", err)
 	}
 
