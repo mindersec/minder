@@ -57,6 +57,9 @@ const (
 	frizbeePrBody             = `This PR replaces tags with sha`
 	frizbeePrBodyWithExcludes = `This PR replaces tags with sha`
 
+	yqCommitTitle = "Replace dangerous PR events"
+	yqPrBody      = `This PR replaces dangerous PR events`
+
 	actionWithTags = `
 on:
   workflow_call:
@@ -129,6 +132,14 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 		ActionsReplaceTagsWithSha: &pb.RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{
 			Exclude: e,
 		},
+	}
+}
+
+func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.yq.evaluate",
+		Title:  yqCommitTitle,
+		Body:   yqPrBody,
 	}
 }
 
@@ -568,6 +579,30 @@ func TestPullRequestRemediate(t *testing.T) {
 			},
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":44}`),
+		},
+		{
+			name: "replace PR events with YQ",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						yqCommitTitle, yqPrBody,
+						refFromBranch(branchBaseName(yqCommitTitle)), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(45)}, nil)
+			},
+			remArgs:          createTestRemArgs(),
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
 		},
 	}
 

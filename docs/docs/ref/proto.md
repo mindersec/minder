@@ -2481,7 +2481,8 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 | title | <TypeLink type="string">string</TypeLink> |  | the title of the PR |
 | body | <TypeLink type="string">string</TypeLink> |  | the body of the PR |
 | contents | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content">RuleType.Definition.Remediate.PullRequestRemediation.Content</TypeLink> | repeated |  |
-| method | <TypeLink type="string">string</TypeLink> |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA |
+| method | <TypeLink type="string">string</TypeLink> |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA -- minder.yq.evaluate - evaluates a yq expression on a file |
+| params | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | params are unstructured parameters passed to the method. These are optional and evaluated by the method. |
 | actions_replace_tags_with_sha | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-ActionsReplaceTagsWithSha">RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithSha</TypeLink> | optional | If the method is minder.actions.replace_tags_with_sha, this is the configuration for that method |
 
 

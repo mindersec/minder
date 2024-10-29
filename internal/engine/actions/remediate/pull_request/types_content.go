@@ -20,6 +20,8 @@ const (
 	minderContentModification = "minder.content"
 	// minderFrizbeeTagResolve replaces a github action tag with the appropriate checksum
 	minderFrizbeeTagResolve = "minder.actions.replace_tags_with_sha"
+	// minderYQEvaluate evaluates a yq expression
+	minderYQEvaluate = "minder.yq.evaluate"
 
 	// ContentBytesLimit is the maximum number of bytes for the content
 	ContentBytesLimit = 5120
