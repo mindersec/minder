@@ -2246,6 +2246,14 @@ definitions:
           -- minder.actions.replace_tags_with_sha - finds any github actions
           within a workflow
                                                     file and replaces the tag with the SHA
+          -- minder.yq.evaluate - evaluates a yq expression on a file
+      params:
+        type: object
+        description: >-
+          params are unstructured parameters passed to the method. These are
+          optional
+
+          and evaluated by the method.
       actionsReplaceTagsWithSha:
         $ref: '#/definitions/PullRequestRemediationActionsReplaceTagsWithSha'
         title: >-
