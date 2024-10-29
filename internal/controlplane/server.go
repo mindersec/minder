@@ -234,10 +234,16 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
+	validator, err := util.NewValidator()
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %w", err)
+	}
+
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
+		util.ProtoValidationInterceptor(validator),
 		// This adds `Grpc-Metadata-Request-Id` to the
 		// response.
 		logger.RequestIDInterceptor("request-id"),

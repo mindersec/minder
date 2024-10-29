@@ -5,6 +5,7 @@ version: v1
 name: buf.build/mindersec/minder
 deps:
   - buf.build/googleapis/googleapis
+  - buf.build/bufbuild/protovalidate
 breaking:
   use:
     - WIRE_JSON

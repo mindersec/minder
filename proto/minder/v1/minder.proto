@@ -9,6 +9,7 @@ import "google/protobuf/descriptor.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/field_mask.proto";
+import "buf/validate/validate.proto";
 
 option go_package = "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1";
 
@@ -2316,7 +2317,7 @@ message RoleAssignment {
     // project is the project in which the role is assigned.
     optional string project = 4;
     // email is the email address of the subject used for invitations.
-    string email = 6;
+    string email = 6 [(buf.validate.field) = {string: {email: true}}];
     // first_name is the first name of the subject.
     string first_name = 7;
     // last_name is the last name of the subject.
