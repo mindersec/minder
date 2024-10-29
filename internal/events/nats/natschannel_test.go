@@ -66,10 +66,11 @@ func TestNatsChannel(t *testing.T) {
 	// the last message published be dropped if the following Close call
 	// is within a few milliseconds of the Publish call.
 	time.Sleep(5 * time.Millisecond)
-	// Don't let sub1 see the last message, even though it's published by pub1.
+	// Don't let sub1 see the last two messages, even though it's published by pub1.
 	if err := sub1.Close(); err != nil {
 		t.Fatalf("failed to close sub1: %v", err)
 	}
+	time.Sleep(5 * time.Millisecond)
 	if err := pub2.Publish("test", m3); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
