@@ -1,15 +1,20 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package util
+// Package api package api provides a gRPC interceptor that validates incoming requests.
+package api
 
 import (
 	"context"
+	"errors"
+
 	"github.com/bufbuild/protovalidate-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
+	"github.com/mindersec/minder/internal/util"
 )
 
 // ProtoValidationInterceptor is a gRPC interceptor that validates incoming requests.
@@ -24,7 +29,14 @@ func ProtoValidationInterceptor(validator *protovalidate.Validator) grpc.UnarySe
 
 		// Validate the incoming request
 		if err := validator.Validate(msg); err != nil {
-			// Return validation error
+			var validationErr *protovalidate.ValidationError
+			if errors.As(err, &validationErr) {
+				// Convert ValidationError to validate.Violations
+				violations := validationErr.ToProto()
+				// Convert violations to a util.NiceStatus message and return it
+				return nil, util.UserVisibleError(codes.InvalidArgument, "Validation failed: %s", violations)
+			}
+			// Default to generic validation error
 			return nil, status.Errorf(codes.InvalidArgument, "Validation failed: %v", err)
 		}
 		// Proceed to the handler
@@ -34,5 +46,9 @@ func ProtoValidationInterceptor(validator *protovalidate.Validator) grpc.UnarySe
 
 // NewValidator creates a new validator.
 func NewValidator() (*protovalidate.Validator, error) {
-	return protovalidate.New()
+	options := []protovalidate.ValidatorOption{
+		protovalidate.WithUTC(true),
+		// TODO: add protovalidate.WithDescriptors() in the future
+	}
+	return protovalidate.New(options...)
 }
