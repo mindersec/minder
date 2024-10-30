@@ -18,10 +18,17 @@ logging:
   level: "debug"
 
 events:
-  sql_connection:
-    dbhost: "watermill-postgres"
-    dbport: 5432
-    dbuser: postgres
-    dbpass: postgres
-    dbname: watermill
-    sslmode: disable
+  driver: "sql"
+#  driver: "cloudevents-nats"
+  sql:
+    connection:
+      dbhost: "watermill-postgres"
+      dbport: 5432
+      dbuser: postgres
+      dbpass: postgres
+      dbname: watermill
+      sslmode: disable
+#  nats:
+#    url: "nats://localhost:4222"
+#    prefix: "minder"
+#    queue: "minder"

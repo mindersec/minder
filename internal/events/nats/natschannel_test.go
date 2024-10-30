@@ -16,6 +16,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/test"
 
 	"github.com/mindersec/minder/internal/events/common"
+	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
@@ -27,7 +28,7 @@ func TestNatsChannel(t *testing.T) {
 	}
 	defer server.Shutdown()
 	cfg := serverconfig.EventConfig{
-		Nats: serverconfig.NatsConfig{
+		Nats: config.NatsConfig{
 			URL:    server.ClientURL(),
 			Prefix: "test",
 			Queue:  "minder",
@@ -121,7 +122,7 @@ loop:
 }
 
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {
-	pub, sub, closer, err := BuildNatsChannelDriver(&cfg)
+	pub, sub, closer, err := BuildNatsChannelDriver(&cfg.Nats)
 	if err != nil {
 		return nil, nil, nil, nil, fmt.Errorf("failed to build nats channel driver: %v", err)
 	}

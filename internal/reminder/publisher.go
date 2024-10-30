@@ -13,12 +13,33 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/events/common"
+	natsinternal "github.com/mindersec/minder/internal/events/nats"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
+
+func (r *reminder) getMessagePublisher(ctx context.Context) (message.Publisher, common.DriverCloser, error) {
+	switch r.cfg.EventConfig.Driver {
+	case constants.NATSDriver:
+		return r.setupNATSPublisher(ctx)
+	case constants.SQLDriver:
+		return r.setupSQLPublisher(ctx)
+	default:
+		return nil, nil, fmt.Errorf("unknown publisher type: %s", r.cfg.EventConfig.Driver)
+	}
+}
+
+func (r *reminder) setupNATSPublisher(_ context.Context) (message.Publisher, common.DriverCloser, error) {
+	pub, _, cl, err := natsinternal.BuildNatsChannelDriver(&r.cfg.EventConfig.NatsConfig)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create NATS publisher: %w", err)
+	}
+	return pub, cl, nil
+}
 
 func (r *reminder) setupSQLPublisher(ctx context.Context) (message.Publisher, common.DriverCloser, error) {
 	logger := zerolog.Ctx(ctx)
 
-	db, _, err := r.cfg.EventConfig.Connection.GetDBConnection(ctx)
+	db, _, err := r.cfg.EventConfig.SQLPubConfig.Connection.GetDBConnection(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to connect to events database: %w", err)
 	}

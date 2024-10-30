@@ -63,9 +63,6 @@ func NewEventer(ctx context.Context, _ openfeature.IClient, cfg *serverconfig.Ev
 	if cfg == nil {
 		return nil, errors.New("event config is nil")
 	}
-	if cfg == nil {
-		return nil, errors.New("event config is nil")
-	}
 
 	l := zerowater.NewZerologLoggerAdapter(
 		zerolog.Ctx(ctx).With().Str("component", "watermill").Logger())
@@ -153,7 +150,7 @@ func instantiateDriver(
 		return eventersql.BuildPostgreSQLDriver(ctx, cfg)
 	case constants.NATSDriver:
 		zerolog.Ctx(ctx).Info().Msg("Using NATS driver")
-		return nats.BuildNatsChannelDriver(cfg)
+		return nats.BuildNatsChannelDriver(&cfg.Nats)
 	default:
 		zerolog.Ctx(ctx).Info().Msg("Driver unknown")
 		return nil, nil, nil, fmt.Errorf("unknown driver %s", driver)
