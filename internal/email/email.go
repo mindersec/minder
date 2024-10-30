@@ -77,10 +77,8 @@ func NewMessage(
 		RoleName:         role,
 		RoleVerb:         authz.AllRolesVerbs[authz.Role(role)],
 	}
-
 	// Validate the data source template for HTML injection attacks or empty fields
-	err = data.Validate()
-	if err != nil {
+	if err = data.Validate(); err != nil {
 		return nil, err
 	}
 	// Create the HTML and text bodies
@@ -182,16 +180,12 @@ func (b *bodyData) Validate() error {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 		// Check if the field is settable and of kind and type string
-		if field.CanSet() && field.Kind() == reflect.String && field.Type() == reflect.TypeOf("") {
-			strVal := field.String()
-			// Execute your function on the field value
-			err := isValidField(strVal)
-			if err != nil {
-				return fmt.Errorf("field %s failed validation - %s", v.Type().Field(i).Name, strVal)
-			}
-		} else {
-			// Return an error if the field is not settable or not a string
+		if !field.CanSet() || field.Kind() != reflect.String || field.Type() != reflect.TypeOf("") {
 			return fmt.Errorf("field %s is not settable or a string", v.Type().Field(i).Name)
+		}
+		err := isValidField(field.String())
+		if err != nil {
+			return fmt.Errorf("field %s failed validation - %s", v.Type().Field(i).Name, field.String())
 		}
 	}
 	return nil
