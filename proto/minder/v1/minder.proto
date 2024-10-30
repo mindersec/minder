@@ -2313,15 +2313,27 @@ message RoleAssignment {
     // subject is the subject to which the role is assigned.
     string subject = 2;
     // display_name is the display name of the subject.
-    string display_name = 5 [(buf.validate.field).string.pattern = "[A-Za-z][- [:word:]\\[\\]\\(\\)]*"];
+    string display_name = 5 [(buf.validate.field).string = {
+        pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+        max_len: 200,
+    }];
     // project is the project in which the role is assigned.
-    optional string project = 4 [(buf.validate.field).string.pattern = "[A-Za-z][- [:word:]\\[\\]\\(\\)]*"];
+    optional string project = 4 [(buf.validate.field).string = {
+        pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+        max_len: 200,
+    }];
     // email is the email address of the subject used for invitations.
     string email = 6 [(buf.validate.field) = {string: {email: true}}];
     // first_name is the first name of the subject.
-    string first_name = 7;
+    string first_name = 7 [(buf.validate.field).string = {
+        pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+        max_len: 200,
+    }];
     // last_name is the last name of the subject.
-    string last_name = 8;
+    string last_name = 8 [(buf.validate.field).string = {
+        pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+        max_len: 200,
+    }];
 
     reserved 3; // deprecated context
 }
