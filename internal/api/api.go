@@ -7,7 +7,10 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
+	"buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	"github.com/bufbuild/protovalidate-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -34,7 +37,7 @@ func ProtoValidationInterceptor(validator *protovalidate.Validator) grpc.UnarySe
 				// Convert ValidationError to validate.Violations
 				violations := validationErr.ToProto()
 				// Convert violations to a util.NiceStatus message and return it
-				return nil, util.UserVisibleError(codes.InvalidArgument, "Validation failed: %s", violations)
+				return nil, util.UserVisibleError(codes.InvalidArgument, "Validation failed:\n%s", formatViolations(violations))
 			}
 			// Default to generic validation error
 			return nil, status.Errorf(codes.InvalidArgument, "Validation failed: %v", err)
@@ -51,4 +54,13 @@ func NewValidator() (*protovalidate.Validator, error) {
 		// TODO: add protovalidate.WithDescriptors() in the future
 	}
 	return protovalidate.New(options...)
+}
+
+// formatViolations is a helper function to format violations
+func formatViolations(violations *validate.Violations) string {
+	var res []string
+	for _, v := range violations.Violations {
+		res = append(res, fmt.Sprintf("- Field '%s': %s", *v.FieldPath, *v.Message))
+	}
+	return strings.Join(res, "\n")
 }
