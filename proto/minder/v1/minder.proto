@@ -2315,17 +2315,14 @@ message RoleAssignment {
     // display_name is the display name of the subject.
     string display_name = 5 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+            pattern: "[A-Za-z][-[:word:]]*",
             max_len: 200,
         },
         (buf.validate.field).ignore_empty = true
     ];
     // project is the project in which the role is assigned.
     optional string project = 4 [
-        (buf.validate.field).string = {
-            pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
-            max_len: 200,
-        },
+        (buf.validate.field).string = {uuid: true},
         (buf.validate.field).ignore_empty = true
     ];
     // email is the email address of the subject used for invitations.
