@@ -14,16 +14,10 @@ const (
 	GoChannelDriver = "go-channel"
 	SQLDriver       = "sql"
 	NATSDriver      = "cloudevents-nats"
+	FlaggedDriver   = "flagged"
 
 	DeadLetterQueueTopic = "dead_letter_queue"
 	PublishedKey         = "published_at"
-)
-
-const (
-	// MetricsNamespace is the namespace for all metrics emitted by the eventer
-	MetricsNamespace = "minder"
-	// MetricsSubsystem is the subsystem for all metrics emitted by the eventer
-	MetricsSubsystem = "eventer"
 )
 
 const (
