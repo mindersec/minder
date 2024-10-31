@@ -617,6 +617,20 @@ func (mr *MockStoreMockRecorder) DeleteRepository(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockStore)(nil).DeleteRepository), ctx, id)
 }
 
+// DeleteRuleInstanceOfProfileInProject mocks base method.
+func (m *MockStore) DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg db.DeleteRuleInstanceOfProfileInProjectParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRuleInstanceOfProfileInProject", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRuleInstanceOfProfileInProject indicates an expected call of DeleteRuleInstanceOfProfileInProject.
+func (mr *MockStoreMockRecorder) DeleteRuleInstanceOfProfileInProject(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleInstanceOfProfileInProject", reflect.TypeOf((*MockStore)(nil).DeleteRuleInstanceOfProfileInProject), ctx, arg)
+}
+
 // DeleteRuleType mocks base method.
 func (m *MockStore) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -1792,6 +1806,21 @@ func (m *MockStore) InsertRemediationEvent(ctx context.Context, arg db.InsertRem
 func (mr *MockStoreMockRecorder) InsertRemediationEvent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRemediationEvent", reflect.TypeOf((*MockStore)(nil).InsertRemediationEvent), ctx, arg)
+}
+
+// ListAllParentProjects mocks base method.
+func (m *MockStore) ListAllParentProjects(ctx context.Context) ([]db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllParentProjects", ctx)
+	ret0, _ := ret[0].([]db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllParentProjects indicates an expected call of ListAllParentProjects.
+func (mr *MockStoreMockRecorder) ListAllParentProjects(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllParentProjects", reflect.TypeOf((*MockStore)(nil).ListAllParentProjects), ctx)
 }
 
 // ListArtifactsByRepoID mocks base method.

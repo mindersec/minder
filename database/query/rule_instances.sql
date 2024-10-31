@@ -51,3 +51,6 @@ SELECT rule_type_id FROM rule_instances
 WHERE name = $1
 AND entity_type = $2
 AND profile_id = $3;
+
+-- name: DeleteRuleInstanceOfProfileInProject :exec
+DELETE FROM rule_instances WHERE project_id = $1 AND profile_id = $2 AND rule_type_id = $3;

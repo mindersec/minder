@@ -1023,6 +1023,8 @@ message Project {
     // display_names are short *non-unique* strings to provide
     // a user-friendly name for presentation in lists, etc.
     string display_name = 5;
+    bool is_organization = 8;
+    string parent_id = 9;
 }
 
 // Repositories API objects
@@ -2789,4 +2791,12 @@ message UpstreamEntityRef {
     // and will be a subset of the properties of the entity that will
     // be stored in Minder.
     google.protobuf.Struct properties = 3;
+}
+
+// BundleSubscription represents a subscription to a bundle.
+message BundleSubscription {
+    string id = 1;
+    string project_id = 2;
+    string bundle_id = 3;
+    string current_version = 4;
 }

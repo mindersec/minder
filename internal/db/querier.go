@@ -62,6 +62,7 @@ type Querier interface {
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
+	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
@@ -172,6 +173,7 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
+	ListAllParentProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)

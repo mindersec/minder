@@ -347,6 +347,42 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 	return i, err
 }
 
+const listAllParentProjects = `-- name: ListAllParentProjects :many
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE parent_id IS NULL AND is_organization = FALSE
+`
+
+func (q *Queries) ListAllParentProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, listAllParentProjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Project{}
+	for rows.Next() {
+		var i Project
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.IsOrganization,
+			&i.Metadata,
+			&i.ParentID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const orphanProject = `-- name: OrphanProject :one
 
 UPDATE projects

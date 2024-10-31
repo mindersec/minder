@@ -4513,6 +4513,12 @@
         "displayName": {
           "type": "string",
           "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
+        },
+        "isOrganization": {
+          "type": "boolean"
+        },
+        "parentId": {
+          "type": "string"
         }
       },
       "title": "Project API Objects"
