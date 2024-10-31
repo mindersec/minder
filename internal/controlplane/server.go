@@ -39,6 +39,7 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/api"
 	"github.com/mindersec/minder/internal/assets"
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
@@ -234,10 +235,16 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
+	validator, err := api.NewValidator()
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %w", err)
+	}
+
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
+		api.ProtoValidationInterceptor(validator),
 		// This adds `Grpc-Metadata-Request-Id` to the
 		// response.
 		logger.RequestIDInterceptor("request-id"),
