@@ -3,8 +3,34 @@
 
 package email
 
+import "html/template"
+
+// validate that the templates compile
+var (
+	_ = template.Must(template.New("body-invite-text").Parse(bodyText))
+	_ = template.Must(template.New("body-invite-html").Parse(bodyHTML))
+)
+
 //nolint:lll
 const (
+	// bodyText is the text body of the email
+	bodyText = `
+{{.AdminName}} has invited you to become {{.RoleName}} in the {{.OrganizationName}} organization in Minder by Stacklok.
+
+View Invitation: {{.InvitationURL}}
+
+Once you accept, you’ll be able to {{.RoleVerb}} the {{.OrganizationName}} organization in Minder by Stacklok.
+
+This invitation was sent to {{.RecipientEmail}}. If you were not expecting it, you can ignore this email.
+
+Minder by Stacklok is an open source platform that helps development teams and open source communities build more secure software, and prove to others that what they’ve built is secure.
+
+Terms and Conditions: {{.TermsURL}} Privacy: {{.PrivacyURL}}
+
+Sign in to Minder: {{.SignInURL}}
+
+Stacklok
+`
 	// bodyHTML is the HTML body of the email
 	bodyHTML = `
 <div

@@ -132,7 +132,7 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 			identity.Human(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error generating UUID: %w", err)
+			return nil, fmt.Errorf("error creating email message: %w", err)
 		}
 		err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
 		if err != nil {
@@ -232,7 +232,6 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
-
 	// Get the sponsor's user information (current user)
 	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
@@ -305,7 +304,7 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		sponsorDisplay,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error generating UUID: %w", err)
+		return nil, fmt.Errorf("error creating email message: %w", err)
 	}
 
 	err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
