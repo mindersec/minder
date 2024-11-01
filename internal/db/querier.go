@@ -62,6 +62,7 @@ type Querier interface {
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
+	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
@@ -148,6 +149,7 @@ type Querier interface {
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
+	GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
@@ -172,6 +174,7 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
+	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)

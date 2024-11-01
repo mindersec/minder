@@ -31,6 +31,21 @@ func (q *Queries) DeleteNonUpdatedRules(ctx context.Context, arg DeleteNonUpdate
 	return err
 }
 
+const deleteRuleInstanceOfProfileInProject = `-- name: DeleteRuleInstanceOfProfileInProject :exec
+DELETE FROM rule_instances WHERE project_id = $1 AND profile_id = $2 AND rule_type_id = $3
+`
+
+type DeleteRuleInstanceOfProfileInProjectParams struct {
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProfileID  uuid.UUID `json:"profile_id"`
+	RuleTypeID uuid.UUID `json:"rule_type_id"`
+}
+
+func (q *Queries) DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRuleInstanceOfProfileInProject, arg.ProjectID, arg.ProfileID, arg.RuleTypeID)
+	return err
+}
+
 const getRuleInstancesEntityInProjects = `-- name: GetRuleInstancesEntityInProjects :many
 SELECT id, profile_id, rule_type_id, name, entity_type, def, params, created_at, updated_at, project_id FROM rule_instances
 WHERE entity_type = $1

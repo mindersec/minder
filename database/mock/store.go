@@ -617,6 +617,20 @@ func (mr *MockStoreMockRecorder) DeleteRepository(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepository", reflect.TypeOf((*MockStore)(nil).DeleteRepository), ctx, id)
 }
 
+// DeleteRuleInstanceOfProfileInProject mocks base method.
+func (m *MockStore) DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg db.DeleteRuleInstanceOfProfileInProjectParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRuleInstanceOfProfileInProject", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRuleInstanceOfProfileInProject indicates an expected call of DeleteRuleInstanceOfProfileInProject.
+func (mr *MockStoreMockRecorder) DeleteRuleInstanceOfProfileInProject(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleInstanceOfProfileInProject", reflect.TypeOf((*MockStore)(nil).DeleteRuleInstanceOfProfileInProject), ctx, arg)
+}
+
 // DeleteRuleType mocks base method.
 func (m *MockStore) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -1466,6 +1480,21 @@ func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(ctx, arg any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoName), ctx, arg)
 }
 
+// GetRootProjectByID mocks base method.
+func (m *MockStore) GetRootProjectByID(ctx context.Context, id uuid.UUID) (db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRootProjectByID", ctx, id)
+	ret0, _ := ret[0].(db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRootProjectByID indicates an expected call of GetRootProjectByID.
+func (mr *MockStoreMockRecorder) GetRootProjectByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjectByID", reflect.TypeOf((*MockStore)(nil).GetRootProjectByID), ctx, id)
+}
+
 // GetRuleEvaluationByProfileIdAndRuleType mocks base method.
 func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, ruleName sql.NullString, entityID uuid.UUID, ruleTypeName sql.NullString) (*db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()
@@ -1792,6 +1821,21 @@ func (m *MockStore) InsertRemediationEvent(ctx context.Context, arg db.InsertRem
 func (mr *MockStoreMockRecorder) InsertRemediationEvent(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRemediationEvent", reflect.TypeOf((*MockStore)(nil).InsertRemediationEvent), ctx, arg)
+}
+
+// ListAllRootProjects mocks base method.
+func (m *MockStore) ListAllRootProjects(ctx context.Context) ([]db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllRootProjects", ctx)
+	ret0, _ := ret[0].([]db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllRootProjects indicates an expected call of ListAllRootProjects.
+func (mr *MockStoreMockRecorder) ListAllRootProjects(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRootProjects", reflect.TypeOf((*MockStore)(nil).ListAllRootProjects), ctx)
 }
 
 // ListArtifactsByRepoID mocks base method.
