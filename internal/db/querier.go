@@ -220,7 +220,7 @@ type Querier interface {
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
-	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the

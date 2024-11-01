@@ -77,21 +77,17 @@ func (q *Queries) GetSubscriptionByProjectBundle(ctx context.Context, arg GetSub
 	return i, err
 }
 
-const setCurrentVersion = `-- name: SetCurrentVersion :exec
-UPDATE subscriptions
-SET current_version = $1
-FROM subscriptions AS su
-JOIN bundles as bu ON su.bundle_id = bu.id
-WHERE su.project_id = $2 AND bu.namespace = $1 AND bu.name = $2
+const setSubscriptionBundleVersion = `-- name: SetSubscriptionBundleVersion :exec
+UPDATE subscriptions SET current_version = $2 WHERE project_id = $1
 `
 
-type SetCurrentVersionParams struct {
-	CurrentVersion string    `json:"current_version"`
+type SetSubscriptionBundleVersionParams struct {
 	ProjectID      uuid.UUID `json:"project_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
-func (q *Queries) SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error {
-	_, err := q.db.ExecContext(ctx, setCurrentVersion, arg.CurrentVersion, arg.ProjectID)
+func (q *Queries) SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error {
+	_, err := q.db.ExecContext(ctx, setSubscriptionBundleVersion, arg.ProjectID, arg.CurrentVersion)
 	return err
 }
 
