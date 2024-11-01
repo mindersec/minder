@@ -105,37 +105,30 @@ func (q *querierType) BeginTx() (Querier, error) {
 
 // Commit commits the transaction
 func (q *querierType) Commit() error {
-	if q.tx != nil {
-		err := q.store.Commit(q.tx)
-		// Clear the transaction and the querier
-		q.tx = nil
-		q.querier = nil
-		return err
+	if q.tx == nil {
+		return fmt.Errorf("no transaction to commit")
 	}
-	return fmt.Errorf("no transaction to commit")
+	err := q.store.Commit(q.tx)
+	// Clear the transaction and the querier
+	q.tx = nil
+	q.querier = nil
+	return err
 }
 
 // Cancel cancels the transaction
 func (q *querierType) Cancel() error {
-	if q.tx != nil {
-		err := q.store.Rollback(q.tx)
-		// Clear the transaction and the querier
-		q.tx = nil
-		q.querier = nil
-		return err
+	if q.tx == nil {
+		return fmt.Errorf("no transaction to cancel")
 	}
-	return fmt.Errorf("no transaction to cancel")
+	err := q.store.Rollback(q.tx)
+	// Clear the transaction and the querier
+	q.tx = nil
+	q.querier = nil
+	return err
 }
 
 // initDatabase function initializes the database connection
 func initDatabase(ctx context.Context, cfg *server.Config) (db.Store, func(), error) {
-	zerolog.Ctx(ctx).Debug().
-		Str("name", cfg.Database.Name).
-		Str("host", cfg.Database.Host).
-		Str("user", cfg.Database.User).
-		Str("ssl_mode", cfg.Database.SSLMode).
-		Int("port", cfg.Database.Port).
-		Msg("connecting to minder database")
 	// Get a database connection
 	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 	if err != nil {
