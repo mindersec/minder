@@ -80,9 +80,11 @@ func (t *Type) BeginTx() (Querier, error) {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
 	return &Type{
-		store:   t.store,
-		tx:      tx,
-		querier: t.store.GetQuerierWithTransaction(tx),
+		store:      t.store,
+		querier:    t.store.GetQuerierWithTransaction(tx),
+		ruleSvc:    t.ruleSvc,
+		profileSvc: t.profileSvc,
+		tx:         tx,
 	}, nil
 }
 
