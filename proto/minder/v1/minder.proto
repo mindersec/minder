@@ -2270,7 +2270,10 @@ message UpdateRoleRequest {
     // use RemoveRole to remove permissions entirely from the project.
     repeated string roles = 4;
     // email is the email address of the subject used for updating invitations
-    string email = 5;
+    string email = 5 [
+      (buf.validate.field) = {string: {email: true}},
+      (buf.validate.field).ignore_empty = true
+    ];
 
     reserved 3; // deprecated repeated string role = 3;
     reserved "role";
