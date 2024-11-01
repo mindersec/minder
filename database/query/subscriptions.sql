@@ -24,4 +24,3 @@ WHERE bu.namespace = $1 AND bu.name = $2 AND su.project_id = $3;
 
 -- name: SetSubscriptionBundleVersion :exec
 UPDATE subscriptions SET current_version = $2 WHERE project_id = $1;
-

@@ -32,7 +32,7 @@ type BundleHandlers interface {
 
 // SetCurrentVersion sets the current version of the bundle for a project
 func (t *Type) SetCurrentVersion(ctx context.Context, projectID uuid.UUID, currentVersion string) error {
-	return t.querier.SetCurrentVersion(ctx, db.SetCurrentVersionParams{
+	return t.querier.SetSubscriptionBundleVersion(ctx, db.SetSubscriptionBundleVersionParams{
 		ProjectID:      projectID,
 		CurrentVersion: currentVersion,
 	})
