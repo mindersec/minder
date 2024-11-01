@@ -3,7 +3,7 @@
 [![Continuous integration](https://github.com/mindersec/minder/actions/workflows/main.yml/badge.svg)](https://github.com/mindersec/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/mindersec/minder/badge.svg?branch=main)](https://coveralls.io/github/mindersec/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
 ---
 
-[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Releases](https://github.com/mindersec/minder/releases)
+[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://mindersec.github.io/) | [Releases](https://github.com/mindersec/minder/releases)
 ---
 
 # What is Minder?
@@ -129,16 +129,16 @@ where you can manage your registered repositories, create profiles, rules and mu
 configured consistently and securely.
 
 For more information about `minder`, see:
-* `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
-* `minder` REST API Documentation - [Docs](https://minder-docs.stacklok.dev/ref/api).
+* `minder` CLI commands - [Docs](https://mindersec.github.io/ref/cli/minder).
+* `minder` REST API Documentation - [Docs](https://mindersec.github.io/ref/api).
 * `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/mindersec/minder-rules-and-profiles).
-* Minder documentation - [Docs](https://minder-docs.stacklok.dev).
+* Minder documentation - [Docs](https://mindersec.github.io/).
 
 # Roadmap
 
 The Minder community are actively working on new features and improvements for Minder.
 
-You can find our roadmap [here](https://minder-docs.stacklok.dev/about/roadmap).
+You can find our roadmap [here](https://mindersec.github.io/about/roadmap).
 
 Should you wish to request or contribute a feature or improvement, please use the following
 [issue template](https://github.com/mindersec/minder/issues/new?template=enhancement.yml)
@@ -199,7 +199,7 @@ cp config/server-config.yaml.example server-config.yaml
 
 You'd also have to set up an OAuth2 application for `minder-server` to use.
 Once completed, update the configuration file with the appropriate values.
-See the documentation on how to do that - [Docs](https://minder-docs.stacklok.dev/run_minder_server/config_oauth).
+See the documentation on how to do that - [Docs](https://mindersec.github.io/run_minder_server/config_oauth).
 
 #### Run `minder-server`
 
@@ -240,13 +240,13 @@ By default, the `minder` CLI will point to the production Stacklok environment i
 
 ### Development guidelines
 
-You can find more detailed information about the development process in the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
+You can find more detailed information about the development process in the [Developer Guide](https://mindersec.github.io/developer_guide/get-hacking).
 
 ## Minder API
 
-* REST API documentation - [Link](https://minder-docs.stacklok.dev/ref/api).
+* REST API documentation - [Link](https://mindersec.github.io/ref/api).
 
-* Proto API documentation - [Link](https://minder-docs.stacklok.dev/ref/proto).
+* Proto API documentation - [Link](https://mindersec.github.io/ref/proto).
 
 * Protobuf - [Link](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
 
