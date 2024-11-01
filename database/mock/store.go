@@ -1480,6 +1480,21 @@ func (mr *MockStoreMockRecorder) GetRepositoryByRepoName(ctx, arg any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRepositoryByRepoName", reflect.TypeOf((*MockStore)(nil).GetRepositoryByRepoName), ctx, arg)
 }
 
+// GetRootProjectByID mocks base method.
+func (m *MockStore) GetRootProjectByID(ctx context.Context, id uuid.UUID) (db.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRootProjectByID", ctx, id)
+	ret0, _ := ret[0].(db.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRootProjectByID indicates an expected call of GetRootProjectByID.
+func (mr *MockStoreMockRecorder) GetRootProjectByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRootProjectByID", reflect.TypeOf((*MockStore)(nil).GetRootProjectByID), ctx, id)
+}
+
 // GetRuleEvaluationByProfileIdAndRuleType mocks base method.
 func (m *MockStore) GetRuleEvaluationByProfileIdAndRuleType(ctx context.Context, profileID uuid.UUID, ruleName sql.NullString, entityID uuid.UUID, ruleTypeName sql.NullString) (*db.ListRuleEvaluationsByProfileIdRow, error) {
 	m.ctrl.T.Helper()

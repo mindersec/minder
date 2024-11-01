@@ -1903,8 +1903,6 @@ Project API Objects
 | created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | display_name | <TypeLink type="string">string</TypeLink> |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
-| is_organization | <TypeLink type="bool">bool</TypeLink> |  |  |
-| parent_id | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 

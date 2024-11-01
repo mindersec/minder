@@ -25,13 +25,19 @@ type RuleTypeHandlers interface {
 }
 
 // DeleteRuleType deletes a rule type by ID
-func (t *Type) DeleteRuleType(ctx context.Context, ruleTypeID uuid.UUID) error {
-	return t.querier.DeleteRuleType(ctx, ruleTypeID)
+func (q *querierType) DeleteRuleType(ctx context.Context, ruleTypeID uuid.UUID) error {
+	if q.querier == nil {
+		return ErrQuerierMissing
+	}
+	return q.querier.DeleteRuleType(ctx, ruleTypeID)
 }
 
 // ListRuleTypesByProject returns a list of rule types by project ID
-func (t *Type) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]*pb.RuleType, error) {
-	ret, err := t.querier.ListRuleTypesByProject(ctx, projectID)
+func (q *querierType) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]*pb.RuleType, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	ret, err := q.querier.ListRuleTypesByProject(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,8 +53,11 @@ func (t *Type) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) 
 }
 
 // GetRuleTypeByName returns a rule type by name and project IDs
-func (t *Type) GetRuleTypeByName(ctx context.Context, projectIDs []uuid.UUID, name string) (*pb.RuleType, error) {
-	ret, err := t.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+func (q *querierType) GetRuleTypeByName(ctx context.Context, projectIDs []uuid.UUID, name string) (*pb.RuleType, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	ret, err := q.querier.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
 		Name:     name,
 		Projects: projectIDs,
 	})
@@ -59,21 +68,33 @@ func (t *Type) GetRuleTypeByName(ctx context.Context, projectIDs []uuid.UUID, na
 }
 
 // UpdateRuleType updates a rule type
-func (t *Type) UpdateRuleType(
+func (q *querierType) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
-	return t.ruleSvc.UpdateRuleType(ctx, projectID, subscriptionID, ruleType, t.querier)
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	if q.ruleSvc == nil {
+		return nil, ErrRuleSvcMissing
+	}
+	return q.ruleSvc.UpdateRuleType(ctx, projectID, subscriptionID, ruleType, q.querier)
 }
 
 // CreateRuleType creates a rule type
-func (t *Type) CreateRuleType(
+func (q *querierType) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
 	ruleType *pb.RuleType,
 ) (*pb.RuleType, error) {
-	return t.ruleSvc.CreateRuleType(ctx, projectID, subscriptionID, ruleType, t.querier)
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	if q.ruleSvc == nil {
+		return nil, ErrRuleSvcMissing
+	}
+	return q.ruleSvc.CreateRuleType(ctx, projectID, subscriptionID, ruleType, q.querier)
 }

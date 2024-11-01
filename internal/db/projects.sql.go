@@ -347,6 +347,27 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 	return i, err
 }
 
+const getRootProjectByID = `-- name: GetRootProjectByID :one
+SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
+WHERE id = $1
+AND parent_id IS NULL AND is_organization = FALSE LIMIT 1
+`
+
+func (q *Queries) GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error) {
+	row := q.db.QueryRowContext(ctx, getRootProjectByID, id)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.IsOrganization,
+		&i.Metadata,
+		&i.ParentID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listAllRootProjects = `-- name: ListAllRootProjects :many
 SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
 WHERE parent_id IS NULL AND is_organization = FALSE

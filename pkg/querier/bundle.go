@@ -31,20 +31,26 @@ type BundleHandlers interface {
 }
 
 // SetCurrentVersion sets the current version of the bundle for a project
-func (t *Type) SetCurrentVersion(ctx context.Context, projectID uuid.UUID, currentVersion string) error {
-	return t.querier.SetSubscriptionBundleVersion(ctx, db.SetSubscriptionBundleVersionParams{
+func (q *querierType) SetCurrentVersion(ctx context.Context, projectID uuid.UUID, currentVersion string) error {
+	if q.querier == nil {
+		return ErrQuerierMissing
+	}
+	return q.querier.SetSubscriptionBundleVersion(ctx, db.SetSubscriptionBundleVersionParams{
 		ProjectID:      projectID,
 		CurrentVersion: currentVersion,
 	})
 }
 
 // GetSubscriptionByProjectBundle gets a subscription by project bundle
-func (t *Type) GetSubscriptionByProjectBundle(
+func (q *querierType) GetSubscriptionByProjectBundle(
 	ctx context.Context,
 	projectID uuid.UUID,
 	bundleNamespace, bundleName string,
 ) (*BundleSubscription, error) {
-	ret, err := t.querier.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	ret, err := q.querier.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
 		Namespace: bundleNamespace,
 		Name:      bundleName,
 		ProjectID: projectID,

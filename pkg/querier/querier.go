@@ -21,6 +21,15 @@ import (
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
+var (
+	// ErrQuerierMissing is returned when the querier is not initialized
+	ErrQuerierMissing = fmt.Errorf("querier is missing, possibly due to closed or committed transaction")
+	// ErrProfileSvcMissing is returned when the profile service is not initialized
+	ErrProfileSvcMissing = fmt.Errorf("profile service is missing")
+	// ErrRuleSvcMissing is returned when the rule service is not initialized
+	ErrRuleSvcMissing = fmt.Errorf("rule service is missing")
+)
+
 // Store interface provides functions to execute db queries and transactions
 type Store interface {
 	ProjectHandlers
@@ -31,17 +40,20 @@ type Store interface {
 }
 
 // Querier interface provides functions to interact with the Minder database using transactions
+// Calling Commit() or Cancel() is necessary after using the querier.
+// Note that they act as a destructor for the transaction
+// so any further calls using the querier will result in an error.
 type Querier interface {
 	ProjectHandlers
 	RuleTypeHandlers
 	ProfileHandlers
 	BundleHandlers
-	CommitTx() error
-	CancelTx() error
+	Commit() error
+	Cancel() error
 }
 
-// Type represents the querier type
-type Type struct {
+// querierType represents the database querier
+type querierType struct {
 	store      db.Store
 	tx         *sql.Tx
 	querier    db.ExtendQuerier
@@ -49,11 +61,14 @@ type Type struct {
 	profileSvc profiles.ProfileService
 }
 
+// Closer is a function that closes the database connection
+type Closer func()
+
 // Ensure Type implements the Querier interface
-var _ Querier = (*Type)(nil)
+var _ Querier = (*querierType)(nil)
 
 // New creates a new instance of the querier
-func New(ctx context.Context, config *server.Config) (Store, func(), error) {
+func New(ctx context.Context, config *server.Config) (Store, Closer, error) {
 	// Initialize the database
 	store, dbCloser, err := initDatabase(ctx, config)
 	if err != nil {
@@ -65,7 +80,7 @@ func New(ctx context.Context, config *server.Config) (Store, func(), error) {
 		return nil, nil, fmt.Errorf("unable to setup eventer: %w", err)
 	}
 	// Return the new Type
-	return &Type{
+	return &querierType{
 		store:      store,
 		querier:    store, // use store by default
 		ruleSvc:    ruletypes.NewRuleTypeService(),
@@ -74,45 +89,45 @@ func New(ctx context.Context, config *server.Config) (Store, func(), error) {
 }
 
 // BeginTx begins a new transaction
-func (t *Type) BeginTx() (Querier, error) {
-	tx, err := t.store.BeginTransaction()
+func (q *querierType) BeginTx() (Querier, error) {
+	tx, err := q.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
-	return &Type{
-		store:      t.store,
-		querier:    t.store.GetQuerierWithTransaction(tx),
-		ruleSvc:    t.ruleSvc,
-		profileSvc: t.profileSvc,
+	return &querierType{
+		store:      q.store,
+		querier:    q.store.GetQuerierWithTransaction(tx),
+		ruleSvc:    q.ruleSvc,
+		profileSvc: q.profileSvc,
 		tx:         tx,
 	}, nil
 }
 
-// CommitTx commits the transaction
-func (t *Type) CommitTx() error {
-	if t.tx != nil {
-		err := t.store.Commit(t.tx)
-		// Clear the transaction and reset the querier to the store
-		t.tx = nil
-		t.querier = t.store
+// Commit commits the transaction
+func (q *querierType) Commit() error {
+	if q.tx != nil {
+		err := q.store.Commit(q.tx)
+		// Clear the transaction and the querier
+		q.tx = nil
+		q.querier = nil
 		return err
 	}
 	return fmt.Errorf("no transaction to commit")
 }
 
-// CancelTx cancels the transaction
-func (t *Type) CancelTx() error {
-	if t.tx != nil {
-		err := t.store.Rollback(t.tx)
-		// Clear the transaction and reset the querier to the store
-		t.tx = nil
-		t.querier = t.store
+// Cancel cancels the transaction
+func (q *querierType) Cancel() error {
+	if q.tx != nil {
+		err := q.store.Rollback(q.tx)
+		// Clear the transaction and the querier
+		q.tx = nil
+		q.querier = nil
 		return err
 	}
 	return fmt.Errorf("no transaction to cancel")
 }
 
-// initDb function initializes the database connection and transaction details, if needed
+// initDatabase function initializes the database connection
 func initDatabase(ctx context.Context, cfg *server.Config) (db.Store, func(), error) {
 	zerolog.Ctx(ctx).Debug().
 		Str("name", cfg.Database.Name).

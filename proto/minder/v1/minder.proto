@@ -1023,8 +1023,6 @@ message Project {
     // display_names are short *non-unique* strings to provide
     // a user-friendly name for presentation in lists, etc.
     string display_name = 5;
-    bool is_organization = 8;
-    string parent_id = 9;
 }
 
 // Repositories API objects

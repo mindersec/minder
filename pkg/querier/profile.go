@@ -35,41 +35,66 @@ type ProfileHandlers interface {
 }
 
 // DeleteProfile deletes a profile
-func (t *Type) DeleteProfile(ctx context.Context, projectID uuid.UUID, profileID uuid.UUID) error {
-	return t.querier.DeleteProfile(ctx, db.DeleteProfileParams{
+func (q *querierType) DeleteProfile(ctx context.Context, projectID uuid.UUID, profileID uuid.UUID) error {
+	if q.querier == nil {
+		return ErrQuerierMissing
+	}
+	return q.querier.DeleteProfile(ctx, db.DeleteProfileParams{
 		ProjectID: projectID,
 		ID:        profileID,
 	})
 }
 
 // UpdateProfile updates a profile
-func (t *Type) UpdateProfile(
+func (q *querierType) UpdateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
 	profile *pb.Profile,
 ) (*pb.Profile, error) {
-	return t.profileSvc.UpdateProfile(ctx, projectID, subscriptionID, profile, t.querier)
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	if q.profileSvc == nil {
+		return nil, ErrProfileSvcMissing
+	}
+	return q.profileSvc.UpdateProfile(ctx, projectID, subscriptionID, profile, q.querier)
 }
 
 // CreateProfile creates a profile
-func (t *Type) CreateProfile(
+func (q *querierType) CreateProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
 	profile *pb.Profile,
 ) (*pb.Profile, error) {
-	return t.profileSvc.CreateProfile(ctx, projectID, subscriptionID, profile, t.querier)
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	if q.profileSvc == nil {
+		return nil, ErrProfileSvcMissing
+	}
+	return q.profileSvc.CreateProfile(ctx, projectID, subscriptionID, profile, q.querier)
 }
 
 // ListProfilesInstantiatingRuleType returns a list of profiles instantiating a rule type
-func (t *Type) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error) {
-	return t.querier.ListProfilesInstantiatingRuleType(ctx, ruleTypeID)
+func (q *querierType) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	return q.querier.ListProfilesInstantiatingRuleType(ctx, ruleTypeID)
 }
 
 // GetProfileByProjectAndName returns a profile by project ID and name
-func (t *Type) GetProfileByProjectAndName(ctx context.Context, projectID uuid.UUID, name string) (map[string]*pb.Profile, error) {
-	ret, err := t.querier.GetProfileByProjectAndName(ctx, db.GetProfileByProjectAndNameParams{
+func (q *querierType) GetProfileByProjectAndName(
+	ctx context.Context,
+	projectID uuid.UUID,
+	name string,
+) (map[string]*pb.Profile, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	ret, err := q.querier.GetProfileByProjectAndName(ctx, db.GetProfileByProjectAndNameParams{
 		Name:      name,
 		ProjectID: projectID,
 	})
@@ -80,8 +105,14 @@ func (t *Type) GetProfileByProjectAndName(ctx context.Context, projectID uuid.UU
 }
 
 // DeleteRuleInstanceOfProfileInProject deletes a rule instance for a profile in a project
-func (t *Type) DeleteRuleInstanceOfProfileInProject(ctx context.Context, projectID, profileID, ruleTypeID uuid.UUID) error {
-	return t.querier.DeleteRuleInstanceOfProfileInProject(ctx, db.DeleteRuleInstanceOfProfileInProjectParams{
+func (q *querierType) DeleteRuleInstanceOfProfileInProject(
+	ctx context.Context,
+	projectID, profileID, ruleTypeID uuid.UUID,
+) error {
+	if q.querier == nil {
+		return ErrQuerierMissing
+	}
+	return q.querier.DeleteRuleInstanceOfProfileInProject(ctx, db.DeleteRuleInstanceOfProfileInProjectParams{
 		ProjectID:  projectID,
 		ProfileID:  profileID,
 		RuleTypeID: ruleTypeID,
