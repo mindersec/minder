@@ -347,13 +347,13 @@ func (q *Queries) GetProjectByName(ctx context.Context, name string) (Project, e
 	return i, err
 }
 
-const listAllParentProjects = `-- name: ListAllParentProjects :many
+const listAllRootProjects = `-- name: ListAllRootProjects :many
 SELECT id, name, is_organization, metadata, parent_id, created_at, updated_at FROM projects
 WHERE parent_id IS NULL AND is_organization = FALSE
 `
 
-func (q *Queries) ListAllParentProjects(ctx context.Context) ([]Project, error) {
-	rows, err := q.db.QueryContext(ctx, listAllParentProjects)
+func (q *Queries) ListAllRootProjects(ctx context.Context) ([]Project, error) {
+	rows, err := q.db.QueryContext(ctx, listAllRootProjects)
 	if err != nil {
 		return nil, err
 	}

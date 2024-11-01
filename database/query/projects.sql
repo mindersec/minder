@@ -103,6 +103,6 @@ UPDATE projects
 SET metadata = $2
 WHERE id = $1 RETURNING *;
 
--- name: ListAllParentProjects :many
+-- name: ListAllRootProjects :many
 SELECT * FROM projects
 WHERE parent_id IS NULL AND is_organization = FALSE;

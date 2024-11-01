@@ -10,8 +10,15 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+// BundleSubscription represents a bundle subscription
+type BundleSubscription struct {
+	ID             uuid.UUID
+	ProjectID      uuid.UUID
+	BundleID       uuid.UUID
+	CurrentVersion string
+}
 
 // BundleHandlers interface provides functions to interact with bundles and subscriptions
 type BundleHandlers interface {
@@ -19,13 +26,13 @@ type BundleHandlers interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		bundleNamespace, bundleName string,
-	) (*pb.BundleSubscription, error)
+	) (*BundleSubscription, error)
 	SetCurrentVersion(ctx context.Context, projectID uuid.UUID, currentVersion string) error
 }
 
 // SetCurrentVersion sets the current version of the bundle for a project
 func (t *Type) SetCurrentVersion(ctx context.Context, projectID uuid.UUID, currentVersion string) error {
-	return t.db.querier.SetCurrentVersion(ctx, db.SetCurrentVersionParams{
+	return t.querier.SetCurrentVersion(ctx, db.SetCurrentVersionParams{
 		ProjectID:      projectID,
 		CurrentVersion: currentVersion,
 	})
@@ -36,8 +43,8 @@ func (t *Type) GetSubscriptionByProjectBundle(
 	ctx context.Context,
 	projectID uuid.UUID,
 	bundleNamespace, bundleName string,
-) (*pb.BundleSubscription, error) {
-	ret, err := t.db.querier.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
+) (*BundleSubscription, error) {
+	ret, err := t.querier.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
 		Namespace: bundleNamespace,
 		Name:      bundleName,
 		ProjectID: projectID,
@@ -45,10 +52,10 @@ func (t *Type) GetSubscriptionByProjectBundle(
 	if err != nil {
 		return nil, err
 	}
-	return &pb.BundleSubscription{
-		Id:             ret.ID.String(),
-		ProjectId:      ret.ProjectID.String(),
-		BundleId:       ret.BundleID.String(),
+	return &BundleSubscription{
+		ID:             ret.ID,
+		ProjectID:      ret.ProjectID,
+		BundleID:       ret.BundleID,
 		CurrentVersion: ret.CurrentVersion,
 	}, nil
 }

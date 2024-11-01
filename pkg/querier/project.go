@@ -22,7 +22,7 @@ type ProjectHandlers interface {
 
 // GetProjectByID returns a project by ID
 func (t *Type) GetProjectByID(ctx context.Context, id uuid.UUID) (*pb.Project, error) {
-	ret, err := t.db.querier.GetProjectByID(ctx, id)
+	ret, err := t.querier.GetProjectByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (t *Type) GetProjectByID(ctx context.Context, id uuid.UUID) (*pb.Project, e
 
 // ListAllParentProjects returns all parent projects
 func (t *Type) ListAllParentProjects(ctx context.Context) ([]*pb.Project, error) {
-	ret, err := t.db.querier.ListAllParentProjects(ctx)
+	ret, err := t.querier.ListAllRootProjects(ctx)
 	if err != nil {
 		return nil, err
 	}

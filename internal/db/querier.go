@@ -173,7 +173,7 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
-	ListAllParentProjects(ctx context.Context) ([]Project, error)
+	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)

@@ -27,42 +27,35 @@ type Store interface {
 	RuleTypeHandlers
 	ProfileHandlers
 	BundleHandlers
-	Close()
-	Commit() error
+	BeginTx() (Querier, error)
 }
 
-// dbData struct stores the database connection and transaction details
-type dbData struct {
-	store         db.Store
-	tx            *sql.Tx
-	querier       db.ExtendQuerier
-	querierCloser func()
+// Querier interface provides functions to interact with the Minder database using transactions
+type Querier interface {
+	ProjectHandlers
+	RuleTypeHandlers
+	ProfileHandlers
+	BundleHandlers
+	CommitTx() error
+	CancelTx() error
 }
 
-// Type struct
+// Type represents the querier type
 type Type struct {
-	db         *dbData
+	store      db.Store
+	tx         *sql.Tx
+	querier    db.ExtendQuerier
 	ruleSvc    ruletypes.RuleTypeService
 	profileSvc profiles.ProfileService
 }
 
-// New returns a new Type struct. All db operations are done through this struct and applied to the database directly.
-// If you want to execute db operations with a transaction, use NewWithTransaction instead.
-func New(ctx context.Context, config *server.Config) (*Type, func(), error) {
-	return newQuerier(ctx, config, false)
-}
+// Ensure Type implements the Querier interface
+var _ Querier = (*Type)(nil)
 
-// NewWithTransaction returns a new Type struct. All db operations are done through this struct with a transaction
-func NewWithTransaction(ctx context.Context, config *server.Config) (*Type, func(), error) {
-	return newQuerier(ctx, config, true)
-}
-
-// newQuerier returns a new Type struct
-func newQuerier(ctx context.Context, config *server.Config, useTransaction bool) (*Type, func(), error) {
-	var err error
-	ret := &Type{}
+// New creates a new instance of the querier
+func New(ctx context.Context, config *server.Config) (Store, func(), error) {
 	// Initialize the database
-	ret.db, err = initDb(ctx, config, useTransaction)
+	store, dbCloser, err := initDatabase(ctx, config)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to setup database: %w", err)
 	}
@@ -71,60 +64,71 @@ func newQuerier(ctx context.Context, config *server.Config, useTransaction bool)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to setup eventer: %w", err)
 	}
-	// Create profile and rule type services
-	ret.ruleSvc = ruletypes.NewRuleTypeService()
-	ret.profileSvc = profiles.NewProfileService(evt, selectors.NewEnv())
 	// Return the new Type
-	return ret, ret.Close, nil
+	return &Type{
+		store:      store,
+		querier:    store, // use store by default
+		ruleSvc:    ruletypes.NewRuleTypeService(),
+		profileSvc: profiles.NewProfileService(evt, selectors.NewEnv()),
+	}, dbCloser, nil
 }
 
-// Commit function
-func (t *Type) Commit() error {
-	if t.db.tx != nil {
-		return t.db.store.Commit(t.db.tx)
+// BeginTx begins a new transaction
+func (t *Type) BeginTx() (Querier, error) {
+	tx, err := t.store.BeginTransaction()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
-	return nil
+	return &Type{
+		store:   t.store,
+		tx:      tx,
+		querier: t.store.GetQuerierWithTransaction(tx),
+	}, nil
 }
 
-// Close function
-func (t *Type) Close() {
-	t.db.querierCloser()
+// CommitTx commits the transaction
+func (t *Type) CommitTx() error {
+	if t.tx != nil {
+		err := t.store.Commit(t.tx)
+		// Clear the transaction and reset the querier to the store
+		t.tx = nil
+		t.querier = t.store
+		return err
+	}
+	return fmt.Errorf("no transaction to commit")
+}
+
+// CancelTx cancels the transaction
+func (t *Type) CancelTx() error {
+	if t.tx != nil {
+		err := t.store.Rollback(t.tx)
+		// Clear the transaction and reset the querier to the store
+		t.tx = nil
+		t.querier = t.store
+		return err
+	}
+	return fmt.Errorf("no transaction to cancel")
 }
 
 // initDb function initializes the database connection and transaction details, if needed
-func initDb(ctx context.Context, cfg *server.Config, useTransaction bool) (*dbData, error) {
-	ret := &dbData{}
+func initDatabase(ctx context.Context, cfg *server.Config) (db.Store, func(), error) {
+	zerolog.Ctx(ctx).Debug().
+		Str("name", cfg.Database.Name).
+		Str("host", cfg.Database.Host).
+		Str("user", cfg.Database.User).
+		Str("ssl_mode", cfg.Database.SSLMode).
+		Int("port", cfg.Database.Port).
+		Msg("connecting to minder database")
+	// Get a database connection
 	dbConn, _, err := cfg.Database.GetDBConnection(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
-	storeCloser := func() {
+	closer := func() {
 		err := dbConn.Close()
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error closing database connection")
 		}
 	}
-	ret.store = db.NewStore(dbConn)
-	// Determine if we should use a transaction or not.
-	// If we are using a transaction, we will create a new transaction and use that for all queries.
-	// If we are not using a transaction, we will use the store directly.
-	// In either case, we will close the store connection when we are done.
-	if useTransaction {
-		// Begin a transaction
-		tx, err := ret.store.BeginTransaction()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to begin transaction")
-		}
-		// Store it as the querier
-		ret.querier = ret.store.GetQuerierWithTransaction(tx)
-		ret.querierCloser = func() {
-			_ = ret.store.Rollback(tx)
-			storeCloser()
-		}
-		ret.tx = tx
-	} else {
-		ret.querier = ret.store
-		ret.querierCloser = storeCloser
-	}
-	return ret, nil
+	return db.NewStore(dbConn), closer, nil
 }

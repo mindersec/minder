@@ -2792,11 +2792,3 @@ message UpstreamEntityRef {
     // be stored in Minder.
     google.protobuf.Struct properties = 3;
 }
-
-// BundleSubscription represents a subscription to a bundle.
-message BundleSubscription {
-    string id = 1;
-    string project_id = 2;
-    string bundle_id = 3;
-    string current_version = 4;
-}

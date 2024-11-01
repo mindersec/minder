@@ -1808,19 +1808,19 @@ func (mr *MockStoreMockRecorder) InsertRemediationEvent(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertRemediationEvent", reflect.TypeOf((*MockStore)(nil).InsertRemediationEvent), ctx, arg)
 }
 
-// ListAllParentProjects mocks base method.
-func (m *MockStore) ListAllParentProjects(ctx context.Context) ([]db.Project, error) {
+// ListAllRootProjects mocks base method.
+func (m *MockStore) ListAllRootProjects(ctx context.Context) ([]db.Project, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListAllParentProjects", ctx)
+	ret := m.ctrl.Call(m, "ListAllRootProjects", ctx)
 	ret0, _ := ret[0].([]db.Project)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// ListAllParentProjects indicates an expected call of ListAllParentProjects.
-func (mr *MockStoreMockRecorder) ListAllParentProjects(ctx any) *gomock.Call {
+// ListAllRootProjects indicates an expected call of ListAllRootProjects.
+func (mr *MockStoreMockRecorder) ListAllRootProjects(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllParentProjects", reflect.TypeOf((*MockStore)(nil).ListAllParentProjects), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllRootProjects", reflect.TypeOf((*MockStore)(nil).ListAllRootProjects), ctx)
 }
 
 // ListArtifactsByRepoID mocks base method.

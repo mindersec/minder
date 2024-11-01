@@ -36,7 +36,7 @@ type ProfileHandlers interface {
 
 // DeleteProfile deletes a profile
 func (t *Type) DeleteProfile(ctx context.Context, projectID uuid.UUID, profileID uuid.UUID) error {
-	return t.db.querier.DeleteProfile(ctx, db.DeleteProfileParams{
+	return t.querier.DeleteProfile(ctx, db.DeleteProfileParams{
 		ProjectID: projectID,
 		ID:        profileID,
 	})
@@ -49,7 +49,7 @@ func (t *Type) UpdateProfile(
 	subscriptionID uuid.UUID,
 	profile *pb.Profile,
 ) (*pb.Profile, error) {
-	return t.profileSvc.UpdateProfile(ctx, projectID, subscriptionID, profile, t.db.querier)
+	return t.profileSvc.UpdateProfile(ctx, projectID, subscriptionID, profile, t.querier)
 }
 
 // CreateProfile creates a profile
@@ -59,17 +59,17 @@ func (t *Type) CreateProfile(
 	subscriptionID uuid.UUID,
 	profile *pb.Profile,
 ) (*pb.Profile, error) {
-	return t.profileSvc.CreateProfile(ctx, projectID, subscriptionID, profile, t.db.querier)
+	return t.profileSvc.CreateProfile(ctx, projectID, subscriptionID, profile, t.querier)
 }
 
 // ListProfilesInstantiatingRuleType returns a list of profiles instantiating a rule type
 func (t *Type) ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error) {
-	return t.db.querier.ListProfilesInstantiatingRuleType(ctx, ruleTypeID)
+	return t.querier.ListProfilesInstantiatingRuleType(ctx, ruleTypeID)
 }
 
 // GetProfileByProjectAndName returns a profile by project ID and name
 func (t *Type) GetProfileByProjectAndName(ctx context.Context, projectID uuid.UUID, name string) (map[string]*pb.Profile, error) {
-	ret, err := t.db.querier.GetProfileByProjectAndName(ctx, db.GetProfileByProjectAndNameParams{
+	ret, err := t.querier.GetProfileByProjectAndName(ctx, db.GetProfileByProjectAndNameParams{
 		Name:      name,
 		ProjectID: projectID,
 	})
@@ -81,7 +81,7 @@ func (t *Type) GetProfileByProjectAndName(ctx context.Context, projectID uuid.UU
 
 // DeleteRuleInstanceOfProfileInProject deletes a rule instance for a profile in a project
 func (t *Type) DeleteRuleInstanceOfProfileInProject(ctx context.Context, projectID, profileID, ruleTypeID uuid.UUID) error {
-	return t.db.querier.DeleteRuleInstanceOfProfileInProject(ctx, db.DeleteRuleInstanceOfProfileInProjectParams{
+	return t.querier.DeleteRuleInstanceOfProfileInProject(ctx, db.DeleteRuleInstanceOfProfileInProjectParams{
 		ProjectID:  projectID,
 		ProfileID:  profileID,
 		RuleTypeID: ruleTypeID,
