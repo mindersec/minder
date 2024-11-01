@@ -1560,7 +1560,10 @@ message Context {
     // name of the provider
     optional string provider = 1;
     // ID of the project
-    optional string project = 3;
+    optional string project = 3 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     optional string retired_organization = 2;
 }
@@ -1568,7 +1571,10 @@ message Context {
 // ContextV2 defines the context in which a rule is evaluated.
 message ContextV2 {
     // project is the project ID
-    string project_id = 1;
+    string project_id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     // name of the provider. Set to empty string when not applicable.
     string provider = 2;
