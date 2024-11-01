@@ -2122,18 +2122,18 @@ func (mr *MockStoreMockRecorder) Rollback(tx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Rollback", reflect.TypeOf((*MockStore)(nil).Rollback), tx)
 }
 
-// SetCurrentVersion mocks base method.
-func (m *MockStore) SetCurrentVersion(ctx context.Context, arg db.SetCurrentVersionParams) error {
+// SetSubscriptionBundleVersion mocks base method.
+func (m *MockStore) SetSubscriptionBundleVersion(ctx context.Context, arg db.SetSubscriptionBundleVersionParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetCurrentVersion", ctx, arg)
+	ret := m.ctrl.Call(m, "SetSubscriptionBundleVersion", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetCurrentVersion indicates an expected call of SetCurrentVersion.
-func (mr *MockStoreMockRecorder) SetCurrentVersion(ctx, arg any) *gomock.Call {
+// SetSubscriptionBundleVersion indicates an expected call of SetSubscriptionBundleVersion.
+func (mr *MockStoreMockRecorder) SetSubscriptionBundleVersion(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCurrentVersion", reflect.TypeOf((*MockStore)(nil).SetCurrentVersion), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSubscriptionBundleVersion", reflect.TypeOf((*MockStore)(nil).SetSubscriptionBundleVersion), ctx, arg)
 }
 
 // UpdateEncryptedSecret mocks base method.

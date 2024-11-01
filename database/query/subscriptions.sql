@@ -22,9 +22,6 @@ SELECT su.* FROM subscriptions AS su
 JOIN bundles AS bu ON bu.id = su.bundle_id
 WHERE bu.namespace = $1 AND bu.name = $2 AND su.project_id = $3;
 
--- name: SetCurrentVersion :exec
-UPDATE subscriptions
-SET current_version = $1
-FROM subscriptions AS su
-JOIN bundles as bu ON su.bundle_id = bu.id
-WHERE su.project_id = $2 AND bu.namespace = $1 AND bu.name = $2;
+-- name: SetSubscriptionBundleVersion :exec
+UPDATE subscriptions SET current_version = $2 WHERE project_id = $1;
+
