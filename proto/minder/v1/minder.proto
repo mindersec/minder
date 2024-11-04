@@ -1297,7 +1297,10 @@ message PatchProfileRequest {
     Context context = 1;
     // The id of the profile to patch. Same explanation about explicitness
     // as for the context
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
     // The patch to apply to the profile
     Profile patch = 3;
     // needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/
@@ -1340,7 +1343,10 @@ message GetProfileByIdRequest {
     // context is the context which contains the profiles
     Context context = 1;
     // id is the id of the profile to get
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 message GetProfileByIdResponse {
@@ -1362,7 +1368,10 @@ message GetProfileByNameResponse {
 // get the overall profile status
 message ProfileStatus {
     // profile_id is the id of the profile
-    string profile_id = 1;
+    string profile_id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
     // profile_name is the name of the profile
     string profile_name = 2;
     // profile_status is the status of the profile
@@ -2065,7 +2074,10 @@ message Profile {
 
     // id is the id of the profile.
     // This is optional and is set by the system.
-    optional string id = 2;
+    optional string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     // name is the name of the profile instance.
     string name = 3;
