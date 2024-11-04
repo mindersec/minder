@@ -199,7 +199,10 @@ message ArtifactVersion {
 }
 
 message GetArtifactByIdRequest {
-    string id = 1;
+    string id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     Context context = 7;
 
@@ -1113,7 +1116,10 @@ message RegisterRepositoryResponse {
 }
 
 message GetRepositoryByIdRequest {
-    string repository_id = 1;
+    string repository_id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
     Context context = 2;
 }
 
@@ -1122,7 +1128,10 @@ message GetRepositoryByIdResponse {
 }
 
 message DeleteRepositoryByIdRequest {
-    string repository_id = 1;
+    string repository_id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
     Context context = 2;
 }
 
@@ -1427,7 +1436,10 @@ message EntityTypedId {
     // entity is the entity to get status for. Incompatible with `all`
     Entity type = 1;
     // id is the ID of the entity to get status for. Incompatible with `all`
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 message GetProfileStatusByNameRequest {
@@ -2753,6 +2765,7 @@ message EvaluationHistoryAlert {
     string details = 2;
 }
 
+// used for parsing resources in ruletypes
 message EntityInstance {
     // id is the unique identifier of the entity.
     string id = 1;
