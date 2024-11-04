@@ -770,7 +770,7 @@ Namespace: is the namespace for the DockerHub provider.
 
 <Message id="minder-v1-EntityInstance">EntityInstance</Message>
 
-
+used for parsing resources in ruletypes
 
 
 | Field | Type | Label | Description |
