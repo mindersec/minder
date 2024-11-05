@@ -1381,7 +1381,7 @@ GitType defines the git data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | <TypeLink type="string">string</TypeLink> |  |  |
+| provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 | from | <TypeLink type="string">string</TypeLink> |  |  |
 
