@@ -203,7 +203,6 @@ func enrollUsingOAuth2Flow(
 	resp, err := oauthClient.GetAuthorizationURL(ctx, &minderv1.GetAuthorizationURLRequest{
 		Context:       &minderv1.Context{Provider: &providerName, Project: &project},
 		Cli:           true,
-		Port:          port,
 		Owner:         &owner,
 		Config:        providerConfig,
 		ProviderClass: providerClass,

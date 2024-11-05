@@ -212,8 +212,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -248,8 +247,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubAppProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -283,8 +281,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &nonGithubProviderName,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(_ *mockdb.MockStore) {},
 
@@ -303,8 +300,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
