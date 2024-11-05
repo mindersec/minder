@@ -1316,7 +1316,10 @@ message DeleteProfileRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the profile to delete
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 message DeleteProfileResponse {
@@ -1634,7 +1637,10 @@ message GetRuleTypeByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type.
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 // GetRuleTypeByIdResponse is the response to get a rule type by id.
@@ -1674,7 +1680,10 @@ message DeleteRuleTypeRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // id is the id of the rule type to be deleted.
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 // DeleteRuleTypeResponse is the response to delete a rule type.
@@ -1856,7 +1865,10 @@ message RuleType {
 
     // id is the id of the rule type.
     // This is mostly optional and is set by the server.
-    optional string id = 1;
+    optional string id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     // name is the name of the rule type.
     string name = 2;
@@ -2512,7 +2524,10 @@ message DeleteProviderByIDRequest {
     // context is the context in which the provider is deleted. Only the project is required in this context.
     Context context = 1;
     // id is the id of the provider to delete
-    string id = 2;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 }
 
 message DeleteProviderByIDResponse {
@@ -2645,7 +2660,10 @@ message Provider {
 
 // GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
 message GetEvaluationHistoryRequest {
-    string id = 1;
+    string id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore_empty = true
+    ];
 
     Context context = 2;
 }
