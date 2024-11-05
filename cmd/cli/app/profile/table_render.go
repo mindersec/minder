@@ -4,6 +4,9 @@
 package profile
 
 import (
+	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
@@ -104,11 +107,15 @@ func RenderRuleEvaluationStatusTable(
 	statuses []*minderv1.RuleEvaluationStatus,
 	t table.Table,
 ) {
+	// sort by entity
+	slices.SortFunc(statuses, func(a *minderv1.RuleEvaluationStatus, b *minderv1.RuleEvaluationStatus) int {
+		return strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"])
+	})
+
 	for _, eval := range statuses {
 		t.AddRowWithColor(
-			layouts.NoColor(eval.RuleDescriptionName),
-			layouts.NoColor(eval.RuleTypeName),
-			layouts.NoColor(eval.Entity),
+			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.RuleDescriptionName, eval.RuleTypeName)),
+			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
 			common.GetEvalStatusColor(eval.Status),
 			common.GetRemediateStatusColor(eval.RemediationStatus),
 			layouts.NoColor(mapToYAMLOrEmpty(eval.EntityInfo)),
