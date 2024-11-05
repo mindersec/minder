@@ -76,7 +76,7 @@ func AllInOneServerService(
 	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
 	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
-	evt, err := eventer.New(ctx, nil, &cfg.Events)
+	evt, err := eventer.New(ctx, featureFlagClient, &cfg.Events)
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
