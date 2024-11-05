@@ -77,7 +77,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -121,7 +121,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -165,7 +165,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -215,7 +215,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -297,7 +297,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -355,7 +355,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -414,7 +414,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -466,7 +466,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -552,7 +552,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -654,7 +654,7 @@
           },
           {
             "name": "cursor.size",
-            "description": "size is the number of items to retrieve from the collection.",
+            "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -693,7 +693,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -757,7 +757,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -821,7 +821,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -859,7 +859,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -946,7 +946,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1068,7 +1068,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1114,7 +1114,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1210,7 +1210,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1253,7 +1253,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1305,7 +1305,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1343,7 +1343,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1381,7 +1381,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1440,7 +1440,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1533,7 +1533,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1590,7 +1590,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1662,7 +1662,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1700,7 +1700,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1713,7 +1713,7 @@
           },
           {
             "name": "limit",
-            "description": "limit is the maximum number of providers to return.",
+            "description": "limit is the maximum number of providers to return.\n0 uses a server-defined default.",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1751,7 +1751,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1819,7 +1819,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1864,7 +1864,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1909,7 +1909,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1960,7 +1960,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2017,7 +2017,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2067,7 +2067,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2111,7 +2111,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2155,7 +2155,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2197,7 +2197,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2248,7 +2248,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2297,7 +2297,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2348,7 +2348,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2397,7 +2397,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2493,7 +2493,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2616,7 +2616,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2661,7 +2661,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2704,7 +2704,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2742,7 +2742,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3404,7 +3404,7 @@
         },
         "project": {
           "type": "string",
-          "title": "ID of the project"
+          "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project."
         },
         "retiredOrganization": {
           "type": "string"
@@ -3417,7 +3417,7 @@
       "properties": {
         "projectId": {
           "type": "string",
-          "title": "project is the project ID"
+          "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project."
         },
         "provider": {
           "type": "string",
@@ -3572,7 +3572,7 @@
         "size": {
           "type": "integer",
           "format": "int64",
-          "description": "size is the number of items to retrieve from the collection."
+          "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default."
         }
       },
       "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve."
@@ -4461,11 +4461,11 @@
       "properties": {
         "profileId": {
           "type": "string",
-          "title": "profile_id is the id of the profile"
+          "description": "profile_id is the id of the profile.  One of profile_id or profile_name must be set."
         },
         "profileName": {
           "type": "string",
-          "title": "profile_name is the name of the profile"
+          "description": "profile_name is the name of the profile.  One of profile_id or profile_name must be set."
         },
         "profileStatus": {
           "type": "string",

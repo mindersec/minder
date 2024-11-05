@@ -93,9 +93,9 @@ message Cursor {
     // an per-rpc basis.
     string cursor = 1;
     // size is the number of items to retrieve from the collection.
+    // 0 uses a server-defined default.
     uint32 size = 2 [
-        (buf.validate.field).ignore_empty = true,
-        (buf.validate.field).uint32 = { gte: 1, lte: 100 }
+        (buf.validate.field).uint32 = { gte: 0, lte: 100 }
     ];
 }
 
@@ -193,7 +193,7 @@ message Artifact {
 
 message ArtifactVersion {
     int64 version_id = 1 [
-        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (buf.validate.field).int64 = { gte: 1 }
     ];
     repeated string tags = 2;
@@ -207,7 +207,7 @@ message ArtifactVersion {
 message GetArtifactByIdRequest {
     string id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     Context context = 7;
@@ -1064,7 +1064,7 @@ message UpstreamRepositoryRef {
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3 [
-        (buf.validate.field).ignore_empty = true, // Given it's ignored on input, we can ignore empty values
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE, // Given it's ignored on input, we can ignore empty values
         (buf.validate.field).int64 = { gte: 1 }
     ];
     Context context = 4;
@@ -1126,8 +1126,7 @@ message RegisterRepositoryResponse {
 
 message GetRepositoryByIdRequest {
     string repository_id = 1 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
     Context context = 2;
 }
@@ -1138,8 +1137,7 @@ message GetRepositoryByIdResponse {
 
 message DeleteRepositoryByIdRequest {
     string repository_id = 1 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
     Context context = 2;
 }
@@ -1175,7 +1173,6 @@ message DeleteRepositoryByNameResponse {
 message ListRepositoriesRequest {
     string provider = 1 [deprecated=true];
     int64 limit = 3 [
-        (buf.validate.field).ignore_empty = true,
         (buf.validate.field).int64 = { gte: 0, lte: 100 }
     ];
     Context context = 5;
@@ -1310,8 +1307,7 @@ message PatchProfileRequest {
     // The id of the profile to patch. Same explanation about explicitness
     // as for the context
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
     // The patch to apply to the profile
     Profile patch = 3;
@@ -1329,8 +1325,7 @@ message DeleteProfileRequest {
     Context context = 1;
     // id is the id of the profile to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 }
 
@@ -1359,8 +1354,7 @@ message GetProfileByIdRequest {
     Context context = 1;
     // id is the id of the profile to get
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 }
 
@@ -1382,12 +1376,12 @@ message GetProfileByNameResponse {
 
 // get the overall profile status
 message ProfileStatus {
-    // profile_id is the id of the profile
+    // profile_id is the id of the profile.  One of profile_id or profile_name must be set.
     string profile_id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
-    // profile_name is the name of the profile
+    // profile_name is the name of the profile.  One of profile_id or profile_name must be set.
     string profile_name = 2;
     // profile_status is the status of the profile
     string profile_status = 3;
@@ -1462,7 +1456,7 @@ message EntityTypedId {
     // id is the ID of the entity to get status for. Incompatible with `all`
     string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 }
 
@@ -1595,10 +1589,11 @@ message Context {
 
     // name of the provider
     optional string provider = 1;
-    // ID of the project
+    // ID of the project.  If empty or unset, will select the user's default project
+    // if they only have one project.
     optional string project = 3 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     optional string retired_organization = 2;
@@ -1606,10 +1601,11 @@ message Context {
 
 // ContextV2 defines the context in which a rule is evaluated.
 message ContextV2 {
-    // project is the project ID
+    // project is the project ID.  If empty or unset, will select the user's default project
+    // if they only have one project.
     string project_id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // name of the provider. Set to empty string when not applicable.
@@ -1650,8 +1646,7 @@ message GetRuleTypeByIdRequest {
     Context context = 1;
     // id is the id of the rule type.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 }
 
@@ -1693,8 +1688,7 @@ message DeleteRuleTypeRequest {
     Context context = 1;
     // id is the id of the rule type to be deleted.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 }
 
@@ -1879,7 +1873,7 @@ message RuleType {
     // This is mostly optional and is set by the server.
     optional string id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // name is the name of the rule type.
@@ -2100,7 +2094,7 @@ message Profile {
     // This is optional and is set by the system.
     optional string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // name is the name of the profile instance.
@@ -2326,7 +2320,7 @@ message UpdateRoleRequest {
     // email is the email address of the subject used for updating invitations
     string email = 5 [
       (buf.validate.field) = {string: {email: true}},
-      (buf.validate.field).ignore_empty = true
+      (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     reserved 3; // deprecated repeated string role = 3;
@@ -2375,17 +2369,17 @@ message RoleAssignment {
             pattern: "[A-Za-z][-[:word:]]*",
             max_len: 200,
         },
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // project is the project in which the role is assigned.
     optional string project = 4 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // email is the email address of the subject used for invitations.
     string email = 6 [
         (buf.validate.field) = {string: {email: true}},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // first_name is the first name of the subject.
     string first_name = 7 [
@@ -2393,7 +2387,7 @@ message RoleAssignment {
             pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
             max_len: 200,
         },
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // last_name is the last name of the subject.
     string last_name = 8 [
@@ -2401,7 +2395,7 @@ message RoleAssignment {
             pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
             max_len: 200,
         },
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     reserved 3; // deprecated context
@@ -2492,9 +2486,9 @@ message ListProvidersRequest {
     Context context = 1;
 
     // limit is the maximum number of providers to return.
+    // 0 uses a server-defined default.
     int32 limit = 2 [
-        (buf.validate.field).ignore_empty = true,
-        (buf.validate.field).int32 = {gt: 0, lte: 100}
+        (buf.validate.field).int32 = {gte: 0, lte: 100}
     ];
 
     // cursor is the cursor to use for the page of results, empty if at the beginning
@@ -2540,8 +2534,7 @@ message DeleteProviderByIDRequest {
     Context context = 1;
     // id is the id of the provider to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 }
 
@@ -2600,7 +2593,7 @@ message GitHubAppParams {
     // The GitHub installation ID for the app.  On create, this is the only
     // parameter used; the organization parameters are ignored.
     int64 installation_id = 1 [
-        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (buf.validate.field).int64 = {gt: 0}
     ];
 
@@ -2612,7 +2605,7 @@ message GitHubAppParams {
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
     int64 organization_id = 3 [
-        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (buf.validate.field).int64 = {gt: 0}
     ];
 }
@@ -2682,8 +2675,7 @@ message Provider {
 // GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
 message GetEvaluationHistoryRequest {
     string id = 1 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore_empty = true
+        (buf.validate.field).string = {uuid: true}
     ];
 
     Context context = 2;

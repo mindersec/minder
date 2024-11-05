@@ -378,7 +378,7 @@ buf compatibility checks.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> | optional | name of the provider |
-| project | <TypeLink type="string">string</TypeLink> | optional | ID of the project |
+| project | <TypeLink type="string">string</TypeLink> | optional | ID of the project. If empty or unset, will select the user's default project if they only have one project. |
 | retired_organization | <TypeLink type="string">string</TypeLink> | optional |  |
 
 
@@ -390,7 +390,7 @@ ContextV2 defines the context in which a rule is evaluated.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project_id | <TypeLink type="string">string</TypeLink> |  | project is the project ID |
+| project_id | <TypeLink type="string">string</TypeLink> |  | project is the project ID. If empty or unset, will select the user's default project if they only have one project. |
 | provider | <TypeLink type="string">string</TypeLink> |  | name of the provider. Set to empty string when not applicable. |
 
 
@@ -539,7 +539,7 @@ retrieve.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
-| size | <TypeLink type="uint32">uint32</TypeLink> |  | size is the number of items to retrieve from the collection. |
+| size | <TypeLink type="uint32">uint32</TypeLink> |  | size is the number of items to retrieve from the collection. 0 uses a server-defined default. |
 
 
 
@@ -1601,7 +1601,7 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the providers are evaluated. |
-| limit | <TypeLink type="int32">int32</TypeLink> |  | limit is the maximum number of providers to return. |
+| limit | <TypeLink type="int32">int32</TypeLink> |  | limit is the maximum number of providers to return. 0 uses a server-defined default. |
 | cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the cursor to use for the page of results, empty if at the beginning |
 
 
@@ -1881,8 +1881,8 @@ get the overall profile status
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| profile_id | <TypeLink type="string">string</TypeLink> |  | profile_id is the id of the profile |
-| profile_name | <TypeLink type="string">string</TypeLink> |  | profile_name is the name of the profile |
+| profile_id | <TypeLink type="string">string</TypeLink> |  | profile_id is the id of the profile. One of profile_id or profile_name must be set. |
+| profile_name | <TypeLink type="string">string</TypeLink> |  | profile_name is the name of the profile. One of profile_id or profile_name must be set. |
 | profile_status | <TypeLink type="string">string</TypeLink> |  | profile_status is the status of the profile |
 | last_updated | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | last_updated is the last time the profile was updated |
 | profile_display_name | <TypeLink type="string">string</TypeLink> |  | profile_display_name is the display name of the profile |
