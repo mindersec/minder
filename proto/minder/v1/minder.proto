@@ -93,7 +93,10 @@ message Cursor {
     // an per-rpc basis.
     string cursor = 1;
     // size is the number of items to retrieve from the collection.
-    uint32 size = 2;
+    uint32 size = 2 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).uint32 = { gte: 1, lte: 100 }
+    ];
 }
 
 // CursorPage message used in response messages. Its purpose is to
@@ -189,7 +192,10 @@ message Artifact {
 }
 
 message ArtifactVersion {
-    int64 version_id = 1;
+    int64 version_id = 1 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).int64 = { gte: 1 }
+    ];
     repeated string tags = 2;
     string sha = 3;
     google.protobuf.Timestamp created_at = 6;
@@ -231,12 +237,12 @@ message GetArtifactByNameResponse {
 message PullRequest {
     string url = 1;         // The full URL to the PR
     string commit_sha = 2;  // Commit SHA of the PR HEAD. Will be useful to submit a review
-    int64 number = 3;       // The sequential PR number (not the DB PK!)
+    int64 number = 3;  // The sequential PR number (not the DB PK!)
 
     string repo_owner = 4;  // The owner of the repo, will be used to submit a review
     string repo_name = 5;   // The name of the repo, will be used to submit a review
 
-    int64 author_id = 6;    // The author of the PR, will be used to check if we can request changes
+    int64 author_id = 6;  // The author of the PR, will be used to check if we can request changes
 
     string action = 7;      // The action that triggered the webhook
 
@@ -984,8 +990,8 @@ message CheckHealthResponse {
 }
 
 message GetAuthorizationURLRequest {
-    bool  cli = 3;
-    int32  port = 4;
+    bool cli = 3;
+    int32 port = 4 [(buf.validate.field).int32 = { gte: 1000, lte: 65535 }];
     optional string owner = 5;
     Context context = 6;
     optional string redirect_url = 7;
@@ -1057,7 +1063,10 @@ message UpstreamRepositoryRef {
     string name = 2;
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
-    int64 repo_id = 3;
+    int64 repo_id = 3 [
+        (buf.validate.field).ignore_empty = true, // Given it's ignored on input, we can ignore empty values
+        (buf.validate.field).int64 = { gte: 1 }
+    ];
     Context context = 4;
     // True if the repository is already registered in Minder.
     // This is only set on output, and is ignored on input.
@@ -1165,7 +1174,10 @@ message DeleteRepositoryByNameResponse {
 
 message ListRepositoriesRequest {
     string provider = 1 [deprecated=true];
-    int64 limit = 3;
+    int64 limit = 3 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).int64 = { gte: 0, lte: 100 }
+    ];
     Context context = 5;
     string cursor = 6;
 
@@ -1751,7 +1763,7 @@ message ListEvaluationResultsResponse {
 // This is used to fetch data from a REST endpoint.
 message RestType {
     message Fallback {
-        int32 http_code = 1;
+        int32 http_code = 1 [(buf.validate.field).int32 = { gte: 100, lte: 599 }];
         string body = 2;
     }
 
@@ -2480,7 +2492,10 @@ message ListProvidersRequest {
     Context context = 1;
 
     // limit is the maximum number of providers to return.
-    int32 limit = 2;
+    int32 limit = 2 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).int32 = {gt: 0, lte: 100}
+    ];
 
     // cursor is the cursor to use for the page of results, empty if at the beginning
     string cursor = 3;
@@ -2584,7 +2599,10 @@ message ProviderParameter {
 message GitHubAppParams {
     // The GitHub installation ID for the app.  On create, this is the only
     // parameter used; the organization parameters are ignored.
-    int64 installation_id = 1;
+    int64 installation_id = 1 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).int64 = {gt: 0}
+    ];
 
     // The GitHub organization slug where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
@@ -2593,7 +2611,10 @@ message GitHubAppParams {
     // The GitHub organization ID where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
-    int64 organization_id = 3;
+    int64 organization_id = 3 [
+        (buf.validate.field).ignore_empty = true,
+        (buf.validate.field).int64 = {gt: 0}
+    ];
 }
 
 // ProviderTrait is the type of the provider.
