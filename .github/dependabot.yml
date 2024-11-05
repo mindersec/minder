@@ -25,6 +25,10 @@ updates:
     directory: "docs"
     schedule:
       interval: "daily"
+    groups:
+      docusaurus:
+        patterns:
+          - "*docusaurus*"
     ignore:
       # facebook/docusaurus#4029 suggests MDX v2 will only be in the v3 release.
       # facebook/docusaurus#9053 has some more details on the migration.
