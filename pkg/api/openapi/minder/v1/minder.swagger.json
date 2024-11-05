@@ -283,13 +283,6 @@
             "type": "boolean"
           },
           {
-            "name": "port",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
             "name": "owner",
             "in": "query",
             "required": false,

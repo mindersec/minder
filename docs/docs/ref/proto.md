@@ -959,7 +959,6 @@ Namespace: is the namespace for the GHCR provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cli | <TypeLink type="bool">bool</TypeLink> |  |  |
-| port | <TypeLink type="int32">int32</TypeLink> |  |  |
 | owner | <TypeLink type="string">string</TypeLink> | optional |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 | redirect_url | <TypeLink type="string">string</TypeLink> | optional |  |

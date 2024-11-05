@@ -991,7 +991,6 @@ message CheckHealthResponse {
 
 message GetAuthorizationURLRequest {
     bool cli = 3;
-    int32 port = 4 [(buf.validate.field).int32 = { gte: 1000, lte: 65535 }];
     optional string owner = 5;
     Context context = 6;
     optional string redirect_url = 7;
@@ -1001,7 +1000,8 @@ message GetAuthorizationURLRequest {
 
     string provider_class = 9;
 
-    reserved 1, 2; // deprecated provider and project_id
+    reserved 1, 2, 4;
+    reserved "provider", "project_id", "port";
 }
 
 message GetAuthorizationURLResponse {
