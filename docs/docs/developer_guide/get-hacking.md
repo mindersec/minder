@@ -10,6 +10,11 @@ Follow the steps in the [Installing a Development version](./../run_minder_serve
 
 The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
 
+When iterating, it can be helpful to only rebuild and reload the `minder` container.  You can do this with:
+```bash
+make run-docker services=minder
+```
+
 ## Run the tests
 ```bash
 make test
