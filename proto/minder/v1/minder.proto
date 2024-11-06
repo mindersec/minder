@@ -914,19 +914,6 @@ service ProvidersService {
         };
     }
 
-    // GetUnclaimedProviders returns a list of known provider configurations
-    // that this user could claim based on their identity.  This is a read-only
-    // operation for use by clients which wish to present a menu of options.
-    rpc GetUnclaimedProviders (GetUnclaimedProvidersRequest) returns (GetUnclaimedProvidersResponse) {
-        option (google.api.http) = {
-            get: "/api/v1/my/providers"
-        };
-
-        option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_USER
-        };
-    }
-
     rpc ListProviderClasses (ListProviderClassesRequest) returns (ListProviderClassesResponse) {
         option (google.api.http) = {
             get: "/api/v1/provider_classes"
@@ -2541,18 +2528,6 @@ message DeleteProviderByIDRequest {
 message DeleteProviderByIDResponse {
     // id is the id of the provider that was deleted
     string id = 1;
-}
-
-message GetUnclaimedProvidersRequest {
-    // context is the context in which the set of providers are evaluated.
-    Context context = 1;
-}
-
-message GetUnclaimedProvidersResponse {
-    // providers is a set of parameters which can be supplied to allow the user
-    // to assign existing unclaimed credentials to a new provider in the project
-    // via CreateProvider().
-    repeated ProviderParameter providers = 1;
 }
 
 message ListProviderClassesRequest {

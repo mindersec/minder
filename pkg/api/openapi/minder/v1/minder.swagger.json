@@ -735,45 +735,6 @@
         ]
       }
     },
-    "/api/v1/my/providers": {
-      "get": {
-        "summary": "GetUnclaimedProviders returns a list of known provider configurations\nthat this user could claim based on their identity.  This is a read-only\noperation for use by clients which wish to present a menu of options.",
-        "operationId": "ProvidersService_GetUnclaimedProviders",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetUnclaimedProvidersResponse"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "ProvidersService"
-        ]
-      }
-    },
     "/api/v1/permissions/assign": {
       "post": {
         "operationId": "PermissionsService_AssignRole",
@@ -3994,19 +3955,6 @@
         }
       },
       "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
-    },
-    "v1GetUnclaimedProvidersResponse": {
-      "type": "object",
-      "properties": {
-        "providers": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ProviderParameter"
-          },
-          "description": "providers is a set of parameters which can be supplied to allow the user\nto assign existing unclaimed credentials to a new provider in the project\nvia CreateProvider()."
-        }
-      }
     },
     "v1GetUserResponse": {
       "type": "object",
