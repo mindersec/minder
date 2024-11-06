@@ -168,7 +168,6 @@ replies with OK
 | CreateProvider | [CreateProviderRequest](#minder-v1-CreateProviderRequest) | [CreateProviderResponse](#minder-v1-CreateProviderResponse) |  |
 | DeleteProvider | [DeleteProviderRequest](#minder-v1-DeleteProviderRequest) | [DeleteProviderResponse](#minder-v1-DeleteProviderResponse) |  |
 | DeleteProviderByID | [DeleteProviderByIDRequest](#minder-v1-DeleteProviderByIDRequest) | [DeleteProviderByIDResponse](#minder-v1-DeleteProviderByIDResponse) |  |
-| GetUnclaimedProviders | [GetUnclaimedProvidersRequest](#minder-v1-GetUnclaimedProvidersRequest) | [GetUnclaimedProvidersResponse](#minder-v1-GetUnclaimedProvidersResponse) | GetUnclaimedProviders returns a list of known provider configurations that this user could claim based on their identity.  This is a read-only operation for use by clients which wish to present a menu of options. |
 | ListProviderClasses | [ListProviderClassesRequest](#minder-v1-ListProviderClassesRequest) | [ListProviderClassesResponse](#minder-v1-ListProviderClassesResponse) |  |
 | ReconcileEntityRegistration | [ReconcileEntityRegistrationRequest](#minder-v1-ReconcileEntityRegistrationRequest) | [ReconcileEntityRegistrationResponse](#minder-v1-ReconcileEntityRegistrationResponse) |  |
 
@@ -1238,28 +1237,6 @@ GetRuleTypeByNameResponse is the response to get a rule type by name.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type. |
-
-
-
-<Message id="minder-v1-GetUnclaimedProvidersRequest">GetUnclaimedProvidersRequest</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the set of providers are evaluated. |
-
-
-
-<Message id="minder-v1-GetUnclaimedProvidersResponse">GetUnclaimedProvidersResponse</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| providers | <TypeLink type="minder-v1-ProviderParameter">ProviderParameter</TypeLink> | repeated | providers is a set of parameters which can be supplied to allow the user to assign existing unclaimed credentials to a new provider in the project via CreateProvider(). |
 
 
 
