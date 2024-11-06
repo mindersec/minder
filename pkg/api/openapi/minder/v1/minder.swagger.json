@@ -647,7 +647,7 @@
           },
           {
             "name": "cursor.cursor",
-            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. Note it is base64 encoded.",
+            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3528,7 +3528,7 @@
       "properties": {
         "cursor": {
           "type": "string",
-          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. Note it is base64 encoded."
+          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis."
         },
         "size": {
           "type": "integer",
