@@ -964,7 +964,12 @@ service InviteService {
 
 message GetInviteDetailsRequest {
     // Invite nonce/code to retrieve details for
-    string code = 2;
+    string code = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9_-]+$",
+            len: 64,
+        }
+    ];
 
     reserved 1; // deprecated Context context = 1;
     reserved "context";
@@ -2495,7 +2500,12 @@ message ListInvitationsResponse {
 
 message ResolveInvitationRequest {
     // code is the code of the invitation to resolve.
-    string code = 1;
+    string code = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9_-]+$",
+            len: 64,
+        }
+    ];
     // accept is true if the invitation is accepted, false if it is rejected.
     bool accept = 2;
 }
