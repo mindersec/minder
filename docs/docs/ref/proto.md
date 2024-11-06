@@ -537,7 +537,7 @@ retrieve.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. Note it is base64 encoded. |
 | size | <TypeLink type="uint32">uint32</TypeLink> |  | size is the number of items to retrieve from the collection. 0 uses a server-defined default. |
 
 
