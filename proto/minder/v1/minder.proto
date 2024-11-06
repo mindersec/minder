@@ -222,7 +222,13 @@ message GetArtifactByIdResponse {
 }
 
 message GetArtifactByNameRequest {
-    string name = 1;
+    string name = 1 [
+        (buf.validate.field).string = {
+            pattern: "[-./[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     Context context = 4;
 
     reserved 2, 3; // deprecated latest_versions, tag
@@ -1135,7 +1141,13 @@ message DeleteRepositoryByIdResponse {
 
 message GetRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
-    string name = 3;
+    string name = 3 [
+        (buf.validate.field).string = {
+            pattern: "[-./[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     Context context = 4;
 
     reserved 2; // deprecated project_id
@@ -1147,7 +1159,13 @@ message GetRepositoryByNameResponse {
 
 message DeleteRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
-    string name = 3;
+    string name = 3 [
+        (buf.validate.field).string = {
+            pattern: "[-./[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     Context context = 4;
 
     reserved 2; // deprecated project_id
@@ -1178,6 +1196,7 @@ message ListRepositoriesResponse {
 
 message ReconcileEntityRegistrationRequest {
     Context context = 1;
+    // entity is the entity type
     string entity = 2;
 }
 
@@ -1354,20 +1373,23 @@ message GetProfileByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // name is the name of the profile to get
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message GetProfileByNameResponse {
     Profile profile = 1;
 }
 
-// get the overall profile status
+// get the overall profile status as output
 message ProfileStatus {
     // profile_id is the id of the profile.  One of profile_id or profile_name must be set.
-    string profile_id = 1 [
-        (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
-    ];
+    string profile_id = 1;
     // profile_name is the name of the profile.  One of profile_id or profile_name must be set.
     string profile_name = 2;
     // profile_status is the status of the profile
@@ -1451,7 +1473,13 @@ message GetProfileStatusByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // name is the name of the profile to get
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     EntityTypedId entity = 3;
     bool all = 4;
@@ -1575,7 +1603,13 @@ message Context {
     // buf compatibility checks.
 
     // name of the provider
-    optional string provider = 1;
+    optional string provider = 1 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // ID of the project.  If empty or unset, will select the user's default project
     // if they only have one project.
     optional string project = 3 [
@@ -1596,7 +1630,13 @@ message ContextV2 {
     ];
 
     // name of the provider. Set to empty string when not applicable.
-    string provider = 2;
+    string provider = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 // --- START RuleType CRUD definitions
@@ -1618,7 +1658,13 @@ message GetRuleTypeByNameRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
     // name is the name of the rule type.
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 // GetRuleTypeByNameResponse is the response to get a rule type by name.
@@ -1711,7 +1757,17 @@ message ListEvaluationResultsRequest {
 
     // If set, only return evaluation results for the named rules.
     // If empty, return evaluation results for all rules
-    repeated string rule_name = 5;
+    repeated string rule_name = 5 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[-[:word:]]*",
+                        max_len: 200,
+                    }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message ListEvaluationResultsResponse {
@@ -1864,10 +1920,22 @@ message RuleType {
     ];
 
     // name is the name of the rule type.
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // display_name is the display name of the rule type.
-    string display_name = 8;
+    string display_name = 8 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // short_failure_message is the message to display when the evaluation fails.
     string short_failure_message = 10;
@@ -2085,7 +2153,13 @@ message Profile {
     ];
 
     // name is the name of the profile instance.
-    string name = 3;
+    string name = 3 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // labels are a set of system-provided attributes which can be used to
     // filter profiles and status results.  Labels cannot be set by the user,
@@ -2172,7 +2246,13 @@ message CreateProjectRequest {
     Context context = 1;
 
     // name is the name of the project to create.
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message CreateProjectResponse {
@@ -2195,7 +2275,13 @@ message UpdateProjectRequest {
     Context context = 1;
 
     // display_name is the display name of the project to update.
-    string display_name = 2;
+    string display_name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // description is the description of the project to update.
     string description = 3;
@@ -2208,7 +2294,13 @@ message UpdateProjectResponse {
 
 message ProjectPatch {
     // display_name is the display name of the project to update.
-    optional string display_name = 1;
+    optional string display_name = 1 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // description is the description of the project to update.
     optional string description = 2;
@@ -2460,7 +2552,13 @@ message GetProviderRequest {
     // context is the context in which the provider is evaluated.
     Context context = 1;
     // name is the name of the provider to get.
-    string name = 2;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message GetProviderResponse {
@@ -2621,7 +2719,13 @@ enum CredentialsState {
 
 message Provider {
     // name is the name of the provider.
-    string name = 1;
+    string name = 1 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // class is the name of the provider implementation, eg. 'github' or 'gh-app'.
     string class = 7;
     // project is the project where the provider is.  This is ignored on input
@@ -2667,9 +2771,29 @@ message ListEvaluationHistoryRequest {
     // List of entity types to retrieve.
     repeated string entity_type = 2;
     // List of entity names to retrieve.
-    repeated string entity_name = 3;
+    repeated string entity_name = 3 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[-./[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // List of profile names to retrieve.
-    repeated string profile_name = 4;
+    repeated string profile_name = 4 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[A-Za-z][-[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // List of evaluation statuses to retrieve.
     repeated string status = 5;
     // List of remediation statuses to retrieve.

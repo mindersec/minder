@@ -4429,7 +4429,7 @@
           "title": "profile_display_name is the display name of the profile"
         }
       },
-      "title": "get the overall profile status"
+      "title": "get the overall profile status as output"
     },
     "v1Project": {
       "type": "object",
@@ -4559,7 +4559,8 @@
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
-          "type": "string"
+          "type": "string",
+          "title": "entity is the entity type"
         }
       }
     },
