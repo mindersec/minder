@@ -1853,7 +1853,7 @@ Rule defines the individual call of a certain rule type.
 
 <Message id="minder-v1-ProfileStatus">ProfileStatus</Message>
 
-get the overall profile status
+get the overall profile status as output
 
 
 | Field | Type | Label | Description |
@@ -1989,7 +1989,7 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| entity | <TypeLink type="string">string</TypeLink> |  |  |
+| entity | <TypeLink type="string">string</TypeLink> |  | entity is the entity type |
 
 
 
