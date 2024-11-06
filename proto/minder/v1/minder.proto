@@ -95,8 +95,7 @@ message Cursor {
         (buf.validate.field).string = {
             pattern: "^[[:word:]=]*$",
             max_len: 200,
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        }
     ];
     // size is the number of items to retrieve from the collection.
     // 0 uses a server-defined default.
@@ -178,7 +177,7 @@ message ListArtifactsRequest {
     Context context = 3;
     string from = 4 [
         (buf.validate.field).string = {
-            pattern: "^[^=]+=[\\S]+$",
+            pattern: "^[[:word:]]+=[-,/[:word:]]+$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1202,8 +1201,7 @@ message ListRepositoriesRequest {
         (buf.validate.field).string = {
             pattern: "^[[:word:]=]*$",
             max_len: 200,
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        }
     ];
 
     reserved 2,4; // deprecated project_id, offset
@@ -2609,8 +2607,7 @@ message ListProvidersRequest {
         (buf.validate.field).string = {
             pattern: "^[[:word:]=]*$",
             max_len: 200,
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        }
     ];
 }
 
