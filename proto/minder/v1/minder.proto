@@ -91,7 +91,13 @@ message Cursor {
     // cursor is the index to start from within the collection being
     // retrieved. It's an opaque payload specified and interpreted on
     // an per-rpc basis.
-    string cursor = 1;
+    string cursor = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[[:word:]=]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // size is the number of items to retrieve from the collection.
     // 0 uses a server-defined default.
     uint32 size = 2 [
@@ -1192,7 +1198,13 @@ message ListRepositoriesRequest {
         (buf.validate.field).int64 = { gte: 0, lte: 100 }
     ];
     Context context = 5;
-    string cursor = 6;
+    string cursor = 6 [
+        (buf.validate.field).string = {
+            pattern: "^[[:word:]=]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     reserved 2,4; // deprecated project_id, offset
     reserved "project_id", "offset";
@@ -2593,7 +2605,13 @@ message ListProvidersRequest {
     ];
 
     // cursor is the cursor to use for the page of results, empty if at the beginning
-    string cursor = 3;
+    string cursor = 3 [
+        (buf.validate.field).string = {
+            pattern: "^[[:word:]=]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message ListProvidersResponse {
