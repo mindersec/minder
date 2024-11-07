@@ -2352,7 +2352,14 @@ message UpdateProjectRequest {
     ];
 
     // description is the description of the project to update.
-    string description = 3;
+    string description = 3 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            min_len: 1,
+            max_len: 1000,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message UpdateProjectResponse {
@@ -2371,7 +2378,14 @@ message ProjectPatch {
     ];
 
     // description is the description of the project to update.
-    optional string description = 2;
+    optional string description = 2 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            min_len: 1,
+            max_len: 1000,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 message PatchProjectRequest {
@@ -2460,10 +2474,23 @@ message UpdateRoleRequest {
     Context context = 1;
     // subject is the account to change permissions for.
     // The account must already have permissions on the project
-    string subject = 2;
+    string subject = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // All subject roles are _replaced_ with the following role assignments.  Must be non-empty,
     // use RemoveRole to remove permissions entirely from the project.
-    repeated string roles = 4;
+    repeated string roles = 4 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "^[a-z]+(_[a-z]+)*$",
+                    min_len: 1,
+                    max_len: 200,
+                }
+            }
+        }
+    ];
     // email is the email address of the subject used for updating invitations
     string email = 5 [
       (buf.validate.field) = {string: {email: true}},
@@ -2507,9 +2534,18 @@ message Role {
 
 message RoleAssignment {
     // role is the role that is assigned.
-    string role = 1;
+    string role = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z]+(_[a-z]+)*$",
+            min_len: 1,
+            max_len: 200,
+        }
+    ];
     // subject is the subject to which the role is assigned.
-    string subject = 2;
+    string subject = 2 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // display_name is the display name of the subject.
     string display_name = 5 [
         (buf.validate.field).string = {
