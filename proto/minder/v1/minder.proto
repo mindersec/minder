@@ -2909,13 +2909,23 @@ message ListEvaluationHistoryRequest {
     Context context = 1;
 
     // List of entity types to retrieve.
-    repeated string entity_type = 2;
+    repeated string entity_type = 2 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[,[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // List of entity names to retrieve.
     repeated string entity_name = 3 [
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[-./[:word:]]*",
+                    pattern: "[,-./[:word:]]*",
                     max_len: 200,
                 }
             }
@@ -2927,7 +2937,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[A-Za-z][-[:word:]]*",
+                    pattern: "[A-Za-z][,-[:word:]]*",
                     max_len: 200,
                 }
             }
@@ -2935,11 +2945,41 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // List of evaluation statuses to retrieve.
-    repeated string status = 5;
+    repeated string status = 5 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[,[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // List of remediation statuses to retrieve.
-    repeated string remediation = 6;
+    repeated string remediation = 6 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[,[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // List of alert statuses to retrieve.
-    repeated string alert = 7;
+    repeated string alert = 7 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "[,[:word:]]*",
+                    max_len: 200,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // Timestamp representing the start time of the selection window.
     google.protobuf.Timestamp from = 8;
     // Timestamp representing the end time of the selection window.
