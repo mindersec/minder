@@ -1283,7 +1283,12 @@ message VerifyProviderCredentialRequest {
     Context context = 1;
 
     // enrollment_nonce is the state parameter returned when enrolling the provider
-    string enrollment_nonce = 2;
+    string enrollment_nonce = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9_-]+$",
+            len: 54,
+        }
+    ];
 }
 
 // VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
