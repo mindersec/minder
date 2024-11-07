@@ -1260,7 +1260,13 @@ message ListRepositoriesResponse {
 message ReconcileEntityRegistrationRequest {
     Context context = 1;
     // entity is the entity type
-    string entity = 2;
+    string entity = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z]+(_[a-z]+)*$",
+            min_len: 1,
+            max_len: 200,
+        }
+    ];
 }
 
 message ReconcileEntityRegistrationResponse {
