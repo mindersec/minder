@@ -2118,7 +2118,7 @@ message RuleType {
     // short_failure_message is the message to display when the evaluation fails.
     string short_failure_message = 10 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "[A-Za-z][-/.!?,:;[:word:] *#\\[\\]()`{}]*",
             max_len: 400,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2253,8 +2253,7 @@ message RuleType {
                 // compatibility with existing stored rules
                 string endpoint = 1 [
                     (buf.validate.field).string = {
-                        pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+)?(\\/[a-zA-Z0-9._-]+)*(\\/\\{\\{[^}]+\\}\\})*(\\/)?$",
-                        max_len: 400,
+                        uri: true,
                     },
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
@@ -2361,7 +2360,7 @@ message RuleType {
                 // the title of the PR
                 string title = 1 [
                     (buf.validate.field).string = {
-                        pattern: "[[:space:][:punct:][:word:]]*",
+                        pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
                         min_len: 1,
                         max_len: 75,
                     }
@@ -2369,7 +2368,7 @@ message RuleType {
                 // the body of the PR
                 string body = 2 [
                     (buf.validate.field).string = {
-                        pattern: "[[:space:][:punct:][:word:]]*",
+                        pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
                         min_len: 1,
                         max_len: 65536,
                     }
@@ -2433,7 +2432,7 @@ message RuleType {
     // description is the description of the rule type.
     string description = 5 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "[A-Za-z][-/.!?,:;[:word:] *#\\[\\]()`{}]*",
             min_len: 1,
             max_len: 1000,
         }
@@ -2442,7 +2441,7 @@ message RuleType {
     // guidance are instructions we give the user in case a rule fails.
     string guidance = 6 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "[A-Za-z][-/.!?,:;[:word:] *#\\[\\]()`{}]*",
             min_len: 1,
             max_len: 1000,
         }
