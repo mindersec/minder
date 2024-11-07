@@ -1905,7 +1905,13 @@ message ListEvaluationResultsResponse {
 message RestType {
     message Fallback {
         int32 http_code = 1 [(buf.validate.field).int32 = { gte: 100, lte: 599 }];
-        string body = 2;
+        string body = 2 [
+            (buf.validate.field).string = {
+                pattern: "^\\s*\\{.*\\}\\s*$",
+                max_len: 1000,
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
     }
 
     // endpoint is the endpoint to fetch data from.
@@ -1913,19 +1919,50 @@ message RestType {
     // This is a required field and must be set.
     // This is also evaluated via a template which allows
     // us dynamically fill in the values.
-    string endpoint = 1;
+    string endpoint = 1 [
+        (buf.validate.field).string = {
+            pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+)?(\\/[a-zA-Z0-9._-]+)*(\\/\\{\\{[^}]+\\}\\})*(\\/)?$",
+            max_len: 400,
+        }
+    ];
 
     // method is the method to use to fetch data.
-    string method = 2;
+    string method = 2 [
+        (buf.validate.field).string = {
+            pattern: "^(GET|POST|PUT|PATCH|DELETE)$",
+        }
+    ];
 
     // headers are the headers to be sent to the endpoint.
-    repeated string headers = 3;
+    repeated string headers = 3 [
+        (buf.validate.field).repeated = {
+            items: {
+                string: {
+                    pattern: "^[a-zA-Z0-9-]+: .+$",
+                    max_len: 400,
+                }
+            }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // body is the body to be sent to the endpoint.
-    optional string body = 4;
+    optional string body = 4 [
+        (buf.validate.field).string = {
+            pattern: "^\\s*\\{.*\\}\\s*$",
+            max_len: 1000,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // parse is the parsing mechanism to be used to parse the data.
-    string parse = 5;
+    string parse = 5 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z_]+$",
+            max_len: 50,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // fallback provides a body that the ingester would return in case
     // the REST call returns a non-200 status code.
@@ -1944,19 +1981,42 @@ message ArtifactType {
 // GitType defines the git data ingester.
 message GitType {
     // clone_url is the url of the git repository.
-    string clone_url = 1;
+    string clone_url = 1 [
+        (buf.validate.field).string = {
+            pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+\\/[a-zA-Z0-9._-]+\\/[a-zA-Z0-9._-]+\\.git|git@[\\w.-]+:[\\w.-]+\\/[\\w.-]+\\.git|git:\\/\\/[a-zA-Z0-9.-]+\\/[a-zA-Z0-9._-]+\\/[a-zA-Z0-9._-]+\\.git)$",
+            max_len: 200,
+        }
+    ];
 
     // branch is the branch of the git repository.
-    string branch = 2;
+    string branch = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[a-zA-Z0-9._/-]+$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 // DiffType defines the diff data ingester.
 message DiffType {
     message Ecosystem {
         // name is the name of the ecosystem.
-        string name = 1;
+        string name = 1 [
+            (buf.validate.field).string = {
+                pattern: "^[a-z]+(_[a-z]+)*$",
+                min_len: 1,
+                max_len: 200,
+            }
+        ];
         // depfile is the file that contains the dependencies for this ecosystem
-        string depfile = 2;
+        string depfile = 2 [
+            (buf.validate.field).string = {
+                pattern: "^(\\./)?([a-zA-Z0-9_]+\\/)*[a-zA-Z0-9_]+(\\.[a-zA-Z0-9]+)?$",
+                min_len: 1,
+                max_len: 200,
+            }
+        ];
     }
 
     // ecosystems is the list of ecosystems to be used
@@ -1966,7 +2026,13 @@ message DiffType {
     // type is the type of diff ingestor to use.
     // The default is "dep" which will leverage
     // the ecosystems array.
-    string type = 2;
+    string type = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z]+(_[a-z]+)*$",
+            min_len: 1,
+            max_len: 200,
+        }
+    ];
 }
 
 // Severity defines the severity of the rule.
@@ -2011,10 +2077,18 @@ enum RuleTypeReleasePhase {
 // The version is assumed from the folder's version.
 message RuleType {
     // version is the version of the rule type API.
-    string version = 11;
+    string version = 11 [
+        (buf.validate.field).string = {
+            pattern: "^v\\d+(\\.\\d+)?(\\.\\d+)?(?:-[\\w\\.-]+)?$",
+        }
+    ];
 
     // type is the type of the rule.
-    string type = 12;
+    string type = 12 [
+        (buf.validate.field).string = {
+            pattern: "rule-type",
+        }
+    ];
 
     // id is the id of the rule type.
     // This is mostly optional and is set by the server.
@@ -2042,7 +2116,13 @@ message RuleType {
     ];
 
     // short_failure_message is the message to display when the evaluation fails.
-    string short_failure_message = 10;
+    string short_failure_message = 10 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            max_len: 400,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // context is the context in which the rule is evaluated.
     Context context = 3;
@@ -2051,7 +2131,13 @@ message RuleType {
     message Definition {
         // in_entity is the entity in which the rule is evaluated.
         // This can be repository, build_environment or artifact.
-        string in_entity = 1;
+        string in_entity = 1 [
+            (buf.validate.field).string = {
+                pattern: "^[a-z]+(_[a-z]+)*$",
+                min_len: 1,
+                max_len: 200,
+            }
+        ];
 
         // rule_schema is the schema of the rule. This is expressed in JSON Schema.
         google.protobuf.Struct rule_schema = 2;
@@ -2064,7 +2150,13 @@ message RuleType {
         message Ingest {
             // type is the type of the data ingestion.
             // we currently support rest, artifact and builtin.
-            string type = 1;
+            string type = 1 [
+                (buf.validate.field).string = {
+                    pattern: "^[a-z]+(_[a-z]+)*$",
+                    min_len: 1,
+                    max_len: 200,
+                }
+            ];
 
             // rest is the rest data ingestion.
             // this is only used if the type is rest.
@@ -2090,11 +2182,23 @@ message RuleType {
         message Eval {
             // type is the type of the data evaluation.
             // Right now only `jq` is supported as a driver
-            string type = 1;
+            string type = 1 [
+                (buf.validate.field).string = {
+                    pattern: "^[a-z]+(_[a-z]+)*$",
+                    min_len: 1,
+                    max_len: 200,
+                }
+            ];
 
             message JQComparison {
                 message Operator {
-                    string def = 1;
+                    string def = 1 [
+                        (buf.validate.field).string = {
+                            pattern: "^\\.[a-z_]+(\\.[a-z_]+)*$",
+                            min_len: 1,
+                            max_len: 200,
+                        }
+                    ];
                 }
 
                 // Ingested points to the data retrieved in the `ingest` section
@@ -2118,14 +2222,26 @@ message RuleType {
                 //   allow access by default and deny access only if a
                 //   violation is found. It expects the profile to set a
                 //   `violations` variable with a "msg" field.
-                string type = 1;
+                string type = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "^[a-z]+(_[a-z]+)*$",
+                        min_len: 1,
+                        max_len: 200,
+                    }
+                ];
                 // def is the definition of the rego profile.
                 string def = 2;
                 // how are violations reported. This is only used if the
                 // `constraints` type is selected. The default is `text`
                 // which returns human-readable text. The other option is
                 // `json` which returns a JSON array containing the violations.
-                optional string violation_format = 3;
+                optional string violation_format = 3 [
+                    (buf.validate.field).string = {
+                        pattern: "^[a-z]+(_[a-z]+)*$",
+                        min_len: 1,
+                        max_len: 200,
+                    }
+                ];
             }
 
             message Vulncheck {
@@ -2135,11 +2251,23 @@ message RuleType {
             message Trusty {
                 // This is no longer used, but is still here for backwards
                 // compatibility with existing stored rules
-                string endpoint = 1;
+                string endpoint = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+)?(\\/[a-zA-Z0-9._-]+)*(\\/\\{\\{[^}]+\\}\\})*(\\/)?$",
+                        max_len: 400,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                ];
             }
 
             message Homoglyphs {
-                string type = 1;
+                string type = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "^[a-z]+(_[a-z]+)*$",
+                        min_len: 1,
+                        max_len: 200,
+                    }
+                ];
             }
 
             // jq is only used if the `jq` type is selected.
@@ -2163,37 +2291,89 @@ message RuleType {
         Eval eval = 5;
 
         message Remediate {
-            string type = 1;
+            string type = 1 [
+                (buf.validate.field).string = {
+                    pattern: "^[a-z]+(_[a-z]+)*$",
+                    min_len: 1,
+                    max_len: 200,
+                }
+            ];
 
             message GhBranchProtectionType {
-                string patch = 1;
+                string patch = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "^\\s*\\{.*\\}\\s*$",
+                        max_len: 1000,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                ];
             }
 
             // the name stutters a bit but we already use a PullRequest message for handling PR entities
             message PullRequestRemediation {
                 message Content {
                     // the file to patch
-                    string path = 1;
+                    string path = 1 [
+                        (buf.validate.field).string = {
+                            pattern: "^\\.?(?:[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+(?:\\.[a-zA-Z0-9]+)?$",
+                            min_len: 1,
+                            max_len: 200,
+                        }
+                    ];
                     // how to patch the file. For now, only replace is supported
-                    string action = 2;
+                    string action = 2 [
+                        (buf.validate.field).string = {
+                            pattern: "^[a-z]+(_[a-z]+)*$",
+                            min_len: 1,
+                            max_len: 50,
+                        }
+                    ];
                     // the content of the file
                     string content = 4;
                     // the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings
                     // the usual modes are: 100644 for regular files, 100755 for executable files and
                     // 040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)
                     // see e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16
-                    optional string mode = 3;
+                    optional string mode = 3 [
+                        (buf.validate.field).string = {
+                            pattern: "^\\d+$",
+                            max_len: 6,
+                        },
+                        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    ];
                 }
 
                 message ActionsReplaceTagsWithSha {
                     // List of actions to exclude from the replacement
-                    repeated string exclude = 1;
+                    repeated string exclude = 1 [
+                        (buf.validate.field).repeated = {
+                            items: {
+                                string: {
+                                    pattern: "^\\.?(?:[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+(?:\\.[a-zA-Z0-9]+)?$",
+                                    max_len: 200,
+                                }
+                            }
+                        },
+                        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    ];
                 }
 
                 // the title of the PR
-                string title = 1;
+                string title = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "[[:space:][:punct:][:word:]]*",
+                        min_len: 1,
+                        max_len: 75,
+                    }
+                ];
                 // the body of the PR
-                string body = 2;
+                string body = 2 [
+                    (buf.validate.field).string = {
+                        pattern: "[[:space:][:punct:][:word:]]*",
+                        min_len: 1,
+                        max_len: 65536,
+                    }
+                ];
                 repeated Content contents = 3;
                 // the method to use to create the PR. For now, these are supported:
                 // -- minder.content - ensures that the content of the file is exactly as specified
@@ -2201,7 +2381,12 @@ message RuleType {
                 // -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
                 //                                           file and replaces the tag with the SHA
                 // -- minder.yq.evaluate - evaluates a yq expression on a file
-                string method = 4;
+                string method = 4 [
+                    (buf.validate.field).string = {
+                        pattern: "^minder(?:\\.[a-zA-Z0-9_]+)*$",
+                        max_len: 200,
+                    }
+                ];
                 // params are unstructured parameters passed to the method. These are optional
                 // and evaluated by the method.
                 google.protobuf.Struct params = 6;
@@ -2218,10 +2403,24 @@ message RuleType {
         Remediate remediate = 6;
 
         message Alert {
-            string type = 1;
+            string type = 1 [
+                (buf.validate.field).string = {
+                    pattern: "^[a-z]+(_[a-z]+)*$",
+                    min_len: 1,
+                    max_len: 200,
+                },
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
 
             message AlertTypeSA {
-                string severity = 1;
+                string severity = 1 [
+                    (buf.validate.field).string = {
+                        pattern: "^[a-z]+(_[a-z]+)*$",
+                        min_len: 1,
+                        max_len: 200,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                ];
             }
             optional AlertTypeSA security_advisory = 2;
         }
@@ -2232,10 +2431,22 @@ message RuleType {
     Definition def = 4;
 
     // description is the description of the rule type.
-    string description = 5;
+    string description = 5 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            min_len: 1,
+            max_len: 1000,
+        }
+    ];
 
     // guidance are instructions we give the user in case a rule fails.
-    string guidance = 6;
+    string guidance = 6 [
+        (buf.validate.field).string = {
+            pattern: "[[:space:][:punct:][:word:]]*",
+            min_len: 1,
+            max_len: 1000,
+        }
+    ];
 
     // severity is the severity of the rule type.
     Severity severity = 7;
