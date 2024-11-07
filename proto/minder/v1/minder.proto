@@ -1068,8 +1068,20 @@ message RegistrableUpstreamEntityRef {
 }
 
 message UpstreamRepositoryRef {
-    string owner = 1;
-    string name = 2;
+    string owner = 1 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3 [
