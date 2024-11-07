@@ -1812,7 +1812,7 @@ message ListEvaluationResultsRequest {
         // ID can contain either a profile name or an ID
         string profile = 2 [
             (buf.validate.field).string = {
-                pattern: "^([A-Za-z][-a-zA-Z0-9_]*|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$",
+                pattern: "^([[:alnum:]][-[:word:]]*)?$"
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
