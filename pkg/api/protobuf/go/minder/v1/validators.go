@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/open-policy-agent/opa/ast"
 )
 
 var (
@@ -148,10 +149,6 @@ func (rt *RuleType) Validate() error {
 		return fmt.Errorf("%w: %w", ErrInvalidRuleType, err)
 	}
 
-	if rt.Def == nil {
-		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleType)
-	}
-
 	if err := rt.Def.Validate(); err != nil {
 		return errors.Join(ErrInvalidRuleType, err)
 	}
@@ -161,6 +158,10 @@ func (rt *RuleType) Validate() error {
 
 // Validate validates a rule type definition
 func (def *RuleType_Definition) Validate() error {
+	if def == nil {
+		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
+	}
+
 	if !EntityFromString(def.InEntity).IsValid() {
 		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
 	}
@@ -175,8 +176,37 @@ func (def *RuleType_Definition) Validate() error {
 		return err
 	}
 
-	if def.Eval == nil {
-		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
+	return def.Eval.Validate()
+}
+
+// Validate validates a rule type definition eval
+func (ev *RuleType_Definition_Eval) Validate() error {
+	if ev == nil {
+		return fmt.Errorf("%w: eval is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	// Not using import to avoid circular dependency
+	if ev.Type == "rego" {
+		if err := ev.GetRego().Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Validate validates a rule type definition eval rego
+func (rego *RuleType_Definition_Eval_Rego) Validate() error {
+	if rego == nil {
+		return fmt.Errorf("%w: rego is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if rego.Def == "" {
+		return fmt.Errorf("%w: rego definition is empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := ast.ParseModule("minder-ruletype-def.rego", rego.Def)
+	if err != nil {
+		return fmt.Errorf("%w: rego definition is invalid: %s", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
