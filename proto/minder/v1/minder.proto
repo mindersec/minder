@@ -1000,14 +1000,32 @@ message CheckHealthResponse {
 
 message GetAuthorizationURLRequest {
     bool cli = 3;
-    optional string owner = 5;
+    optional string owner = 5 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     Context context = 6;
-    optional string redirect_url = 7;
+    optional string redirect_url = 7 [
+        (buf.validate.field).string = {
+            uri: true,
+            max_len: 600,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     // config is a JSON object that can be used to pass additional configuration
     google.protobuf.Struct config = 8;
 
-    string provider_class = 9;
+    string provider_class = 9 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 
     reserved 1, 2, 4;
     reserved "provider", "project_id", "port";
@@ -1020,8 +1038,20 @@ message GetAuthorizationURLResponse {
 
 message StoreProviderTokenRequest {
     string provider = 1 [deprecated=true];
-    string access_token = 3;
-    optional string owner = 4;
+    string access_token = 3 [
+        (buf.validate.field).string = {
+            pattern: "^[a-zA-Z0-9-_]+$",
+            min_len: 10,
+            max_len: 200,
+        }
+    ];
+    optional string owner = 4 [
+        (buf.validate.field).string = {
+            pattern: "[A-Za-z][-[:word:]]*"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     Context context = 5;
 
     reserved 2; // deprecated project_id
@@ -1253,7 +1283,12 @@ message VerifyProviderCredentialRequest {
     Context context = 1;
 
     // enrollment_nonce is the state parameter returned when enrolling the provider
-    string enrollment_nonce = 2;
+    string enrollment_nonce = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9_-]+$",
+            len: 54,
+        }
+    ];
 }
 
 // VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
