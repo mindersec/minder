@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -48,6 +49,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	evalStatus := viper.GetStringSlice("eval-status")
 	remediationStatus := viper.GetStringSlice("remediation-status")
 	alertStatus := viper.GetStringSlice("alert-status")
+	labels := viper.GetStringSlice("label")
 
 	// time range
 	from := viper.GetTime("from")
@@ -90,6 +92,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		Status:      evalStatus,
 		Remediation: remediationStatus,
 		Alert:       alertStatus,
+		LabelFilter: labels,
 		From:        nil,
 		To:          nil,
 		Cursor:      cursorFromOptions(cursorStr, size),
@@ -223,6 +226,11 @@ func init() {
 	listCmd.Flags().StringSlice("eval-status", nil, evalFilterMsg)
 	listCmd.Flags().StringSlice("remediation-status", nil, remediationFilterMsg)
 	listCmd.Flags().StringSlice("alert-status", nil, alertFilterMsg)
+	listCmd.Flags().StringSliceP("label", "l", nil, "Filter evaluation history list by label")
+	if err := listCmd.Flags().MarkHidden("label"); err != nil {
+		listCmd.Printf("Error hiding flag: %s", err)
+		os.Exit(1)
+	}
 	listCmd.Flags().String("from", "", "Filter evaluation history list by time")
 	listCmd.Flags().String("to", "", "Filter evaluation history list by time")
 	listCmd.Flags().StringP("cursor", "c", "", "Fetch previous or next page from the list")
