@@ -2851,12 +2851,22 @@ message Provider {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // class is the name of the provider implementation, eg. 'github' or 'gh-app'.
-    string class = 7;
+    string class = 7 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z][a-z0-9_-]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
     // project is the project where the provider is.  This is ignored on input
     // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
-    string version = 3;
+    string version = 3 [
+        (buf.validate.field).string = {
+            pattern: "^v\\d+(\\.\\d+)?(\\.\\d+)?(?:-[\\w\\.-]+)?$",
+        }
+    ];
 
     // implements is the list of interfaces that the provider implements.
     repeated ProviderType implements = 4;
