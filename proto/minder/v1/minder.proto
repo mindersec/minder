@@ -2355,10 +2355,9 @@ message UpdateProjectRequest {
     string description = 3 [
         (buf.validate.field).string = {
             pattern: "[[:space:][:punct:][:word:]]*",
-            min_len: 1,
+            min_len: 0,
             max_len: 1000,
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        }
     ];
 }
 
@@ -2381,10 +2380,9 @@ message ProjectPatch {
     optional string description = 2 [
         (buf.validate.field).string = {
             pattern: "[[:space:][:punct:][:word:]]*",
-            min_len: 1,
+            min_len: 0,
             max_len: 1000,
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        }
     ];
 }
 
