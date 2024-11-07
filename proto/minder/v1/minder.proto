@@ -1010,8 +1010,8 @@ message GetAuthorizationURLRequest {
     Context context = 6;
     optional string redirect_url = 7 [
         (buf.validate.field).string = {
-            pattern: "^(https?):\\/\\/[a-zA-Z0-9.-]+(\\.[a-zA-Z]{2,})?(:[0-9]{1,5})?(\\/[^\\s]*)?$",
-            max_len: 200,
+            uri: true,
+            max_len: 600,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
@@ -1040,7 +1040,7 @@ message StoreProviderTokenRequest {
     string provider = 1 [deprecated=true];
     string access_token = 3 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z0-9._-]$",
+            pattern: "^[a-zA-Z0-9-_]+$",
             min_len: 10,
             max_len: 200,
         }
