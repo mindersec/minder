@@ -3385,6 +3385,23 @@ message ListEvaluationHistoryRequest {
     // Timestamp representing the end time of the selection window.
     google.protobuf.Timestamp to = 9;
 
+    // Filter evaluation history to only those matching the specified labels.
+    //
+    // The default is to return all user-created profiles; the string "*" can
+    // be used to select all profiles, including system profiles.  This syntax
+    // may be expanded in the future.
+    repeated string label_filter = 11 [
+        (buf.validate.field).repeated = {
+	    items: {
+	        string: {
+		    pattern: "^(\\*|[a-z][a-z0-9_]*)$",
+		    max_len: 200,
+		},
+	    },
+	},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+
     // Cursor object to select the "page" of data to retrieve.
     Cursor cursor = 10;
 }

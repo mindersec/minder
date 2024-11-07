@@ -36,6 +36,34 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 	ere1 := createRandomEvaluationRuleEntity(t, riID1, repo1.ID)
 	es1 := createRandomEvaluationStatus(t, ere1)
 
+	// Evaluations for this profile should not show up in the
+	// results.
+	ruleType2 := createRandomRuleType(t, proj.ID)
+	profile2 := createRandomProfile(t, proj.ID, []string{"label2"})
+	fmt.Println(profile2)
+	riID2 := createRandomRuleInstance(
+		t,
+		proj.ID,
+		profile2.ID,
+		ruleType2.ID,
+	)
+	ere2 := createRandomEvaluationRuleEntity(t, riID2, repo1.ID)
+	es2 := createRandomEvaluationStatus(t, ere2)
+
+	// Evaluations for this profile should not show up in the
+	// results.
+	ruleType3 := createRandomRuleType(t, proj.ID)
+	profile3 := createRandomProfile(t, proj.ID, []string{"label3"})
+	fmt.Println(profile3)
+	riID3 := createRandomRuleInstance(
+		t,
+		proj.ID,
+		profile3.ID,
+		ruleType3.ID,
+	)
+	ere3 := createRandomEvaluationRuleEntity(t, riID3, repo1.ID)
+	es3 := createRandomEvaluationStatus(t, ere3)
+
 	tests := []struct {
 		name   string
 		params ListEvaluationHistoryParams
@@ -392,6 +420,193 @@ func TestListEvaluationHistoryFilters(t *testing.T) {
 			},
 		},
 
+		// profile labels filter
+		{
+			name: "profile labels filter missing",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 1)
+				row := rows[0]
+				require.Equal(t, es1, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Empty(t, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter include",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Labels:    []string{"nonexisting"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 0)
+			},
+		},
+		{
+			name: "profile labels filter include match label2",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Labels:    []string{"label2"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 1)
+				row := rows[0]
+				require.Equal(t, es2, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile2.Labels, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter include match label3",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Labels:    []string{"label3"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 1)
+				row := rows[0]
+				require.Equal(t, es3, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile3.Labels, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter match *",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Labels:    []string{"*"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 3)
+
+				row := rows[0]
+				require.Equal(t, es3, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile3.Labels, row.ProfileLabels)
+
+				row = rows[1]
+				require.Equal(t, es2, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile2.Labels, row.ProfileLabels)
+
+				row = rows[2]
+				require.Equal(t, es1, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile1.Labels, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter exclude label2",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Notlabels: []string{"label2"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 1)
+
+				row := rows[0]
+				require.Equal(t, es1, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile1.Labels, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter exclude label3",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Notlabels: []string{"label3"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 1)
+
+				row := rows[0]
+				require.Equal(t, es1, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile1.Labels, row.ProfileLabels)
+			},
+		},
+		{
+			name: "profile labels filter include * exclude label2",
+			params: ListEvaluationHistoryParams{
+				Next: sql.NullTime{
+					Time:  time.UnixMicro(999999999999999999).UTC(),
+					Valid: true,
+				},
+				Labels:    []string{"*"},
+				Notlabels: []string{"label3"},
+				Projectid: proj.ID,
+				Size:      5,
+			},
+			checkf: func(t *testing.T, rows []ListEvaluationHistoryRow) {
+				t.Helper()
+				require.Len(t, rows, 2)
+
+				row := rows[0]
+				require.Equal(t, es2, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile2.Labels, row.ProfileLabels)
+
+				row = rows[1]
+				require.Equal(t, es1, row.EvaluationID)
+				require.Equal(t, EntitiesRepository, row.EntityType)
+				require.Equal(t, repo1.ID, row.EntityID)
+				require.Equal(t, profile1.Labels, row.ProfileLabels)
+			},
+		},
+
 		// time range filter
 		{
 			name: "time range filter from +1h",
@@ -671,6 +886,7 @@ func TestGetEvaluationHistory(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		repos = append(repos, createRandomRepository(t, proj.ID, prov))
 	}
+
 	ruleType1 := createRandomRuleType(t, proj.ID)
 	profile1 := createRandomProfile(t, proj.ID, []string{})
 	riID1 := createRandomRuleInstance(

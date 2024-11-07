@@ -805,6 +805,17 @@
             "format": "date-time"
           },
           {
+            "name": "labelFilter",
+            "description": "Filter evaluation history to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
             "name": "cursor.cursor",
             "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis.",
             "in": "query",

@@ -1520,6 +1520,9 @@ which is used for pagination.
 | alert | <TypeLink type="string">string</TypeLink> | repeated | List of alert statuses to retrieve. |
 | from | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | Timestamp representing the start time of the selection window. |
 | to | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | Timestamp representing the end time of the selection window. |
+| label_filter | <TypeLink type="string">string</TypeLink> | repeated | Filter evaluation history to only those matching the specified labels.
+
+The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. |
 
 

@@ -657,6 +657,80 @@ func TestFilterOptions(t *testing.T) {
 			err: true,
 		},
 
+		// label
+		{
+			name: "label in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(LabelFilter)
+				require.NotNil(t, f.IncludedLabels())
+				require.Nil(t, f.ExcludedLabels())
+				require.Equal(t, []string{"label"}, f.IncludedLabels())
+			},
+		},
+		{
+			name: "label not in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("!label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(LabelFilter)
+				require.Nil(t, f.IncludedLabels())
+				require.NotNil(t, f.ExcludedLabels())
+				require.Equal(t, []string{"label"}, f.ExcludedLabels())
+			},
+		},
+		{
+			name: "empty label",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "wrong label filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+		{
+			name: "label exclude star",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("!*")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+
 		// status
 		{
 			name: "status in filter",
