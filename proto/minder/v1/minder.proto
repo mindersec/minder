@@ -1575,7 +1575,7 @@ message GetProfileStatusByNameRequest {
     ];
     string rule_name = 7 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "[A-Za-z][-/[:word:] ]*",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2311,7 +2311,7 @@ message Profile {
         // name is the descriptive name of the rule, not to be confused with type
         string name = 4 [
             (buf.validate.field).string = {
-                pattern: "[[:space:][:punct:][:word:]]*",
+                pattern: "[A-Za-z][-/[:word:] ]*",
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2353,7 +2353,7 @@ message Profile {
         // description is the human-readable description of the selector.
         string description = 6 [
             (buf.validate.field).string = {
-                pattern: "[[:space:][:punct:][:word:]]*",
+                pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
                 max_len: 1000,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2399,7 +2399,7 @@ message Profile {
     // display_name is the display name of the profile.
     string display_name = 13 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "[A-Za-z][-/[:word:] ]*",
             max_len: 1000,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
