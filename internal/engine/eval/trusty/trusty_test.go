@@ -48,11 +48,7 @@ func TestBuildEvalResult(t *testing.T) {
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
-						PackageData: struct {
-							Archived   bool                       `json:"archived"`
-							Deprecated bool                       `json:"is_deprecated"`
-							Malicious  *trustytypes.MaliciousData `json:"malicious"`
-						}{
+						PackageData: trustytypes.PackageData{
 							Archived:   false,
 							Deprecated: false,
 							Malicious: &trustytypes.MaliciousData{
@@ -110,11 +106,7 @@ func TestBuildEvalResult(t *testing.T) {
 						Summary: trustytypes.ScoreSummary{
 							Score: &sg,
 						},
-						PackageData: struct {
-							Archived   bool                       `json:"archived"`
-							Deprecated bool                       `json:"is_deprecated"`
-							Malicious  *trustytypes.MaliciousData `json:"malicious"`
-						}{
+						PackageData: trustytypes.PackageData{
 							Archived:   false,
 							Deprecated: false,
 							Malicious: &trustytypes.MaliciousData{
