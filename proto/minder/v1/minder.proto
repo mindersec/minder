@@ -2363,7 +2363,7 @@ message UpdateProjectRequest {
     // display_name is the display name of the project to update.
     string display_name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/[:word:]]*$",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2388,7 +2388,7 @@ message ProjectPatch {
     // display_name is the display name of the project to update.
     optional string display_name = 1 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/[:word:]]*$",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
