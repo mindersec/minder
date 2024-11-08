@@ -190,6 +190,16 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 		if err := ev.GetRego().Validate(); err != nil {
 			return err
 		}
+	} else if ev.Type == "jq" {
+		if len(ev.GetJq()) == 0 {
+			return fmt.Errorf("%w: jq definition is empty", ErrInvalidRuleTypeDefinition)
+		}
+
+		for i, jq := range ev.GetJq() {
+			if err := jq.Validate(); err != nil {
+				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
+			}
+		}
 	}
 	return nil
 }
@@ -207,6 +217,29 @@ func (rego *RuleType_Definition_Eval_Rego) Validate() error {
 	_, err := ast.ParseModule("minder-ruletype-def.rego", rego.Def)
 	if err != nil {
 		return fmt.Errorf("%w: rego definition is invalid: %s", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition eval jq
+func (jq *RuleType_Definition_Eval_JQComparison) Validate() error {
+	if jq == nil {
+		return fmt.Errorf("%w: jq is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if jq.GetIngested().GetDef() == "" {
+		return fmt.Errorf("%w: jq ingested definition is empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	if jq.GetProfile() != nil && jq.GetConstant() != nil {
+		return fmt.Errorf("%w: jq profile and constant accessors are mutually exclusive", ErrInvalidRuleTypeDefinition)
+	} else if jq.GetProfile() == nil && jq.GetConstant() == nil {
+		return fmt.Errorf("%w: jq missing profile or constant accessor", ErrInvalidRuleTypeDefinition)
+	}
+
+	if jq.GetProfile() != nil && jq.GetProfile().GetDef() == "" {
+		return fmt.Errorf("%w: jq profile accessor definition is empty", ErrInvalidRuleTypeDefinition)
 	}
 
 	return nil
