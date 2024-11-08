@@ -1752,7 +1752,7 @@ message GetRuleTypeByNameRequest {
     // name is the name of the rule type.
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$",
+            pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1865,7 +1865,7 @@ message ListEvaluationResultsRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "^[-[:word:]]*$",
+                    pattern: "^[A-Za-z][-/[:word:]]*$",
                         max_len: 200,
                     }
             }
@@ -2651,7 +2651,7 @@ message RoleAssignment {
     // display_name is the display name of the subject.
     string display_name = 5 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
