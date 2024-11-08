@@ -1907,7 +1907,7 @@ message RestType {
         int32 http_code = 1 [(buf.validate.field).int32 = { gte: 100, lte: 599 }];
         string body = 2 [
             (buf.validate.field).string = {
-                pattern: "^\\s*\\{.*\\}\\s*$",
+                pattern: "^\\s*\\{[\\s\\S]*\\}\\s*$",
                 max_len: 1000,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1921,7 +1921,7 @@ message RestType {
     // us dynamically fill in the values.
     string endpoint = 1 [
         (buf.validate.field).string = {
-            pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+)?(\\/[a-zA-Z0-9._-]+)*(\\/\\{\\{[^}]+\\}\\})*(\\/)?$",
+            pattern: "^(https?:\\/\\/)?[a-zA-Z0-9._-]+(\\/[a-zA-Z0-9._{}\\/-]*)?$",
             max_len: 400,
         }
     ];
@@ -1929,8 +1929,9 @@ message RestType {
     // method is the method to use to fetch data.
     string method = 2 [
         (buf.validate.field).string = {
-            pattern: "^(GET|POST|PUT|PATCH|DELETE)$",
-        }
+            pattern: '^(?i)(GET|POST|PUT|PATCH|DELETE)$'
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // headers are the headers to be sent to the endpoint.
@@ -1938,7 +1939,7 @@ message RestType {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "^[a-zA-Z0-9-]+: .+$",
+                    pattern: "^[a-zA-Z0-9-]+: [^\n\r]+$",
                     max_len: 400,
                 }
             }
@@ -1949,7 +1950,7 @@ message RestType {
     // body is the body to be sent to the endpoint.
     optional string body = 4 [
         (buf.validate.field).string = {
-            pattern: "^\\s*\\{.*\\}\\s*$",
+            pattern: "^\\s*\\{[\\s\\S]*\\}\\s*$",
             max_len: 1000,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1983,7 +1984,7 @@ message GitType {
     // clone_url is the url of the git repository.
     string clone_url = 1 [
         (buf.validate.field).string = {
-            pattern: "^(https:\\/\\/[a-zA-Z0-9.-]+\\/[a-zA-Z0-9._-]+\\/[a-zA-Z0-9._-]+\\.git|git@[\\w.-]+:[\\w.-]+\\/[\\w.-]+\\.git|git:\\/\\/[a-zA-Z0-9.-]+\\/[a-zA-Z0-9._-]+\\/[a-zA-Z0-9._-]+\\.git)$",
+            uri: true,
             max_len: 200,
         }
     ];
@@ -1991,7 +1992,7 @@ message GitType {
     // branch is the branch of the git repository.
     string branch = 2 [
         (buf.validate.field).string = {
-            pattern: "^[a-zA-Z0-9._/-]+$",
+            pattern: "^[[:word:]./-]+$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2079,7 +2080,7 @@ message RuleType {
     // version is the version of the rule type API.
     string version = 11 [
         (buf.validate.field).string = {
-            pattern: "^v\\d+(\\.\\d+)?(\\.\\d+)?(?:-[\\w\\.-]+)?$",
+            pattern: "^v\\d$",
         }
     ];
 
@@ -2194,7 +2195,7 @@ message RuleType {
                 message Operator {
                     string def = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.[a-z_]+(\\.[a-z_]+)*$",
+                            pattern: "^\\.[a-z_]+(\\.[a-z_]+|\\[\\d+]|\\[\"[a-z_]+\"\\])*$",
                             min_len: 1,
                             max_len: 200,
                         }
