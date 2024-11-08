@@ -17,7 +17,7 @@ import (
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
 
 	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"

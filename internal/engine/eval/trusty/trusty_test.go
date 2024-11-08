@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
 	"github.com/stretchr/testify/require"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"

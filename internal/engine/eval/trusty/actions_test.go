@@ -7,7 +7,7 @@ package trusty
 import (
 	"testing"
 
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
 	"github.com/stretchr/testify/require"
 
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"

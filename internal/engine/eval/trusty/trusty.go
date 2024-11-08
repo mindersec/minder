@@ -11,8 +11,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
-	trusty "github.com/stacklok/trusty-sdk-go/pkg/client"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	trusty "github.com/stacklok/trusty-sdk-go/pkg/v1/client"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
