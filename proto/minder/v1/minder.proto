@@ -2375,7 +2375,8 @@ message UpdateProjectRequest {
             pattern: "^[A-Za-z][-/.!?,:;[:word:] ]*$",
             min_len: 0,
             max_len: 1000,
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 }
 
@@ -2400,7 +2401,8 @@ message ProjectPatch {
             pattern: "^[A-Za-z][-/.!?,:;[:word:] ]*$",
             min_len: 0,
             max_len: 1000,
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 }
 
