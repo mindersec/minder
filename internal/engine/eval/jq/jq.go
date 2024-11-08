@@ -37,22 +37,8 @@ func NewJQEvaluator(
 
 	for idx := range assertions {
 		a := assertions[idx]
-		if a.Profile != nil && a.Constant != nil {
-			return nil, fmt.Errorf("profile and constant accessors are mutually exclusive")
-		} else if a.Profile == nil && a.Constant == nil {
-			return nil, fmt.Errorf("missing profile or constant accessor")
-		}
-
-		if a.Profile != nil && a.Profile.Def == "" {
-			return nil, fmt.Errorf("missing profile accessor definition")
-		}
-
-		if a.Ingested == nil {
-			return nil, fmt.Errorf("missing data accessor")
-		}
-
-		if a.Ingested.Def == "" {
-			return nil, fmt.Errorf("missing data accessor definition")
+		if err := a.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid jq assertion: %w", err)
 		}
 	}
 
