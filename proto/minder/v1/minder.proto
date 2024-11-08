@@ -1921,7 +1921,6 @@ message RestType {
     // us dynamically fill in the values.
     string endpoint = 1 [
         (buf.validate.field).string = {
-            pattern: "^(https?:\\/\\/)?[a-zA-Z0-9._-]+(\\/[a-zA-Z0-9._{}\\/-]*)?$",
             max_len: 400,
         }
     ];
@@ -1986,7 +1985,8 @@ message GitType {
         (buf.validate.field).string = {
             uri: true,
             max_len: 200,
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // branch is the branch of the git repository.
@@ -2013,7 +2013,7 @@ message DiffType {
         // depfile is the file that contains the dependencies for this ecosystem
         string depfile = 2 [
             (buf.validate.field).string = {
-                pattern: "^(\\./)?([a-zA-Z0-9_]+\\/)*[a-zA-Z0-9_]+(\\.[a-zA-Z0-9]+)?$",
+                pattern: "^(\\./)?([a-zA-Z0-9_\\-]+/)*[a-zA-Z0-9_\\-]+(\\.[a-zA-Z0-9]+)?$",
                 min_len: 1,
                 max_len: 200,
             }
@@ -2030,9 +2030,9 @@ message DiffType {
     string type = 2 [
         (buf.validate.field).string = {
             pattern: "^[a-z]+(_[a-z]+)*$",
-            min_len: 1,
             max_len: 200,
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 }
 
@@ -2154,9 +2154,9 @@ message RuleType {
             string type = 1 [
                 (buf.validate.field).string = {
                     pattern: "^[a-z]+(_[a-z]+)*$",
-                    min_len: 1,
                     max_len: 200,
-                }
+                },
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
 
             // rest is the rest data ingestion.
@@ -2225,10 +2225,11 @@ message RuleType {
                 //   `violations` variable with a "msg" field.
                 string type = 1 [
                     (buf.validate.field).string = {
-                        pattern: "^[a-z]+(_[a-z]+)*$",
+                        pattern: "^[a-z]+([_-][a-z]+)*$",
                         min_len: 1,
                         max_len: 200,
-                    }
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
                 // def is the definition of the rego profile.
                 string def = 2;
@@ -2385,7 +2386,8 @@ message RuleType {
                     (buf.validate.field).string = {
                         pattern: "^minder(?:\\.[a-zA-Z0-9_]+)*$",
                         max_len: 200,
-                    }
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
                 // params are unstructured parameters passed to the method. These are optional
                 // and evaluated by the method.
