@@ -1455,7 +1455,7 @@ message GetProfileByNameRequest {
     // name is the name of the profile to get
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$"
+            pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1555,7 +1555,7 @@ message GetProfileStatusByNameRequest {
     // name is the name of the profile to get
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$"
+            pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
