@@ -5,6 +5,7 @@ package invites
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -132,7 +133,10 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 			identity.Human(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error creating email message: %w", err)
+			if errors.Is(err, email.ErrValidationFailed) {
+				return nil, util.UserVisibleError(codes.InvalidArgument, "error creating email message: %v", err)
+			}
+			return nil, status.Errorf(codes.Internal, "error creating email message: %v", err)
 		}
 		err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
 		if err != nil {
@@ -304,7 +308,10 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		sponsorDisplay,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating email message: %w", err)
+		if errors.Is(err, email.ErrValidationFailed) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "error creating email message: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "error creating email message: %v", err)
 	}
 
 	err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)

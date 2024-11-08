@@ -7,6 +7,7 @@ package email
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"reflect"
@@ -18,6 +19,15 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/util"
 )
+
+// ErrValidationFailed is returned when the template data source fails validation
+var ErrValidationFailed = errors.New("validation failed")
+
+// NewErrValidationFailed creates a new error for failed validation
+func NewErrValidationFailed(fieldName, fieldValue string) error {
+	msg := fmt.Sprintf("field %s failed validation %s", fieldName, fieldValue)
+	return fmt.Errorf("%w: %s", ErrValidationFailed, msg)
+}
 
 const (
 	// TopicQueueInviteEmail is the topic for sending invite emails
@@ -181,11 +191,11 @@ func (b *bodyData) Validate() error {
 		field := v.Field(i)
 		// Check if the field is settable and of kind and type string
 		if !field.CanSet() || field.Kind() != reflect.String || field.Type() != reflect.TypeOf("") {
-			return fmt.Errorf("field %s is not settable or a string", v.Type().Field(i).Name)
+			return NewErrValidationFailed(v.Type().Field(i).Name, field.String())
 		}
 		err := isValidField(field.String())
 		if err != nil {
-			return fmt.Errorf("field %s failed validation - %s", v.Type().Field(i).Name, field.String())
+			return NewErrValidationFailed(v.Type().Field(i).Name, field.String())
 		}
 	}
 	return nil

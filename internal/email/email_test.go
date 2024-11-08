@@ -91,7 +91,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 				RoleName:         "Administrator",
 				RoleVerb:         "manage",
 			},
-			"field AdminName failed validation - John <b>Doe</b>",
+			"validation failed: field AdminName failed validation John <b>Doe</b>",
 		},
 
 		// Test case 3: OrganizationName contains HTML content
@@ -108,7 +108,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 				RoleName:         "Administrator",
 				RoleVerb:         "manage",
 			},
-			"field OrganizationName failed validation - <script>alert('Hack');</script>",
+			"validation failed: field OrganizationName failed validation <script>alert('Hack');</script>",
 		},
 
 		// Test case 4: AdminName contains JavaScript code
@@ -125,7 +125,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 				RoleName:         "Administrator",
 				RoleVerb:         "manage",
 			},
-			"field AdminName failed validation - onload=alert('test')",
+			"validation failed: field AdminName failed validation onload=alert('test')",
 		},
 
 		// Test case 5: All fields contain valid plain text with some URLs
