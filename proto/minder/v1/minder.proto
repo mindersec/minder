@@ -235,7 +235,7 @@ message GetArtifactByIdResponse {
 message GetArtifactByNameRequest {
     string name = 1 [
         (buf.validate.field).string = {
-            pattern: "[-./[:word:]]*",
+            pattern: "^[-./[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1002,7 +1002,7 @@ message GetAuthorizationURLRequest {
     bool cli = 3;
     optional string owner = 5 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*"
+            pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1021,7 +1021,7 @@ message GetAuthorizationURLRequest {
 
     string provider_class = 9 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1047,7 +1047,7 @@ message StoreProviderTokenRequest {
     ];
     optional string owner = 4 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*"
+            pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1100,14 +1100,14 @@ message RegistrableUpstreamEntityRef {
 message UpstreamRepositoryRef {
     string owner = 1 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*"
+            pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1201,7 +1201,7 @@ message GetRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
     string name = 3 [
         (buf.validate.field).string = {
-            pattern: "[-./[:word:]]*",
+            pattern: "^[-./[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1219,7 +1219,7 @@ message DeleteRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
     string name = 3 [
         (buf.validate.field).string = {
-            pattern: "[-./[:word:]]*",
+            pattern: "^[-./[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1455,7 +1455,7 @@ message GetProfileByNameRequest {
     // name is the name of the profile to get
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*"
+            pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1555,7 +1555,7 @@ message GetProfileStatusByNameRequest {
     // name is the name of the profile to get
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*"
+            pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1568,14 +1568,14 @@ message GetProfileStatusByNameRequest {
     string rule = 5 [deprecated=true];
     string rule_type = 6 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/[:word:]]*"
+            pattern: "^[A-Za-z][-/[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     string rule_name = 7 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/[:word:] ]*",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1697,7 +1697,7 @@ message Context {
     // name of the provider
     optional string provider = 1 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1724,7 +1724,7 @@ message ContextV2 {
     // name of the provider. Set to empty string when not applicable.
     string provider = 2 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1752,7 +1752,7 @@ message GetRuleTypeByNameRequest {
     // name is the name of the rule type.
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1865,7 +1865,7 @@ message ListEvaluationResultsRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[-[:word:]]*",
+                    pattern: "^[-[:word:]]*$",
                         max_len: 200,
                     }
             }
@@ -2026,7 +2026,7 @@ message RuleType {
     // name is the name of the rule type.
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[-[:word:]]*",
+            pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2035,7 +2035,7 @@ message RuleType {
     // display_name is the display name of the rule type.
     string display_name = 8 [
         (buf.validate.field).string = {
-            pattern: "[[:space:][:punct:][:word:]]*",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2259,7 +2259,7 @@ message Profile {
     // name is the name of the profile instance.
     string name = 3 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2296,7 +2296,7 @@ message Profile {
         // type is the type of the rule to be instantiated.
         string type = 1 [
             (buf.validate.field).string = {
-                pattern: "[A-Za-z][-/[:word:]]*"
+                pattern: "^[A-Za-z][-/[:word:]]*$",
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2311,7 +2311,7 @@ message Profile {
         // name is the descriptive name of the rule, not to be confused with type
         string name = 4 [
             (buf.validate.field).string = {
-                pattern: "[A-Za-z][-/[:word:] ]*",
+                pattern: "^[A-Za-z][-/[:word:] ]*$",
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2352,7 +2352,7 @@ message Profile {
         // description is the human-readable description of the selector.
         string description = 6 [
             (buf.validate.field).string = {
-                pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
+                pattern: "^[A-Za-z][-/.!?,:;[:word:] ]*$",
                 max_len: 1000,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2374,8 +2374,7 @@ message Profile {
     // this is optional and defaults to "on"
     optional string alert = 9 [
         (buf.validate.field).string = {
-            pattern: "^(on|off|dry_run)$",
-            max_len:50,
+            in: ["on", "off", "dry_run"]
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
@@ -2397,7 +2396,7 @@ message Profile {
     // display_name is the display name of the profile.
     string display_name = 13 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/[:word:] ]*",
+            pattern: "^[A-Za-z][-/[:word:] ]*$",
             max_len: 1000,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2652,7 +2651,7 @@ message RoleAssignment {
     // display_name is the display name of the subject.
     string display_name = 5 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2670,7 +2669,7 @@ message RoleAssignment {
     // first_name is the first name of the subject.
     string first_name = 7 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+            pattern: "^[A-Za-z][- [:word:]\\[\\]\\(\\)]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2678,7 +2677,7 @@ message RoleAssignment {
     // last_name is the last name of the subject.
     string last_name = 8 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][- [:word:]\\[\\]\\(\\)]*",
+            pattern: "^[A-Za-z][- [:word:]\\[\\]\\(\\)]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2766,7 +2765,7 @@ message GetProviderRequest {
     // name is the name of the provider to get.
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "[-[:word:]]*",
+            pattern: "^[-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2938,7 +2937,7 @@ message Provider {
     // name is the name of the provider.
     string name = 1 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-[:word:]]*",
+            pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -3000,7 +2999,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[,[:word:]]*",
+                    pattern: "^[,[:word:]]*$",
                     max_len: 200,
                 }
             }
@@ -3012,7 +3011,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[,-./[:word:]]*",
+                    pattern: "^[,-./[:word:]]*$",
                     max_len: 200,
                 }
             }
@@ -3024,7 +3023,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[A-Za-z][,-[:word:]]*",
+                    pattern: "^[A-Za-z][-/[:word:]]*$",
                     max_len: 200,
                 }
             }
@@ -3036,7 +3035,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[,[:word:]]*",
+                    pattern: "^[,[:word:]]*$",
                     max_len: 200,
                 }
             }
@@ -3048,7 +3047,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[,[:word:]]*",
+                    pattern: "^[,[:word:]]*$",
                     max_len: 200,
                 }
             }
@@ -3060,7 +3059,7 @@ message ListEvaluationHistoryRequest {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "[,[:word:]]*",
+                    pattern: "^[,[:word:]]*$",
                     max_len: 200,
                 }
             }
