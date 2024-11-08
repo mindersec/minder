@@ -1423,7 +1423,7 @@ message ListProfilesRequest {
     // may be expanded in the future.
     string label_filter = 2 [
         (buf.validate.field).string = {
-            pattern: "^(\\*|[a-zA-Z][a-zA-Z0-9_]*)$",
+            pattern: "^(\\*|[a-z][a-z0-9_]*)$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2343,7 +2343,6 @@ message Profile {
         // expr is the expression to select the entity.
         string selector = 4 [
             (buf.validate.field).string = {
-                pattern: "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\\[\\d+\\])?$",
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2366,8 +2365,7 @@ message Profile {
     // this is optional and defaults to "off"
     optional string remediate = 8 [
         (buf.validate.field).string = {
-            pattern: "^(on|off|dry_run)$",
-            max_len:50,
+            in: ["on", "off", "dry_run"]
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
@@ -2392,7 +2390,7 @@ message Profile {
     // version is the version of the profile type. In this case, it is "v1"
     string version = 11 [
         (buf.validate.field).string = {
-            pattern: "^v\\d+(\\.\\d+)?(\\.\\d+)?(?:-[\\w\\.-]+)?$",
+            pattern: "^v\\d$",
         }
     ];
 
