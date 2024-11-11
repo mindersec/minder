@@ -2119,7 +2119,6 @@ message RuleType {
     // short_failure_message is the message to display when the evaluation fails.
     string short_failure_message = 10 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/.!?,:;[:word:] *#\\[\\]()`{}]*",
             max_len: 400,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2153,8 +2152,7 @@ message RuleType {
             // we currently support rest, artifact and builtin.
             string type = 1 [
                 (buf.validate.field).string = {
-                    pattern: "^[a-z]+(_[a-z]+)*$",
-                    max_len: 200,
+                    in: ["rest", "artifact", "builtin", "git", "diff"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
@@ -2182,12 +2180,9 @@ message RuleType {
         // endpoint and how we compare it to the rule.
         message Eval {
             // type is the type of the data evaluation.
-            // Right now only `jq` is supported as a driver
             string type = 1 [
                 (buf.validate.field).string = {
-                    pattern: "^[a-z]+(_[a-z]+)*$",
-                    min_len: 1,
-                    max_len: 200,
+                    in: ["jq", "rego", "vulncheck", "trusty", "homoglyphs"],
                 }
             ];
 
@@ -2195,7 +2190,7 @@ message RuleType {
                 message Operator {
                     string def = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.[a-z_]+(\\.[a-z_]+|\\[\\d+]|\\[\"[a-z_]+\"\\])*$",
+                            pattern: "^\\.[a-zA-Z_]+(\\.[a-zA-Z_]+|\\[\\d+]|\\[\"[a-zA-Z_]+\"\\])*$",
                             min_len: 1,
                             max_len: 200,
                         }
@@ -2239,10 +2234,9 @@ message RuleType {
                 // `json` which returns a JSON array containing the violations.
                 optional string violation_format = 3 [
                     (buf.validate.field).string = {
-                        pattern: "^[a-z]+(_[a-z]+)*$",
-                        min_len: 1,
-                        max_len: 200,
-                    }
+                        in: ["text", "json"],
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
             }
 
@@ -2264,9 +2258,7 @@ message RuleType {
             message Homoglyphs {
                 string type = 1 [
                     (buf.validate.field).string = {
-                        pattern: "^[a-z]+(_[a-z]+)*$",
-                        min_len: 1,
-                        max_len: 200,
+                        in: ["invisible_characters", "mixed_scripts"]
                     }
                 ];
             }
@@ -2294,16 +2286,14 @@ message RuleType {
         message Remediate {
             string type = 1 [
                 (buf.validate.field).string = {
-                    pattern: "^[a-z]+(_[a-z]+)*$",
-                    min_len: 1,
-                    max_len: 200,
-                }
+                    in: ["rest", "gh_branch_protection", "pull_request"],
+                },
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
 
             message GhBranchProtectionType {
                 string patch = 1 [
                     (buf.validate.field).string = {
-                        pattern: "^\\s*\\{.*\\}\\s*$",
                         max_len: 1000,
                     },
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2316,7 +2306,7 @@ message RuleType {
                     // the file to patch
                     string path = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.?(?:[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+(?:\\.[a-zA-Z0-9]+)?$",
+                            pattern: "^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$",
                             min_len: 1,
                             max_len: 200,
                         }
@@ -2324,7 +2314,7 @@ message RuleType {
                     // how to patch the file. For now, only replace is supported
                     string action = 2 [
                         (buf.validate.field).string = {
-                            pattern: "^[a-z]+(_[a-z]+)*$",
+                            in: ["replace"],
                             min_len: 1,
                             max_len: 50,
                         }
@@ -2350,19 +2340,17 @@ message RuleType {
                         (buf.validate.field).repeated = {
                             items: {
                                 string: {
-                                    pattern: "^\\.?(?:[a-zA-Z0-9_.-]+\\/)*[a-zA-Z0-9_.-]+(?:\\.[a-zA-Z0-9]+)?$",
+                                    pattern: "^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$",
                                     max_len: 200,
                                 }
                             }
-                        },
-                        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                        }
                     ];
                 }
 
                 // the title of the PR
                 string title = 1 [
                     (buf.validate.field).string = {
-                        pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
                         min_len: 1,
                         max_len: 75,
                     }
@@ -2370,7 +2358,6 @@ message RuleType {
                 // the body of the PR
                 string body = 2 [
                     (buf.validate.field).string = {
-                        pattern: "[A-Za-z][-/.!?,:;[:word:] ]*",
                         min_len: 1,
                         max_len: 65536,
                     }
@@ -2384,8 +2371,7 @@ message RuleType {
                 // -- minder.yq.evaluate - evaluates a yq expression on a file
                 string method = 4 [
                     (buf.validate.field).string = {
-                        pattern: "^minder(?:\\.[a-zA-Z0-9_]+)*$",
-                        max_len: 200,
+                        in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate"],
                     },
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
@@ -2407,9 +2393,7 @@ message RuleType {
         message Alert {
             string type = 1 [
                 (buf.validate.field).string = {
-                    pattern: "^[a-z]+(_[a-z]+)*$",
-                    min_len: 1,
-                    max_len: 200,
+                    in: ["security_advisory"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
@@ -2417,9 +2401,7 @@ message RuleType {
             message AlertTypeSA {
                 string severity = 1 [
                     (buf.validate.field).string = {
-                        pattern: "^[a-z]+(_[a-z]+)*$",
-                        min_len: 1,
-                        max_len: 200,
+                        in: ["unknown", "info", "low", "medium", "high", "critical"],
                     },
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];

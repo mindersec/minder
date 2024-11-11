@@ -2332,7 +2332,7 @@ endpoint and how we compare it to the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the data evaluation. Right now only `jq` is supported as a driver |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the data evaluation. |
 | jq | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison">RuleType.Definition.Eval.JQComparison</TypeLink> | repeated | jq is only used if the `jq` type is selected. It defines the comparisons that are made between the ingested data and the profile rule. |
 | rego | <TypeLink type="minder-v1-RuleType-Definition-Eval-Rego">RuleType.Definition.Eval.Rego</TypeLink> | optional | rego is only used if the `rego` type is selected. |
 | vulncheck | <TypeLink type="minder-v1-RuleType-Definition-Eval-Vulncheck">RuleType.Definition.Eval.Vulncheck</TypeLink> | optional | vulncheck is only used if the `vulncheck` type is selected. |

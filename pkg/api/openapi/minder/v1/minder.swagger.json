@@ -2851,7 +2851,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "title": "type is the type of the data evaluation.\nRight now only `jq` is supported as a driver"
+          "description": "type is the type of the data evaluation."
         },
         "jq": {
           "type": "array",
