@@ -479,10 +479,10 @@ func getProfileFromPBForUpdateByName(
 
 func validateProfileUpdate(
 	old *db.Profile,
-	new *minderv1.Profile,
+	newProfile *minderv1.Profile,
 	projectID uuid.UUID,
 ) error {
-	if old.Name != new.Name {
+	if old.Name != newProfile.Name {
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile name")
 	}
 
@@ -490,7 +490,7 @@ func validateProfileUpdate(
 		return util.UserVisibleError(codes.InvalidArgument, "cannot change profile project")
 	}
 
-	if err := namespaces.ValidateLabelsUpdate(new.GetLabels(), old.Labels); err != nil {
+	if err := namespaces.ValidateLabelsUpdate(newProfile.GetLabels(), old.Labels); err != nil {
 		return util.UserVisibleError(codes.InvalidArgument, "labels update failed validation: %v", err)
 	}
 
