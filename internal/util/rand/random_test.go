@@ -14,12 +14,12 @@ import (
 func TestRandomInt(t *testing.T) {
 	t.Parallel()
 
-	min := int64(1)
-	max := int64(10)
+	minVal := int64(1)
+	maxVal := int64(10)
 	seed := int64(12345)
-	randomInt := rand.RandomInt(min, max, seed)
-	require.GreaterOrEqual(t, randomInt, min)
-	require.LessOrEqual(t, randomInt, max)
+	randomInt := rand.RandomInt(minVal, maxVal, seed)
+	require.GreaterOrEqual(t, randomInt, minVal)
+	require.LessOrEqual(t, randomInt, maxVal)
 }
 
 func TestRandomString(t *testing.T) {
