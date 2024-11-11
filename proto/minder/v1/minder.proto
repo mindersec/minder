@@ -2417,7 +2417,6 @@ message RuleType {
     // description is the description of the rule type.
     string description = 5 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/.!?,:;'[:word:] *#\\[\\]()`{}]*",
             min_len: 1,
             max_len: 1000,
         }
@@ -2426,7 +2425,6 @@ message RuleType {
     // guidance are instructions we give the user in case a rule fails.
     string guidance = 6 [
         (buf.validate.field).string = {
-            pattern: "[A-Za-z][-/.!?,:;'[:word:] *#\\[\\]()`{}]*",
             min_len: 1,
             max_len: 1000,
         }
