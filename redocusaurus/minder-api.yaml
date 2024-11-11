@@ -2119,9 +2119,7 @@ definitions:
     properties:
       type:
         type: string
-        title: |-
-          type is the type of the data evaluation.
-          Right now only `jq` is supported as a driver
+        description: type is the type of the data evaluation.
       jq:
         type: array
         items:
@@ -2372,10 +2370,22 @@ definitions:
     properties:
       title:
         type: string
-        title: the title of the PR
+        description: >-
+          the title of the PR
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the PR.
       body:
         type: string
-        title: the body of the PR
+        description: >-
+          the body of the PR
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the PR.
       contents:
         type: array
         items:
@@ -2431,6 +2441,7 @@ definitions:
         format: int32
       body:
         type: string
+        description: This is expected to be a valid JSON string.
   RuleTypeDefinition:
     type: object
     properties:
@@ -3710,7 +3721,7 @@ definitions:
         type: string
         description: |-
           endpoint is the endpoint to fetch data from.
-          This can be a URL or the path on the API.bool
+          This can be a URL or path on the API.
           This is a required field and must be set.
           This is also evaluated via a template which allows
           us dynamically fill in the values.
@@ -3724,7 +3735,9 @@ definitions:
         description: headers are the headers to be sent to the endpoint.
       body:
         type: string
-        description: body is the body to be sent to the endpoint.
+        description: |-
+          body is the body to be sent to the endpoint.
+          This is expected to be a valid JSON string.
       parse:
         type: string
         description: parse is the parsing mechanism to be used to parse the data.
@@ -3886,10 +3899,14 @@ definitions:
         description: def is the definition of the rule type.
       description:
         type: string
-        description: description is the description of the rule type.
+        description: |-
+          description is the description of the rule type.
+          This is expected to be a valid markdown formatted string.
       guidance:
         type: string
-        description: guidance are instructions we give the user in case a rule fails.
+        description: |-
+          guidance are instructions we give the user in case a rule fails.
+          This is expected to be a valid markdown formatted string.
       severity:
         $ref: '#/definitions/v1Severity'
         description: severity is the severity of the rule type.
