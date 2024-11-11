@@ -22,9 +22,9 @@ func NewRand(seed int64) *rand.Rand {
 }
 
 // RandomInt returns a random integer between min and max.
-func RandomInt(min, max int64, seed int64) int64 {
+func RandomInt(minVal, maxVal int64, seed int64) int64 {
 	r := NewRand(seed)
-	return min + r.Int63n(max-min+1)
+	return minVal + r.Int63n(maxVal-minVal+1)
 }
 
 // RandomString returns a random string of length n.
