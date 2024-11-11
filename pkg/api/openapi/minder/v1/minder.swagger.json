@@ -3137,11 +3137,11 @@
       "properties": {
         "title": {
           "type": "string",
-          "title": "the title of the PR"
+          "description": "the title of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
         },
         "body": {
           "type": "string",
-          "title": "the body of the PR"
+          "description": "the body of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
         },
         "contents": {
           "type": "array",
@@ -3188,7 +3188,8 @@
           "format": "int32"
         },
         "body": {
-          "type": "string"
+          "type": "string",
+          "description": "This is expected to be a valid JSON string."
         }
       }
     },
@@ -4738,7 +4739,7 @@
       "properties": {
         "endpoint": {
           "type": "string",
-          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or the path on the API.bool\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
+          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or path on the API.\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
         },
         "method": {
           "type": "string",
@@ -4753,7 +4754,7 @@
         },
         "body": {
           "type": "string",
-          "description": "body is the body to be sent to the endpoint."
+          "description": "body is the body to be sent to the endpoint.\nThis is expected to be a valid JSON string."
         },
         "parse": {
           "type": "string",
@@ -4948,11 +4949,11 @@
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the rule type."
+          "description": "description is the description of the rule type.\nThis is expected to be a valid markdown formatted string."
         },
         "guidance": {
           "type": "string",
-          "description": "guidance are instructions we give the user in case a rule fails."
+          "description": "guidance are instructions we give the user in case a rule fails.\nThis is expected to be a valid markdown formatted string."
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",

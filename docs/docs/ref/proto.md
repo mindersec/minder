@@ -2154,10 +2154,10 @@ This is used to fetch data from a REST endpoint.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | <TypeLink type="string">string</TypeLink> |  | endpoint is the endpoint to fetch data from. This can be a URL or the path on the API.bool This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
+| endpoint | <TypeLink type="string">string</TypeLink> |  | endpoint is the endpoint to fetch data from. This can be a URL or path on the API. This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
 | method | <TypeLink type="string">string</TypeLink> |  | method is the method to use to fetch data. |
 | headers | <TypeLink type="string">string</TypeLink> | repeated | headers are the headers to be sent to the endpoint. |
-| body | <TypeLink type="string">string</TypeLink> | optional | body is the body to be sent to the endpoint. |
+| body | <TypeLink type="string">string</TypeLink> | optional | body is the body to be sent to the endpoint. This is expected to be a valid JSON string. |
 | parse | <TypeLink type="string">string</TypeLink> |  | parse is the parsing mechanism to be used to parse the data. |
 | fallback | <TypeLink type="minder-v1-RestType-Fallback">RestType.Fallback</TypeLink> | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
 
@@ -2171,7 +2171,7 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | http_code | <TypeLink type="int32">int32</TypeLink> |  |  |
-| body | <TypeLink type="string">string</TypeLink> |  |  |
+| body | <TypeLink type="string">string</TypeLink> |  | This is expected to be a valid JSON string. |
 
 
 
@@ -2276,8 +2276,8 @@ The version is assumed from the folder's version.
 | short_failure_message | <TypeLink type="string">string</TypeLink> |  | short_failure_message is the message to display when the evaluation fails. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule is evaluated. |
 | def | <TypeLink type="minder-v1-RuleType-Definition">RuleType.Definition</TypeLink> |  | def is the definition of the rule type. |
-| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. |
-| guidance | <TypeLink type="string">string</TypeLink> |  | guidance are instructions we give the user in case a rule fails. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the rule type. This is expected to be a valid markdown formatted string. |
+| guidance | <TypeLink type="string">string</TypeLink> |  | guidance are instructions we give the user in case a rule fails. This is expected to be a valid markdown formatted string. |
 | severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule type. |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated. |
 
@@ -2454,8 +2454,8 @@ the name stutters a bit but we already use a PullRequest message for handling PR
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| title | <TypeLink type="string">string</TypeLink> |  | the title of the PR |
-| body | <TypeLink type="string">string</TypeLink> |  | the body of the PR |
+| title | <TypeLink type="string">string</TypeLink> |  | the title of the PR This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the PR. |
+| body | <TypeLink type="string">string</TypeLink> |  | the body of the PR This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the PR. |
 | contents | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation-Content">RuleType.Definition.Remediate.PullRequestRemediation.Content</TypeLink> | repeated |  |
 | method | <TypeLink type="string">string</TypeLink> |  | the method to use to create the PR. For now, these are supported: -- minder.content - ensures that the content of the file is exactly as specified refer to the Content message for more details -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow file and replaces the tag with the SHA -- minder.yq.evaluate - evaluates a yq expression on a file |
 | params | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | params are unstructured parameters passed to the method. These are optional and evaluated by the method. |

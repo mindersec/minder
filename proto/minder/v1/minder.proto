@@ -1905,9 +1905,9 @@ message ListEvaluationResultsResponse {
 message RestType {
     message Fallback {
         int32 http_code = 1 [(buf.validate.field).int32 = { gte: 100, lte: 599 }];
+        // This is expected to be a valid JSON string.
         string body = 2 [
             (buf.validate.field).string = {
-                pattern: "^\\s*\\{[\\s\\S]*\\}\\s*$",
                 max_len: 1000,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1915,7 +1915,7 @@ message RestType {
     }
 
     // endpoint is the endpoint to fetch data from.
-    // This can be a URL or the path on the API.bool
+    // This can be a URL or path on the API.
     // This is a required field and must be set.
     // This is also evaluated via a template which allows
     // us dynamically fill in the values.
@@ -1938,7 +1938,7 @@ message RestType {
         (buf.validate.field).repeated = {
             items: {
                 string: {
-                    pattern: "^[a-zA-Z0-9-]+: [^\n\r]+$",
+                    pattern: "^[a-zA-Z0-9-]+:[[:graph:][:blank:]]+$",
                     max_len: 400,
                 }
             }
@@ -1947,9 +1947,9 @@ message RestType {
     ];
 
     // body is the body to be sent to the endpoint.
+    // This is expected to be a valid JSON string.
     optional string body = 4 [
         (buf.validate.field).string = {
-            pattern: "^\\s*\\{[\\s\\S]*\\}\\s*$",
             max_len: 1000,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2349,6 +2349,8 @@ message RuleType {
                 }
 
                 // the title of the PR
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the PR.
                 string title = 1 [
                     (buf.validate.field).string = {
                         min_len: 1,
@@ -2356,6 +2358,8 @@ message RuleType {
                     }
                 ];
                 // the body of the PR
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the PR.
                 string body = 2 [
                     (buf.validate.field).string = {
                         min_len: 1,
@@ -2415,6 +2419,7 @@ message RuleType {
     Definition def = 4;
 
     // description is the description of the rule type.
+    // This is expected to be a valid markdown formatted string.
     string description = 5 [
         (buf.validate.field).string = {
             min_len: 1,
@@ -2423,6 +2428,7 @@ message RuleType {
     ];
 
     // guidance are instructions we give the user in case a rule fails.
+    // This is expected to be a valid markdown formatted string.
     string guidance = 6 [
         (buf.validate.field).string = {
             min_len: 1,
