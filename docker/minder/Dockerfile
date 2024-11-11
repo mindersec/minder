@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 # SPDX-License-Identifier: Apache-2.0
 
-FROM index.docker.io/library/golang@sha256:4a3c2bcd243d3dbb7b15237eecb0792db3614900037998c2cd6a579c46888c1e AS builder
+FROM index.docker.io/library/golang@sha256:d56c3e08fe5b27729ee3834854ae8f7015af48fd651cd25d1e3bcf3c19830174 AS builder
 ENV APP_ROOT=/opt/app-root
 ENV GOPATH=$APP_ROOT
 
