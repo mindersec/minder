@@ -19,7 +19,6 @@ func TestSetDefaultValuesOnValidation(t *testing.T) {
 	t.Parallel()
 
 	rtstr := `
-
 ---
 version: v1
 release_phase: alpha

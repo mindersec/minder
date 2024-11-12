@@ -146,6 +146,22 @@ func (r *RuleTypeEngine) Eval(
 		}
 	}()
 
+	// The rule type has already been validated at creation time. However,
+	// re-validating it here is a good idea to ensure that the rule type
+	// has not been tampered with. Also, this sets the defaults for the
+	// rule definition.
+	if ruleDef != nil {
+		if err := r.ruleValidator.ValidateRuleDefAgainstSchema(ruleDef); err != nil {
+			return fmt.Errorf("rule definition validation failed: %w", err)
+		}
+	}
+
+	if ruleParams != nil {
+		if err := r.ruleValidator.ValidateParamsAgainstSchema(ruleParams); err != nil {
+			return fmt.Errorf("rule parameters validation failed: %w", err)
+		}
+	}
+
 	logger.Info().Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
 	result, ok := r.ingestCache.Get(r.ingester, entity, ruleParams)
