@@ -54,7 +54,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
 	github.com/open-policy-agent/opa v0.70.0
 	github.com/openfga/go-sdk v0.6.3
-	github.com/openfga/openfga v1.7.0
+	github.com/openfga/openfga v1.8.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.20.5
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
@@ -218,7 +218,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/selinux v1.11.1 // indirect
-	github.com/openfga/api/proto v0.0.0-20241016183012-297cfdbbde98 // indirect
+	github.com/openfga/api/proto v0.0.0-20241107182745-c14fb4b3d4b4 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20240926131254-992b301a003f // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pressly/goose/v3 v3.22.1 // indirect
