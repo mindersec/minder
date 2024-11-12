@@ -60,6 +60,7 @@ require (
 	github.com/puzpuzpuz/xsync/v3 v3.4.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.33.0
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.22.0
 	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.22.0
 	github.com/sigstore/protobuf-specs v0.3.2
@@ -74,7 +75,6 @@ require (
 	github.com/styrainc/regal v0.29.1
 	github.com/thomaspoignant/go-feature-flag v1.38.0
 	github.com/xanzy/go-gitlab v0.113.0
-	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yuin/goldmark v1.7.8
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.57.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.57.0
