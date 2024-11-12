@@ -1107,7 +1107,7 @@ message UpstreamRepositoryRef {
     ];
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:].]*$",
+            pattern: "^[-.[:alnum:]_]+$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
