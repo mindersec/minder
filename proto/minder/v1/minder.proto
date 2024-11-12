@@ -1575,7 +1575,7 @@ message GetProfileStatusByNameRequest {
     ];
     string rule_name = 7 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2110,7 +2110,7 @@ message RuleType {
     // display_name is the display name of the rule type.
     string display_name = 8 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2510,7 +2510,7 @@ message Profile {
         // name is the descriptive name of the rule, not to be confused with type
         string name = 4 [
             (buf.validate.field).string = {
-                pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+                pattern: "^[A-Za-z][-/'()[:word:] :]*$",
                 max_len: 200,
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2595,7 +2595,7 @@ message Profile {
     // display_name is the display name of the profile.
     string display_name = 13 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 1000,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2646,7 +2646,7 @@ message UpdateProjectRequest {
     // display_name is the display name of the project to update.
     string display_name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2672,7 +2672,7 @@ message ProjectPatch {
     // display_name is the display name of the project to update.
     optional string display_name = 1 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -2850,7 +2850,7 @@ message RoleAssignment {
     // display_name is the display name of the subject.
     string display_name = 5 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/'()[:word:] ]*$",
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
