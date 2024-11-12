@@ -1107,7 +1107,7 @@ message UpstreamRepositoryRef {
     ];
     string name = 2 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$",
+            pattern: "^[A-Za-z][-[:word:].]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1201,7 +1201,7 @@ message GetRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
     string name = 3 [
         (buf.validate.field).string = {
-            pattern: "^[-./[:word:]]*$",
+            pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
@@ -1219,7 +1219,7 @@ message DeleteRepositoryByNameRequest {
     string provider = 1 [deprecated=true];
     string name = 3 [
         (buf.validate.field).string = {
-            pattern: "^[-./[:word:]]*$",
+            pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
