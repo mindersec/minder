@@ -10,12 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
-	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
