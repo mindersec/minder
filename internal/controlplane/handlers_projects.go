@@ -161,6 +161,12 @@ func (s *Server) CreateProject(
 			"project does not allow project hierarchy operations")
 	}
 
+	// Retrieve the role-to-feature mapping from the configuration
+	projectFeatures, err := s.cfg.Features.GetFeaturesForRoles(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error getting features for roles: %v", err)
+	}
+
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
@@ -199,6 +205,10 @@ func (s *Server) CreateProject(
 			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", req.Name)
 		}
 		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
+	}
+
+	if err := features.CreateEntitlements(ctx, qtx, subProject.ID, projectFeatures); err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
 	}
 
 	if err := s.authzClient.Adopt(ctx, parent.ID, subProject.ID); err != nil {

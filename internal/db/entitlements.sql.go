@@ -12,6 +12,21 @@ import (
 	"github.com/google/uuid"
 )
 
+const createEntitlement = `-- name: CreateEntitlement :exec
+INSERT INTO entitlements (feature, project_id) VALUES ($1, $2)
+ON CONFLICT DO NOTHING
+`
+
+type CreateEntitlementParams struct {
+	Feature   string    `json:"feature"`
+	ProjectID uuid.UUID `json:"project_id"`
+}
+
+func (q *Queries) CreateEntitlement(ctx context.Context, arg CreateEntitlementParams) error {
+	_, err := q.db.ExecContext(ctx, createEntitlement, arg.Feature, arg.ProjectID)
+	return err
+}
+
 const getEntitlementFeaturesByProjectID = `-- name: GetEntitlementFeaturesByProjectID :many
 SELECT feature
 FROM entitlements

@@ -9,7 +9,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
@@ -35,8 +38,17 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 		}, nil)
 
 	ctx := context.Background()
+	keyCloakUserToken := openid.New()
+	require.NoError(t, keyCloakUserToken.Set("realm_access", map[string]interface{}{
+		"roles": []interface{}{
+			"default-roles-stacklok",
+			"offline_access",
+			"uma_authorization",
+		},
+	}))
+	ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -62,8 +74,17 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 		Return(db.Project{}, fmt.Errorf("failed to create project"))
 
 	ctx := context.Background()
+	keyCloakUserToken := openid.New()
+	require.NoError(t, keyCloakUserToken.Set("realm_access", map[string]interface{}{
+		"roles": []interface{}{
+			"default-roles-stacklok",
+			"offline_access",
+			"uma_authorization",
+		},
+	}))
+	ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
 
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -94,7 +115,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 
 	for _, tc := range testCases {
 		_, err := creator.ProvisionSelfEnrolledProject(

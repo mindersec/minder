@@ -30,6 +30,22 @@ func ProjectAllowsProjectHierarchyOperations(ctx context.Context, store db.Store
 	return featureEnabled(ctx, store, projectID, projectHierarchyOperationsEnabledFlag)
 }
 
+// CreateEntitlements creates entitlements for a project
+// It takes a 'qtx' because it is usually called within a transaction
+func CreateEntitlements(ctx context.Context, qtx db.Querier, projectID uuid.UUID, features []string) error {
+	for _, feature := range features {
+		err := qtx.CreateEntitlement(ctx, db.CreateEntitlementParams{
+			ProjectID: projectID,
+			Feature:   feature,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Is a simple helper function to check if a feature is enabled for a project.
 // This does not check the feature's configuration, if any, just that it's enabled.
 func featureEnabled(ctx context.Context, store db.Store, projectID uuid.UUID, featureFlag string) bool {

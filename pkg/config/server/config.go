@@ -30,6 +30,7 @@ type Config struct {
 	Auth            AuthConfig            `mapstructure:"auth"`
 	WebhookConfig   WebhookConfig         `mapstructure:"webhook-config"`
 	Events          EventConfig           `mapstructure:"events"`
+	Features        FeaturesConfig        `mapstructure:"features"`
 	Authz           AuthzConfig           `mapstructure:"authz"`
 	Provider        ProviderConfig        `mapstructure:"provider"`
 	Marketplace     MarketplaceConfig     `mapstructure:"marketplace"`

@@ -15,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/mindpak"
 )
@@ -39,17 +40,20 @@ type projectCreator struct {
 	authzClient authz.Client
 	marketplace marketplaces.Marketplace
 	profilesCfg *server.DefaultProfilesConfig
+	featuresCfg *server.FeaturesConfig
 }
 
 // NewProjectCreator creates a new instance of the project creator
 func NewProjectCreator(authzClient authz.Client,
 	marketplace marketplaces.Marketplace,
 	profilesCfg *server.DefaultProfilesConfig,
+	featuresCfg *server.FeaturesConfig,
 ) ProjectCreator {
 	return &projectCreator{
 		authzClient: authzClient,
 		marketplace: marketplace,
 		profilesCfg: profilesCfg,
+		featuresCfg: featuresCfg,
 	}
 }
 
@@ -73,6 +77,12 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	jsonmeta, err := json.Marshal(&projectmeta)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal meta: %w", err)
+	}
+
+	// Retrieve the role-to-feature mapping from the configuration
+	projectFeatures, err := p.featuresCfg.GetFeaturesForRoles(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting features for roles: %w", err)
 	}
 
 	projectID := uuid.New()
@@ -103,6 +113,10 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 			return nil, ErrProjectAlreadyExists
 		}
 		return nil, fmt.Errorf("failed to create default project: %v", err)
+	}
+
+	if err := features.CreateEntitlements(ctx, qtx, project.ID, projectFeatures); err != nil {
+		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}
 
 	// Enable any default profiles and rule types in the project.

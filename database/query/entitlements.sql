@@ -10,3 +10,7 @@ WHERE e.project_id = sqlc.arg(project_id)::UUID AND e.feature = sqlc.arg(feature
 SELECT feature
 FROM entitlements
 WHERE project_id = sqlc.arg(project_id)::UUID;
+
+-- name: CreateEntitlement :exec
+INSERT INTO entitlements (feature, project_id) VALUES ($1, $2)
+ON CONFLICT DO NOTHING;
