@@ -63,7 +63,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	for _, f := range files {
-		if shouldSkipFile(f.Path) {
+		if f.Path != "-" && shouldSkipFile(f.Path) {
 			continue
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
