@@ -71,7 +71,7 @@ require (
 	github.com/stacklok/frizbee v0.1.4
 	github.com/stacklok/trusty-sdk-go v0.2.2
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.28.0
+	github.com/styrainc/regal v0.29.0
 	github.com/thomaspoignant/go-feature-flag v1.38.0
 	github.com/xanzy/go-gitlab v0.113.0
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -158,7 +158,7 @@ require (
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/erikvarga/go-rpmdb v0.0.0-20240208180226-b97e041ef9af // indirect
-	github.com/fatih/color v1.17.0 // indirect
+	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
@@ -287,7 +287,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.8.2 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.6 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
