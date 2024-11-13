@@ -644,13 +644,8 @@ func TestInvalidJQEvals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jqe, err := jq.NewJQEvaluator(tt.assertions)
-			assert.NoError(t, err, "Got unexpected error")
-			assert.NotNil(t, jqe, "Got unexpected nil")
-
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
-			assert.Error(t, err, "Got unexpected error")
-			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
+			_, err := jq.NewJQEvaluator(tt.assertions)
+			assert.Error(t, err, "Expected error")
 		})
 	}
 }

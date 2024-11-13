@@ -136,8 +136,8 @@ const ruleDefJSON = `
 	"eval": {
 		"type": "jq",
 		"jq": [{
-			"ingested": {"def": "abc"},
-			"profile": {"def": "xyz"}
+			"ingested": {"def": ".abc"},
+			"profile": {"def": ".xyz"}
 		}]
 	}
 }
