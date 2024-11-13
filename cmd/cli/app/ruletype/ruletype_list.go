@@ -56,11 +56,15 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
+		for _, rt := range resp.GetRuleTypes() {
+			out, err := util.GetYamlFromProto(rt)
+			if err != nil {
+				return cli.MessageAndError("Error getting yaml from proto", err)
+			}
+			// Print YAML separator between each rule type
+			cmd.Println("---")
+			cmd.Println(out)
 		}
-		cmd.Println(out)
 	case app.Table:
 		table := initializeTableForList()
 		for _, rt := range resp.RuleTypes {

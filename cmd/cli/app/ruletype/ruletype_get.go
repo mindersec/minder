@@ -69,7 +69,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 
 	switch format {
 	case app.YAML:
-		out, err := util.GetYamlFromProto(rtype)
+		out, err := util.GetYamlFromProto(rtype.GetRuleType())
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
