@@ -79,12 +79,6 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 		return nil, fmt.Errorf("failed to marshal meta: %w", err)
 	}
 
-	// Retrieve the role-to-feature mapping from the configuration
-	projectFeatures, err := p.featuresCfg.GetFeaturesForRoles(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting features for roles: %w", err)
-	}
-
 	projectID := uuid.New()
 
 	// Create authorization tuple
@@ -115,6 +109,8 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 		return nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
+	// Retrieve the role-to-feature mapping from the configuration
+	projectFeatures := p.featuresCfg.GetFeaturesForRoles(ctx)
 	if err := features.CreateEntitlements(ctx, qtx, project.ID, projectFeatures); err != nil {
 		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}

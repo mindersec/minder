@@ -10,20 +10,22 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
-const createEntitlement = `-- name: CreateEntitlement :exec
-INSERT INTO entitlements (feature, project_id) VALUES ($1, $2)
+const createEntitlements = `-- name: CreateEntitlements :exec
+INSERT INTO entitlements (feature, project_id)
+SELECT unnest($1::text[]), $2::UUID
 ON CONFLICT DO NOTHING
 `
 
-type CreateEntitlementParams struct {
-	Feature   string    `json:"feature"`
-	ProjectID uuid.UUID `json:"project_id"`
+type CreateEntitlementsParams struct {
+	Column1 []string  `json:"column_1"`
+	Column2 uuid.UUID `json:"column_2"`
 }
 
-func (q *Queries) CreateEntitlement(ctx context.Context, arg CreateEntitlementParams) error {
-	_, err := q.db.ExecContext(ctx, createEntitlement, arg.Feature, arg.ProjectID)
+func (q *Queries) CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error {
+	_, err := q.db.ExecContext(ctx, createEntitlements, pq.Array(arg.Column1), arg.Column2)
 	return err
 }
 

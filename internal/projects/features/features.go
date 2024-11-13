@@ -31,16 +31,12 @@ func ProjectAllowsProjectHierarchyOperations(ctx context.Context, store db.Store
 }
 
 // CreateEntitlements creates entitlements for a project
-// It takes a 'qtx' because it is usually called within a transaction
 func CreateEntitlements(ctx context.Context, qtx db.Querier, projectID uuid.UUID, features []string) error {
-	for _, feature := range features {
-		err := qtx.CreateEntitlement(ctx, db.CreateEntitlementParams{
-			ProjectID: projectID,
-			Feature:   feature,
-		})
-		if err != nil {
-			return err
-		}
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Column1: features,
+		Column2: projectID,
+	}); err != nil {
+		return err
 	}
 
 	return nil

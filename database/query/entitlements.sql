@@ -11,6 +11,7 @@ SELECT feature
 FROM entitlements
 WHERE project_id = sqlc.arg(project_id)::UUID;
 
--- name: CreateEntitlement :exec
-INSERT INTO entitlements (feature, project_id) VALUES ($1, $2)
+-- name: CreateEntitlements :exec
+INSERT INTO entitlements (feature, project_id)
+SELECT unnest($1::text[]), $2::UUID
 ON CONFLICT DO NOTHING;
