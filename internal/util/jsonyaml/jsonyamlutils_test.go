@@ -83,9 +83,9 @@ func TestConvertJSONToYAML(t *testing.T) {
 			name:     "complex yaml",
 			jsonCase: "{\"bar\":[\"foo\",\"bar\",\"baz\"],\"foo\":\"bar\"}\n",
 			wantW: `bar:
-    - foo
-    - bar
-    - baz
+  - foo
+  - bar
+  - baz
 foo: bar
 `,
 			wantErr: false,

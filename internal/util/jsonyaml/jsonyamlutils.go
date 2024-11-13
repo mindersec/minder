@@ -38,7 +38,9 @@ func TranscodeYAMLToJSON(r io.Reader, w io.Writer) error {
 
 // TranscodeJSONToYAML transcodes JSON to YAML
 func TranscodeJSONToYAML(r io.Reader, w io.Writer) error {
-	return transcode(json.NewDecoder(r), yaml.NewEncoder(w))
+	enc := yaml.NewEncoder(w)
+	enc.SetIndent(2)
+	return transcode(json.NewDecoder(r), enc)
 }
 
 // ConvertYamlToJson converts yaml to json
