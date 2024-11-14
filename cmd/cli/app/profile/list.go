@@ -59,11 +59,14 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return fmt.Errorf("error getting yaml from proto: %w", err)
+		for _, prof := range resp.GetProfiles() {
+			out, err := util.GetYamlFromProto(prof)
+			if err != nil {
+				return fmt.Errorf("error getting yaml from proto: %w", err)
+			}
+			cmd.Println("---")
+			cmd.Println(out)
 		}
-		cmd.Println(out)
 	case app.Table:
 		settable := NewProfileSettingsTable()
 		for _, v := range resp.Profiles {
