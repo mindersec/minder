@@ -50,13 +50,6 @@ func TestCreateUser_gRPC(t *testing.T) {
 	projectID := uuid.New()
 	keyCloakUserToken := openid.New()
 	require.NoError(t, keyCloakUserToken.Set("gh_id", "31337"))
-	require.NoError(t, keyCloakUserToken.Set("realm_access", map[string]interface{}{
-		"roles": []interface{}{
-			"default-roles-stacklok",
-			"offline_access",
-			"uma_authorization",
-		},
-	}))
 
 	testCases := []struct {
 		name       string
@@ -69,7 +62,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 		{
 			name: "Success",
 			req:  &pb.CreateUserRequest{},
-			buildStubs: func(ctx context.Context, store *mockdb.MockStore, mockJwt *mockjwt.MockValidator,
+			buildStubs: func(ctx context.Context, store *mockdb.MockStore, jwt *mockjwt.MockValidator,
 				_ *mockprov.MockGitHubProviderService) context.Context {
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
@@ -90,14 +83,12 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(returnedUser, nil)
-				store.EXPECT().
-					GetUnclaimedInstallationsByUser(gomock.Any(), sql.NullString{String: "31337", Valid: true}).
-					Return([]db.ProviderGithubAppInstallation{}, nil)
+				store.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
-				mockJwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
-				ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
+				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 
 				return ctx
 			},
