@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/itchyny/gojq"
 	"github.com/open-policy-agent/opa/ast"
 )
 
@@ -228,8 +229,8 @@ func (jq *RuleType_Definition_Eval_JQComparison) Validate() error {
 		return fmt.Errorf("%w: jq is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if jq.GetIngested().GetDef() == "" {
-		return fmt.Errorf("%w: jq ingested definition is empty", ErrInvalidRuleTypeDefinition)
+	if err := jq.GetIngested().Validate(); err != nil {
+		return fmt.Errorf("%w: jq ingested definition is invalid: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	if jq.GetProfile() != nil && jq.GetConstant() != nil {
@@ -238,8 +239,31 @@ func (jq *RuleType_Definition_Eval_JQComparison) Validate() error {
 		return fmt.Errorf("%w: jq missing profile or constant accessor", ErrInvalidRuleTypeDefinition)
 	}
 
-	if jq.GetProfile() != nil && jq.GetProfile().GetDef() == "" {
-		return fmt.Errorf("%w: jq profile accessor definition is empty", ErrInvalidRuleTypeDefinition)
+	if jq.GetProfile() != nil {
+		if err := jq.GetProfile().Validate(); err != nil {
+			return fmt.Errorf("%w: jq profile accessor is invalid: %w", ErrInvalidRuleTypeDefinition, err)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition eval jq operator
+func (op *RuleType_Definition_Eval_JQComparison_Operator) Validate() error {
+	if op == nil {
+		return fmt.Errorf("%w: operator is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if op.GetDef() == "" {
+		return fmt.Errorf("%w: definition is empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	q, err := gojq.Parse(op.GetDef())
+	if err != nil {
+		return fmt.Errorf("%w: definition is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+	if _, err = gojq.Compile(q); err != nil {
+		return fmt.Errorf("%w: definition is invalid: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
