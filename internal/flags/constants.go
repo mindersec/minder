@@ -15,4 +15,6 @@ const (
 	VulnCheckErrorTemplate Experiment = "vulncheck_error_template"
 	// AlternateMessageDriver enables an an alternate message driver.
 	AlternateMessageDriver Experiment = "alternate_message_driver"
+	// DataSources enables data sources management.
+	DataSources Experiment = "data_sources"
 )

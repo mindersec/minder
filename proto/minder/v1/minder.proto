@@ -60,6 +60,10 @@ enum Relation {
     RELATION_ENTITY_RECONCILIATION_TASK_CREATE = 35 [(name) = "entity_reconciliation_task_create"];
     RELATION_ENTITY_RECONCILE = 36 [(name) = "entity_reconcile"];
     RELATION_ROLE_ASSIGNMENT_UPDATE = 37 [(name) = "role_assignment_update"];
+    RELATION_DATA_SOURCE_GET = 38 [(name) = "data_source_get"];
+    RELATION_DATA_SOURCE_CREATE = 39 [(name) = "data_source_create"];
+    RELATION_DATA_SOURCE_UPDATE = 40 [(name) = "data_source_update"];
+    RELATION_DATA_SOURCE_DELETE = 41 [(name) = "data_source_delete"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -603,6 +607,65 @@ service ProfileService {
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
             relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+}
+
+service DataSourceService {
+    rpc CreateDataSource (CreateDataSourceRequest) returns (CreateDataSourceResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/data_source"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_CREATE
+        };
+    }
+
+    rpc GetDataSourceById (GetDataSourceByIdRequest) returns (GetDataSourceByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/data_source/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_GET
+        };
+    }
+
+    rpc ListDataSources (ListDataSourcesRequest) returns (ListDataSourcesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/data_sources"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_GET
+        };
+    }
+
+    rpc UpdateDataSource (UpdateDataSourceRequest) returns (UpdateDataSourceResponse) {
+        option (google.api.http) = {
+            put: "/api/v1/data_source"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_UPDATE
+        };
+    }
+
+    rpc DeleteDataSource (DeleteDataSourceRequest) returns (DeleteDataSourceResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/data_source/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_DELETE
         };
     }
 }
@@ -1359,6 +1422,56 @@ message GetUserResponse {
     // This will be deprecated in favor of the project_roles field
     repeated Project projects = 2 [deprecated=true];
     repeated ProjectRole project_roles = 3;
+}
+
+// DataSource service
+message CreateDataSourceRequest {
+    Context context = 1;
+}
+
+message CreateDataSourceResponse {
+    // TODO
+}
+
+message GetDataSourceByIdRequest {
+    Context context = 1;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+}
+
+message GetDataSourceByIdResponse {
+    // TODO
+}
+
+message ListDataSourcesRequest {
+    Context context = 1;
+}
+
+message ListDataSourcesResponse {
+    // TODO
+}
+
+message UpdateDataSourceRequest {
+    Context context = 1;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+}
+
+message UpdateDataSourceResponse {
+    // TODO
+}
+
+message DeleteDataSourceRequest {
+    Context context = 1;
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+}
+
+message DeleteDataSourceResponse {
+    // TODO
 }
 
 // Profile service
