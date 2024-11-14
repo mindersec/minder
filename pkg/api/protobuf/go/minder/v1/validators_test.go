@@ -139,3 +139,58 @@ func TestRuleType_Definition_Eval_JQComparison_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		rego    *RuleType_Definition_Eval_Rego
+		wantErr bool
+	}{
+		{
+			name: "valid rego definition",
+			rego: &RuleType_Definition_Eval_Rego{
+				Def: "package example.policy\n\nallow { true }",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "nil rego",
+			rego:    nil,
+			wantErr: true,
+		},
+		{
+			name: "empty rego definition",
+			rego: &RuleType_Definition_Eval_Rego{
+				Def: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid syntax rego definition",
+			rego: &RuleType_Definition_Eval_Rego{
+				Def: "package example.policy\n\nallow {",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing import rego definition",
+			rego: &RuleType_Definition_Eval_Rego{
+				Def: "package example.policy\n\nallow if { input.ingested.url != \"\" }",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.rego.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
