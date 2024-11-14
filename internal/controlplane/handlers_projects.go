@@ -203,7 +203,10 @@ func (s *Server) CreateProject(
 
 	// Retrieve the membership-to-feature mapping from the configuration
 	projectFeatures := s.cfg.Features.GetFeaturesForMemberships(ctx)
-	if err := features.CreateEntitlements(ctx, qtx, subProject.ID, projectFeatures); err != nil {
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Column1: projectFeatures,
+		Column2: subProject.ID,
+	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
 	}
 

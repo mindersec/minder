@@ -15,7 +15,6 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
-	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/mindpak"
 )
@@ -111,7 +110,10 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 
 	// Retrieve the membership-to-feature mapping from the configuration
 	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
-	if err := features.CreateEntitlements(ctx, qtx, project.ID, projectFeatures); err != nil {
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Column1: projectFeatures,
+		Column2: project.ID,
+	}); err != nil {
 		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}
 

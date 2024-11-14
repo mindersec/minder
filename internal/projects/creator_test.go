@@ -38,7 +38,7 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 			ID: uuid.New(),
 		}, nil)
 	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, params db.CreateEntitlementsParams) error {
+		DoAndReturn(func(_ context.Context, params db.CreateEntitlementsParams) error {
 			expectedFeatures := []string{"featureA", "featureB"}
 			if !reflect.DeepEqual(params.Column1, expectedFeatures) {
 				t.Errorf("expected features %v, got %v", expectedFeatures, params.Column1)
