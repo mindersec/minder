@@ -15,7 +15,7 @@ import (
 
 // CreateDataSource creates a data source
 func (s *Server) CreateDataSource(ctx context.Context,
-	req *minderv1.CreateDataSourceRequest) (*minderv1.CreateDataSourceResponse, error) {
+	_ *minderv1.CreateDataSourceRequest) (*minderv1.CreateDataSourceResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
@@ -26,7 +26,7 @@ func (s *Server) CreateDataSource(ctx context.Context,
 
 // GetDataSourceById retrieves a data source by ID
 func (s *Server) GetDataSourceById(ctx context.Context,
-	req *minderv1.GetDataSourceByIdRequest) (*minderv1.GetDataSourceByIdResponse, error) {
+	_ *minderv1.GetDataSourceByIdRequest) (*minderv1.GetDataSourceByIdResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
@@ -37,7 +37,7 @@ func (s *Server) GetDataSourceById(ctx context.Context,
 
 // ListDataSources lists all data sources
 func (s *Server) ListDataSources(ctx context.Context,
-	req *minderv1.ListDataSourcesRequest) (*minderv1.ListDataSourcesResponse, error) {
+	_ *minderv1.ListDataSourcesRequest) (*minderv1.ListDataSourcesResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
@@ -48,7 +48,7 @@ func (s *Server) ListDataSources(ctx context.Context,
 
 // UpdateDataSource updates a data source
 func (s *Server) UpdateDataSource(ctx context.Context,
-	req *minderv1.UpdateDataSourceRequest) (*minderv1.UpdateDataSourceResponse, error) {
+	_ *minderv1.UpdateDataSourceRequest) (*minderv1.UpdateDataSourceResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
@@ -59,7 +59,7 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 
 // DeleteDataSource deletes a data source
 func (s *Server) DeleteDataSource(ctx context.Context,
-	req *minderv1.DeleteDataSourceRequest) (*minderv1.DeleteDataSourceResponse, error) {
+	_ *minderv1.DeleteDataSourceRequest) (*minderv1.DeleteDataSourceResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
