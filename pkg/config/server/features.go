@@ -37,13 +37,13 @@ func extractMembershipsFromContext(ctx context.Context) []string {
 		return nil
 	}
 
-	membershipsInterface, ok := realmAccess["roles"].([]any)
+	rawMemberships, ok := realmAccess["roles"].([]any)
 	if !ok {
 		return nil
 	}
 
-	memberships := make([]string, len(membershipsInterface))
-	for i, membership := range membershipsInterface {
+	memberships := make([]string, len(rawMemberships))
+	for i, membership := range rawMemberships {
 		if membershipStr, ok := membership.(string); ok {
 			memberships[i] = membershipStr
 		}
