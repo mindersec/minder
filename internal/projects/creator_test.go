@@ -6,6 +6,7 @@ package projects_test
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
@@ -36,19 +37,28 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 		Return(db.Project{
 			ID: uuid.New(),
 		}, nil)
+	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, params db.CreateEntitlementsParams) error {
+			expectedFeatures := []string{"featureA", "featureB"}
+			if !reflect.DeepEqual(params.Column1, expectedFeatures) {
+				t.Errorf("expected features %v, got %v", expectedFeatures, params.Column1)
+			}
+			return nil
+		})
 
-	ctx := context.Background()
-	keyCloakUserToken := openid.New()
-	require.NoError(t, keyCloakUserToken.Set("realm_access", map[string]interface{}{
-		"roles": []interface{}{
-			"default-roles-stacklok",
-			"offline_access",
-			"uma_authorization",
+	ctx := prepareTestToken(t, []any{
+		"teamA",
+		"teamB",
+		"teamC",
+	})
+
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{
+		MembershipFeatureMapping: map[string]string{
+			"teamA": "featureA",
+			"teamB": "featureB",
 		},
-	}))
-	ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
+	})
 
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -74,16 +84,6 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 		Return(db.Project{}, fmt.Errorf("failed to create project"))
 
 	ctx := context.Background()
-	keyCloakUserToken := openid.New()
-	require.NoError(t, keyCloakUserToken.Set("realm_access", map[string]interface{}{
-		"roles": []interface{}{
-			"default-roles-stacklok",
-			"offline_access",
-			"uma_authorization",
-		},
-	}))
-	ctx = jwt.WithAuthTokenContext(ctx, keyCloakUserToken)
-
 	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
@@ -127,4 +127,17 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 		assert.EqualError(t, err, "invalid project name: validation failed")
 	}
 
+}
+
+// prepareTestToken creates a JWT token with the specified roles and returns the context with the token.
+func prepareTestToken(t *testing.T, roles []any) context.Context {
+	t.Helper()
+
+	token := openid.New()
+	require.NoError(t, token.Set("realm_access", map[string]any{
+		"roles": roles,
+	}))
+
+	ctx := jwt.WithAuthTokenContext(context.Background(), token)
+	return ctx
 }

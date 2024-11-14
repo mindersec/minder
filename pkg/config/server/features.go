@@ -11,17 +11,17 @@ import (
 
 // FeaturesConfig is the configuration for the features
 type FeaturesConfig struct {
-	// RoleFeatureMapping maps a role to a feature
-	RoleFeatureMapping map[string]string `mapstructure:"role_feature_mapping"`
+	// MembershipFeatureMapping maps a membership to a feature
+	MembershipFeatureMapping map[string]string `mapstructure:"membership_feature_mapping"`
 }
 
-// GetFeaturesForRoles returns the features associated with the roles in the context
-func (fc *FeaturesConfig) GetFeaturesForRoles(ctx context.Context) []string {
-	roles := extractRolesFromContext(ctx)
+// GetFeaturesForMemberships returns the features associated with the memberships in the context
+func (fc *FeaturesConfig) GetFeaturesForMemberships(ctx context.Context) []string {
+	memberships := extractMembershipsFromContext(ctx)
 
 	var features []string
-	for _, role := range roles {
-		if feature, ok := fc.RoleFeatureMapping[role]; ok {
+	for _, m := range memberships {
+		if feature, ok := fc.MembershipFeatureMapping[m]; ok {
 			features = append(features, feature)
 		}
 	}
@@ -29,25 +29,25 @@ func (fc *FeaturesConfig) GetFeaturesForRoles(ctx context.Context) []string {
 	return features
 }
 
-// extractRolesFromContext extracts roles from the JWT in the context.
-// Returns empty slice if no roles are found.
-func extractRolesFromContext(ctx context.Context) []string {
-	realmAccess, ok := jwt.GetUserClaimFromContext[map[string]interface{}](ctx, "realm_access")
+// extractMembershipsFromContext extracts memberships from the JWT in the context.
+// Returns empty slice if no memberships are found.
+func extractMembershipsFromContext(ctx context.Context) []string {
+	realmAccess, ok := jwt.GetUserClaimFromContext[map[string]any](ctx, "realm_access")
 	if !ok {
 		return nil
 	}
 
-	rolesInterface, ok := realmAccess["roles"].([]interface{})
+	rawMemberships, ok := realmAccess["roles"].([]any)
 	if !ok {
 		return nil
 	}
 
-	roles := make([]string, len(rolesInterface))
-	for i, role := range rolesInterface {
-		if roleStr, ok := role.(string); ok {
-			roles[i] = roleStr
+	memberships := make([]string, len(rawMemberships))
+	for i, membership := range rawMemberships {
+		if membershipStr, ok := membership.(string); ok {
+			memberships[i] = membershipStr
 		}
 	}
 
-	return roles
+	return memberships
 }

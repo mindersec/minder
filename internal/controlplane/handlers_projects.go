@@ -201,8 +201,8 @@ func (s *Server) CreateProject(
 		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
 	}
 
-	// Retrieve the role-to-feature mapping from the configuration
-	projectFeatures := s.cfg.Features.GetFeaturesForRoles(ctx)
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := s.cfg.Features.GetFeaturesForMemberships(ctx)
 	if err := features.CreateEntitlements(ctx, qtx, subProject.ID, projectFeatures); err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
 	}

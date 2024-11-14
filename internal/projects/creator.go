@@ -109,8 +109,8 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 		return nil, fmt.Errorf("failed to create default project: %v", err)
 	}
 
-	// Retrieve the role-to-feature mapping from the configuration
-	projectFeatures := p.featuresCfg.GetFeaturesForRoles(ctx)
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
 	if err := features.CreateEntitlements(ctx, qtx, project.ID, projectFeatures); err != nil {
 		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}
