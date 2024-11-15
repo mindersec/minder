@@ -415,7 +415,7 @@ DataSource service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 
 
 
@@ -614,7 +614,7 @@ create entities are called Providers.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 
 
@@ -1053,7 +1053,7 @@ Namespace: is the namespace for the GHCR provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 
 
@@ -1490,7 +1490,7 @@ GitType defines the git data ingester.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 
 
 
@@ -2701,7 +2701,7 @@ Severity defines the severity of the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 
 

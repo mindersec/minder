@@ -1426,7 +1426,7 @@ message GetUserResponse {
 
 // DataSource service
 message CreateDataSourceRequest {
-    Context context = 1;
+    ContextV2 context = 1;
 }
 
 message CreateDataSourceResponse {
@@ -1434,7 +1434,7 @@ message CreateDataSourceResponse {
 }
 
 message GetDataSourceByIdRequest {
-    Context context = 1;
+    ContextV2 context = 1;
     string id = 2 [
         (buf.validate.field).string = {uuid: true}
     ];
@@ -1445,7 +1445,7 @@ message GetDataSourceByIdResponse {
 }
 
 message ListDataSourcesRequest {
-    Context context = 1;
+    ContextV2 context = 1;
 }
 
 message ListDataSourcesResponse {
@@ -1453,7 +1453,7 @@ message ListDataSourcesResponse {
 }
 
 message UpdateDataSourceRequest {
-    Context context = 1;
+    ContextV2 context = 1;
     string id = 2 [
         (buf.validate.field).string = {uuid: true}
     ];
@@ -1464,7 +1464,7 @@ message UpdateDataSourceResponse {
 }
 
 message DeleteDataSourceRequest {
-    Context context = 1;
+    ContextV2 context = 1;
     string id = 2 [
         (buf.validate.field).string = {uuid: true}
     ];
