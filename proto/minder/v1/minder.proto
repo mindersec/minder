@@ -3431,8 +3431,7 @@ message DataSource {
         (buf.validate.field).string = {
             in: ["data-source"],
             max_len: 12,
-        },
-        (google.api.field_behavior) = REQUIRED
+        }
     ];
 
     // context is the context in which the data source is evaluated.
@@ -3441,6 +3440,8 @@ message DataSource {
     ContextV2 context = 3;
 
     // name is the name of the data source.
+    // Note that this is unique within a project hierarchy.
+    // This is also case insensitive.
     string name = 4 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-[:word:]]*$",
