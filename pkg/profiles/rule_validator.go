@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -25,20 +26,20 @@ type RuleValidator struct {
 
 // NewRuleValidator creates a new rule validator
 func NewRuleValidator(rt *minderv1.RuleType) (*RuleValidator, error) {
+	if rt.GetDef().GetRuleSchema() == nil {
+		return nil, fmt.Errorf("rule type %s does not have a rule schema", rt.Name)
+	}
 	// Create a new schema compiler
 	// Compile the main rule schema
-	mainSchema, err := compileSchema(rt.GetDef().GetRuleSchema().AsMap())
+	mainSchema, err := compileSchemaFromPB(rt.GetDef().GetRuleSchema())
 	if err != nil {
 		return nil, fmt.Errorf("cannot create json schema: %w", err)
 	}
 
 	// Compile the parameter schema if it exists
-	var paramSchema *jsonschema.Schema
-	if rt.Def.ParamSchema != nil {
-		paramSchema, err = compileSchema(rt.GetDef().GetParamSchema().AsMap())
-		if err != nil {
-			return nil, fmt.Errorf("cannot create json schema for params: %w", err)
-		}
+	paramSchema, err := compileSchemaFromPB(rt.GetDef().GetParamSchema())
+	if err != nil {
+		return nil, fmt.Errorf("cannot create json schema for params: %w", err)
 	}
 
 	return &RuleValidator{
@@ -77,7 +78,15 @@ func (r *RuleValidator) ValidateParamsAgainstSchema(params map[string]any) error
 	return nil
 }
 
-func compileSchema(schemaData interface{}) (*jsonschema.Schema, error) {
+func compileSchemaFromPB(schemaData *structpb.Struct) (*jsonschema.Schema, error) {
+	if schemaData == nil {
+		return nil, nil
+	}
+
+	return compileSchemaFromMap(schemaData.AsMap())
+}
+
+func compileSchemaFromMap(schemaData map[string]any) (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
 	if err := compiler.AddResource("schema.json", schemaData); err != nil {
 		return nil, fmt.Errorf("invalid schema: %w", err)
@@ -87,7 +96,10 @@ func compileSchema(schemaData interface{}) (*jsonschema.Schema, error) {
 
 func validateAgainstSchema(schema *jsonschema.Schema, obj map[string]any) error {
 	if err := schema.Validate(obj); err != nil {
-		return buildValidationError(err.(*jsonschema.ValidationError).Causes)
+		if verror, ok := err.(*jsonschema.ValidationError); ok {
+			return buildValidationError(verror.Causes)
+		}
+		return fmt.Errorf("invalid json schema: %s", err)
 	}
 	return nil
 }
