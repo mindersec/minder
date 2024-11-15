@@ -62,6 +62,20 @@ export const TypeLink = ({ children, type }) => {
 
 
 
+<Service id="minder-v1-DataSourceService">DataSourceService</Service>
+
+
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| CreateDataSource | [CreateDataSourceRequest](#minder-v1-CreateDataSourceRequest) | [CreateDataSourceResponse](#minder-v1-CreateDataSourceResponse) |  |
+| GetDataSourceById | [GetDataSourceByIdRequest](#minder-v1-GetDataSourceByIdRequest) | [GetDataSourceByIdResponse](#minder-v1-GetDataSourceByIdResponse) |  |
+| ListDataSources | [ListDataSourcesRequest](#minder-v1-ListDataSourcesRequest) | [ListDataSourcesResponse](#minder-v1-ListDataSourcesResponse) |  |
+| UpdateDataSource | [UpdateDataSourceRequest](#minder-v1-UpdateDataSourceRequest) | [UpdateDataSourceResponse](#minder-v1-UpdateDataSourceResponse) |  |
+| DeleteDataSource | [DeleteDataSourceRequest](#minder-v1-DeleteDataSourceRequest) | [DeleteDataSourceResponse](#minder-v1-DeleteDataSourceResponse) |  |
+
+
+
 <Service id="minder-v1-EvalResultsService">EvalResultsService</Service>
 
 
@@ -394,6 +408,23 @@ ContextV2 defines the context in which a rule is evaluated.
 
 
 
+<Message id="minder-v1-CreateDataSourceRequest">CreateDataSourceRequest</Message>
+
+DataSource service
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-CreateDataSourceResponse">CreateDataSourceResponse</Message>
+
+TODO
+
+
+
 <Message id="minder-v1-CreateEntityReconciliationTaskRequest">CreateEntityReconciliationTaskRequest</Message>
 
 
@@ -573,6 +604,24 @@ create entities are called Providers.
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. This is also case insensitive. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
+
+
+
+<Message id="minder-v1-DeleteDataSourceRequest">DeleteDataSourceRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+| id | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteDataSourceResponse">DeleteDataSourceResponse</Message>
+
+TODO
 
 
 
@@ -997,6 +1046,24 @@ Namespace: is the namespace for the GHCR provider.
 
 
 
+<Message id="minder-v1-GetDataSourceByIdRequest">GetDataSourceByIdRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+| id | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetDataSourceByIdResponse">GetDataSourceByIdResponse</Message>
+
+TODO
+
+
+
 <Message id="minder-v1-GetEvaluationHistoryRequest">GetEvaluationHistoryRequest</Message>
 
 GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
@@ -1413,6 +1480,23 @@ GitType defines the git data ingester.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListDataSourcesRequest">ListDataSourcesRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-ListDataSourcesResponse">ListDataSourcesResponse</Message>
+
+TODO
 
 
 
@@ -2610,6 +2694,24 @@ Severity defines the severity of the rule.
 
 
 
+<Message id="minder-v1-UpdateDataSourceRequest">UpdateDataSourceRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+| id | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-UpdateDataSourceResponse">UpdateDataSourceResponse</Message>
+
+TODO
+
+
+
 <Message id="minder-v1-UpdateProfileRequest">UpdateProfileRequest</Message>
 
 
@@ -2936,6 +3038,10 @@ ProviderTrait is the type of the provider.
 | RELATION_ENTITY_RECONCILIATION_TASK_CREATE | 35 |  |
 | RELATION_ENTITY_RECONCILE | 36 |  |
 | RELATION_ROLE_ASSIGNMENT_UPDATE | 37 |  |
+| RELATION_DATA_SOURCE_GET | 38 |  |
+| RELATION_DATA_SOURCE_CREATE | 39 |  |
+| RELATION_DATA_SOURCE_UPDATE | 40 |  |
+| RELATION_DATA_SOURCE_DELETE | 41 |  |
 
 
 

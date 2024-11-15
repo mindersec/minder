@@ -122,6 +122,7 @@ type Server struct {
 	pb.UnimplementedProvidersServiceServer
 	pb.UnimplementedEvalResultsServiceServer
 	pb.UnimplementedInviteServiceServer
+	pb.UnimplementedDataSourceServiceServer
 }
 
 // NewServer creates a new server instance

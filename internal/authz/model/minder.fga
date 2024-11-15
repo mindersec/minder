@@ -84,3 +84,8 @@ type project
     define profile_status_get: viewer
 
     define entity_reconciliation_task_create: editor
+
+    define data_source_get: viewer
+    define data_source_create: admin
+    define data_source_update: admin
+    define data_source_delete: admin
