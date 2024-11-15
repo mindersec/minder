@@ -204,12 +204,15 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 	oldRequired, hasOldRequired := oldSchemaMap["required"]
 	newRequired, hasNewRequired := newSchemaMap["required"]
 
+	// If we don't have required fields in either schema, we're good
 	if !hasNewRequired && !hasOldRequired {
 		// If we don't have required fields in either schema, we're good
 		// profiles using this rule type won't break
 		return nil
 	}
 
+	// If the new schema doesn't have required fields, but the old schema does,
+	// we're good
 	if !hasNewRequired && hasOldRequired {
 		// If we don't have required fields in the new schema but do
 		// in the old schema, we're good.
@@ -217,6 +220,8 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 		return nil
 	}
 
+	// If the new schema has required fields, but the old schema doesn't,
+	// we may break profiles using this rule type
 	if hasNewRequired && !hasOldRequired {
 		// If we have required fields in the new schema but not the old
 		// schema, we may break profiles using this rule type
@@ -235,13 +240,18 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 
 	// We need to make sure that the old required fields are
 	// a superset of the new required fields
-	oldSet := sets.New(oldRequiredSlice...)
-	newSet := sets.New(newRequiredSlice...)
-	if !oldSet.IsSuperset(newSet) {
+	if !requiredIsSuperset(oldRequiredSlice, newRequiredSlice) {
 		return fmt.Errorf("cannot add required fields to rule schema")
 	}
 
 	return nil
+}
+
+func requiredIsSuperset(oldRequired, newRequired []interface{}) bool {
+	oldSet := sets.New(oldRequired...)
+	newSet := sets.New(newRequired...)
+
+	return oldSet.IsSuperset(newSet)
 }
 
 func schemaIsNilOrEmpty(schema *structpb.Struct) bool {
