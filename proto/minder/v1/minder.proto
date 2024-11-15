@@ -3456,94 +3456,98 @@ message DataSource {
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
-    // input_schema is the input configuration for the data source.
-    // It allows us to configure a JSON schema for the input data.
-    google.protobuf.Struct input_schema = 6;
-
     oneof driver {
         // rest is the REST data source driver.
-        RestDataSource rest = 7;
+        RestDataSource rest = 6;
     }
 }
 
 // RestDataSource is the REST data source driver.
 message RestDataSource {
-    // endpoint is the URL of the REST API. Note that endpoints are
-    // templates that can be parameterized with variables. Parametrization
-    // is done using RFC 6570.
-    string endpoint = 1 [
-        (buf.validate.field).string = {
-            pattern: "^https?://.*$",
-            max_len: 800,
-        },
-        (google.api.field_behavior) = REQUIRED
-    ];
-
-    // method is the HTTP method to use for the request.
-    // If left unset, it will default to "GET".
-    string method = 2 [
-        (buf.validate.field).string = {
-            in: ["GET", "POST", "PUT", "PATCH", "DELETE"]
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
-    ];
-
-    // headers is a map of headers to send with the request.
-    map<string, string> headers = 3;
-
-    oneof body {
-        // body is the body of the request.
-        google.protobuf.Struct bodyobj = 4;
-        // bodystr is the body of the request as a string.
-        string bodystr = 5 [
+    message Def {
+        // endpoint is the URL of the REST API. Note that endpoints are
+        // templates that can be parameterized with variables. Parametrization
+        // is done using RFC 6570.
+        string endpoint = 1 [
             (buf.validate.field).string = {
-                max_len: 1000,
-            }
-        ];
-    }
-
-    // parse is the parse configuration for the response.
-    // This allows us to serialize the response into a structured format,
-    // or not.
-    // If left unset, the response will be treated as a string.
-    // If set to "json", the response will be parsed as JSON.
-    string parse = 6 [
-        (buf.validate.field).string = {
-            in: ["json"]
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
-    ];
-
-    message Fallback {
-        int32 http_status = 1 [
-            (buf.validate.field).int32 = {gte: 100, lte: 599},
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                pattern: "^https?://.*$",
+                max_len: 800,
+            },
+            (google.api.field_behavior) = REQUIRED
         ];
 
-        string body = 2 [
+        // method is the HTTP method to use for the request.
+        // If left unset, it will default to "GET".
+        string method = 2 [
             (buf.validate.field).string = {
-                max_len: 1000,
+                in: ["GET", "POST", "PUT", "PATCH", "DELETE"]
             },
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
         ];
+
+        // headers is a map of headers to send with the request.
+        map<string, string> headers = 3;
+
+        oneof body {
+            // body is the body of the request.
+            google.protobuf.Struct bodyobj = 4;
+            // bodystr is the body of the request as a string.
+            string bodystr = 5 [
+                (buf.validate.field).string = {
+                    max_len: 1000,
+                }
+            ];
+        }
+
+        // parse is the parse configuration for the response.
+        // This allows us to serialize the response into a structured format,
+        // or not.
+        // If left unset, the response will be treated as a string.
+        // If set to "json", the response will be parsed as JSON.
+        string parse = 6 [
+            (buf.validate.field).string = {
+                in: ["json"]
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
+
+        message Fallback {
+            int32 http_status = 1 [
+                (buf.validate.field).int32 = {gte: 100, lte: 599},
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
+
+            string body = 2 [
+                (buf.validate.field).string = {
+                    max_len: 1000,
+                },
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
+        }
+
+        // fallback is the fallback configuration for the response in case
+        // of an unexpected status code.
+        repeated Fallback fallback = 7;
+
+        // expected_status is the expected status code for the response.
+        // This may be repeated to allow for multiple expected status codes.
+        // If left unset, it will default to 200.
+        repeated int32 expected_status = 8 [
+            (buf.validate.field).repeated = {
+                items: {
+                    int32: {
+                        gte: 100,
+                        lte: 599,
+                    }
+                }
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
+
+        // input_schema is the schema for the input to the REST API.
+        google.protobuf.Struct input_schema = 9;
     }
 
-    // fallback is the fallback configuration for the response in case
-    // of an unexpected status code.
-    repeated Fallback fallback = 7;
-
-    // expected_status is the expected status code for the response.
-    // This may be repeated to allow for multiple expected status codes.
-    // If left unset, it will default to 200.
-    repeated int32 expected_status = 8 [
-        (buf.validate.field).repeated = {
-            items: {
-                int32: {
-                    gte: 100,
-                    lte: 599,
-                }
-            }
-        },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
-    ];
+    // defs is the list of definitions for the REST API.
+    map<string, Def> def = 1;
 }

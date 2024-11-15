@@ -570,9 +570,8 @@ create entities are called Providers.
 | version | <TypeLink type="string">string</TypeLink> |  | version is the version of the data source API. |
 | type | <TypeLink type="string">string</TypeLink> |  | type is the data source type |
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the data source is evaluated. Note that in this case we only need the project in the context, since data sources are not provider-specific. |
-| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. This is also case insensitive. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
-| input_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | input_schema is the input configuration for the data source. It allows us to configure a JSON schema for the input data. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
 
 
@@ -2173,18 +2172,30 @@ RestDataSource is the REST data source driver.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| def | <TypeLink type="minder-v1-RestDataSource-DefEntry">RestDataSource.DefEntry</TypeLink> | repeated | defs is the list of definitions for the REST API. |
+
+
+
+<Message id="minder-v1-RestDataSource-Def">RestDataSource.Def</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
 | endpoint | <TypeLink type="string">string</TypeLink> |  | endpoint is the URL of the REST API. Note that endpoints are templates that can be parameterized with variables. Parametrization is done using RFC 6570. |
 | method | <TypeLink type="string">string</TypeLink> |  | method is the HTTP method to use for the request. If left unset, it will default to "GET". |
-| headers | <TypeLink type="minder-v1-RestDataSource-HeadersEntry">RestDataSource.HeadersEntry</TypeLink> | repeated | headers is a map of headers to send with the request. |
+| headers | <TypeLink type="minder-v1-RestDataSource-Def-HeadersEntry">RestDataSource.Def.HeadersEntry</TypeLink> | repeated | headers is a map of headers to send with the request. |
 | bodyobj | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | body is the body of the request. |
 | bodystr | <TypeLink type="string">string</TypeLink> |  | bodystr is the body of the request as a string. |
 | parse | <TypeLink type="string">string</TypeLink> |  | parse is the parse configuration for the response. This allows us to serialize the response into a structured format, or not. If left unset, the response will be treated as a string. If set to "json", the response will be parsed as JSON. |
-| fallback | <TypeLink type="minder-v1-RestDataSource-Fallback">RestDataSource.Fallback</TypeLink> | repeated | fallback is the fallback configuration for the response in case of an unexpected status code. |
+| fallback | <TypeLink type="minder-v1-RestDataSource-Def-Fallback">RestDataSource.Def.Fallback</TypeLink> | repeated | fallback is the fallback configuration for the response in case of an unexpected status code. |
 | expected_status | <TypeLink type="int32">int32</TypeLink> | repeated | expected_status is the expected status code for the response. This may be repeated to allow for multiple expected status codes. If left unset, it will default to 200. |
+| input_schema | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | input_schema is the schema for the input to the REST API. |
 
 
 
-<Message id="minder-v1-RestDataSource-Fallback">RestDataSource.Fallback</Message>
+<Message id="minder-v1-RestDataSource-Def-Fallback">RestDataSource.Def.Fallback</Message>
 
 
 
@@ -2196,7 +2207,7 @@ RestDataSource is the REST data source driver.
 
 
 
-<Message id="minder-v1-RestDataSource-HeadersEntry">RestDataSource.HeadersEntry</Message>
+<Message id="minder-v1-RestDataSource-Def-HeadersEntry">RestDataSource.Def.HeadersEntry</Message>
 
 
 
@@ -2205,6 +2216,18 @@ RestDataSource is the REST data source driver.
 | ----- | ---- | ----- | ----------- |
 | key | <TypeLink type="string">string</TypeLink> |  |  |
 | value | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RestDataSource-DefEntry">RestDataSource.DefEntry</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-RestDataSource-Def">RestDataSource.Def</TypeLink> |  |  |
 
 
 
