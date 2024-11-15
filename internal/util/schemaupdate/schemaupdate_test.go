@@ -100,6 +100,28 @@ func TestValidateSchemaUpdate(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "removing required fields is allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string"
+						}
+					},
+					"required": ["foo"]
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string"
+						}
+					}
+				}`,
+			},
+		},
+		{
 			name: "old schema should error if new schema deletes fields",
 			args: args{
 				oldRuleSchemaDef: `{
@@ -295,6 +317,23 @@ func TestValidateSchemaUpdate(t *testing.T) {
 							"type": "string"
 						}
 					}
+				}`,
+			},
+			wantErr: true,
+		},
+		{
+			name: "Removing the properties map is not allowed",
+			args: args{
+				oldRuleSchemaDef: `{
+					"type": "object",
+					"properties": {
+						"foo": {
+							"type": "string"
+						}
+					}
+				}`,
+				newRuleSchemaDef: `{
+					"type": "object"
 				}`,
 			},
 			wantErr: true,
