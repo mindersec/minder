@@ -581,6 +581,25 @@ paths:
           required: false
           type: string
           format: date-time
+        - name: labelFilter
+          description: >-
+            Filter evaluation history to only those matching the specified
+            labels.
+
+
+            The default is to return all user-created profiles; the string "*"
+            can
+
+            be used to select all profiles, including system profiles.  This
+            syntax
+
+            may be expanded in the future.
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
         - name: cursor.cursor
           description: |-
             cursor is the index to start from within the collection being
