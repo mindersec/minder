@@ -2433,15 +2433,6 @@ definitions:
           entity is the entity to register. This is the same as the repository
           field, but uses the new UpstreamEntityRef message. This is what we'll
           migrate to eventually.
-  RestTypeFallback:
-    type: object
-    properties:
-      httpCode:
-        type: integer
-        format: int32
-      body:
-        type: string
-        description: This is expected to be a valid JSON string.
   RuleTypeDefinition:
     type: object
     properties:
@@ -3745,13 +3736,22 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/RestTypeFallback'
+          $ref: '#/definitions/v1RestTypeFallback'
         description: |-
           fallback provides a body that the ingester would return in case
           the REST call returns a non-200 status code.
     description: |-
       RestType defines the rest data evaluation.
       This is used to fetch data from a REST endpoint.
+  v1RestTypeFallback:
+    type: object
+    properties:
+      httpCode:
+        type: integer
+        format: int32
+      body:
+        type: string
+        description: This is expected to be a valid JSON string.
   v1Role:
     type: object
     properties:
