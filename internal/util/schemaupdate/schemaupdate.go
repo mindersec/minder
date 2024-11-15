@@ -97,14 +97,30 @@ func validateObjectSchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error
 }
 
 func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
-	dst, err := deepcopy.Anything(newSchemaMap)
+	oldProperties, hasOldProperties := oldSchemaMap["properties"]
+	newProperties, hasNewProperties := newSchemaMap["properties"]
+
+	if !hasNewProperties || !hasOldProperties {
+		return fmt.Errorf("cannot remove properties from object type rule schema")
+	}
+
+	oldPropertiesMap, ok := oldProperties.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid old properties field")
+	}
+	newPropertiesMap, ok := newProperties.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid new properties field")
+	}
+
+	dst, err := deepcopy.Anything(newPropertiesMap)
 	if err != nil {
 		return fmt.Errorf("failed to deepcopy old schema: %v", err)
 	}
 
 	castedDst := dst.(map[string]any)
 
-	err = mergo.Merge(&castedDst, &oldSchemaMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
+	err = mergo.Merge(&castedDst, &oldPropertiesMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
 	if err != nil {
 		return fmt.Errorf("failed to merge old and new schema: %v", err)
 	}
@@ -119,7 +135,7 @@ func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
 
 	// The new schema should be a superset of the old schema
 	// if it's not, we may break profiles using this rule type
-	if !cmp.Equal(newSchemaMap, castedDst, opts...) {
+	if !cmp.Equal(newPropertiesMap, castedDst, opts...) {
 		return fmt.Errorf("cannot remove properties from rule schema")
 	}
 
