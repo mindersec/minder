@@ -119,6 +119,7 @@ SELECT s.id::uuid AS evaluation_id,
        ri.name AS rule_name,
        rt.severity_value as rule_severity,
        p.name AS profile_name,
+       p.labels as profile_labels,
        -- evaluation status and details
        s.status AS evaluation_status,
        s.details AS evaluation_details,
@@ -158,6 +159,13 @@ SELECT s.id::uuid AS evaluation_id,
    AND (sqlc.narg(tots)::timestamp without time zone IS NULL OR  s.evaluation_time < sqlc.narg(tots))
    -- implicit filter by project id
    AND j.id = sqlc.arg(projectId)
+   -- implicit filter by profile labels
+   AND ((sqlc.slice(labels)::text[] IS NULL AND p.labels = array[]::text[]) -- include only unlabelled records
+	OR ((sqlc.slice(labels)::text[] IS NOT NULL AND sqlc.slice(labels)::text[] = array['*']::text[]) -- include all labels
+	    OR (sqlc.slice(labels)::text[] IS NOT NULL AND p.labels && sqlc.slice(labels)::text[]) -- include only specified labels
+	)
+   )
+   AND (sqlc.slice(notLabels)::text[] IS NULL OR NOT p.labels && sqlc.slice(notLabels)::text[]) -- exclude only specified labels
  ORDER BY
  CASE WHEN sqlc.narg(next)::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
  CASE WHEN sqlc.narg(prev)::timestamp without time zone IS NULL THEN s.evaluation_time END DESC

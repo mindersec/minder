@@ -296,6 +296,9 @@ func toSQLFilter(
 	if err := paramsFromProfileNameFilter(filter, params); err != nil {
 		return err
 	}
+	if err := paramsFromLabelFilter(filter, params); err != nil {
+		return err
+	}
 	if err := paramsFromRemediationFilter(filter, params); err != nil {
 		return err
 	}
@@ -366,6 +369,17 @@ func paramsFromProfileNameFilter(
 	if len(filter.ExcludedProfileNames()) != 0 {
 		params.Notprofilenames = filter.ExcludedProfileNames()
 	}
+	return nil
+}
+
+func paramsFromLabelFilter(
+	filter LabelFilter,
+	params *db.ListEvaluationHistoryParams,
+) error {
+	if len(filter.IncludedLabels()) != 0 {
+		params.Labels = filter.IncludedLabels()
+	}
+	// We do not exclude based on labels
 	return nil
 }
 

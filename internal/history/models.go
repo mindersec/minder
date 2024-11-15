@@ -177,6 +177,18 @@ type ProfileNameFilter interface {
 	ExcludedProfileNames() []string
 }
 
+// LabelFilter interface should be implemented by types implementing a
+// filter on labels.
+type LabelFilter interface {
+	// AddLabel adds a label for inclusion/exclusion in the
+	// filter.
+	AddLabel(string) error
+	// IncludedLabels returns the list of included labels.
+	IncludedLabels() []string
+	// ExcludedLabels returns the list of excluded labels.
+	ExcludedLabels() []string
+}
+
 // StatusFilter interface should be implemented by types implementing
 // a filter on statuses.
 type StatusFilter interface {
@@ -235,6 +247,7 @@ type ListEvaluationFilter interface {
 	EntityTypeFilter
 	EntityNameFilter
 	ProfileNameFilter
+	LabelFilter
 	StatusFilter
 	RemediationFilter
 	AlertFilter
@@ -256,6 +269,10 @@ type listEvaluationFilter struct {
 	includedProfileNames []string
 	// List of profile names to exclude from the selection
 	excludedProfileNames []string
+	// List of included labels
+	includedLabels []string
+	// List of excluded labels
+	excludedLabels []string
 	// List of statuses to include in the selection
 	includedStatuses []string
 	// List of statuses to exclude from the selection
@@ -355,6 +372,29 @@ func (filter *listEvaluationFilter) IncludedProfileNames() []string {
 }
 func (filter *listEvaluationFilter) ExcludedProfileNames() []string {
 	return filter.excludedProfileNames
+}
+
+func (filter *listEvaluationFilter) AddLabel(label string) error {
+	if label == "!*" {
+		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+	}
+	if label == "*" && len(filter.includedLabels) != 0 {
+		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+	}
+	if strings.HasPrefix(label, "!") {
+		label = strings.Split(label, "!")[1] // guaranteed to exist
+		filter.excludedLabels = append(filter.excludedLabels, label)
+	} else {
+		filter.includedLabels = append(filter.includedLabels, label)
+	}
+
+	return nil
+}
+func (filter *listEvaluationFilter) IncludedLabels() []string {
+	return filter.includedLabels
+}
+func (filter *listEvaluationFilter) ExcludedLabels() []string {
+	return filter.excludedLabels
 }
 
 func (filter *listEvaluationFilter) AddStatus(status string) error {
@@ -526,6 +566,22 @@ func WithProfileName(profileName string) FilterOpt {
 			return fmt.Errorf("%w: wrong filter type", ErrInvalidIdentifier)
 		}
 		return inner.AddProfileName(profileName)
+	}
+}
+
+// WithLabel adds a label string to the filter. It is only possible to
+// filter by inclusion. The string "*" can be used to select all
+// records.
+func WithLabel(label string) FilterOpt {
+	return func(filter Filter) error {
+		if label == "" {
+			return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+		}
+		inner, ok := filter.(LabelFilter)
+		if !ok {
+			return fmt.Errorf("%w: wront filter type", ErrInvalidIdentifier)
+		}
+		return inner.AddLabel(label)
 	}
 }
 
