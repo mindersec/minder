@@ -113,29 +113,25 @@ func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
 		return fmt.Errorf("invalid new properties field")
 	}
 
-	dst, err := deepcopy.Anything(newPropertiesMap)
+	// copy new schema to avoid modifying the original
+	mergedSchema, err := copySchema(newPropertiesMap)
 	if err != nil {
-		return fmt.Errorf("failed to deepcopy old schema: %v", err)
+		return fmt.Errorf("failed to copy new schema: %v", err)
 	}
 
-	castedDst := dst.(map[string]any)
-
-	err = mergo.Merge(&castedDst, &oldPropertiesMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
+	// Merge the old schema into the new schema.
+	// The merged schema should equal the new schema if the old schema
+	// is a subset of the new schema
+	err = mergo.Merge(&mergedSchema, &oldPropertiesMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
 	if err != nil {
 		return fmt.Errorf("failed to merge old and new schema: %v", err)
 	}
 
-	// We need to ignore the description field when comparing the old and new schema to allow
-	// to update the ruletype text. We also need to ignore changing defaults as they are advisory
-	// for the UI at the moment
-	opts := []cmp.Option{
-		cmp.FilterPath(isScalarDescription, cmp.Ignore()),
-		cmp.FilterPath(isDefaultValue, cmp.Ignore()),
-	}
-
 	// The new schema should be a superset of the old schema
 	// if it's not, we may break profiles using this rule type
-	if !cmp.Equal(newPropertiesMap, castedDst, opts...) {
+	// The mergedSchema is the new schema with the old schema merged in
+	// so we can compare it to the new schema directly
+	if !schemasAreEqual(mergedSchema, newPropertiesMap) {
 		return fmt.Errorf("cannot remove properties from rule schema")
 	}
 
@@ -303,4 +299,26 @@ func validateItems(oldSchemaMap, newSchemaMap map[string]any) error {
 	}
 
 	return nil
+}
+func copySchema(s map[string]any) (map[string]any, error) {
+	dst, err := deepcopy.Anything(s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deepcopy: %v", err)
+	}
+
+	castedDst, ok := dst.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast schema to map")
+	}
+	return castedDst, nil
+}
+
+func schemasAreEqual(a, b map[string]any) bool {
+	// We need to ignore the description field when comparing the old and new schema to allow
+	// to update the ruletype text. We also need to ignore changing defaults as they are advisory
+	// for the UI at the moment
+	return cmp.Equal(a, b,
+		cmp.FilterPath(isScalarDescription, cmp.Ignore()),
+		cmp.FilterPath(isDefaultValue, cmp.Ignore()),
+	)
 }
