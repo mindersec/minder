@@ -177,6 +177,13 @@ func (def *RuleType_Definition) Validate() error {
 		return err
 	}
 
+	// Alert is not required and can be nil
+	if def.Alert != nil {
+		if err := def.Alert.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return def.Eval.Validate()
 }
 
@@ -281,6 +288,32 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition alert
+func (alert *RuleType_Definition_Alert) Validate() error {
+	if alert == nil {
+		return nil
+	}
+
+	// Not using import to avoid circular dependency
+	if alert.Type == "security_advisory" {
+		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+	return nil
+}
+
+// Validate validates a rule type alert security advisory
+func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
+	if sa == nil {
+		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
 	}
 
 	return nil

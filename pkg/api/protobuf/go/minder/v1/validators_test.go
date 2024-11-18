@@ -194,3 +194,53 @@ func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestRuleType_Definition_Alert_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		alert   *RuleType_Definition_Alert
+		wantErr bool
+	}{
+		{
+			name: "valid alert definition",
+			alert: &RuleType_Definition_Alert{
+				Type:             "security_advisory",
+				SecurityAdvisory: &RuleType_Definition_Alert_AlertTypeSA{},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "nil alert is valid",
+			alert:   nil,
+			wantErr: false,
+		},
+		{
+			name: "empty alert type",
+			alert: &RuleType_Definition_Alert{
+				Type: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid security advisory",
+			alert: &RuleType_Definition_Alert{
+				Type:             "security_advisory",
+				SecurityAdvisory: nil,
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.alert.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
