@@ -72,7 +72,7 @@ require (
 	github.com/stacklok/frizbee v0.1.4
 	github.com/stacklok/trusty-sdk-go v0.2.2
 	github.com/stretchr/testify v1.9.0
-	github.com/styrainc/regal v0.29.1
+	github.com/styrainc/regal v0.29.2
 	github.com/thomaspoignant/go-feature-flag v1.38.0
 	github.com/xanzy/go-gitlab v0.113.0
 	github.com/yuin/goldmark v1.7.8
