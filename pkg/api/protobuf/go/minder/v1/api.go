@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/util/jsonyaml"
@@ -51,16 +52,14 @@ const (
 	ArtifactResource ResourceType = "artifact"
 	// ProjectResource is a project resource
 	ProjectResource ResourceType = "project"
+	// DataSourceResource is a data source resource
+	DataSourceResource ResourceType = "data-source"
 )
 
 // ResourceTypeIsValid checks if the resource type is valid
 func ResourceTypeIsValid(rt ResourceType) bool {
-	switch rt {
-	case RuleTypeResource, ProfileResource, EntityInstanceResource, RepositoryResource, ArtifactResource,
-		ProjectResource:
-		return true
-	}
-	return false
+	_, ok := resourceMatchers[rt]
+	return ok
 }
 
 var (
@@ -70,6 +69,7 @@ var (
 		EntityInstanceResource: &EntityInstance{},
 		RepositoryResource:     &Repository{},
 		ArtifactResource:       &Artifact{},
+		DataSourceResource:     &DataSource{},
 	}
 )
 
@@ -99,6 +99,33 @@ func ParseResource(r io.Reader, rm ResourceMeta) error {
 	}
 
 	if err := json.NewDecoder(w).Decode(rm); err != nil {
+		return errors.Join(ErrNotAResource, fmt.Errorf("error decoding resource: %w", err))
+	}
+
+	if err := Validate(rm); err != nil {
+		return fmt.Errorf("error validating resource meta: %w", err)
+	}
+
+	// Attempt to match resource type before trying to decode
+	if !ResourceMatches(ResourceType(rm.GetType()), rm) {
+		return fmt.Errorf("resource type does not match: %w", ErrResourceTypeMismatch)
+	}
+
+	return nil
+}
+
+// ParseResourceProto is a generic parser for Minder resources, similar to ParseResource.
+// However, this function will decode the resource using the protojson package, which allows
+// for more control over the decoding process and more complex cases such as one-of fields.
+func ParseResourceProto(r io.Reader, rm ResourceMeta) error {
+	// We transcode to JSON so we can decode it straight to the protobuf structure
+	w := &bytes.Buffer{}
+
+	if err := jsonyaml.TranscodeYAMLToJSON(r, w); err != nil {
+		return fmt.Errorf("error converting yaml to json: %w", err)
+	}
+
+	if err := protojson.Unmarshal(w.Bytes(), rm); err != nil {
 		return errors.Join(ErrNotAResource, fmt.Errorf("error decoding resource: %w", err))
 	}
 
