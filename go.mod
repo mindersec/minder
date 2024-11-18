@@ -44,7 +44,7 @@ require (
 	github.com/itchyny/gojq v0.12.16
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/mikefarah/yq/v4 v4.44.3
+	github.com/mikefarah/yq/v4 v4.44.5
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/nats-io/nats-server/v2 v2.10.22
 	github.com/nats-io/nats.go v1.37.0
@@ -163,7 +163,7 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
-	github.com/goccy/go-yaml v1.12.0 // indirect
+	github.com/goccy/go-yaml v1.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/go-github/v61 v61.0.0 // indirect
@@ -379,7 +379,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/mod v0.22.0
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.31.0 // indirect
 	golang.org/x/sys v0.27.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
