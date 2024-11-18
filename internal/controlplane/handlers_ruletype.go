@@ -179,7 +179,7 @@ func (s *Server) CreateRuleType(
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
+			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type definition: %s", err)
 		} else if errors.Is(err, ruletypes.ErrRuleAlreadyExists) {
 			return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", crt.RuleType.GetName())
 		}
@@ -219,7 +219,7 @@ func (s *Server) UpdateRuleType(
 	})
 	if err != nil {
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid rule type definition: %s", err)
+			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type definition: %s", err)
 		} else if errors.Is(err, ruletypes.ErrRuleNotFound) {
 			return nil, status.Errorf(codes.NotFound, "rule type %s not found", urt.RuleType.GetName())
 		}
