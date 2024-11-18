@@ -111,8 +111,8 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	// Retrieve the membership-to-feature mapping from the configuration
 	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
 	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
-		Column1: projectFeatures,
-		Column2: project.ID,
+		Features:  projectFeatures,
+		ProjectID: project.ID,
 	}); err != nil {
 		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}

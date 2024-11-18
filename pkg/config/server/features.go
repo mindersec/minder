@@ -19,9 +19,9 @@ type FeaturesConfig struct {
 func (fc *FeaturesConfig) GetFeaturesForMemberships(ctx context.Context) []string {
 	memberships := extractMembershipsFromContext(ctx)
 
-	var features []string
+	features := make([]string, 0, len(memberships))
 	for _, m := range memberships {
-		if feature, ok := fc.MembershipFeatureMapping[m]; ok {
+		if feature := fc.MembershipFeatureMapping[m]; feature != "" {
 			features = append(features, feature)
 		}
 	}
@@ -42,10 +42,10 @@ func extractMembershipsFromContext(ctx context.Context) []string {
 		return nil
 	}
 
-	memberships := make([]string, len(rawMemberships))
-	for i, membership := range rawMemberships {
+	memberships := make([]string, 0, len(rawMemberships))
+	for _, membership := range rawMemberships {
 		if membershipStr, ok := membership.(string); ok {
-			memberships[i] = membershipStr
+			memberships = append(memberships, membershipStr)
 		}
 	}
 

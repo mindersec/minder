@@ -20,12 +20,12 @@ ON CONFLICT DO NOTHING
 `
 
 type CreateEntitlementsParams struct {
-	Column1 []string  `json:"column_1"`
-	Column2 uuid.UUID `json:"column_2"`
+	Features  []string  `json:"features"`
+	ProjectID uuid.UUID `json:"project_id"`
 }
 
 func (q *Queries) CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error {
-	_, err := q.db.ExecContext(ctx, createEntitlements, pq.Array(arg.Column1), arg.Column2)
+	_, err := q.db.ExecContext(ctx, createEntitlements, pq.Array(arg.Features), arg.ProjectID)
 	return err
 }
 

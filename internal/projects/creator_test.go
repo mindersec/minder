@@ -40,13 +40,13 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(_ context.Context, params db.CreateEntitlementsParams) error {
 			expectedFeatures := []string{"featureA", "featureB"}
-			if !reflect.DeepEqual(params.Column1, expectedFeatures) {
-				t.Errorf("expected features %v, got %v", expectedFeatures, params.Column1)
+			if !reflect.DeepEqual(params.Features, expectedFeatures) {
+				t.Errorf("expected features %v, got %v", expectedFeatures, params.Features)
 			}
 			return nil
 		})
 
-	ctx := prepareTestToken(t, []any{
+	ctx := prepareTestToken(context.Background(), t, []any{
 		"teamA",
 		"teamB",
 		"teamC",
@@ -130,7 +130,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 }
 
 // prepareTestToken creates a JWT token with the specified roles and returns the context with the token.
-func prepareTestToken(t *testing.T, roles []any) context.Context {
+func prepareTestToken(ctx context.Context, t *testing.T, roles []any) context.Context {
 	t.Helper()
 
 	token := openid.New()
@@ -138,6 +138,5 @@ func prepareTestToken(t *testing.T, roles []any) context.Context {
 		"roles": roles,
 	}))
 
-	ctx := jwt.WithAuthTokenContext(context.Background(), token)
-	return ctx
+	return jwt.WithAuthTokenContext(ctx, token)
 }
