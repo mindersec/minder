@@ -468,10 +468,15 @@ func TestCustomDatasourceRegister(t *testing.T) {
 	fdsf := v1mockds.NewMockDataSourceFuncDef(ctrl)
 
 	fds.EXPECT().GetFuncs().Return(map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef{
-		"fake.source": fdsf,
-	})
+		"source": fdsf,
+	}).AnyTimes()
 
 	fdsf.EXPECT().ValidateArgs(gomock.Any()).Return(nil).AnyTimes()
+
+	fdsr := v1datasources.NewDataSourceRegistry()
+
+	err := fdsr.RegisterDataSource("fake", fds)
+	require.NoError(t, err, "could not register data source")
 
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
@@ -485,7 +490,7 @@ allow {
 	minder.datasource.fake.source({"datasourcetest": input.ingested.data}) == "foo"
 }`,
 		},
-		options.WithDataSources(fds),
+		options.WithDataSources(fdsr),
 	)
 	require.NoError(t, err, "could not create evaluator")
 

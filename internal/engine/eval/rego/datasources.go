@@ -14,9 +14,9 @@ import (
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
-// RegisterDataSource implements the Eval interface.
-func (e *Evaluator) RegisterDataSource(ds v1datasources.DataSource) {
-	for key, dsf := range ds.GetFuncs() {
+// RegisterDataSources implements the Eval interface.
+func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
+	for key, dsf := range dsr.GetFuncs() {
 		fmt.Printf("Registering data source %s\n", key)
 		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
 	}
