@@ -59,7 +59,7 @@ func buildFromDataSource(key v1datasources.DataSourceFuncKey, dsf v1datasources.
 	)
 }
 
-// This converts the data source key into a format that can be used in the rego query.
+// This converts the data source function key into a format that can be used in the rego query.
 // For example, if the key is "aws.ec2.instances", it will
 // be converted to "minder.data.aws.ec2.instances".
 // It also normalizes the key to lowercase (which should have already been done)
