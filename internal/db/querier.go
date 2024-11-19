@@ -20,6 +20,7 @@ type Querier interface {
 	CountRepositories(ctx context.Context) (int64, error)
 	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
 	// CreateEntityWithID adds an entry to the entities table with a specific ID so it can be tracked by Minder.
