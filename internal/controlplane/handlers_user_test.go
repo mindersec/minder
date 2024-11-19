@@ -83,6 +83,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(returnedUser, nil)
+				store.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
@@ -262,6 +264,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 					authz,
 					marketplaces.NewNoopMarketplace(),
 					&serverconfig.DefaultProfilesConfig{},
+					&serverconfig.FeaturesConfig{},
 				),
 			}
 
