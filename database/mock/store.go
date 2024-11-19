@@ -192,6 +192,20 @@ func (mr *MockStoreMockRecorder) CountUsers(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), ctx)
 }
 
+// CreateEntitlements mocks base method.
+func (m *MockStore) CreateEntitlements(ctx context.Context, arg db.CreateEntitlementsParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEntitlements", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateEntitlements indicates an expected call of CreateEntitlements.
+func (mr *MockStoreMockRecorder) CreateEntitlements(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEntitlements", reflect.TypeOf((*MockStore)(nil).CreateEntitlements), ctx, arg)
+}
+
 // CreateEntity mocks base method.
 func (m *MockStore) CreateEntity(ctx context.Context, arg db.CreateEntityParams) (db.EntityInstance, error) {
 	m.ctrl.T.Helper()
