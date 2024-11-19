@@ -39,17 +39,20 @@ type projectCreator struct {
 	authzClient authz.Client
 	marketplace marketplaces.Marketplace
 	profilesCfg *server.DefaultProfilesConfig
+	featuresCfg *server.FeaturesConfig
 }
 
 // NewProjectCreator creates a new instance of the project creator
 func NewProjectCreator(authzClient authz.Client,
 	marketplace marketplaces.Marketplace,
 	profilesCfg *server.DefaultProfilesConfig,
+	featuresCfg *server.FeaturesConfig,
 ) ProjectCreator {
 	return &projectCreator{
 		authzClient: authzClient,
 		marketplace: marketplace,
 		profilesCfg: profilesCfg,
+		featuresCfg: featuresCfg,
 	}
 }
 
@@ -103,6 +106,15 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 			return nil, ErrProjectAlreadyExists
 		}
 		return nil, fmt.Errorf("failed to create default project: %v", err)
+	}
+
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Features:  projectFeatures,
+		ProjectID: project.ID,
+	}); err != nil {
+		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}
 
 	// Enable any default profiles and rule types in the project.

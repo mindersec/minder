@@ -201,6 +201,15 @@ func (s *Server) CreateProject(
 		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
 	}
 
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := s.cfg.Features.GetFeaturesForMemberships(ctx)
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Features:  projectFeatures,
+		ProjectID: subProject.ID,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
+	}
+
 	if err := s.authzClient.Adopt(ctx, parent.ID, subProject.ID); err != nil {
 		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
 	}
