@@ -4,13 +4,7 @@
 // Package v1 provides the interfaces and types for the data sources.
 package v1
 
-import (
-	"github.com/santhosh-tekuri/jsonschema/v6"
-)
-
-// DataFuncSourceArgs is the type of the arguments that a data function source
-// can take.
-type DataFuncSourceArgs *jsonschema.Schema
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // DataSourceFuncKey is the key that uniquely identifies a data source function.
 type DataSourceFuncKey string
@@ -24,9 +18,16 @@ func (k DataSourceFuncKey) String() string {
 // It contains the key that uniquely identifies the function and the arguments
 // that the function can take.
 type DataSourceFuncDef interface {
-	GetKey() DataSourceFuncKey
-	GetArgs() DataFuncSourceArgs
+	// ValidateArgs validates the arguments of the function.
 	ValidateArgs(obj any) error
+	// ValidateUpdate validates the update to the data source.
+	// The data source implementation should respect the update and return an error
+	// if the update is invalid.
+	ValidateUpdate(obj any) error
+	// Call calls the function with the given arguments.
+	// It is the responsibility of the data source implementation to handle the call.
+	// It is also the responsibility of the caller to validate the arguments
+	// before calling the function.
 	Call(args any) (any, error)
 }
 
@@ -35,6 +36,7 @@ type DataSourceFuncDef interface {
 // interact with external systems. These get taken into used by the Evaluator.
 // Moreover, a data source must be able to validate an update to itself.
 type DataSource interface {
-	GetFuncs() []DataSourceFuncDef
-	ValidateUpdate(DataSource) error
+	// IterFuncs returns an iterator that iterates over the functions
+	// that the data source can provide.
+	GetFuncs() map[DataSourceFuncKey]DataSourceFuncDef
 }

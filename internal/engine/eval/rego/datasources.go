@@ -16,16 +16,17 @@ import (
 
 // RegisterDataSource implements the Eval interface.
 func (e *Evaluator) RegisterDataSource(ds v1datasources.DataSource) {
-	for _, dsf := range ds.GetFuncs() {
-		e.regoOpts = append(e.regoOpts, buildFromDataSource(dsf))
+	for key, dsf := range ds.GetFuncs() {
+		fmt.Printf("Registering data source %s\n", key)
+		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
 	}
 }
 
 // buildFromDataSource builds a rego function from a data source function.
 // It takes a DataSourceFuncDef and returns a function that can be used to
 // register the function with the rego engine.
-func buildFromDataSource(dsf v1datasources.DataSourceFuncDef) func(*rego.Rego) {
-	k := normalizeKey(dsf.GetKey())
+func buildFromDataSource(key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef) func(*rego.Rego) {
+	k := normalizeKey(key)
 	return rego.Function1(
 		&rego.Function{
 			Name: k,
@@ -73,5 +74,5 @@ func normalizeKey(key v1datasources.DataSourceFuncKey) string {
 		}
 		return -1
 	}, underscore)
-	return fmt.Sprintf("minder.data.%s", norm)
+	return fmt.Sprintf("minder.datasource.%s", norm)
 }
