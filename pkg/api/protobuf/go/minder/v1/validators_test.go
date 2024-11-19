@@ -9,6 +9,69 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
+func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		ingest  *RuleType_Definition_Ingest
+		wantErr bool
+	}{
+		{
+			name: "valid diff ingest",
+			ingest: &RuleType_Definition_Ingest{
+				Type: IngestTypeDiff,
+				Diff: &DiffType{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid rest ingest",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "rest",
+				Rest: &RestType{
+					Endpoint: "https://example.com/api",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "nil ingest",
+			ingest:  nil,
+			wantErr: true,
+		},
+		{
+			name: "invalid diff ingest",
+			ingest: &RuleType_Definition_Ingest{
+				Type: IngestTypeDiff,
+				Diff: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid rest ingest",
+			ingest: &RuleType_Definition_Ingest{
+				Type: "rest",
+				Rest: &RestType{
+					Endpoint: "",
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.ingest.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestRuleType_Definition_Eval_JQComparison_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -238,6 +301,197 @@ func TestRuleType_Definition_Alert_Validate(t *testing.T) {
 			t.Parallel()
 
 			err := tt.alert.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRuleType_Definition_Remediate_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		rem     *RuleType_Definition_Remediate
+		wantErr bool
+	}{
+		{
+			name: "valid rest remediation",
+			rem: &RuleType_Definition_Remediate{
+				Type: "rest",
+				Rest: &RestType{
+					Endpoint: "https://example.com/api",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid pull request remediation",
+			rem: &RuleType_Definition_Remediate{
+				Type: "pull_request",
+				PullRequest: &RuleType_Definition_Remediate_PullRequestRemediation{
+					Title: "Fix issue",
+					Body:  "This PR fixes the issue.",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid GitHub branch protection remediation",
+			rem: &RuleType_Definition_Remediate{
+				Type: "gh_branch_protection",
+				GhBranchProtection: &RuleType_Definition_Remediate_GhBranchProtectionType{
+					Patch: "patch content",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:    "nil remediation",
+			rem:     nil,
+			wantErr: false,
+		},
+		{
+			name: "empty remediation type",
+			rem: &RuleType_Definition_Remediate{
+				Type: "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.rem.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRestType_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		rest    *RestType
+		wantErr bool
+	}{
+		{
+			name: "valid rest remediation",
+			rest: &RestType{
+				Endpoint: "https://example.com/api",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty remediation endpoint",
+			rest: &RestType{
+				Endpoint: "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.rest.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRuleType_Definition_Remediate_PullRequestRemediation_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		prRem   *RuleType_Definition_Remediate_PullRequestRemediation
+		wantErr bool
+	}{
+		{
+			name: "valid pull request remediation",
+			prRem: &RuleType_Definition_Remediate_PullRequestRemediation{
+				Title: "Fix issue",
+				Body:  "This pull request adds a Dependabot configuration to the repository to handle package updates for {{.Profile.package_ecosystem }}.",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty pull request title",
+			prRem: &RuleType_Definition_Remediate_PullRequestRemediation{
+				Title: "",
+				Body:  "This pull request adds a Dependabot configuration to the repository to handle package updates for {{.Profile.package_ecosystem }}.",
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty pull request body",
+			prRem: &RuleType_Definition_Remediate_PullRequestRemediation{
+				Title: "Fix issue",
+				Body:  "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "malformed pull request body",
+			prRem: &RuleType_Definition_Remediate_PullRequestRemediation{
+				Title: "Fix issue",
+				Body:  "{{ .Name",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.prRem.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestRuleType_Definition_Remediate_GhBranchProtectionType_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		ghp     *RuleType_Definition_Remediate_GhBranchProtectionType
+		wantErr bool
+	}{
+		{
+			name: "valid GitHub branch protection remediation",
+			ghp: &RuleType_Definition_Remediate_GhBranchProtectionType{
+				Patch: "patch content",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty branch protection patch template",
+			ghp: &RuleType_Definition_Remediate_GhBranchProtectionType{
+				Patch: "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.ghp.Validate()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
