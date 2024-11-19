@@ -7,7 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -151,6 +151,78 @@ func TestValidatorScenarios(t *testing.T) {
 
 var ruleTypeName = "branch_protection_allow_force_pushes"
 var ruleTypeDisplayName = "Allow force pushes to the branch"
+var ruleTypeContent = `
+---
+version: v1
+release_phase: beta
+type: rule-type
+name: branch_protection_allow_force_pushes
+display_name: Prevent overwriting git history
+short_failure_message: Force pushes are allowed
+severity:
+  value: medium
+context:
+  provider: github
+description: Disallow force pushes to the branch
+guidance: |
+  Ensure that the appropriate setting is disabled for the branch
+  protection rule.
+
+  This setting prevents users with push access to force push to the
+  branch.
+
+  For more information, see [GitHub's
+  documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule).
+def:
+  # Defines the section of the pipeline the rule will appear in.
+  # This will affect the template used to render multiple parts
+  # of the rule.
+  in_entity: repository
+  # Defines the schema for parameters that will be passed to the rule
+  param_schema:
+    properties:
+      branch:
+        type: string
+        description: "The name of the branch to check. If left empty, the default branch will be used."
+    required:
+      - branch
+  # Defines the schema for writing a rule with this rule being checked
+  rule_schema:
+    type: object
+    properties: {}
+  # Defines the configuration for ingesting data relevant for the rule
+  ingest:
+    type: rest
+    rest:
+      # This is the path to the data source. Given that this will evaluate
+      # for each repository in the organization, we use a template that
+      # will be evaluated for each repository. The structure to use is the
+      # protobuf structure for the entity that is being evaluated.
+      endpoint: '{{ $branch_param := index .Params "branch" }}/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{if ne $branch_param "" }}{{ $branch_param }}{{ else }}{{ .Entity.DefaultBranch }}{{ end }}/protection'
+      # This is the method to use to retrieve the data. It should already default to JSON
+      parse: json
+      fallback:
+        - http_code: 404
+          body: |
+            {"http_status": 404, "message": "Not Protected"}
+  # Defines the configuration for evaluating data ingested against the given policy
+  eval:
+    type: jq
+    jq:
+      - ingested:
+          def: ".allow_force_pushes.enabled"
+        constant: false
+  # Defines the configuration for remediating the rule
+  remediate:
+    type: gh_branch_protection
+    gh_branch_protection:
+      patch: |
+        {"allow_force_pushes": false }
+  # Defines the configuration for alerting on the rule
+  alert:
+    type: security_advisory
+    security_advisory: {}
+`
 var ruleName = "MyRule"
 var ruleUUID = uuid.New()
 var projectID = uuid.New()
@@ -277,11 +349,7 @@ func makeProfile(opts ...func(*minderv1.Profile)) *minderv1.Profile {
 
 func loadRawRuleTypeDef() (json.RawMessage, error) {
 	// read rule type from disk and set it up as a fixture
-	f, err := os.Open("../../examples/rules-and-profiles/rule-types/github/branch_protection_allow_force_pushes.yaml")
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
+	f := strings.NewReader(ruleTypeContent)
 
 	ruleType := &minderv1.RuleType{}
 	if err := minderv1.ParseResource(f, ruleType); err != nil {
