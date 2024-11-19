@@ -8,6 +8,7 @@ package options
 import (
 	"github.com/open-feature/go-sdk/openfeature"
 
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -31,5 +32,27 @@ func WithFlagsClient(client openfeature.IClient) Option {
 			return nil
 		}
 		return inner.SetFlagsClient(client)
+	}
+}
+
+// SupportsDataSources interface advertises the fact that the implementer
+// can register data sources with the evaluator.
+type SupportsDataSources interface {
+	RegisterDataSource(ds v1datasources.DataSource)
+}
+
+// WithDataSources provides the evaluation engine with a list of data sources
+// to register. In case the given evaluator does not support data sources,
+// WithDataSources silently ignores the error.
+func WithDataSources(ds ...v1datasources.DataSource) Option {
+	return func(e interfaces.Evaluator) error {
+		for _, d := range ds {
+			inner, ok := e.(SupportsDataSources)
+			if !ok {
+				return nil
+			}
+			inner.RegisterDataSource(d)
+		}
+		return nil
 	}
 }

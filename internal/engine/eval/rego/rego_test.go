@@ -6,6 +6,7 @@ package rego_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,9 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -453,4 +456,85 @@ violations[{"msg": msg}] {
 	err = e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
+}
+
+type fakeDataSourceFunc struct{}
+
+func (_ fakeDataSourceFunc) GetKey() v1datasources.DataSourceFuncKey {
+	return "fake.source"
+}
+
+func (_ fakeDataSourceFunc) GetArgs() v1datasources.DataFuncSourceArgs {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (_ fakeDataSourceFunc) ValidateArgs(_ any) error {
+	return nil
+}
+
+func (_ fakeDataSourceFunc) Call(args any) (any, error) {
+	m, ok := args.(map[string]any)
+	if !ok {
+		return nil, errors.New("invalid input")
+	}
+
+	d, ok := m["datasourcetest"]
+	if !ok {
+		return nil, errors.New("missing key")
+	}
+
+	return d, nil
+}
+
+type fakeDataSource struct{}
+
+func (_ *fakeDataSource) GetFuncs() []v1datasources.DataSourceFuncDef {
+	return []v1datasources.DataSourceFuncDef{
+		&fakeDataSourceFunc{},
+	}
+}
+
+func (_ *fakeDataSource) ValidateUpdate(_ v1datasources.DataSource) error {
+	return nil
+}
+
+func TestCustomDatasourceRegister(t *testing.T) {
+	t.Parallel()
+
+	fds := &fakeDataSource{}
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	minder.data.fake.source({"datasourcetest": input.ingested.data}) == "foo"
+}`,
+		},
+		options.WithDataSources(fds),
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	// Matches
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		Object: map[string]any{
+			"data": "foo",
+		},
+	})
+	require.NoError(t, err, "could not evaluate")
+
+	// Doesn't match
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		Object: map[string]any{
+			"data": "bar",
+		},
+	})
+	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
