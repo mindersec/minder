@@ -29,17 +29,11 @@ import (
 )
 
 type restDataSource struct {
-	name     string
 	handlers map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef
 }
 
 // ensure that restDataSource implements the v1datasources.DataSource interface
 var _ v1datasources.DataSource = (*restDataSource)(nil)
-
-// GetName implements the v1datasources.DataSource interface.
-func (r *restDataSource) GetName() string {
-	return r.name
-}
 
 // GetFuncs implements the v1datasources.DataSource interface.
 func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef {
@@ -47,7 +41,7 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 }
 
 // NewRestDataSource builds a new REST data source.
-func NewRestDataSource(name string, rest *minderv1.RestDataSource) (v1datasources.DataSource, error) {
+func NewRestDataSource(rest *minderv1.RestDataSource) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
 	}
@@ -57,7 +51,6 @@ func NewRestDataSource(name string, rest *minderv1.RestDataSource) (v1datasource
 	}
 
 	out := &restDataSource{
-		name:     name,
 		handlers: make(map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef, len(rest.GetDef())),
 	}
 

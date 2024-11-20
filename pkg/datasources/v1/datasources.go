@@ -36,9 +36,6 @@ type DataSourceFuncDef interface {
 // interact with external systems. These get taken into used by the Evaluator.
 // Moreover, a data source must be able to validate an update to itself.
 type DataSource interface {
-	// Returns the registered name of the data source.
-	GetName() string
-
 	// GetFuncs returns the functions that the data source provides.
 	GetFuncs() map[DataSourceFuncKey]DataSourceFuncDef
 }
