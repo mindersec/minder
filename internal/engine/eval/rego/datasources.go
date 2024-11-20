@@ -38,7 +38,7 @@ func buildFromDataSource(key v1datasources.DataSourceFuncKey, dsf v1datasources.
 				return nil, err
 			}
 
-			if err := dsf.ValidateArgs(obj); err != nil {
+			if err := dsf.ValidateArgs(jsonObj); err != nil {
 				return nil, err
 			}
 
