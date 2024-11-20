@@ -83,8 +83,6 @@ type fetchParams struct {
 
 	providerID uuid.UUID
 	projectID  uuid.UUID
-
-	other map[string]any
 }
 
 type testCtx struct {
