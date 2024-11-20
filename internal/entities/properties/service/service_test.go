@@ -51,18 +51,6 @@ func withUpstreamRepoProperties(repoProperties map[string]any, entType minderv1.
 	}
 }
 
-func withUpstreamRepoProperty(key string, val any, entType minderv1.Entity) func(mock *mock_github.MockGitHub) {
-	return func(mock *mock_github.MockGitHub) {
-		prop, err := properties.NewProperty(val)
-		if err != nil {
-			panic(err)
-		}
-		mock.EXPECT().
-			FetchProperty(gomock.Any(), gomock.Any(), entType, key).
-			Return(prop, nil)
-	}
-}
-
 func insertProperties(ctx context.Context, t *testing.T, store db.Store, entID uuid.UUID, props *properties.Properties) {
 	t.Helper()
 
