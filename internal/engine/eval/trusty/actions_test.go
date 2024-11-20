@@ -7,7 +7,6 @@ package trusty
 import (
 	"testing"
 
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
 	"github.com/stretchr/testify/require"
 
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -26,28 +25,25 @@ func TestBuildProvenanceStruct(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name     string
-		sut      *trustytypes.Reply
+		sut      *trustyReport
 		mustNil  bool
 		expected *templateProvenance
 	}{
 		{
 			name: "full-response",
-			sut: &trustytypes.Reply{
-				Provenance: &trustytypes.Provenance{
-					Score: 8.0,
-					Description: trustytypes.ProvenanceDescription{
-						Historical: trustytypes.HistoricalProvenance{
-							Tags:     10,
-							Common:   8,
-							Overlap:  80,
-							Versions: 10,
-						},
-						Sigstore: trustytypes.SigstoreProvenance{
-							Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
-							Workflow:         ".github/workflows/build_and_deploy.yml",
-							SourceRepository: "https://github.com/vercel/next.js",
-							Transparency:     "https://search.sigstore.dev/?logIndex=88381843",
-						},
+			sut: &trustyReport{
+				Provenance: &provenance{
+					Historical: &historicalProvenance{
+						Tags:     10,
+						Common:   8,
+						Overlap:  80,
+						Versions: 10,
+					},
+					Sigstore: &sigstoreProvenance{
+						Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
+						Workflow:         ".github/workflows/build_and_deploy.yml",
+						SourceRepository: "https://github.com/vercel/next.js",
+						RekorURI:         "https://search.sigstore.dev/?logIndex=88381843",
 					},
 				},
 			},
@@ -68,16 +64,13 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name: "only-historical",
-			sut: &trustytypes.Reply{
-				Provenance: &trustytypes.Provenance{
-					Score: 8.0,
-					Description: trustytypes.ProvenanceDescription{
-						Historical: trustytypes.HistoricalProvenance{
-							Tags:     10,
-							Common:   8,
-							Overlap:  80,
-							Versions: 10,
-						},
+			sut: &trustyReport{
+				Provenance: &provenance{
+					Historical: &historicalProvenance{
+						Tags:     10,
+						Common:   8,
+						Overlap:  80,
+						Versions: 10,
 					},
 				},
 			},
@@ -92,16 +85,13 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name: "only-sigstore",
-			sut: &trustytypes.Reply{
-				Provenance: &trustytypes.Provenance{
-					Score: 8.0,
-					Description: trustytypes.ProvenanceDescription{
-						Sigstore: trustytypes.SigstoreProvenance{
-							Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
-							Workflow:         ".github/workflows/build_and_deploy.yml",
-							SourceRepository: "https://github.com/vercel/next.js",
-							Transparency:     "https://search.sigstore.dev/?logIndex=88381843",
-						},
+			sut: &trustyReport{
+				Provenance: &provenance{
+					Sigstore: &sigstoreProvenance{
+						Issuer:           "CN=sigstore-intermediate,O=sigstore.dev",
+						Workflow:         ".github/workflows/build_and_deploy.yml",
+						SourceRepository: "https://github.com/vercel/next.js",
+						RekorURI:         "https://search.sigstore.dev/?logIndex=88381843",
 					},
 				},
 			},
@@ -122,7 +112,7 @@ func TestBuildProvenanceStruct(t *testing.T) {
 		},
 		{
 			name:    "no-provenance",
-			sut:     &trustytypes.Reply{},
+			sut:     &trustyReport{},
 			mustNil: true,
 		},
 	} {

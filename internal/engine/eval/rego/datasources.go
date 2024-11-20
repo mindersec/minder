@@ -17,7 +17,6 @@ import (
 // RegisterDataSources implements the Eval interface.
 func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
 	for key, dsf := range dsr.GetFuncs() {
-		fmt.Printf("Registering data source %s\n", key)
 		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
 	}
 }
@@ -39,7 +38,7 @@ func buildFromDataSource(key v1datasources.DataSourceFuncKey, dsf v1datasources.
 				return nil, err
 			}
 
-			if err := dsf.ValidateArgs(obj); err != nil {
+			if err := dsf.ValidateArgs(jsonObj); err != nil {
 				return nil, err
 			}
 
