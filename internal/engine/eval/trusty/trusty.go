@@ -7,14 +7,18 @@ package trusty
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
 	trusty "github.com/stacklok/trusty-sdk-go/pkg/v1/client"
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/mindersec/minder/internal/constants"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
@@ -200,9 +204,7 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	// Craft an evaluation failed error with the dependency data:
 	var lowScoringPackages, maliciousPackages []string
 	for _, d := range prSummary.trackedAlternatives {
-		if d.trustyReply.PackageData.Malicious != nil &&
-			d.trustyReply.PackageData.Malicious.Published != nil &&
-			d.trustyReply.PackageData.Malicious.Published.String() != "" {
+		if d.trustyReply.Malicious != nil {
 			maliciousPackages = append(maliciousPackages, d.trustyReply.PackageName)
 		} else {
 			lowScoringPackages = append(lowScoringPackages, d.trustyReply.PackageName)
@@ -240,9 +242,63 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	return nil
 }
 
+type trustyReport struct {
+	PackageName     string
+	PackageType     string
+	PackageVersion  string
+	TrustyURL       string
+	IsDeprecated    bool
+	IsArchived      bool
+	Score           *float64
+	ActivityScore   float64
+	ProvenanceScore float64
+	ScoreComponents []scoreComponent
+	Alternatives    []alternative
+	Provenance      *provenance
+	Malicious       *malicious
+}
+
+type scoreComponent struct {
+	Label string
+	Value any
+}
+
+type provenance struct {
+	Historical *historicalProvenance
+	Sigstore   *sigstoreProvenance
+}
+
+type historicalProvenance struct {
+	Versions int
+	Tags     int
+	Common   int
+	Overlap  float64
+}
+
+type sigstoreProvenance struct {
+	SourceRepository string
+	Workflow         string
+	Issuer           string
+	RekorURI         string
+}
+
+type malicious struct {
+	Summary string
+	Details string
+}
+
+type alternative struct {
+	PackageName string
+	PackageType string
+	Score       *float64
+	TrustyURL   string
+}
+
 func getDependencyScore(
-	ctx context.Context, trustyClient *trusty.Trusty, dep *pbinternal.PrDependencies_ContextualDependency,
-) (*trustytypes.Reply, error) {
+	ctx context.Context,
+	trustyClient *trusty.Trusty,
+	dep *pbinternal.PrDependencies_ContextualDependency,
+) (*trustyReport, error) {
 	// Call the Trusty API
 	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
 		Name:      dep.Dep.Name,
@@ -252,14 +308,160 @@ func getDependencyScore(
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
-	return resp, nil
+
+	res := makeTrustyReport(dep, resp)
+
+	return res, nil
+}
+
+func makeTrustyReport(
+	dep *pbinternal.PrDependencies_ContextualDependency,
+	resp *trustytypes.Reply,
+) *trustyReport {
+	res := &trustyReport{
+		PackageName:     dep.Dep.Name,
+		PackageVersion:  dep.Dep.Version,
+		PackageType:     dep.Dep.Ecosystem.AsString(),
+		TrustyURL:       makeTrustyURL(dep.Dep.Name, strings.ToLower(dep.Dep.Ecosystem.AsString())),
+		Score:           resp.Summary.Score,
+		IsDeprecated:    resp.PackageData.Deprecated,
+		IsArchived:      resp.PackageData.Archived,
+		ActivityScore:   getValueFromMap[float64](resp.Summary.Description, "activity"),
+		ProvenanceScore: getValueFromMap[float64](resp.Summary.Description, "provenance"),
+	}
+
+	res.ScoreComponents = makeScoreComponents(resp.Summary.Description)
+	res.Alternatives = makeAlternatives(dep.Dep.Ecosystem.AsString(), resp.Alternatives.Packages)
+
+	if getValueFromMap[bool](resp.Summary.Description, "malicious") {
+		res.Malicious = &malicious{
+			Summary: resp.PackageData.Malicious.Summary,
+			Details: preprocessDetails(resp.PackageData.Malicious.Details),
+		}
+	}
+
+	res.Provenance = makeProvenance(resp.Provenance)
+
+	return res
+}
+
+func makeScoreComponents(descr map[string]any) []scoreComponent {
+	scoreComponents := make([]scoreComponent, 0)
+
+	if descr == nil {
+		return scoreComponents
+	}
+
+	caser := cases.Title(language.Und, cases.NoLower)
+	for l, v := range descr {
+		switch l {
+		case "activity":
+			l = "Package activity"
+		case "activity_repo":
+			l = "Repository activity"
+		case "activity_user":
+			l = "User activity"
+		case "provenance_type":
+			l = "Provenance"
+		case "typosquatting":
+			if f, ok := v.(float64); ok && f > 5.0 {
+				// skip typosquatting entry
+				continue
+			}
+			l = "Typosquatting"
+			v = "⚠️ Dependency may be trying to impersonate a well known package"
+		}
+
+		// Note: if none of the cases above match, we still
+		// add the value to the list along with its
+		// capitalized label.
+
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: fmt.Sprintf("%s%s", caser.String(l[0:1]), l[1:]),
+			Value: v,
+		})
+	}
+
+	return scoreComponents
+}
+
+func makeAlternatives(
+	ecosystem string,
+	trustyAlternatives []trustytypes.Alternative,
+) []alternative {
+	alternatives := []alternative{}
+	for _, alt := range trustyAlternatives {
+		alternatives = append(alternatives, alternative{
+			PackageName: alt.PackageName,
+			PackageType: ecosystem,
+			Score:       &alt.Score,
+			TrustyURL:   makeTrustyURL(alt.PackageName, ecosystem),
+		})
+	}
+
+	return alternatives
+}
+
+func makeProvenance(
+	trustyProvenance *trustytypes.Provenance,
+) *provenance {
+	if trustyProvenance == nil {
+		return nil
+	}
+
+	prov := &provenance{}
+	if trustyProvenance.Description.Historical.Overlap != 0 {
+		prov.Historical = &historicalProvenance{
+			Versions: int(trustyProvenance.Description.Historical.Versions),
+			Tags:     int(trustyProvenance.Description.Historical.Tags),
+			Common:   int(trustyProvenance.Description.Historical.Common),
+			Overlap:  trustyProvenance.Description.Historical.Overlap,
+		}
+	}
+
+	if trustyProvenance.Description.Sigstore.Issuer != "" {
+		prov.Sigstore = &sigstoreProvenance{
+			SourceRepository: trustyProvenance.Description.Sigstore.SourceRepository,
+			Workflow:         trustyProvenance.Description.Sigstore.Workflow,
+			Issuer:           trustyProvenance.Description.Sigstore.Issuer,
+			RekorURI:         trustyProvenance.Description.Sigstore.Transparency,
+		}
+	}
+
+	return prov
+}
+
+func makeTrustyURL(packageName string, ecosystem string) string {
+	trustyURL, _ := url.JoinPath(
+		constants.TrustyHttpURL,
+		"report",
+		strings.ToLower(ecosystem),
+		url.PathEscape(packageName))
+	return trustyURL
+}
+
+func getValueFromMap[T any](coll map[string]any, field string) T {
+	var t T
+	v, ok := coll[field]
+	if !ok {
+		return t
+	}
+	res, ok := v.(T)
+	if !ok {
+		return t
+	}
+	return res
 }
 
 // classifyDependency checks the dependencies from the PR for maliciousness or
 // low scores and adds them to the summary if needed
 func classifyDependency(
-	_ context.Context, logger *zerolog.Logger, resp *trustytypes.Reply, ruleConfig *config,
-	prSummary *summaryPrHandler, dep *pbinternal.PrDependencies_ContextualDependency,
+	_ context.Context,
+	logger *zerolog.Logger,
+	resp *trustyReport,
+	ruleConfig *config,
+	prSummary *summaryPrHandler,
+	dep *pbinternal.PrDependencies_ContextualDependency,
 ) {
 	// Check all the policy violations
 	reasons := []RuleViolationReason{}
@@ -274,7 +476,7 @@ func classifyDependency(
 
 	// If the package is malicious, ensure that the score is 0 to avoid it
 	// getting ignored from the report
-	if resp.PackageData.Malicious != nil && resp.PackageData.Malicious.Summary != "" {
+	if resp.Malicious != nil && resp.Malicious.Summary != "" {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
 			Str("malicious", "true").
@@ -288,11 +490,11 @@ func classifyDependency(
 	}
 
 	// Note if the packages is deprecated or archived
-	if resp.PackageData.Deprecated || resp.PackageData.Archived {
+	if resp.IsDeprecated || resp.IsArchived {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
-			Bool("deprecated", resp.PackageData.Deprecated).
-			Bool("archived", resp.PackageData.Archived).
+			Bool("deprecated", resp.IsDeprecated).
+			Bool("archived", resp.IsArchived).
 			Msgf("deprecated dependency")
 
 		if !ecoConfig.AllowDeprecated {
@@ -303,26 +505,24 @@ func classifyDependency(
 	} else {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
-			Bool("deprecated", resp.PackageData.Deprecated).
+			Bool("deprecated", resp.IsDeprecated).
 			Msgf("not deprecated dependency")
 	}
 
 	packageScore := float64(0)
-	if resp.Summary.Score != nil {
-		packageScore = *resp.Summary.Score
+	if resp.Score != nil {
+		packageScore = *resp.Score
 	}
-
-	descr := readPackageDescription(resp)
 
 	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
 	}
 
-	if ecoConfig.Provenance > descr["provenance"].(float64) && descr["provenance"].(float64) > 0 {
+	if ecoConfig.Provenance > resp.ProvenanceScore && resp.ProvenanceScore > 0 {
 		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
 	}
 
-	if ecoConfig.Activity > descr["activity"].(float64) && descr["activity"].(float64) > 0 {
+	if ecoConfig.Activity > resp.ActivityScore && resp.ActivityScore > 0 {
 		reasons = append(reasons, TRUSTY_LOW_ACTIVITY)
 	}
 
@@ -342,28 +542,7 @@ func classifyDependency(
 	} else {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
-			Float64("score", *resp.Summary.Score).
 			Float64("threshold", ecoConfig.Score).
 			Msgf("dependency ok")
 	}
-}
-
-// readPackageDescription reads the description from the package summary and
-// normlizes the required values when missing from a partial Trusty response
-func readPackageDescription(resp *trustytypes.Reply) map[string]any {
-	descr := map[string]any{}
-	if resp == nil {
-		resp = &trustytypes.Reply{}
-	}
-	if resp.Summary.Description != nil {
-		descr = resp.Summary.Description
-	}
-
-	// Ensure don't panic checking all fields are there
-	for _, fld := range []string{"activity", "provenance"} {
-		if _, ok := descr[fld]; !ok || descr[fld] == nil {
-			descr[fld] = float64(0)
-		}
-	}
-	return descr
 }
