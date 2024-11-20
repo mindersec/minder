@@ -17,7 +17,6 @@ import (
 // RegisterDataSources implements the Eval interface.
 func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
 	for key, dsf := range dsr.GetFuncs() {
-		fmt.Printf("Registering data source %s\n", key)
 		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
 	}
 }
