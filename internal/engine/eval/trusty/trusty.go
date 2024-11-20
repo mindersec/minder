@@ -12,10 +12,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
-	trusty "github.com/stacklok/trusty-sdk-go/pkg/v1/client"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v1/types"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
+	trusty "github.com/stacklok/trusty-sdk-go/pkg/v2/client"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/constants"
@@ -39,7 +37,7 @@ const (
 type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
-	client   *trusty.Trusty
+	client   trusty.Trusty
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -296,105 +294,158 @@ type alternative struct {
 
 func getDependencyScore(
 	ctx context.Context,
-	trustyClient *trusty.Trusty,
+	trustyClient trusty.Trusty,
 	dep *pbinternal.PrDependencies_ContextualDependency,
 ) (*trustyReport, error) {
 	// Call the Trusty API
-	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
-		Name:      dep.Dep.Name,
-		Version:   dep.Dep.Version,
-		Ecosystem: trustytypes.Ecosystem(dep.Dep.Ecosystem),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+	packageType := dep.Dep.Ecosystem.AsString()
+	input := &trustytypes.Dependency{
+		PackageName:    dep.Dep.Name,
+		PackageType:    packageType,
+		PackageVersion: &dep.Dep.Version,
 	}
 
-	res := makeTrustyReport(dep, resp)
+	respSummary, err := trustyClient.Summary(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting summary: %w", err)
+	}
+
+	respPkg, err := trustyClient.PackageMetadata(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting package metadata: %w", err)
+	}
+
+	respAlternatives, err := trustyClient.Alternatives(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting alternatives: %w", err)
+	}
+
+	respProvenance, err := trustyClient.Provenance(ctx, input)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting provenance: %w", err)
+	}
+
+	res := makeTrustyReport(dep,
+		respSummary,
+		respPkg,
+		respAlternatives,
+		respProvenance,
+	)
 
 	return res, nil
 }
 
 func makeTrustyReport(
 	dep *pbinternal.PrDependencies_ContextualDependency,
-	resp *trustytypes.Reply,
+	respSummary *trustytypes.PackageSummaryAnnotation,
+	respPkg *trustytypes.TrustyPackageData,
+	respAlternatives *trustytypes.PackageAlternatives,
+	respProvenance *trustytypes.Provenance,
 ) *trustyReport {
 	res := &trustyReport{
-		PackageName:     dep.Dep.Name,
-		PackageVersion:  dep.Dep.Version,
-		PackageType:     dep.Dep.Ecosystem.AsString(),
-		TrustyURL:       makeTrustyURL(dep.Dep.Name, strings.ToLower(dep.Dep.Ecosystem.AsString())),
-		Score:           resp.Summary.Score,
-		IsDeprecated:    resp.PackageData.Deprecated,
-		IsArchived:      resp.PackageData.Archived,
-		ActivityScore:   getValueFromMap[float64](resp.Summary.Description, "activity"),
-		ProvenanceScore: getValueFromMap[float64](resp.Summary.Description, "provenance"),
+		PackageName:    dep.Dep.Name,
+		PackageVersion: dep.Dep.Version,
+		PackageType:    dep.Dep.Ecosystem.AsString(),
+		TrustyURL:      makeTrustyURL(dep.Dep.Name, strings.ToLower(dep.Dep.Ecosystem.AsString())),
 	}
 
-	res.ScoreComponents = makeScoreComponents(resp.Summary.Description)
-	res.Alternatives = makeAlternatives(dep.Dep.Ecosystem.AsString(), resp.Alternatives.Packages)
+	addSummaryDetails(res, respSummary)
+	addMetadataDetails(res, respPkg)
 
-	if getValueFromMap[bool](resp.Summary.Description, "malicious") {
-		res.Malicious = &malicious{
-			Summary: resp.PackageData.Malicious.Summary,
-			Details: preprocessDetails(resp.PackageData.Malicious.Details),
-		}
+	res.ScoreComponents = makeScoreComponents(respSummary.Description)
+	res.Alternatives = makeAlternatives(dep.Dep.Ecosystem.AsString(), respAlternatives.Packages)
+
+	if respSummary.Description.Malicious {
+		res.Malicious = makeMaliciousDetails(respPkg.Malicious)
 	}
 
-	res.Provenance = makeProvenance(resp.Provenance)
+	res.Provenance = makeProvenance(respProvenance)
 
 	return res
 }
 
-func makeScoreComponents(descr map[string]any) []scoreComponent {
+func addSummaryDetails(res *trustyReport, resp *trustytypes.PackageSummaryAnnotation) {
+	if resp == nil {
+		return
+	}
+
+	res.Score = resp.Score
+	res.ActivityScore = resp.Description.Activity
+	res.ProvenanceScore = resp.Description.Provenance
+}
+
+func addMetadataDetails(res *trustyReport, resp *trustytypes.TrustyPackageData) {
+	if resp == nil {
+		return
+	}
+
+	res.IsDeprecated = resp.IsDeprecated != nil && *resp.IsDeprecated
+	res.IsArchived = resp.Archived != nil && *resp.Archived
+}
+
+func makeScoreComponents(resp trustytypes.SummaryDescription) []scoreComponent {
 	scoreComponents := make([]scoreComponent, 0)
 
-	if descr == nil {
-		return scoreComponents
-	}
-
-	caser := cases.Title(language.Und, cases.NoLower)
-	for l, v := range descr {
-		switch l {
-		case "activity":
-			l = "Package activity"
-		case "activity_repo":
-			l = "Repository activity"
-		case "activity_user":
-			l = "User activity"
-		case "provenance_type":
-			l = "Provenance"
-		case "typosquatting":
-			if f, ok := v.(float64); ok && f > 5.0 {
-				// skip typosquatting entry
-				continue
-			}
-			l = "Typosquatting"
-			v = "⚠️ Dependency may be trying to impersonate a well known package"
-		}
-
-		// Note: if none of the cases above match, we still
-		// add the value to the list along with its
-		// capitalized label.
-
+	// activity scores
+	if resp.Activity != 0 {
 		scoreComponents = append(scoreComponents, scoreComponent{
-			Label: fmt.Sprintf("%s%s", caser.String(l[0:1]), l[1:]),
-			Value: v,
+			Label: "Package activity",
+			Value: resp.Activity,
 		})
 	}
+	if resp.ActivityRepo != 0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Repository activity",
+			Value: resp.ActivityRepo,
+		})
+	}
+	if resp.ActivityUser != 0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "User activity",
+			Value: resp.ActivityUser,
+		})
+	}
+
+	// provenance information
+	if resp.ProvenanceType != nil {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Provenance",
+			Value: string(*resp.ProvenanceType),
+		})
+	}
+
+	// typosquatting information
+	if resp.TypoSquatting != 0 && resp.TypoSquatting <= 5.0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Typosquatting",
+			Value: "⚠️ Dependency may be trying to impersonate a well known package",
+		})
+	}
+
+	// Note: in the previous implementation based on Trusty v1
+	// API, if new fields were added to the `"description"` field
+	// of a package they were implicitly added to the table of
+	// score components.
+	//
+	// This was possible because the `Description` field of the go
+	// struct was defined as `map[string]any`.
+	//
+	// This is not the case with v2 API, so we need to keep track
+	// of new measures being added to the API.
 
 	return scoreComponents
 }
 
 func makeAlternatives(
 	ecosystem string,
-	trustyAlternatives []trustytypes.Alternative,
+	trustyAlternatives []*trustytypes.PackageBasicInfo,
 ) []alternative {
 	alternatives := []alternative{}
 	for _, alt := range trustyAlternatives {
 		alternatives = append(alternatives, alternative{
 			PackageName: alt.PackageName,
 			PackageType: ecosystem,
-			Score:       &alt.Score,
+			Score:       alt.Score,
 			TrustyURL:   makeTrustyURL(alt.PackageName, ecosystem),
 		})
 	}
@@ -402,29 +453,42 @@ func makeAlternatives(
 	return alternatives
 }
 
+func makeMaliciousDetails(
+	maliciousInfo *trustytypes.PackageMaliciousPayload,
+) *malicious {
+	if maliciousInfo == nil {
+		return nil
+	}
+
+	return &malicious{
+		Summary: maliciousInfo.Summary,
+		Details: preprocessDetails(maliciousInfo.Details),
+	}
+}
+
 func makeProvenance(
-	trustyProvenance *trustytypes.Provenance,
+	resp *trustytypes.Provenance,
 ) *provenance {
-	if trustyProvenance == nil {
+	if resp == nil {
 		return nil
 	}
 
 	prov := &provenance{}
-	if trustyProvenance.Description.Historical.Overlap != 0 {
+	if resp.Historical.Overlap != 0 {
 		prov.Historical = &historicalProvenance{
-			Versions: int(trustyProvenance.Description.Historical.Versions),
-			Tags:     int(trustyProvenance.Description.Historical.Tags),
-			Common:   int(trustyProvenance.Description.Historical.Common),
-			Overlap:  trustyProvenance.Description.Historical.Overlap,
+			Versions: int(resp.Historical.Versions),
+			Tags:     int(resp.Historical.Tags),
+			Common:   int(resp.Historical.Common),
+			Overlap:  resp.Historical.Overlap,
 		}
 	}
 
-	if trustyProvenance.Description.Sigstore.Issuer != "" {
+	if resp.Sigstore.Issuer != "" {
 		prov.Sigstore = &sigstoreProvenance{
-			SourceRepository: trustyProvenance.Description.Sigstore.SourceRepository,
-			Workflow:         trustyProvenance.Description.Sigstore.Workflow,
-			Issuer:           trustyProvenance.Description.Sigstore.Issuer,
-			RekorURI:         trustyProvenance.Description.Sigstore.Transparency,
+			SourceRepository: resp.Sigstore.SourceRepo,
+			Workflow:         resp.Sigstore.Workflow,
+			Issuer:           resp.Sigstore.Issuer,
+			RekorURI:         resp.Sigstore.Transparency,
 		}
 	}
 
@@ -438,19 +502,6 @@ func makeTrustyURL(packageName string, ecosystem string) string {
 		strings.ToLower(ecosystem),
 		url.PathEscape(packageName))
 	return trustyURL
-}
-
-func getValueFromMap[T any](coll map[string]any, field string) T {
-	var t T
-	v, ok := coll[field]
-	if !ok {
-		return t
-	}
-	res, ok := v.(T)
-	if !ok {
-		return t
-	}
-	return res
 }
 
 // classifyDependency checks the dependencies from the PR for maliciousness or

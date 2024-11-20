@@ -299,7 +299,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				malicious = append(malicious, maliciousTemplateData{
 					templatePackageData: packageData,
 					Summary:             alternative.trustyReply.Malicious.Summary,
-					Details:             preprocessDetails(alternative.trustyReply.Malicious.Details),
+					Details:             alternative.trustyReply.Malicious.Details,
 				})
 				continue
 			}
@@ -324,7 +324,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			// (2) we don't suggest malicious packages, I
 			// suggest getting rid of this check
 			// altogether.
-			if altData.Score != nil && *altData.Score <= lowScorePackages[alternative.Dependency.Name].Score {
+			if altData.Score != nil && *altData.Score != 0 && *altData.Score <= lowScorePackages[alternative.Dependency.Name].Score {
 				continue
 			}
 
@@ -333,8 +333,10 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 					Ecosystem:   altData.PackageType,
 					PackageName: altData.PackageName,
 					TrustyURL:   altData.TrustyURL,
-					Score:       *altData.Score,
 				},
+			}
+			if altData.Score != nil {
+				altPackageData.templatePackageData.Score = *altData.Score
 			}
 
 			dep := lowScorePackages[alternative.Dependency.Name]
@@ -428,8 +430,12 @@ func newSummaryPrHandler(
 	}, nil
 }
 
-func preprocessDetails(s string) string {
-	scanner := bufio.NewScanner(strings.NewReader(s))
+func preprocessDetails(s *string) string {
+	if s == nil {
+		return ""
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(*s))
 	text := ""
 	for scanner.Scan() {
 		if strings.HasPrefix(scanner.Text(), "#") {
