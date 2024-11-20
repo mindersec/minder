@@ -19,18 +19,26 @@ import (
 // ValidateSchemaUpdate validates that the new json schema doesn't break
 // profiles using this rule type
 func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structpb.Struct) error {
-	if len(newRuleSchema.GetFields()) == 0 {
+	oldSchemaMap := oldRuleSchema.AsMap()
+	newSchemaMap := newRuleSchema.AsMap()
+
+	return ValidateSchemaUpdateMap(oldSchemaMap, newSchemaMap)
+}
+
+// ValidateSchemaUpdateMap validates that the new json schema doesn't break
+// profiles using this rule type
+func ValidateSchemaUpdateMap(oldSchemaMap, newSchemaMap map[string]any) error {
+	if len(newSchemaMap) == 0 {
 		// If the new schema is empty (including nil), we're good
 		// The rule type has removed the schema and profiles
 		// won't break
 		return nil
 	}
 
-	if schemaIsNilOrEmpty(oldRuleSchema) && !schemaIsNilOrEmpty(newRuleSchema) {
+	if schemaIsNilOrEmpty(oldSchemaMap) && !schemaIsNilOrEmpty(newSchemaMap) {
 		// If old is nil and new is not, we need to verify that
 		// the new definition is not introducing required fields
-		newrs := newRuleSchema.AsMap()
-		if _, ok := newrs["required"]; ok {
+		if _, ok := newSchemaMap["required"]; ok {
 			return fmt.Errorf("cannot add required fields to rule schema")
 		}
 
@@ -38,9 +46,6 @@ func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structp
 		// profiles using this rule type won't break
 		return nil
 	}
-
-	oldSchemaMap := oldRuleSchema.AsMap()
-	newSchemaMap := newRuleSchema.AsMap()
 
 	oldTypeCast, err := getOrInferType(oldSchemaMap)
 	if err != nil {
@@ -266,12 +271,12 @@ func requiredIsSuperset(oldRequired, newRequired []interface{}) bool {
 	return oldSet.IsSuperset(newSet)
 }
 
-func schemaIsNilOrEmpty(schema *structpb.Struct) bool {
+func schemaIsNilOrEmpty(schema map[string]any) bool {
 	if schema == nil {
 		return true
 	}
 
-	return len(schema.AsMap()) == 0
+	return len(schema) == 0
 }
 
 func validateArraySchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error {

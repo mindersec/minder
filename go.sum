@@ -1021,6 +1021,8 @@ github.com/stacklok/frizbee v0.1.4 h1:00v6/2HBmwzNdOyVAP4e1isOeUAIWTlb5eggoNUpHm
 github.com/stacklok/frizbee v0.1.4/go.mod h1:rFA90VkGFYLb7qCiUniAihmkgXfZAj2BnfF6jR8Csro=
 github.com/stacklok/trusty-sdk-go v0.2.2 h1:55B2DrneLYZXxBaNEeyRMGac7mj+pFbrKomx/hSxUyI=
 github.com/stacklok/trusty-sdk-go v0.2.2/go.mod h1:BbXNVVT32meuxyJuO4pmXRzVPjc/9AXob2sBbOPiKpk=
+github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1 h1:/m2cTZHpqgofDsrwPqsASI6fSNMNhb+9EmUYtHEV2Uk=
+github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1/go.mod h1:Z5KcoM0YLC7INlNhEezeIZ0TZNYf7WSNO0Lvah4DSeQ=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=
 github.com/stoewer/go-strcase v1.3.0/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

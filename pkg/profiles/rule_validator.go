@@ -5,11 +5,10 @@ package profiles
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
-	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -31,13 +30,13 @@ func NewRuleValidator(rt *minderv1.RuleType) (*RuleValidator, error) {
 	}
 	// Create a new schema compiler
 	// Compile the main rule schema
-	mainSchema, err := compileSchemaFromPB(rt.GetDef().GetRuleSchema())
+	mainSchema, err := schemavalidate.CompileSchemaFromPB(rt.GetDef().GetRuleSchema())
 	if err != nil {
 		return nil, fmt.Errorf("cannot create json schema: %w", err)
 	}
 
 	// Compile the parameter schema if it exists
-	paramSchema, err := compileSchemaFromPB(rt.GetDef().GetParamSchema())
+	paramSchema, err := schemavalidate.CompileSchemaFromPB(rt.GetDef().GetParamSchema())
 	if err != nil {
 		return nil, fmt.Errorf("cannot create json schema for params: %w", err)
 	}
@@ -52,13 +51,13 @@ func NewRuleValidator(rt *minderv1.RuleType) (*RuleValidator, error) {
 // ValidateRuleDefAgainstSchema validates the given contextual profile against the
 // schema for this rule type
 func (r *RuleValidator) ValidateRuleDefAgainstSchema(contextualProfile map[string]any) error {
-	if err := validateAgainstSchema(r.schema, contextualProfile); err != nil {
+	if err := schemavalidate.ValidateAgainstSchema(r.schema, contextualProfile); err != nil {
 		return &RuleValidationError{
 			RuleType: r.ruleTypeName,
 			Err:      err.Error(),
 		}
 	}
-	applyDefaults(r.schema, contextualProfile)
+	schemavalidate.ApplyDefaults(r.schema, contextualProfile)
 	return nil
 }
 
@@ -68,66 +67,12 @@ func (r *RuleValidator) ValidateParamsAgainstSchema(params map[string]any) error
 	if r.paramSchema == nil {
 		return nil
 	}
-	if err := validateAgainstSchema(r.paramSchema, params); err != nil {
+	if err := schemavalidate.ValidateAgainstSchema(r.paramSchema, params); err != nil {
 		return &RuleValidationError{
 			RuleType: r.ruleTypeName,
 			Err:      err.Error(),
 		}
 	}
-	applyDefaults(r.paramSchema, params)
+	schemavalidate.ApplyDefaults(r.paramSchema, params)
 	return nil
-}
-
-func compileSchemaFromPB(schemaData *structpb.Struct) (*jsonschema.Schema, error) {
-	if schemaData == nil {
-		return nil, nil
-	}
-
-	return compileSchemaFromMap(schemaData.AsMap())
-}
-
-func compileSchemaFromMap(schemaData map[string]any) (*jsonschema.Schema, error) {
-	compiler := jsonschema.NewCompiler()
-	if err := compiler.AddResource("schema.json", schemaData); err != nil {
-		return nil, fmt.Errorf("invalid schema: %w", err)
-	}
-	return compiler.Compile("schema.json")
-}
-
-func validateAgainstSchema(schema *jsonschema.Schema, obj map[string]any) error {
-	if err := schema.Validate(obj); err != nil {
-		if verror, ok := err.(*jsonschema.ValidationError); ok {
-			return buildValidationError(verror.Causes)
-		}
-		return fmt.Errorf("invalid json schema: %s", err)
-	}
-	return nil
-}
-
-func buildValidationError(errs []*jsonschema.ValidationError) error {
-	problems := make([]string, 0, len(errs))
-	for _, desc := range errs {
-		problems = append(problems, desc.Error())
-	}
-	return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
-}
-
-// applyDefaults recursively applies default values from the schema to the object.
-func applyDefaults(schema *jsonschema.Schema, obj map[string]any) {
-	for key, def := range schema.Properties {
-		// If the key does not exist in obj, apply the default value from the schema if present
-		if _, exists := obj[key]; !exists && def.Default != nil {
-			obj[key] = *def.Default
-		}
-
-		// If def has properties, apply defaults to the nested object
-		if def.Properties != nil {
-			o, ok := obj[key].(map[string]any)
-			if !ok {
-				// cannot apply defaults to non-object types
-				continue
-			}
-			applyDefaults(def, o)
-		}
-	}
 }
