@@ -14,7 +14,7 @@ import (
 
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
-func BuildFromProtobuf(name string, ds *minderv1.DataSource) (v1datasources.DataSource, error) {
+func BuildFromProtobuf(ds *minderv1.DataSource) (v1datasources.DataSource, error) {
 	if ds == nil {
 		return nil, fmt.Errorf("data source is nil")
 	}
@@ -25,7 +25,7 @@ func BuildFromProtobuf(name string, ds *minderv1.DataSource) (v1datasources.Data
 
 	switch ds.GetDriver().(type) {
 	case *minderv1.DataSource_Rest:
-		return rest.NewRestDataSource(name, ds.GetRest())
+		return rest.NewRestDataSource(ds.GetRest())
 	default:
 		return nil, fmt.Errorf("unknown data source type: %T", ds)
 	}
