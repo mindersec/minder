@@ -12,6 +12,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/itchyny/gojq"
 	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/mindersec/minder/internal/util"
 )
 
 var (
@@ -288,6 +290,10 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
+	} else if ing.Type == "rest" {
+		if err := ing.GetRest().Validate(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -314,6 +320,85 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
 	if sa == nil {
 		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition remediate
+func (rem *RuleType_Definition_Remediate) Validate() error {
+	if rem == nil {
+		return nil
+	}
+
+	// Not using import to avoid circular dependency
+	if rem.Type == "rest" {
+		if err := rem.GetRest().Validate(); err != nil {
+			return err
+		}
+	} else if rem.Type == "pull_request" {
+		if err := rem.GetPullRequest().Validate(); err != nil {
+			return err
+		}
+	} else if rem.Type == "gh_branch_protection" {
+		if err := rem.GetGhBranchProtection().Validate(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%w: remediate type cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+	return nil
+}
+
+// Validate validates a rest remediation
+func (rest *RestType) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if rest.Endpoint == "" {
+		return fmt.Errorf("%w: rest endpoint cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a GitHub branch protection remediation
+func (ghp *RuleType_Definition_Remediate_GhBranchProtectionType) Validate() error {
+	if ghp == nil {
+		return fmt.Errorf("%w: github branch protection remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeTextTemplate(&ghp.Patch, "patch")
+	if err != nil {
+		return fmt.Errorf("%w: patch template is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	return nil
+}
+
+// Validate validates a pull request remediation
+func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() error {
+	if prRem == nil {
+		return fmt.Errorf("%w: pull request remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if prRem.Title == "" {
+		return fmt.Errorf("%w: pull request title cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	if prRem.Body == "" {
+		return fmt.Errorf("%w: pull request body cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeHTMLTemplate(&prRem.Title, "title")
+	if err != nil {
+		return fmt.Errorf("%w: pull request title is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	_, err = util.NewSafeHTMLTemplate(&prRem.Body, "body")
+	if err != nil {
+		return fmt.Errorf("%w: pull request body is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
@@ -409,23 +494,6 @@ func validateRule(r *Profile_Rule) error {
 }
 
 var _ Validator = (*RuleType_Definition_Remediate_PullRequestRemediation)(nil)
-
-// Validate validates a rule definition
-func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() error {
-	if prRem == nil {
-		return errors.New("pull request remediation is nil")
-	}
-
-	if prRem.Title == "" {
-		return errors.New("title is required")
-	}
-
-	if prRem.Body == "" {
-		return errors.New("body is required")
-	}
-
-	return nil
-}
 
 func validateNamespacedName(name string) error {
 	components := strings.Split(name, "/")
