@@ -81,14 +81,6 @@ type PropertiesService interface {
 	RetrieveAllPropertiesForEntity(ctx context.Context, efp *models.EntityWithProperties,
 		provMan manager.ProviderManager, opts *ReadOptions,
 	) error
-	// RetrieveProperty fetches a single property for the given entity given
-	// a project, provider, and identifying properties.
-	RetrieveProperty(
-		ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
-		providerID uuid.UUID,
-		lookupProperties *properties.Properties, entType minderv1.Entity, key string,
-		opts *ReadOptions,
-	) (*properties.Property, error)
 	// ReplaceAllProperties saves all properties for the given entity
 	ReplaceAllProperties(
 		ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *CallOptions,
@@ -179,55 +171,6 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 
 	efp.UpdateProperties(props)
 	return nil
-}
-
-// RetrieveProperty fetches a single property for the given entity
-func (ps *propertiesService) RetrieveProperty(
-	ctx context.Context, provider provifv1.Provider, projectId uuid.UUID,
-	providerID uuid.UUID,
-	lookupProperties *properties.Properties, entType minderv1.Entity, key string,
-	opts *ReadOptions,
-) (*properties.Property, error) {
-	l := zerolog.Ctx(ctx).With().
-		Str("projectID", projectId.String()).
-		Str("providerID", providerID.String()).
-		Str("entityType", entType.String()).
-		Logger()
-
-	// fetch the entity first. If there's no entity, there's no properties, go straight to provider
-	entID, err := getEntityIdByProperties(ctx, projectId, providerID, lookupProperties, entType, ps.store)
-	if err != nil && !errors.Is(err, ErrEntityNotFound) {
-		return nil, err
-	}
-
-	// fetch properties from db
-	var dbProp db.Property
-	if entID != uuid.Nil {
-		dbProp, err = ps.store.GetProperty(ctx, db.GetPropertyParams{
-			EntityID: entID,
-			Key:      key,
-		})
-		if err != nil && !errors.Is(err, ErrPropertyNotFound) {
-			return nil, err
-		}
-	} else {
-		l.Info().Msg("no entity found, skipping properties fetch")
-	}
-
-	// if exists, turn into our model
-	if ps.isDatabasePropertyValid(dbProp, opts) {
-		return models.DbPropToModel(dbProp)
-	}
-
-	// if not, fetch from provider
-	prop, err := provider.FetchProperty(ctx, lookupProperties, entType, key)
-	if errors.Is(err, provifv1.ErrEntityNotFound) {
-		return nil, fmt.Errorf("failed to fetch upstream property: %w", ErrEntityNotFound)
-	} else if err != nil {
-		return nil, err
-	}
-
-	return prop, nil
 }
 
 func (ps *propertiesService) ReplaceAllProperties(
