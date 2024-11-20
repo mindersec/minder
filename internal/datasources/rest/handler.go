@@ -78,8 +78,14 @@ func (h *restHandler) ValidateArgs(args any) error {
 func (h *restHandler) ValidateUpdate(obj any) error {
 	switch castedobj := obj.(type) {
 	case *structpb.Struct:
+		if _, err := schemavalidate.CompileSchemaFromPB(castedobj); err != nil {
+			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
+		}
 		return schemaupdate.ValidateSchemaUpdate(h.rawnis, castedobj)
 	case map[string]any:
+		if _, err := schemavalidate.CompileSchemaFromMap(castedobj); err != nil {
+			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
+		}
 		return schemaupdate.ValidateSchemaUpdateMap(h.rawnis.AsMap(), castedobj)
 	default:
 		return errors.New("invalid type")
@@ -136,7 +142,6 @@ func (h *restHandler) Call(args any) (any, error) {
 
 func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 	var data any
-	var err error
 
 	if body == nil {
 		return nil, nil
@@ -153,10 +158,12 @@ func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 
 		data = jsonData
 	} else {
-		data, err = io.ReadAll(lr)
+		bytedata, err := io.ReadAll(lr)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read response body: %w", err)
 		}
+
+		data = string(bytedata)
 	}
 
 	return data, nil
