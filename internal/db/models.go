@@ -495,6 +495,25 @@ type Bundle struct {
 	Name      string    `json:"name"`
 }
 
+type DataSource struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	DisplayName string    `json:"display_name"`
+	ProjectID   uuid.UUID `json:"project_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type DataSourcesFunction struct {
+	ID           uuid.UUID       `json:"id"`
+	Name         string          `json:"name"`
+	Type         string          `json:"type"`
+	DataSourceID uuid.UUID       `json:"data_source_id"`
+	Definition   json.RawMessage `json:"definition"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+}
+
 type Entitlement struct {
 	ID        uuid.UUID `json:"id"`
 	Feature   string    `json:"feature"`
@@ -734,6 +753,11 @@ type RuleType struct {
 	DisplayName         string          `json:"display_name"`
 	ReleasePhase        ReleaseStatus   `json:"release_phase"`
 	ShortFailureMessage string          `json:"short_failure_message"`
+}
+
+type RuleTypeDataSource struct {
+	RuleTypeID    uuid.UUID `json:"rule_type_id"`
+	DataSourcesID uuid.UUID `json:"data_sources_id"`
 }
 
 type SessionStore struct {
