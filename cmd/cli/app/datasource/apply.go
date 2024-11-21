@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package datasource provides functionalities to manage and apply data sources.
 package datasource
 
 import (
