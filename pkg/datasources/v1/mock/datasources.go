@@ -120,17 +120,3 @@ func (mr *MockDataSourceMockRecorder) GetFuncs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFuncs", reflect.TypeOf((*MockDataSource)(nil).GetFuncs))
 }
-
-// GetName mocks base method.
-func (m *MockDataSource) GetName() string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetName")
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// GetName indicates an expected call of GetName.
-func (mr *MockDataSourceMockRecorder) GetName() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockDataSource)(nil).GetName))
-}
