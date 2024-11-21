@@ -23,6 +23,7 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -174,6 +175,11 @@ func (s *Server) CreateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
+	ds := crt.GetRuleType().GetDef().GetEval().GetDataSources()
+	if len(ds) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
+	}
+
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
@@ -212,6 +218,11 @@ func (s *Server) UpdateRuleType(
 	}
 	if err := validateMarkdown(urt.RuleType.Guidance); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
+	}
+
+	ds := urt.GetRuleType().GetDef().GetEval().GetDataSources()
+	if len(ds) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
 	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
