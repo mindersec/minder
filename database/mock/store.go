@@ -44,6 +44,21 @@ func (m *MockStore) EXPECT() *MockStoreMockRecorder {
 	return m.recorder
 }
 
+// AddDataSourceFunction mocks base method.
+func (m *MockStore) AddDataSourceFunction(ctx context.Context, arg db.AddDataSourceFunctionParams) (db.DataSourcesFunction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddDataSourceFunction", ctx, arg)
+	ret0, _ := ret[0].(db.DataSourcesFunction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddDataSourceFunction indicates an expected call of AddDataSourceFunction.
+func (mr *MockStoreMockRecorder) AddDataSourceFunction(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddDataSourceFunction", reflect.TypeOf((*MockStore)(nil).AddDataSourceFunction), ctx, arg)
+}
+
 // BeginTransaction mocks base method.
 func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
 	m.ctrl.T.Helper()
@@ -190,6 +205,21 @@ func (m *MockStore) CountUsers(ctx context.Context) (int64, error) {
 func (mr *MockStoreMockRecorder) CountUsers(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountUsers", reflect.TypeOf((*MockStore)(nil).CountUsers), ctx)
+}
+
+// CreateDataSource mocks base method.
+func (m *MockStore) CreateDataSource(ctx context.Context, arg db.CreateDataSourceParams) (db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateDataSource", ctx, arg)
+	ret0, _ := ret[0].(db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateDataSource indicates an expected call of CreateDataSource.
+func (mr *MockStoreMockRecorder) CreateDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDataSource", reflect.TypeOf((*MockStore)(nil).CreateDataSource), ctx, arg)
 }
 
 // CreateEntitlements mocks base method.
@@ -457,6 +487,36 @@ func (m *MockStore) DeleteArtifact(ctx context.Context, id uuid.UUID) error {
 func (mr *MockStoreMockRecorder) DeleteArtifact(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteArtifact", reflect.TypeOf((*MockStore)(nil).DeleteArtifact), ctx, id)
+}
+
+// DeleteDataSource mocks base method.
+func (m *MockStore) DeleteDataSource(ctx context.Context, arg db.DeleteDataSourceParams) (db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDataSource", ctx, arg)
+	ret0, _ := ret[0].(db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDataSource indicates an expected call of DeleteDataSource.
+func (mr *MockStoreMockRecorder) DeleteDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataSource", reflect.TypeOf((*MockStore)(nil).DeleteDataSource), ctx, arg)
+}
+
+// DeleteDataSourceFunction mocks base method.
+func (m *MockStore) DeleteDataSourceFunction(ctx context.Context, arg db.DeleteDataSourceFunctionParams) (db.DataSourcesFunction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDataSourceFunction", ctx, arg)
+	ret0, _ := ret[0].(db.DataSourcesFunction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDataSourceFunction indicates an expected call of DeleteDataSourceFunction.
+func (mr *MockStoreMockRecorder) DeleteDataSourceFunction(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataSourceFunction", reflect.TypeOf((*MockStore)(nil).DeleteDataSourceFunction), ctx, arg)
 }
 
 // DeleteEntity mocks base method.
@@ -908,6 +968,36 @@ func (m *MockStore) GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]db
 func (mr *MockStoreMockRecorder) GetChildrenProjects(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChildrenProjects", reflect.TypeOf((*MockStore)(nil).GetChildrenProjects), ctx, id)
+}
+
+// GetDataSource mocks base method.
+func (m *MockStore) GetDataSource(ctx context.Context, arg db.GetDataSourceParams) (db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDataSource", ctx, arg)
+	ret0, _ := ret[0].(db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDataSource indicates an expected call of GetDataSource.
+func (mr *MockStoreMockRecorder) GetDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDataSource", reflect.TypeOf((*MockStore)(nil).GetDataSource), ctx, arg)
+}
+
+// GetDataSourceByName mocks base method.
+func (m *MockStore) GetDataSourceByName(ctx context.Context, arg db.GetDataSourceByNameParams) (db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDataSourceByName", ctx, arg)
+	ret0, _ := ret[0].(db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDataSourceByName indicates an expected call of GetDataSourceByName.
+func (mr *MockStoreMockRecorder) GetDataSourceByName(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDataSourceByName", reflect.TypeOf((*MockStore)(nil).GetDataSourceByName), ctx, arg)
 }
 
 // GetEntitiesByProjectHierarchy mocks base method.
@@ -1867,6 +1957,36 @@ func (mr *MockStoreMockRecorder) ListArtifactsByRepoID(ctx, repositoryID any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListArtifactsByRepoID", reflect.TypeOf((*MockStore)(nil).ListArtifactsByRepoID), ctx, repositoryID)
 }
 
+// ListDataSourceFunctions mocks base method.
+func (m *MockStore) ListDataSourceFunctions(ctx context.Context, arg db.ListDataSourceFunctionsParams) ([]db.DataSourcesFunction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDataSourceFunctions", ctx, arg)
+	ret0, _ := ret[0].([]db.DataSourcesFunction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDataSourceFunctions indicates an expected call of ListDataSourceFunctions.
+func (mr *MockStoreMockRecorder) ListDataSourceFunctions(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDataSourceFunctions", reflect.TypeOf((*MockStore)(nil).ListDataSourceFunctions), ctx, arg)
+}
+
+// ListDataSources mocks base method.
+func (m *MockStore) ListDataSources(ctx context.Context, projects []uuid.UUID) ([]db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListDataSources", ctx, projects)
+	ret0, _ := ret[0].([]db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListDataSources indicates an expected call of ListDataSources.
+func (mr *MockStoreMockRecorder) ListDataSources(ctx, projects any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDataSources", reflect.TypeOf((*MockStore)(nil).ListDataSources), ctx, projects)
+}
+
 // ListEvaluationHistory mocks base method.
 func (m *MockStore) ListEvaluationHistory(ctx context.Context, arg db.ListEvaluationHistoryParams) ([]db.ListEvaluationHistoryRow, error) {
 	m.ctrl.T.Helper()
@@ -2192,6 +2312,36 @@ func (m *MockStore) SetSubscriptionBundleVersion(ctx context.Context, arg db.Set
 func (mr *MockStoreMockRecorder) SetSubscriptionBundleVersion(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSubscriptionBundleVersion", reflect.TypeOf((*MockStore)(nil).SetSubscriptionBundleVersion), ctx, arg)
+}
+
+// UpdateDataSource mocks base method.
+func (m *MockStore) UpdateDataSource(ctx context.Context, arg db.UpdateDataSourceParams) (db.DataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDataSource", ctx, arg)
+	ret0, _ := ret[0].(db.DataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDataSource indicates an expected call of UpdateDataSource.
+func (mr *MockStoreMockRecorder) UpdateDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDataSource", reflect.TypeOf((*MockStore)(nil).UpdateDataSource), ctx, arg)
+}
+
+// UpdateDataSourceFunction mocks base method.
+func (m *MockStore) UpdateDataSourceFunction(ctx context.Context, arg db.UpdateDataSourceFunctionParams) (db.DataSourcesFunction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateDataSourceFunction", ctx, arg)
+	ret0, _ := ret[0].(db.DataSourcesFunction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDataSourceFunction indicates an expected call of UpdateDataSourceFunction.
+func (mr *MockStoreMockRecorder) UpdateDataSourceFunction(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDataSourceFunction", reflect.TypeOf((*MockStore)(nil).UpdateDataSourceFunction), ctx, arg)
 }
 
 // UpdateEncryptedSecret mocks base method.
