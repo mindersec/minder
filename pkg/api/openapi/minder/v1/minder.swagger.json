@@ -3350,6 +3350,73 @@
         }
       }
     },
+    "RestDataSourceDef": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "headers is a map of headers to send with the request."
+        },
+        "bodyobj": {
+          "type": "object",
+          "description": "body is the body of the request."
+        },
+        "bodystr": {
+          "type": "string",
+          "description": "bodystr is the body of the request as a string."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RestDataSourceDefFallback"
+          },
+          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
+        },
+        "expectedStatus": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
+        },
+        "inputSchema": {
+          "type": "object",
+          "description": "input_schema is the schema for the input to the REST API."
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
+    },
+    "RestDataSourceDefFallback": {
+      "type": "object",
+      "properties": {
+        "httpStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "body": {
+          "type": "string"
+        }
+      }
+    },
     "RuleTypeDefinition": {
       "type": "object",
       "properties": {
@@ -3556,7 +3623,11 @@
     },
     "v1CreateDataSourceResponse": {
       "type": "object",
-      "title": "TODO"
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
     },
     "v1CreateEntityReconciliationTaskRequest": {
       "type": "object",
@@ -3728,9 +3799,48 @@
       },
       "description": "CursorPage message used in response messages. Its purpose is to\nsend to clients links pointing to next and/or previous collection\nsubsets with respect to the one containing this struct."
     },
+    "v1DataSource": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "version is the version of the data source API."
+        },
+        "type": {
+          "type": "string",
+          "title": "type is the data source type"
+        },
+        "context": {
+          "$ref": "#/definitions/v1ContextV2",
+          "description": "context is the context in which the data source is evaluated.\nNote that in this case we only need the project in the\ncontext, since data sources are not provider-specific."
+        },
+        "name": {
+          "type": "string",
+          "description": "name is the name of the data source.\nNote that this is unique within a project hierarchy.\nThis is also case insensitive."
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the data source.",
+          "readOnly": true
+        },
+        "rest": {
+          "$ref": "#/definitions/v1RestDataSource",
+          "description": "rest is the REST data source driver."
+        }
+      },
+      "description": "DataSource is a Data source instance. Data sources represent\nexternal integrations that enrich the data in Minder, but do not\nhave explicit lifecycle objects (entities).  Integrations which\ncreate entities are called Providers.",
+      "required": [
+        "version",
+        "name"
+      ]
+    },
     "v1DeleteDataSourceResponse": {
       "type": "object",
-      "title": "TODO"
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
     },
     "v1DeleteProfileResponse": {
       "type": "object"
@@ -4010,7 +4120,11 @@
     },
     "v1GetDataSourceByIdResponse": {
       "type": "object",
-      "title": "TODO"
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
     },
     "v1GetEvaluationHistoryResponse": {
       "type": "object",
@@ -4273,7 +4387,15 @@
     },
     "v1ListDataSourcesResponse": {
       "type": "object",
-      "title": "TODO"
+      "properties": {
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DataSource"
+          }
+        }
+      }
     },
     "v1ListEvaluationHistoryResponse": {
       "type": "object",
@@ -4916,6 +5038,19 @@
         }
       }
     },
+    "v1RestDataSource": {
+      "type": "object",
+      "properties": {
+        "def": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/RestDataSourceDef"
+          },
+          "description": "defs is the list of definitions for the REST API."
+        }
+      },
+      "description": "RestDataSource is the REST data source driver."
+    },
     "v1RestType": {
       "type": "object",
       "properties": {
@@ -5230,7 +5365,11 @@
     },
     "v1UpdateDataSourceResponse": {
       "type": "object",
-      "title": "TODO"
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
     },
     "v1UpdateProfileRequest": {
       "type": "object",

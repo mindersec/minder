@@ -421,7 +421,12 @@ DataSource service
 
 <Message id="minder-v1-CreateDataSourceResponse">CreateDataSourceResponse</Message>
 
-TODO
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
 
 
 
@@ -621,7 +626,12 @@ create entities are called Providers.
 
 <Message id="minder-v1-DeleteDataSourceResponse">DeleteDataSourceResponse</Message>
 
-TODO
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
@@ -1060,7 +1070,12 @@ Namespace: is the namespace for the GHCR provider.
 
 <Message id="minder-v1-GetDataSourceByIdResponse">GetDataSourceByIdResponse</Message>
 
-TODO
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
 
 
 
@@ -1496,7 +1511,12 @@ GitType defines the git data ingester.
 
 <Message id="minder-v1-ListDataSourcesResponse">ListDataSourcesResponse</Message>
 
-TODO
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data_sources | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> | repeated |  |
 
 
 
@@ -2711,7 +2731,12 @@ Severity defines the severity of the rule.
 
 <Message id="minder-v1-UpdateDataSourceResponse">UpdateDataSourceResponse</Message>
 
-TODO
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
 
 
 

@@ -1430,7 +1430,7 @@ message CreateDataSourceRequest {
 }
 
 message CreateDataSourceResponse {
-    // TODO
+    DataSource data_source = 1;
 }
 
 message GetDataSourceByIdRequest {
@@ -1441,7 +1441,7 @@ message GetDataSourceByIdRequest {
 }
 
 message GetDataSourceByIdResponse {
-    // TODO
+    DataSource data_source = 1;
 }
 
 message ListDataSourcesRequest {
@@ -1449,7 +1449,7 @@ message ListDataSourcesRequest {
 }
 
 message ListDataSourcesResponse {
-    // TODO
+    repeated DataSource data_sources = 1;
 }
 
 message UpdateDataSourceRequest {
@@ -1460,7 +1460,7 @@ message UpdateDataSourceRequest {
 }
 
 message UpdateDataSourceResponse {
-    // TODO
+    DataSource data_source = 1;
 }
 
 message DeleteDataSourceRequest {
@@ -1471,7 +1471,7 @@ message DeleteDataSourceRequest {
 }
 
 message DeleteDataSourceResponse {
-    // TODO
+    string id = 1;
 }
 
 // Profile service
