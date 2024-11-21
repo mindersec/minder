@@ -16,6 +16,7 @@ import (
 	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -54,7 +55,7 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 		rawInputSchema: def.GetInputSchema(),
 		inputSchema:    schema,
 		endpointTmpl:   def.GetEndpoint(),
-		method:         defaultString(def.GetMethod(), http.MethodGet),
+		method:         util.HttpMethodFromString(def.GetMethod(), http.MethodGet),
 		headers:        def.GetHeaders(),
 		body:           parseRequestBodyConfig(def),
 		parse:          def.GetParse(),
@@ -199,12 +200,4 @@ func buildRestOutput(statusCode int, body any) any {
 		"status_code": statusCode,
 		"body":        body,
 	}
-}
-
-func defaultString(s, def string) string {
-	if s == "" {
-		return def
-	}
-
-	return s
 }
