@@ -70,9 +70,11 @@ export const TypeLink = ({ children, type }) => {
 | ----------- | ------------ | ------------- | ------------|
 | CreateDataSource | [CreateDataSourceRequest](#minder-v1-CreateDataSourceRequest) | [CreateDataSourceResponse](#minder-v1-CreateDataSourceResponse) |  |
 | GetDataSourceById | [GetDataSourceByIdRequest](#minder-v1-GetDataSourceByIdRequest) | [GetDataSourceByIdResponse](#minder-v1-GetDataSourceByIdResponse) |  |
+| GetDataSourceByName | [GetDataSourceByNameRequest](#minder-v1-GetDataSourceByNameRequest) | [GetDataSourceByNameResponse](#minder-v1-GetDataSourceByNameResponse) |  |
 | ListDataSources | [ListDataSourcesRequest](#minder-v1-ListDataSourcesRequest) | [ListDataSourcesResponse](#minder-v1-ListDataSourcesResponse) |  |
 | UpdateDataSource | [UpdateDataSourceRequest](#minder-v1-UpdateDataSourceRequest) | [UpdateDataSourceResponse](#minder-v1-UpdateDataSourceResponse) |  |
-| DeleteDataSource | [DeleteDataSourceRequest](#minder-v1-DeleteDataSourceRequest) | [DeleteDataSourceResponse](#minder-v1-DeleteDataSourceResponse) |  |
+| DeleteDataSourceById | [DeleteDataSourceByIdRequest](#minder-v1-DeleteDataSourceByIdRequest) | [DeleteDataSourceByIdResponse](#minder-v1-DeleteDataSourceByIdResponse) |  |
+| DeleteDataSourceByName | [DeleteDataSourceByNameRequest](#minder-v1-DeleteDataSourceByNameRequest) | [DeleteDataSourceByNameResponse](#minder-v1-DeleteDataSourceByNameResponse) |  |
 
 
 
@@ -613,7 +615,7 @@ create entities are called Providers.
 
 
 
-<Message id="minder-v1-DeleteDataSourceRequest">DeleteDataSourceRequest</Message>
+<Message id="minder-v1-DeleteDataSourceByIdRequest">DeleteDataSourceByIdRequest</Message>
 
 
 
@@ -625,7 +627,7 @@ create entities are called Providers.
 
 
 
-<Message id="minder-v1-DeleteDataSourceResponse">DeleteDataSourceResponse</Message>
+<Message id="minder-v1-DeleteDataSourceByIdResponse">DeleteDataSourceByIdResponse</Message>
 
 
 
@@ -633,6 +635,29 @@ create entities are called Providers.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteDataSourceByNameRequest">DeleteDataSourceByNameRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteDataSourceByNameResponse">DeleteDataSourceByNameResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
@@ -1070,6 +1095,29 @@ Namespace: is the namespace for the GHCR provider.
 
 
 <Message id="minder-v1-GetDataSourceByIdResponse">GetDataSourceByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetDataSourceByNameRequest">GetDataSourceByNameRequest</Message>
+
+GetDataSourceByNameRequest is the request message for the GetDataSourceByName RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
+| name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetDataSourceByNameResponse">GetDataSourceByNameResponse</Message>
 
 
 

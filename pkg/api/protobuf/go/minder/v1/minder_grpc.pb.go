@@ -1559,11 +1559,13 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	DataSourceService_CreateDataSource_FullMethodName  = "/minder.v1.DataSourceService/CreateDataSource"
-	DataSourceService_GetDataSourceById_FullMethodName = "/minder.v1.DataSourceService/GetDataSourceById"
-	DataSourceService_ListDataSources_FullMethodName   = "/minder.v1.DataSourceService/ListDataSources"
-	DataSourceService_UpdateDataSource_FullMethodName  = "/minder.v1.DataSourceService/UpdateDataSource"
-	DataSourceService_DeleteDataSource_FullMethodName  = "/minder.v1.DataSourceService/DeleteDataSource"
+	DataSourceService_CreateDataSource_FullMethodName       = "/minder.v1.DataSourceService/CreateDataSource"
+	DataSourceService_GetDataSourceById_FullMethodName      = "/minder.v1.DataSourceService/GetDataSourceById"
+	DataSourceService_GetDataSourceByName_FullMethodName    = "/minder.v1.DataSourceService/GetDataSourceByName"
+	DataSourceService_ListDataSources_FullMethodName        = "/minder.v1.DataSourceService/ListDataSources"
+	DataSourceService_UpdateDataSource_FullMethodName       = "/minder.v1.DataSourceService/UpdateDataSource"
+	DataSourceService_DeleteDataSourceById_FullMethodName   = "/minder.v1.DataSourceService/DeleteDataSourceById"
+	DataSourceService_DeleteDataSourceByName_FullMethodName = "/minder.v1.DataSourceService/DeleteDataSourceByName"
 )
 
 // DataSourceServiceClient is the client API for DataSourceService service.
@@ -1572,9 +1574,11 @@ const (
 type DataSourceServiceClient interface {
 	CreateDataSource(ctx context.Context, in *CreateDataSourceRequest, opts ...grpc.CallOption) (*CreateDataSourceResponse, error)
 	GetDataSourceById(ctx context.Context, in *GetDataSourceByIdRequest, opts ...grpc.CallOption) (*GetDataSourceByIdResponse, error)
+	GetDataSourceByName(ctx context.Context, in *GetDataSourceByNameRequest, opts ...grpc.CallOption) (*GetDataSourceByNameResponse, error)
 	ListDataSources(ctx context.Context, in *ListDataSourcesRequest, opts ...grpc.CallOption) (*ListDataSourcesResponse, error)
 	UpdateDataSource(ctx context.Context, in *UpdateDataSourceRequest, opts ...grpc.CallOption) (*UpdateDataSourceResponse, error)
-	DeleteDataSource(ctx context.Context, in *DeleteDataSourceRequest, opts ...grpc.CallOption) (*DeleteDataSourceResponse, error)
+	DeleteDataSourceById(ctx context.Context, in *DeleteDataSourceByIdRequest, opts ...grpc.CallOption) (*DeleteDataSourceByIdResponse, error)
+	DeleteDataSourceByName(ctx context.Context, in *DeleteDataSourceByNameRequest, opts ...grpc.CallOption) (*DeleteDataSourceByNameResponse, error)
 }
 
 type dataSourceServiceClient struct {
@@ -1605,6 +1609,16 @@ func (c *dataSourceServiceClient) GetDataSourceById(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *dataSourceServiceClient) GetDataSourceByName(ctx context.Context, in *GetDataSourceByNameRequest, opts ...grpc.CallOption) (*GetDataSourceByNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDataSourceByNameResponse)
+	err := c.cc.Invoke(ctx, DataSourceService_GetDataSourceByName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *dataSourceServiceClient) ListDataSources(ctx context.Context, in *ListDataSourcesRequest, opts ...grpc.CallOption) (*ListDataSourcesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListDataSourcesResponse)
@@ -1625,10 +1639,20 @@ func (c *dataSourceServiceClient) UpdateDataSource(ctx context.Context, in *Upda
 	return out, nil
 }
 
-func (c *dataSourceServiceClient) DeleteDataSource(ctx context.Context, in *DeleteDataSourceRequest, opts ...grpc.CallOption) (*DeleteDataSourceResponse, error) {
+func (c *dataSourceServiceClient) DeleteDataSourceById(ctx context.Context, in *DeleteDataSourceByIdRequest, opts ...grpc.CallOption) (*DeleteDataSourceByIdResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteDataSourceResponse)
-	err := c.cc.Invoke(ctx, DataSourceService_DeleteDataSource_FullMethodName, in, out, cOpts...)
+	out := new(DeleteDataSourceByIdResponse)
+	err := c.cc.Invoke(ctx, DataSourceService_DeleteDataSourceById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dataSourceServiceClient) DeleteDataSourceByName(ctx context.Context, in *DeleteDataSourceByNameRequest, opts ...grpc.CallOption) (*DeleteDataSourceByNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDataSourceByNameResponse)
+	err := c.cc.Invoke(ctx, DataSourceService_DeleteDataSourceByName_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1641,9 +1665,11 @@ func (c *dataSourceServiceClient) DeleteDataSource(ctx context.Context, in *Dele
 type DataSourceServiceServer interface {
 	CreateDataSource(context.Context, *CreateDataSourceRequest) (*CreateDataSourceResponse, error)
 	GetDataSourceById(context.Context, *GetDataSourceByIdRequest) (*GetDataSourceByIdResponse, error)
+	GetDataSourceByName(context.Context, *GetDataSourceByNameRequest) (*GetDataSourceByNameResponse, error)
 	ListDataSources(context.Context, *ListDataSourcesRequest) (*ListDataSourcesResponse, error)
 	UpdateDataSource(context.Context, *UpdateDataSourceRequest) (*UpdateDataSourceResponse, error)
-	DeleteDataSource(context.Context, *DeleteDataSourceRequest) (*DeleteDataSourceResponse, error)
+	DeleteDataSourceById(context.Context, *DeleteDataSourceByIdRequest) (*DeleteDataSourceByIdResponse, error)
+	DeleteDataSourceByName(context.Context, *DeleteDataSourceByNameRequest) (*DeleteDataSourceByNameResponse, error)
 	mustEmbedUnimplementedDataSourceServiceServer()
 }
 
@@ -1660,14 +1686,20 @@ func (UnimplementedDataSourceServiceServer) CreateDataSource(context.Context, *C
 func (UnimplementedDataSourceServiceServer) GetDataSourceById(context.Context, *GetDataSourceByIdRequest) (*GetDataSourceByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDataSourceById not implemented")
 }
+func (UnimplementedDataSourceServiceServer) GetDataSourceByName(context.Context, *GetDataSourceByNameRequest) (*GetDataSourceByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDataSourceByName not implemented")
+}
 func (UnimplementedDataSourceServiceServer) ListDataSources(context.Context, *ListDataSourcesRequest) (*ListDataSourcesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDataSources not implemented")
 }
 func (UnimplementedDataSourceServiceServer) UpdateDataSource(context.Context, *UpdateDataSourceRequest) (*UpdateDataSourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateDataSource not implemented")
 }
-func (UnimplementedDataSourceServiceServer) DeleteDataSource(context.Context, *DeleteDataSourceRequest) (*DeleteDataSourceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteDataSource not implemented")
+func (UnimplementedDataSourceServiceServer) DeleteDataSourceById(context.Context, *DeleteDataSourceByIdRequest) (*DeleteDataSourceByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDataSourceById not implemented")
+}
+func (UnimplementedDataSourceServiceServer) DeleteDataSourceByName(context.Context, *DeleteDataSourceByNameRequest) (*DeleteDataSourceByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDataSourceByName not implemented")
 }
 func (UnimplementedDataSourceServiceServer) mustEmbedUnimplementedDataSourceServiceServer() {}
 func (UnimplementedDataSourceServiceServer) testEmbeddedByValue()                           {}
@@ -1726,6 +1758,24 @@ func _DataSourceService_GetDataSourceById_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DataSourceService_GetDataSourceByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDataSourceByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataSourceServiceServer).GetDataSourceByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataSourceService_GetDataSourceByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataSourceServiceServer).GetDataSourceByName(ctx, req.(*GetDataSourceByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DataSourceService_ListDataSources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListDataSourcesRequest)
 	if err := dec(in); err != nil {
@@ -1762,20 +1812,38 @@ func _DataSourceService_UpdateDataSource_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _DataSourceService_DeleteDataSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteDataSourceRequest)
+func _DataSourceService_DeleteDataSourceById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDataSourceByIdRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DataSourceServiceServer).DeleteDataSource(ctx, in)
+		return srv.(DataSourceServiceServer).DeleteDataSourceById(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: DataSourceService_DeleteDataSource_FullMethodName,
+		FullMethod: DataSourceService_DeleteDataSourceById_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DataSourceServiceServer).DeleteDataSource(ctx, req.(*DeleteDataSourceRequest))
+		return srv.(DataSourceServiceServer).DeleteDataSourceById(ctx, req.(*DeleteDataSourceByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DataSourceService_DeleteDataSourceByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDataSourceByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DataSourceServiceServer).DeleteDataSourceByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DataSourceService_DeleteDataSourceByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DataSourceServiceServer).DeleteDataSourceByName(ctx, req.(*DeleteDataSourceByNameRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1796,6 +1864,10 @@ var DataSourceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DataSourceService_GetDataSourceById_Handler,
 		},
 		{
+			MethodName: "GetDataSourceByName",
+			Handler:    _DataSourceService_GetDataSourceByName_Handler,
+		},
+		{
 			MethodName: "ListDataSources",
 			Handler:    _DataSourceService_ListDataSources_Handler,
 		},
@@ -1804,8 +1876,12 @@ var DataSourceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _DataSourceService_UpdateDataSource_Handler,
 		},
 		{
-			MethodName: "DeleteDataSource",
-			Handler:    _DataSourceService_DeleteDataSource_Handler,
+			MethodName: "DeleteDataSourceById",
+			Handler:    _DataSourceService_DeleteDataSourceById_Handler,
+		},
+		{
+			MethodName: "DeleteDataSourceByName",
+			Handler:    _DataSourceService_DeleteDataSourceByName_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

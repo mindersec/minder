@@ -35,6 +35,17 @@ func (s *Server) GetDataSourceById(ctx context.Context,
 	return &minderv1.GetDataSourceByIdResponse{}, nil
 }
 
+// GetDataSourceByName retrieves a data source by name
+func (s *Server) GetDataSourceByName(ctx context.Context,
+	_ *minderv1.GetDataSourceByNameRequest) (*minderv1.GetDataSourceByNameResponse, error) {
+
+	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
+	}
+
+	return &minderv1.GetDataSourceByNameResponse{}, nil
+}
+
 // ListDataSources lists all data sources
 func (s *Server) ListDataSources(ctx context.Context,
 	_ *minderv1.ListDataSourcesRequest) (*minderv1.ListDataSourcesResponse, error) {
@@ -57,13 +68,24 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 	return &minderv1.UpdateDataSourceResponse{}, nil
 }
 
-// DeleteDataSource deletes a data source
-func (s *Server) DeleteDataSource(ctx context.Context,
-	_ *minderv1.DeleteDataSourceRequest) (*minderv1.DeleteDataSourceResponse, error) {
+// DeleteDataSourceById deletes a data source by ID
+func (s *Server) DeleteDataSourceById(ctx context.Context,
+	_ *minderv1.DeleteDataSourceByIdRequest) (*minderv1.DeleteDataSourceByIdResponse, error) {
 
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
 	}
 
-	return &minderv1.DeleteDataSourceResponse{}, nil
+	return &minderv1.DeleteDataSourceByIdResponse{}, nil
+}
+
+// DeleteDataSourceByName deletes a data source by name
+func (s *Server) DeleteDataSourceByName(ctx context.Context,
+	_ *minderv1.DeleteDataSourceByNameRequest) (*minderv1.DeleteDataSourceByNameResponse, error) {
+
+	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
+	}
+
+	return &minderv1.DeleteDataSourceByNameResponse{}, nil
 }

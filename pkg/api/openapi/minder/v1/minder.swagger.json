@@ -568,6 +568,82 @@
         ]
       }
     },
+    "/api/v1/data_source/name/{name}": {
+      "get": {
+        "operationId": "DataSourceService_GetDataSourceByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetDataSourceByNameResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      },
+      "delete": {
+        "operationId": "DataSourceService_DeleteDataSourceByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteDataSourceByNameResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      }
+    },
     "/api/v1/data_source/{id}": {
       "get": {
         "operationId": "DataSourceService_GetDataSourceById",
@@ -606,12 +682,12 @@
         ]
       },
       "delete": {
-        "operationId": "DataSourceService_DeleteDataSource",
+        "operationId": "DataSourceService_DeleteDataSourceById",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1DeleteDataSourceResponse"
+              "$ref": "#/definitions/v1DeleteDataSourceByIdResponse"
             }
           }
         },
@@ -3837,10 +3913,18 @@
         "name"
       ]
     },
-    "v1DeleteDataSourceResponse": {
+    "v1DeleteDataSourceByIdResponse": {
       "type": "object",
       "properties": {
         "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteDataSourceByNameResponse": {
+      "type": "object",
+      "properties": {
+        "name": {
           "type": "string"
         }
       }
@@ -4122,6 +4206,14 @@
       }
     },
     "v1GetDataSourceByIdResponse": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
+    },
+    "v1GetDataSourceByNameResponse": {
       "type": "object",
       "properties": {
         "dataSource": {

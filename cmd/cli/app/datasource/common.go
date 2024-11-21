@@ -39,7 +39,7 @@ func executeOnOneDataSource(
 	defer closer()
 
 	ds := &minderv1.DataSource{}
-	if err := minderv1.ParseResource(reader, ds); err != nil {
+	if err := minderv1.ParseResourceProto(reader, ds); err != nil {
 		return fmt.Errorf("error parsing data source: %w", err)
 	}
 

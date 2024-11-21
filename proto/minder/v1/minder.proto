@@ -635,6 +635,17 @@ service DataSourceService {
         };
     }
 
+    rpc GetDataSourceByName(GetDataSourceByNameRequest) returns (GetDataSourceByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/data_source/name/{name=**}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_GET
+        };
+    }
+
     rpc ListDataSources (ListDataSourcesRequest) returns (ListDataSourcesResponse) {
         option (google.api.http) = {
             get: "/api/v1/data_sources"
@@ -658,9 +669,20 @@ service DataSourceService {
         };
     }
 
-    rpc DeleteDataSource (DeleteDataSourceRequest) returns (DeleteDataSourceResponse) {
+    rpc DeleteDataSourceById(DeleteDataSourceByIdRequest) returns (DeleteDataSourceByIdResponse) {
         option (google.api.http) = {
             delete: "/api/v1/data_source/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_DATA_SOURCE_DELETE
+        };
+    }
+
+    rpc DeleteDataSourceByName(DeleteDataSourceByNameRequest) returns (DeleteDataSourceByNameResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/data_source/name/{name=**}"
         };
 
         option (rpc_options) = {
@@ -1445,6 +1467,23 @@ message GetDataSourceByIdResponse {
     DataSource data_source = 1;
 }
 
+// GetDataSourceByNameRequest is the request message for the GetDataSourceByName RPC.
+message GetDataSourceByNameRequest {
+    ContextV2 context = 1;
+
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-[:word:]]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+message GetDataSourceByNameResponse {
+    DataSource data_source = 1;
+}
+
 message ListDataSourcesRequest {
     ContextV2 context = 1;
 }
@@ -1462,15 +1501,30 @@ message UpdateDataSourceResponse {
     DataSource data_source = 1;
 }
 
-message DeleteDataSourceRequest {
+message DeleteDataSourceByIdRequest {
     ContextV2 context = 1;
     string id = 2 [
         (buf.validate.field).string = {uuid: true}
     ];
 }
 
-message DeleteDataSourceResponse {
+message DeleteDataSourceByIdResponse {
     string id = 1;
+}
+
+message DeleteDataSourceByNameRequest {
+    ContextV2 context = 1;
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-[:word:]]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+message DeleteDataSourceByNameResponse {
+    string name = 1;
 }
 
 // Profile service

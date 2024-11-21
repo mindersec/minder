@@ -34,43 +34,67 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	id := viper.GetString("id")
+	name := viper.GetString("name")
 
 	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.GetDataSourceById(ctx, &minderv1.GetDataSourceByIdRequest{
-		Context: &minderv1.ContextV2{
-			ProjectId: project,
-		},
-		Id: id,
-	})
+	var err error
+	var ds *minderv1.DataSource
+
+	if id == "" && name == "" {
+		return fmt.Errorf("either id or name must be specified")
+	}
+
+	var resp interface {
+		GetDataSource() *minderv1.DataSource
+	}
+
+	if id != "" {
+		resp, err = client.GetDataSourceById(ctx, &minderv1.GetDataSourceByIdRequest{
+			Context: &minderv1.ContextV2{
+				ProjectId: project,
+			},
+			Id: id,
+		})
+	} else {
+		resp, err = client.GetDataSourceByName(ctx, &minderv1.GetDataSourceByNameRequest{
+			Context: &minderv1.ContextV2{
+				ProjectId: project,
+			},
+			Name: name,
+		})
+	}
+
 	if err != nil {
 		return cli.MessageAndError("Failed to get data source", err)
 	}
 
+	ds = resp.GetDataSource()
+	return outputDataSource(cmd, format, ds)
+}
+
+func outputDataSource(cmd *cobra.Command, format string, ds *minderv1.DataSource) error {
 	switch format {
 	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
+		out, err := util.GetJsonFromProto(ds)
 		if err != nil {
 			return cli.MessageAndError("Error getting json from proto", err)
 		}
 		cmd.Println(out)
 	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
+		out, err := util.GetYamlFromProto(ds)
 		if err != nil {
 			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
 		cmd.Println(out)
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name", "Type"})
-		ds := resp.GetDataSource()
 		t.AddRow(ds.Id, ds.Name, getDataSourceType(ds))
 		t.Render()
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)
 	}
-
 	return nil
 }
 
@@ -80,8 +104,8 @@ func init() {
 	getCmd.Flags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
 	getCmd.Flags().StringP("id", "i", "", "ID of the data source to get info from")
+	getCmd.Flags().StringP("name", "n", "", "Name of the data source to get info from")
 
-	if err := getCmd.MarkFlagRequired("id"); err != nil {
-		panic(err)
-	}
+	// Ensure at least one of id or name is required
+	getCmd.MarkFlagsOneRequired("id", "name")
 }
