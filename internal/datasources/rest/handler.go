@@ -28,14 +28,13 @@ const (
 )
 
 type restHandler struct {
-	// nis is a nullable input schema
-	rawnis       *structpb.Struct
-	nis          *jsonschema.Schema
-	endpointTmpl string
-	method       string
-	body         string
-	headers      map[string]string
-	parse        string
+	rawInputSchema *structpb.Struct
+	inputSchema    *jsonschema.Schema
+	endpointTmpl   string
+	method         string
+	body           string
+	headers        map[string]string
+	parse          string
 	// TODO implement fallback
 	// TODO implement auth
 }
@@ -52,19 +51,19 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 	}
 
 	return &restHandler{
-		rawnis:       def.GetInputSchema(),
-		nis:          schema,
-		endpointTmpl: def.GetEndpoint(),
-		method:       defaultString(def.GetMethod(), http.MethodGet),
-		headers:      def.GetHeaders(),
-		body:         parseRequestBodyConfig(def),
-		parse:        def.GetParse(),
+		rawInputSchema: def.GetInputSchema(),
+		inputSchema:    schema,
+		endpointTmpl:   def.GetEndpoint(),
+		method:         defaultString(def.GetMethod(), http.MethodGet),
+		headers:        def.GetHeaders(),
+		body:           parseRequestBodyConfig(def),
+		parse:          def.GetParse(),
 	}, nil
 }
 
 func (h *restHandler) ValidateArgs(args any) error {
-	if h.nis == nil {
-		return nil
+	if h.inputSchema == nil {
+		return errors.New("input schema cannot be nil")
 	}
 
 	mapobj, ok := args.(map[string]any)
@@ -72,21 +71,25 @@ func (h *restHandler) ValidateArgs(args any) error {
 		return errors.New("args is not a map")
 	}
 
-	return schemavalidate.ValidateAgainstSchema(h.nis, mapobj)
+	return schemavalidate.ValidateAgainstSchema(h.inputSchema, mapobj)
 }
 
 func (h *restHandler) ValidateUpdate(obj any) error {
+	if obj == nil {
+		return errors.New("update schema cannot be nil")
+	}
+
 	switch castedobj := obj.(type) {
 	case *structpb.Struct:
 		if _, err := schemavalidate.CompileSchemaFromPB(castedobj); err != nil {
 			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
 		}
-		return schemaupdate.ValidateSchemaUpdate(h.rawnis, castedobj)
+		return schemaupdate.ValidateSchemaUpdate(h.rawInputSchema, castedobj)
 	case map[string]any:
 		if _, err := schemavalidate.CompileSchemaFromMap(castedobj); err != nil {
 			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
 		}
-		return schemaupdate.ValidateSchemaUpdateMap(h.rawnis.AsMap(), castedobj)
+		return schemaupdate.ValidateSchemaUpdateMap(h.rawInputSchema.AsMap(), castedobj)
 	default:
 		return errors.New("invalid type")
 	}

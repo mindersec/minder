@@ -49,13 +49,13 @@ func Test_newHandlerFromDef(t *testing.T) {
 				},
 			},
 			want: &restHandler{
-				rawnis:       &structpb.Struct{},
-				nis:          &jsonschema.Schema{},
-				endpointTmpl: "http://example.com",
-				method:       "GET",
-				headers:      map[string]string{"Content-Type": "application/json"},
-				body:         "",
-				parse:        "json",
+				rawInputSchema: &structpb.Struct{},
+				inputSchema:    &jsonschema.Schema{},
+				endpointTmpl:   "http://example.com",
+				method:         "GET",
+				headers:        map[string]string{"Content-Type": "application/json"},
+				body:           "",
+				parse:          "json",
 			},
 			wantErr: false,
 		},
@@ -70,7 +70,7 @@ func Test_newHandlerFromDef(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				assert.Equal(t, tt.want.rawnis.AsMap(), got.rawnis.AsMap())
+				assert.Equal(t, tt.want.rawInputSchema.AsMap(), got.rawInputSchema.AsMap())
 				assert.Equal(t, tt.want.endpointTmpl, got.endpointTmpl)
 				assert.Equal(t, tt.want.method, got.method)
 				assert.Equal(t, tt.want.headers, got.headers)
@@ -252,8 +252,7 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		rawnis       *structpb.Struct
-		nis          *jsonschema.Schema
+		inputSchema  *jsonschema.Schema
 		endpointTmpl string
 		method       string
 		body         string
@@ -272,7 +271,7 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 		{
 			name: "Valid args",
 			fields: fields{
-				nis: func() *jsonschema.Schema {
+				inputSchema: func() *jsonschema.Schema {
 					schema, err := schemavalidate.CompileSchemaFromMap(
 						map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}}},
 					)
@@ -288,7 +287,7 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 		{
 			name: "Invalid args type",
 			fields: fields{
-				nis: func() *jsonschema.Schema {
+				inputSchema: func() *jsonschema.Schema {
 					schema, err := schemavalidate.CompileSchemaFromMap(
 						map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}}},
 					)
@@ -304,7 +303,7 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 		{
 			name: "Invalid args value",
 			fields: fields{
-				nis: func() *jsonschema.Schema {
+				inputSchema: func() *jsonschema.Schema {
 					schema, err := schemavalidate.CompileSchemaFromMap(
 						map[string]any{"type": "object", "properties": map[string]any{"key": map[string]any{"type": "string"}}},
 					)
@@ -320,20 +319,19 @@ func Test_restHandler_ValidateArgs(t *testing.T) {
 		{
 			name: "No schema",
 			fields: fields{
-				nis: nil,
+				inputSchema: nil,
 			},
 			args: args{
 				args: map[string]any{"key": "value"},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			h := &restHandler{
-				rawnis:       tt.fields.rawnis,
-				nis:          tt.fields.nis,
+				inputSchema:  tt.fields.inputSchema,
 				endpointTmpl: tt.fields.endpointTmpl,
 				method:       tt.fields.method,
 				body:         tt.fields.body,
@@ -423,6 +421,17 @@ func Test_restHandler_ValidateUpdate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "nil update schema",
+			inputSchema: map[string]any{
+				"type":       "object",
+				"properties": map[string]any{"key": map[string]any{"type": "string"}},
+			},
+			args: args{
+				updateSchema: nil,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -433,7 +442,7 @@ func Test_restHandler_ValidateUpdate(t *testing.T) {
 			require.NoError(t, err, "failed to create structpb.Struct")
 
 			h := &restHandler{
-				rawnis: s,
+				rawInputSchema: s,
 			}
 
 			// Validate that the input schema is a valid JSON schema

@@ -46,6 +46,7 @@ func buildValidationError(errs []*jsonschema.ValidationError) error {
 	for _, desc := range errs {
 		problems = append(problems, desc.Error())
 	}
+
 	return fmt.Errorf("invalid json schema: %s", strings.TrimSpace(strings.Join(problems, "\n")))
 }
 
