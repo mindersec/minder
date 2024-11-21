@@ -1427,6 +1427,7 @@ message GetUserResponse {
 // DataSource service
 message CreateDataSourceRequest {
     ContextV2 context = 1;
+    DataSource data_source = 2;
 }
 
 message CreateDataSourceResponse {
@@ -1454,9 +1455,7 @@ message ListDataSourcesResponse {
 
 message UpdateDataSourceRequest {
     ContextV2 context = 1;
-    string id = 2 [
-        (buf.validate.field).string = {uuid: true}
-    ];
+    DataSource data_source = 2;
 }
 
 message UpdateDataSourceResponse {

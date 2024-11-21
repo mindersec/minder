@@ -71,14 +71,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	return nil
 }
 
-// getDataSourceType returns the type of data source
-func getDataSourceType(ds *minderv1.DataSource) string {
-	if ds.GetRest() != nil {
-		return "REST"
-	}
-	return "Unknown"
-}
-
 func init() {
 	DataSourceCmd.AddCommand(getCmd)
 

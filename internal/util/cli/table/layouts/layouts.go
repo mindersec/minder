@@ -34,6 +34,8 @@ const (
 	RoleList TableLayout = "role_list"
 	// Default is the default table layout
 	Default TableLayout = ""
+	// DataSourceList is the data source list table layout
+	DataSourceList TableLayout = "datasource_list"
 )
 
 // Color is the type for table colors

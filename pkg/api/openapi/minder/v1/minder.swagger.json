@@ -3617,6 +3617,9 @@
       "properties": {
         "context": {
           "$ref": "#/definitions/v1ContextV2"
+        },
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
         }
       },
       "title": "DataSource service"
@@ -5358,8 +5361,8 @@
         "context": {
           "$ref": "#/definitions/v1ContextV2"
         },
-        "id": {
-          "type": "string"
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
         }
       }
     },
