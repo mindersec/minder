@@ -417,7 +417,6 @@ DataSource service
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 | data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
 
 
@@ -2773,7 +2772,6 @@ Severity defines the severity of the rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  |  |
 | data_source | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> |  |  |
 
 

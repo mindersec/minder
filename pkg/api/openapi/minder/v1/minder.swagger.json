@@ -3691,9 +3691,6 @@
     "v1CreateDataSourceRequest": {
       "type": "object",
       "properties": {
-        "context": {
-          "$ref": "#/definitions/v1ContextV2"
-        },
         "dataSource": {
           "$ref": "#/definitions/v1DataSource"
         }
@@ -5450,9 +5447,6 @@
     "v1UpdateDataSourceRequest": {
       "type": "object",
       "properties": {
-        "context": {
-          "$ref": "#/definitions/v1ContextV2"
-        },
         "dataSource": {
           "$ref": "#/definitions/v1DataSource"
         }
