@@ -11,6 +11,7 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/ingester/artifact"
 	"github.com/mindersec/minder/internal/engine/ingester/builtin"
+	"github.com/mindersec/minder/internal/engine/ingester/deps"
 	"github.com/mindersec/minder/internal/engine/ingester/diff"
 	"github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/engine/ingester/rest"
@@ -65,6 +66,12 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return diff.NewDiffIngester(ing.GetDiff(), client)
+	case deps.DepsRuleDataIngestType:
+		client, err := provinfv1.As[provinfv1.Git](provider)
+		if err != nil {
+			return nil, errors.New("provider does not implement git trait")
+		}
+		return deps.NewDepsIngester(ing.GetDeps(), client)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

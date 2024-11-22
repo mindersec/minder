@@ -2201,6 +2201,26 @@ message DiffType {
     ];
 }
 
+// DepsType defines the "deps" ingester which can extract depndencies in protobom
+// format for rule evaluation.
+message DepsType {
+    // branch is the branch of the git repository, when applied to repository entities.
+    // Has no meaning or effect on other entity types.
+    message RepoConfigs {
+        string branch = 1 [
+            (buf.validate.field).string = {
+                pattern: "^[[:word:]./-]+$",
+                max_len: 200,
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
+    }
+
+    oneof entity_type {
+        RepoConfigs repo = 1;
+    }
+}
+
 // Severity defines the severity of the rule.
 message Severity {
     // Value enumerates the severity values.
@@ -2317,10 +2337,15 @@ message RuleType {
             // we currently support rest, artifact and builtin.
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["rest", "artifact", "builtin", "git", "diff"],
+                    in: ["rest", "artifact", "builtin", "git", "diff", "deps"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
+
+            // NOTE: we should have used the "oneof" feature here rather than
+            // having both a string "type" and a series of optional messages.
+            // We can consider fixing this in a V2 API, but it's probably too
+            // to do in V1.
 
             // rest is the rest data ingestion.
             // this is only used if the type is rest.
@@ -2330,13 +2355,20 @@ message RuleType {
             optional BuiltinType builtin = 4;
 
             // artifact is the artifact data ingestion.
+            // artifact currently only applies to artifacts.
             optional ArtifactType artifact = 5;
 
             // git is the git data ingestion.
+            // git currently only applies to repositories.
             optional GitType git = 6;
 
             // diff is the diff data ingestion.
+            // diff currently only applies to pull_requests.
             optional DiffType diff = 7;
+
+            // deps is the deps data ingestion.
+            // deps currently only applies to repositories.
+            optional DepsType deps = 8;
         }
         Ingest ingest = 4;
 
