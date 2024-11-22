@@ -608,9 +608,22 @@ create entities are called Providers.
 | version | <TypeLink type="string">string</TypeLink> |  | version is the version of the data source API. |
 | type | <TypeLink type="string">string</TypeLink> |  | type is the data source type |
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the data source is evaluated. Note that in this case we only need the project in the context, since data sources are not provider-specific. |
-| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. This is also case insensitive. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. Names must be lowercase and can only contain letters, numbers, hyphens, and underscores. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
+
+
+
+<Message id="minder-v1-DataSourceReference">DataSourceReference</Message>
+
+DataSourceReference is a reference to a data source.
+Note that for a resource to refer to a data source the data source must
+be available in the same project hierarchy.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  | refer to a data source by name. |
 
 
 
@@ -2578,6 +2591,9 @@ endpoint and how we compare it to the rule.
 | vulncheck | <TypeLink type="minder-v1-RuleType-Definition-Eval-Vulncheck">RuleType.Definition.Eval.Vulncheck</TypeLink> | optional | vulncheck is only used if the `vulncheck` type is selected. |
 | trusty | <TypeLink type="minder-v1-RuleType-Definition-Eval-Trusty">RuleType.Definition.Eval.Trusty</TypeLink> | optional | The trusty type is no longer used, but is still here for backwards compatibility with existing stored rules |
 | homoglyphs | <TypeLink type="minder-v1-RuleType-Definition-Eval-Homoglyphs">RuleType.Definition.Eval.Homoglyphs</TypeLink> | optional | homoglyphs is only used if the `homoglyphs` type is selected. |
+| data_sources | <TypeLink type="minder-v1-DataSourceReference">DataSourceReference</TypeLink> | repeated | Data sources that the rule refers to. These are used to instantiate the relevant data sources for the rule and keep track of them as dependencies.
+
+Note that the data source must exist in the project hierarchy in order to be used in the rule. |
 
 
 
