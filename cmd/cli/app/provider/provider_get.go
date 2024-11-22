@@ -81,6 +81,7 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 		impls := getImplementsAsStrings(p)
 		afs := getAuthFlowsAsStrings(p)
 
+		t.AddRow("ID", p.GetId())
 		t.AddRow("Name", p.GetName())
 		t.AddRow("Project", p.GetProject())
 		t.AddRow("Version", p.GetVersion())

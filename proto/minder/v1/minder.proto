@@ -3348,6 +3348,12 @@ message Provider {
     // credentials_state is the state of the credentials for the provider.
     // This is an output-only field. It may be: "set", "unset", "not_applicable".
     string credentials_state = 9;
+
+    // id is the unique identifier of the provider.
+    string id = 10 [
+        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
 }
 
 // GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint

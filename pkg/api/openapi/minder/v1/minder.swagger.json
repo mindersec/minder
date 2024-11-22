@@ -4942,6 +4942,10 @@
         "credentialsState": {
           "type": "string",
           "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the provider."
         }
       }
     },
