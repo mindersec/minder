@@ -28,6 +28,7 @@ https://docs.stacklok.com/minder
 * [minder artifact](minder_artifact.md)	 - Manage artifacts within a minder control plane
 * [minder auth](minder_auth.md)	 - Authorize and manage accounts within a minder control plane
 * [minder completion](minder_completion.md)	 - Generate the autocompletion script for the specified shell
+* [minder datasource](minder_datasource.md)	 - Manage data sources within a minder control plane
 * [minder docs](minder_docs.md)	 - Generates documentation for the client
 * [minder history](minder_history.md)	 - View evaluation history
 * [minder profile](minder_profile.md)	 - Manage profiles
