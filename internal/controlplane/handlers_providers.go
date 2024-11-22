@@ -283,6 +283,7 @@ func protobufProviderFromDB(
 	}
 
 	return &minderv1.Provider{
+		Id:               p.ID.String(),
 		Name:             p.Name,
 		Project:          p.ProjectID.String(),
 		Version:          p.Version,
