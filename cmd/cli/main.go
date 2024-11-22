@@ -10,6 +10,7 @@ import (
 	_ "github.com/mindersec/minder/cmd/cli/app/auth"
 	_ "github.com/mindersec/minder/cmd/cli/app/auth/invite"
 	_ "github.com/mindersec/minder/cmd/cli/app/auth/offline_token"
+	_ "github.com/mindersec/minder/cmd/cli/app/datasource"
 	_ "github.com/mindersec/minder/cmd/cli/app/docs"
 	_ "github.com/mindersec/minder/cmd/cli/app/history"
 	_ "github.com/mindersec/minder/cmd/cli/app/profile"
