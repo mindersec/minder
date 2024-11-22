@@ -3046,6 +3046,14 @@
         "homoglyphs": {
           "$ref": "#/definitions/EvalHomoglyphs",
           "description": "homoglyphs is only used if the `homoglyphs` type is selected."
+        },
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DataSourceReference"
+          },
+          "description": "Data sources that the rule refers to. These are used to\ninstantiate the relevant data sources for the rule and keep\ntrack of them as dependencies.\n\nNote that the data source must exist in the project hierarchy\nin order to be used in the rule."
         }
       },
       "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
@@ -3727,6 +3735,16 @@
         }
       },
       "description": "CursorPage message used in response messages. Its purpose is to\nsend to clients links pointing to next and/or previous collection\nsubsets with respect to the one containing this struct."
+    },
+    "v1DataSourceReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "refer to a data source by name."
+        }
+      },
+      "description": "DataSourceReference is a reference to a data source.\nNote that for a resource to refer to a data source the data source must\nbe available in the same project hierarchy."
     },
     "v1DeleteDataSourceResponse": {
       "type": "object",

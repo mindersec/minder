@@ -2394,6 +2394,14 @@ message RuleType {
 
             // homoglyphs is only used if the `homoglyphs` type is selected.
             optional Homoglyphs homoglyphs = 6;
+
+            // Data sources that the rule refers to. These are used to
+            // instantiate the relevant data sources for the rule and keep
+            // track of them as dependencies.
+            //
+            // Note that the data source must exist in the project hierarchy
+            // in order to be used in the rule.
+            repeated DataSourceReference data_sources = 7;
         }
         Eval eval = 5;
 
@@ -3571,10 +3579,11 @@ message DataSource {
 
     // name is the name of the data source.
     // Note that this is unique within a project hierarchy.
-    // This is also case insensitive.
+    // Names must be lowercase and can only contain letters, numbers,
+    // hyphens, and underscores.
     string name = 4 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$",
+            pattern: "^[a-z][-_[:word:]]*$",
             max_len: 200,
         },
         (google.api.field_behavior) = REQUIRED
@@ -3680,4 +3689,17 @@ message RestDataSource {
 
     // defs is the list of definitions for the REST API.
     map<string, Def> def = 1;
+}
+
+// DataSourceReference is a reference to a data source.
+// Note that for a resource to refer to a data source the data source must
+// be available in the same project hierarchy.
+message DataSourceReference {
+    // refer to a data source by name.
+    string name = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z][-_[:word:]]*$",
+            max_len: 200,
+        }
+    ];
 }
