@@ -323,8 +323,9 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			// Since (1) we don't have score anymore, and
 			// (2) we don't suggest malicious packages, I
 			// suggest getting rid of this check
-			// altogether.
-			if altData.Score != nil && *altData.Score != 0 && *altData.Score <= lowScorePackages[alternative.Dependency.Name].Score {
+			// altogether and always report all available
+			// alternatives.
+			if comparePackages(altData, lowScorePackages[alternative.Dependency.Name]) == worse {
 				continue
 			}
 
@@ -346,6 +347,23 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	}
 
 	return sph.compileTemplate(malicious, lowScorePackages)
+}
+
+type packageComparison int
+
+const (
+	better packageComparison = iota
+	worse
+)
+
+// comparePackages compares two packages to determine whether the
+// first argument is better or worse than the second one. It does so
+// by checking Trusty scores.
+func comparePackages(alt alternative, examined templatePackage) packageComparison {
+	if alt.Score != nil && *alt.Score != 0 && *alt.Score <= examined.Score {
+		return worse
+	}
+	return better
 }
 
 // buildProvenanceStruct builds the provenance data structure for the PR template
