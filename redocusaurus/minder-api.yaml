@@ -402,6 +402,65 @@ paths:
             $ref: '#/definitions/v1UpdateDataSourceRequest'
       tags:
         - DataSourceService
+  /api/v1/data_source/name/{name}:
+    get:
+      operationId: DataSourceService_GetDataSourceByName
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetDataSourceByNameResponse'
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          pattern: .+
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+      tags:
+        - DataSourceService
+    delete:
+      operationId: DataSourceService_DeleteDataSourceByName
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1DeleteDataSourceByNameResponse'
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          pattern: .+
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+      tags:
+        - DataSourceService
   /api/v1/data_source/{id}:
     get:
       operationId: DataSourceService_GetDataSourceById
@@ -432,12 +491,12 @@ paths:
       tags:
         - DataSourceService
     delete:
-      operationId: DataSourceService_DeleteDataSource
+      operationId: DataSourceService_DeleteDataSourceById
       responses:
         '200':
           description: A successful response.
           schema:
-            $ref: '#/definitions/v1DeleteDataSourceResponse'
+            $ref: '#/definitions/v1DeleteDataSourceByIdResponse'
       parameters:
         - name: id
           in: path
@@ -2578,6 +2637,69 @@ definitions:
           entity is the entity to register. This is the same as the repository
           field, but uses the new UpstreamEntityRef message. This is what we'll
           migrate to eventually.
+  RestDataSourceDef:
+    type: object
+    properties:
+      endpoint:
+        type: string
+        description: |-
+          endpoint is the URL of the REST API. Note that endpoints are
+          templates that can be parameterized with variables. Parametrization
+          is done using RFC 6570.
+      method:
+        type: string
+        description: |-
+          method is the HTTP method to use for the request.
+          If left unset, it will default to "GET".
+      headers:
+        type: object
+        additionalProperties:
+          type: string
+        description: headers is a map of headers to send with the request.
+      bodyobj:
+        type: object
+        description: body is the body of the request.
+      bodystr:
+        type: string
+        description: bodystr is the body of the request as a string.
+      parse:
+        type: string
+        description: |-
+          parse is the parse configuration for the response.
+          This allows us to serialize the response into a structured format,
+          or not.
+          If left unset, the response will be treated as a string.
+          If set to "json", the response will be parsed as JSON.
+      fallback:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/RestDataSourceDefFallback'
+        description: |-
+          fallback is the fallback configuration for the response in case
+          of an unexpected status code.
+      expectedStatus:
+        type: array
+        items:
+          type: integer
+          format: int32
+        description: |-
+          expected_status is the expected status code for the response.
+          This may be repeated to allow for multiple expected status codes.
+          If left unset, it will default to 200.
+      inputSchema:
+        type: object
+        description: input_schema is the schema for the input to the REST API.
+    required:
+      - endpoint
+  RestDataSourceDefFallback:
+    type: object
+    properties:
+      httpStatus:
+        type: integer
+        format: int32
+      body:
+        type: string
   RuleTypeDefinition:
     type: object
     properties:
@@ -2753,12 +2875,14 @@ definitions:
   v1CreateDataSourceRequest:
     type: object
     properties:
-      context:
-        $ref: '#/definitions/v1ContextV2'
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
     title: DataSource service
   v1CreateDataSourceResponse:
     type: object
-    title: TODO
+    properties:
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
   v1CreateEntityReconciliationTaskRequest:
     type: object
     properties:
@@ -2897,6 +3021,43 @@ definitions:
       CursorPage message used in response messages. Its purpose is to
       send to clients links pointing to next and/or previous collection
       subsets with respect to the one containing this struct.
+  v1DataSource:
+    type: object
+    properties:
+      version:
+        type: string
+        description: version is the version of the data source API.
+      type:
+        type: string
+        title: type is the data source type
+      context:
+        $ref: '#/definitions/v1ContextV2'
+        description: |-
+          context is the context in which the data source is evaluated.
+          Note that in this case we only need the project in the
+          context, since data sources are not provider-specific.
+      name:
+        type: string
+        description: |-
+          name is the name of the data source.
+          Note that this is unique within a project hierarchy.
+          Names must be lowercase and can only contain letters, numbers,
+          hyphens, and underscores.
+      id:
+        type: string
+        description: id is the unique identifier of the data source.
+        readOnly: true
+      rest:
+        $ref: '#/definitions/v1RestDataSource'
+        description: rest is the REST data source driver.
+    description: |-
+      DataSource is a Data source instance. Data sources represent
+      external integrations that enrich the data in Minder, but do not
+      have explicit lifecycle objects (entities).  Integrations which
+      create entities are called Providers.
+    required:
+      - version
+      - name
   v1DataSourceReference:
     type: object
     properties:
@@ -2907,9 +3068,16 @@ definitions:
       DataSourceReference is a reference to a data source.
       Note that for a resource to refer to a data source the data source must
       be available in the same project hierarchy.
-  v1DeleteDataSourceResponse:
+  v1DeleteDataSourceByIdResponse:
     type: object
-    title: TODO
+    properties:
+      id:
+        type: string
+  v1DeleteDataSourceByNameResponse:
+    type: object
+    properties:
+      name:
+        type: string
   v1DeleteProfileResponse:
     type: object
   v1DeleteProjectResponse:
@@ -3136,7 +3304,14 @@ definitions:
         type: string
   v1GetDataSourceByIdResponse:
     type: object
-    title: TODO
+    properties:
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
+  v1GetDataSourceByNameResponse:
+    type: object
+    properties:
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
   v1GetEvaluationHistoryResponse:
     type: object
     properties:
@@ -3351,7 +3526,12 @@ definitions:
           $ref: '#/definitions/v1Project'
   v1ListDataSourcesResponse:
     type: object
-    title: TODO
+    properties:
+      dataSources:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1DataSource'
   v1ListEvaluationHistoryResponse:
     type: object
     properties:
@@ -3878,6 +4058,15 @@ definitions:
         description: |-
           project_display is the display name of the project to which the user
           is invited.
+  v1RestDataSource:
+    type: object
+    properties:
+      def:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/RestDataSourceDef'
+        description: defs is the list of definitions for the REST API.
+    description: RestDataSource is the REST data source driver.
   v1RestType:
     type: object
     properties:
@@ -4150,13 +4339,13 @@ definitions:
   v1UpdateDataSourceRequest:
     type: object
     properties:
-      context:
-        $ref: '#/definitions/v1ContextV2'
-      id:
-        type: string
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
   v1UpdateDataSourceResponse:
     type: object
-    title: TODO
+    properties:
+      dataSource:
+        $ref: '#/definitions/v1DataSource'
   v1UpdateProfileRequest:
     type: object
     properties:
