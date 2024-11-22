@@ -47,7 +47,7 @@ type HasProtoContextV2Compat interface {
 
 // HasProtoContextV2 is an interface that can be implemented by a request
 type HasProtoContextV2 interface {
-	GetContextV2() *pb.ContextV2
+	GetContext() *pb.ContextV2
 }
 
 // HasProtoContext is an interface that can be implemented by a request
@@ -74,13 +74,13 @@ func getProjectFromContextV2Compat(accessor HasProtoContextV2Compat) (uuid.UUID,
 }
 
 func getProjectFromContextV2(accessor HasProtoContextV2) (uuid.UUID, error) {
-	if accessor.GetContextV2() == nil {
+	if accessor.GetContext() == nil {
 		return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "context cannot be nil")
 	}
 
 	// First check if the context is V2
-	if accessor.GetContextV2() != nil && accessor.GetContextV2().GetProjectId() != "" {
-		return parseProject(accessor.GetContextV2().GetProjectId())
+	if accessor.GetContext() != nil && accessor.GetContext().GetProjectId() != "" {
+		return parseProject(accessor.GetContext().GetProjectId())
 	}
 
 	return uuid.Nil, ErrNoProjectInContext
