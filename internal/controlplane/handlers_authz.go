@@ -155,7 +155,7 @@ func getProviderFromContext(req any) string {
 		}
 		return req.GetContext().GetProvider()
 	case HasProtoContextV2:
-		return req.GetContextV2().GetProvider()
+		return req.GetContext().GetProvider()
 	case HasProtoContext:
 		return req.GetContext().GetProvider()
 	default:
