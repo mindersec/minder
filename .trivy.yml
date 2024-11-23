@@ -13,3 +13,4 @@ scan:
   # Default is empty
   skip-dirs:
     - docs/
+    - ".cache/trivy/"
