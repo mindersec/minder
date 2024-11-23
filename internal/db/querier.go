@@ -20,6 +20,12 @@ type Querier interface {
 	CountRepositories(ctx context.Context) (int64, error)
 	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
+	// Data Sources Queries
+	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
+	// Data Source Functions Queries
+	CreateDataSourceFunction(ctx context.Context, arg CreateDataSourceFunctionParams) (DataSourcesFunction, error)
 	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
@@ -47,6 +53,8 @@ type Querier interface {
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteDataSource(ctx context.Context, id uuid.UUID) error
+	DeleteDataSourceFunction(ctx context.Context, id uuid.UUID) error
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
@@ -84,6 +92,9 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	GetDataSourceByID(ctx context.Context, id uuid.UUID) (DataSource, error)
+	GetDataSourceByName(ctx context.Context, arg GetDataSourceByNameParams) (DataSource, error)
+	GetDataSourceFunctions(ctx context.Context, dataSourceID uuid.UUID) ([]DataSourcesFunction, error)
 	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
 	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByProvider retrieves all entities of a given provider.
@@ -177,6 +188,7 @@ type Querier interface {
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
+	ListDataSourcesByProject(ctx context.Context, projectID uuid.UUID) ([]DataSource, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -225,6 +237,8 @@ type Querier interface {
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
+	UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error)
+	UpdateDataSourceFunction(ctx context.Context, arg UpdateDataSourceFunctionParams) (DataSourcesFunction, error)
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the
