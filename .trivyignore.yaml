@@ -1,0 +1,5 @@
+vulnerabilities:
+  - id: CVE-2024-42473
+  # We actually use go-tuf v2. v0.7.0 (which is vulnerable) is merely
+  # a transitive dependency and we're not affected by the CVE.
+  - id: CVE-2024-47534
