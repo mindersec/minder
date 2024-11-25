@@ -6,6 +6,11 @@ package v1
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+const (
+	// DataSourceDriverRest is the driver type for a REST data source.
+	DataSourceDriverRest = "rest"
+)
+
 // DataSourceFuncKey is the key that uniquely identifies a data source function.
 type DataSourceFuncKey string
 

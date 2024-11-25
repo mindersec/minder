@@ -9,9 +9,9 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 func dataSourceDBToProtobuf(ds db.DataSource, dsfuncs []db.DataSourcesFunction) (*minderv1.DataSource, error) {
@@ -33,7 +33,7 @@ func dataSourceDBToProtobuf(ds db.DataSource, dsfuncs []db.DataSourcesFunction) 
 	dsfType := dsfuncs[0].Type
 
 	switch dsfType {
-	case datasources.DataSourceDriverRest:
+	case v1datasources.DataSourceDriverRest:
 		return dataSourceRestDBToProtobuf(outds, dsfuncs)
 	default:
 		return nil, fmt.Errorf("unknown data source type: %s", dsfType)
