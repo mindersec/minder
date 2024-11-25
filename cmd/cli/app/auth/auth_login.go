@@ -26,7 +26,7 @@ $XDG_CONFIG_HOME/minder/credentials.json`,
 }
 
 // LoginCommand is the login subcommand
-func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
@@ -39,6 +39,13 @@ func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 	if err != nil {
 		return cli.MessageAndError("Error ensuring credentials", err)
 	}
+
+	// Get a connection to the GRPC server after we have the credentials
+	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
 
 	client := minderv1.NewUserServiceClient(conn)
 
