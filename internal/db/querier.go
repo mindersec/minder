@@ -13,6 +13,8 @@ import (
 )
 
 type Querier interface {
+	// AddDataSourceFunction adds a function to a datasource.
+	AddDataSourceFunction(ctx context.Context, arg AddDataSourceFunctionParams) (DataSourcesFunction, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
@@ -20,6 +22,8 @@ type Querier interface {
 	CountRepositories(ctx context.Context) (int64, error)
 	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// CreateDataSource creates a new datasource in a given project.
+	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
 	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
@@ -47,6 +51,8 @@ type Querier interface {
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
+	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
@@ -84,6 +90,17 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetDataSource retrieves a datasource by its id and a project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	GetDataSource(ctx context.Context, arg GetDataSourceParams) (DataSource, error)
+	// GetDataSourceByName retrieves a datasource by its name and
+	// a project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	GetDataSourceByName(ctx context.Context, arg GetDataSourceByNameParams) (DataSource, error)
 	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
 	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByProvider retrieves all entities of a given provider.
@@ -177,6 +194,13 @@ type Querier interface {
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
+	// ListDataSourceFunctions retrieves all functions for a datasource.
+	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
+	// ListDataSources retrieves all datasources for project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	ListDataSources(ctx context.Context, projects []uuid.UUID) ([]DataSource, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -225,6 +249,11 @@ type Querier interface {
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
+	// UpdateDataSource updates a datasource in a given project.
+	UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error)
+	// UpdateDataSourceFunction updates a function in a datasource. We're
+	// only able to update the type and definition of the function.
+	UpdateDataSourceFunction(ctx context.Context, arg UpdateDataSourceFunctionParams) (DataSourcesFunction, error)
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the
