@@ -512,6 +512,7 @@ type DataSourcesFunction struct {
 	Definition   json.RawMessage `json:"definition"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
+	ProjectID    uuid.UUID       `json:"project_id"`
 }
 
 type Entitlement struct {
@@ -758,6 +759,7 @@ type RuleType struct {
 type RuleTypeDataSource struct {
 	RuleTypeID    uuid.UUID `json:"rule_type_id"`
 	DataSourcesID uuid.UUID `json:"data_sources_id"`
+	ProjectID     uuid.UUID `json:"project_id"`
 }
 
 type SessionStore struct {
