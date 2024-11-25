@@ -1019,8 +1019,8 @@ github.com/sqlc-dev/pqtype v0.3.0 h1:b09TewZ3cSnO5+M1Kqq05y0+OjqIptxELaSayg7bmqk
 github.com/sqlc-dev/pqtype v0.3.0/go.mod h1:oyUjp5981ctiL9UYvj1bVvCKi8OXkCa0u645hce7CAs=
 github.com/stacklok/frizbee v0.1.4 h1:00v6/2HBmwzNdOyVAP4e1isOeUAIWTlb5eggoNUpHmk=
 github.com/stacklok/frizbee v0.1.4/go.mod h1:rFA90VkGFYLb7qCiUniAihmkgXfZAj2BnfF6jR8Csro=
-github.com/stacklok/trusty-sdk-go v0.2.2 h1:55B2DrneLYZXxBaNEeyRMGac7mj+pFbrKomx/hSxUyI=
-github.com/stacklok/trusty-sdk-go v0.2.2/go.mod h1:BbXNVVT32meuxyJuO4pmXRzVPjc/9AXob2sBbOPiKpk=
+github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687 h1:TIZiO871n9V6sSN+bKsG5SwQ4ZHwGtxcmfcL3siimcY=
+github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687/go.mod h1:QR01jLW/yfwcXY38dwDpgeEjVc2MAR1LycH1fXtoSXs=
 github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1 h1:/m2cTZHpqgofDsrwPqsASI6fSNMNhb+9EmUYtHEV2Uk=
 github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1/go.mod h1:Z5KcoM0YLC7INlNhEezeIZ0TZNYf7WSNO0Lvah4DSeQ=
 github.com/stoewer/go-strcase v1.3.0 h1:g0eASXYtp+yvN9fK8sH94oCIk0fau9uV1/ZdJ0AVEzs=

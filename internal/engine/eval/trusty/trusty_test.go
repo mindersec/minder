@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/rs/zerolog"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
 	"github.com/stretchr/testify/require"
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -341,41 +342,42 @@ func TestClassifyDependency(t *testing.T) {
 
 func TestMakeScoreComponents(t *testing.T) {
 	t.Parallel()
+	typ := trustytypes.ProvenanceTypeVerified
 	for _, tc := range []struct {
 		name     string
-		sut      map[string]any
+		sut      trustytypes.SummaryDescription
 		expected []scoreComponent
 	}{
 		{
 			name: "no-description",
-			sut:  nil,
+			sut:  trustytypes.SummaryDescription{},
 		},
 		{
 			name: "normal-response",
-			sut: map[string]any{
-				"activity":      "a",
-				"activity_user": "b",
-				"provenance":    "c",
-				"activity_repo": "d",
+			sut: trustytypes.SummaryDescription{
+				Activity:       1.0,
+				ActivityUser:   2.0,
+				ActivityRepo:   3.0,
+				ProvenanceType: &typ,
 			},
 			expected: []scoreComponent{
-				{Label: "Package activity", Value: "a"},
-				{Label: "User activity", Value: "b"},
-				{Label: "Provenance", Value: "c"},
-				{Label: "Repository activity", Value: "d"},
+				{Label: "Package activity", Value: 1.0},
+				{Label: "User activity", Value: 2.0},
+				{Label: "Repository activity", Value: 3.0},
+				{Label: "Provenance", Value: "verified_provenance_match"},
 			},
 		},
 		{
 			name: "typosquatting-low",
-			sut: map[string]any{
-				"typosquatting": float64(10),
+			sut: trustytypes.SummaryDescription{
+				TypoSquatting: 10.0,
 			},
 			expected: []scoreComponent{},
 		},
 		{
 			name: "typosquatting-high",
-			sut: map[string]any{
-				"typosquatting": float64(1),
+			sut: trustytypes.SummaryDescription{
+				TypoSquatting: 1,
 			},
 			expected: []scoreComponent{
 				{Label: "Typosquatting", Value: "⚠️ Dependency may be trying to impersonate a well known package"},
