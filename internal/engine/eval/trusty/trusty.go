@@ -305,31 +305,63 @@ func getDependencyScore(
 		PackageVersion: &dep.Dep.Version,
 	}
 
-	respSummary, err := trustyClient.Summary(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting summary: %w", err)
-	}
+	summary := make(chan *trustytypes.PackageSummaryAnnotation, 1)
+	metadata := make(chan *trustytypes.TrustyPackageData, 1)
+	alternatives := make(chan *trustytypes.PackageAlternatives, 1)
+	provenance := make(chan *trustytypes.Provenance, 1)
+	errors := make(chan error)
 
-	respPkg, err := trustyClient.PackageMetadata(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting package metadata: %w", err)
-	}
+	defer func() {
+		close(summary)
+		close(metadata)
+		close(alternatives)
+		close(provenance)
+		close(errors)
+	}()
 
-	respAlternatives, err := trustyClient.Alternatives(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting alternatives: %w", err)
-	}
+	go func() {
+		resp, err := trustyClient.Summary(ctx, input)
+		errors <- err
+		summary <- resp
+	}()
 
-	respProvenance, err := trustyClient.Provenance(ctx, input)
-	if err != nil {
-		return nil, fmt.Errorf("failed getting provenance: %w", err)
+	go func() {
+		resp, err := trustyClient.PackageMetadata(ctx, input)
+		errors <- err
+		metadata <- resp
+	}()
+
+	go func() {
+		resp, err := trustyClient.Alternatives(ctx, input)
+		errors <- err
+		alternatives <- resp
+	}()
+
+	go func() {
+		resp, err := trustyClient.Provenance(ctx, input)
+		errors <- err
+		provenance <- resp
+	}()
+
+	// Beware of the magic number 4, which is the number of
+	// asynchronous calls fired in the previous lines. This must
+	// be kept in sync.
+	for i := 0; i < 4; i++ {
+		err := <-errors
+		if err != nil {
+			return nil, fmt.Errorf("Trusty call failed: %w", err)
+		}
 	}
+	respSummary := <-summary
+	respPkg := <-metadata
+	respAlternatives := <-alternatives
+	respProvenance := <-provenance
 
 	res := makeTrustyReport(dep,
-		respSummary,
-		respPkg,
-		respAlternatives,
-		respProvenance,
+		*respSummary,
+		*respPkg,
+		*respAlternatives,
+		*respProvenance,
 	)
 
 	return res, nil
@@ -337,10 +369,10 @@ func getDependencyScore(
 
 func makeTrustyReport(
 	dep *pbinternal.PrDependencies_ContextualDependency,
-	respSummary *trustytypes.PackageSummaryAnnotation,
-	respPkg *trustytypes.TrustyPackageData,
-	respAlternatives *trustytypes.PackageAlternatives,
-	respProvenance *trustytypes.Provenance,
+	respSummary trustytypes.PackageSummaryAnnotation,
+	respPkg trustytypes.TrustyPackageData,
+	respAlternatives trustytypes.PackageAlternatives,
+	respProvenance trustytypes.Provenance,
 ) *trustyReport {
 	res := &trustyReport{
 		PackageName:    dep.Dep.Name,
@@ -364,21 +396,13 @@ func makeTrustyReport(
 	return res
 }
 
-func addSummaryDetails(res *trustyReport, resp *trustytypes.PackageSummaryAnnotation) {
-	if resp == nil {
-		return
-	}
-
+func addSummaryDetails(res *trustyReport, resp trustytypes.PackageSummaryAnnotation) {
 	res.Score = resp.Score
 	res.ActivityScore = resp.Description.Activity
 	res.ProvenanceScore = resp.Description.Provenance
 }
 
-func addMetadataDetails(res *trustyReport, resp *trustytypes.TrustyPackageData) {
-	if resp == nil {
-		return
-	}
-
+func addMetadataDetails(res *trustyReport, resp trustytypes.TrustyPackageData) {
 	res.IsDeprecated = resp.IsDeprecated != nil && *resp.IsDeprecated
 	res.IsArchived = resp.Archived != nil && *resp.Archived
 }
@@ -456,10 +480,6 @@ func makeAlternatives(
 func makeMaliciousDetails(
 	maliciousInfo *trustytypes.PackageMaliciousPayload,
 ) *malicious {
-	if maliciousInfo == nil {
-		return nil
-	}
-
 	return &malicious{
 		Summary: maliciousInfo.Summary,
 		Details: preprocessDetails(maliciousInfo.Details),
@@ -467,12 +487,8 @@ func makeMaliciousDetails(
 }
 
 func makeProvenance(
-	resp *trustytypes.Provenance,
+	resp trustytypes.Provenance,
 ) *provenance {
-	if resp == nil {
-		return nil
-	}
-
 	prov := &provenance{}
 	if resp.Historical.Overlap != 0 {
 		prov.Historical = &historicalProvenance{
