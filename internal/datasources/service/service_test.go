@@ -21,7 +21,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/datasources/v1"
+	v1 "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 func TestGetByName(t *testing.T) {
@@ -384,6 +384,167 @@ func TestList(t *testing.T) {
 				assert.Equal(t, want.Name, got[i].Name)
 				assert.NotNilf(t, got[i].Driver, "driver is nil")
 			}
+		})
+	}
+}
+
+func TestCreate(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		ds   *minderv1.DataSource
+		opts *Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		setup   func(mockDB *mockdb.MockStore)
+		want    *minderv1.DataSource
+		wantErr bool
+	}{
+		{
+			name: "Successfully create REST data source",
+			args: args{
+				ds: &minderv1.DataSource{
+					Name: "test_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+					Driver: &minderv1.DataSource_Rest{
+						Rest: &minderv1.RestDataSource{
+							Def: map[string]*minderv1.RestDataSource_Def{
+								"test_function": {
+									Endpoint: "http://example.com",
+									InputSchema: func() *structpb.Struct {
+										s, _ := structpb.NewStruct(map[string]any{
+											"type": "object",
+											"properties": map[string]any{
+												"test": "string",
+											},
+										})
+										return s
+									}(),
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), gomock.Any()).
+					Return([]uuid.UUID{uuid.New()}, nil)
+
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, sql.ErrNoRows)
+
+				mockDB.EXPECT().CreateDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{
+						ID:   uuid.New(),
+						Name: "test_ds",
+					}, nil)
+
+				mockDB.EXPECT().AddDataSourceFunction(gomock.Any(), gomock.Any()).
+					Return(db.DataSourcesFunction{}, nil)
+			},
+			want: &minderv1.DataSource{
+				Name: "test_ds",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Nil data source",
+			args: args{
+				ds:   nil,
+				opts: &Options{},
+			},
+			setup:   func(mockDB *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "Invalid project ID",
+			args: args{
+				ds: &minderv1.DataSource{
+					Context: &minderv1.ContextV2{
+						ProjectId: "invalid-uuid",
+					},
+				},
+				opts: &Options{},
+			},
+			setup:   func(mockDB *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "Data source already exists",
+			args: args{
+				ds: &minderv1.DataSource{
+					Name: "existing_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), gomock.Any()).
+					Return([]uuid.UUID{uuid.New()}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{ID: uuid.New()}, nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Unsupported driver type",
+			args: args{
+				ds: &minderv1.DataSource{
+					Name: "test_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+					Driver: nil,
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), gomock.Any()).
+					Return([]uuid.UUID{uuid.New()}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, sql.ErrNoRows)
+				mockDB.EXPECT().CreateDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{
+						ID:   uuid.New(),
+						Name: "test_ds",
+					}, nil)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+
+			svc := NewDataSourceService(mockStore)
+			svc.txBuilder = func(_ *dataSourceService, _ txGetter) (serviceTX, error) {
+				return &fakeTxBuilder{
+					store: mockStore,
+				}, nil
+			}
+			tt.setup(mockStore)
+
+			got, err := svc.Create(context.Background(), tt.args.ds, tt.args.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Name, got.Name)
 		})
 	}
 }

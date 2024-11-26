@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
@@ -172,11 +173,86 @@ func (d *dataSourceService) List(
 	return outDS, nil
 }
 
-// nolint:revive // there is a TODO
 func (d *dataSourceService) Create(
 	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
-	//TODO implement me
-	panic("implement me")
+	if ds == nil {
+		return nil, errors.New("data source is nil")
+	}
+
+	stx, err := d.txBuilder(d, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	defer func(stx serviceTX) {
+		err := stx.Rollback()
+		if err != nil {
+			fmt.Printf("failed to rollback transaction: %v", err)
+		}
+	}(stx)
+
+	tx := stx.Q()
+
+	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
+	if err != nil {
+		return nil, fmt.Errorf("invalid project ID: %w", err)
+	}
+
+	// Check if such data source  already exists in project hierarchy
+	projs, err := listRelevantProjects(ctx, tx, projectID, true)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list relevant projects: %w", err)
+	}
+	existing, err := tx.GetDataSourceByName(ctx, db.GetDataSourceByNameParams{
+		Name:     ds.GetName(),
+		Projects: projs,
+	})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, fmt.Errorf("failed to check for existing data source: %w", err)
+	}
+	if existing.ID != uuid.Nil {
+		return nil, util.UserVisibleError(codes.AlreadyExists,
+			"data source with name %s already exists", ds.GetName())
+	}
+
+	// Create data source record
+	dsRecord, err := tx.CreateDataSource(ctx, db.CreateDataSourceParams{
+		ProjectID:   projectID,
+		Name:        ds.GetName(),
+		DisplayName: ds.GetName(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create data source: %w", err)
+	}
+
+	// Create function records based on driver type
+	switch drv := ds.GetDriver().(type) {
+	case *minderv1.DataSource_Rest:
+		for name, def := range drv.Rest.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal REST definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsRecord.ID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverRest,
+				Definition:   defBytes,
+			}); err != nil {
+				return nil, fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
+	default:
+		return nil, fmt.Errorf("unsupported data source driver type: %T", drv)
+	}
+
+	if err := stx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return ds, nil
 }
 
 // nolint:revive // there is a TODO
