@@ -225,6 +225,10 @@ type Querier interface {
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
+	// ListRuleTypesReferencesByDataSource retrieves all rule types
+	// referencing a given data source in a given project.
+	//
+	ListRuleTypesReferencesByDataSource(ctx context.Context, arg ListRuleTypesReferencesByDataSourceParams) ([]RuleTypeDataSource, error)
 	// When doing a key/algorithm rotation, identify the secrets which need to be
 	// rotated. The criteria for rotation are:
 	// 1) The encrypted_access_token is NULL (this should be removed when we make
