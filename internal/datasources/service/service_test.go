@@ -458,7 +458,7 @@ func TestCreate(t *testing.T) {
 				ds:   nil,
 				opts: &Options{},
 			},
-			setup:   func(mockDB *mockdb.MockStore) {},
+			setup:   func(_ *mockdb.MockStore) {},
 			wantErr: true,
 		},
 		{
@@ -471,7 +471,7 @@ func TestCreate(t *testing.T) {
 				},
 				opts: &Options{},
 			},
-			setup:   func(mockDB *mockdb.MockStore) {},
+			setup:   func(_ *mockdb.MockStore) {},
 			wantErr: true,
 		},
 		{
