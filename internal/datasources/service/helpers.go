@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -29,9 +30,16 @@ func (d *dataSourceService) getDataSourceSomehow(
 
 	tx := stx.Q()
 
-	projs, err := listRelevantProjects(ctx, tx, project, opts.canSearchHierarchical())
-	if err != nil {
-		return nil, fmt.Errorf("failed to list relevant projects: %w", err)
+	var projs []uuid.UUID
+	if len(opts.hierarchy) > 0 {
+		projs = opts.hierarchy
+	} else {
+		prjs, err := listRelevantProjects(ctx, tx, project, opts.canSearchHierarchical())
+		if err != nil {
+			return nil, fmt.Errorf("failed to list relevant projects: %w", err)
+		}
+
+		projs = prjs
 	}
 
 	ds, err := theSomehow(ctx, tx, projs)
@@ -47,11 +55,40 @@ func (d *dataSourceService) getDataSourceSomehow(
 		return nil, fmt.Errorf("failed to get data source functions: %w", err)
 	}
 
+	// NOTE: We currently treat data sources without functions as an error.
+	// The only reason for this is that I (Ozz) currently see no use-case for
+	// data sources without functions. If we ever have a use-case for this, we
+	// should remove this check.
+	if len(dsfuncs) == 0 {
+		return nil, errors.New("data source has no functions")
+	}
+
 	if err := stx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return dataSourceDBToProtobuf(ds, dsfuncs)
+}
+
+func (d *dataSourceService) instantiateDataSource(
+	ctx context.Context,
+	ref *minderv1.DataSourceReference,
+	projectHierarchy []uuid.UUID,
+	tx db.ExtendQuerier,
+) (*minderv1.DataSource, error) {
+	// If we end up supporting other ways of referencing a data source, this
+	// would be the place to validate them.
+	if ref.GetName() == "" {
+		return nil, errors.New("data source name is empty")
+	}
+
+	ds, err := d.GetByName(ctx, ref.GetName(), uuid.Nil,
+		ReadBuilder().withHierarchy(projectHierarchy).WithTransaction(tx))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data source by name: %w", err)
+	}
+
+	return ds, nil
 }
 
 func listRelevantProjects(

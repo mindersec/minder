@@ -6,6 +6,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -17,9 +18,10 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 func TestGetByName(t *testing.T) {
@@ -66,7 +68,7 @@ func TestGetByName(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: dsID,
 							Name:         "test_function",
-							Type:         string(datasources.DataSourceDriverRest),
+							Type:         string(v1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -105,6 +107,26 @@ func TestGetByName(t *testing.T) {
 					Return(db.DataSource{}, fmt.Errorf("database error"))
 			},
 			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "DataSource found with no functions",
+			args: args{
+				name:    "test_name",
+				project: uuid.New(),
+				opts:    &ReadOptions{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				dsID := uuid.New()
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).Return(db.DataSource{
+					ID:        dsID,
+					Name:      "test_name",
+					ProjectID: uuid.New(),
+				}, nil)
+
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{}, nil)
+			},
 			wantErr: true,
 		},
 	}
@@ -183,7 +205,7 @@ func TestGetByID(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: id,
 							Name:         "test_function",
-							Type:         string(datasources.DataSourceDriverRest),
+							Type:         string(v1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -301,7 +323,7 @@ func TestList(t *testing.T) {
 							ID:           uuid.New(),
 							DataSourceID: dsID,
 							Name:         "test_function",
-							Type:         string(datasources.DataSourceDriverRest),
+							Type:         string(v1.DataSourceDriverRest),
 							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
 								Endpoint:    "http://example.com",
 								InputSchema: is,
@@ -362,6 +384,306 @@ func TestList(t *testing.T) {
 				assert.Equal(t, want.Name, got[i].Name)
 				assert.NotNilf(t, got[i].Driver, "driver is nil")
 			}
+		})
+	}
+}
+
+func TestBuildDataSourceRegistry(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		rt   *minderv1.RuleType
+		opts *Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		setup   func(rawProjectID string, mockDB *mockdb.MockStore)
+		wantErr bool
+	}{
+		{
+			name: "Successful registry build",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+				dsID := uuid.New()
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).Return(db.DataSource{
+					ID:        dsID,
+					Name:      "test_data_source",
+					ProjectID: projectID,
+				}, nil)
+
+				is, err := structpb.NewStruct(map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"test": map[string]any{
+							"type": "string",
+						},
+					},
+				})
+				require.NoError(t, err, "failed to create struct")
+
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{
+							ID:           uuid.New(),
+							DataSourceID: dsID,
+							ProjectID:    projectID,
+							Name:         "test_function",
+							Type:         string(v1.DataSourceDriverRest),
+							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
+								Endpoint:    "http://example.com",
+								InputSchema: is,
+							}),
+						},
+					}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Project UUID parse error",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr("invalid_uuid"),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup:   func(_ string, _ *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "nil data source name reference",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								nil,
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Empty data source name reference",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error when getting parent projects",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).
+					Return(nil, errors.New("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error when getting data source by name",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, errors.New("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error when getting data source functions",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+				dsID := uuid.New()
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).Return(db.DataSource{
+					ID:        dsID,
+					Name:      "test_data_source",
+					ProjectID: projectID,
+				}, nil)
+
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{}, errors.New("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			// This should not happen, but we test anyway
+			name: "data source without functions",
+			args: args{
+				rt: &minderv1.RuleType{
+					Context: &minderv1.Context{
+						Project: ptr.Ptr(uuid.New().String()),
+					},
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "test_data_source",
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(rawProjectID string, mockDB *mockdb.MockStore) {
+				projectID := uuid.MustParse(rawProjectID)
+				dsID := uuid.New()
+
+				mockDB.EXPECT().GetParentProjects(gomock.Any(), projectID).Return([]uuid.UUID{projectID}, nil)
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).Return(db.DataSource{
+					ID:        dsID,
+					Name:      "test_data_source",
+					ProjectID: projectID,
+				}, nil)
+
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{},
+					}, nil)
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			// Setup
+			mockStore := mockdb.NewMockStore(ctrl)
+
+			svc := NewDataSourceService(mockStore)
+			svc.txBuilder = func(_ *dataSourceService, _ txGetter) (serviceTX, error) {
+				return &fakeTxBuilder{
+					store: mockStore,
+				}, nil
+			}
+			tt.setup(tt.args.rt.GetContext().GetProject(), mockStore)
+
+			_, err := svc.BuildDataSourceRegistry(context.Background(), tt.args.rt, tt.args.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
 		})
 	}
 }

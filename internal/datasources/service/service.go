@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 
+	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -199,9 +200,51 @@ func (d *dataSourceService) ValidateRuleTypeReferences(
 	panic("implement me")
 }
 
-// nolint:revive // there is a TODO
+// BuildDataSourceRegistry bundles up all data sources referenced in the rule type
+// into a registry.
+//
+// Note that this assumes that the rule type has already been validated.
 func (d *dataSourceService) BuildDataSourceRegistry(
 	ctx context.Context, rt *minderv1.RuleType, opts *Options) (*v1datasources.DataSourceRegistry, error) {
-	//TODO implement me
-	panic("implement me")
+	rawproj := rt.GetContext().GetProject()
+	proj, err := uuid.Parse(rawproj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse project UUID: %w", err)
+	}
+
+	instantiations := rt.GetDef().GetEval().GetDataSources()
+	reg := v1datasources.NewDataSourceRegistry()
+
+	stx, err := d.txBuilder(d, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	//nolint:gosec // we'll log this error later.
+	defer stx.Rollback()
+
+	tx := stx.Q()
+
+	projectHierarchy, err := tx.GetParentProjects(ctx, proj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get project hierarchy: %w", err)
+	}
+
+	for _, ref := range instantiations {
+		inst, err := d.instantiateDataSource(ctx, ref, projectHierarchy, tx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to instantiate data source: %w", err)
+		}
+
+		impl, err := datasources.BuildFromProtobuf(inst)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build data source from protobuf: %w", err)
+		}
+
+		if err := reg.RegisterDataSource(inst.GetName(), impl); err != nil {
+			return nil, fmt.Errorf("failed to register data source: %w", err)
+		}
+	}
+
+	return reg, nil
 }

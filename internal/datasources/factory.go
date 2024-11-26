@@ -12,11 +12,6 @@ import (
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
-const (
-	// DataSourceDriverRest is the driver type for a REST data source.
-	DataSourceDriverRest = "rest"
-)
-
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
 func BuildFromProtobuf(ds *minderv1.DataSource) (v1datasources.DataSource, error) {
