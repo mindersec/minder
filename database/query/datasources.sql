@@ -71,3 +71,9 @@ WHERE project_id = ANY(sqlc.arg(projects)::uuid[]);
 SELECT * FROM data_sources_functions
 WHERE data_source_id = $1 AND project_id = $2;
 
+-- ListRuleTypesReferencesByDataSource retrieves all rule types
+-- referencing a given data source in a given project.
+--
+-- name: ListRuleTypesReferencesByDataSource :many
+SELECT * FROM rule_type_data_sources
+WHERE data_sources_id = $1 AND project_id = $2;
