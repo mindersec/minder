@@ -877,3 +877,167 @@ func restDriverToJson(t *testing.T, rs *minderv1.RestDataSource_Def) []byte {
 
 	return out
 }
+
+func TestDelete(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		id      uuid.UUID
+		project uuid.UUID
+		opts    *Options
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		setup   func(args args, mockDB *mockdb.MockStore)
+		wantErr bool
+	}{
+		{
+			name: "Successful deletion",
+			args: args{
+				id:      uuid.New(),
+				project: uuid.New(),
+				opts:    &Options{},
+			},
+			setup: func(args args, mockDB *mockdb.MockStore) {
+				// Mock ListRuleTypesReferencesByDataSource to return empty list
+				mockDB.EXPECT().
+					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
+						DataSourcesID: args.id,
+						ProjectID:     args.project,
+					})).
+					Return([]db.RuleTypeDataSource{}, nil)
+
+				// Mock DeleteDataSource to succeed
+				mockDB.EXPECT().
+					DeleteDataSource(gomock.Any(), gomock.Eq(db.DeleteDataSourceParams{
+						ID:        args.id,
+						ProjectID: args.project,
+					})).
+					Return(db.DataSource{}, nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "Data source not found",
+			args: args{
+				id:      uuid.New(),
+				project: uuid.New(),
+				opts:    &Options{},
+			},
+			setup: func(args args, mockDB *mockdb.MockStore) {
+				// Mock ListRuleTypesReferencesByDataSource to return empty list
+				mockDB.EXPECT().
+					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
+						DataSourcesID: args.id,
+						ProjectID:     args.project,
+					})).
+					Return([]db.RuleTypeDataSource{}, nil)
+
+				// Mock DeleteDataSource to return sql.ErrNoRows
+				mockDB.EXPECT().
+					DeleteDataSource(gomock.Any(), gomock.Eq(db.DeleteDataSourceParams{
+						ID:        args.id,
+						ProjectID: args.project,
+					})).
+					Return(db.DataSource{}, sql.ErrNoRows)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Data source is in use",
+			args: args{
+				id:      uuid.New(),
+				project: uuid.New(),
+				opts:    &Options{},
+			},
+			setup: func(args args, mockDB *mockdb.MockStore) {
+				// Mock ListRuleTypesReferencesByDataSource to return non-empty list
+				mockDB.EXPECT().
+					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
+						DataSourcesID: args.id,
+						ProjectID:     args.project,
+					})).
+					Return([]db.RuleTypeDataSource{
+						{RuleTypeID: uuid.New()},
+					}, nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error when listing references",
+			args: args{
+				id:      uuid.New(),
+				project: uuid.New(),
+				opts:    &Options{},
+			},
+			setup: func(args args, mockDB *mockdb.MockStore) {
+				// Mock ListRuleTypesReferencesByDataSource to return an error
+				mockDB.EXPECT().
+					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
+						DataSourcesID: args.id,
+						ProjectID:     args.project,
+					})).
+					Return(nil, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error when deleting data source",
+			args: args{
+				id:      uuid.New(),
+				project: uuid.New(),
+				opts:    &Options{},
+			},
+			setup: func(args args, mockDB *mockdb.MockStore) {
+				// Mock ListRuleTypesReferencesByDataSource to return empty list
+				mockDB.EXPECT().
+					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
+						DataSourcesID: args.id,
+						ProjectID:     args.project,
+					})).
+					Return([]db.RuleTypeDataSource{}, nil)
+
+				// Mock DeleteDataSource to return an error
+				mockDB.EXPECT().
+					DeleteDataSource(gomock.Any(), gomock.Eq(db.DeleteDataSourceParams{
+						ID:        args.id,
+						ProjectID: args.project,
+					})).
+					Return(db.DataSource{}, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			// Setup
+			mockStore := mockdb.NewMockStore(ctrl)
+
+			svc := NewDataSourceService(mockStore)
+			svc.txBuilder = func(_ *dataSourceService, _ txGetter) (serviceTX, error) {
+				return &fakeTxBuilder{
+					store: mockStore,
+				}, nil
+			}
+
+			tt.setup(tt.args, mockStore)
+
+			err := svc.Delete(context.Background(), tt.args.id, tt.args.project, tt.args.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+		})
+	}
+}
