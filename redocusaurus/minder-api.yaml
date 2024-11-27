@@ -120,6 +120,10 @@ paths:
           required: false
           type: string
         - name: from
+          description: |-
+            from is the filter to apply to the list of artifacts.
+            An example is "repository=org1/repo1,org2/repo2"
+            to filter by repository names. This is optional.
           in: query
           required: false
           type: string
@@ -157,6 +161,10 @@ paths:
           required: false
           type: string
         - name: from
+          description: |-
+            from is the filter to apply to the list of artifacts.
+            An example is "repository=org1/repo1,org2/repo2"
+            to filter by repository names. This is optional.
           in: query
           required: false
           type: string
@@ -2751,6 +2759,7 @@ definitions:
         type: string
       owner:
         type: string
+        description: owner is the artifact owner. This is optional.
       name:
         type: string
       type:
@@ -2759,6 +2768,9 @@ definitions:
         type: string
       repository:
         type: string
+        description: |-
+          repository is the repository the artifact originated from.
+          This is optional.
       versions:
         type: array
         items:
@@ -2769,6 +2781,12 @@ definitions:
         format: date-time
       context:
         $ref: '#/definitions/v1Context'
+    required:
+      - artifactPk
+      - name
+      - type
+      - visibility
+      - createdAt
   v1ArtifactType:
     type: object
     description: ArtifactType defines the artifact data evaluation.
@@ -2787,6 +2805,9 @@ definitions:
       createdAt:
         type: string
         format: date-time
+    description: |-
+      ArtifactVersion is a version of an artifact.
+      This is currently not populated in any requests or responses.
   v1AssignRoleRequest:
     type: object
     properties:
@@ -3293,6 +3314,9 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1ArtifactVersion'
+        description: This is optional and currently always nil.
+    required:
+      - artifact
   v1GetArtifactByNameResponse:
     type: object
     properties:
@@ -3303,6 +3327,9 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1ArtifactVersion'
+        description: This is optional and currently always nil.
+    required:
+      - artifact
   v1GetAuthorizationURLResponse:
     type: object
     properties:
@@ -3524,6 +3551,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Artifact'
+    required:
+      - results
   v1ListChildProjectsResponse:
     type: object
     properties:
