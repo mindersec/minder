@@ -836,6 +836,30 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 
 
 
+<Message id="minder-v1-DepsType">DepsType</Message>
+
+DepsType defines the "deps" ingester which can extract depndencies in protobom
+format for rule evaluation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| repo | <TypeLink type="minder-v1-DepsType-RepoConfigs">DepsType.RepoConfigs</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DepsType-RepoConfigs">DepsType.RepoConfigs</Message>
+
+branch is the branch of the git repository, when applied to repository entities.
+Has no meaning or effect on other entity types.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| branch | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
 <Message id="minder-v1-DiffType">DiffType</Message>
 
 DiffType defines the diff data ingester.
@@ -2674,9 +2698,10 @@ Ingest defines how the data is ingested.
 | type | <TypeLink type="string">string</TypeLink> |  | type is the type of the data ingestion. we currently support rest, artifact and builtin. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional | rest is the rest data ingestion. this is only used if the type is rest. |
 | builtin | <TypeLink type="minder-v1-BuiltinType">BuiltinType</TypeLink> | optional | builtin is the builtin data ingestion. |
-| artifact | <TypeLink type="minder-v1-ArtifactType">ArtifactType</TypeLink> | optional | artifact is the artifact data ingestion. |
-| git | <TypeLink type="minder-v1-GitType">GitType</TypeLink> | optional | git is the git data ingestion. |
-| diff | <TypeLink type="minder-v1-DiffType">DiffType</TypeLink> | optional | diff is the diff data ingestion. |
+| artifact | <TypeLink type="minder-v1-ArtifactType">ArtifactType</TypeLink> | optional | artifact is the artifact data ingestion. artifact currently only applies to artifacts. |
+| git | <TypeLink type="minder-v1-GitType">GitType</TypeLink> | optional | git is the git data ingestion. git currently only applies to repositories. |
+| diff | <TypeLink type="minder-v1-DiffType">DiffType</TypeLink> | optional | diff is the diff data ingestion. diff currently only applies to pull_requests. |
+| deps | <TypeLink type="minder-v1-DepsType">DepsType</TypeLink> | optional | deps is the deps data ingestion. deps currently only applies to repositories. |
 
 
 
