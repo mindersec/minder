@@ -14,7 +14,10 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	df "github.com/mindersec/minder/database/mock/fixtures"
+	dsf "github.com/mindersec/minder/internal/datasources/service/mock/fixtures"
 	db "github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
@@ -22,18 +25,21 @@ import (
 func TestCreateRuleType(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	tests := []struct {
-		name                string
-		mockStoreFunc       df.MockStoreBuilder
-		ruleTypeServiceFunc sf.RuleTypeSvcMockBuilder
-		request             *minderv1.CreateRuleTypeRequest
-		error               bool
+		name                   string
+		mockStoreFunc          df.MockStoreBuilder
+		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
+		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
+		features               map[string]any
+		request                *minderv1.CreateRuleTypeRequest
+		error                  bool
 	}{
 		{
 			name: "happy path",
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
 				sf.WithSuccessfulCreateRuleType,
@@ -45,7 +51,7 @@ func TestCreateRuleType(t *testing.T) {
 		{
 			name: "guidance sanitize error",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.CreateRuleTypeRequest{
@@ -58,7 +64,7 @@ func TestCreateRuleType(t *testing.T) {
 		{
 			name: "guidance not utf-8",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.CreateRuleTypeRequest{
@@ -71,12 +77,128 @@ func TestCreateRuleType(t *testing.T) {
 		{
 			name: "guidance too long",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.CreateRuleTypeRequest{
 				RuleType: &minderv1.RuleType{
 					Guidance: strings.Repeat("a", 4*1<<10),
+				},
+			},
+			error: true,
+		},
+
+		// data sources validation
+		{
+			name: "available data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulCreateRuleType,
+			),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithSuccessfulGetByName(
+					projectID,
+					&minderv1.DataSource{
+						Name: "foo",
+					},
+				),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithNotFoundGetByName(projectID),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+			error: true,
+		},
+		{
+			name: "failed data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithFailedGetByName(),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+			error: true,
+		},
+		{
+			name: "disabled data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc:    sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(),
+			features:               map[string]any{},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
 				},
 			},
 			error: true,
@@ -103,10 +225,27 @@ func TestCreateRuleType(t *testing.T) {
 				mockSvc = tt.ruleTypeServiceFunc(ctrl)
 			}
 
+			var mockDsSvc dsf.DataSourcesSvcMock
+			if tt.dataSourcesServiceFunc != nil {
+				mockDsSvc = tt.dataSourcesServiceFunc(ctrl)
+			}
+
+			featureClient := &flags.FakeClient{}
+			if tt.features != nil {
+				featureClient.Data = tt.features
+			}
+
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
+			srv.dataSourcesService = mockDsSvc
+			srv.featureFlags = featureClient
 
-			resp, err := srv.CreateRuleType(context.Background(), tt.request)
+			ctx := context.Background()
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: "testing"},
+			})
+			resp, err := srv.CreateRuleType(ctx, tt.request)
 			if tt.error {
 				require.Error(t, err)
 				require.Nil(t, resp)
@@ -122,18 +261,21 @@ func TestCreateRuleType(t *testing.T) {
 func TestUpdateRuleType(t *testing.T) {
 	t.Parallel()
 
+	projectID := uuid.New()
 	tests := []struct {
-		name                string
-		mockStoreFunc       df.MockStoreBuilder
-		ruleTypeServiceFunc sf.RuleTypeSvcMockBuilder
-		request             *minderv1.UpdateRuleTypeRequest
-		error               bool
+		name                   string
+		mockStoreFunc          df.MockStoreBuilder
+		ruleTypeServiceFunc    sf.RuleTypeSvcMockBuilder
+		dataSourcesServiceFunc dsf.DataSourcesSvcMockBuilder
+		features               map[string]any
+		request                *minderv1.UpdateRuleTypeRequest
+		error                  bool
 	}{
 		{
 			name: "happy path",
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
 				sf.WithSuccessfulUpdateRuleType,
@@ -145,7 +287,7 @@ func TestUpdateRuleType(t *testing.T) {
 		{
 			name: "guidance sanitize error",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.UpdateRuleTypeRequest{
@@ -158,7 +300,7 @@ func TestUpdateRuleType(t *testing.T) {
 		{
 			name: "guidance not utf-8",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.UpdateRuleTypeRequest{
@@ -171,12 +313,128 @@ func TestUpdateRuleType(t *testing.T) {
 		{
 			name: "guidance too long",
 			mockStoreFunc: df.NewMockStore(
-				WithSuccessfulGetProjectByID(uuid.Nil),
+				WithSuccessfulGetProjectByID(projectID),
 			),
 			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
 			request: &minderv1.UpdateRuleTypeRequest{
 				RuleType: &minderv1.RuleType{
 					Guidance: strings.Repeat("a", 4*1<<10),
+				},
+			},
+			error: true,
+		},
+
+		// data sources validation
+		{
+			name: "available data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulUpdateRuleType,
+			),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithSuccessfulGetByName(
+					projectID,
+					&minderv1.DataSource{
+						Name: "foo",
+					},
+				),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithNotFoundGetByName(projectID),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+			error: true,
+		},
+		{
+			name: "failed data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(
+				dsf.WithFailedGetByName(),
+			),
+			features: map[string]any{
+				"data_sources": true,
+			},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
+				},
+			},
+			error: true,
+		},
+		{
+			name: "disabled data sources",
+			mockStoreFunc: df.NewMockStore(
+				df.WithRollbackTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc:    sf.NewRuleTypeServiceMock(),
+			dataSourcesServiceFunc: dsf.NewDataSourcesServiceMock(),
+			features:               map[string]any{},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: &minderv1.RuleType{
+					Def: &minderv1.RuleType_Definition{
+						Eval: &minderv1.RuleType_Definition_Eval{
+							DataSources: []*minderv1.DataSourceReference{
+								{
+									Name: "foo",
+								},
+							},
+						},
+					},
 				},
 			},
 			error: true,
@@ -203,10 +461,27 @@ func TestUpdateRuleType(t *testing.T) {
 				mockSvc = tt.ruleTypeServiceFunc(ctrl)
 			}
 
+			var mockDsSvc dsf.DataSourcesSvcMock
+			if tt.dataSourcesServiceFunc != nil {
+				mockDsSvc = tt.dataSourcesServiceFunc(ctrl)
+			}
+
+			featureClient := &flags.FakeClient{}
+			if tt.features != nil {
+				featureClient.Data = tt.features
+			}
+
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.ruleTypes = mockSvc
+			srv.dataSourcesService = mockDsSvc
+			srv.featureFlags = featureClient
 
-			resp, err := srv.UpdateRuleType(context.Background(), tt.request)
+			ctx := context.Background()
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: "testing"},
+			})
+			resp, err := srv.UpdateRuleType(ctx, tt.request)
 			if tt.error {
 				require.Error(t, err)
 				require.Nil(t, resp)
