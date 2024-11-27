@@ -82,7 +82,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	if err != nil {
 		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 	}
-	cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 48 hours for " +
+	cmd.Println(cli.SuccessBanner.Render("Successfully deleted account. It may take up to 10 minutes for " +
 		"all data to be removed."))
 	return nil
 }
