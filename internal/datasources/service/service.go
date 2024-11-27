@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -187,7 +188,7 @@ func (d *dataSourceService) Create(
 	defer func(stx serviceTX) {
 		err := stx.Rollback()
 		if err != nil {
-			fmt.Printf("failed to rollback transaction: %v", err)
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
 	}(stx)
 
@@ -272,7 +273,7 @@ func (d *dataSourceService) Delete(
 	defer func(stx serviceTX) {
 		err := stx.Rollback()
 		if err != nil {
-			fmt.Printf("failed to rollback transaction: %v", err)
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
 	}(stx)
 
