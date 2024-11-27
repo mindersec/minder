@@ -513,7 +513,9 @@ func getDataSources(readers []*os.File) (*v1datasources.DataSourceRegistry, erro
 			return nil, fmt.Errorf("error parsing data source %s: %w", fname, err)
 		}
 
-		// TODO: Add data source validation here.
+		if err := ds.Validate(); err != nil {
+			return nil, fmt.Errorf("error validating data source %s: %w", fname, err)
+		}
 
 		intds, err := internalds.BuildFromProtobuf(ds)
 		if err != nil {
