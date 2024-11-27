@@ -575,7 +575,7 @@ retrieve.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the index to start from within the collection being retrieved. It's an opaque payload specified and interpreted on an per-rpc basis. An empty string is used to indicate the first item in the collection. |
 | size | <TypeLink type="uint32">uint32</TypeLink> |  | size is the number of items to retrieve from the collection. 0 uses a server-defined default. |
 
 
@@ -590,8 +590,8 @@ subsets with respect to the one containing this struct.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | total_records | <TypeLink type="uint32">uint32</TypeLink> |  | Total number of records matching the request. This is optional. |
-| next | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. |
-| prev | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. |
+| next | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed after the ones shipped with the message containing this struct. This is optional. |
+| prev | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor pointing to retrieve results logically placed before the ones shipped with the message containing this struct. This is optional. |
 
 
 
@@ -1604,7 +1604,7 @@ which is used for pagination.
 | label_filter | <TypeLink type="string">string</TypeLink> | repeated | Filter evaluation history to only those matching the specified labels.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
-| cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. |
+| cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. This is optional. |
 
 
 

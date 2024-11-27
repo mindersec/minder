@@ -893,7 +893,7 @@
           },
           {
             "name": "cursor.cursor",
-            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis.",
+            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -902,7 +902,7 @@
             "name": "cursor.size",
             "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "integer",
             "format": "int64"
           }
@@ -3854,7 +3854,7 @@
       "properties": {
         "cursor": {
           "type": "string",
-          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis."
+          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection."
         },
         "size": {
           "type": "integer",
@@ -3862,7 +3862,10 @@
           "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default."
         }
       },
-      "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve."
+      "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve.",
+      "required": [
+        "size"
+      ]
     },
     "v1CursorPage": {
       "type": "object",
@@ -3874,11 +3877,11 @@
         },
         "next": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed after the\nones shipped with the message containing this struct."
+          "description": "Cursor pointing to retrieve results logically placed after the\nones shipped with the message containing this struct. This is optional."
         },
         "prev": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed before the\nones shipped with the message containing this struct."
+          "description": "Cursor pointing to retrieve results logically placed before the\nones shipped with the message containing this struct. This is optional."
         }
       },
       "description": "CursorPage message used in response messages. Its purpose is to\nsend to clients links pointing to next and/or previous collection\nsubsets with respect to the one containing this struct."
