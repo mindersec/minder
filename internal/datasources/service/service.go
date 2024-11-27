@@ -291,6 +291,11 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 	instantiations := rt.GetDef().GetEval().GetDataSources()
 	reg := v1datasources.NewDataSourceRegistry()
 
+	// return early so we don't need to do useless work
+	if len(instantiations) == 0 {
+		return reg, nil
+	}
+
 	stx, err := d.txBuilder(d, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
