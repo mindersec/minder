@@ -244,11 +244,11 @@ manage Users CRUD
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | artifact_pk | <TypeLink type="string">string</TypeLink> |  |  |
-| owner | <TypeLink type="string">string</TypeLink> |  |  |
+| owner | <TypeLink type="string">string</TypeLink> |  | owner is the artifact owner. This is optional. |
 | name | <TypeLink type="string">string</TypeLink> |  |  |
 | type | <TypeLink type="string">string</TypeLink> |  |  |
 | visibility | <TypeLink type="string">string</TypeLink> |  |  |
-| repository | <TypeLink type="string">string</TypeLink> |  |  |
+| repository | <TypeLink type="string">string</TypeLink> |  | repository is the repository the artifact originated from. This is optional. |
 | versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
 | created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
@@ -263,7 +263,8 @@ ArtifactType defines the artifact data evaluation.
 
 <Message id="minder-v1-ArtifactVersion">ArtifactVersion</Message>
 
-
+ArtifactVersion is a version of an artifact.
+This is currently not populated in any requests or responses.
 
 
 | Field | Type | Label | Description |
@@ -1038,7 +1039,7 @@ Namespace: is the namespace for the GHCR provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | artifact | <TypeLink type="minder-v1-Artifact">Artifact</TypeLink> |  |  |
-| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
+| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated | This is optional and currently always nil. |
 
 
 
@@ -1062,7 +1063,7 @@ Namespace: is the namespace for the GHCR provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | artifact | <TypeLink type="minder-v1-Artifact">Artifact</TypeLink> |  |  |
-| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated |  |
+| versions | <TypeLink type="minder-v1-ArtifactVersion">ArtifactVersion</TypeLink> | repeated | This is optional and currently always nil. |
 
 
 
@@ -1521,7 +1522,7 @@ GitType defines the git data ingester.
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| from | <TypeLink type="string">string</TypeLink> |  |  |
+| from | <TypeLink type="string">string</TypeLink> |  | from is the filter to apply to the list of artifacts. An example is "repository=org1/repo1,org2/repo2" to filter by repository names. This is optional. |
 
 
 

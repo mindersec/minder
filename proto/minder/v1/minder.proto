@@ -181,7 +181,12 @@ service ArtifactService {
 
 message ListArtifactsRequest {
     string provider = 1 [deprecated=true];
-    Context context = 3;
+    Context context = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    // from is the filter to apply to the list of artifacts.
+    // An example is "repository=org1/repo1,org2/repo2"
+    // to filter by repository names. This is optional.
     string from = 4 [
         (buf.validate.field).string = {
             pattern: "^[[:word:]]+=[-,/[:word:]]+$",
@@ -194,21 +199,38 @@ message ListArtifactsRequest {
 }
 
 message ListArtifactsResponse {
-    repeated Artifact results = 1;
+    repeated Artifact results = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message Artifact {
-    string artifact_pk = 1;
+    string artifact_pk = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    // owner is the artifact owner. This is optional.
     string owner = 2;
-    string name = 3;
-    string type = 4;
-    string visibility = 5;
+    string name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string type = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string visibility = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    // repository is the repository the artifact originated from.
+    // This is optional.
     string repository = 6;
     repeated ArtifactVersion versions = 7;
-    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp created_at = 8  [
+        (google.api.field_behavior) = REQUIRED
+    ];
     Context context = 9;
 }
 
+// ArtifactVersion is a version of an artifact.
+// This is currently not populated in any requests or responses.
 message ArtifactVersion {
     int64 version_id = 1 [
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
@@ -225,17 +247,23 @@ message ArtifactVersion {
 message GetArtifactByIdRequest {
     string id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (google.api.field_behavior) = REQUIRED
     ];
 
-    Context context = 7;
+    Context context = 7 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     reserved 5, 6; // deprecated latest_versions, tag
     reserved "latest_versions", "tag";
 }
 
 message GetArtifactByIdResponse {
-    Artifact artifact = 1;
+    Artifact artifact = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    // This is optional and currently always nil.
     repeated ArtifactVersion versions = 2;
 }
 
@@ -245,16 +273,22 @@ message GetArtifactByNameRequest {
             pattern: "^[-./[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (google.api.field_behavior) = REQUIRED
     ];
-    Context context = 4;
+    Context context = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     reserved 2, 3; // deprecated latest_versions, tag
     reserved "latest_versions", "tag";
 }
 
 message GetArtifactByNameResponse {
-    Artifact artifact = 1;
+    Artifact artifact = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    // This is optional and currently always nil.
     repeated ArtifactVersion versions = 2;
 }
 

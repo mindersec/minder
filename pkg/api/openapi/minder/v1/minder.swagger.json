@@ -181,6 +181,7 @@
           },
           {
             "name": "from",
+            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -231,6 +232,7 @@
           },
           {
             "name": "from",
+            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3546,7 +3548,8 @@
           "type": "string"
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the artifact owner. This is optional."
         },
         "name": {
           "type": "string"
@@ -3558,7 +3561,8 @@
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": "string",
+          "description": "repository is the repository the artifact originated from.\nThis is optional."
         },
         "versions": {
           "type": "array",
@@ -3574,7 +3578,14 @@
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "artifactPk",
+        "name",
+        "type",
+        "visibility",
+        "createdAt"
+      ]
     },
     "v1ArtifactType": {
       "type": "object",
@@ -3600,7 +3611,8 @@
           "type": "string",
           "format": "date-time"
         }
-      }
+      },
+      "description": "ArtifactVersion is a version of an artifact.\nThis is currently not populated in any requests or responses."
     },
     "v1AssignRoleRequest": {
       "type": "object",
@@ -4193,9 +4205,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ArtifactVersion"
-          }
+          },
+          "description": "This is optional and currently always nil."
         }
-      }
+      },
+      "required": [
+        "artifact"
+      ]
     },
     "v1GetArtifactByNameResponse": {
       "type": "object",
@@ -4208,9 +4224,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ArtifactVersion"
-          }
+          },
+          "description": "This is optional and currently always nil."
         }
-      }
+      },
+      "required": [
+        "artifact"
+      ]
     },
     "v1GetAuthorizationURLResponse": {
       "type": "object",
@@ -4484,7 +4504,10 @@
             "$ref": "#/definitions/v1Artifact"
           }
         }
-      }
+      },
+      "required": [
+        "results"
+      ]
     },
     "v1ListChildProjectsResponse": {
       "type": "object",
