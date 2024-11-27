@@ -18,6 +18,7 @@ import (
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
 	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
+	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -81,9 +82,12 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 	}
 }
 func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
-	userCfg := &Config{}
+	var logger = zerolog.Ctx(ctx)
+	userCfg := &Config{
+		Branch: defaultBranch,
+	}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
-		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
+		return nil, fmt.Errorf("failed to read dependency ingester configuration from params: %w", err)
 	}
 
 	if repo.GetCloneUrl() == "" {
@@ -91,6 +95,7 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 	}
 
 	branch := gi.getBranch(repo, userCfg.Branch)
+	logger.Info().Interface("repo", repo).Msgf("extracting dependencies from %s#%s", repo.GetCloneUrl(), branch)
 
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is
@@ -117,6 +122,8 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 		return nil, fmt.Errorf("could not scan filesystem: %w", err)
 	}
 
+	logger.Debug().Interface("deps", deps).Msgf("Scanning successful: %d nodes found", len(deps.Nodes))
+
 	head, err := r.Head()
 	if err != nil {
 		return nil, fmt.Errorf("could not get head: %w", err)
@@ -129,7 +136,9 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 		WithCommitHash(hsh.String())
 
 	return &interfaces.Result{
-		Object:     deps,
+		Object: map[string]any{
+			"node_list": deps,
+		},
 		Checkpoint: chkpoint,
 	}, nil
 }
@@ -155,6 +164,9 @@ func (gi *Deps) getBranch(repo *pb.Repository, branch string) string {
 }
 
 func scanFs(ctx context.Context, memFS billy.Filesystem) (*sbom.NodeList, error) {
+	if memFS == nil {
+		return nil, fmt.Errorf("unable to scan dependencies, no active defined")
+	}
 	// have to down-cast here, because scalibr needs multiple io/fs types
 	wrapped, ok := iofs.New(memFS).(scalibr_fs.FS)
 	if !ok {
