@@ -2378,13 +2378,24 @@ definitions:
         description: builtin is the builtin data ingestion.
       artifact:
         $ref: '#/definitions/v1ArtifactType'
-        description: artifact is the artifact data ingestion.
+        description: |-
+          artifact is the artifact data ingestion.
+          artifact currently only applies to artifacts.
       git:
         $ref: '#/definitions/v1GitType'
-        description: git is the git data ingestion.
+        description: |-
+          git is the git data ingestion.
+          git currently only applies to repositories.
       diff:
         $ref: '#/definitions/v1DiffType'
-        description: diff is the diff data ingestion.
+        description: |-
+          diff is the diff data ingestion.
+          diff currently only applies to pull_requests.
+      deps:
+        $ref: '#/definitions/v1DepsType'
+        description: |-
+          deps is the deps data ingestion.
+          deps currently only applies to repositories.
     description: Ingest defines how the data is ingested.
   DefinitionRemediate:
     type: object
@@ -2397,6 +2408,16 @@ definitions:
         $ref: '#/definitions/RemediateGhBranchProtectionType'
       pullRequest:
         $ref: '#/definitions/RemediatePullRequestRemediation'
+  DepsTypeRepoConfigs:
+    type: object
+    properties:
+      branch:
+        type: string
+    description: >-
+      branch is the branch of the git repository, when applied to repository
+      entities.
+
+      Has no meaning or effect on other entity types.
   DiffTypeEcosystem:
     type: object
     properties:
@@ -3142,6 +3163,16 @@ definitions:
     description: DeleteRuleTypeResponse is the response to delete a rule type.
   v1DeleteUserResponse:
     type: object
+  v1DepsType:
+    type: object
+    properties:
+      repo:
+        $ref: '#/definitions/DepsTypeRepoConfigs'
+    description: >-
+      DepsType defines the "deps" ingester which can extract depndencies in
+      protobom
+
+      format for rule evaluation.
   v1DiffType:
     type: object
     properties:
