@@ -508,3 +508,88 @@ func validateNamespacedName(name string) error {
 	}
 	return nil
 }
+
+// Validate validates data sources
+func (ds *DataSource) Validate() error {
+	if ds == nil {
+		return fmt.Errorf("%w: data source is nil", ErrValidationFailed)
+	}
+
+	if ds.GetName() == "" {
+		return fmt.Errorf("%w: data source name cannot be empty", ErrValidationFailed)
+	}
+
+	if ds.GetDriver() == nil {
+		return fmt.Errorf("%w: data source driver cannot be nil", ErrValidationFailed)
+	}
+
+	// All data source drivers must include validation
+	val, ok := ds.GetDriver().(Validator)
+	if !ok {
+		return fmt.Errorf("%w: data source driver is not a valid driver", ErrValidationFailed)
+	}
+
+	ds.GetRest()
+
+	return val.Validate()
+}
+
+// Validate is the entrypoint for the actual driver's validation
+func (dsRestDriver *DataSource_Rest) Validate() error {
+	if dsRestDriver == nil {
+		return fmt.Errorf("%w: rest driver is nil", ErrValidationFailed)
+	}
+
+	if dsRestDriver.Rest == nil {
+		return fmt.Errorf("%w: rest driver is nil", ErrValidationFailed)
+	}
+
+	return dsRestDriver.Rest.Validate()
+}
+
+// Validate validates a rest data source
+func (rest *RestDataSource) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest data source is nil", ErrValidationFailed)
+	}
+
+	if len(rest.GetDef()) == 0 {
+		return fmt.Errorf("%w: rest definition is empty", ErrValidationFailed)
+	}
+
+	var errs []error
+	for i, def := range rest.GetDef() {
+		if i == "" {
+			errs = append(errs, fmt.Errorf("rest function name %s is empty", i))
+		}
+
+		// TODO: Should we validate valid characters here? We already do that
+		// in the protobuf definition.
+		if err := def.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("rest function %s is invalid: %w", i, err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	return nil
+}
+
+// Validate validates a rest function
+func (rest *RestDataSource_Def) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest function is nil", ErrValidationFailed)
+	}
+
+	if rest.GetEndpoint() == "" {
+		return fmt.Errorf("%w: rest function endpoint is empty", ErrValidationFailed)
+	}
+
+	if rest.GetInputSchema() == nil {
+		return fmt.Errorf("%w: rest function input schema is nil", ErrValidationFailed)
+	}
+
+	return nil
+}
