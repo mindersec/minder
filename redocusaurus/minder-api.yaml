@@ -663,7 +663,8 @@ paths:
           description: |-
             cursor is the index to start from within the collection being
             retrieved. It's an opaque payload specified and interpreted on
-            an per-rpc basis.
+            an per-rpc basis. An empty string is used to indicate the first
+            item in the collection.
           in: query
           required: false
           type: string
@@ -672,7 +673,7 @@ paths:
             size is the number of items to retrieve from the collection.
             0 uses a server-defined default.
           in: query
-          required: false
+          required: true
           type: integer
           format: int64
       tags:
@@ -2988,7 +2989,8 @@ definitions:
         description: |-
           cursor is the index to start from within the collection being
           retrieved. It's an opaque payload specified and interpreted on
-          an per-rpc basis.
+          an per-rpc basis. An empty string is used to indicate the first
+          item in the collection.
       size:
         type: integer
         format: int64
@@ -3000,6 +3002,8 @@ definitions:
       allow clients to specify the subset of records to retrieve by means
       of index within a collection, along with the number of items to
       retrieve.
+    required:
+      - size
   v1CursorPage:
     type: object
     properties:
@@ -3009,14 +3013,18 @@ definitions:
         description: Total number of records matching the request. This is optional.
       next:
         $ref: '#/definitions/v1Cursor'
-        description: |-
+        description: >-
           Cursor pointing to retrieve results logically placed after the
-          ones shipped with the message containing this struct.
+
+          ones shipped with the message containing this struct. This is
+          optional.
       prev:
         $ref: '#/definitions/v1Cursor'
-        description: |-
+        description: >-
           Cursor pointing to retrieve results logically placed before the
-          ones shipped with the message containing this struct.
+
+          ones shipped with the message containing this struct. This is
+          optional.
     description: |-
       CursorPage message used in response messages. Its purpose is to
       send to clients links pointing to next and/or previous collection
