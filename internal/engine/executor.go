@@ -12,6 +12,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
@@ -112,6 +113,8 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
+	dssvc := datasourceservice.NewDataSourceService(e.querier)
+
 	entityType := entities.EntityTypeToDB(inf.Type)
 	// Load all the relevant rule type engines for this entity
 	ruleEngineCache, err := rtengine.NewRuleEngineCache(
@@ -121,6 +124,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		inf.ProjectID,
 		provider,
 		ingestCache,
+		dssvc,
 		eoptions.WithFlagsClient(e.featureFlags),
 	)
 	if err != nil {
