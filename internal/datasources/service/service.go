@@ -11,6 +11,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/encoding/protojson"
 
@@ -187,7 +188,7 @@ func (d *dataSourceService) Create(
 	defer func(stx serviceTX) {
 		err := stx.Rollback()
 		if err != nil {
-			fmt.Printf("failed to rollback transaction: %v", err)
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
 	}(stx)
 
@@ -262,11 +263,61 @@ func (d *dataSourceService) Update(
 	panic("implement me")
 }
 
-// nolint:revive // there is a TODO
+// Delete deletes a data source in the given project.
 func (d *dataSourceService) Delete(
 	ctx context.Context, id uuid.UUID, project uuid.UUID, opts *Options) error {
-	//TODO implement me
-	panic("implement me")
+	stx, err := d.txBuilder(d, opts)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func(stx serviceTX) {
+		err := stx.Rollback()
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
+		}
+	}(stx)
+
+	// Get the transaction querier
+	tx := stx.Q()
+
+	// List rule types referencing the data source
+	ret, err := tx.ListRuleTypesReferencesByDataSource(ctx, db.ListRuleTypesReferencesByDataSourceParams{
+		DataSourcesID: id,
+		ProjectID:     project,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to list rule types referencing data source %s: %w", id, err)
+	}
+
+	// Check if the data source is in use by any rule types
+	if len(ret) > 0 {
+		// Return an error with the rule types that are using the data source
+		var existingRefs []string
+		for _, r := range ret {
+			existingRefs = append(existingRefs, r.RuleTypeID.String())
+		}
+		return util.UserVisibleError(codes.FailedPrecondition,
+			"data source %s is in use by the following rule types: %v", id, existingRefs)
+	}
+
+	// Delete the data source record
+	_, err = tx.DeleteDataSource(ctx, db.DeleteDataSourceParams{
+		ID:        id,
+		ProjectID: project,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return util.UserVisibleError(codes.NotFound,
+				"data source with id %s not found in project %s", id, project)
+		}
+		return fmt.Errorf("failed to delete data source with id %s: %w", id, err)
+	}
+
+	// Commit the transaction
+	if err := stx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+	return nil
 }
 
 // nolint:revive // there is a TODO
