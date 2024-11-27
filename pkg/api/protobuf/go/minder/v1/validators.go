@@ -529,8 +529,6 @@ func (ds *DataSource) Validate() error {
 		return fmt.Errorf("%w: data source driver is not a valid driver", ErrValidationFailed)
 	}
 
-	ds.GetRest()
-
 	return val.Validate()
 }
 
