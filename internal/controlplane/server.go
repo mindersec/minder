@@ -46,6 +46,7 @@ import (
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
+	datasourcessvc "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/history"
@@ -96,6 +97,7 @@ type Server struct {
 	props               propSvc.PropertiesService
 	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
+	dataSourcesService  datasourcessvc.DataSourcesService
 	repos               reposvc.RepositoryService
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
@@ -142,6 +144,7 @@ func NewServer(
 	profileService profiles.ProfileService,
 	historyService history.EvaluationHistoryService,
 	ruleService ruletypes.RuleTypeService,
+	dataSourcesService datasourcessvc.DataSourcesService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
 	providerAuthManager manager.AuthManager,
@@ -161,6 +164,7 @@ func NewServer(
 		profiles:            profileService,
 		history:             historyService,
 		ruleTypes:           ruleService,
+		dataSourcesService:  dataSourcesService,
 		providerStore:       providerStore,
 		featureFlags:        featureFlagClient,
 		ghClient:            &ghprov.ClientServiceImplementation{},
