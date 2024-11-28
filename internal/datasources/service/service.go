@@ -197,7 +197,7 @@ func (d *dataSourceService) Create(
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	// Check if such data source  already exists in project hierarchy
+	// Check if such data source already exists in project hierarchy
 	projs, err := listRelevantProjects(ctx, tx, projectID, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list relevant projects: %w", err)

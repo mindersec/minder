@@ -15,13 +15,27 @@ import (
 
 // CreateDataSource creates a data source
 func (s *Server) CreateDataSource(ctx context.Context,
-	_ *minderv1.CreateDataSourceRequest) (*minderv1.CreateDataSourceResponse, error) {
+	in *minderv1.CreateDataSourceRequest) (*minderv1.CreateDataSourceResponse, error) {
 
+	// Check if the DataSources feature is enabled
 	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
 	}
 
-	return &minderv1.CreateDataSourceResponse{}, nil
+	// Get the data source from the request
+	dsReq := in.GetDataSource()
+	if dsReq == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "missing data source")
+	}
+
+	// Process the request
+	ret, err := s.dataSourcesService.Create(ctx, dsReq, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the response
+	return &minderv1.CreateDataSourceResponse{DataSource: ret}, nil
 }
 
 // GetDataSourceById retrieves a data source by ID
