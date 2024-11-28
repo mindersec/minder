@@ -232,7 +232,7 @@ func (d *dataSourceService) Create(
 	}
 
 	// Create function records based on driver type
-	if err := d.addDataSourceFunctions(ctx, tx, ds, dsRecord.ID, projectID); err != nil {
+	if err := addDataSourceFunctions(ctx, tx, ds, dsRecord.ID, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create data source functions: %w", err)
 	}
 
@@ -308,7 +308,7 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("failed to delete existing functions: %w", err)
 	}
 
-	if err := d.addDataSourceFunctions(ctx, tx, ds, existing.ID, projectID); err != nil {
+	if err := addDataSourceFunctions(ctx, tx, ds, existing.ID, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create data source functions: %w", err)
 	}
 
@@ -438,7 +438,7 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 }
 
 // addDataSourceFunctions adds functions to a data source based on its driver type.
-func (d *dataSourceService) addDataSourceFunctions(
+func addDataSourceFunctions(
 	ctx context.Context,
 	tx db.ExtendQuerier,
 	ds *minderv1.DataSource,
