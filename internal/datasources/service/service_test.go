@@ -24,6 +24,25 @@ import (
 	v1 "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
+var validRESTDriverFixture = &minderv1.DataSource_Rest{
+	Rest: &minderv1.RestDataSource{
+		Def: map[string]*minderv1.RestDataSource_Def{
+			"test_function": {
+				Endpoint: "http://example.com",
+				InputSchema: func() *structpb.Struct {
+					s, _ := structpb.NewStruct(map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"test": "string",
+						},
+					})
+					return s
+				}(),
+			},
+		},
+	},
+}
+
 func TestGetByName(t *testing.T) {
 	t.Parallel()
 
@@ -410,24 +429,7 @@ func TestCreate(t *testing.T) {
 					Context: &minderv1.ContextV2{
 						ProjectId: uuid.New().String(),
 					},
-					Driver: &minderv1.DataSource_Rest{
-						Rest: &minderv1.RestDataSource{
-							Def: map[string]*minderv1.RestDataSource_Def{
-								"test_function": {
-									Endpoint: "http://example.com",
-									InputSchema: func() *structpb.Struct {
-										s, _ := structpb.NewStruct(map[string]any{
-											"type": "object",
-											"properties": map[string]any{
-												"test": "string",
-											},
-										})
-										return s
-									}(),
-								},
-							},
-						},
-					},
+					Driver: validRESTDriverFixture,
 				},
 				opts: &Options{},
 			},
@@ -482,6 +484,7 @@ func TestCreate(t *testing.T) {
 					Context: &minderv1.ContextV2{
 						ProjectId: uuid.New().String(),
 					},
+					Driver: validRESTDriverFixture,
 				},
 				opts: &Options{},
 			},
@@ -505,16 +508,8 @@ func TestCreate(t *testing.T) {
 				},
 				opts: &Options{},
 			},
-			setup: func(mockDB *mockdb.MockStore) {
-				mockDB.EXPECT().GetParentProjects(gomock.Any(), gomock.Any()).
-					Return([]uuid.UUID{uuid.New()}, nil)
-				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
-					Return(db.DataSource{}, sql.ErrNoRows)
-				mockDB.EXPECT().CreateDataSource(gomock.Any(), gomock.Any()).
-					Return(db.DataSource{
-						ID:   uuid.New(),
-						Name: "test_ds",
-					}, nil)
+			setup: func(_ *mockdb.MockStore) {
+				// This fails on the early validation side.
 			},
 			wantErr: true,
 		},
@@ -1087,7 +1082,7 @@ func TestUpdate(t *testing.T) {
 				opts: &Options{},
 			},
 			setup: func(mockDB *mockdb.MockStore) {
-				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{
 						ID:   uuid.MustParse(uuid.New().String()),
 						Name: "test_ds",
@@ -1151,15 +1146,17 @@ func TestUpdate(t *testing.T) {
 			name: "Data source not found",
 			args: args{
 				ds: &minderv1.DataSource{
-					Id: uuid.New().String(),
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
 					Context: &minderv1.ContextV2{
 						ProjectId: uuid.New().String(),
 					},
+					Driver: validRESTDriverFixture,
 				},
 				opts: &Options{},
 			},
 			setup: func(mockDB *mockdb.MockStore) {
-				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{}, sql.ErrNoRows)
 			},
 			wantErr: true,
@@ -1168,15 +1165,17 @@ func TestUpdate(t *testing.T) {
 			name: "Database error on update",
 			args: args{
 				ds: &minderv1.DataSource{
-					Id: uuid.New().String(),
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
 					Context: &minderv1.ContextV2{
 						ProjectId: uuid.New().String(),
 					},
+					Driver: validRESTDriverFixture,
 				},
 				opts: &Options{},
 			},
 			setup: func(mockDB *mockdb.MockStore) {
-				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{ID: uuid.New()}, nil)
 
 				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
@@ -1188,15 +1187,17 @@ func TestUpdate(t *testing.T) {
 			name: "Database error on delete functions",
 			args: args{
 				ds: &minderv1.DataSource{
-					Id: uuid.New().String(),
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
 					Context: &minderv1.ContextV2{
 						ProjectId: uuid.New().String(),
 					},
+					Driver: validRESTDriverFixture,
 				},
 				opts: &Options{},
 			},
 			setup: func(mockDB *mockdb.MockStore) {
-				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{ID: uuid.New()}, nil)
 
 				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
