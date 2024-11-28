@@ -283,12 +283,14 @@
         "parameters": [
           {
             "name": "cli",
+            "description": "cli is true if the request is being made from a CLI.",
             "in": "query",
             "required": false,
             "type": "boolean"
           },
           {
             "name": "owner",
+            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -315,6 +317,7 @@
           },
           {
             "name": "redirectUrl",
+            "description": "redirect_url is the URL to redirect to after the authorization is complete.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3307,15 +3310,20 @@
       "type": "object",
       "properties": {
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "access_token is the token to store."
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "accessToken"
+      ]
     },
     "ProfileRule": {
       "type": "object",
@@ -3688,7 +3696,10 @@
         "status": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1Context": {
       "type": "object",
@@ -4263,7 +4274,11 @@
         "state": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "url",
+        "state"
+      ]
     },
     "v1GetDataSourceByIdResponse": {
       "type": "object",
@@ -4311,7 +4326,13 @@
           "type": "boolean",
           "title": "expired is true if the invitation has expired"
         }
-      }
+      },
+      "required": [
+        "projectDisplay",
+        "sponsorDisplay",
+        "expiresAt",
+        "expired"
+      ]
     },
     "v1GetProfileByIdResponse": {
       "type": "object",
@@ -5501,15 +5522,20 @@
           "type": "string"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "access_token is the token to store."
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "accessToken"
+      ]
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
