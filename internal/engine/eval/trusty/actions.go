@@ -20,7 +20,6 @@ import (
 	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -198,7 +197,7 @@ type dependencyAlternatives struct {
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
 	cli       provifv1.GitHub
-	pr        *pb.PullRequest
+	pr        *pbinternal.PullRequest
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
@@ -430,7 +429,7 @@ func (sph *summaryPrHandler) compileTemplate(malicious []maliciousTemplateData, 
 }
 
 func newSummaryPrHandler(
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {

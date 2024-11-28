@@ -20,7 +20,6 @@ import (
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mock_ghclient "github.com/mindersec/minder/internal/providers/github/mock"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 const (
@@ -41,7 +40,7 @@ func TestReviewPrHandlerNoVulnerabilities(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -80,7 +79,7 @@ func TestReviewPrHandlerVulnerabilitiesDifferentIdentities(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -189,7 +188,7 @@ func TestReviewPrHandlerVulnerabilitiesErrLookUpPackage(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -283,7 +282,7 @@ func TestReviewPrHandlerVulnerabilitiesWithNoPatchVersion(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -383,7 +382,7 @@ func TestReviewPrHandlerVulnerabilitiesDismissReview(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -497,7 +496,7 @@ func TestCommitStatusHandlerNoVulnerabilities(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -542,7 +541,7 @@ func TestCommitStatusPrHandlerWithVulnerabilities(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -658,7 +657,7 @@ func TestReviewPrHandlerReviewPriorReview(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -705,7 +704,7 @@ func TestReviewPrHandlerVulnerabilitiesAndNoPriorReview(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,
@@ -749,7 +748,7 @@ func TestReviewPrHandlerReviewAlreadyExistsOnSHA(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockClient := mock_ghclient.NewMockGitHub(ctrl)
-	pr := &pb.PullRequest{
+	pr := &pbinternal.PullRequest{
 		Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/43",
 		CommitSha: commitSHA,
 		Number:    43,

@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/util"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -22,7 +22,7 @@ type GhReviewPrHandler struct {
 	logger zerolog.Logger
 
 	ghClient provifv1.GitHub
-	pr       *pb.PullRequest
+	pr       *pbinternal.PullRequest
 
 	minderReview *github.PullRequestReview
 	comments     []*github.DraftReviewComment
@@ -69,7 +69,7 @@ func (ra *GhReviewPrHandler) SubmitReview(ctx context.Context, reviewText string
 }
 
 // Hydrate hydrates the handler with a pull request
-func (ra *GhReviewPrHandler) Hydrate(ctx context.Context, pr *pb.PullRequest) {
+func (ra *GhReviewPrHandler) Hydrate(ctx context.Context, pr *pbinternal.PullRequest) {
 	logger := zerolog.Ctx(ctx).With().
 		Int64("pull-number", pr.Number).
 		Str("repo-owner", pr.RepoOwner).

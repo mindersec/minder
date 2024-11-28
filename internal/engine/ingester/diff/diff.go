@@ -84,7 +84,7 @@ func (di *Diff) Ingest(
 	ent protoreflect.ProtoMessage,
 	_ map[string]any,
 ) (*interfaces.Result, error) {
-	pr, ok := ent.(*pb.PullRequest)
+	pr, ok := ent.(*pbinternal.PullRequest)
 	if !ok {
 		return nil, fmt.Errorf("entity is not a pull request")
 	}
@@ -111,7 +111,7 @@ func (di *Diff) Ingest(
 	}
 }
 
-func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 	page := 0
 
@@ -139,7 +139,7 @@ func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pb.PullReq
 	return &interfaces.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
-func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pb.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
 	diff := &pbinternal.PrContents{Pr: pr}
 	page := 0
 
@@ -196,7 +196,7 @@ func (di *Diff) ingestFileForDepDiff(
 	return batchCtxDeps, nil
 }
 
-func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pb.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 
 	// TODO: we should be able to just fetch the additional commits between base and target.

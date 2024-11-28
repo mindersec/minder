@@ -13,6 +13,7 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -301,7 +302,7 @@ func (jrb *jsonResultBuilder) formatResults() error {
 
 func getEntityName(entity protoreflect.ProtoMessage) string {
 	switch inner := entity.(type) {
-	case *minderv1.PullRequest:
+	case *pbinternal.PullRequest:
 		return fmt.Sprintf("%s/%s#%d",
 			inner.RepoOwner,
 			inner.RepoName,

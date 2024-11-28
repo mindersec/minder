@@ -18,6 +18,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
@@ -103,7 +104,7 @@ func TestSecurityAdvisoryAlert(t *testing.T) {
 				context.Background(),
 				interfaces.ActionCmdOn,
 				models.ActionOptOn,
-				&pb.PullRequest{},
+				&pbinternal.PullRequest{},
 				evalParams,
 				nil,
 			)

@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 func TestNewSummaryPrHandler(t *testing.T) {
@@ -17,7 +17,7 @@ func TestNewSummaryPrHandler(t *testing.T) {
 
 	// newSummaryPrHandler must never fail. The only failure point
 	// right now is the pr comment template
-	_, err := newSummaryPrHandler(&v1.PullRequest{}, nil, "")
+	_, err := newSummaryPrHandler(&pbinternal.PullRequest{}, nil, "")
 	require.NoError(t, err)
 }
 

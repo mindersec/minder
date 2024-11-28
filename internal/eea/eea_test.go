@@ -27,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties"
 	psvc "github.com/mindersec/minder/internal/entities/properties/service"
 	propsvcmock "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
@@ -324,7 +325,7 @@ func TestFlushAll(t *testing.T) {
 					}, nil)
 
 				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(&minderv1.PullRequest{}, nil)
+					Return(&pbinternal.PullRequest{}, nil)
 			},
 		},
 	}

@@ -15,7 +15,7 @@ import (
 	go_github "github.com/google/go-github/v63/github"
 
 	"github.com/mindersec/minder/internal/entities/properties"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -187,8 +187,8 @@ func getPrWrapperAttrsFromProps(props *properties.Properties) (string, string, i
 }
 
 // PullRequestV1FromProperties creates a PullRequestV1 from a properties object
-func PullRequestV1FromProperties(props *properties.Properties) (*minderv1.PullRequest, error) {
-	return &minderv1.PullRequest{
+func PullRequestV1FromProperties(props *properties.Properties) (*pbinternal.PullRequest, error) {
+	return &pbinternal.PullRequest{
 		Url:            props.GetProperty(PullPropertyURL).GetString(),
 		CommitSha:      props.GetProperty(PullPropertySha).GetString(),
 		TargetRef:      props.GetProperty(PullPropertyTargetRef).GetString(),

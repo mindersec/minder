@@ -291,7 +291,7 @@ func Test_getScalibrTypeDiff(t *testing.T) {
 				t.Fatalf("NewDiffIngester() error = %v", err)
 			}
 
-			req := &pb.PullRequest{
+			req := &pbinternal.PullRequest{
 				Url:            "https://api.github.com/repos/evan-testing-minder/docs-test/pulls/2",
 				CommitSha:      "5fab4eb53bdfdd879b841564ed9e8064de271cd2",
 				Number:         2,
