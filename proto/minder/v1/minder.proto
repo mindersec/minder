@@ -1066,7 +1066,8 @@ message GetInviteDetailsRequest {
         (buf.validate.field).string = {
             pattern: "^[A-Za-z0-9_-]+$",
             len: 64,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     reserved 1; // deprecated Context context = 1;
@@ -1075,24 +1076,38 @@ message GetInviteDetailsRequest {
 
 message GetInviteDetailsResponse {
     // Project associated with the invite
-    string project_display = 1;
+    string project_display = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // Sponsor of the invite
-    string sponsor_display = 2;
+    string sponsor_display = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // expires_at is the time at which the invitation expires.
-    google.protobuf.Timestamp expires_at = 3;
+    google.protobuf.Timestamp expires_at = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // expired is true if the invitation has expired
-    bool expired = 4;
+    bool expired = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CheckHealthRequest {
 }
 
 message CheckHealthResponse {
-    string status = 1;
+    string status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message GetAuthorizationURLRequest {
+    // cli is true if the request is being made from a CLI.
     bool cli = 3;
+
+    // owner is the owner (e.g GitHub org) that the provider is associated with.
+    // This is optional.
     optional string owner = 5 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-[:word:]]*$"
@@ -1101,6 +1116,8 @@ message GetAuthorizationURLRequest {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     Context context = 6;
+
+    // redirect_url is the URL to redirect to after the authorization is complete.
     optional string redirect_url = 7 [
         (buf.validate.field).string = {
             uri: true,
@@ -1125,19 +1142,29 @@ message GetAuthorizationURLRequest {
 }
 
 message GetAuthorizationURLResponse {
-    string url = 1;
-    string state = 2;
+    string url = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string state = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message StoreProviderTokenRequest {
     string provider = 1 [deprecated=true];
+
+    // access_token is the token to store.
     string access_token = 3 [
         (buf.validate.field).string = {
             pattern: "^[a-zA-Z0-9-_]+$",
             min_len: 10,
             max_len: 200,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
+
+    // owner is the owner (e.g GitHub org) that the provider is associated with.
+    // This is optional.
     optional string owner = 4 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-[:word:]]*$"

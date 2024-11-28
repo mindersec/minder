@@ -1098,10 +1098,10 @@ Namespace: is the namespace for the GHCR provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| cli | <TypeLink type="bool">bool</TypeLink> |  |  |
-| owner | <TypeLink type="string">string</TypeLink> | optional |  |
+| cli | <TypeLink type="bool">bool</TypeLink> |  | cli is true if the request is being made from a CLI. |
+| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| redirect_url | <TypeLink type="string">string</TypeLink> | optional |  |
+| redirect_url | <TypeLink type="string">string</TypeLink> | optional | redirect_url is the URL to redirect to after the authorization is complete. |
 | config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is a JSON object that can be used to pass additional configuration |
 | provider_class | <TypeLink type="string">string</TypeLink> |  |  |
 
@@ -2767,8 +2767,8 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
-| access_token | <TypeLink type="string">string</TypeLink> |  |  |
-| owner | <TypeLink type="string">string</TypeLink> | optional |  |
+| access_token | <TypeLink type="string">string</TypeLink> |  | access_token is the token to store. |
+| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
