@@ -25,6 +25,29 @@ message Dependency {
   string version = 3;
 }
 
+message PullRequest {
+  string url = 1;         // The full URL to the PR
+  string commit_sha = 2;  // Commit SHA of the PR HEAD. Will be useful to submit a review
+  int64 number = 3;  // The sequential PR number (not the DB PK!)
+
+  string repo_owner = 4;  // The owner of the repo, will be used to submit a review
+  string repo_name = 5;   // The name of the repo, will be used to submit a review
+
+  int64 author_id = 6;  // The author of the PR, will be used to check if we can request changes
+
+  string action = 7;      // The action that triggered the webhook
+
+  minder.v1.Context context = 8;
+
+  // properties is a map of properties of the entity.
+  google.protobuf.Struct properties = 9;
+
+  string base_clone_url = 10;   // URL used to clone the base repository
+  string target_clone_url = 11; // URL used to clone the target repository
+  string base_ref = 12;         // The base ref of the PR
+  string target_ref = 13;       // The target ref of the PR
+}
+
 message PrDependencies {
   message ContextualDependency {
     message FilePatch {
@@ -36,7 +59,7 @@ message PrDependencies {
     FilePatch file = 2;
   }
 
-  minder.v1.PullRequest pr = 1;
+  PullRequest pr = 1;
   repeated ContextualDependency deps = 2;
 }
 
@@ -54,7 +77,7 @@ message PrContents {
     }
   }
 
-  minder.v1.PullRequest pr = 1;
+  PullRequest pr = 1;
   repeated File files = 2;
 }
 

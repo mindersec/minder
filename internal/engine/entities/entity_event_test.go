@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -104,7 +105,7 @@ func Test_parseEntityEvent(t *testing.T) {
 		{
 			name: "legacy pull_request event",
 			args: args{
-				ent: &pb.PullRequest{
+				ent: &pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,
@@ -121,7 +122,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			},
 			want: &EntityInfoWrapper{
 				ProjectID: projectID,
-				Entity: &pb.PullRequest{
+				Entity: &pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,
@@ -195,7 +196,7 @@ func Test_parseEntityEvent(t *testing.T) {
 		{
 			name: "pull_request event with entity ID",
 			args: args{
-				ent: &pb.PullRequest{
+				ent: &pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,
@@ -209,7 +210,7 @@ func Test_parseEntityEvent(t *testing.T) {
 			},
 			want: &EntityInfoWrapper{
 				ProjectID: projectID,
-				Entity: &pb.PullRequest{
+				Entity: &pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,
@@ -342,7 +343,7 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 			eiw: NewEntityInfoWrapper().
 				WithProviderID(providerID).
 				WithProjectID(projectID).
-				WithProtoMessage(pb.Entity_ENTITY_PULL_REQUESTS, &pb.PullRequest{
+				WithProtoMessage(pb.Entity_ENTITY_PULL_REQUESTS, &pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,
@@ -362,7 +363,7 @@ func TestEntityInfoWrapper_ToMessage(t *testing.T) {
 			eiw: NewEntityInfoWrapper().
 				WithProviderID(providerID).
 				WithProjectID(projectID).
-				WithPullRequest(&pb.PullRequest{
+				WithPullRequest(&pbinternal.PullRequest{
 					Url:       "https://api.github.com/repos/jakubtestorg/bad-npm/pulls/3",
 					CommitSha: "bd9958a63c9b95ccc2bc0cf1eef65a87529aed16",
 					Number:    3,

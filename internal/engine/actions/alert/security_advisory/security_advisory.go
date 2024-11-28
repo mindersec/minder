@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	htmltemplate "html/template"
 	"strings"
 
@@ -310,7 +311,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	case *pb.Repository:
 		result.Owner = entity.GetOwner()
 		result.Repo = entity.GetName()
-	case *pb.PullRequest:
+	case *pbinternal.PullRequest:
 		result.Owner = entity.GetRepoOwner()
 		result.Repo = entity.GetRepoName()
 	case *pb.Artifact:

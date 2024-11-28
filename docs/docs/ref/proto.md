@@ -2160,29 +2160,6 @@ ProviderConfig contains the generic configuration for a provider.
 
 
 
-<Message id="minder-v1-PullRequest">PullRequest</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| url | <TypeLink type="string">string</TypeLink> |  | The full URL to the PR |
-| commit_sha | <TypeLink type="string">string</TypeLink> |  | Commit SHA of the PR HEAD. Will be useful to submit a review |
-| number | <TypeLink type="int64">int64</TypeLink> |  | The sequential PR number (not the DB PK!) |
-| repo_owner | <TypeLink type="string">string</TypeLink> |  | The owner of the repo, will be used to submit a review |
-| repo_name | <TypeLink type="string">string</TypeLink> |  | The name of the repo, will be used to submit a review |
-| author_id | <TypeLink type="int64">int64</TypeLink> |  | The author of the PR, will be used to check if we can request changes |
-| action | <TypeLink type="string">string</TypeLink> |  | The action that triggered the webhook |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity. |
-| base_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the base repository |
-| target_clone_url | <TypeLink type="string">string</TypeLink> |  | URL used to clone the target repository |
-| base_ref | <TypeLink type="string">string</TypeLink> |  | The base ref of the PR |
-| target_ref | <TypeLink type="string">string</TypeLink> |  | The target ref of the PR |
-
-
-
 <Message id="minder-v1-RESTProviderConfig">RESTProviderConfig</Message>
 
 RESTProviderConfig contains the configuration for the REST provider.

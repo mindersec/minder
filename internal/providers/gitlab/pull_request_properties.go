@@ -14,7 +14,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/mindersec/minder/internal/entities/properties"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -125,7 +125,7 @@ func gitlabMergeRequestToProperties(mr *gitlab.MergeRequest, proj *gitlab.Projec
 	return outProps, nil
 }
 
-func pullRequestV1FromProperties(prProps *properties.Properties) (*minderv1.PullRequest, error) {
+func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.PullRequest, error) {
 	_, err := prProps.GetProperty(properties.PropertyUpstreamID).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get upstream ID: %w", err)
@@ -167,7 +167,7 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*minderv1.Pull
 		return nil, fmt.Errorf("failed to parse upstream ID: %w", err)
 	}
 
-	pbPR := &minderv1.PullRequest{
+	pbPR := &pbinternal.PullRequest{
 		Number:     id,
 		RepoOwner:  ns,
 		RepoName:   projName,

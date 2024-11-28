@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/properties/service"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/providers/manager"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
@@ -344,7 +345,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
 	}
 
-	pr, ok := rawPR.(*minderv1.PullRequest)
+	pr, ok := rawPR.(*pbinternal.PullRequest)
 	if !ok {
 		return nil, fmt.Errorf("error converting entity to pull request")
 	}

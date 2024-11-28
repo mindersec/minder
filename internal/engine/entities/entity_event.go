@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
@@ -101,7 +102,7 @@ func (eiw *EntityInfoWrapper) WithRepository(r *minderv1.Repository) *EntityInfo
 }
 
 // WithPullRequest sets the entity to a repository
-func (eiw *EntityInfoWrapper) WithPullRequest(p *minderv1.PullRequest) *EntityInfoWrapper {
+func (eiw *EntityInfoWrapper) WithPullRequest(p *pbinternal.PullRequest) *EntityInfoWrapper {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
 	eiw.Entity = p
 
@@ -156,7 +157,7 @@ func (eiw *EntityInfoWrapper) AsArtifact() *EntityInfoWrapper {
 // AsPullRequest sets the entity type to a pull request
 func (eiw *EntityInfoWrapper) AsPullRequest() {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
-	eiw.Entity = &minderv1.PullRequest{}
+	eiw.Entity = &pbinternal.PullRequest{}
 }
 
 // AsEntityInstance sets the entity type to an entity instance

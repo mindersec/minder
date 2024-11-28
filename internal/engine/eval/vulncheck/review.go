@@ -17,7 +17,6 @@ import (
 	"github.com/rs/zerolog"
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -105,7 +104,7 @@ func reviewBodyWithSuggestion(comment string) string {
 
 type reviewPrHandler struct {
 	cli provifv1.GitHub
-	pr  *pb.PullRequest
+	pr  *pbinternal.PullRequest
 
 	trackedDeps []dependencyVulnerabilities
 
@@ -131,7 +130,7 @@ func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
 
 func newReviewPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 	opts ...reviewPrHandlerOption,
 ) (*reviewPrHandler, error) {
@@ -469,7 +468,7 @@ type commitStatusPrHandler struct {
 
 func newCommitStatusPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	client provifv1.GitHub,
 ) (prStatusHandler, error) {
 	// create a reviewPrHandler and embed it in the commitStatusPrHandler
@@ -531,7 +530,7 @@ func (csh *commitStatusPrHandler) setCommitStatus(
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
 	cli provifv1.GitHub
-	pr  *pb.PullRequest
+	pr  *pbinternal.PullRequest
 
 	logger      zerolog.Logger
 	trackedDeps []dependencyVulnerabilities
@@ -577,7 +576,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 
 func newSummaryPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 ) *summaryPrHandler {
 	logger := zerolog.Ctx(ctx).With().

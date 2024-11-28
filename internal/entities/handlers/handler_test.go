@@ -25,6 +25,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/entities/properties/service/mock/fixtures"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -181,7 +182,7 @@ func checkPullRequestMessage(t *testing.T, msg *watermill.Message) {
 	require.NoError(t, err)
 	require.NotNil(t, eiw)
 
-	pbpr, ok := eiw.Entity.(*minderv1.PullRequest)
+	pbpr, ok := eiw.Entity.(*pbinternal.PullRequest)
 	require.True(t, ok)
 	assert.Equal(t, pullRequestPropMap[ghprops.PullPropertyNumber].(int64), pbpr.Number)
 }
@@ -609,7 +610,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			providerSetup: newProviderMock(
 				withSuccessfulGetEntityName(pullName),
 				withSuccessfulFetchAllProperties(getPullRequestProperties()),
-				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
+				WithSuccessfulPropertiesToProtoMessage(&pbinternal.PullRequest{
 					Number: 789,
 				}),
 			),
