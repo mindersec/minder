@@ -275,7 +275,6 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	// Get existing data source to verify it exists and compare changes
 	dsID, err := uuid.Parse(ds.GetId())
 	if err != nil {
 		return nil, fmt.Errorf("invalid data source ID: %w", err)
