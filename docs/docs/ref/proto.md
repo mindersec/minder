@@ -336,18 +336,6 @@ and undefined so for the "let's not auto-register anything" case we'd just let t
 
 
 
-<Message id="minder-v1-BranchProtection">BranchProtection</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| branch | <TypeLink type="string">string</TypeLink> |  |  |
-| is_protected | <TypeLink type="bool">bool</TypeLink> |  | Add other relevant fields |
-
-
-
 <Message id="minder-v1-Build">Build</Message>
 
 
