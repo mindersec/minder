@@ -50,6 +50,27 @@ func (q *Queries) AddDataSourceFunction(ctx context.Context, arg AddDataSourceFu
 	return i, err
 }
 
+const addRuleTypeDataSourceReference = `-- name: AddRuleTypeDataSourceReference :one
+INSERT INTO rule_type_data_sources (rule_type_id, data_sources_id, project_id)
+VALUES ($1::uuid, $2::uuid, $3::uuid)
+RETURNING rule_type_id, data_sources_id, project_id
+`
+
+type AddRuleTypeDataSourceReferenceParams struct {
+	Ruletypeid   uuid.UUID `json:"ruletypeid"`
+	Datasourceid uuid.UUID `json:"datasourceid"`
+	Projectid    uuid.UUID `json:"projectid"`
+}
+
+// AddRuleTypeDataSourceReference adds a link between one rule type
+// and one data source it uses.
+func (q *Queries) AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error) {
+	row := q.db.QueryRowContext(ctx, addRuleTypeDataSourceReference, arg.Ruletypeid, arg.Datasourceid, arg.Projectid)
+	var i RuleTypeDataSource
+	err := row.Scan(&i.RuleTypeID, &i.DataSourcesID, &i.ProjectID)
+	return i, err
+}
+
 const createDataSource = `-- name: CreateDataSource :one
 
 INSERT INTO data_sources (project_id, name, display_name)
