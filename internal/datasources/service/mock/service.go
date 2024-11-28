@@ -147,17 +147,3 @@ func (mr *MockDataSourcesServiceMockRecorder) Update(ctx, ds, opts any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDataSourcesService)(nil).Update), ctx, ds, opts)
 }
-
-// ValidateRuleTypeReferences mocks base method.
-func (m *MockDataSourcesService) ValidateRuleTypeReferences(ctx context.Context, rt *v1.RuleType, opts *service.Options) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateRuleTypeReferences", ctx, rt, opts)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateRuleTypeReferences indicates an expected call of ValidateRuleTypeReferences.
-func (mr *MockDataSourcesServiceMockRecorder) ValidateRuleTypeReferences(ctx, rt, opts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateRuleTypeReferences", reflect.TypeOf((*MockDataSourcesService)(nil).ValidateRuleTypeReferences), ctx, rt, opts)
-}

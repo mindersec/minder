@@ -46,13 +46,6 @@ type DataSourcesService interface {
 	// Note that one cannot delete a data source that is in use by a rule type.
 	Delete(ctx context.Context, id uuid.UUID, project uuid.UUID, opts *Options) error
 
-	// ValidateRuleTypeReferences takes the data source declarations in
-	// a rule type and validates that the data sources are available
-	// in the project hierarchy.
-	//
-	// Note that the rule type already contains project information.
-	ValidateRuleTypeReferences(ctx context.Context, rt *minderv1.RuleType, opts *Options) error
-
 	// BuildDataSourceRegistry bundles up all data sources referenced in the rule type
 	// into a registry.
 	BuildDataSourceRegistry(ctx context.Context, rt *minderv1.RuleType, opts *Options) (*v1datasources.DataSourceRegistry, error)
@@ -368,13 +361,6 @@ func (d *dataSourceService) Delete(
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 	return nil
-}
-
-// nolint:revive // there is a TODO
-func (d *dataSourceService) ValidateRuleTypeReferences(
-	ctx context.Context, rt *minderv1.RuleType, opts *Options) error {
-	//TODO implement me
-	panic("implement me")
 }
 
 // BuildDataSourceRegistry bundles up all data sources referenced in the rule type
