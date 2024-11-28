@@ -519,6 +519,21 @@ func (mr *MockStoreMockRecorder) DeleteDataSourceFunction(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataSourceFunction", reflect.TypeOf((*MockStore)(nil).DeleteDataSourceFunction), ctx, arg)
 }
 
+// DeleteDataSourceFunctions mocks base method.
+func (m *MockStore) DeleteDataSourceFunctions(ctx context.Context, arg db.DeleteDataSourceFunctionsParams) ([]db.DataSourcesFunction, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDataSourceFunctions", ctx, arg)
+	ret0, _ := ret[0].([]db.DataSourcesFunction)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteDataSourceFunctions indicates an expected call of DeleteDataSourceFunctions.
+func (mr *MockStoreMockRecorder) DeleteDataSourceFunctions(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDataSourceFunctions", reflect.TypeOf((*MockStore)(nil).DeleteDataSourceFunctions), ctx, arg)
+}
+
 // DeleteEntity mocks base method.
 func (m *MockStore) DeleteEntity(ctx context.Context, arg db.DeleteEntityParams) error {
 	m.ctrl.T.Helper()

@@ -130,6 +130,52 @@ func (q *Queries) DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSo
 	return i, err
 }
 
+const deleteDataSourceFunctions = `-- name: DeleteDataSourceFunctions :many
+
+DELETE FROM data_sources_functions
+WHERE data_source_id = $1 AND project_id = $2
+RETURNING id, name, type, data_source_id, definition, created_at, updated_at, project_id
+`
+
+type DeleteDataSourceFunctionsParams struct {
+	DataSourceID uuid.UUID `json:"data_source_id"`
+	ProjectID    uuid.UUID `json:"project_id"`
+}
+
+// DeleteDataSourceFunctions deletes all functions associated with a given datasource
+// in a specific project.
+func (q *Queries) DeleteDataSourceFunctions(ctx context.Context, arg DeleteDataSourceFunctionsParams) ([]DataSourcesFunction, error) {
+	rows, err := q.db.QueryContext(ctx, deleteDataSourceFunctions, arg.DataSourceID, arg.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DataSourcesFunction{}
+	for rows.Next() {
+		var i DataSourcesFunction
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.DataSourceID,
+			&i.Definition,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ProjectID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDataSource = `-- name: GetDataSource :one
 
 SELECT id, name, display_name, project_id, created_at, updated_at FROM data_sources

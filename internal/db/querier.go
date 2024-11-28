@@ -53,6 +53,9 @@ type Querier interface {
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
 	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
+	// DeleteDataSourceFunctions deletes all functions associated with a given datasource
+	// in a specific project.
+	DeleteDataSourceFunctions(ctx context.Context, arg DeleteDataSourceFunctionsParams) ([]DataSourcesFunction, error)
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
