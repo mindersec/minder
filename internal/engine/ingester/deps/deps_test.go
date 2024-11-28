@@ -105,15 +105,6 @@ func TestScanFS(t *testing.T) {
 
 func TestGetBranch(t *testing.T) {
 	t.Parallel()
-	gi, err := NewDepsIngester(&v1.DepsType{
-		EntityType: &v1.DepsType_Repo{
-			Repo: &v1.DepsType_RepoConfigs{
-				Branch: "",
-			},
-		},
-	}, &mock_github.MockGit{})
-
-	require.NoError(t, err)
 	for _, tc := range []struct {
 		name         string
 		repo         *v1.Repository
@@ -128,9 +119,15 @@ func TestGetBranch(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			gi.cfg.EntityType = &v1.DepsType_Repo{
-				Repo: &v1.DepsType_RepoConfigs{Branch: tc.configBranch},
-			}
+			gi, err := NewDepsIngester(&v1.DepsType{
+				EntityType: &v1.DepsType_Repo{
+					Repo: &v1.DepsType_RepoConfigs{
+						Branch: tc.configBranch,
+					},
+				},
+			}, &mock_github.MockGit{})
+			require.NoError(t, err)
+
 			branch := gi.getBranch(tc.repo, tc.branch)
 			require.Equal(t, tc.expect, branch)
 		})
