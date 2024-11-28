@@ -181,8 +181,8 @@ func (d *dataSourceService) List(
 // Finally, we create function records based on the driver type.
 func (d *dataSourceService) Create(
 	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
-	if ds == nil {
-		return nil, errors.New("data source is nil")
+	if err := ds.Validate(); err != nil {
+		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
 
 	stx, err := d.txBuilder(d, opts)
@@ -252,8 +252,8 @@ func (d *dataSourceService) Create(
 // All functions must use the same driver type to maintain data source integrity.
 func (d *dataSourceService) Update(
 	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
-	if ds == nil {
-		return nil, errors.New("data source is nil")
+	if err := ds.Validate(); err != nil {
+		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
 
 	stx, err := d.txBuilder(d, opts)
@@ -275,25 +275,20 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	dsID, err := uuid.Parse(ds.GetId())
-	if err != nil {
-		return nil, fmt.Errorf("invalid data source ID: %w", err)
-	}
-
-	existing, err := tx.GetDataSource(ctx, db.GetDataSourceParams{
-		ID:       dsID,
+	existing, err := tx.GetDataSourceByName(ctx, db.GetDataSourceByNameParams{
+		Name:     ds.GetName(),
 		Projects: []uuid.UUID{projectID},
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, util.UserVisibleError(codes.NotFound,
-				"data source with id %s not found", dsID)
+				"data source with name %s not found", ds.GetName())
 		}
 		return nil, fmt.Errorf("failed to get existing data source: %w", err)
 	}
 
 	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
-		ID:          dsID,
+		ID:          existing.ID,
 		ProjectID:   projectID,
 		DisplayName: ds.GetName(),
 	}); err != nil {
@@ -301,7 +296,7 @@ func (d *dataSourceService) Update(
 	}
 
 	if _, err := tx.DeleteDataSourceFunctions(ctx, db.DeleteDataSourceFunctionsParams{
-		DataSourceID: dsID,
+		DataSourceID: existing.ID,
 		ProjectID:    projectID,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to delete existing functions: %w", err)
