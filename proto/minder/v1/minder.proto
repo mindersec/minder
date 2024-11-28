@@ -181,9 +181,7 @@ service ArtifactService {
 
 message ListArtifactsRequest {
     string provider = 1 [deprecated=true];
-    Context context = 3 [
-        (google.api.field_behavior) = REQUIRED
-    ];
+    Context context = 3;
     // from is the filter to apply to the list of artifacts.
     // An example is "repository=org1/repo1,org2/repo2"
     // to filter by repository names. This is optional.
@@ -251,9 +249,7 @@ message GetArtifactByIdRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    Context context = 7 [
-        (google.api.field_behavior) = REQUIRED
-    ];
+    Context context = 7;
 
     reserved 5, 6; // deprecated latest_versions, tag
     reserved "latest_versions", "tag";
@@ -276,9 +272,7 @@ message GetArtifactByNameRequest {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
-    Context context = 4 [
-        (google.api.field_behavior) = REQUIRED
-    ];
+    Context context = 4;
 
     reserved 2, 3; // deprecated latest_versions, tag
     reserved "latest_versions", "tag";
