@@ -15,6 +15,7 @@ import (
 
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -36,9 +37,10 @@ const (
 // It initializes the rego engine and evaluates the rules
 // The default rego package is "minder"
 type Evaluator struct {
-	cfg      *Config
-	regoOpts []func(*rego.Rego)
-	reseval  resultEvaluator
+	cfg         *Config
+	regoOpts    []func(*rego.Rego)
+	reseval     resultEvaluator
+	datasources *v1datasources.DataSourceRegistry
 }
 
 // Input is the input for the rego evaluator
@@ -113,10 +115,20 @@ func (e *Evaluator) Eval(
 	// this explicitly.
 	obj := res.Object
 
-	libFuncs := instantiateRegoLib(res)
+	// Register options to expose functions
+	regoFuncOptions := []func(*rego.Rego){}
+
+	// Initialize the built-in minder library rego functions
+	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
+
+	// If the evaluator has data sources defined, expose their functions
+	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(e.datasources)...)
+
+	// Create the rego object
 	r := e.newRegoFromOptions(
-		libFuncs...,
+		regoFuncOptions...,
 	)
+
 	pq, err := r.PrepareForEval(ctx)
 	if err != nil {
 		return fmt.Errorf("could not prepare Rego: %w", err)

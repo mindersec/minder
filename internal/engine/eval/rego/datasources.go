@@ -16,9 +16,22 @@ import (
 
 // RegisterDataSources implements the Eval interface.
 func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
-	for key, dsf := range dsr.GetFuncs() {
-		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
+	e.datasources = dsr
+}
+
+// buildDataSourceOptions creates an options set from the functions available in
+// a data source registry.
+func buildDataSourceOptions(dsr *v1datasources.DataSourceRegistry) []func(*rego.Rego) {
+	opts := []func(*rego.Rego){}
+	if dsr == nil {
+		return opts
 	}
+
+	for key, dsf := range dsr.GetFuncs() {
+		opts = append(opts, buildFromDataSource(key, dsf))
+	}
+
+	return opts
 }
 
 // buildFromDataSource builds a rego function from a data source function.
