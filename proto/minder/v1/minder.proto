@@ -1424,12 +1424,6 @@ message VerifyProviderCredentialResponse {
     string provider_name = 2;
 }
 
-message BranchProtection {
-  string branch = 1;
-  bool is_protected = 2;
-  // Add other relevant fields
-}
-
 // User service
 message CreateUserRequest { }
 
