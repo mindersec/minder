@@ -59,6 +59,21 @@ func (mr *MockStoreMockRecorder) AddDataSourceFunction(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddDataSourceFunction", reflect.TypeOf((*MockStore)(nil).AddDataSourceFunction), ctx, arg)
 }
 
+// AddRuleTypeDataSourceReference mocks base method.
+func (m *MockStore) AddRuleTypeDataSourceReference(ctx context.Context, arg db.AddRuleTypeDataSourceReferenceParams) (db.RuleTypeDataSource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddRuleTypeDataSourceReference", ctx, arg)
+	ret0, _ := ret[0].(db.RuleTypeDataSource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AddRuleTypeDataSourceReference indicates an expected call of AddRuleTypeDataSourceReference.
+func (mr *MockStoreMockRecorder) AddRuleTypeDataSourceReference(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddRuleTypeDataSourceReference", reflect.TypeOf((*MockStore)(nil).AddRuleTypeDataSourceReference), ctx, arg)
+}
+
 // BeginTransaction mocks base method.
 func (m *MockStore) BeginTransaction() (*sql.Tx, error) {
 	m.ctrl.T.Helper()

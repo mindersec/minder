@@ -15,6 +15,10 @@ import (
 type Querier interface {
 	// AddDataSourceFunction adds a function to a datasource.
 	AddDataSourceFunction(ctx context.Context, arg AddDataSourceFunctionParams) (DataSourcesFunction, error)
+	// AddRuleTypeDataSourceReference adds a link between one rule type
+	// and one data source it uses.
+	//
+	AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
