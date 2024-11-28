@@ -68,6 +68,7 @@ func init() {
 	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
+// nolint: unparam
 func newDefaultServer(
 	t *testing.T,
 	mockStore *mockdb.MockStore,
