@@ -52,6 +52,10 @@ func executeOnOneDataSource(
 		ds.Context.ProjectId = proj
 	}
 
+	if err := ds.Validate(); err != nil {
+		return fmt.Errorf("error validating data source: %w", err)
+	}
+
 	// create or update the data source
 	createdDS, err := exec(ctx, f, ds)
 	if err != nil {
