@@ -34,7 +34,7 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.20.2
 	github.com/google/go-github/v63 v63.0.0
-	github.com/google/osv-scalibr v0.1.4
+	github.com/google/osv-scalibr v0.1.5
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/securecookie v1.1.2
@@ -171,6 +171,7 @@ require (
 	github.com/google/go-github/v61 v61.0.0 // indirect
 	github.com/google/osv-scanner v1.9.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
+	github.com/groob/plist v0.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
