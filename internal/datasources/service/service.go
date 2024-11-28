@@ -174,6 +174,11 @@ func (d *dataSourceService) List(
 	return outDS, nil
 }
 
+// Create creates a new data source.
+//
+// Create handles data source creation by using a transaction to ensure atomicity.
+// We first validate the data source name uniqueness, then create the data source record.
+// Finally, we create function records based on the driver type.
 func (d *dataSourceService) Create(
 	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
 	if ds == nil {
@@ -227,26 +232,8 @@ func (d *dataSourceService) Create(
 	}
 
 	// Create function records based on driver type
-	switch drv := ds.GetDriver().(type) {
-	case *minderv1.DataSource_Rest:
-		for name, def := range drv.Rest.GetDef() {
-			defBytes, err := protojson.Marshal(def)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal REST definition: %w", err)
-			}
-
-			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
-				DataSourceID: dsRecord.ID,
-				ProjectID:    projectID,
-				Name:         name,
-				Type:         v1datasources.DataSourceDriverRest,
-				Definition:   defBytes,
-			}); err != nil {
-				return nil, fmt.Errorf("failed to create data source function: %w", err)
-			}
-		}
-	default:
-		return nil, fmt.Errorf("unsupported data source driver type: %T", drv)
+	if err := addDataSourceFunctions(ctx, tx, ds, dsRecord.ID, projectID); err != nil {
+		return nil, fmt.Errorf("failed to create data source functions: %w", err)
 	}
 
 	if err := stx.Commit(); err != nil {
@@ -256,11 +243,79 @@ func (d *dataSourceService) Create(
 	return ds, nil
 }
 
-// nolint:revive // there is a TODO
+// Update updates an existing data source and its functions.
+//
+// Update handles data source modifications by using a transaction to ensure atomicity.
+// We first validate and verify the data source exists, then update its basic info.
+// For functions, we take a "delete and recreate" approach rather than individual updates
+// because it's simpler and safer - it ensures consistency and avoids partial updates.
+// All functions must use the same driver type to maintain data source integrity.
 func (d *dataSourceService) Update(
 	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
-	//TODO implement me
-	panic("implement me")
+	if ds == nil {
+		return nil, errors.New("data source is nil")
+	}
+
+	stx, err := d.txBuilder(d, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	defer func(stx serviceTX) {
+		err := stx.Rollback()
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
+		}
+	}(stx)
+
+	tx := stx.Q()
+
+	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
+	if err != nil {
+		return nil, fmt.Errorf("invalid project ID: %w", err)
+	}
+
+	dsID, err := uuid.Parse(ds.GetId())
+	if err != nil {
+		return nil, fmt.Errorf("invalid data source ID: %w", err)
+	}
+
+	existing, err := tx.GetDataSource(ctx, db.GetDataSourceParams{
+		ID:       dsID,
+		Projects: []uuid.UUID{projectID},
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound,
+				"data source with id %s not found", dsID)
+		}
+		return nil, fmt.Errorf("failed to get existing data source: %w", err)
+	}
+
+	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
+		ID:          dsID,
+		ProjectID:   projectID,
+		DisplayName: ds.GetName(),
+	}); err != nil {
+		return nil, fmt.Errorf("failed to update data source: %w", err)
+	}
+
+	if _, err := tx.DeleteDataSourceFunctions(ctx, db.DeleteDataSourceFunctionsParams{
+		DataSourceID: dsID,
+		ProjectID:    projectID,
+	}); err != nil {
+		return nil, fmt.Errorf("failed to delete existing functions: %w", err)
+	}
+
+	if err := addDataSourceFunctions(ctx, tx, ds, existing.ID, projectID); err != nil {
+		return nil, fmt.Errorf("failed to create data source functions: %w", err)
+	}
+
+	if err := stx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return ds, nil
 }
 
 // Delete deletes a data source in the given project.
@@ -379,4 +434,36 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 	}
 
 	return reg, nil
+}
+
+// addDataSourceFunctions adds functions to a data source based on its driver type.
+func addDataSourceFunctions(
+	ctx context.Context,
+	tx db.ExtendQuerier,
+	ds *minderv1.DataSource,
+	dsID uuid.UUID,
+	projectID uuid.UUID,
+) error {
+	switch drv := ds.GetDriver().(type) {
+	case *minderv1.DataSource_Rest:
+		for name, def := range drv.Rest.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return fmt.Errorf("failed to marshal REST definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverRest,
+				Definition:   defBytes,
+			}); err != nil {
+				return fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
+	default:
+		return fmt.Errorf("unsupported data source driver type: %T", drv)
+	}
+	return nil
 }

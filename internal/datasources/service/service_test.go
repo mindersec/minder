@@ -1012,7 +1012,7 @@ func TestDelete(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1038,6 +1038,203 @@ func TestDelete(t *testing.T) {
 			}
 
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		ds   *minderv1.DataSource
+		opts *Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		setup   func(mockDB *mockdb.MockStore)
+		want    *minderv1.DataSource
+		wantErr bool
+	}{
+		{
+			name: "Successfully update REST data source",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+					Driver: &minderv1.DataSource_Rest{
+						Rest: &minderv1.RestDataSource{
+							Def: map[string]*minderv1.RestDataSource_Def{
+								"test_function": {
+									Endpoint: "http://example.com/updated",
+									InputSchema: func() *structpb.Struct {
+										s, _ := structpb.NewStruct(map[string]any{
+											"type": "object",
+											"properties": map[string]any{
+												"test": "string",
+											},
+										})
+										return s
+									}(),
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{
+						ID:   uuid.MustParse(uuid.New().String()),
+						Name: "test_ds",
+					}, nil)
+
+				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{
+						ID:   uuid.New(),
+						Name: "updated_ds",
+					}, nil)
+
+				mockDB.EXPECT().DeleteDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return(nil, nil)
+
+				mockDB.EXPECT().AddDataSourceFunction(gomock.Any(), gomock.Any()).
+					Return(db.DataSourcesFunction{}, nil)
+			},
+			want: &minderv1.DataSource{
+				Name: "updated_ds",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Nil data source",
+			args: args{
+				ds:   nil,
+				opts: &Options{},
+			},
+			setup:   func(_ *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "Invalid project ID",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id: uuid.New().String(),
+					Context: &minderv1.ContextV2{
+						ProjectId: "invalid-uuid",
+					},
+				},
+				opts: &Options{},
+			},
+			setup:   func(_ *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "Invalid data source ID",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id: "invalid-uuid",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+				},
+				opts: &Options{},
+			},
+			setup:   func(_ *mockdb.MockStore) {},
+			wantErr: true,
+		},
+		{
+			name: "Data source not found",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id: uuid.New().String(),
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, sql.ErrNoRows)
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error on update",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id: uuid.New().String(),
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{ID: uuid.New()}, nil)
+
+				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error on delete functions",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id: uuid.New().String(),
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{ID: uuid.New()}, nil)
+
+				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{}, nil)
+
+				mockDB.EXPECT().DeleteDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return(nil, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			svc := NewDataSourceService(mockStore)
+			svc.txBuilder = func(_ *dataSourceService, _ txGetter) (serviceTX, error) {
+				return &fakeTxBuilder{
+					store: mockStore,
+				}, nil
+			}
+
+			tt.setup(mockStore)
+
+			got, err := svc.Update(context.Background(), tt.args.ds, tt.args.opts)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want.Name, got.Name)
 		})
 	}
 }

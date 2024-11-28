@@ -37,6 +37,14 @@ DELETE FROM data_sources_functions
 WHERE data_source_id = $1 AND name = $2 AND project_id = $3
 RETURNING *;
 
+-- DeleteDataSourceFunctions deletes all functions associated with a given datasource
+-- in a specific project.
+
+-- name: DeleteDataSourceFunctions :many
+DELETE FROM data_sources_functions
+WHERE data_source_id = $1 AND project_id = $2
+RETURNING *;
+
 -- GetDataSource retrieves a datasource by its id and a project hierarchy.
 --
 -- Note that to get a datasource for a given project, one can simply
