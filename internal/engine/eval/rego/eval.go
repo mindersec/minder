@@ -122,7 +122,7 @@ func (e *Evaluator) Eval(
 	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
 
 	// If the evaluator has data sources defined, expose their functions
-	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(e.datasources)...)
+	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
 
 	// Create the rego object
 	r := e.newRegoFromOptions(
