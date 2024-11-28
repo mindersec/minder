@@ -1180,16 +1180,28 @@ message StoreProviderTokenRequest {
 message StoreProviderTokenResponse {    
 }
 
-// Project API Objects
+// Project API Objects. This is only used in responses.
 message Project {
-    string project_id = 1;
-    string name = 3;
+    string project_id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // description is a human-readable description of the project.
+    // This is optional.
     string description = 4;
-    google.protobuf.Timestamp created_at = 6;
-    google.protobuf.Timestamp updated_at = 7;
+    google.protobuf.Timestamp created_at = 6 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    google.protobuf.Timestamp updated_at = 7 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // display_name allows for a human-readable name to be used.
     // display_names are short *non-unique* strings to provide
     // a user-friendly name for presentation in lists, etc.
+    // This is optional.
     string display_name = 5;
 }
 
@@ -1203,21 +1215,29 @@ message ListRemoteRepositoriesFromProviderRequest {
 }
 
 message ListRemoteRepositoriesFromProviderResponse {
-    repeated UpstreamRepositoryRef results = 1;
+    repeated UpstreamRepositoryRef results = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // entities is the same list as the repositories, but it
     // uses the new UpstreamEntityRef message. This is what
     // we'll migrate to eventually.
-    repeated RegistrableUpstreamEntityRef entities = 2;
+    repeated RegistrableUpstreamEntityRef entities = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message RegistrableUpstreamEntityRef {
-    UpstreamEntityRef entity = 1;
+    UpstreamEntityRef entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // True if the entity is already registered in Minder.
     bool registered = 2;
 }
 
 message UpstreamRepositoryRef {
+    // owner is the owner (e.g GitHub org) that the provider is associated with.
+    // This is optional.
     string owner = 1 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-[:word:]]*$"
@@ -1230,7 +1250,8 @@ message UpstreamRepositoryRef {
             pattern: "^[-.[:alnum:]_]+$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (google.api.field_behavior) = REQUIRED
     ];
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
@@ -1244,13 +1265,23 @@ message UpstreamRepositoryRef {
     bool registered = 5;
 }
 
+// Repository API objects. This is only used in responses.
 message Repository {
     reserved 15;
     reserved "registered";
-    optional string id = 1; // This is optional when returning remote repositories
+    // id is the unique identifier of the repository within Minder.
+    // It is always populated, but the optional keyword is used for
+    // backwards compatibility.
+    optional string id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     optional Context context = 2;
-    string owner = 3;
-    string name = 4;
+    string owner = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string name = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     int64 repo_id = 5;
     int64 hook_id = 6;
     string hook_url = 7;
@@ -1259,8 +1290,12 @@ message Repository {
     string hook_name = 10;
     string hook_type = 11;
     string hook_uuid = 12;
-    bool is_private = 13;
-    bool is_fork = 14;
+    bool is_private = 13 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    bool is_fork = 14 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     google.protobuf.Timestamp created_at = 16;
     google.protobuf.Timestamp updated_at = 17;
     string default_branch = 18;
@@ -1271,11 +1306,14 @@ message Repository {
 
 message RegisterRepositoryRequest {
     string provider = 1 [deprecated=true];
+
+    // repository is the repository to register. This is optional if entity
+    // is set.
     UpstreamRepositoryRef repository = 3;
     Context context = 4;
     // entity is the entity to register. This is the same as the repository
     // field, but uses the new UpstreamEntityRef message. This is what we'll
-    // migrate to eventually.
+    // migrate to eventually. This is optional if repository is set.
     UpstreamEntityRef entity = 5;
 
     reserved 2; // deprecated project_id
@@ -1288,33 +1326,43 @@ message RegisterRepoResult {
     }
 
     Repository repository = 1;
-    Status status = 2;
+    Status status = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message RegisterRepositoryResponse {
-    RegisterRepoResult result = 1;
+    RegisterRepoResult result = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message GetRepositoryByIdRequest {
     string repository_id = 1 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
     Context context = 2;
 }
 
 message GetRepositoryByIdResponse {
-    Repository repository = 1;
+    Repository repository = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteRepositoryByIdRequest {
     string repository_id = 1 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
     Context context = 2;
 }
 
 message DeleteRepositoryByIdResponse {
-    string repository_id = 1;
+    string repository_id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message GetRepositoryByNameRequest {
@@ -1324,7 +1372,8 @@ message GetRepositoryByNameRequest {
             pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (google.api.field_behavior) = REQUIRED
     ];
     Context context = 4;
 
@@ -1332,7 +1381,9 @@ message GetRepositoryByNameRequest {
 }
 
 message GetRepositoryByNameResponse {
-    Repository repository = 1;
+    Repository repository = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteRepositoryByNameRequest {
@@ -1342,7 +1393,8 @@ message DeleteRepositoryByNameRequest {
             pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (google.api.field_behavior) = REQUIRED
     ];
     Context context = 4;
 
@@ -1350,15 +1402,23 @@ message DeleteRepositoryByNameRequest {
 }
 
 message DeleteRepositoryByNameResponse {
-    string name = 1;
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListRepositoriesRequest {
     string provider = 1 [deprecated=true];
+
+    // limit is the maximum number of results to return.
+    // This is optional.
     int64 limit = 3 [
         (buf.validate.field).int64 = { gte: 0, lte: 100 }
     ];
     Context context = 5;
+
+    // cursor is the cursor to use for the next page of results.
+    // This is optional.
     string cursor = 6 [
         (buf.validate.field).string = {
             pattern: "^[[:word:]=]*$",
@@ -1371,7 +1431,9 @@ message ListRepositoriesRequest {
 }
 
 message ListRepositoriesResponse {
-    repeated Repository results = 1;
+    repeated Repository results = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // cursor is the cursor to use for the next page of results, empty if at the end
     string cursor = 2;
@@ -1385,7 +1447,8 @@ message ReconcileEntityRegistrationRequest {
             pattern: "^[a-z]+(_[a-z]+)*$",
             min_len: 1,
             max_len: 200,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 

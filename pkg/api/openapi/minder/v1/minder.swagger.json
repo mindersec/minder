@@ -2158,6 +2158,7 @@
           },
           {
             "name": "limit",
+            "description": "limit is the maximum number of results to return.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -2185,6 +2186,7 @@
           },
           {
             "name": "cursor",
+            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2215,6 +2217,7 @@
           },
           {
             "name": "limit",
+            "description": "limit is the maximum number of results to return.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -2242,6 +2245,7 @@
           },
           {
             "name": "cursor",
+            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3446,14 +3450,15 @@
       "type": "object",
       "properties": {
         "repository": {
-          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+          "$ref": "#/definitions/v1UpstreamRepositoryRef",
+          "description": "repository is the repository to register. This is optional if entity\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
@@ -4019,7 +4024,10 @@
         "repositoryId": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "repositoryId"
+      ]
     },
     "v1DeleteRepositoryByNameResponse": {
       "type": "object",
@@ -4027,7 +4035,10 @@
         "name": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1DeleteRuleTypeResponse": {
       "type": "object",
@@ -4395,7 +4406,10 @@
         "repository": {
           "$ref": "#/definitions/v1Repository"
         }
-      }
+      },
+      "required": [
+        "repository"
+      ]
     },
     "v1GetRepositoryByNameResponse": {
       "type": "object",
@@ -4403,7 +4417,10 @@
         "repository": {
           "$ref": "#/definitions/v1Repository"
         }
-      }
+      },
+      "required": [
+        "repository"
+      ]
     },
     "v1GetRuleTypeByIdResponse": {
       "type": "object",
@@ -4689,7 +4706,11 @@
           },
           "description": "entities is the same list as the repositories, but it\nuses the new UpstreamEntityRef message. This is what\nwe'll migrate to eventually."
         }
-      }
+      },
+      "required": [
+        "results",
+        "entities"
+      ]
     },
     "v1ListRepositoriesResponse": {
       "type": "object",
@@ -4705,7 +4726,10 @@
           "type": "string",
           "title": "cursor is the cursor to use for the next page of results, empty if at the end"
         }
-      }
+      },
+      "required": [
+        "results"
+      ]
     },
     "v1ListRoleAssignmentsResponse": {
       "type": "object",
@@ -4925,7 +4949,8 @@
           "type": "string"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "description is a human-readable description of the project.\nThis is optional."
         },
         "createdAt": {
           "type": "string",
@@ -4937,10 +4962,16 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
+          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc.\nThis is optional."
         }
       },
-      "title": "Project API Objects"
+      "description": "Project API Objects. This is only used in responses.",
+      "required": [
+        "projectId",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "v1ProjectPatch": {
       "type": "object",
@@ -5050,7 +5081,10 @@
           "type": "string",
           "title": "entity is the entity type"
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1ReconcileEntityRegistrationResponse": {
       "type": "object"
@@ -5064,7 +5098,10 @@
         "status": {
           "$ref": "#/definitions/v1RegisterRepoResultStatus"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1RegisterRepoResultStatus": {
       "type": "object",
@@ -5084,14 +5121,15 @@
           "type": "string"
         },
         "repository": {
-          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+          "$ref": "#/definitions/v1UpstreamRepositoryRef",
+          "description": "repository is the repository to register. This is optional if entity\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
@@ -5101,7 +5139,10 @@
         "result": {
           "$ref": "#/definitions/v1RegisterRepoResult"
         }
-      }
+      },
+      "required": [
+        "result"
+      ]
     },
     "v1RegistrableUpstreamEntityRef": {
       "type": "object",
@@ -5113,7 +5154,10 @@
           "type": "boolean",
           "description": "True if the entity is already registered in Minder."
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1RemoveRoleResponse": {
       "type": "object",
@@ -5133,7 +5177,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "title": "This is optional when returning remote repositories"
+          "description": "id is the unique identifier of the repository within Minder.\nIt is always populated, but the optional keyword is used for\nbackwards compatibility."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -5194,7 +5238,15 @@
           "type": "object",
           "description": "properties is a map of properties of the entity."
         }
-      }
+      },
+      "description": "Repository API objects. This is only used in responses.",
+      "required": [
+        "id",
+        "owner",
+        "name",
+        "isPrivate",
+        "isFork"
+      ]
     },
     "v1ResolveInvitationResponse": {
       "type": "object",
@@ -5685,7 +5737,8 @@
       "type": "object",
       "properties": {
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "name": {
           "type": "string"
@@ -5702,7 +5755,10 @@
           "type": "boolean",
           "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1UserRecord": {
       "type": "object",
