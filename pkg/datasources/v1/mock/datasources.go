@@ -10,6 +10,7 @@
 package mock_v1
 
 import (
+	context "context"
 	reflect "reflect"
 
 	v1 "github.com/mindersec/minder/pkg/datasources/v1"
@@ -41,18 +42,18 @@ func (m *MockDataSourceFuncDef) EXPECT() *MockDataSourceFuncDefMockRecorder {
 }
 
 // Call mocks base method.
-func (m *MockDataSourceFuncDef) Call(args any) (any, error) {
+func (m *MockDataSourceFuncDef) Call(ctx context.Context, args any) (any, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Call", args)
+	ret := m.ctrl.Call(m, "Call", ctx, args)
 	ret0, _ := ret[0].(any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Call indicates an expected call of Call.
-func (mr *MockDataSourceFuncDefMockRecorder) Call(args any) *gomock.Call {
+func (mr *MockDataSourceFuncDefMockRecorder) Call(ctx, args any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockDataSourceFuncDef)(nil).Call), args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockDataSourceFuncDef)(nil).Call), ctx, args)
 }
 
 // ValidateArgs mocks base method.

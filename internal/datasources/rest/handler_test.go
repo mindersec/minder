@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -237,7 +238,7 @@ func Test_restHandler_Call(t *testing.T) {
 				headers:      tt.fields.headers,
 				parse:        tt.fields.parse,
 			}
-			got, err := h.Call(tt.args.args)
+			got, err := h.Call(context.Background(), tt.args.args)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
