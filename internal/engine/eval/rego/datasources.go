@@ -12,19 +12,35 @@ import (
 	"github.com/open-policy-agent/opa/types"
 
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // RegisterDataSources implements the Eval interface.
 func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
-	for key, dsf := range dsr.GetFuncs() {
-		e.regoOpts = append(e.regoOpts, buildFromDataSource(key, dsf))
+	e.datasources = dsr
+}
+
+// buildDataSourceOptions creates an options set from the functions available in
+// a data source registry.
+func buildDataSourceOptions(res *interfaces.Result, dsr *v1datasources.DataSourceRegistry) []func(*rego.Rego) {
+	opts := []func(*rego.Rego){}
+	if dsr == nil {
+		return opts
 	}
+
+	for key, dsf := range dsr.GetFuncs() {
+		opts = append(opts, buildFromDataSource(res, key, dsf))
+	}
+
+	return opts
 }
 
 // buildFromDataSource builds a rego function from a data source function.
 // It takes a DataSourceFuncDef and returns a function that can be used to
 // register the function with the rego engine.
-func buildFromDataSource(key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef) func(*rego.Rego) {
+func buildFromDataSource(
+	_ *interfaces.Result, key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef,
+) func(*rego.Rego) {
 	k := normalizeKey(key)
 	return rego.Function1(
 		&rego.Function{
