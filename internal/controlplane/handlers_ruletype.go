@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	datasourcesvc "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
@@ -176,13 +175,12 @@ func (s *Server) CreateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
-	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		ruleDS := crt.GetRuleType().GetDef().GetEval().GetDataSources()
-		if err := s.validateDataSources(ctx, projectID, ruleDS, qtx); err != nil {
-			// We expect the error to be a user visible error
-			return nil, err
-		}
+	ruleDS := crt.GetRuleType().GetDef().GetEval().GetDataSources()
+	if len(ruleDS) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
+	}
 
+	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
 	if err != nil {
@@ -222,13 +220,12 @@ func (s *Server) UpdateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
-	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
-		ruleDS := urt.GetRuleType().GetDef().GetEval().GetDataSources()
-		if err := s.validateDataSources(ctx, projectID, ruleDS, qtx); err != nil {
-			// We expect the error to be a user visible error
-			return nil, err
-		}
+	ruleDS := urt.GetRuleType().GetDef().GetEval().GetDataSources()
+	if len(ruleDS) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
+	}
 
+	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.UpdateRuleType(ctx, projectID, uuid.Nil, urt.GetRuleType(), qtx)
 	})
 	if err != nil {
@@ -372,37 +369,6 @@ func validateMarkdown(md string) error {
 			errInvalidRuleType,
 			err,
 		)
-	}
-
-	return nil
-}
-
-func (s *Server) validateDataSources(
-	ctx context.Context,
-	projectID uuid.UUID,
-	ruleDS []*minderv1.DataSourceReference,
-	qtx db.ExtendQuerier,
-) error {
-	// Short circuiting to avoid accessing the database.
-	if len(ruleDS) == 0 {
-		return nil
-	}
-
-	if len(ruleDS) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
-
-	opts := datasourcesvc.ReadBuilder().WithTransaction(qtx)
-	for _, requested := range ruleDS {
-		_, err := s.dataSourcesService.GetByName(
-			ctx,
-			requested.Name,
-			projectID,
-			opts,
-		)
-		if err != nil {
-			return util.UserVisibleError(codes.Internal, "failed retrieving data sources")
-		}
 	}
 
 	return nil
