@@ -1464,7 +1464,9 @@ message VerifyProviderTokenFromRequest {
 }
 
 message VerifyProviderTokenFromResponse {
-    string status = 1;
+    string status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // VerifyProviderCredentialRequest contains the enrollment nonce (aka state) that was used when enrolling the provider
@@ -1476,14 +1478,22 @@ message VerifyProviderCredentialRequest {
         (buf.validate.field).string = {
             pattern: "^[A-Za-z0-9_-]+$",
             len: 54,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 // VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider
 // name, if it has been created
 message VerifyProviderCredentialResponse {
-    bool created = 1;
+
+    // created is true if the provider was created.
+    bool created = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // provider_name is the name of the provider that was created.
+    // This is populated if creation was successful.
     string provider_name = 2;
 }
 
@@ -1491,14 +1501,24 @@ message VerifyProviderCredentialResponse {
 message CreateUserRequest { }
 
 message CreateUserResponse {
-    int32 id = 1;
+    int32 id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     string organization_id = 2 [deprecated=true];
     string organizatio_name =3 [deprecated=true];
-    string project_id = 4;
-    string project_name = 5;
-    string identity_subject = 6;
-    google.protobuf.Timestamp created_at = 7;
-    Context context = 8;
+    string project_id = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string project_name = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string identity_subject = 6 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    google.protobuf.Timestamp created_at = 7 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    Context context = 8 [deprecated=true];
 }
 
 message DeleteUserRequest {
@@ -1510,10 +1530,18 @@ message DeleteUserResponse {
 
 // user record to be returned
 message UserRecord {
-    int32 id = 1;
-    string identity_subject = 3;
-    google.protobuf.Timestamp created_at = 4;
-    google.protobuf.Timestamp updated_at = 5;
+    int32 id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    string identity_subject = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    google.protobuf.Timestamp created_at = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    google.protobuf.Timestamp updated_at = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     reserved 2; // deprecated organization_id
     reserved "organization_id";
@@ -1521,8 +1549,12 @@ message UserRecord {
 
 // ProjectRole has the project along with the role the user has in the project
 message ProjectRole {
-    Role role = 1;
-    Project project = 2;
+    Role role = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+    Project project = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get user
@@ -1531,10 +1563,14 @@ message GetUserRequest {
 }
 
 message GetUserResponse {
-    optional UserRecord user = 1;
+    optional UserRecord user = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // This will be deprecated in favor of the project_roles field
     repeated Project projects = 2 [deprecated=true];
-    repeated ProjectRole project_roles = 3;
+    repeated ProjectRole project_roles = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // DataSource service
@@ -3123,11 +3159,17 @@ message RemoveRoleResponse {
 
 message Role {
     // name is the name of the role.
-    string name = 1;
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // display name of the role
-    string display_name = 3;
+    string display_name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // description is the description of the role.
-    string description = 2;
+    string description = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message RoleAssignment {
