@@ -4,6 +4,7 @@
 package rego
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -59,7 +60,8 @@ func buildFromDataSource(
 			}
 
 			// Call the data source function
-			ret, err := dsf.Call(jsonObj)
+			ctx := context.Background()
+			ret, err := dsf.Call(ctx, jsonObj)
 			if err != nil {
 				return nil, err
 			}
