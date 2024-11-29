@@ -197,6 +197,22 @@ func (q *Queries) DeleteDataSourceFunctions(ctx context.Context, arg DeleteDataS
 	return items, nil
 }
 
+const deleteRuleTypeDataSource = `-- name: DeleteRuleTypeDataSource :exec
+DELETE FROM rule_type_data_sources
+ WHERE rule_type_id = $1
+   AND project_id = $2
+`
+
+type DeleteRuleTypeDataSourceParams struct {
+	Ruleid    uuid.UUID `json:"ruleid"`
+	Projectid uuid.UUID `json:"projectid"`
+}
+
+func (q *Queries) DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTypeDataSourceParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRuleTypeDataSource, arg.Ruleid, arg.Projectid)
+	return err
+}
+
 const getDataSource = `-- name: GetDataSource :one
 
 SELECT id, name, display_name, project_id, created_at, updated_at FROM data_sources
