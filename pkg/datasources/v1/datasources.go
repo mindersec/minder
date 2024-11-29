@@ -4,6 +4,12 @@
 // Package v1 provides the interfaces and types for the data sources.
 package v1
 
+import (
+	"context"
+
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+)
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 const (
@@ -33,7 +39,7 @@ type DataSourceFuncDef interface {
 	// It is the responsibility of the data source implementation to handle the call.
 	// It is also the responsibility of the caller to validate the arguments
 	// before calling the function.
-	Call(args any) (any, error)
+	Call(ctx context.Context, args any) (any, error)
 }
 
 // DataSource is the interface that a data source must implement.
@@ -43,4 +49,13 @@ type DataSourceFuncDef interface {
 type DataSource interface {
 	// GetFuncs returns the functions that the data source provides.
 	GetFuncs() map[DataSourceFuncKey]DataSourceFuncDef
+}
+
+// ContextKey type to store/retrieve the context
+type ContextKey struct {
+}
+
+// Context encapsulates the context passed to all context function calls
+type Context struct {
+	Ingest *interfaces.Result
 }

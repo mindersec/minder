@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,7 +97,7 @@ func (h *restHandler) ValidateUpdate(obj any) error {
 	}
 }
 
-func (h *restHandler) Call(args any) (any, error) {
+func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 	argsMap, ok := args.(map[string]any)
 	if !ok {
 		return nil, errors.New("args is not a map")
