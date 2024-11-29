@@ -550,7 +550,7 @@ User service
 | project_name | <TypeLink type="string">string</TypeLink> |  |  |
 | identity_subject | <TypeLink type="string">string</TypeLink> |  |  |
 | created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | **Deprecated.**  |
 
 
 
@@ -2952,8 +2952,8 @@ name, if it has been created
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| created | <TypeLink type="bool">bool</TypeLink> |  |  |
-| provider_name | <TypeLink type="string">string</TypeLink> |  |  |
+| created | <TypeLink type="bool">bool</TypeLink> |  | created is true if the provider was created. |
+| provider_name | <TypeLink type="string">string</TypeLink> |  | provider_name is the name of the provider that was created. This is populated if creation was successful. |
 
 
 

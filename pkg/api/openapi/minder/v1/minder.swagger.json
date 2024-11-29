@@ -378,7 +378,7 @@
             "name": "enrollmentNonce",
             "description": "enrollment_nonce is the state parameter returned when enrolling the provider",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           }
         ],
@@ -3888,7 +3888,14 @@
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "projectName",
+        "identitySubject",
+        "createdAt"
+      ]
     },
     "v1Cursor": {
       "type": "object",
@@ -4463,7 +4470,11 @@
             "$ref": "#/definitions/v1ProjectRole"
           }
         }
-      }
+      },
+      "required": [
+        "user",
+        "projectRoles"
+      ]
     },
     "v1GitHubAppParams": {
       "type": "object",
@@ -4996,7 +5007,11 @@
           "$ref": "#/definitions/v1Project"
         }
       },
-      "title": "ProjectRole has the project along with the role the user has in the project"
+      "title": "ProjectRole has the project along with the role the user has in the project",
+      "required": [
+        "role",
+        "project"
+      ]
     },
     "v1Provider": {
       "type": "object",
@@ -5351,7 +5366,12 @@
           "type": "string",
           "description": "description is the description of the role."
         }
-      }
+      },
+      "required": [
+        "name",
+        "displayName",
+        "description"
+      ]
     },
     "v1RoleAssignment": {
       "type": "object",
@@ -5779,19 +5799,30 @@
           "format": "date-time"
         }
       },
-      "title": "user record to be returned"
+      "title": "user record to be returned",
+      "required": [
+        "id",
+        "identitySubject",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "v1VerifyProviderCredentialResponse": {
       "type": "object",
       "properties": {
         "created": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "created is true if the provider was created."
         },
         "providerName": {
-          "type": "string"
+          "type": "string",
+          "description": "provider_name is the name of the provider that was created.\nThis is populated if creation was successful."
         }
       },
-      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created"
+      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created",
+      "required": [
+        "created"
+      ]
     },
     "v1VerifyProviderTokenFromResponse": {
       "type": "object",
@@ -5799,7 +5830,10 @@
         "status": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     }
   }
 }
