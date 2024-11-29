@@ -3923,7 +3923,18 @@ message DataSource {
     oneof driver {
         // rest is the REST data source driver.
         RestDataSource rest = 6;
+
+        // deps is the dependencies extractor data source driver.
+        DepsDataSource deps = 7;
     }
+}
+
+// DepsDataSource is the dependency data source driver
+message DepsDataSource {
+    message Def {
+    }
+    
+    map<string, Def> def = 1;
 }
 
 // RestDataSource is the REST data source driver.
