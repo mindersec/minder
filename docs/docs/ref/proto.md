@@ -1827,9 +1827,9 @@ The default is to return all user-created profiles; the string "*" can be used t
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
-| limit | <TypeLink type="int64">int64</TypeLink> |  |  |
+| limit | <TypeLink type="int64">int64</TypeLink> |  | limit is the maximum number of results to return. This is optional. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| cursor | <TypeLink type="string">string</TypeLink> |  |  |
+| cursor | <TypeLink type="string">string</TypeLink> |  | cursor is the cursor to use for the next page of results. This is optional. |
 
 
 
@@ -2068,17 +2068,17 @@ get the overall profile status as output
 
 <Message id="minder-v1-Project">Project</Message>
 
-Project API Objects
+Project API Objects. This is only used in responses.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | project_id | <TypeLink type="string">string</TypeLink> |  |  |
 | name | <TypeLink type="string">string</TypeLink> |  |  |
-| description | <TypeLink type="string">string</TypeLink> |  |  |
+| description | <TypeLink type="string">string</TypeLink> |  | description is a human-readable description of the project. This is optional. |
 | created_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
 | updated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  |  |
-| display_name | <TypeLink type="string">string</TypeLink> |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name allows for a human-readable name to be used. display_names are short *non-unique* strings to provide a user-friendly name for presentation in lists, etc. This is optional. |
 
 
 
@@ -2209,9 +2209,9 @@ RESTProviderConfig contains the configuration for the REST provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
-| repository | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> |  |  |
+| repository | <TypeLink type="minder-v1-UpstreamRepositoryRef">UpstreamRepositoryRef</TypeLink> |  | repository is the repository to register. This is optional if entity is set. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  | entity is the entity to register. This is the same as the repository field, but uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. |
+| entity | <TypeLink type="minder-v1-UpstreamEntityRef">UpstreamEntityRef</TypeLink> |  | entity is the entity to register. This is the same as the repository field, but uses the new UpstreamEntityRef message. This is what we'll migrate to eventually. This is optional if repository is set. |
 
 
 
@@ -2270,12 +2270,12 @@ Stubs for the SDLC entities
 
 <Message id="minder-v1-Repository">Repository</Message>
 
-
+Repository API objects. This is only used in responses.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| id | <TypeLink type="string">string</TypeLink> | optional | This is optional when returning remote repositories |
+| id | <TypeLink type="string">string</TypeLink> | optional | id is the unique identifier of the repository within Minder. It is always populated, but the optional keyword is used for backwards compatibility. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> | optional |  |
 | owner | <TypeLink type="string">string</TypeLink> |  |  |
 | name | <TypeLink type="string">string</TypeLink> |  |  |
@@ -2910,7 +2910,7 @@ provider to identify the entity in the upstream system.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| owner | <TypeLink type="string">string</TypeLink> |  |  |
+| owner | <TypeLink type="string">string</TypeLink> |  | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional. |
 | name | <TypeLink type="string">string</TypeLink> |  |  |
 | repo_id | <TypeLink type="int64">int64</TypeLink> |  | The upstream identity of the repository, as an integer. This is only set on output, and is ignored on input. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
