@@ -31,6 +31,10 @@ import (
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
+type contextKey string
+
+const requestKey contextKey = "request"
+
 // CreateProfile creates a profile for a project
 func (s *Server) CreateProfile(ctx context.Context,
 	cpr *minderv1.CreateProfileRequest) (*minderv1.CreateProfileResponse, error) {
@@ -307,100 +311,6 @@ func getRuleEvalEntityInfo(
 	return entityInfo
 }
 
-// GetProfileStatusByName is a method to get profile status
-// nolint:gocyclo // TODO: Refactor this to be more readable
-func (s *Server) GetProfileStatusByName(ctx context.Context,
-	in *minderv1.GetProfileStatusByNameRequest) (*minderv1.GetProfileStatusByNameResponse, error) {
-
-	entityCtx := engcontext.EntityFromContext(ctx)
-
-	err := entityCtx.ValidateProject(ctx, s.store)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
-	}
-
-	dbProfileStatus, err := s.store.GetProfileStatusByNameAndProject(ctx, db.GetProfileStatusByNameAndProjectParams{
-		ProjectID: entityCtx.Project.ID,
-		Name:      in.Name,
-	})
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", in.Name)
-		}
-		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", err)
-	}
-
-	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
-	var selector *uuid.NullUUID
-	var ruleType *sql.NullString
-	var ruleName *sql.NullString
-
-	if in.GetAll() {
-		selector = &uuid.NullUUID{}
-	} else if e := in.GetEntity(); e != nil {
-		if !e.GetType().IsValid() {
-			return nil, util.UserVisibleError(codes.InvalidArgument,
-				"invalid entity type %s, please use one of %s",
-				e.GetType(), entities.KnownTypesCSV())
-		}
-		selector = &uuid.NullUUID{}
-		if err := selector.Scan(e.GetId()); err != nil {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid entity ID in selector")
-		}
-	}
-
-	ruleType = &sql.NullString{
-		String: in.GetRuleType(),
-		Valid:  in.GetRuleType() != "",
-	}
-
-	// TODO: Remove deprecated 'rule' field from proto
-	if !ruleType.Valid {
-		//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
-		ruleType = &sql.NullString{
-			String: in.GetRule(),
-			Valid:  in.GetRule() != "",
-		}
-	}
-
-	ruleName = &sql.NullString{
-		String: in.GetRuleName(),
-		Valid:  in.GetRuleName() != "",
-	}
-
-	// TODO: Handle retrieving status for other types of entities
-	if selector != nil {
-		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
-			ProfileID:    dbProfileStatus.ID,
-			EntityID:     *selector,
-			RuleTypeName: *ruleType,
-			RuleName:     *ruleName,
-		})
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
-		}
-
-		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
-			ctx, dbRuleEvaluationStatuses, dbProfileStatus.ID.String(),
-		)
-		// TODO: Add other entities once we have database entries for them
-	}
-
-	// Telemetry logging
-	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: dbProfileStatus.Name, ID: dbProfileStatus.ID}
-
-	return &minderv1.GetProfileStatusByNameResponse{
-		ProfileStatus: &minderv1.ProfileStatus{
-			ProfileId:     dbProfileStatus.ID.String(),
-			ProfileName:   dbProfileStatus.Name,
-			ProfileStatus: string(dbProfileStatus.ProfileStatus),
-			LastUpdated:   timestamppb.New(dbProfileStatus.LastUpdated),
-		},
-		RuleEvaluationStatus: ruleEvaluationStatuses,
-	}, nil
-}
-
 func (s *Server) getRuleEvaluationStatuses(
 	ctx context.Context,
 	dbRuleEvaluationStatuses []db.ListRuleEvaluationsByProfileIdRow,
@@ -643,4 +553,234 @@ func (s *Server) UpdateProfile(ctx context.Context,
 	return &minderv1.UpdateProfileResponse{
 		Profile: updatedProfile,
 	}, nil
+}
+
+// GetProfileStatusByName retrieves profile status by name
+func (s *Server) GetProfileStatusByName(
+	ctx context.Context,
+	in *minderv1.GetProfileStatusByNameRequest,
+) (*minderv1.GetProfileStatusResponse, error) {
+	ctx = context.WithValue(ctx, requestKey, in)
+	return s.getProfileStatus(ctx,
+		engcontext.EntityFromContext(ctx).Project.ID,
+		in.Name,
+		s.store.GetProfileStatusByNameAndProject,
+		nil,
+	)
+}
+
+// GetProfileStatusById retrieves profile status by ID
+func (s *Server) GetProfileStatusById(
+	ctx context.Context,
+	in *minderv1.GetProfileStatusByIdRequest,
+) (*minderv1.GetProfileStatusResponse, error) {
+	ctx = context.WithValue(ctx, requestKey, in)
+	return s.getProfileStatus(ctx,
+		engcontext.EntityFromContext(ctx).Project.ID,
+		uuid.MustParse(in.Id),
+		nil,
+		s.store.GetProfileStatusByIdAndProject,
+	)
+}
+
+func (s *Server) getProfileStatus(ctx context.Context,
+	projectID uuid.UUID,
+	profileIdentifier interface{},
+	getProfileByNameFunc func(context.Context,
+		db.GetProfileStatusByNameAndProjectParams,
+	) (db.GetProfileStatusByNameAndProjectRow, error),
+	getProfileByIdFunc func(context.Context,
+		db.GetProfileStatusByIdAndProjectParams,
+	) (db.GetProfileStatusByIdAndProjectRow, error)) (*minderv1.GetProfileStatusResponse, error) {
+
+	entityCtx := engcontext.EntityFromContext(ctx)
+
+	// Validate project
+	if err := entityCtx.ValidateProject(ctx, s.store); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	// Retrieve profile status
+	var dbProfileStatus interface{}
+	var getProfileErr error
+
+	switch id := profileIdentifier.(type) {
+	case string:
+		if id == "" {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "profile name cannot be empty")
+		}
+		if getProfileByNameFunc == nil {
+			return nil, status.Errorf(codes.Internal, "profile retrieval function not provided for name")
+		}
+		dbProfileStatus, getProfileErr = getProfileByNameFunc(ctx, db.GetProfileStatusByNameAndProjectParams{
+			ProjectID: projectID,
+			Name:      id,
+		})
+	case uuid.UUID:
+		if getProfileByIdFunc == nil {
+			return nil, status.Errorf(codes.Internal, "profile retrieval function not provided for ID")
+		}
+		dbProfileStatus, getProfileErr = getProfileByIdFunc(ctx, db.GetProfileStatusByIdAndProjectParams{
+			ProjectID: projectID,
+			ID:        id,
+		})
+	default:
+		return nil, fmt.Errorf("unsupported profile identifier type")
+	}
+
+	// Handle profile retrieval error
+	if getProfileErr != nil {
+		if errors.Is(getProfileErr, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", profileIdentifier)
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", getProfileErr)
+	}
+
+	// Extract profile details
+	var profileName string
+	var profileID uuid.UUID
+	var lastUpdated *timestamppb.Timestamp
+	var profileStatus string
+
+	switch ps := dbProfileStatus.(type) {
+	case db.GetProfileStatusByNameAndProjectRow:
+		profileName = ps.Name
+		profileID = ps.ID
+		lastUpdated = timestamppb.New(ps.LastUpdated)
+		profileStatus = string(ps.ProfileStatus)
+	case db.GetProfileStatusByIdAndProjectRow:
+		profileName = ps.Name
+		profileID = ps.ID
+		lastUpdated = timestamppb.New(ps.LastUpdated)
+		profileStatus = string(ps.ProfileStatus)
+	default:
+		return nil, status.Errorf(codes.Internal, "unexpected profile status type")
+	}
+
+	// Prepare rule evaluation filter
+	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
+	var selector *uuid.NullUUID
+	var ruleType *sql.NullString
+	var ruleName *sql.NullString
+
+	// Extract filter criteria based on request type
+	switch req := ctx.Value("request").(type) {
+	case *minderv1.GetProfileStatusByNameRequest:
+		fmt.Print(req)
+		// Validate entity type if provided
+		if e := req.GetEntity(); e != nil {
+			if !e.GetType().IsValid() {
+				return nil, util.UserVisibleError(codes.InvalidArgument,
+					"invalid entity type %s, please use one of %s",
+					e.GetType(), entities.KnownTypesCSV())
+			}
+		}
+
+		selector = extractEntitySelector(req.GetEntity())
+
+		ruleType = &sql.NullString{
+			String: req.GetRuleName(),
+			Valid:  req.GetRuleName() != "",
+		}
+
+		if !ruleType.Valid {
+			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
+			ruleType = &sql.NullString{
+				String: req.GetRule(),
+				Valid:  req.GetRule() != "",
+			}
+		}
+
+		ruleName = &sql.NullString{
+			String: req.GetRuleName(),
+			Valid:  req.GetRuleName() != "",
+		}
+
+	case *minderv1.GetProfileStatusByIdRequest:
+		// Validate entity type if provided
+		if e := req.GetEntity(); e != nil {
+			if !e.GetType().IsValid() {
+				return nil, util.UserVisibleError(codes.InvalidArgument,
+					"invalid entity type %s, please use one of %s",
+					e.GetType(), entities.KnownTypesCSV())
+			}
+		}
+
+		selector = extractEntitySelector(req.Entity)
+
+		ruleType = &sql.NullString{
+			String: req.GetRuleName(),
+			Valid:  req.GetRuleName() != "",
+		}
+
+		// TODO: Remove deprecated 'rule' field from proto
+		if !ruleType.Valid {
+			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
+			ruleType = &sql.NullString{
+				String: req.GetRule(),
+				Valid:  req.GetRule() != "",
+			}
+		}
+		ruleName = &sql.NullString{
+			String: req.GetRuleName(),
+			Valid:  req.GetRuleName() != "",
+		}
+
+	default:
+		return nil, status.Errorf(codes.Internal, "unknown request type in context")
+	}
+
+	// Retrieve rule evaluation statuses if needed
+	if selector != nil || isAllRequested(ctx) {
+		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
+			ProfileID:    profileID,
+			EntityID:     *selector,
+			RuleTypeName: *ruleType,
+			RuleName:     *ruleName,
+		})
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
+		}
+
+		ruleEvaluationStatuses = s.getRuleEvaluationStatuses(
+			ctx, dbRuleEvaluationStatuses, profileID.String(),
+		)
+	}
+
+	// Telemetry logging
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
+
+	return &minderv1.GetProfileStatusResponse{
+		ProfileStatus: &minderv1.ProfileStatus{
+			ProfileId:     profileID.String(),
+			ProfileName:   profileName,
+			ProfileStatus: profileStatus,
+			LastUpdated:   lastUpdated,
+		},
+		RuleEvaluationStatus: ruleEvaluationStatuses,
+	}, nil
+}
+
+// Helper function to extract entity selector
+func extractEntitySelector(entity *minderv1.EntityTypedId) *uuid.NullUUID {
+	if entity == nil {
+		return nil
+	}
+	var selector uuid.NullUUID
+	if err := selector.Scan(entity.GetId()); err != nil {
+		return nil
+	}
+	return &selector
+}
+
+// Helper Function Check if all items are requested
+func isAllRequested(ctx context.Context) bool {
+	switch req := ctx.Value("request").(type) {
+	case *minderv1.GetProfileStatusByNameRequest:
+		return req.GetAll()
+	case *minderv1.GetProfileStatusByIdRequest:
+		return req.GetAll()
+	}
+	return false
 }

@@ -595,9 +595,20 @@ service ProfileService {
         };
     }
 
-    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
+    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/name/{name=**}/status"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+
+    rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/profile/id/{id=**}/status"
         };
 
         option (rpc_options) = {
@@ -1874,9 +1885,40 @@ message GetProfileStatusByNameRequest {
     ];
 }
 
-message GetProfileStatusByNameResponse {
+message GetProfileStatusByIdRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the profile to get
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+
+    EntityTypedId entity = 3;
+    bool all = 4;
+
+    // rule is the type of the rule. Deprecated in favor of rule_type
+    string rule = 5 [deprecated=true];
+    string rule_type = 6 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+    string rule_name = 7 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+}
+
+message GetProfileStatusResponse {
     // profile_status is the status of the profile
-    ProfileStatus profile_status = 1;
+    ProfileStatus profile_status = 1[
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // rule_evaluation_status is the status of the rules
     repeated RuleEvaluationStatus rule_evaluation_status = 2;

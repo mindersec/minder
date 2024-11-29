@@ -33,6 +33,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
+	profileId := viper.GetString("id")
 	entityId := viper.GetString("entity")
 	entityType := viper.GetString("entity-type")
 	format := viper.GetString("output")
@@ -42,14 +43,28 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-		Context: &minderv1.Context{Project: &project},
-		Name:    profileName,
-		Entity: &minderv1.EntityTypedId{
-			Id:   entityId,
-			Type: minderv1.EntityFromString(entityType),
-		},
-	})
+	var resp *minderv1.GetProfileStatusResponse
+	var err error
+
+	if profileId != "" {
+		resp, err = client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
+			Context: &minderv1.Context{Project: &project},
+			Id:      profileId,
+			Entity: &minderv1.EntityTypedId{
+				Id:   entityId,
+				Type: minderv1.EntityFromString(entityType),
+			},
+		})
+	} else {
+		resp, err = client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
+			Context: &minderv1.Context{Project: &project},
+			Name:    profileName,
+			Entity: &minderv1.EntityTypedId{
+				Id:   entityId,
+				Type: minderv1.EntityFromString(entityType),
+			},
+		})
+	}
 	if err != nil {
 		return cli.MessageAndError("Error getting profile status", err)
 	}

@@ -1251,6 +1251,103 @@
         ]
       }
     },
+    "/api/v1/profile/id/{id}/status": {
+      "get": {
+        "operationId": "ProfileService_GetProfileStatusById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProfileStatusResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the profile to get",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "entity.type",
+            "description": "entity is the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ENTITY_UNSPECIFIED",
+              "ENTITY_REPOSITORIES",
+              "ENTITY_BUILD_ENVIRONMENTS",
+              "ENTITY_ARTIFACTS",
+              "ENTITY_PULL_REQUESTS",
+              "ENTITY_RELEASE",
+              "ENTITY_PIPELINE_RUN",
+              "ENTITY_TASK_RUN",
+              "ENTITY_BUILD"
+            ],
+            "default": "ENTITY_UNSPECIFIED"
+          },
+          {
+            "name": "entity.id",
+            "description": "id is the ID of the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "rule",
+            "description": "rule is the type of the rule. Deprecated in favor of rule_type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/api/v1/profile/name/{name}": {
       "get": {
         "operationId": "ProfileService_GetProfileByName",
@@ -1304,7 +1401,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetProfileStatusByNameResponse"
+              "$ref": "#/definitions/v1GetProfileStatusResponse"
             }
           }
         },
@@ -4368,7 +4465,20 @@
         }
       }
     },
-    "v1GetProfileStatusByNameResponse": {
+    "v1GetProfileStatusByProjectResponse": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProfileStatus"
+          },
+          "title": "profile_status is the status of the profile"
+        }
+      }
+    },
+    "v1GetProfileStatusResponse": {
       "type": "object",
       "properties": {
         "profileStatus": {
@@ -4383,20 +4493,10 @@
           },
           "title": "rule_evaluation_status is the status of the rules"
         }
-      }
-    },
-    "v1GetProfileStatusByProjectResponse": {
-      "type": "object",
-      "properties": {
-        "profileStatus": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ProfileStatus"
-          },
-          "title": "profile_status is the status of the profile"
-        }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProviderResponse": {
       "type": "object",
