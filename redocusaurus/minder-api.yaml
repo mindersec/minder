@@ -1615,6 +1615,9 @@ paths:
           required: false
           type: string
         - name: limit
+          description: |-
+            limit is the maximum number of results to return.
+            This is optional.
           in: query
           required: false
           type: string
@@ -1638,6 +1641,9 @@ paths:
           required: false
           type: string
         - name: cursor
+          description: |-
+            cursor is the cursor to use for the next page of results.
+            This is optional.
           in: query
           required: false
           type: string
@@ -1657,6 +1663,9 @@ paths:
           required: true
           type: string
         - name: limit
+          description: |-
+            limit is the maximum number of results to return.
+            This is optional.
           in: query
           required: false
           type: string
@@ -1680,6 +1689,9 @@ paths:
           required: false
           type: string
         - name: cursor
+          description: |-
+            cursor is the cursor to use for the next page of results.
+            This is optional.
           in: query
           required: false
           type: string
@@ -2676,6 +2688,9 @@ definitions:
     properties:
       repository:
         $ref: '#/definitions/v1UpstreamRepositoryRef'
+        description: |-
+          repository is the repository to register. This is optional if entity
+          is set.
       context:
         $ref: '#/definitions/v1Context'
       entity:
@@ -2683,7 +2698,7 @@ definitions:
         description: |-
           entity is the entity to register. This is the same as the repository
           field, but uses the new UpstreamEntityRef message. This is what we'll
-          migrate to eventually.
+          migrate to eventually. This is optional if repository is set.
   RestDataSourceDef:
     type: object
     properties:
@@ -3172,11 +3187,15 @@ definitions:
     properties:
       repositoryId:
         type: string
+    required:
+      - repositoryId
   v1DeleteRepositoryByNameResponse:
     type: object
     properties:
       name:
         type: string
+    required:
+      - name
   v1DeleteRuleTypeResponse:
     type: object
     description: DeleteRuleTypeResponse is the response to delete a rule type.
@@ -3472,11 +3491,15 @@ definitions:
     properties:
       repository:
         $ref: '#/definitions/v1Repository'
+    required:
+      - repository
   v1GetRepositoryByNameResponse:
     type: object
     properties:
       repository:
         $ref: '#/definitions/v1Repository'
+    required:
+      - repository
   v1GetRuleTypeByIdResponse:
     type: object
     properties:
@@ -3720,6 +3743,9 @@ definitions:
           entities is the same list as the repositories, but it
           uses the new UpstreamEntityRef message. This is what
           we'll migrate to eventually.
+    required:
+      - results
+      - entities
   v1ListRepositoriesResponse:
     type: object
     properties:
@@ -3733,6 +3759,8 @@ definitions:
         title: >-
           cursor is the cursor to use for the next page of results, empty if at
           the end
+    required:
+      - results
   v1ListRoleAssignmentsResponse:
     type: object
     properties:
@@ -3928,6 +3956,9 @@ definitions:
         type: string
       description:
         type: string
+        description: |-
+          description is a human-readable description of the project.
+          This is optional.
       createdAt:
         type: string
         format: date-time
@@ -3940,7 +3971,13 @@ definitions:
           display_name allows for a human-readable name to be used.
           display_names are short *non-unique* strings to provide
           a user-friendly name for presentation in lists, etc.
-    title: Project API Objects
+          This is optional.
+    description: Project API Objects. This is only used in responses.
+    required:
+      - projectId
+      - name
+      - createdAt
+      - updatedAt
   v1ProjectPatch:
     type: object
     properties:
@@ -4034,6 +4071,8 @@ definitions:
       entity:
         type: string
         title: entity is the entity type
+    required:
+      - entity
   v1ReconcileEntityRegistrationResponse:
     type: object
   v1RegisterRepoResult:
@@ -4043,6 +4082,8 @@ definitions:
         $ref: '#/definitions/v1Repository'
       status:
         $ref: '#/definitions/v1RegisterRepoResultStatus'
+    required:
+      - status
   v1RegisterRepoResultStatus:
     type: object
     properties:
@@ -4057,6 +4098,9 @@ definitions:
         type: string
       repository:
         $ref: '#/definitions/v1UpstreamRepositoryRef'
+        description: |-
+          repository is the repository to register. This is optional if entity
+          is set.
       context:
         $ref: '#/definitions/v1Context'
       entity:
@@ -4064,12 +4108,14 @@ definitions:
         description: |-
           entity is the entity to register. This is the same as the repository
           field, but uses the new UpstreamEntityRef message. This is what we'll
-          migrate to eventually.
+          migrate to eventually. This is optional if repository is set.
   v1RegisterRepositoryResponse:
     type: object
     properties:
       result:
         $ref: '#/definitions/v1RegisterRepoResult'
+    required:
+      - result
   v1RegistrableUpstreamEntityRef:
     type: object
     properties:
@@ -4078,6 +4124,8 @@ definitions:
       registered:
         type: boolean
         description: True if the entity is already registered in Minder.
+    required:
+      - entity
   v1RemoveRoleResponse:
     type: object
     properties:
@@ -4092,7 +4140,10 @@ definitions:
     properties:
       id:
         type: string
-        title: This is optional when returning remote repositories
+        description: |-
+          id is the unique identifier of the repository within Minder.
+          It is always populated, but the optional keyword is used for
+          backwards compatibility.
       context:
         $ref: '#/definitions/v1Context'
       owner:
@@ -4134,6 +4185,13 @@ definitions:
       properties:
         type: object
         description: properties is a map of properties of the entity.
+    description: Repository API objects. This is only used in responses.
+    required:
+      - id
+      - owner
+      - name
+      - isPrivate
+      - isFork
   v1ResolveInvitationResponse:
     type: object
     properties:
@@ -4562,6 +4620,11 @@ definitions:
     properties:
       owner:
         type: string
+        description: >-
+          owner is the owner (e.g GitHub org) that the provider is associated
+          with.
+
+          This is optional.
       name:
         type: string
       repoId:
@@ -4577,6 +4640,8 @@ definitions:
         description: |-
           True if the repository is already registered in Minder.
           This is only set on output, and is ignored on input.
+    required:
+      - name
   v1UserRecord:
     type: object
     properties:
