@@ -600,6 +600,7 @@ create entities are called Providers.
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. Names must be lowercase and can only contain letters, numbers, hyphens, and underscores. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
+| deps | <TypeLink type="minder-v1-DepsDataSource">DepsDataSource</TypeLink> |  | deps is the dependencies extractor data source driver. |
 
 
 
@@ -821,6 +822,35 @@ DeleteRuleTypeResponse is the response to delete a rule type.
 <Message id="minder-v1-DeleteUserResponse">DeleteUserResponse</Message>
 
 
+
+
+
+<Message id="minder-v1-DepsDataSource">DepsDataSource</Message>
+
+DepsDataSource is the dependency data source driver
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| def | <TypeLink type="minder-v1-DepsDataSource-DefEntry">DepsDataSource.DefEntry</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-DepsDataSource-Def">DepsDataSource.Def</Message>
+
+
+
+
+
+<Message id="minder-v1-DepsDataSource-DefEntry">DepsDataSource.DefEntry</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-DepsDataSource-Def">DepsDataSource.Def</TypeLink> |  |  |
 
 
 
