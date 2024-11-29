@@ -636,98 +636,21 @@ func (s *Server) getProfileStatus(ctx context.Context,
 		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", getProfileErr)
 	}
 
-	// Extract profile details
-	var profileName string
-	var profileID uuid.UUID
-	var lastUpdated *timestamppb.Timestamp
-	var profileStatus string
+	// Extract Profile Details
+	profileName, profileID, lastUpdated, profileStatus, extractProfileDetailsErr := extractProfileDetails(dbProfileStatus)
 
-	switch ps := dbProfileStatus.(type) {
-	case db.GetProfileStatusByNameAndProjectRow:
-		profileName = ps.Name
-		profileID = ps.ID
-		lastUpdated = timestamppb.New(ps.LastUpdated)
-		profileStatus = string(ps.ProfileStatus)
-	case db.GetProfileStatusByIdAndProjectRow:
-		profileName = ps.Name
-		profileID = ps.ID
-		lastUpdated = timestamppb.New(ps.LastUpdated)
-		profileStatus = string(ps.ProfileStatus)
-	default:
-		return nil, status.Errorf(codes.Internal, "unexpected profile status type")
+	if extractProfileDetailsErr != nil {
+		return nil, extractProfileDetailsErr
 	}
 
 	// Prepare rule evaluation filter
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
-	var selector *uuid.NullUUID
-	var ruleType *sql.NullString
-	var ruleName *sql.NullString
 
 	// Extract filter criteria based on request type
-	switch req := ctx.Value("request").(type) {
-	case *minderv1.GetProfileStatusByNameRequest:
-		fmt.Print(req)
-		// Validate entity type if provided
-		if e := req.GetEntity(); e != nil {
-			if !e.GetType().IsValid() {
-				return nil, util.UserVisibleError(codes.InvalidArgument,
-					"invalid entity type %s, please use one of %s",
-					e.GetType(), entities.KnownTypesCSV())
-			}
-		}
+	selector, ruleType, ruleName, extractFiltersErr := extractFiltersFromRequest(ctx.Value(requestKey))
 
-		selector = extractEntitySelector(req.GetEntity())
-
-		ruleType = &sql.NullString{
-			String: req.GetRuleName(),
-			Valid:  req.GetRuleName() != "",
-		}
-
-		if !ruleType.Valid {
-			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
-			ruleType = &sql.NullString{
-				String: req.GetRule(),
-				Valid:  req.GetRule() != "",
-			}
-		}
-
-		ruleName = &sql.NullString{
-			String: req.GetRuleName(),
-			Valid:  req.GetRuleName() != "",
-		}
-
-	case *minderv1.GetProfileStatusByIdRequest:
-		// Validate entity type if provided
-		if e := req.GetEntity(); e != nil {
-			if !e.GetType().IsValid() {
-				return nil, util.UserVisibleError(codes.InvalidArgument,
-					"invalid entity type %s, please use one of %s",
-					e.GetType(), entities.KnownTypesCSV())
-			}
-		}
-
-		selector = extractEntitySelector(req.Entity)
-
-		ruleType = &sql.NullString{
-			String: req.GetRuleName(),
-			Valid:  req.GetRuleName() != "",
-		}
-
-		// TODO: Remove deprecated 'rule' field from proto
-		if !ruleType.Valid {
-			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
-			ruleType = &sql.NullString{
-				String: req.GetRule(),
-				Valid:  req.GetRule() != "",
-			}
-		}
-		ruleName = &sql.NullString{
-			String: req.GetRuleName(),
-			Valid:  req.GetRuleName() != "",
-		}
-
-	default:
-		return nil, status.Errorf(codes.Internal, "unknown request type in context")
+	if extractFiltersErr != nil {
+		return nil, extractFiltersErr
 	}
 
 	// Retrieve rule evaluation statuses if needed
@@ -783,4 +706,101 @@ func isAllRequested(ctx context.Context) bool {
 		return req.GetAll()
 	}
 	return false
+}
+
+func extractProfileDetails(dbProfileStatus interface{}) (
+	profileName string,
+	profileID uuid.UUID,
+	lastUpdated *timestamppb.Timestamp,
+	profileStatus string,
+	err error) {
+
+	switch ps := dbProfileStatus.(type) {
+	case db.GetProfileStatusByNameAndProjectRow:
+		profileName = ps.Name
+		profileID = ps.ID
+		lastUpdated = timestamppb.New(ps.LastUpdated)
+		profileStatus = string(ps.ProfileStatus)
+	case db.GetProfileStatusByIdAndProjectRow:
+		profileName = ps.Name
+		profileID = ps.ID
+		lastUpdated = timestamppb.New(ps.LastUpdated)
+		profileStatus = string(ps.ProfileStatus)
+	default:
+		return "", uuid.Nil, nil, "", status.Errorf(codes.Internal, "unexpected profile status type")
+	}
+
+	return profileName, profileID, lastUpdated, profileStatus, status.Errorf(codes.Internal, "unexpected profile status type")
+
+}
+
+func extractFiltersFromRequest(req interface{}) (*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
+	var selector *uuid.NullUUID
+	var ruleType *sql.NullString
+	var ruleName *sql.NullString
+
+	switch r := req.(type) {
+	case *minderv1.GetProfileStatusByNameRequest:
+		if e := r.GetEntity(); e != nil {
+			if !e.GetType().IsValid() {
+				return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
+					"invalid entity type %s, please use one of %s",
+					e.GetType(), entities.KnownTypesCSV())
+			}
+		}
+
+		selector = extractEntitySelector(r.GetEntity())
+
+		ruleType = &sql.NullString{
+			String: r.GetRuleName(),
+			Valid:  r.GetRuleName() != "",
+		}
+		// TODO: Remove deprecated 'rule' field from proto
+		if !ruleType.Valid {
+			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
+			ruleType = &sql.NullString{
+				String: r.GetRule(),
+				Valid:  r.GetRule() != "",
+			}
+		}
+
+		ruleName = &sql.NullString{
+			String: r.GetRuleName(),
+			Valid:  r.GetRuleName() != "",
+		}
+
+	case *minderv1.GetProfileStatusByIdRequest:
+		if e := r.GetEntity(); e != nil {
+			if !e.GetType().IsValid() {
+				return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
+					"invalid entity type %s, please use one of %s",
+					e.GetType(), entities.KnownTypesCSV())
+			}
+		}
+
+		selector = extractEntitySelector(r.GetEntity())
+
+		ruleType = &sql.NullString{
+			String: r.GetRuleName(),
+			Valid:  r.GetRuleName() != "",
+		}
+		// TODO: Remove deprecated 'rule' field from proto
+		if !ruleType.Valid {
+			//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
+			ruleType = &sql.NullString{
+				String: r.GetRule(),
+				Valid:  r.GetRule() != "",
+			}
+		}
+
+		ruleName = &sql.NullString{
+			String: r.GetRuleName(),
+			Valid:  r.GetRuleName() != "",
+		}
+
+	default:
+		return nil, nil, nil, status.Errorf(codes.Internal, "unknown request type")
+	}
+
+	return selector, ruleType, ruleName, nil
 }
