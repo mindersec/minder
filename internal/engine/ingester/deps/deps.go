@@ -12,15 +12,12 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	"github.com/go-viper/mapstructure/v2"
-	scalibr "github.com/google/osv-scalibr"
-	"github.com/google/osv-scalibr/extractor/filesystem/list"
-	scalibr_fs "github.com/google/osv-scalibr/fs"
-	scalibr_plugin "github.com/google/osv-scalibr/plugin"
-	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	mdeps "github.com/mindersec/minder/internal/deps"
+	"github.com/mindersec/minder/internal/deps/scalibr"
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -36,8 +33,9 @@ const (
 
 // Deps is the engine for a rule type that uses deps data ingest
 type Deps struct {
-	cfg     *pb.DepsType
-	gitprov provifv1.Git
+	cfg       *pb.DepsType
+	gitprov   provifv1.Git
+	extractor mdeps.Extractor
 }
 
 // Config is the set of parameters to the deps rule data ingest engine
@@ -56,8 +54,9 @@ func NewDepsIngester(cfg *pb.DepsType, gitprov provifv1.Git) (*Deps, error) {
 	}
 
 	return &Deps{
-		cfg:     cfg,
-		gitprov: gitprov,
+		cfg:       cfg,
+		gitprov:   gitprov,
+		extractor: scalibr.NewExtractor(),
 	}, nil
 }
 
@@ -72,7 +71,7 @@ func (gi *Deps) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo,
-// and scanning it for dependencies with scalibr.
+// and scanning it for dependencies with a dependency extractor
 func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
 	switch entity := ent.(type) {
 	case *pb.Repository:
@@ -81,6 +80,7 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 		return nil, fmt.Errorf("deps is only supported for repositories")
 	}
 }
+
 func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
 	var logger = zerolog.Ctx(ctx)
 	userCfg := &Config{
@@ -117,7 +117,7 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 		return nil, fmt.Errorf("could not get worktree: %w", err)
 	}
 
-	deps, err := scanFs(ctx, wt.Filesystem)
+	deps, err := gi.scanMemFs(ctx, wt.Filesystem)
 	if err != nil {
 		return nil, fmt.Errorf("could not scan filesystem: %w", err)
 	}
@@ -163,63 +163,16 @@ func (gi *Deps) getBranch(repo *pb.Repository, branch string) string {
 	return defaultBranch
 }
 
-func scanFs(ctx context.Context, memFS billy.Filesystem) (*sbom.NodeList, error) {
+// scanMemFs scans a billy memory filesystem for software dependencies.
+func (gi *Deps) scanMemFs(ctx context.Context, memFS billy.Filesystem) (*sbom.NodeList, error) {
 	if memFS == nil {
 		return nil, fmt.Errorf("unable to scan dependencies, no active defined")
 	}
-	// have to down-cast here, because scalibr needs multiple io/fs types
-	wrapped, ok := iofs.New(memFS).(scalibr_fs.FS)
-	if !ok {
-		return nil, fmt.Errorf("error converting filesystem to ReadDirFS")
+
+	nl, err := gi.extractor.ScanFilesystem(ctx, iofs.New(memFS))
+	if err != nil {
+		return nil, fmt.Errorf("%T extractor: %w", gi.extractor, err)
 	}
 
-	desiredCaps := scalibr_plugin.Capabilities{
-		OS:            scalibr_plugin.OSLinux,
-		Network:       true,
-		DirectFS:      false,
-		RunningSystem: false,
-	}
-
-	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
-	scanConfig := scalibr.ScanConfig{
-		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
-		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		FilesystemExtractors: list.FilterByCapabilities(list.Default, &desiredCaps),
-		Capabilities:         &desiredCaps,
-	}
-
-	scanner := scalibr.New()
-	scanResults := scanner.Scan(ctx, &scanConfig)
-
-	if scanResults == nil || scanResults.Status == nil {
-		return nil, fmt.Errorf("error scanning files: no results")
-	}
-	if scanResults.Status.Status != scalibr_plugin.ScanStatusSucceeded {
-		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
-	}
-
-	res := sbom.NewNodeList()
-	for _, inv := range scanResults.Inventories {
-		node := &sbom.Node{
-			Type:    sbom.Node_PACKAGE,
-			Id:      uuid.New().String(),
-			Name:    inv.Name,
-			Version: inv.Version,
-			Identifiers: map[int32]string{
-				int32(sbom.SoftwareIdentifierType_PURL): inv.Extractor.ToPURL(inv).String(),
-				// TODO: scalibr returns a _list_ of CPEs, but protobom will store one.
-				// use the first?
-				// int32(sbom.SoftwareIdentifierType_CPE23):  inv.Extractor.ToCPEs(inv),
-			},
-		}
-		for _, l := range inv.Locations {
-			node.Properties = append(node.Properties, &sbom.Property{
-				Name: "sourceFile",
-				Data: l,
-			})
-		}
-		res.AddNode(node)
-	}
-
-	return res, nil
+	return nl, err
 }
