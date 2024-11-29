@@ -40,7 +40,7 @@ func buildDataSourceOptions(res *interfaces.Result, dsr *v1datasources.DataSourc
 // It takes a DataSourceFuncDef and returns a function that can be used to
 // register the function with the rego engine.
 func buildFromDataSource(
-	_ *interfaces.Result, key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef,
+	res *interfaces.Result, key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef,
 ) func(*rego.Rego) {
 	k := normalizeKey(key)
 	return rego.Function1(
@@ -60,7 +60,13 @@ func buildFromDataSource(
 			}
 
 			// Call the data source function
-			ctx := context.Background()
+			ctx := context.WithValue(
+				context.Background(),
+				v1datasources.ContextKey{},
+				v1datasources.Context{
+					Ingest: res,
+				},
+			)
 			ret, err := dsf.Call(ctx, jsonObj)
 			if err != nil {
 				return nil, err
