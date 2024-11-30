@@ -1176,8 +1176,8 @@ type ProfileServiceClient interface {
 	ListProfiles(ctx context.Context, in *ListProfilesRequest, opts ...grpc.CallOption) (*ListProfilesResponse, error)
 	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
 	GetProfileByName(ctx context.Context, in *GetProfileByNameRequest, opts ...grpc.CallOption) (*GetProfileByNameResponse, error)
-	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusResponse, error)
-	GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusResponse, error)
+	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusByIdResponse, error)
 	GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error)
 }
 
@@ -1259,9 +1259,9 @@ func (c *profileServiceClient) GetProfileByName(ctx context.Context, in *GetProf
 	return out, nil
 }
 
-func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusResponse, error) {
+func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProfileStatusResponse)
+	out := new(GetProfileStatusByNameResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusByName_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1269,9 +1269,9 @@ func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *profileServiceClient) GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusResponse, error) {
+func (c *profileServiceClient) GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusByIdResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetProfileStatusResponse)
+	out := new(GetProfileStatusByIdResponse)
 	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusById_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -1300,8 +1300,8 @@ type ProfileServiceServer interface {
 	ListProfiles(context.Context, *ListProfilesRequest) (*ListProfilesResponse, error)
 	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
 	GetProfileByName(context.Context, *GetProfileByNameRequest) (*GetProfileByNameResponse, error)
-	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusResponse, error)
-	GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusResponse, error)
+	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusByIdResponse, error)
 	GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
@@ -1334,10 +1334,10 @@ func (UnimplementedProfileServiceServer) GetProfileById(context.Context, *GetPro
 func (UnimplementedProfileServiceServer) GetProfileByName(context.Context, *GetProfileByNameRequest) (*GetProfileByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileByName not implemented")
 }
-func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByName not implemented")
 }
-func (UnimplementedProfileServiceServer) GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusResponse, error) {
+func (UnimplementedProfileServiceServer) GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusById not implemented")
 }
 func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error) {

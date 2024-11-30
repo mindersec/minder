@@ -1258,7 +1258,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetProfileStatusResponse"
+              "$ref": "#/definitions/v1GetProfileStatusByIdResponse"
             }
           }
         },
@@ -1401,7 +1401,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1GetProfileStatusResponse"
+              "$ref": "#/definitions/v1GetProfileStatusByNameResponse"
             }
           }
         },
@@ -4465,20 +4465,7 @@
         }
       }
     },
-    "v1GetProfileStatusByProjectResponse": {
-      "type": "object",
-      "properties": {
-        "profileStatus": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ProfileStatus"
-          },
-          "title": "profile_status is the status of the profile"
-        }
-      }
-    },
-    "v1GetProfileStatusResponse": {
+    "v1GetProfileStatusByIdResponse": {
       "type": "object",
       "properties": {
         "profileStatus": {
@@ -4497,6 +4484,39 @@
       "required": [
         "profileStatus"
       ]
+    },
+    "v1GetProfileStatusByNameResponse": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile"
+        },
+        "ruleEvaluationStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "rule_evaluation_status is the status of the rules"
+        }
+      },
+      "required": [
+        "profileStatus"
+      ]
+    },
+    "v1GetProfileStatusByProjectResponse": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ProfileStatus"
+          },
+          "title": "profile_status is the status of the profile"
+        }
+      }
     },
     "v1GetProviderResponse": {
       "type": "object",

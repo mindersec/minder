@@ -559,28 +559,48 @@ func (s *Server) UpdateProfile(ctx context.Context,
 func (s *Server) GetProfileStatusByName(
 	ctx context.Context,
 	in *minderv1.GetProfileStatusByNameRequest,
-) (*minderv1.GetProfileStatusResponse, error) {
+) (*minderv1.GetProfileStatusByNameResponse, error) {
 	ctx = context.WithValue(ctx, requestKey, in)
-	return s.getProfileStatus(ctx,
+	resp, err := s.getProfileStatus(
+		ctx,
 		engcontext.EntityFromContext(ctx).Project.ID,
 		in.Name,
 		s.store.GetProfileStatusByNameAndProject,
-		nil,
+		nil, // No ID function required
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &minderv1.GetProfileStatusByNameResponse{
+		ProfileStatus:        resp.ProfileStatus,
+		RuleEvaluationStatus: resp.RuleEvaluationStatus,
+	}, nil
 }
 
 // GetProfileStatusById retrieves profile status by ID
 func (s *Server) GetProfileStatusById(
 	ctx context.Context,
 	in *minderv1.GetProfileStatusByIdRequest,
-) (*minderv1.GetProfileStatusResponse, error) {
+) (*minderv1.GetProfileStatusByIdResponse, error) {
 	ctx = context.WithValue(ctx, requestKey, in)
-	return s.getProfileStatus(ctx,
+
+	resp, err := s.getProfileStatus(
+		ctx,
 		engcontext.EntityFromContext(ctx).Project.ID,
 		uuid.MustParse(in.Id),
-		nil,
+		nil, // No name function required
 		s.store.GetProfileStatusByIdAndProject,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Cast response to GetProfileStatusByIdResponse
+	return &minderv1.GetProfileStatusByIdResponse{
+		ProfileStatus:        resp.ProfileStatus,
+		RuleEvaluationStatus: resp.RuleEvaluationStatus,
+	}, nil
 }
 
 func (s *Server) getProfileStatus(ctx context.Context,
@@ -730,7 +750,7 @@ func extractProfileDetails(dbProfileStatus interface{}) (
 		return "", uuid.Nil, nil, "", status.Errorf(codes.Internal, "unexpected profile status type")
 	}
 
-	return profileName, profileID, lastUpdated, profileStatus, status.Errorf(codes.Internal, "unexpected profile status type")
+	return profileName, profileID, lastUpdated, profileStatus, nil
 
 }
 

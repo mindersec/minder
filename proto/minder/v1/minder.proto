@@ -595,7 +595,7 @@ service ProfileService {
         };
     }
 
-    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusResponse) {
+    rpc GetProfileStatusByName (GetProfileStatusByNameRequest) returns (GetProfileStatusByNameResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/name/{name=**}/status"
         };
@@ -606,7 +606,7 @@ service ProfileService {
         };
     }
 
-    rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusResponse) {
+    rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusByIdResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile/id/{id=**}/status"
         };
@@ -1885,6 +1885,16 @@ message GetProfileStatusByNameRequest {
     ];
 }
 
+message GetProfileStatusByNameResponse {
+    // profile_status is the status of the profile
+    ProfileStatus profile_status = 1[
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // rule_evaluation_status is the status of the rules
+    repeated RuleEvaluationStatus rule_evaluation_status = 2;
+}
+
 message GetProfileStatusByIdRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
@@ -1912,6 +1922,16 @@ message GetProfileStatusByIdRequest {
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
+}
+
+message GetProfileStatusByIdResponse {
+    // profile_status is the status of the profile
+    ProfileStatus profile_status = 1[
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // rule_evaluation_status is the status of the rules
+    repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
 
 message GetProfileStatusResponse {

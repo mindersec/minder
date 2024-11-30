@@ -151,8 +151,8 @@ replies with OK
 | ListProfiles | [ListProfilesRequest](#minder-v1-ListProfilesRequest) | [ListProfilesResponse](#minder-v1-ListProfilesResponse) |  |
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
 | GetProfileByName | [GetProfileByNameRequest](#minder-v1-GetProfileByNameRequest) | [GetProfileByNameResponse](#minder-v1-GetProfileByNameResponse) |  |
-| GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusResponse](#minder-v1-GetProfileStatusResponse) |  |
-| GetProfileStatusById | [GetProfileStatusByIdRequest](#minder-v1-GetProfileStatusByIdRequest) | [GetProfileStatusResponse](#minder-v1-GetProfileStatusResponse) |  |
+| GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#minder-v1-GetProfileStatusByNameResponse) |  |
+| GetProfileStatusById | [GetProfileStatusByIdRequest](#minder-v1-GetProfileStatusByIdRequest) | [GetProfileStatusByIdResponse](#minder-v1-GetProfileStatusByIdResponse) |  |
 | GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#minder-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#minder-v1-GetProfileStatusByProjectResponse) |  |
 
 
@@ -1266,6 +1266,18 @@ get profile by name
 
 
 
+<Message id="minder-v1-GetProfileStatusByIdResponse">GetProfileStatusByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile |
+| rule_evaluation_status | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | rule_evaluation_status is the status of the rules |
+
+
+
 <Message id="minder-v1-GetProfileStatusByNameRequest">GetProfileStatusByNameRequest</Message>
 
 
@@ -1280,6 +1292,18 @@ get profile by name
 | rule | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
 | rule_type | <TypeLink type="string">string</TypeLink> |  |  |
 | rule_name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetProfileStatusByNameResponse">GetProfileStatusByNameResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile |
+| rule_evaluation_status | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | rule_evaluation_status is the status of the rules |
 
 
 
