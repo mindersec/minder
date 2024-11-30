@@ -45,8 +45,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 
 	resp, err := getProfileStatus(ctx, client, project, profileId, profileName, entityId, entityType)
 	if err != nil {
-        return cli.MessageAndError("Error getting profile status", err)
-    }
+		return cli.MessageAndError("Error getting profile status", err)
+	}
 
 	switch format {
 	case app.JSON:
@@ -71,51 +71,51 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 }
 
 func getProfileStatus(
-    ctx context.Context, 
-    client minderv1.ProfileServiceClient, 
-    project, profileId, profileName, entityId, entityType string,
+	ctx context.Context,
+	client minderv1.ProfileServiceClient,
+	project, profileId, profileName, entityId, entityType string,
 ) (*minderv1.GetProfileStatusResponse, error) {
-    var resp *minderv1.GetProfileStatusResponse
+	var resp *minderv1.GetProfileStatusResponse
 
-    if profileId != "" {
-        idResp, err := client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
-            Context: &minderv1.Context{Project: &project},
-            Id:      profileId,
-            Entity: &minderv1.EntityTypedId{
-                Id:   entityId,
-                Type: minderv1.EntityFromString(entityType),
-            },
-        })
-        if err != nil {
-            return nil, err
-        }
-        
-        // Convert to the common response type
-        resp = &minderv1.GetProfileStatusResponse{
-            ProfileStatus:        idResp.ProfileStatus,
-            RuleEvaluationStatus: idResp.RuleEvaluationStatus,
-        }
-    } else {
-        nameResp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-            Context: &minderv1.Context{Project: &project},
-            Name:    profileName,
-            Entity: &minderv1.EntityTypedId{
-                Id:   entityId,
-                Type: minderv1.EntityFromString(entityType),
-            },
-        })
-        if err != nil {
-            return nil, err
-        }
-        
-        // Convert to the common response type
-        resp = &minderv1.GetProfileStatusResponse{
-            ProfileStatus:        nameResp.ProfileStatus,
-            RuleEvaluationStatus: nameResp.RuleEvaluationStatus,
-        }
-    }
+	if profileId != "" {
+		idResp, err := client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
+			Context: &minderv1.Context{Project: &project},
+			Id:      profileId,
+			Entity: &minderv1.EntityTypedId{
+				Id:   entityId,
+				Type: minderv1.EntityFromString(entityType),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
 
-    return resp, nil
+		// Convert to the common response type
+		resp = &minderv1.GetProfileStatusResponse{
+			ProfileStatus:        idResp.ProfileStatus,
+			RuleEvaluationStatus: idResp.RuleEvaluationStatus,
+		}
+	} else {
+		nameResp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
+			Context: &minderv1.Context{Project: &project},
+			Name:    profileName,
+			Entity: &minderv1.EntityTypedId{
+				Id:   entityId,
+				Type: minderv1.EntityFromString(entityType),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// Convert to the common response type
+		resp = &minderv1.GetProfileStatusResponse{
+			ProfileStatus:        nameResp.ProfileStatus,
+			RuleEvaluationStatus: nameResp.RuleEvaluationStatus,
+		}
+	}
+
+	return resp, nil
 }
 
 func init() {
