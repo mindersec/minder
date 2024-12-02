@@ -1257,11 +1257,11 @@ get profile by name
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the profile to get |
-| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
-| all | <TypeLink type="bool">bool</TypeLink> |  |  |
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  | entity is the entity to get status for. Incompatible with `all`. This is optional. |
+| all | <TypeLink type="bool">bool</TypeLink> |  | all is true if the status of all entities should be returned. Incompatible with `entity`. This is optional. |
 | rule | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
-| rule_type | <TypeLink type="string">string</TypeLink> |  |  |
-| rule_name | <TypeLink type="string">string</TypeLink> |  |  |
+| rule_type | <TypeLink type="string">string</TypeLink> |  | rule_type is the type of the rule to filter on. This is optional. |
+| rule_name | <TypeLink type="string">string</TypeLink> |  | rule_name is the name of the rule to filter on. This is optional. |
 
 
 
@@ -1994,6 +1994,7 @@ ListRuleTypesResponse is the response to list rule types.
 <Message id="minder-v1-Profile">Profile</Message>
 
 Profile defines a profile that is user defined.
+All fields are optional because we want to allow partial updates.
 
 
 | Field | Type | Label | Description |
@@ -2484,7 +2485,7 @@ get the status of the rules for a given profile
 | rule_type_name | <TypeLink type="string">string</TypeLink> |  | rule_type_name is the name of the rule |
 | rule_description_name | <TypeLink type="string">string</TypeLink> |  | rule_description_name is the name to describe the rule |
 | alert | <TypeLink type="minder-v1-EvalResultAlert">EvalResultAlert</TypeLink> |  | alert holds the alert details if the rule generated an alert in an external system |
-| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule |
+| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule. This may be empty. |
 | rule_evaluation_id | <TypeLink type="string">string</TypeLink> |  | rule_evaluation_id is the id of the rule evaluation |
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |

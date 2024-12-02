@@ -1341,7 +1341,7 @@
             "name": "entity.type",
             "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string",
             "enum": [
               "ENTITY_UNSPECIFIED",
@@ -1360,11 +1360,12 @@
             "name": "entity.id",
             "description": "id is the ID of the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
             "name": "all",
+            "description": "all is true if the status of all entities should be returned.\nIncompatible with `entity`. This is optional.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1378,12 +1379,14 @@
           },
           {
             "name": "ruleType",
+            "description": "rule_type is the type of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "ruleName",
+            "description": "rule_name is the name of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3777,7 +3780,10 @@
           "$ref": "#/definitions/v1Profile"
         }
       },
-      "title": "Profile service"
+      "title": "Profile service",
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProfileResponse": {
       "type": "object",
@@ -3785,7 +3791,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProjectRequest": {
       "type": "object",
@@ -4109,7 +4118,11 @@
           "title": "id is the ID of the entity to get status for. Incompatible with `all`"
         }
       },
-      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...",
+      "required": [
+        "type",
+        "id"
+      ]
     },
     "v1EvalResultAlert": {
       "type": "object",
@@ -4358,7 +4371,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileByNameResponse": {
       "type": "object",
@@ -4366,7 +4382,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileStatusByNameResponse": {
       "type": "object",
@@ -4383,7 +4402,10 @@
           },
           "title": "rule_evaluation_status is the status of the rules"
         }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProfileStatusByProjectResponse": {
       "type": "object",
@@ -4396,7 +4418,10 @@
           },
           "title": "profile_status is the status of the profile"
         }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProviderResponse": {
       "type": "object",
@@ -4657,7 +4682,10 @@
             "$ref": "#/definitions/v1Profile"
           }
         }
-      }
+      },
+      "required": [
+        "profiles"
+      ]
     },
     "v1ListProjectsResponse": {
       "type": "object",
@@ -4795,7 +4823,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1PatchProjectResponse": {
       "type": "object",
@@ -4921,7 +4952,7 @@
           "description": "display_name is the display name of the profile."
         }
       },
-      "description": "Profile defines a profile that is user defined."
+      "description": "Profile defines a profile that is user defined.\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProfileStatus": {
       "type": "object",
@@ -4948,7 +4979,10 @@
           "title": "profile_display_name is the display name of the profile"
         }
       },
-      "title": "get the overall profile status as output"
+      "title": "get the overall profile status as output",
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1Project": {
       "type": "object",
@@ -5476,7 +5510,7 @@
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",
-          "title": "severity is the severity of the rule"
+          "description": "severity is the severity of the rule. This may be empty."
         },
         "ruleEvaluationId": {
           "type": "string",
@@ -5495,7 +5529,14 @@
           "title": "release_phase is the phase of the release"
         }
       },
-      "title": "get the status of the rules for a given profile"
+      "title": "get the status of the rules for a given profile",
+      "required": [
+        "ruleId",
+        "entity",
+        "status",
+        "ruleTypeName",
+        "releasePhase"
+      ]
     },
     "v1RuleType": {
       "type": "object",
@@ -5634,7 +5675,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProfileResponse": {
       "type": "object",
@@ -5642,7 +5686,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProjectRequest": {
       "type": "object",
