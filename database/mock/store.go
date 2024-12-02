@@ -749,6 +749,20 @@ func (mr *MockStoreMockRecorder) DeleteRuleType(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), ctx, id)
 }
 
+// DeleteRuleTypeDataSource mocks base method.
+func (m *MockStore) DeleteRuleTypeDataSource(ctx context.Context, arg db.DeleteRuleTypeDataSourceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRuleTypeDataSource", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRuleTypeDataSource indicates an expected call of DeleteRuleTypeDataSource.
+func (mr *MockStoreMockRecorder) DeleteRuleTypeDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleTypeDataSource", reflect.TypeOf((*MockStore)(nil).DeleteRuleTypeDataSource), ctx, arg)
+}
+
 // DeleteSelector mocks base method.
 func (m *MockStore) DeleteSelector(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()

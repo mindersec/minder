@@ -93,3 +93,8 @@ WHERE data_sources_id = $1 AND project_id = $2;
 INSERT INTO rule_type_data_sources (rule_type_id, data_sources_id, project_id)
 VALUES (sqlc.arg(ruleTypeID)::uuid, sqlc.arg(dataSourceID)::uuid, sqlc.arg(projectID)::uuid)
 RETURNING rule_type_id, data_sources_id, project_id;
+
+-- name: DeleteRuleTypeDataSource :exec
+DELETE FROM rule_type_data_sources
+ WHERE rule_type_id = sqlc.arg(ruleid)
+   AND project_id = sqlc.arg(projectid);

@@ -78,6 +78,7 @@ type Querier interface {
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
+	DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTypeDataSourceParams) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
