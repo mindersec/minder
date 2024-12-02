@@ -3170,7 +3170,9 @@ message ListRolesRequest {
 }
 
 message ListRolesResponse {
-    repeated Role roles = 1;
+    repeated Role roles = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListRoleAssignmentsRequest {
@@ -3181,27 +3183,34 @@ message ListRoleAssignmentsRequest {
 message ListRoleAssignmentsResponse {
     // role_assignments contains permission grants which have been accepted
     // by a user.
-    repeated RoleAssignment role_assignments = 1;
+    repeated RoleAssignment role_assignments = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // invitations contains outstanding role invitations which have not yet
     // been accepted by a user.
-    repeated Invitation invitations = 2;
+    repeated Invitation invitations = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message AssignRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
     // role_assignment is the role assignment to be created.
-    RoleAssignment role_assignment = 2;
+    RoleAssignment role_assignment = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message AssignRoleResponse {
     // role_assignment is the role assignment that was created.
+    // This is optional.
     RoleAssignment role_assignment = 1;
 
     // invitation contains the details of the invitation for the
     // assigned user to join the project if the user is not already
-    // a member.
+    // a member. This is optional.
     Invitation invitation = 2;
 }
 
@@ -3225,7 +3234,8 @@ message UpdateRoleRequest {
                     max_len: 200,
                 }
             }
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // email is the email address of the subject used for updating invitations
     string email = 5 [
@@ -3249,7 +3259,9 @@ message RemoveRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
     // role_assignment is the role assignment to be removed.
-    RoleAssignment role_assignment = 2;
+    RoleAssignment role_assignment = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message RemoveRoleResponse {
@@ -3281,7 +3293,8 @@ message RoleAssignment {
             pattern: "^[a-z]+(_[a-z]+)*$",
             min_len: 1,
             max_len: 200,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // subject is the subject to which the role is assigned.
     string subject = 2 [
@@ -3330,7 +3343,9 @@ message ListInvitationsRequest {
 }
 
 message ListInvitationsResponse {
-    repeated Invitation invitations = 1;
+    repeated Invitation invitations = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ResolveInvitationRequest {
@@ -3339,7 +3354,8 @@ message ResolveInvitationRequest {
         (buf.validate.field).string = {
             pattern: "^[A-Za-z0-9_-]+$",
             len: 64,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // accept is true if the invitation is accepted, false if it is rejected.
     bool accept = 2;
@@ -3348,28 +3364,39 @@ message ResolveInvitationRequest {
 message ResolveInvitationResponse {
     // role is the role that would be assigned if the user
     // accepts the invitation.
-    string role = 1;
+    string role = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // email is the email address of the invited user.
     string email = 2;
     // project is the project to which the user is invited.
-    string project = 3;
+    string project = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // is_accepted is the status of the invitation.
-    bool is_accepted = 4;
+    bool is_accepted = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // project_display is the display name of the project to which the user
     // is invited.
     string project_display = 5;
 }
 
+// Invitation is an invitation to join a project. This is only used in responses.
 message Invitation {
     // role is the role that would be assigned if the user
     // accepts the invitation.
-    string role = 1;
+    string role = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // email is the email address of the invited user.  This is
     // presented as a convenience for display purposes, and does
     // not affect who can accept the invitation using the code.
     string email = 2;
     // project is the project to which the user is invited.
-    string project = 3;
+    string project = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // code is a unique identifier for the invitation, which can
     // be used by the recipient to accept or reject the invitation.
