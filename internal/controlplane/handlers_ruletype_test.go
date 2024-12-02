@@ -5,6 +5,7 @@ package controlplane
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -21,6 +22,23 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )
+
+const ruleDefJSON = `
+{
+	"rule_schema": {},
+	"ingest": {
+		"type": "git",
+        "git": {}
+	},
+	"eval": {
+		"type": "jq",
+		"jq": [{
+			"ingested": {"def": ".abc"},
+			"profile": {"def": ".xyz"}
+		}]
+	}
+}
+`
 
 func TestCreateRuleType(t *testing.T) {
 	t.Parallel()
@@ -491,6 +509,114 @@ func TestUpdateRuleType(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 		})
+	}
+}
+
+func TestListRuleTypes(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	ruleTypeList := []db.RuleType{
+		{ID: uuid.New(), Name: "rule1", ProjectID: projectID, Definition: []byte(ruleDefJSON)},
+		{ID: uuid.New(), Name: "rule2", ProjectID: projectID, Definition: []byte(ruleDefJSON)},
+	}
+	tests := []struct {
+		name          string
+		mockStoreFunc df.MockStoreBuilder
+		ruleTypes     []db.RuleType
+		error         bool
+	}{
+		{
+			name: "success with rule types",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				WithSuccessfulListRuleTypesByProject(projectID, ruleTypeList),
+			),
+			ruleTypes: ruleTypeList,
+		},
+		{
+			name: "success with no rule types",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				WithSuccessfulListRuleTypesByProject(projectID, []db.RuleType{}),
+			),
+			ruleTypes: []db.RuleType{},
+		},
+		{
+			name: "error in entity context",
+			mockStoreFunc: df.NewMockStore(
+				WithFailedGetProjectByID(),
+			),
+			error: true,
+		},
+		{
+			name: "failed to get rule types",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				WithFailedListRuleTypesByProject(projectID),
+			),
+			error: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			var mockStore *mockdb.MockStore
+			if tt.mockStoreFunc != nil {
+				mockStore = tt.mockStoreFunc(ctrl)
+			} else {
+				mockStore = mockdb.NewMockStore(ctrl)
+			}
+
+			srv := newDefaultServer(t, mockStore, nil, nil, nil)
+
+			ctx := context.Background()
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: "testing"},
+			})
+
+			resp, err := srv.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{})
+			if tt.error {
+				require.Error(t, err)
+				require.Nil(t, resp)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Len(t, resp.RuleTypes, len(tt.ruleTypes))
+		})
+	}
+}
+
+func WithSuccessfulListRuleTypesByProject(projectID uuid.UUID, ruleTypes []db.RuleType) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			ListRuleTypesByProject(gomock.Any(), projectID).
+			Return(ruleTypes, nil)
+	}
+}
+
+func WithFailedListRuleTypesByProject(projectID uuid.UUID) func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			ListRuleTypesByProject(gomock.Any(), projectID).
+			Return(nil, errors.New("failed to list rule types"))
+	}
+}
+
+func WithFailedGetProjectByID() func(*mockdb.MockStore) {
+	return func(mockStore *mockdb.MockStore) {
+		mockStore.EXPECT().
+			GetProjectByID(gomock.Any(), gomock.Any()).
+			Return(db.Project{}, errors.New("failed to get project by ID"))
 	}
 }
 
