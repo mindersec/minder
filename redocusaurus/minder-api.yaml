@@ -2997,6 +2997,8 @@ definitions:
         description: >-
           context is the context in which the entity reconciliation task is
           created.
+    required:
+      - entity
   v1CreateEntityReconciliationTaskResponse:
     type: object
   v1CreateProfileRequest:
@@ -3023,12 +3025,16 @@ definitions:
       name:
         type: string
         description: name is the name of the project to create.
+    required:
+      - name
   v1CreateProjectResponse:
     type: object
     properties:
       project:
         $ref: '#/definitions/v1Project'
         description: project is the project that was created.
+    required:
+      - project
   v1CreateProviderRequest:
     type: object
     properties:
@@ -3210,6 +3216,8 @@ definitions:
       projectId:
         type: string
         description: project_id is the id of the project that was deleted.
+    required:
+      - projectId
   v1DeleteProviderByIDResponse:
     type: object
     properties:
@@ -3700,6 +3708,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Project'
+    required:
+      - projects
   v1ListDataSourcesResponse:
     type: object
     properties:
@@ -3739,6 +3749,8 @@ definitions:
         description: >-
           Each entity selected by the list request will have _single_ entry in
           entities which contains results of all evaluations for each profile.
+    required:
+      - entities
   v1ListInvitationsResponse:
     type: object
     properties:
@@ -3765,6 +3777,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Project'
+    required:
+      - projects
   v1ListProviderClassesResponse:
     type: object
     properties:
@@ -3873,6 +3887,8 @@ definitions:
       project:
         $ref: '#/definitions/v1Project'
         description: project is the project that was updated.
+    required:
+      - project
   v1PatchProviderResponse:
     type: object
     properties:
@@ -4620,16 +4636,22 @@ definitions:
         description: context is the context in which the project is updated.
       displayName:
         type: string
-        description: display_name is the display name of the project to update.
+        description: |-
+          display_name is the display name of the project to update.
+          This is optional.
       description:
         type: string
-        description: description is the description of the project to update.
+        description: |-
+          description is the description of the project to update.
+          This is optional.
   v1UpdateProjectResponse:
     type: object
     properties:
       project:
         $ref: '#/definitions/v1Project'
         description: project is the project that was updated.
+    required:
+      - project
   v1UpdateRoleRequest:
     type: object
     properties:
