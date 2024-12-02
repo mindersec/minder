@@ -2608,8 +2608,8 @@ Note that the data source must exist in the project hierarchy in order to be use
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ingested | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Ingested points to the data retrieved in the `ingest` section |
-| profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. |
-| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value |
+| profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. This is mutually exclusive with the `constant` field. |
+| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value. This is mutually exclusive with the `profile` field. |
 
 
 

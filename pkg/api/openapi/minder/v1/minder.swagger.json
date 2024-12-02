@@ -3144,7 +3144,10 @@
           "description": "Data sources that the rule refers to. These are used to\ninstantiate the relevant data sources for the rule and keep\ntrack of them as dependencies.\n\nNote that the data source must exist in the project hierarchy\nin order to be used in the rule."
         }
       },
-      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
+      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionIngest": {
       "type": "object",
@@ -3178,7 +3181,10 @@
           "description": "deps is the deps data ingestion.\ndeps currently only applies to repositories."
         }
       },
-      "description": "Ingest defines how the data is ingested."
+      "description": "Ingest defines how the data is ingested.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionRemediate": {
       "type": "object",
@@ -3236,12 +3242,15 @@
         },
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
-          "description": "Profile points to the profile itself."
+          "description": "Profile points to the profile itself.\nThis is mutually exclusive with the `constant` field."
         },
         "constant": {
-          "title": "Constant points to a constant value"
+          "description": "Constant points to a constant value.\nThis is mutually exclusive with the `profile` field."
         }
-      }
+      },
+      "required": [
+        "ingested"
+      ]
     },
     "EvalRego": {
       "type": "object",
@@ -3258,7 +3267,10 @@
           "type": "string",
           "description": "how are violations reported. This is only used if the\n`constraints` type is selected. The default is `text`\nwhich returns human-readable text. The other option is\n`json` which returns a JSON array containing the violations."
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "EvalTrusty": {
       "type": "object",
@@ -3279,7 +3291,10 @@
         "def": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "ListEvaluationResultsResponseEntityEvaluationResults": {
       "type": "object",
@@ -3560,7 +3575,11 @@
           "$ref": "#/definitions/DefinitionAlert"
         }
       },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation.",
+      "required": [
+        "ingest",
+        "eval"
+      ]
     },
     "protobufNullValue": {
       "type": "string",
@@ -3852,7 +3871,10 @@
           "description": "rule_type is the rule type to be created."
         }
       },
-      "description": "CreateRuleTypeRequest is the request to create a rule type."
+      "description": "CreateRuleTypeRequest is the request to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateRuleTypeResponse": {
       "type": "object",
@@ -3862,7 +3884,10 @@
           "description": "rule_type is the rule type that was created."
         }
       },
-      "description": "CreateRuleTypeResponse is the response to create a rule type."
+      "description": "CreateRuleTypeResponse is the response to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateUserRequest": {
       "type": "object",
@@ -4462,7 +4487,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id."
+      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetRuleTypeByNameResponse": {
       "type": "object",
@@ -4472,7 +4500,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
+      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetUserResponse": {
       "type": "object",
@@ -4815,7 +4846,10 @@
           "description": "rule_types is the list of rule types."
         }
       },
-      "description": "ListRuleTypesResponse is the response to list rule types."
+      "description": "ListRuleTypesResponse is the response to list rule types.",
+      "required": [
+        "ruleTypes"
+      ]
     },
     "v1PatchProfileResponse": {
       "type": "object",
@@ -5370,7 +5404,10 @@
           "description": "fallback provides a body that the ingester would return in case\nthe REST call returns a non-200 status code."
         }
       },
-      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
+      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint.",
+      "required": [
+        "endpoint"
+      ]
     },
     "v1RestTypeFallback": {
       "type": "object",
@@ -5590,7 +5627,13 @@
           "description": "release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
-      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version.",
+      "required": [
+        "name",
+        "def",
+        "description",
+        "guidance"
+      ]
     },
     "v1RuleTypeReleasePhase": {
       "type": "string",
@@ -5770,7 +5813,10 @@
           "description": "rule_type is the rule type to be updated."
         }
       },
-      "description": "UpdateRuleTypeRequest is the request to update a rule type."
+      "description": "UpdateRuleTypeRequest is the request to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpdateRuleTypeResponse": {
       "type": "object",
@@ -5780,7 +5826,10 @@
           "description": "rule_type is the rule type that was updated."
         }
       },
-      "description": "UpdateRuleTypeResponse is the response to update a rule type."
+      "description": "UpdateRuleTypeResponse is the response to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpstreamEntityRef": {
       "type": "object",

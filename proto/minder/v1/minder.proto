@@ -1962,7 +1962,9 @@ message EntityAutoRegistrationConfig {
 // and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 message AutoRegistration {
     // enabled is the list of entities that are enabled for auto-registration.
-    map<string, EntityAutoRegistrationConfig> entities = 1;
+    map<string, EntityAutoRegistrationConfig> entities = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // ProviderConfig contains the generic configuration for a provider.
@@ -2082,7 +2084,9 @@ message ListRuleTypesRequest {
 // ListRuleTypesResponse is the response to list rule types.
 message ListRuleTypesResponse {
     // rule_types is the list of rule types.
-    repeated RuleType rule_types = 1;
+    repeated RuleType rule_types = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // GetRuleTypeByNameRequest is the request to get a rule type by name.
@@ -2102,7 +2106,9 @@ message GetRuleTypeByNameRequest {
 // GetRuleTypeByNameResponse is the response to get a rule type by name.
 message GetRuleTypeByNameResponse {
     // rule_type is the rule type.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // GetRuleTypeByIdRequest is the request to get a rule type by id.
@@ -2111,40 +2117,51 @@ message GetRuleTypeByIdRequest {
     Context context = 1;
     // id is the id of the rule type.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 // GetRuleTypeByIdResponse is the response to get a rule type by id.
 message GetRuleTypeByIdResponse {
     // rule_type is the rule type.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // CreateRuleTypeRequest is the request to create a rule type.
 message CreateRuleTypeRequest {
     // rule_type is the rule type to be created.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 // CreateRuleTypeResponse is the response to create a rule type.
 message CreateRuleTypeResponse {
     // rule_type is the rule type that was created.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // UpdateRuleTypeRequest is the request to update a rule type.
 message UpdateRuleTypeRequest {
     // rule_type is the rule type to be updated.
-    RuleType rule_type = 2;
+    RuleType rule_type = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 3; // deprecated context
 }
 
 // UpdateRuleTypeResponse is the response to update a rule type.
 message UpdateRuleTypeResponse {
     // rule_type is the rule type that was updated.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // DeleteRuleTypeRequest is the request to delete a rule type.
@@ -2153,7 +2170,8 @@ message DeleteRuleTypeRequest {
     Context context = 1;
     // id is the id of the rule type to be deleted.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -2262,7 +2280,8 @@ message RestType {
     string endpoint = 1 [
         (buf.validate.field).string = {
             max_len: 400,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // method is the method to use to fetch data.
@@ -2464,7 +2483,7 @@ message RuleType {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // display_name is the display name of the rule type.
@@ -2514,7 +2533,7 @@ message RuleType {
                 (buf.validate.field).string = {
                     in: ["rest", "artifact", "builtin", "git", "diff", "deps"],
                 },
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (google.api.field_behavior) = REQUIRED
             ];
 
             // NOTE: we should have used the "oneof" feature here rather than
@@ -2545,7 +2564,9 @@ message RuleType {
             // deps currently only applies to repositories.
             optional DepsType deps = 8;
         }
-        Ingest ingest = 4;
+        Ingest ingest = 4 [
+            (google.api.field_behavior) = REQUIRED
+        ];
 
         // Eval defines the data evaluation definition.
         // This pertains to the way we traverse data from the upstream
@@ -2555,7 +2576,8 @@ message RuleType {
             string type = 1 [
                 (buf.validate.field).string = {
                     in: ["jq", "rego", "vulncheck", "trusty", "homoglyphs"],
-                }
+                },
+                (google.api.field_behavior) = REQUIRED
             ];
 
             message JQComparison {
@@ -2565,17 +2587,22 @@ message RuleType {
                             pattern: "^\\.[a-zA-Z_]+(\\.[a-zA-Z_]+|\\[\\d+]|\\[\"[a-zA-Z_]+\"\\])*$",
                             min_len: 1,
                             max_len: 200,
-                        }
+                        },
+                        (google.api.field_behavior) = REQUIRED
                     ];
                 }
 
                 // Ingested points to the data retrieved in the `ingest` section
-                Operator ingested = 1;
+                Operator ingested = 1 [
+                    (google.api.field_behavior) = REQUIRED
+                ];
 
                 // Profile points to the profile itself.
+                // This is mutually exclusive with the `constant` field.
                 Operator profile = 2;
 
-                // Constant points to a constant value
+                // Constant points to a constant value.
+                // This is mutually exclusive with the `profile` field.
                 google.protobuf.Value constant = 3;
             }
 
@@ -2599,7 +2626,9 @@ message RuleType {
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
                 // def is the definition of the rego profile.
-                string def = 2;
+                string def = 2 [
+                    (google.api.field_behavior) = REQUIRED
+                ];
                 // how are violations reported. This is only used if the
                 // `constraints` type is selected. The default is `text`
                 // which returns human-readable text. The other option is
@@ -2661,7 +2690,9 @@ message RuleType {
             // in order to be used in the rule.
             repeated DataSourceReference data_sources = 7;
         }
-        Eval eval = 5;
+        Eval eval = 5 [
+            (google.api.field_behavior) = REQUIRED
+        ];
 
         message Remediate {
             string type = 1 [
@@ -2796,7 +2827,9 @@ message RuleType {
     }
 
     // def is the definition of the rule type.
-    Definition def = 4;
+    Definition def = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // description is the description of the rule type.
     // This is expected to be a valid markdown formatted string.
@@ -2804,7 +2837,8 @@ message RuleType {
         (buf.validate.field).string = {
             min_len: 1,
             max_len: 1000,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // guidance are instructions we give the user in case a rule fails.
@@ -2813,7 +2847,8 @@ message RuleType {
         (buf.validate.field).string = {
             min_len: 1,
             max_len: 1000,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // severity is the severity of the rule type.
