@@ -117,7 +117,10 @@ func GetGrpcConnection(
 		}
 	}
 
-	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
+	credentialOpts := credentials.NewTLS(&tls.Config{
+		MinVersion: tls.VersionTLS13,
+		ServerName: grpc_host,
+	})
 	if allowInsecure {
 		credentialOpts = insecure.NewCredentials()
 	}
