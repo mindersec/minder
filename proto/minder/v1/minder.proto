@@ -1654,21 +1654,29 @@ message DeleteDataSourceByNameResponse {
 
 // Profile service
 message CreateProfileRequest {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 message CreateProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message UpdateProfileRequest {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 message UpdateProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message PatchProfileRequest {
@@ -1679,7 +1687,8 @@ message PatchProfileRequest {
     // The id of the profile to patch. Same explanation about explicitness
     // as for the context
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
     // The patch to apply to the profile
     Profile patch = 3;
@@ -1689,7 +1698,9 @@ message PatchProfileRequest {
 }
 
 message PatchProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProfileRequest {
@@ -1697,7 +1708,8 @@ message DeleteProfileRequest {
     Context context = 1;
     // id is the id of the profile to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -1723,7 +1735,9 @@ message ListProfilesRequest {
 }
 
 message ListProfilesResponse {
-    repeated Profile profiles = 1;
+    repeated Profile profiles = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get profile by id
@@ -1732,12 +1746,15 @@ message GetProfileByIdRequest {
     Context context = 1;
     // id is the id of the profile to get
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message GetProfileByIdResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get profile by name
@@ -1750,12 +1767,14 @@ message GetProfileByNameRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message GetProfileByNameResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get the overall profile status as output
@@ -1765,7 +1784,9 @@ message ProfileStatus {
     // profile_name is the name of the profile.  One of profile_id or profile_name must be set.
     string profile_name = 2;
     // profile_status is the status of the profile
-    string profile_status = 3;
+    string profile_status = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
 
@@ -1790,13 +1811,19 @@ message RuleEvaluationStatus {
     // profile_id is the id of the profile
     string profile_id = 1;
     // rule_id is the id of the rule
-    string rule_id = 2;
+    string rule_id = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // rule_name is the type of the rule. Deprecated in favor of rule_type_name
     string rule_name = 3 [deprecated=true];
     // entity is the entity that was evaluated
-    string entity = 4;
+    string entity = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // status is the status of the evaluation
-    string status = 5;
+    string status = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 6;
     // entity_info is the information about the entity
@@ -1812,12 +1839,14 @@ message RuleEvaluationStatus {
     // remediation_details is the description of the remediation attempt if any
     string remediation_details = 12;
     // rule_type_name is the name of the rule
-    string rule_type_name = 13;
+    string rule_type_name = 13 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // rule_description_name is the name to describe the rule
     string rule_description_name = 14;
     // alert holds the alert details if the rule generated an alert in an external system
     EvalResultAlert alert = 15;
-    // severity is the severity of the rule
+    // severity is the severity of the rule. This may be empty.
     Severity severity = 16;
     // rule_evaluation_id is the id of the rule evaluation
     string rule_evaluation_id = 17;
@@ -1826,18 +1855,22 @@ message RuleEvaluationStatus {
     // rule_display_name captures the display name of the rule 
     string rule_display_name = 19;
     // release_phase is the phase of the release
-    RuleTypeReleasePhase release_phase = 20;
+    RuleTypeReleasePhase release_phase = 20 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 // such as (repo, 1), (artifact, 2), ...
 message EntityTypedId {
     // entity is the entity to get status for. Incompatible with `all`
-    Entity type = 1;
+    Entity type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // id is the ID of the entity to get status for. Incompatible with `all`
     string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -1853,11 +1886,19 @@ message GetProfileStatusByNameRequest {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
+    // entity is the entity to get status for. Incompatible with `all`.
+    // This is optional.
     EntityTypedId entity = 3;
+
+    // all is true if the status of all entities should be returned.
+    // Incompatible with `entity`. This is optional.
     bool all = 4;
 
     // rule is the type of the rule. Deprecated in favor of rule_type
     string rule = 5 [deprecated=true];
+
+    // rule_type is the type of the rule to filter on.
+    // This is optional.
     string rule_type = 6 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/[:word:]]*$"
@@ -1865,6 +1906,9 @@ message GetProfileStatusByNameRequest {
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
+
+    // rule_name is the name of the rule to filter on.
+    // This is optional.
     string rule_name = 7 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
@@ -1876,7 +1920,9 @@ message GetProfileStatusByNameRequest {
 
 message GetProfileStatusByNameResponse {
     // profile_status is the status of the profile
-    ProfileStatus profile_status = 1;
+    ProfileStatus profile_status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // rule_evaluation_status is the status of the rules
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
@@ -1889,7 +1935,9 @@ message GetProfileStatusByProjectRequest {
 
 message GetProfileStatusByProjectResponse {
     // profile_status is the status of the profile
-    repeated ProfileStatus profile_status = 1;
+    repeated ProfileStatus profile_status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // Entity defines the entity that is supported by the provider.
@@ -2776,6 +2824,7 @@ message RuleType {
 }
 
 // Profile defines a profile that is user defined.
+// All fields are optional because we want to allow partial updates.
 message Profile {
     // context is the context in which the profile is evaluated.
     Context context = 1;
