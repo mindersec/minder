@@ -591,3 +591,8 @@ func (rest *RestDataSource_Def) Validate() error {
 
 	return nil
 }
+
+// Validate checks the state of the dependencies driver
+func (driver *DataSource_Deps) Validate() error {
+	return nil
+}
