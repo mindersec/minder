@@ -2251,7 +2251,9 @@ message ListEvaluationResultsResponse {
     }
 
     // Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile.
-    repeated EntityEvaluationResults entities = 2;
+    repeated EntityEvaluationResults entities = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // --- END EvaluationResults definitions
@@ -3024,7 +3026,9 @@ message ListProjectsRequest {
 }
 
 message ListProjectsResponse {
-    repeated Project projects = 1;
+    repeated Project projects = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CreateProjectRequest {
@@ -3037,13 +3041,15 @@ message CreateProjectRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message CreateProjectResponse {
     // project is the project that was created.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProjectRequest {
@@ -3053,7 +3059,9 @@ message DeleteProjectRequest {
 
 message DeleteProjectResponse {
     // project_id is the id of the project that was deleted.
-    string project_id = 1;
+    string project_id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message UpdateProjectRequest {
@@ -3061,6 +3069,7 @@ message UpdateProjectRequest {
     Context context = 1;
 
     // display_name is the display name of the project to update.
+    // This is optional.
     string display_name = 2 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
@@ -3070,6 +3079,7 @@ message UpdateProjectRequest {
     ];
 
     // description is the description of the project to update.
+    // This is optional.
     string description = 3 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/.!?,:;'[:word:] ]*$",
@@ -3082,7 +3092,9 @@ message UpdateProjectRequest {
 
 message UpdateProjectResponse {
     // project is the project that was updated.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ProjectPatch {
@@ -3120,7 +3132,9 @@ message PatchProjectRequest {
 
 message PatchProjectResponse {
     // project is the project that was updated.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListChildProjectsRequest {
@@ -3132,12 +3146,16 @@ message ListChildProjectsRequest {
 }
 
 message ListChildProjectsResponse {
-    repeated Project projects = 1;
+    repeated Project projects = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CreateEntityReconciliationTaskRequest {
     // entity is the entity to be reconciled.
-    EntityTypedId entity = 1;
+    EntityTypedId entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // context is the context in which the entity reconciliation task is created.
     Context context = 2;
