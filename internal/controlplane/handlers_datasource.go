@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -71,7 +72,7 @@ func (s *Server) GetDataSourceById(ctx context.Context,
 	}
 
 	// Get the data source by ID
-	ds, err := s.dataSourcesService.GetByID(ctx, dsID, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByID(ctx, dsID, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (s *Server) GetDataSourceByName(ctx context.Context,
 	}
 
 	// Get the data source by name
-	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +134,7 @@ func (s *Server) ListDataSources(ctx context.Context,
 	}
 
 	// Get all data sources
-	ret, err := s.dataSourcesService.List(ctx, entityCtx.Project.ID, nil)
+	ret, err := s.dataSourcesService.List(ctx, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func (s *Server) DeleteDataSourceByName(ctx context.Context,
 	}
 
 	// Get the data source id by name
-	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
