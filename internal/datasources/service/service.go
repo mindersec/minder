@@ -443,6 +443,23 @@ func addDataSourceFunctions(
 				return fmt.Errorf("failed to create data source function: %w", err)
 			}
 		}
+	case *minderv1.DataSource_Deps:
+		for name, def := range drv.Deps.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return fmt.Errorf("failed to marshal REST definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverDeps,
+				Definition:   defBytes,
+			}); err != nil {
+				return fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
 	default:
 		return fmt.Errorf("unsupported data source driver type: %T", drv)
 	}

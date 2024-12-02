@@ -15,6 +15,9 @@ import (
 const (
 	// DataSourceDriverRest is the driver type for a REST data source.
 	DataSourceDriverRest = "rest"
+
+	// DataSourceDriverDeps is the driver type for the dependency exctractor.
+	DataSourceDriverDeps = "deps"
 )
 
 // DataSourceFuncKey is the key that uniquely identifies a data source function.
