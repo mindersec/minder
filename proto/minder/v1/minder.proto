@@ -3814,6 +3814,7 @@ message DataSource {
     // id is the unique identifier of the data source.
     string id = 5 [
         (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
