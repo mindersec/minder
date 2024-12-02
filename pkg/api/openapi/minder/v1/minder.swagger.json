@@ -3787,7 +3787,10 @@
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the entity reconciliation task is created."
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1CreateEntityReconciliationTaskResponse": {
       "type": "object"
@@ -3826,7 +3829,10 @@
           "type": "string",
           "description": "name is the name of the project to create."
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1CreateProjectResponse": {
       "type": "object",
@@ -3835,7 +3841,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was created."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1CreateProviderRequest": {
       "type": "object",
@@ -4039,7 +4048,10 @@
           "type": "string",
           "description": "project_id is the id of the project that was deleted."
         }
-      }
+      },
+      "required": [
+        "projectId"
+      ]
     },
     "v1DeleteProviderByIDResponse": {
       "type": "object",
@@ -4646,7 +4658,10 @@
             "$ref": "#/definitions/v1Project"
           }
         }
-      }
+      },
+      "required": [
+        "projects"
+      ]
     },
     "v1ListDataSourcesResponse": {
       "type": "object",
@@ -4689,7 +4704,10 @@
           },
           "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
         }
-      }
+      },
+      "required": [
+        "entities"
+      ]
     },
     "v1ListInvitationsResponse": {
       "type": "object",
@@ -4728,7 +4746,10 @@
             "$ref": "#/definitions/v1Project"
           }
         }
-      }
+      },
+      "required": [
+        "projects"
+      ]
     },
     "v1ListProviderClassesResponse": {
       "type": "object",
@@ -4869,7 +4890,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1PatchProviderResponse": {
       "type": "object",
@@ -5743,11 +5767,11 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name is the display name of the project to update."
+          "description": "display_name is the display name of the project to update.\nThis is optional."
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the project to update."
+          "description": "description is the description of the project to update.\nThis is optional."
         }
       }
     },
@@ -5758,7 +5782,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1UpdateRoleRequest": {
       "type": "object",

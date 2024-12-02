@@ -2826,8 +2826,8 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is updated. |
-| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the project to update. |
-| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the project to update. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the project to update. This is optional. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the project to update. This is optional. |
 
 
 
