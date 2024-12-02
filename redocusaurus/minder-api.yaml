@@ -2390,6 +2390,8 @@ definitions:
       Eval defines the data evaluation definition.
       This pertains to the way we traverse data from the upstream
       endpoint and how we compare it to the rule.
+    required:
+      - type
   DefinitionIngest:
     type: object
     properties:
@@ -2427,6 +2429,8 @@ definitions:
           deps is the deps data ingestion.
           deps currently only applies to repositories.
     description: Ingest defines how the data is ingested.
+    required:
+      - type
   DefinitionRemediate:
     type: object
     properties:
@@ -2470,9 +2474,15 @@ definitions:
         title: Ingested points to the data retrieved in the `ingest` section
       profile:
         $ref: '#/definitions/JQComparisonOperator'
-        description: Profile points to the profile itself.
+        description: |-
+          Profile points to the profile itself.
+          This is mutually exclusive with the `constant` field.
       constant:
-        title: Constant points to a constant value
+        description: |-
+          Constant points to a constant value.
+          This is mutually exclusive with the `profile` field.
+    required:
+      - ingested
   EvalRego:
     type: object
     properties:
@@ -2499,6 +2509,8 @@ definitions:
           `constraints` type is selected. The default is `text`
           which returns human-readable text. The other option is
           `json` which returns a JSON array containing the violations.
+    required:
+      - def
   EvalTrusty:
     type: object
     properties:
@@ -2515,6 +2527,8 @@ definitions:
     properties:
       def:
         type: string
+    required:
+      - def
   ListEvaluationResultsResponseEntityEvaluationResults:
     type: object
     properties:
@@ -2802,6 +2816,9 @@ definitions:
     description: >-
       Definition defines the rule type. It encompases the schema and the data
       evaluation.
+    required:
+      - ingest
+      - eval
   protobufNullValue:
     type: string
     enum:
@@ -3039,6 +3056,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be created.
     description: CreateRuleTypeRequest is the request to create a rule type.
+    required:
+      - ruleType
   v1CreateRuleTypeResponse:
     type: object
     properties:
@@ -3046,6 +3065,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type that was created.
     description: CreateRuleTypeResponse is the response to create a rule type.
+    required:
+      - ruleType
   v1CreateUserRequest:
     type: object
     title: User service
@@ -3537,6 +3558,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type.
     description: GetRuleTypeByIdResponse is the response to get a rule type by id.
+    required:
+      - ruleType
   v1GetRuleTypeByNameResponse:
     type: object
     properties:
@@ -3544,6 +3567,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type.
     description: GetRuleTypeByNameResponse is the response to get a rule type by name.
+    required:
+      - ruleType
   v1GetUserResponse:
     type: object
     properties:
@@ -3833,6 +3858,8 @@ definitions:
           $ref: '#/definitions/v1RuleType'
         description: rule_types is the list of rule types.
     description: ListRuleTypesResponse is the response to list rule types.
+    required:
+      - ruleTypes
   v1PatchProfileResponse:
     type: object
     properties:
@@ -4305,6 +4332,8 @@ definitions:
     description: |-
       RestType defines the rest data evaluation.
       This is used to fetch data from a REST endpoint.
+    required:
+      - endpoint
   v1RestTypeFallback:
     type: object
     properties:
@@ -4490,6 +4519,11 @@ definitions:
     description: |-
       RuleType defines rules that may or may not be user defined.
       The version is assumed from the folder's version.
+    required:
+      - name
+      - def
+      - description
+      - guidance
   v1RuleTypeReleasePhase:
     type: string
     enum:
@@ -4643,6 +4677,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type to be updated.
     description: UpdateRuleTypeRequest is the request to update a rule type.
+    required:
+      - ruleType
   v1UpdateRuleTypeResponse:
     type: object
     properties:
@@ -4650,6 +4686,8 @@ definitions:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type that was updated.
     description: UpdateRuleTypeResponse is the response to update a rule type.
+    required:
+      - ruleType
   v1UpstreamEntityRef:
     type: object
     properties:
