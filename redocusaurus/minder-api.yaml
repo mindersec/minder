@@ -1000,7 +1000,7 @@ paths:
         - name: entity.type
           description: entity is the entity to get status for. Incompatible with `all`
           in: query
-          required: false
+          required: true
           type: string
           enum:
             - ENTITY_UNSPECIFIED
@@ -1018,9 +1018,12 @@ paths:
             id is the ID of the entity to get status for. Incompatible with
             `all`
           in: query
-          required: false
+          required: true
           type: string
         - name: all
+          description: |-
+            all is true if the status of all entities should be returned.
+            Incompatible with `entity`. This is optional.
           in: query
           required: false
           type: boolean
@@ -1030,10 +1033,16 @@ paths:
           required: false
           type: string
         - name: ruleType
+          description: |-
+            rule_type is the type of the rule to filter on.
+            This is optional.
           in: query
           required: false
           type: string
         - name: ruleName
+          description: |-
+            rule_name is the name of the rule to filter on.
+            This is optional.
           in: query
           required: false
           type: string
@@ -2979,11 +2988,15 @@ definitions:
       profile:
         $ref: '#/definitions/v1Profile'
     title: Profile service
+    required:
+      - profile
   v1CreateProfileResponse:
     type: object
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1CreateProjectRequest:
     type: object
     properties:
@@ -3263,6 +3276,9 @@ definitions:
       uniquely identify an entity
 
       such as (repo, 1), (artifact, 2), ...
+    required:
+      - type
+      - id
   v1EvalResultAlert:
     type: object
     properties:
@@ -3460,11 +3476,15 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1GetProfileByNameResponse:
     type: object
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1GetProfileStatusByNameResponse:
     type: object
     properties:
@@ -3477,6 +3497,8 @@ definitions:
           type: object
           $ref: '#/definitions/v1RuleEvaluationStatus'
         title: rule_evaluation_status is the status of the rules
+    required:
+      - profileStatus
   v1GetProfileStatusByProjectResponse:
     type: object
     properties:
@@ -3486,6 +3508,8 @@ definitions:
           type: object
           $ref: '#/definitions/v1ProfileStatus'
         title: profile_status is the status of the profile
+    required:
+      - profileStatus
   v1GetProviderResponse:
     type: object
     properties:
@@ -3706,6 +3730,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Profile'
+    required:
+      - profiles
   v1ListProjectsResponse:
     type: object
     properties:
@@ -3812,6 +3838,8 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1PatchProjectResponse:
     type: object
     properties:
@@ -3931,7 +3959,9 @@ definitions:
       displayName:
         type: string
         description: display_name is the display name of the profile.
-    description: Profile defines a profile that is user defined.
+    description: |-
+      Profile defines a profile that is user defined.
+      All fields are optional because we want to allow partial updates.
   v1ProfileStatus:
     type: object
     properties:
@@ -3956,6 +3986,8 @@ definitions:
         type: string
         title: profile_display_name is the display name of the profile
     title: get the overall profile status as output
+    required:
+      - profileStatus
   v1Project:
     type: object
     properties:
@@ -4384,7 +4416,7 @@ definitions:
           external system
       severity:
         $ref: '#/definitions/v1Severity'
-        title: severity is the severity of the rule
+        description: severity is the severity of the rule. This may be empty.
       ruleEvaluationId:
         type: string
         title: rule_evaluation_id is the id of the rule evaluation
@@ -4400,6 +4432,12 @@ definitions:
         $ref: '#/definitions/v1RuleTypeReleasePhase'
         title: release_phase is the phase of the release
     title: get the status of the rules for a given profile
+    required:
+      - ruleId
+      - entity
+      - status
+      - ruleTypeName
+      - releasePhase
   v1RuleType:
     type: object
     properties:
@@ -4531,11 +4569,15 @@ definitions:
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1UpdateProfileResponse:
     type: object
     properties:
       profile:
         $ref: '#/definitions/v1Profile'
+    required:
+      - profile
   v1UpdateProjectRequest:
     type: object
     properties:
