@@ -23,8 +23,8 @@ _Last updated: June 2024_
 
 ## Next
 
-* **Report CVEs, Trusty scores, and license info for ingested SBOMs:** Ingest SBOMS and identify dependencies; show CVEs, Trusty scores, and license information including any changes over time.
-* **Block PRs based on Trusty scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
+* **Report CVEs, Stacklok Insight scores, and license info for ingested SBOMs:** Ingest SBOMS and identify dependencies; show CVEs, Stacklok Insight scores, and license information including any changes over time.
+* **Block PRs based on Stacklok Insight scores:** In addition to adding comments to pull requests (as is currently available), add the option to block pull requests as a policy remediation.
 * **Policy events:** Provide information about rule evaluation as it changes, and historical rule evaluation.
 * **Generate SBOMs:** Enable users to automatically create and sign SBOMs.
 
@@ -35,7 +35,7 @@ _Last updated: June 2024_
 * **Register GitLab and Bitbucket repositories:** In addition to managing GitHub repositories, enable users to manage configuration and policy for other source control providers.
 * **Export a Minder 'badge/certification' that shows what practices a project followed:** Create a badge that OSS maintainers and enterprise developers can create and share with others that asserts the Minder practices and policies their projects follow.
 * **Temporary permissions to providers vs. long-running:** Policy remediation currently requires long-running permissions to providers such as GitHub; provide the option to enable temporary permissions.
-* **Create PRs for dependency updates:** As a policy autoremediation option, enable Minder to automatically create pull requests to update dependencies based on vulnerabilities, Trusty scores, or license changes.
+* **Create PRs for dependency updates:** As a policy autoremediation option, enable Minder to automatically create pull requests to update dependencies based on vulnerabilities, Stacklok Insight scores, or license changes.
 * **Drive policy through git (config management):** Enable users to dynamically create and maintain policies from other sources, e.g. Git, allowing for easier policy maintenance and the ability to manage policies through GitOps workflows.
 * **Integrations with additional OSS and commercial tools:** Integrate with tools that run code and secrets scanning (eg Snyk), and behavior analysis (eg [OSSF Package Analysis tool](https://github.com/ossf/package-analysis)).
-* **Help package authors improve Trusty Scores:** Provide guidance and/or policy to improve key Trusty Store metrics (open issues, active contributors).
+* **Help package authors improve Stacklok Insight Scores:** Provide guidance and/or policy to improve key Stacklok Insight Store metrics (open issues, active contributors).

@@ -87,5 +87,4 @@ Deploy Minder on Kubernetes
 | service.metricPort | int | `9090` | Metrics port for the service to expose metrics on |
 | serviceAccounts.migrate | string | `""` | ServiceAccount to be used for migration. If set, Minder will use this named ServiceAccount. |
 | serviceAccounts.server | string | `""` | ServiceAccount to be used by the server. If set, Minder will use this named ServiceAccount. |
-| trusty.endpoint | string | `"http://pi.pi:8000"` | Endpoint for the trusty service which Minder communicates with |
-
+| trusty.endpoint | string | `"https://api.trustypkg.dev"` | Endpoint for the Stacklok Insight service which Minder communicates with |

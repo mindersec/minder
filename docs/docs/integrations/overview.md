@@ -29,12 +29,11 @@ Examples of integrations include:
 
 For more information, see the [OSS Integrations](community_integrations.md) documentation.
 
-## Trusty
+## Stacklok Insight
 
-Trusty is a tool that helps you make better decisions about your dependencies. It provides a set
-of heuristics to help you decide if a dependency is trustworthy or not. It's also developed by
-your friends at Stacklok!
+Stacklok Insight is a tool that helps you make better decisions about your dependencies. It provides a set
+of heuristics to help you decide if a dependency is trustworthy or not.
 
-Trusty is integrated into Minder via a dedicated rule type.
+Stacklok Insight is integrated into Minder via a dedicated rule type.
 
-For more information, see the [Trusty](trusty.md) documentation.
+For more information, see the [Stacklok Insight](stacklok-insight.md) documentation.
