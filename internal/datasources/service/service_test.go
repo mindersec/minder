@@ -898,10 +898,7 @@ func TestDelete(t *testing.T) {
 			setup: func(args args, mockDB *mockdb.MockStore) {
 				// Mock ListRuleTypesReferencesByDataSource to return empty list
 				mockDB.EXPECT().
-					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
-						DataSourcesID: args.id,
-						ProjectID:     args.project,
-					})).
+					ListRuleTypesReferencesByDataSource(gomock.Any(), args.id).
 					Return([]db.RuleTypeDataSource{}, nil)
 
 				// Mock DeleteDataSource to succeed
@@ -924,10 +921,7 @@ func TestDelete(t *testing.T) {
 			setup: func(args args, mockDB *mockdb.MockStore) {
 				// Mock ListRuleTypesReferencesByDataSource to return empty list
 				mockDB.EXPECT().
-					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
-						DataSourcesID: args.id,
-						ProjectID:     args.project,
-					})).
+					ListRuleTypesReferencesByDataSource(gomock.Any(), args.id).
 					Return([]db.RuleTypeDataSource{}, nil)
 
 				// Mock DeleteDataSource to return sql.ErrNoRows
@@ -950,10 +944,7 @@ func TestDelete(t *testing.T) {
 			setup: func(args args, mockDB *mockdb.MockStore) {
 				// Mock ListRuleTypesReferencesByDataSource to return non-empty list
 				mockDB.EXPECT().
-					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
-						DataSourcesID: args.id,
-						ProjectID:     args.project,
-					})).
+					ListRuleTypesReferencesByDataSource(gomock.Any(), args.id).
 					Return([]db.RuleTypeDataSource{
 						{RuleTypeID: uuid.New()},
 					}, nil)
@@ -970,10 +961,7 @@ func TestDelete(t *testing.T) {
 			setup: func(args args, mockDB *mockdb.MockStore) {
 				// Mock ListRuleTypesReferencesByDataSource to return an error
 				mockDB.EXPECT().
-					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
-						DataSourcesID: args.id,
-						ProjectID:     args.project,
-					})).
+					ListRuleTypesReferencesByDataSource(gomock.Any(), args.id).
 					Return(nil, fmt.Errorf("database error"))
 			},
 			wantErr: true,
@@ -988,10 +976,7 @@ func TestDelete(t *testing.T) {
 			setup: func(args args, mockDB *mockdb.MockStore) {
 				// Mock ListRuleTypesReferencesByDataSource to return empty list
 				mockDB.EXPECT().
-					ListRuleTypesReferencesByDataSource(gomock.Any(), gomock.Eq(db.ListRuleTypesReferencesByDataSourceParams{
-						DataSourcesID: args.id,
-						ProjectID:     args.project,
-					})).
+					ListRuleTypesReferencesByDataSource(gomock.Any(), args.id).
 					Return([]db.RuleTypeDataSource{}, nil)
 
 				// Mock DeleteDataSource to return an error
