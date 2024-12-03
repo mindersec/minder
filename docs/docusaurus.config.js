@@ -61,6 +61,7 @@ const config = {
   presets: [
     [
       'classic',
+      /** @type {import('@docusaurus/preset-classic').Options} */
       {
         docs: {
           routeBasePath: '/',
@@ -74,6 +75,22 @@ const config = {
     ],
     redocusaurus,
   ],
+
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            /* Trusty rebrand */
+            to: '/integrations/stacklok-insight',
+            from: '/integrations/trusty',
+          },
+        ],
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     (
