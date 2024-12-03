@@ -819,7 +819,7 @@ paths:
         - name: roleAssignment.role
           description: role is the role that is assigned.
           in: query
-          required: false
+          required: true
           type: string
         - name: roleAssignment.subject
           description: subject is the subject to which the role is assigned.
@@ -2896,18 +2896,22 @@ definitions:
       roleAssignment:
         $ref: '#/definitions/v1RoleAssignment'
         description: role_assignment is the role assignment to be created.
+    required:
+      - roleAssignment
   v1AssignRoleResponse:
     type: object
     properties:
       roleAssignment:
         $ref: '#/definitions/v1RoleAssignment'
-        description: role_assignment is the role assignment that was created.
+        description: |-
+          role_assignment is the role assignment that was created.
+          This is optional.
       invitation:
         $ref: '#/definitions/v1Invitation'
         description: |-
           invitation contains the details of the invitation for the
           assigned user to join the project if the user is not already
-          a member.
+          a member. This is optional.
   v1AuthorizationFlow:
     type: string
     enum:
@@ -3690,6 +3694,12 @@ definitions:
       emailSkipped:
         type: boolean
         description: emailSkipped is true if the email was not sent to the invitee.
+    description: >-
+      Invitation is an invitation to join a project. This is only used in
+      responses.
+    required:
+      - role
+      - project
   v1ListArtifactsResponse:
     type: object
     properties:
@@ -3759,6 +3769,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Invitation'
+    required:
+      - invitations
   v1ListProfilesResponse:
     type: object
     properties:
@@ -3854,6 +3866,9 @@ definitions:
         description: |-
           invitations contains outstanding role invitations which have not yet
           been accepted by a user.
+    required:
+      - roleAssignments
+      - invitations
   v1ListRolesResponse:
     type: object
     properties:
@@ -3862,6 +3877,8 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1Role'
+    required:
+      - roles
   v1ListRuleTypesResponse:
     type: object
     properties:
@@ -4301,6 +4318,10 @@ definitions:
         description: |-
           project_display is the display name of the project to which the user
           is invited.
+    required:
+      - role
+      - project
+      - isAccepted
   v1RestDataSource:
     type: object
     properties:
@@ -4399,6 +4420,8 @@ definitions:
       lastName:
         type: string
         description: last_name is the last name of the subject.
+    required:
+      - role
   v1RuleEvaluationStatus:
     type: object
     properties:
@@ -4677,6 +4700,8 @@ definitions:
         title: >-
           email is the email address of the subject used for updating
           invitations
+    required:
+      - roles
   v1UpdateRoleResponse:
     type: object
     properties:
