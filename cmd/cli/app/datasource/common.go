@@ -122,7 +122,7 @@ func appendDataSourcePropertiesToName(ds *minderv1.DataSource) string {
 	name := ds.Name
 	properties := []string{}
 	// add the type property if it is present
-	dType := getDataSourceType(ds)
+	dType := ds.GetDriverType()
 	if dType != "" {
 		properties = append(properties, fmt.Sprintf("type: %s", dType))
 	}
@@ -136,14 +136,6 @@ func appendDataSourcePropertiesToName(ds *minderv1.DataSource) string {
 
 	// return only name otherwise
 	return name
-}
-
-// getDataSourceType returns the type of data source
-func getDataSourceType(ds *minderv1.DataSource) string {
-	if ds.GetRest() != nil {
-		return "REST"
-	}
-	return "Unknown"
 }
 
 // initializeTableForList initializes the table for listing data sources

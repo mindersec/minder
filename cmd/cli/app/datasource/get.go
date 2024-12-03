@@ -90,7 +90,7 @@ func outputDataSource(cmd *cobra.Command, format string, ds *minderv1.DataSource
 		cmd.Println(out)
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name", "Type"})
-		t.AddRow(ds.Id, ds.Name, getDataSourceType(ds))
+		t.AddRow(ds.Id, ds.Name, ds.GetDriverType())
 		t.Render()
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)
