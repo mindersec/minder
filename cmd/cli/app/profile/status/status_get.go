@@ -95,7 +95,7 @@ func getProfileStatus(
 			ProfileStatus:        idResp.ProfileStatus,
 			RuleEvaluationStatus: idResp.RuleEvaluationStatus,
 		}
-	} else {
+	} else if profileName != "" {
 		nameResp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 			Context: &minderv1.Context{Project: &project},
 			Name:    profileName,
@@ -113,6 +113,8 @@ func getProfileStatus(
 			ProfileStatus:        nameResp.ProfileStatus,
 			RuleEvaluationStatus: nameResp.RuleEvaluationStatus,
 		}
+	} else {
+		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id or profile name required"))
 	}
 
 	return resp, nil

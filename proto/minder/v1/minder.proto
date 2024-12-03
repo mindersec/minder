@@ -608,7 +608,7 @@ service ProfileService {
 
     rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusByIdResponse) {
         option (google.api.http) = {
-            get: "/api/v1/profile/id/{id=**}/status"
+            get: "/api/v1/profile/{id}/status"
         };
 
         option (rpc_options) = {

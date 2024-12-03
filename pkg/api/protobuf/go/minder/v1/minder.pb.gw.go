@@ -3733,7 +3733,7 @@ func RegisterProfileServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusById", runtime.WithHTTPPathPattern("/api/v1/profile/id/{id=**}/status"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusById", runtime.WithHTTPPathPattern("/api/v1/profile/{id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5514,7 +5514,7 @@ func RegisterProfileServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusById", runtime.WithHTTPPathPattern("/api/v1/profile/id/{id=**}/status"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/minder.v1.ProfileService/GetProfileStatusById", runtime.WithHTTPPathPattern("/api/v1/profile/{id}/status"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -5556,7 +5556,7 @@ var (
 	pattern_ProfileService_GetProfileById_0            = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "profile", "id"}, ""))
 	pattern_ProfileService_GetProfileByName_0          = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3}, []string{"api", "v1", "profile", "name"}, ""))
 	pattern_ProfileService_GetProfileStatusByName_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "name", "status"}, ""))
-	pattern_ProfileService_GetProfileStatusById_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "id", "status"}, ""))
+	pattern_ProfileService_GetProfileStatusById_0      = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "profile", "id", "status"}, ""))
 	pattern_ProfileService_GetProfileStatusByProject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "profile_status"}, ""))
 )
 

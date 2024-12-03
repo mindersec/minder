@@ -561,13 +561,30 @@ func (s *Server) GetProfileStatusByName(
 	in *minderv1.GetProfileStatusByNameRequest,
 ) (*minderv1.GetProfileStatusByNameResponse, error) {
 	ctx = context.WithValue(ctx, requestKey, in)
-	resp, err := s.getProfileStatus(
-		ctx,
-		engcontext.EntityFromContext(ctx).Project.ID,
-		in.Name,
-		s.store.GetProfileStatusByNameAndProject,
-		nil, // No ID function required
-	)
+
+	// Validate name is not empty
+	if in.Name == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "profile name cannot be empty")
+	}
+
+	entityCtx := engcontext.EntityFromContext(ctx)
+
+	if err := entityCtx.ValidateProject(ctx, s.store); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	dbProfileStatus, err := s.store.GetProfileStatusByNameAndProject(ctx, db.GetProfileStatusByNameAndProjectParams{
+		ProjectID: engcontext.EntityFromContext(ctx).Project.ID,
+		Name:      in.Name,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", in.Name)
+		}
+		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", err)
+	}
+
+	resp, err := s.processProfileStatus(ctx, dbProfileStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -585,33 +602,9 @@ func (s *Server) GetProfileStatusById(
 ) (*minderv1.GetProfileStatusByIdResponse, error) {
 	ctx = context.WithValue(ctx, requestKey, in)
 
-	resp, err := s.getProfileStatus(
-		ctx,
-		engcontext.EntityFromContext(ctx).Project.ID,
-		uuid.MustParse(in.Id),
-		nil, // No name function required
-		s.store.GetProfileStatusByIdAndProject,
-	)
-	if err != nil {
-		return nil, err
+	if in.Id == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "profile id cannot be empty")
 	}
-
-	// Cast response to GetProfileStatusByIdResponse
-	return &minderv1.GetProfileStatusByIdResponse{
-		ProfileStatus:        resp.ProfileStatus,
-		RuleEvaluationStatus: resp.RuleEvaluationStatus,
-	}, nil
-}
-
-func (s *Server) getProfileStatus(ctx context.Context,
-	projectID uuid.UUID,
-	profileIdentifier interface{},
-	getProfileByNameFunc func(context.Context,
-		db.GetProfileStatusByNameAndProjectParams,
-	) (db.GetProfileStatusByNameAndProjectRow, error),
-	getProfileByIdFunc func(context.Context,
-		db.GetProfileStatusByIdAndProjectParams,
-	) (db.GetProfileStatusByIdAndProjectRow, error)) (*minderv1.GetProfileStatusResponse, error) {
 
 	entityCtx := engcontext.EntityFromContext(ctx)
 
@@ -620,42 +613,31 @@ func (s *Server) getProfileStatus(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	// Retrieve profile status
-	var dbProfileStatus interface{}
-	var getProfileErr error
-
-	switch id := profileIdentifier.(type) {
-	case string:
-		if id == "" {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "profile name cannot be empty")
+	dbProfileStatus, err := s.store.GetProfileStatusByIdAndProject(ctx, db.GetProfileStatusByIdAndProjectParams{
+		ProjectID: engcontext.EntityFromContext(ctx).Project.ID,
+		ID:        uuid.MustParse(in.Id),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", in.Id)
 		}
-		if getProfileByNameFunc == nil {
-			return nil, status.Errorf(codes.Internal, "profile retrieval function not provided for name")
-		}
-		dbProfileStatus, getProfileErr = getProfileByNameFunc(ctx, db.GetProfileStatusByNameAndProjectParams{
-			ProjectID: projectID,
-			Name:      id,
-		})
-	case uuid.UUID:
-		if getProfileByIdFunc == nil {
-			return nil, status.Errorf(codes.Internal, "profile retrieval function not provided for ID")
-		}
-		dbProfileStatus, getProfileErr = getProfileByIdFunc(ctx, db.GetProfileStatusByIdAndProjectParams{
-			ProjectID: projectID,
-			ID:        id,
-		})
-	default:
-		return nil, fmt.Errorf("unsupported profile identifier type")
+		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", err)
 	}
 
-	// Handle profile retrieval error
-	if getProfileErr != nil {
-		if errors.Is(getProfileErr, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "profile %q status not found", profileIdentifier)
-		}
-		return nil, status.Errorf(codes.Unknown, "failed to get profile: %s", getProfileErr)
+	resp, err := s.processProfileStatus(ctx, dbProfileStatus)
+	if err != nil {
+		return nil, err
 	}
 
+	return &minderv1.GetProfileStatusByIdResponse{
+		ProfileStatus:        resp.ProfileStatus,
+		RuleEvaluationStatus: resp.RuleEvaluationStatus,
+	}, nil
+}
+
+func (s *Server) processProfileStatus(
+	ctx context.Context,
+	dbProfileStatus interface{}) (*minderv1.GetProfileStatusResponse, error) {
 	// Extract Profile Details
 	profileName, profileID, lastUpdated, profileStatus, extractProfileDetailsErr := extractProfileDetails(dbProfileStatus)
 
@@ -691,6 +673,7 @@ func (s *Server) getProfileStatus(ctx context.Context,
 	}
 
 	// Telemetry logging
+	entityCtx := engcontext.EntityFromContext(ctx)
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
