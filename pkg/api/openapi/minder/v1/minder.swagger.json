@@ -1580,7 +1580,7 @@
             "name": "entity.type",
             "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string",
             "enum": [
               "ENTITY_UNSPECIFIED",
@@ -1599,7 +1599,7 @@
             "name": "entity.id",
             "description": "id is the ID of the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
