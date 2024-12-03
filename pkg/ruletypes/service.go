@@ -150,6 +150,14 @@ func (_ *ruleTypeService) CreateRuleType(
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
 	}
 
+	// Data Sources reference update. Note that this step can be
+	// safely performed after updating the rule, as the only thing
+	// we need from the previous code is project id and rule id.
+	ds := ruleTypeDef.GetEval().GetDataSources()
+	if err := processDataSources(ctx, newDBRecord.ID, ds, projectID, projects, qtx); err != nil {
+		return nil, fmt.Errorf("failed updating references to data sources: %w", err)
+	}
+
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
 
 	rt, err := RuleTypePBFromDB(&newDBRecord)
@@ -229,6 +237,19 @@ func (_ *ruleTypeService) UpdateRuleType(
 		return nil, fmt.Errorf("failed to update rule type: %w", err)
 	}
 
+	projects, err := qtx.GetParentProjects(ctx, projectID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parent projects: %w", err)
+	}
+
+	// Data Sources reference update. Note that this step can be
+	// safely performed after updating the rule, as the only thing
+	// we need from the previous code is project id and rule id.
+	ds := ruleTypeDef.GetEval().GetDataSources()
+	if err := processDataSources(ctx, oldRuleType.ID, ds, projectID, projects, qtx); err != nil {
+		return nil, fmt.Errorf("failed updating references to data sources: %w", err)
+	}
+
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: oldRuleType.Name, ID: oldRuleType.ID}
 
 	result, err := RuleTypePBFromDB(&updatedRuleType)
@@ -299,4 +320,71 @@ func validateRuleUpdate(existingRecord *db.RuleType, newRuleType *pb.RuleType) e
 	}
 
 	return nil
+}
+
+func processDataSources(
+	ctx context.Context,
+	ruleID uuid.UUID,
+	ds []*pb.DataSourceReference,
+	projectID uuid.UUID,
+	projectHierarchy []uuid.UUID,
+	qtx db.Querier,
+) error {
+	// We first verify that the data sources required are
+	// available within the project hierarchy.
+	datasources, err := getAvailableDataSources(ctx, ds, projectHierarchy, qtx)
+	if err != nil {
+		return fmt.Errorf("data source not available: %w", err)
+	}
+
+	// Then, we proceed to delete any data source reference we
+	// have for the old definition of the rule type.
+	deleteArgs := db.DeleteRuleTypeDataSourceParams{
+		Ruleid:    ruleID,
+		Projectid: projectID,
+	}
+	if err := qtx.DeleteRuleTypeDataSource(ctx, deleteArgs); err != nil {
+		return fmt.Errorf("error deleting references to data source: %w", err)
+	}
+
+	// Finally, we add references to the required data source.
+	for _, datasource := range datasources {
+		insertArgs := db.AddRuleTypeDataSourceReferenceParams{
+			Ruletypeid:   ruleID,
+			Datasourceid: datasource.ID,
+			Projectid:    projectID,
+		}
+		if _, err := qtx.AddRuleTypeDataSourceReference(ctx, insertArgs); err != nil {
+			return fmt.Errorf("error adding references to data source: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func getAvailableDataSources(
+	ctx context.Context,
+	requiredDataSources []*pb.DataSourceReference,
+	projects []uuid.UUID,
+	qtx db.Querier,
+) ([]db.DataSource, error) {
+	datasources := make([]db.DataSource, 0)
+
+	for _, datasource := range requiredDataSources {
+		qarg := db.GetDataSourceByNameParams{
+			Name:     datasource.Name,
+			Projects: projects,
+		}
+		dbDataSource, err := qtx.GetDataSourceByName(ctx, qarg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("data source of name %s not found", datasource.Name)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("failed getting data sources: %w", err)
+		}
+
+		datasources = append(datasources, dbDataSource)
+	}
+
+	return datasources, nil
 }
