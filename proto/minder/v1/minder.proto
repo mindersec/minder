@@ -1665,21 +1665,29 @@ message DeleteDataSourceByNameResponse {
 
 // Profile service
 message CreateProfileRequest {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 message CreateProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message UpdateProfileRequest {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 message UpdateProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message PatchProfileRequest {
@@ -1690,7 +1698,8 @@ message PatchProfileRequest {
     // The id of the profile to patch. Same explanation about explicitness
     // as for the context
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
     // The patch to apply to the profile
     Profile patch = 3;
@@ -1700,7 +1709,9 @@ message PatchProfileRequest {
 }
 
 message PatchProfileResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProfileRequest {
@@ -1708,7 +1719,8 @@ message DeleteProfileRequest {
     Context context = 1;
     // id is the id of the profile to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -1734,7 +1746,9 @@ message ListProfilesRequest {
 }
 
 message ListProfilesResponse {
-    repeated Profile profiles = 1;
+    repeated Profile profiles = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get profile by id
@@ -1743,12 +1757,15 @@ message GetProfileByIdRequest {
     Context context = 1;
     // id is the id of the profile to get
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message GetProfileByIdResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get profile by name
@@ -1761,12 +1778,14 @@ message GetProfileByNameRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message GetProfileByNameResponse {
-    Profile profile = 1;
+    Profile profile = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // get the overall profile status as output
@@ -1776,7 +1795,9 @@ message ProfileStatus {
     // profile_name is the name of the profile.  One of profile_id or profile_name must be set.
     string profile_name = 2;
     // profile_status is the status of the profile
-    string profile_status = 3;
+    string profile_status = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 4;
 
@@ -1801,13 +1822,19 @@ message RuleEvaluationStatus {
     // profile_id is the id of the profile
     string profile_id = 1;
     // rule_id is the id of the rule
-    string rule_id = 2;
+    string rule_id = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // rule_name is the type of the rule. Deprecated in favor of rule_type_name
     string rule_name = 3 [deprecated=true];
     // entity is the entity that was evaluated
-    string entity = 4;
+    string entity = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // status is the status of the evaluation
-    string status = 5;
+    string status = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // last_updated is the last time the profile was updated
     google.protobuf.Timestamp last_updated = 6;
     // entity_info is the information about the entity
@@ -1823,12 +1850,14 @@ message RuleEvaluationStatus {
     // remediation_details is the description of the remediation attempt if any
     string remediation_details = 12;
     // rule_type_name is the name of the rule
-    string rule_type_name = 13;
+    string rule_type_name = 13 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // rule_description_name is the name to describe the rule
     string rule_description_name = 14;
     // alert holds the alert details if the rule generated an alert in an external system
     EvalResultAlert alert = 15;
-    // severity is the severity of the rule
+    // severity is the severity of the rule. This may be empty.
     Severity severity = 16;
     // rule_evaluation_id is the id of the rule evaluation
     string rule_evaluation_id = 17;
@@ -1837,18 +1866,22 @@ message RuleEvaluationStatus {
     // rule_display_name captures the display name of the rule 
     string rule_display_name = 19;
     // release_phase is the phase of the release
-    RuleTypeReleasePhase release_phase = 20;
+    RuleTypeReleasePhase release_phase = 20 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
 // such as (repo, 1), (artifact, 2), ...
 message EntityTypedId {
     // entity is the entity to get status for. Incompatible with `all`
-    Entity type = 1;
+    Entity type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // id is the ID of the entity to get status for. Incompatible with `all`
     string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -1864,11 +1897,19 @@ message GetProfileStatusByNameRequest {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
+    // entity is the entity to get status for. Incompatible with `all`.
+    // This is optional.
     EntityTypedId entity = 3;
+
+    // all is true if the status of all entities should be returned.
+    // Incompatible with `entity`. This is optional.
     bool all = 4;
 
     // rule is the type of the rule. Deprecated in favor of rule_type
     string rule = 5 [deprecated=true];
+
+    // rule_type is the type of the rule to filter on.
+    // This is optional.
     string rule_type = 6 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/[:word:]]*$"
@@ -1876,6 +1917,9 @@ message GetProfileStatusByNameRequest {
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
+
+    // rule_name is the name of the rule to filter on.
+    // This is optional.
     string rule_name = 7 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
@@ -1936,7 +1980,7 @@ message GetProfileStatusByIdResponse {
 
 message GetProfileStatusResponse {
     // profile_status is the status of the profile
-    ProfileStatus profile_status = 1[
+    ProfileStatus profile_status = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -1951,7 +1995,9 @@ message GetProfileStatusByProjectRequest {
 
 message GetProfileStatusByProjectResponse {
     // profile_status is the status of the profile
-    repeated ProfileStatus profile_status = 1;
+    repeated ProfileStatus profile_status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // Entity defines the entity that is supported by the provider.
@@ -1976,7 +2022,9 @@ message EntityAutoRegistrationConfig {
 // and undefined so for the "let's not auto-register anything" case we'd just let the repeated string empty
 message AutoRegistration {
     // enabled is the list of entities that are enabled for auto-registration.
-    map<string, EntityAutoRegistrationConfig> entities = 1;
+    map<string, EntityAutoRegistrationConfig> entities = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // ProviderConfig contains the generic configuration for a provider.
@@ -2096,7 +2144,9 @@ message ListRuleTypesRequest {
 // ListRuleTypesResponse is the response to list rule types.
 message ListRuleTypesResponse {
     // rule_types is the list of rule types.
-    repeated RuleType rule_types = 1;
+    repeated RuleType rule_types = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // GetRuleTypeByNameRequest is the request to get a rule type by name.
@@ -2116,7 +2166,9 @@ message GetRuleTypeByNameRequest {
 // GetRuleTypeByNameResponse is the response to get a rule type by name.
 message GetRuleTypeByNameResponse {
     // rule_type is the rule type.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // GetRuleTypeByIdRequest is the request to get a rule type by id.
@@ -2125,40 +2177,51 @@ message GetRuleTypeByIdRequest {
     Context context = 1;
     // id is the id of the rule type.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 // GetRuleTypeByIdResponse is the response to get a rule type by id.
 message GetRuleTypeByIdResponse {
     // rule_type is the rule type.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // CreateRuleTypeRequest is the request to create a rule type.
 message CreateRuleTypeRequest {
     // rule_type is the rule type to be created.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 2; // deprecated context
 }
 
 // CreateRuleTypeResponse is the response to create a rule type.
 message CreateRuleTypeResponse {
     // rule_type is the rule type that was created.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // UpdateRuleTypeRequest is the request to update a rule type.
 message UpdateRuleTypeRequest {
     // rule_type is the rule type to be updated.
-    RuleType rule_type = 2;
+    RuleType rule_type = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     reserved 3; // deprecated context
 }
 
 // UpdateRuleTypeResponse is the response to update a rule type.
 message UpdateRuleTypeResponse {
     // rule_type is the rule type that was updated.
-    RuleType rule_type = 1;
+    RuleType rule_type = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // DeleteRuleTypeRequest is the request to delete a rule type.
@@ -2167,7 +2230,8 @@ message DeleteRuleTypeRequest {
     Context context = 1;
     // id is the id of the rule type to be deleted.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
@@ -2247,7 +2311,9 @@ message ListEvaluationResultsResponse {
     }
 
     // Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile.
-    repeated EntityEvaluationResults entities = 2;
+    repeated EntityEvaluationResults entities = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // --- END EvaluationResults definitions
@@ -2276,7 +2342,8 @@ message RestType {
     string endpoint = 1 [
         (buf.validate.field).string = {
             max_len: 400,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // method is the method to use to fetch data.
@@ -2478,7 +2545,7 @@ message RuleType {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // display_name is the display name of the rule type.
@@ -2528,7 +2595,7 @@ message RuleType {
                 (buf.validate.field).string = {
                     in: ["rest", "artifact", "builtin", "git", "diff", "deps"],
                 },
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (google.api.field_behavior) = REQUIRED
             ];
 
             // NOTE: we should have used the "oneof" feature here rather than
@@ -2559,7 +2626,9 @@ message RuleType {
             // deps currently only applies to repositories.
             optional DepsType deps = 8;
         }
-        Ingest ingest = 4;
+        Ingest ingest = 4 [
+            (google.api.field_behavior) = REQUIRED
+        ];
 
         // Eval defines the data evaluation definition.
         // This pertains to the way we traverse data from the upstream
@@ -2569,7 +2638,8 @@ message RuleType {
             string type = 1 [
                 (buf.validate.field).string = {
                     in: ["jq", "rego", "vulncheck", "trusty", "homoglyphs"],
-                }
+                },
+                (google.api.field_behavior) = REQUIRED
             ];
 
             message JQComparison {
@@ -2579,17 +2649,22 @@ message RuleType {
                             pattern: "^\\.[a-zA-Z_]+(\\.[a-zA-Z_]+|\\[\\d+]|\\[\"[a-zA-Z_]+\"\\])*$",
                             min_len: 1,
                             max_len: 200,
-                        }
+                        },
+                        (google.api.field_behavior) = REQUIRED
                     ];
                 }
 
                 // Ingested points to the data retrieved in the `ingest` section
-                Operator ingested = 1;
+                Operator ingested = 1 [
+                    (google.api.field_behavior) = REQUIRED
+                ];
 
                 // Profile points to the profile itself.
+                // This is mutually exclusive with the `constant` field.
                 Operator profile = 2;
 
-                // Constant points to a constant value
+                // Constant points to a constant value.
+                // This is mutually exclusive with the `profile` field.
                 google.protobuf.Value constant = 3;
             }
 
@@ -2613,7 +2688,9 @@ message RuleType {
                     (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
                 ];
                 // def is the definition of the rego profile.
-                string def = 2;
+                string def = 2 [
+                    (google.api.field_behavior) = REQUIRED
+                ];
                 // how are violations reported. This is only used if the
                 // `constraints` type is selected. The default is `text`
                 // which returns human-readable text. The other option is
@@ -2675,7 +2752,9 @@ message RuleType {
             // in order to be used in the rule.
             repeated DataSourceReference data_sources = 7;
         }
-        Eval eval = 5;
+        Eval eval = 5 [
+            (google.api.field_behavior) = REQUIRED
+        ];
 
         message Remediate {
             string type = 1 [
@@ -2810,7 +2889,9 @@ message RuleType {
     }
 
     // def is the definition of the rule type.
-    Definition def = 4;
+    Definition def = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // description is the description of the rule type.
     // This is expected to be a valid markdown formatted string.
@@ -2818,7 +2899,8 @@ message RuleType {
         (buf.validate.field).string = {
             min_len: 1,
             max_len: 1000,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // guidance are instructions we give the user in case a rule fails.
@@ -2827,7 +2909,8 @@ message RuleType {
         (buf.validate.field).string = {
             min_len: 1,
             max_len: 1000,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // severity is the severity of the rule type.
@@ -2838,6 +2921,7 @@ message RuleType {
 }
 
 // Profile defines a profile that is user defined.
+// All fields are optional because we want to allow partial updates.
 message Profile {
     // context is the context in which the profile is evaluated.
     Context context = 1;
@@ -3002,7 +3086,9 @@ message ListProjectsRequest {
 }
 
 message ListProjectsResponse {
-    repeated Project projects = 1;
+    repeated Project projects = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CreateProjectRequest {
@@ -3015,13 +3101,15 @@ message CreateProjectRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message CreateProjectResponse {
     // project is the project that was created.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProjectRequest {
@@ -3031,7 +3119,9 @@ message DeleteProjectRequest {
 
 message DeleteProjectResponse {
     // project_id is the id of the project that was deleted.
-    string project_id = 1;
+    string project_id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message UpdateProjectRequest {
@@ -3039,6 +3129,7 @@ message UpdateProjectRequest {
     Context context = 1;
 
     // display_name is the display name of the project to update.
+    // This is optional.
     string display_name = 2 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
@@ -3048,6 +3139,7 @@ message UpdateProjectRequest {
     ];
 
     // description is the description of the project to update.
+    // This is optional.
     string description = 3 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/.!?,:;'[:word:] ]*$",
@@ -3060,7 +3152,9 @@ message UpdateProjectRequest {
 
 message UpdateProjectResponse {
     // project is the project that was updated.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ProjectPatch {
@@ -3098,7 +3192,9 @@ message PatchProjectRequest {
 
 message PatchProjectResponse {
     // project is the project that was updated.
-    Project project = 1;
+    Project project = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListChildProjectsRequest {
@@ -3110,12 +3206,16 @@ message ListChildProjectsRequest {
 }
 
 message ListChildProjectsResponse {
-    repeated Project projects = 1;
+    repeated Project projects = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CreateEntityReconciliationTaskRequest {
     // entity is the entity to be reconciled.
-    EntityTypedId entity = 1;
+    EntityTypedId entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // context is the context in which the entity reconciliation task is created.
     Context context = 2;
@@ -3130,7 +3230,9 @@ message ListRolesRequest {
 }
 
 message ListRolesResponse {
-    repeated Role roles = 1;
+    repeated Role roles = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListRoleAssignmentsRequest {
@@ -3141,27 +3243,34 @@ message ListRoleAssignmentsRequest {
 message ListRoleAssignmentsResponse {
     // role_assignments contains permission grants which have been accepted
     // by a user.
-    repeated RoleAssignment role_assignments = 1;
+    repeated RoleAssignment role_assignments = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // invitations contains outstanding role invitations which have not yet
     // been accepted by a user.
-    repeated Invitation invitations = 2;
+    repeated Invitation invitations = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message AssignRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
     // role_assignment is the role assignment to be created.
-    RoleAssignment role_assignment = 2;
+    RoleAssignment role_assignment = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message AssignRoleResponse {
     // role_assignment is the role assignment that was created.
+    // This is optional.
     RoleAssignment role_assignment = 1;
 
     // invitation contains the details of the invitation for the
     // assigned user to join the project if the user is not already
-    // a member.
+    // a member. This is optional.
     Invitation invitation = 2;
 }
 
@@ -3185,7 +3294,8 @@ message UpdateRoleRequest {
                     max_len: 200,
                 }
             }
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // email is the email address of the subject used for updating invitations
     string email = 5 [
@@ -3209,7 +3319,9 @@ message RemoveRoleRequest {
     // context is the context in which the role assignment is evaluated.
     Context context = 1;
     // role_assignment is the role assignment to be removed.
-    RoleAssignment role_assignment = 2;
+    RoleAssignment role_assignment = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message RemoveRoleResponse {
@@ -3241,7 +3353,8 @@ message RoleAssignment {
             pattern: "^[a-z]+(_[a-z]+)*$",
             min_len: 1,
             max_len: 200,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // subject is the subject to which the role is assigned.
     string subject = 2 [
@@ -3290,7 +3403,9 @@ message ListInvitationsRequest {
 }
 
 message ListInvitationsResponse {
-    repeated Invitation invitations = 1;
+    repeated Invitation invitations = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ResolveInvitationRequest {
@@ -3299,7 +3414,8 @@ message ResolveInvitationRequest {
         (buf.validate.field).string = {
             pattern: "^[A-Za-z0-9_-]+$",
             len: 64,
-        }
+        },
+        (google.api.field_behavior) = REQUIRED
     ];
     // accept is true if the invitation is accepted, false if it is rejected.
     bool accept = 2;
@@ -3308,28 +3424,39 @@ message ResolveInvitationRequest {
 message ResolveInvitationResponse {
     // role is the role that would be assigned if the user
     // accepts the invitation.
-    string role = 1;
+    string role = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // email is the email address of the invited user.
     string email = 2;
     // project is the project to which the user is invited.
-    string project = 3;
+    string project = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // is_accepted is the status of the invitation.
-    bool is_accepted = 4;
+    bool is_accepted = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // project_display is the display name of the project to which the user
     // is invited.
     string project_display = 5;
 }
 
+// Invitation is an invitation to join a project. This is only used in responses.
 message Invitation {
     // role is the role that would be assigned if the user
     // accepts the invitation.
-    string role = 1;
+    string role = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // email is the email address of the invited user.  This is
     // presented as a convenience for display purposes, and does
     // not affect who can accept the invitation using the code.
     string email = 2;
     // project is the project to which the user is invited.
-    string project = 3;
+    string project = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // code is a unique identifier for the invitation, which can
     // be used by the recipient to accept or reject the invitation.
@@ -3876,6 +4003,7 @@ message DataSource {
     // id is the unique identifier of the data source.
     string id = 5 [
         (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 

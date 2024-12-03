@@ -22,6 +22,9 @@ type serviceTX interface {
 // This is a handy helper function to optionally begin a transaction if we've already
 // got one.
 func beginTx(d *dataSourceService, opts txGetter) (serviceTX, error) {
+	if opts == nil {
+		opts = &Options{}
+	}
 	if opts.getTransaction() != nil {
 		return &externalTX{q: opts.getTransaction()}, nil
 	}

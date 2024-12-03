@@ -296,8 +296,8 @@ This is currently not populated in any requests or responses.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was created. |
-| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was created. This is optional. |
+| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. This is optional. |
 
 
 
@@ -1287,11 +1287,11 @@ get profile by name
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the profile to get |
-| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
-| all | <TypeLink type="bool">bool</TypeLink> |  |  |
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  | entity is the entity to get status for. Incompatible with `all`. This is optional. |
+| all | <TypeLink type="bool">bool</TypeLink> |  | all is true if the status of all entities should be returned. Incompatible with `entity`. This is optional. |
 | rule | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
-| rule_type | <TypeLink type="string">string</TypeLink> |  |  |
-| rule_name | <TypeLink type="string">string</TypeLink> |  |  |
+| rule_type | <TypeLink type="string">string</TypeLink> |  | rule_type is the type of the rule to filter on. This is optional. |
+| rule_name | <TypeLink type="string">string</TypeLink> |  | rule_name is the name of the rule to filter on. This is optional. |
 
 
 
@@ -1547,7 +1547,7 @@ GitType defines the git data ingester.
 
 <Message id="minder-v1-Invitation">Invitation</Message>
 
-
+Invitation is an invitation to join a project. This is only used in responses.
 
 
 | Field | Type | Label | Description |
@@ -2036,6 +2036,7 @@ ListRuleTypesResponse is the response to list rule types.
 <Message id="minder-v1-Profile">Profile</Message>
 
 Profile defines a profile that is user defined.
+All fields are optional because we want to allow partial updates.
 
 
 | Field | Type | Label | Description |
@@ -2526,7 +2527,7 @@ get the status of the rules for a given profile
 | rule_type_name | <TypeLink type="string">string</TypeLink> |  | rule_type_name is the name of the rule |
 | rule_description_name | <TypeLink type="string">string</TypeLink> |  | rule_description_name is the name to describe the rule |
 | alert | <TypeLink type="minder-v1-EvalResultAlert">EvalResultAlert</TypeLink> |  | alert holds the alert details if the rule generated an alert in an external system |
-| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule |
+| severity | <TypeLink type="minder-v1-Severity">Severity</TypeLink> |  | severity is the severity of the rule. This may be empty. |
 | rule_evaluation_id | <TypeLink type="string">string</TypeLink> |  | rule_evaluation_id is the id of the rule evaluation |
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
@@ -2649,8 +2650,8 @@ Note that the data source must exist in the project hierarchy in order to be use
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ingested | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Ingested points to the data retrieved in the `ingest` section |
-| profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. |
-| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value |
+| profile | <TypeLink type="minder-v1-RuleType-Definition-Eval-JQComparison-Operator">RuleType.Definition.Eval.JQComparison.Operator</TypeLink> |  | Profile points to the profile itself. This is mutually exclusive with the `constant` field. |
+| constant | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | Constant points to a constant value. This is mutually exclusive with the `profile` field. |
 
 
 
@@ -2867,8 +2868,8 @@ Severity defines the severity of the rule.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the project is updated. |
-| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the project to update. |
-| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the project to update. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is the display name of the project to update. This is optional. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the project to update. This is optional. |
 
 
 

@@ -78,6 +78,7 @@ type Querier interface {
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
+	DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTypeDataSourceParams) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
@@ -235,7 +236,7 @@ type Querier interface {
 	// ListRuleTypesReferencesByDataSource retrieves all rule types
 	// referencing a given data source in a given project.
 	//
-	ListRuleTypesReferencesByDataSource(ctx context.Context, arg ListRuleTypesReferencesByDataSourceParams) ([]RuleTypeDataSource, error)
+	ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourcesID uuid.UUID) ([]RuleTypeDataSource, error)
 	// When doing a key/algorithm rotation, identify the secrets which need to be
 	// rotated. The criteria for rotation are:
 	// 1) The encrypted_access_token is NULL (this should be removed when we make

@@ -78,6 +78,10 @@ func TestCreateDataSource(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
+			// project validation
+			mockStore.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+				ID: projectID,
+			}, nil).AnyTimes()
 
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
 			featureClient := &flags.FakeClient{}
@@ -456,6 +460,11 @@ func TestUpdateDataSource(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
+			// project validation
+			mockStore.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+				ID: projectID,
+			}, nil).AnyTimes()
+
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
 			featureClient := &flags.FakeClient{}
 

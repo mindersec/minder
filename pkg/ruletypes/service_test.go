@@ -105,13 +105,13 @@ func TestRuleTypeService(t *testing.T) {
 		{
 			Name:       "CreateRuleType successfully creates a new rule type",
 			RuleType:   newRuleType(withBasicStructure),
-			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: create,
 		},
 		{
 			Name:           "CreateRuleType successfully creates a new namespaced rule type",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate, withSuccessfulDeleteRuleTypeDataSource),
 			SubscriptionID: subscriptionID,
 			TestMethod:     create,
 		},
@@ -182,40 +182,120 @@ func TestRuleTypeService(t *testing.T) {
 		{
 			Name:       "UpdateRuleType successfully updates an existing rule",
 			RuleType:   newRuleType(withBasicStructure),
-			DBSetup:    dbf.NewDBMock(withSuccessfulGet, withSuccessfulUpdate),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: update,
 		},
 		{
-			Name:           "UpdateRuleType successfully updates an existing rule",
+			Name:           "UpdateRuleType successfully updates an existing rule with subscription",
 			RuleType:       newRuleType(withBasicStructure),
-			DBSetup:        dbf.NewDBMock(withSuccessfulNamespaceGet, withSuccessfulUpdate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withSuccessfulNamespaceGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod:     update,
 			SubscriptionID: subscriptionID,
 		},
 		{
 			Name:           "UpsertRuleType successfully creates a new namespaced rule type",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulNamespaceCreate, withSuccessfulDeleteRuleTypeDataSource),
 			SubscriptionID: subscriptionID,
 			TestMethod:     upsert,
 		},
 		{
 			Name:           "UpsertRuleType successfully updates an existing rule",
 			RuleType:       newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			DBSetup:        dbf.NewDBMock(withHierarchyGet, withSuccessfulNamespaceGet, withSuccessfulUpdate),
+			DBSetup:        dbf.NewDBMock(withHierarchyGet, withHierarchyGet, withSuccessfulNamespaceGet, withSuccessfulUpdate, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod:     upsert,
 			SubscriptionID: subscriptionID,
 		},
 		{
 			Name:       "CreateRuleType with EvaluationFailureMessage",
 			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(shortFailureMessage)),
-			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateWithEvaluationFailureMessage),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateWithEvaluationFailureMessage, withSuccessfulDeleteRuleTypeDataSource),
 			TestMethod: create,
 		},
 		{
 			Name:       "UpdateRuleType with EvaluationFailureMessage",
 			RuleType:   newRuleType(withBasicStructure, withEvaluationFailureMessage(shortFailureMessage)),
-			DBSetup:    dbf.NewDBMock(withSuccessfulGet, withSuccessfulUpdateWithEvaluationFailureMessage),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdateWithEvaluationFailureMessage, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: update,
+		},
+		{
+			Name:       "CreateRuleType with Data Sources",
+			RuleType:   newRuleType(withBasicStructure, withDataSources),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulGetDataSourcesByName(1), withSuccessfulDeleteRuleTypeDataSource, withSuccessfulAddRuleTypeDataSourceReference),
+			TestMethod: create,
+		},
+		{
+			Name:       "UpdateRuleType with Data Sources",
+			RuleType:   newRuleType(withBasicStructure, withDataSources),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulGetDataSourcesByName(1), withSuccessfulDeleteRuleTypeDataSource, withSuccessfulAddRuleTypeDataSourceReference),
+			TestMethod: update,
+		},
+		{
+			Name:          "CreateRuleType with Data Sources not found",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "data source not available",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withNotFoundGetDataSourcesByName),
+			TestMethod:    create,
+		},
+		{
+			Name:          "UpdateRuleType with Data Sources not found",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "data source not available",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withNotFoundGetDataSourcesByName),
+			TestMethod:    update,
+		},
+		{
+			Name:          "CreateRuleType with Data Sources failed get",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "failed getting data sources",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withFailedGetDataSourcesByName),
+			TestMethod:    create,
+		},
+		{
+			Name:          "UpdateRuleType with Data Sources failed get",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "failed getting data sources",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withFailedGetDataSourcesByName),
+			TestMethod:    update,
+		},
+		{
+			Name:          "CreateRuleType with Data Sources failed delete",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "error deleting references to data source",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulGetDataSourcesByName(1), withFailedDeleteRuleTypeDataSource),
+			TestMethod:    create,
+		},
+		{
+			Name:          "UpdateRuleType with Data Sources failed delete",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "error adding references to data source",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulGetDataSourcesByName(1), withSuccessfulDeleteRuleTypeDataSource, withFailedAddRuleTypeDataSourceReference),
+			TestMethod:    update,
+		},
+		{
+			Name:          "CreateRuleType with Data Sources failed add",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "error adding references to data source",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulGetDataSourcesByName(1), withSuccessfulDeleteRuleTypeDataSource, withFailedAddRuleTypeDataSourceReference),
+			TestMethod:    create,
+		},
+		{
+			Name:          "UpdateRuleType with Data Sources failed add",
+			RuleType:      newRuleType(withBasicStructure, withDataSources),
+			ExpectedError: "error adding references to data source",
+			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulGetDataSourcesByName(1), withSuccessfulDeleteRuleTypeDataSource, withFailedAddRuleTypeDataSourceReference),
+			TestMethod:    update,
+		},
+		{
+			Name:       "CreateRuleType with Data Sources multiple adds",
+			RuleType:   newRuleType(withBasicStructure, withDataSources, withDataSources),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulGetDataSourcesByName(2), withSuccessfulDeleteRuleTypeDataSource, withSuccessfulAddRuleTypeDataSourceReference),
+			TestMethod: create,
+		},
+		{
+			Name:       "UpdateRuleType with Data Sources multiple add",
+			RuleType:   newRuleType(withBasicStructure, withDataSources, withDataSources),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withSuccessfulGetDataSourcesByName(2), withSuccessfulDeleteRuleTypeDataSource, withSuccessfulAddRuleTypeDataSourceReference),
 			TestMethod: update,
 		},
 	}
@@ -338,6 +418,16 @@ func withBasicStructure(ruleType *pb.RuleType) {
 	ruleType.Severity = &pb.Severity{Value: pb.Severity_VALUE_HIGH}
 }
 
+func withDataSources(ruleType *pb.RuleType) {
+	datasources := []*pb.DataSourceReference{
+		{
+			// We just need a random string
+			Name: fmt.Sprintf("foo-%s", uuid.New().String()),
+		},
+	}
+	ruleType.Def.Eval.DataSources = datasources
+}
+
 func withEvaluationFailureMessage(message string) func(ruleType *pb.RuleType) {
 	return func(ruleType *pb.RuleType) {
 		ruleType.ShortFailureMessage = message
@@ -429,6 +519,52 @@ func withFailedUpdate(mock dbf.DBMock) {
 	mock.EXPECT().
 		UpdateRuleType(gomock.Any(), gomock.Any()).
 		Return(db.RuleType{}, errDefault)
+}
+
+func withSuccessfulGetDataSourcesByName(times int) func(dbf.DBMock) {
+	return func(mock dbf.DBMock) {
+		call := mock.EXPECT().
+			GetDataSourceByName(gomock.Any(), gomock.Any())
+		for i := 0; i < times; i++ {
+			call = call.Return(db.DataSource{Name: fmt.Sprintf("foo-%d", i)}, nil)
+		}
+	}
+}
+
+func withNotFoundGetDataSourcesByName(mock dbf.DBMock) {
+	mock.EXPECT().
+		GetDataSourceByName(gomock.Any(), gomock.Any()).
+		Return(db.DataSource{}, sql.ErrNoRows)
+}
+
+func withFailedGetDataSourcesByName(mock dbf.DBMock) {
+	mock.EXPECT().
+		GetDataSourceByName(gomock.Any(), gomock.Any()).
+		Return(db.DataSource{}, errDefault)
+}
+
+func withSuccessfulDeleteRuleTypeDataSource(mock dbf.DBMock) {
+	mock.EXPECT().
+		DeleteRuleTypeDataSource(gomock.Any(), gomock.Any()).
+		Return(nil)
+}
+
+func withFailedDeleteRuleTypeDataSource(mock dbf.DBMock) {
+	mock.EXPECT().
+		DeleteRuleTypeDataSource(gomock.Any(), gomock.Any()).
+		Return(errDefault)
+}
+
+func withSuccessfulAddRuleTypeDataSourceReference(mock dbf.DBMock) {
+	mock.EXPECT().
+		AddRuleTypeDataSourceReference(gomock.Any(), gomock.Any()).
+		Return(db.RuleTypeDataSource{}, nil)
+}
+
+func withFailedAddRuleTypeDataSourceReference(mock dbf.DBMock) {
+	mock.EXPECT().
+		AddRuleTypeDataSourceReference(gomock.Any(), gomock.Any()).
+		Return(db.RuleTypeDataSource{}, errDefault)
 }
 
 func newDBRuleType(severity db.Severity, subscriptionID uuid.UUID, failureMessage string) db.RuleType {

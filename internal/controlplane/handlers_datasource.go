@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -28,6 +29,10 @@ func (s *Server) CreateDataSource(ctx context.Context,
 	dsReq := in.GetDataSource()
 	if dsReq == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "missing data source")
+	}
+
+	if err := s.forceDataSourceProject(ctx, dsReq); err != nil {
+		return nil, err
 	}
 
 	// Process the request
@@ -71,7 +76,7 @@ func (s *Server) GetDataSourceById(ctx context.Context,
 	}
 
 	// Get the data source by ID
-	ds, err := s.dataSourcesService.GetByID(ctx, dsID, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByID(ctx, dsID, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +110,7 @@ func (s *Server) GetDataSourceByName(ctx context.Context,
 	}
 
 	// Get the data source by name
-	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +138,7 @@ func (s *Server) ListDataSources(ctx context.Context,
 	}
 
 	// Get all data sources
-	ret, err := s.dataSourcesService.List(ctx, entityCtx.Project.ID, nil)
+	ret, err := s.dataSourcesService.List(ctx, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -155,6 +160,10 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 	dsReq := in.GetDataSource()
 	if dsReq == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "missing data source")
+	}
+
+	if err := s.forceDataSourceProject(ctx, dsReq); err != nil {
+		return nil, err
 	}
 
 	// Process the request
@@ -232,7 +241,7 @@ func (s *Server) DeleteDataSourceByName(ctx context.Context,
 	}
 
 	// Get the data source id by name
-	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, nil)
+	ds, err := s.dataSourcesService.GetByName(ctx, dsName, entityCtx.Project.ID, &service.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -251,4 +260,21 @@ func (s *Server) DeleteDataSourceByName(ctx context.Context,
 
 	// Return the response
 	return &minderv1.DeleteDataSourceByNameResponse{Name: dsName}, nil
+}
+
+func (s *Server) forceDataSourceProject(ctx context.Context, in *minderv1.DataSource) error {
+	entityCtx := engcontext.EntityFromContext(ctx)
+
+	// Ensure the project is valid and exist in the db
+	if err := entityCtx.ValidateProject(ctx, s.store); err != nil {
+		return status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	// Force the context to have the observed project ID
+	if in.GetContext() == nil {
+		in.Context = &minderv1.ContextV2{}
+	}
+	in.GetContext().ProjectId = entityCtx.Project.ID.String()
+
+	return nil
 }

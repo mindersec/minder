@@ -303,6 +303,10 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	if ds.Id == "" {
+		ds.Id = existing.ID.String()
+	}
+
 	return ds, nil
 }
 
@@ -324,10 +328,7 @@ func (d *dataSourceService) Delete(
 	tx := stx.Q()
 
 	// List rule types referencing the data source
-	ret, err := tx.ListRuleTypesReferencesByDataSource(ctx, db.ListRuleTypesReferencesByDataSourceParams{
-		DataSourcesID: id,
-		ProjectID:     project,
-	})
+	ret, err := tx.ListRuleTypesReferencesByDataSource(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to list rule types referencing data source %s: %w", id, err)
 	}

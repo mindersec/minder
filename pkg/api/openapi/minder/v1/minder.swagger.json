@@ -1086,7 +1086,7 @@
             "name": "roleAssignment.role",
             "description": "role is the role that is assigned.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
@@ -1341,7 +1341,7 @@
             "name": "entity.type",
             "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string",
             "enum": [
               "ENTITY_UNSPECIFIED",
@@ -1360,11 +1360,12 @@
             "name": "entity.id",
             "description": "id is the ID of the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
             "name": "all",
+            "description": "all is true if the status of all entities should be returned.\nIncompatible with `entity`. This is optional.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1378,12 +1379,14 @@
           },
           {
             "name": "ruleType",
+            "description": "rule_type is the type of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "ruleName",
+            "description": "rule_name is the name of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3237,7 +3240,10 @@
           "description": "Data sources that the rule refers to. These are used to\ninstantiate the relevant data sources for the rule and keep\ntrack of them as dependencies.\n\nNote that the data source must exist in the project hierarchy\nin order to be used in the rule."
         }
       },
-      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
+      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionIngest": {
       "type": "object",
@@ -3271,7 +3277,10 @@
           "description": "deps is the deps data ingestion.\ndeps currently only applies to repositories."
         }
       },
-      "description": "Ingest defines how the data is ingested."
+      "description": "Ingest defines how the data is ingested.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionRemediate": {
       "type": "object",
@@ -3329,12 +3338,15 @@
         },
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
-          "description": "Profile points to the profile itself."
+          "description": "Profile points to the profile itself.\nThis is mutually exclusive with the `constant` field."
         },
         "constant": {
-          "title": "Constant points to a constant value"
+          "description": "Constant points to a constant value.\nThis is mutually exclusive with the `profile` field."
         }
-      }
+      },
+      "required": [
+        "ingested"
+      ]
     },
     "EvalRego": {
       "type": "object",
@@ -3351,7 +3363,10 @@
           "type": "string",
           "description": "how are violations reported. This is only used if the\n`constraints` type is selected. The default is `text`\nwhich returns human-readable text. The other option is\n`json` which returns a JSON array containing the violations."
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "EvalTrusty": {
       "type": "object",
@@ -3372,7 +3387,10 @@
         "def": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "ListEvaluationResultsResponseEntityEvaluationResults": {
       "type": "object",
@@ -3653,7 +3671,11 @@
           "$ref": "#/definitions/DefinitionAlert"
         }
       },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation.",
+      "required": [
+        "ingest",
+        "eval"
+      ]
     },
     "protobufNullValue": {
       "type": "string",
@@ -3747,18 +3769,21 @@
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment to be created."
         }
-      }
+      },
+      "required": [
+        "roleAssignment"
+      ]
     },
     "v1AssignRoleResponse": {
       "type": "object",
       "properties": {
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment that was created."
+          "description": "role_assignment is the role assignment that was created.\nThis is optional."
         },
         "invitation": {
           "$ref": "#/definitions/v1Invitation",
-          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member."
+          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member. This is optional."
         }
       }
     },
@@ -3861,7 +3886,10 @@
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the entity reconciliation task is created."
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1CreateEntityReconciliationTaskResponse": {
       "type": "object"
@@ -3873,7 +3901,10 @@
           "$ref": "#/definitions/v1Profile"
         }
       },
-      "title": "Profile service"
+      "title": "Profile service",
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProfileResponse": {
       "type": "object",
@@ -3881,7 +3912,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProjectRequest": {
       "type": "object",
@@ -3894,7 +3928,10 @@
           "type": "string",
           "description": "name is the name of the project to create."
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1CreateProjectResponse": {
       "type": "object",
@@ -3903,7 +3940,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was created."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1CreateProviderRequest": {
       "type": "object",
@@ -3939,7 +3979,10 @@
           "description": "rule_type is the rule type to be created."
         }
       },
-      "description": "CreateRuleTypeRequest is the request to create a rule type."
+      "description": "CreateRuleTypeRequest is the request to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateRuleTypeResponse": {
       "type": "object",
@@ -3949,7 +3992,10 @@
           "description": "rule_type is the rule type that was created."
         }
       },
-      "description": "CreateRuleTypeResponse is the response to create a rule type."
+      "description": "CreateRuleTypeResponse is the response to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateUserRequest": {
       "type": "object",
@@ -4101,7 +4147,10 @@
           "type": "string",
           "description": "project_id is the id of the project that was deleted."
         }
-      }
+      },
+      "required": [
+        "projectId"
+      ]
     },
     "v1DeleteProviderByIDResponse": {
       "type": "object",
@@ -4205,7 +4254,11 @@
           "title": "id is the ID of the entity to get status for. Incompatible with `all`"
         }
       },
-      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...",
+      "required": [
+        "type",
+        "id"
+      ]
     },
     "v1EvalResultAlert": {
       "type": "object",
@@ -4454,7 +4507,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileByNameResponse": {
       "type": "object",
@@ -4462,7 +4518,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileStatusByIdResponse": {
       "type": "object",
@@ -4515,7 +4574,10 @@
           },
           "title": "profile_status is the status of the profile"
         }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProviderResponse": {
       "type": "object",
@@ -4556,7 +4618,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id."
+      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetRuleTypeByNameResponse": {
       "type": "object",
@@ -4566,7 +4631,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
+      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetUserResponse": {
       "type": "object",
@@ -4682,7 +4750,12 @@
           "type": "boolean",
           "description": "emailSkipped is true if the email was not sent to the invitee."
         }
-      }
+      },
+      "description": "Invitation is an invitation to join a project. This is only used in responses.",
+      "required": [
+        "role",
+        "project"
+      ]
     },
     "v1ListArtifactsResponse": {
       "type": "object",
@@ -4709,7 +4782,10 @@
             "$ref": "#/definitions/v1Project"
           }
         }
-      }
+      },
+      "required": [
+        "projects"
+      ]
     },
     "v1ListDataSourcesResponse": {
       "type": "object",
@@ -4752,7 +4828,10 @@
           },
           "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
         }
-      }
+      },
+      "required": [
+        "entities"
+      ]
     },
     "v1ListInvitationsResponse": {
       "type": "object",
@@ -4764,7 +4843,10 @@
             "$ref": "#/definitions/v1Invitation"
           }
         }
-      }
+      },
+      "required": [
+        "invitations"
+      ]
     },
     "v1ListProfilesResponse": {
       "type": "object",
@@ -4776,7 +4858,10 @@
             "$ref": "#/definitions/v1Profile"
           }
         }
-      }
+      },
+      "required": [
+        "profiles"
+      ]
     },
     "v1ListProjectsResponse": {
       "type": "object",
@@ -4788,7 +4873,10 @@
             "$ref": "#/definitions/v1Project"
           }
         }
-      }
+      },
+      "required": [
+        "projects"
+      ]
     },
     "v1ListProviderClassesResponse": {
       "type": "object",
@@ -4880,7 +4968,11 @@
           },
           "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
         }
-      }
+      },
+      "required": [
+        "roleAssignments",
+        "invitations"
+      ]
     },
     "v1ListRolesResponse": {
       "type": "object",
@@ -4892,7 +4984,10 @@
             "$ref": "#/definitions/v1Role"
           }
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1ListRuleTypesResponse": {
       "type": "object",
@@ -4906,7 +5001,10 @@
           "description": "rule_types is the list of rule types."
         }
       },
-      "description": "ListRuleTypesResponse is the response to list rule types."
+      "description": "ListRuleTypesResponse is the response to list rule types.",
+      "required": [
+        "ruleTypes"
+      ]
     },
     "v1PatchProfileResponse": {
       "type": "object",
@@ -4914,7 +5012,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1PatchProjectResponse": {
       "type": "object",
@@ -4923,7 +5024,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1PatchProviderResponse": {
       "type": "object",
@@ -5040,7 +5144,7 @@
           "description": "display_name is the display name of the profile."
         }
       },
-      "description": "Profile defines a profile that is user defined."
+      "description": "Profile defines a profile that is user defined.\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProfileStatus": {
       "type": "object",
@@ -5067,7 +5171,10 @@
           "title": "profile_display_name is the display name of the profile"
         }
       },
-      "title": "get the overall profile status as output"
+      "title": "get the overall profile status as output",
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1Project": {
       "type": "object",
@@ -5405,7 +5512,12 @@
           "type": "string",
           "description": "project_display is the display name of the project to which the user\nis invited."
         }
-      }
+      },
+      "required": [
+        "role",
+        "project",
+        "isAccepted"
+      ]
     },
     "v1RestDataSource": {
       "type": "object",
@@ -5455,7 +5567,10 @@
           "description": "fallback provides a body that the ingester would return in case\nthe REST call returns a non-200 status code."
         }
       },
-      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
+      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint.",
+      "required": [
+        "endpoint"
+      ]
     },
     "v1RestTypeFallback": {
       "type": "object",
@@ -5523,7 +5638,10 @@
           "type": "string",
           "description": "last_name is the last name of the subject."
         }
-      }
+      },
+      "required": [
+        "role"
+      ]
     },
     "v1RuleEvaluationStatus": {
       "type": "object",
@@ -5595,7 +5713,7 @@
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",
-          "title": "severity is the severity of the rule"
+          "description": "severity is the severity of the rule. This may be empty."
         },
         "ruleEvaluationId": {
           "type": "string",
@@ -5614,7 +5732,14 @@
           "title": "release_phase is the phase of the release"
         }
       },
-      "title": "get the status of the rules for a given profile"
+      "title": "get the status of the rules for a given profile",
+      "required": [
+        "ruleId",
+        "entity",
+        "status",
+        "ruleTypeName",
+        "releasePhase"
+      ]
     },
     "v1RuleType": {
       "type": "object",
@@ -5668,7 +5793,13 @@
           "description": "release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
-      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version.",
+      "required": [
+        "name",
+        "def",
+        "description",
+        "guidance"
+      ]
     },
     "v1RuleTypeReleasePhase": {
       "type": "string",
@@ -5753,7 +5884,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProfileResponse": {
       "type": "object",
@@ -5761,7 +5895,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProjectRequest": {
       "type": "object",
@@ -5772,11 +5909,11 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name is the display name of the project to update."
+          "description": "display_name is the display name of the project to update.\nThis is optional."
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the project to update."
+          "description": "description is the description of the project to update.\nThis is optional."
         }
       }
     },
@@ -5787,7 +5924,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1UpdateRoleRequest": {
       "type": "object",
@@ -5811,7 +5951,10 @@
           "type": "string",
           "title": "email is the email address of the subject used for updating invitations"
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1UpdateRoleResponse": {
       "type": "object",
@@ -5842,7 +5985,10 @@
           "description": "rule_type is the rule type to be updated."
         }
       },
-      "description": "UpdateRuleTypeRequest is the request to update a rule type."
+      "description": "UpdateRuleTypeRequest is the request to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpdateRuleTypeResponse": {
       "type": "object",
@@ -5852,7 +5998,10 @@
           "description": "rule_type is the rule type that was updated."
         }
       },
-      "description": "UpdateRuleTypeResponse is the response to update a rule type."
+      "description": "UpdateRuleTypeResponse is the response to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpstreamEntityRef": {
       "type": "object",

@@ -749,6 +749,20 @@ func (mr *MockStoreMockRecorder) DeleteRuleType(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleType", reflect.TypeOf((*MockStore)(nil).DeleteRuleType), ctx, id)
 }
 
+// DeleteRuleTypeDataSource mocks base method.
+func (m *MockStore) DeleteRuleTypeDataSource(ctx context.Context, arg db.DeleteRuleTypeDataSourceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRuleTypeDataSource", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRuleTypeDataSource indicates an expected call of DeleteRuleTypeDataSource.
+func (mr *MockStoreMockRecorder) DeleteRuleTypeDataSource(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRuleTypeDataSource", reflect.TypeOf((*MockStore)(nil).DeleteRuleTypeDataSource), ctx, arg)
+}
+
 // DeleteSelector mocks base method.
 func (m *MockStore) DeleteSelector(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -2228,18 +2242,18 @@ func (mr *MockStoreMockRecorder) ListRuleTypesByProject(ctx, projectID any) *gom
 }
 
 // ListRuleTypesReferencesByDataSource mocks base method.
-func (m *MockStore) ListRuleTypesReferencesByDataSource(ctx context.Context, arg db.ListRuleTypesReferencesByDataSourceParams) ([]db.RuleTypeDataSource, error) {
+func (m *MockStore) ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourcesID uuid.UUID) ([]db.RuleTypeDataSource, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleTypesReferencesByDataSource", ctx, arg)
+	ret := m.ctrl.Call(m, "ListRuleTypesReferencesByDataSource", ctx, dataSourcesID)
 	ret0, _ := ret[0].([]db.RuleTypeDataSource)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRuleTypesReferencesByDataSource indicates an expected call of ListRuleTypesReferencesByDataSource.
-func (mr *MockStoreMockRecorder) ListRuleTypesReferencesByDataSource(ctx, arg any) *gomock.Call {
+func (mr *MockStoreMockRecorder) ListRuleTypesReferencesByDataSource(ctx, dataSourcesID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesReferencesByDataSource", reflect.TypeOf((*MockStore)(nil).ListRuleTypesReferencesByDataSource), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesReferencesByDataSource", reflect.TypeOf((*MockStore)(nil).ListRuleTypesReferencesByDataSource), ctx, dataSourcesID)
 }
 
 // ListTokensToMigrate mocks base method.
