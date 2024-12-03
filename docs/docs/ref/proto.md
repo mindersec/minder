@@ -295,8 +295,8 @@ This is currently not populated in any requests or responses.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was created. |
-| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. |
+| role_assignment | <TypeLink type="minder-v1-RoleAssignment">RoleAssignment</TypeLink> |  | role_assignment is the role assignment that was created. This is optional. |
+| invitation | <TypeLink type="minder-v1-Invitation">Invitation</TypeLink> |  | invitation contains the details of the invitation for the assigned user to join the project if the user is not already a member. This is optional. |
 
 
 
@@ -1505,7 +1505,7 @@ GitType defines the git data ingester.
 
 <Message id="minder-v1-Invitation">Invitation</Message>
 
-
+Invitation is an invitation to join a project. This is only used in responses.
 
 
 | Field | Type | Label | Description |

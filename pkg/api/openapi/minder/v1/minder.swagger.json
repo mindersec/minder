@@ -1086,7 +1086,7 @@
             "name": "roleAssignment.role",
             "description": "role is the role that is assigned.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
@@ -3673,18 +3673,21 @@
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment to be created."
         }
-      }
+      },
+      "required": [
+        "roleAssignment"
+      ]
     },
     "v1AssignRoleResponse": {
       "type": "object",
       "properties": {
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment that was created."
+          "description": "role_assignment is the role assignment that was created.\nThis is optional."
         },
         "invitation": {
           "$ref": "#/definitions/v1Invitation",
-          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member."
+          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member. This is optional."
         }
       }
     },
@@ -4631,7 +4634,12 @@
           "type": "boolean",
           "description": "emailSkipped is true if the email was not sent to the invitee."
         }
-      }
+      },
+      "description": "Invitation is an invitation to join a project. This is only used in responses.",
+      "required": [
+        "role",
+        "project"
+      ]
     },
     "v1ListArtifactsResponse": {
       "type": "object",
@@ -4719,7 +4727,10 @@
             "$ref": "#/definitions/v1Invitation"
           }
         }
-      }
+      },
+      "required": [
+        "invitations"
+      ]
     },
     "v1ListProfilesResponse": {
       "type": "object",
@@ -4841,7 +4852,11 @@
           },
           "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
         }
-      }
+      },
+      "required": [
+        "roleAssignments",
+        "invitations"
+      ]
     },
     "v1ListRolesResponse": {
       "type": "object",
@@ -4853,7 +4868,10 @@
             "$ref": "#/definitions/v1Role"
           }
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1ListRuleTypesResponse": {
       "type": "object",
@@ -5378,7 +5396,12 @@
           "type": "string",
           "description": "project_display is the display name of the project to which the user\nis invited."
         }
-      }
+      },
+      "required": [
+        "role",
+        "project",
+        "isAccepted"
+      ]
     },
     "v1RestDataSource": {
       "type": "object",
@@ -5499,7 +5522,10 @@
           "type": "string",
           "description": "last_name is the last name of the subject."
         }
-      }
+      },
+      "required": [
+        "role"
+      ]
     },
     "v1RuleEvaluationStatus": {
       "type": "object",
@@ -5809,7 +5835,10 @@
           "type": "string",
           "title": "email is the email address of the subject used for updating invitations"
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1UpdateRoleResponse": {
       "type": "object",
