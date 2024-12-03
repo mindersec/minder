@@ -303,6 +303,10 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	if ds.Id == "" {
+		ds.Id = existing.ID.String()
+	}
+
 	return ds, nil
 }
 
