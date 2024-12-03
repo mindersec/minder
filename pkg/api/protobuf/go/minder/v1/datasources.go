@@ -3,6 +3,8 @@
 
 package v1
 
+import v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+
 // GetContext returns the v2 context from the CreateDataSourceRequest data source.
 func (r *CreateDataSourceRequest) GetContext() *ContextV2 {
 	return r.DataSource.GetContext()
@@ -12,4 +14,18 @@ func (r *CreateDataSourceRequest) GetContext() *ContextV2 {
 // data source.
 func (r *UpdateDataSourceRequest) GetContext() *ContextV2 {
 	return r.DataSource.GetContext()
+}
+
+// GetDriverType returns the string representation of the driver type of the data source.
+func (ds *DataSource) GetDriverType() string {
+	if ds == nil {
+		return ""
+	}
+
+	switch ds.GetDriver().(type) {
+	case *DataSource_Rest:
+		return v1datasources.DataSourceDriverRest
+	default:
+		return "unknown"
+	}
 }
