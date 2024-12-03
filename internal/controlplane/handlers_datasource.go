@@ -31,6 +31,10 @@ func (s *Server) CreateDataSource(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "missing data source")
 	}
 
+	if err := s.forceDataSourceProject(ctx, dsReq); err != nil {
+		return nil, err
+	}
+
 	// Process the request
 	ret, err := s.dataSourcesService.Create(ctx, dsReq, nil)
 	if err != nil {
@@ -158,6 +162,10 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "missing data source")
 	}
 
+	if err := s.forceDataSourceProject(ctx, dsReq); err != nil {
+		return nil, err
+	}
+
 	// Process the request
 	ret, err := s.dataSourcesService.Update(ctx, dsReq, nil)
 	if err != nil {
@@ -252,4 +260,21 @@ func (s *Server) DeleteDataSourceByName(ctx context.Context,
 
 	// Return the response
 	return &minderv1.DeleteDataSourceByNameResponse{Name: dsName}, nil
+}
+
+func (s *Server) forceDataSourceProject(ctx context.Context, in *minderv1.DataSource) error {
+	entityCtx := engcontext.EntityFromContext(ctx)
+
+	// Ensure the project is valid and exist in the db
+	if err := entityCtx.ValidateProject(ctx, s.store); err != nil {
+		return status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	// Force the context to have the observed project ID
+	if in.GetContext() == nil {
+		in.Context = &minderv1.ContextV2{}
+	}
+	in.GetContext().ProjectId = entityCtx.Project.ID.String()
+
+	return nil
 }
