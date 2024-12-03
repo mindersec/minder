@@ -3435,13 +3435,15 @@ message GetProviderRequest {
             pattern: "^[-[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message GetProviderResponse {
     // provider is the provider that was retrieved.
-    Provider provider = 1;
+    Provider provider = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListProvidersRequest {
@@ -3451,7 +3453,8 @@ message ListProvidersRequest {
     // limit is the maximum number of providers to return.
     // 0 uses a server-defined default.
     int32 limit = 2 [
-        (buf.validate.field).int32 = {gte: 0, lte: 100}
+        (buf.validate.field).int32 = {gte: 0, lte: 100},
+        (google.api.field_behavior) = REQUIRED
     ];
 
     // cursor is the cursor to use for the page of results, empty if at the beginning
@@ -3464,7 +3467,9 @@ message ListProvidersRequest {
 }
 
 message ListProvidersResponse {
-    repeated Provider providers = 1;
+    repeated Provider providers = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // cursor is the cursor to use for the next page of results, empty if at the end
     string cursor = 2;
@@ -3474,12 +3479,16 @@ message CreateProviderRequest {
     // context is the context in which the provider is created.
     Context context = 1;
     // provider is the provider to be created.
-    Provider provider = 2;
+    Provider provider = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message CreateProviderResponse {
     // provider is the provider that was created.
-    Provider provider = 1;
+    Provider provider = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // authorization provides additional authorization information needed
     // to complete the initialization of the provider.
@@ -3489,12 +3498,16 @@ message CreateProviderResponse {
 message DeleteProviderRequest {
     // context is the context in which the provider is deleted.  Both
     // project and provider are required in this context.
-    Context context = 1;
+    Context context = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProviderResponse {
     // name is the name of the provider that was deleted
-    string name = 1;
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message DeleteProviderByIDRequest {
@@ -3502,13 +3515,16 @@ message DeleteProviderByIDRequest {
     Context context = 1;
     // id is the id of the provider to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 }
 
 message DeleteProviderByIDResponse {
     // id is the id of the provider that was deleted
-    string id = 1;
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message ListProviderClassesRequest {
@@ -3518,18 +3534,26 @@ message ListProviderClassesRequest {
 
 message ListProviderClassesResponse {
     // provider_classes is the list of provider classes.
-    repeated string provider_classes = 1;
+    repeated string provider_classes = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message PatchProviderRequest {
-    Context context = 1;
+    // context is the context in which the provider is updated.
+    // The provider name is required in this context.
+    Context context = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     Provider patch = 2;
 
     google.protobuf.FieldMask update_mask = 3;
 }
 
 message PatchProviderResponse {
-    Provider provider = 1;
+    Provider provider = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message AuthorizationParams {
@@ -3600,6 +3624,8 @@ enum CredentialsState {
     CREDENTIALS_STATE_NOT_APPLICABLE = 3 [(name) = "not_applicable"];
 }
 
+// Provider represents a provider that is used to interact with external systems.
+// All fields are optional because we want to allow partial updates.
 message Provider {
     // name is the name of the provider.
     string name = 1 [
@@ -3653,7 +3679,8 @@ message Provider {
 // GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
 message GetEvaluationHistoryRequest {
     string id = 1 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
     ];
 
     Context context = 2;
@@ -3769,7 +3796,9 @@ message ListEvaluationHistoryRequest {
 // GetEvaluationHistory RPC.
 message GetEvaluationHistoryResponse {
     // The requested record
-    EvaluationHistory evaluation = 1;
+    EvaluationHistory evaluation = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // ListEvaluationHistoryResponse represents a response message for the
@@ -3779,74 +3808,110 @@ message GetEvaluationHistoryResponse {
 // the next and/or previous pages of data.
 message ListEvaluationHistoryResponse {
     // List of records retrieved.
-    repeated EvaluationHistory data = 1;
+    repeated EvaluationHistory data = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
     // Metadata of the current page and pointers to next and/or
     // previous pages.
     CursorPage page = 2;
 }
 
+// EvaluationHistory represents the history of an entity evaluation.
+// This is only used in responses.
 message EvaluationHistory {
     // entity contains details of the entity which was evaluated.
-    EvaluationHistoryEntity entity = 1;
+    EvaluationHistoryEntity entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // rule contains details of the rule which the entity was evaluated against.
-    EvaluationHistoryRule rule = 2;
+    EvaluationHistoryRule rule = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // status contains the evaluation status.
-    EvaluationHistoryStatus status = 3;
+    EvaluationHistoryStatus status = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // alert contains details of the alerts for this evaluation.
+    // This is optional.
     EvaluationHistoryAlert alert = 4;
 
     // remediation contains details of the remediation for this evaluation.
+    // This is optional.
     EvaluationHistoryRemediation remediation = 5;
 
     // created_at is the timestamp of creation of this evaluation
-    google.protobuf.Timestamp evaluated_at = 6;
+    google.protobuf.Timestamp evaluated_at = 6 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // id is the unique identifier of the evaluation.
-    string id = 7;
+    string id = 7 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message EvaluationHistoryEntity {
     // id is the unique identifier of the entity.
-    string id = 1;
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // type is the entity type.
-    Entity type = 2;
+    Entity type = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // name is the entity name.
-    string name = 3;
+    string name = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message EvaluationHistoryRule {
     // name is the name of the rule instance.
-    string name = 1;
+    string name = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // type is the name of the rule type.
-    string rule_type = 2;
+    string rule_type = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // profile is the name of the profile which contains the rule.
-    string profile = 3;
+    string profile = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // severity is the severity of the rule type.
-    Severity severity = 4;
+    Severity severity = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message EvaluationHistoryStatus {
     // status is one of (success, error, failure, skipped)
     // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
+    string status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // details contains optional details about the evaluation.
     // the structure and contents are rule type specific, and are subject to change.
-    string details = 2;
+    string details = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 message EvaluationHistoryRemediation {
     // status is one of (success, error, failure, skipped, not available)
     // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
+    string status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // details contains optional details about the remediation.
     // the structure and contents are remediation specific, and are subject to change.
@@ -3856,7 +3921,9 @@ message EvaluationHistoryRemediation {
 message EvaluationHistoryAlert {
     // status is one of (on, off, error, skipped, not available)
     // not using enums to mirror the behaviour of the existing API contracts.
-    string status = 1;
+    string status = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 
     // details contains optional details about the alert.
     // the structure and contents are alert specific, and are subject to change.

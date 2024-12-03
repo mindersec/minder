@@ -940,7 +940,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 <Message id="minder-v1-EvaluationHistory">EvaluationHistory</Message>
 
-
+EvaluationHistory represents the history of an entity evaluation.
+This is only used in responses.
 
 
 | Field | Type | Label | Description |
@@ -948,8 +949,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | entity | <TypeLink type="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</TypeLink> |  | entity contains details of the entity which was evaluated. |
 | rule | <TypeLink type="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</TypeLink> |  | rule contains details of the rule which the entity was evaluated against. |
 | status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
-| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
-| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
+| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. This is optional. |
+| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. This is optional. |
 | evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the evaluation. |
 
@@ -1968,7 +1969,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is updated. The provider name is required in this context. |
 | patch | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  |  |
 | update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  |  |
 
@@ -2109,7 +2110,8 @@ ProjectRole has the project along with the role the user has in the project
 
 <Message id="minder-v1-Provider">Provider</Message>
 
-
+Provider represents a provider that is used to interact with external systems.
+All fields are optional because we want to allow partial updates.
 
 
 | Field | Type | Label | Description |
