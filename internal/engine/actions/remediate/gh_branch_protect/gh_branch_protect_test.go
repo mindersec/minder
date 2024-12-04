@@ -321,7 +321,8 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			prov, err := testGithubProvider(ghApiUrl)
 			require.NoError(t, err)
-			engine, err := NewGhBranchProtectRemediator(tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov)
+			engine, err := NewGhBranchProtectRemediator(
+				tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
@@ -343,7 +344,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil)
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.ent, evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")

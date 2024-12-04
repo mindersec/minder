@@ -621,7 +621,8 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			provider, err := testGithubProvider()
 			require.NoError(t, err)
-			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider)
+			engine, err := NewPullRequestRemediate(
+				tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
@@ -655,7 +656,6 @@ func TestPullRequestRemediate(t *testing.T) {
 				})
 			retMeta, err := engine.Do(context.Background(),
 				interfaces.ActionCmdOn,
-				tt.remArgs.remAction,
 				tt.remArgs.ent,
 				evalParams,
 				nil)

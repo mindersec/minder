@@ -5,6 +5,7 @@
 package remediate_test
 
 import (
+	"github.com/mindersec/minder/pkg/profiles/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -117,7 +118,8 @@ func TestNewRuleRemediator(t *testing.T) {
 				provider, err = tt.provider()
 				require.NoError(t, err)
 			}
-			result, err := remediate.NewRuleRemediator(tt.ruleType, provider)
+			result, err := remediate.NewRuleRemediator(
+				tt.ruleType, provider, models.ActionOptOn)
 			if tt.wantError {
 				require.Error(t, err)
 				return
