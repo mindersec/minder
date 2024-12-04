@@ -28,8 +28,7 @@ import (
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
-	actions      map[engif.ActionType]engif.Action
-	actionsOnOff map[engif.ActionType]models.ActionOpt
+	actions map[engif.ActionType]engif.Action
 }
 
 // NewRuleActions creates a new rule actions engine
@@ -40,13 +39,13 @@ func NewRuleActions(
 	actionConfig *models.ActionConfiguration,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
-	remEngine, err := remediate.NewRuleRemediator(ruletype, provider)
+	remEngine, err := remediate.NewRuleRemediator(ruletype, provider, actionConfig.Remediate)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 
 	// Create the alert engine
-	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider)
+	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider, actionConfig.Alert)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}
@@ -56,18 +55,7 @@ func NewRuleActions(
 			remEngine.Class():   remEngine,
 			alertEngine.Class(): alertEngine,
 		},
-		// The on/off state of the actions is an integral part of the action engine
-		// and should be set upon creation.
-		actionsOnOff: map[engif.ActionType]models.ActionOpt{
-			remEngine.Class():   remEngine.GetOnOffState(actionConfig.Remediate),
-			alertEngine.Class(): alertEngine.GetOnOffState(actionConfig.Alert),
-		},
 	}, nil
-}
-
-// GetOnOffState returns the on/off state of the actions
-func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]models.ActionOpt {
-	return rae.actionsOnOff
 }
 
 // DoActions processes all actions i.e., remediation and alerts
@@ -143,7 +131,7 @@ func (rae *RuleActionsEngine) processAction(
 	// Get action engine
 	action := rae.actions[actionType]
 	// Return the result of the action
-	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
+	return action.Do(ctx, cmd, ent, params, metadata)
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
@@ -257,14 +245,14 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 		Str("action", string(actionType))
 
 	// Get the profile option set for this action type
-	actionOnOff, ok := rae.actionsOnOff[actionType]
+	action, ok := rae.actions[actionType]
 	if !ok {
 		// If the action is not found, definitely skip it
 		logger.Msg("action type not found, skipping")
 		return true
 	}
 	// Check the action option
-	switch actionOnOff {
+	switch action.GetOnOffState() {
 	case models.ActionOptOff:
 		// Action is off, skip
 		logger.Msg("action is off, skipping")

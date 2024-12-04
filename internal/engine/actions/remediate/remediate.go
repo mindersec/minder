@@ -8,6 +8,7 @@ package remediate
 import (
 	"errors"
 	"fmt"
+	"github.com/mindersec/minder/pkg/profiles/models"
 
 	"github.com/mindersec/minder/internal/engine/actions/remediate/gh_branch_protect"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
@@ -25,6 +26,7 @@ const ActionType engif.ActionType = "remediate"
 func NewRuleRemediator(
 	rt *pb.RuleType,
 	provider provinfv1.Provider,
+	setting models.ActionOpt,
 ) (engif.Action, error) {
 	remediate := rt.Def.GetRemediate()
 	if remediate == nil {
@@ -41,7 +43,7 @@ func NewRuleRemediator(
 		if remediate.GetRest() == nil {
 			return nil, fmt.Errorf("remediations engine missing rest configuration")
 		}
-		return rest.NewRestRemediate(ActionType, remediate.GetRest(), client)
+		return rest.NewRestRemediate(ActionType, remediate.GetRest(), client, setting)
 
 	case gh_branch_protect.RemediateType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
@@ -51,7 +53,8 @@ func NewRuleRemediator(
 		if remediate.GetGhBranchProtection() == nil {
 			return nil, fmt.Errorf("remediations engine missing gh_branch_protection configuration")
 		}
-		return gh_branch_protect.NewGhBranchProtectRemediator(ActionType, remediate.GetGhBranchProtection(), client)
+		return gh_branch_protect.NewGhBranchProtectRemediator(
+			ActionType, remediate.GetGhBranchProtection(), client, setting)
 
 	case pull_request.RemediateType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
@@ -62,7 +65,8 @@ func NewRuleRemediator(
 			return nil, fmt.Errorf("remediations engine missing pull request configuration")
 		}
 
-		return pull_request.NewPullRequestRemediate(ActionType, remediate.GetPullRequest(), client)
+		return pull_request.NewPullRequestRemediate(
+			ActionType, remediate.GetPullRequest(), client, setting)
 	}
 
 	return nil, fmt.Errorf("unknown remediation type: %s", remediate.GetType())
