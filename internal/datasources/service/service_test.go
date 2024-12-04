@@ -33,7 +33,9 @@ var validRESTDriverFixture = &minderv1.DataSource_Rest{
 					s, _ := structpb.NewStruct(map[string]any{
 						"type": "object",
 						"properties": map[string]any{
-							"test": "string",
+							"test": map[string]any{
+								"type": "string",
+							},
 						},
 					})
 					return s
@@ -1054,7 +1056,12 @@ func TestUpdate(t *testing.T) {
 										s, _ := structpb.NewStruct(map[string]any{
 											"type": "object",
 											"properties": map[string]any{
-												"test": "string",
+												"test": map[string]any{
+													"type": "string",
+												},
+												"foo": map[string]any{
+													"type": "string",
+												},
 											},
 										})
 										return s
@@ -1071,6 +1078,29 @@ func TestUpdate(t *testing.T) {
 					Return(db.DataSource{
 						ID:   uuid.MustParse(uuid.New().String()),
 						Name: "test_ds",
+					}, nil)
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{
+							ID:           uuid.New(),
+							DataSourceID: uuid.New(),
+							Name:         "test_function",
+							Type:         string(v1.DataSourceDriverRest),
+							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
+								Endpoint: "http://example.com",
+								InputSchema: func() *structpb.Struct {
+									s, _ := structpb.NewStruct(map[string]any{
+										"type": "object",
+										"properties": map[string]any{
+											"test": map[string]any{
+												"type": "string",
+											},
+										},
+									})
+									return s
+								}(),
+							}),
+						},
 					}, nil)
 
 				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
@@ -1162,6 +1192,29 @@ func TestUpdate(t *testing.T) {
 			setup: func(mockDB *mockdb.MockStore) {
 				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{ID: uuid.New()}, nil)
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{
+							ID:           uuid.New(),
+							DataSourceID: uuid.New(),
+							Name:         "test_function",
+							Type:         string(v1.DataSourceDriverRest),
+							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
+								Endpoint: "http://example.com",
+								InputSchema: func() *structpb.Struct {
+									s, _ := structpb.NewStruct(map[string]any{
+										"type": "object",
+										"properties": map[string]any{
+											"test": map[string]any{
+												"type": "string",
+											},
+										},
+									})
+									return s
+								}(),
+							}),
+						},
+					}, nil)
 
 				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{}, fmt.Errorf("database error"))
@@ -1184,12 +1237,123 @@ func TestUpdate(t *testing.T) {
 			setup: func(mockDB *mockdb.MockStore) {
 				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{ID: uuid.New()}, nil)
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{
+							ID:           uuid.New(),
+							DataSourceID: uuid.New(),
+							Name:         "test_function",
+							Type:         string(v1.DataSourceDriverRest),
+							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
+								Endpoint: "http://example.com",
+								InputSchema: func() *structpb.Struct {
+									s, _ := structpb.NewStruct(map[string]any{
+										"type": "object",
+										"properties": map[string]any{
+											"test": map[string]any{
+												"type": "string",
+											},
+										},
+									})
+									return s
+								}(),
+							}),
+						},
+					}, nil)
 
 				mockDB.EXPECT().UpdateDataSource(gomock.Any(), gomock.Any()).
 					Return(db.DataSource{}, nil)
 
 				mockDB.EXPECT().DeleteDataSourceFunctions(gomock.Any(), gomock.Any()).
 					Return(nil, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Database error on get functions",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+					Driver: validRESTDriverFixture,
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{ID: uuid.New()}, nil)
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{}, fmt.Errorf("database error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "Update REST data source fails on update validation",
+			args: args{
+				ds: &minderv1.DataSource{
+					Id:   uuid.New().String(),
+					Name: "updated_ds",
+					Context: &minderv1.ContextV2{
+						ProjectId: uuid.New().String(),
+					},
+					Driver: &minderv1.DataSource_Rest{
+						Rest: &minderv1.RestDataSource{
+							Def: map[string]*minderv1.RestDataSource_Def{
+								"test_function": {
+									Endpoint: "http://example.com/updated",
+									InputSchema: func() *structpb.Struct {
+										s, _ := structpb.NewStruct(map[string]any{
+											"type": "object",
+											"properties": map[string]any{
+												// This is not allowed as we're missing the "test" field
+												"foo": map[string]any{
+													"type": "string",
+												},
+											},
+											// This is not allowed as we're adding a required field
+											"required": []any{"foo"},
+										})
+										return s
+									}(),
+								},
+							},
+						},
+					},
+				},
+				opts: &Options{},
+			},
+			setup: func(mockDB *mockdb.MockStore) {
+				mockDB.EXPECT().GetDataSourceByName(gomock.Any(), gomock.Any()).
+					Return(db.DataSource{
+						ID:   uuid.MustParse(uuid.New().String()),
+						Name: "test_ds",
+					}, nil)
+				mockDB.EXPECT().ListDataSourceFunctions(gomock.Any(), gomock.Any()).
+					Return([]db.DataSourcesFunction{
+						{
+							ID:           uuid.New(),
+							DataSourceID: uuid.New(),
+							Name:         "test_function",
+							Type:         string(v1.DataSourceDriverRest),
+							Definition: restDriverToJson(t, &minderv1.RestDataSource_Def{
+								Endpoint: "http://example.com",
+								InputSchema: func() *structpb.Struct {
+									s, _ := structpb.NewStruct(map[string]any{
+										"type": "object",
+										"properties": map[string]any{
+											"test": map[string]any{
+												"type": "string",
+											},
+										},
+									})
+									return s
+								}(),
+							}),
+						},
+					}, nil)
 			},
 			wantErr: true,
 		},
