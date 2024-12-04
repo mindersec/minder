@@ -1161,6 +1161,7 @@ const (
 	ProfileService_GetProfileById_FullMethodName            = "/minder.v1.ProfileService/GetProfileById"
 	ProfileService_GetProfileByName_FullMethodName          = "/minder.v1.ProfileService/GetProfileByName"
 	ProfileService_GetProfileStatusByName_FullMethodName    = "/minder.v1.ProfileService/GetProfileStatusByName"
+	ProfileService_GetProfileStatusById_FullMethodName      = "/minder.v1.ProfileService/GetProfileStatusById"
 	ProfileService_GetProfileStatusByProject_FullMethodName = "/minder.v1.ProfileService/GetProfileStatusByProject"
 )
 
@@ -1176,6 +1177,7 @@ type ProfileServiceClient interface {
 	GetProfileById(ctx context.Context, in *GetProfileByIdRequest, opts ...grpc.CallOption) (*GetProfileByIdResponse, error)
 	GetProfileByName(ctx context.Context, in *GetProfileByNameRequest, opts ...grpc.CallOption) (*GetProfileByNameResponse, error)
 	GetProfileStatusByName(ctx context.Context, in *GetProfileStatusByNameRequest, opts ...grpc.CallOption) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusByIdResponse, error)
 	GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error)
 }
 
@@ -1267,6 +1269,16 @@ func (c *profileServiceClient) GetProfileStatusByName(ctx context.Context, in *G
 	return out, nil
 }
 
+func (c *profileServiceClient) GetProfileStatusById(ctx context.Context, in *GetProfileStatusByIdRequest, opts ...grpc.CallOption) (*GetProfileStatusByIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProfileStatusByIdResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetProfileStatusById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *profileServiceClient) GetProfileStatusByProject(ctx context.Context, in *GetProfileStatusByProjectRequest, opts ...grpc.CallOption) (*GetProfileStatusByProjectResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetProfileStatusByProjectResponse)
@@ -1289,6 +1301,7 @@ type ProfileServiceServer interface {
 	GetProfileById(context.Context, *GetProfileByIdRequest) (*GetProfileByIdResponse, error)
 	GetProfileByName(context.Context, *GetProfileByNameRequest) (*GetProfileByNameResponse, error)
 	GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error)
+	GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusByIdResponse, error)
 	GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
@@ -1323,6 +1336,9 @@ func (UnimplementedProfileServiceServer) GetProfileByName(context.Context, *GetP
 }
 func (UnimplementedProfileServiceServer) GetProfileStatusByName(context.Context, *GetProfileStatusByNameRequest) (*GetProfileStatusByNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByName not implemented")
+}
+func (UnimplementedProfileServiceServer) GetProfileStatusById(context.Context, *GetProfileStatusByIdRequest) (*GetProfileStatusByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusById not implemented")
 }
 func (UnimplementedProfileServiceServer) GetProfileStatusByProject(context.Context, *GetProfileStatusByProjectRequest) (*GetProfileStatusByProjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProfileStatusByProject not implemented")
@@ -1492,6 +1508,24 @@ func _ProfileService_GetProfileStatusByName_Handler(srv interface{}, ctx context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_GetProfileStatusById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProfileStatusByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetProfileStatusById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetProfileStatusById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetProfileStatusById(ctx, req.(*GetProfileStatusByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProfileService_GetProfileStatusByProject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetProfileStatusByProjectRequest)
 	if err := dec(in); err != nil {
@@ -1548,6 +1582,10 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetProfileStatusByName",
 			Handler:    _ProfileService_GetProfileStatusByName_Handler,
+		},
+		{
+			MethodName: "GetProfileStatusById",
+			Handler:    _ProfileService_GetProfileStatusById_Handler,
 		},
 		{
 			MethodName: "GetProfileStatusByProject",

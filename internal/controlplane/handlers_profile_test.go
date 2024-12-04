@@ -1172,3 +1172,113 @@ func TestPatchManagedProfile(t *testing.T) {
 	require.Contains(t, err.Error(), "attempted to edit a rule type or profile which belongs to a bundle")
 	require.Nil(t, patchedProfile)
 }
+
+func TestGetProfileStatusByName(t *testing.T) {
+	t.Parallel()
+
+	// Setup test database
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	require.NoError(t, err, "Error creating fake store")
+
+	// Create a test project
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test-project",
+		Metadata: []byte(`{}`),
+	})
+	require.NoError(t, err, "Error creating test project")
+
+	// Create a test profile
+	expectedProfileName := "test-profile"
+	dbProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      expectedProfileName,
+		ProjectID: dbproj.ID,
+	})
+	require.NoError(t, err, "Error creating test profile")
+
+	// Setup context with project information
+	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+		Project: engcontext.Project{ID: dbproj.ID},
+	})
+
+	// Create server instance
+	s := &Server{
+		store: dbStore,
+	}
+
+	// Test case
+	t.Run("Successful retrieval of profile status by name", func(t *testing.T) {
+		t.Parallel()
+		// Prepare request
+		req := &minderv1.GetProfileStatusByNameRequest{
+			Name: expectedProfileName,
+		}
+
+		// Call the method
+		resp, err := s.GetProfileStatusByName(ctx, req)
+
+		// Assertions
+		require.NoError(t, err, "Should not return an error")
+		require.NotNil(t, resp, "Response should not be nil")
+		require.Equal(t, dbProfile.ID.String(), resp.ProfileStatus.ProfileId, "Profile ID should match")
+		require.Equal(t, expectedProfileName, resp.ProfileStatus.ProfileName, "Profile name should match")
+	})
+}
+
+func TestGetProfileStatusById(t *testing.T) {
+	t.Parallel()
+
+	// Setup test database
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	require.NoError(t, err, "Error creating fake store")
+
+	// Create a test project
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test-project",
+		Metadata: []byte(`{}`),
+	})
+	require.NoError(t, err, "Error creating test project")
+
+	// Create a test profile
+	expectedProfileName := "test-profile"
+	dbProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      expectedProfileName,
+		ProjectID: dbproj.ID,
+	})
+	require.NoError(t, err, "Error creating test profile")
+
+	// Setup context with project information
+	ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+		Project: engcontext.Project{ID: dbproj.ID},
+	})
+
+	// Create server instance
+	s := &Server{
+		store: dbStore,
+	}
+
+	// Test case
+	t.Run("Successful retrieval of profile status by ID", func(t *testing.T) {
+		t.Parallel()
+		// Prepare request
+		req := &minderv1.GetProfileStatusByIdRequest{
+			Id: dbProfile.ID.String(),
+		}
+
+		// Call the method
+		resp, err := s.GetProfileStatusById(ctx, req)
+
+		// Assertions
+		require.NoError(t, err, "Should not return an error")
+		require.NotNil(t, resp, "Response should not be nil")
+		require.Equal(t, dbProfile.ID.String(), resp.ProfileStatus.ProfileId, "Profile ID should match")
+		require.Equal(t, expectedProfileName, resp.ProfileStatus.ProfileName, "Profile name should match")
+	})
+}
