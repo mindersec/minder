@@ -2747,6 +2747,13 @@ definitions:
       bodystr:
         type: string
         description: bodystr is the body of the request as a string.
+      bodyFromField:
+        type: string
+        description: |-
+          body_from_field is the field in the input to use as the body.
+          If the value is an string, it will be used as the body, as is.
+          If the value is an object, it will be serialized as JSON.
+          If the value is not found in the input, the request will fail.
       parse:
         type: string
         description: |-
