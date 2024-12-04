@@ -95,6 +95,7 @@ type Alert struct {
 	summaryTmpl          *htmltemplate.Template
 	descriptionTmpl      *htmltemplate.Template
 	descriptionNoRemTmpl *htmltemplate.Template
+	setting              models.ActionOpt
 }
 
 type paramsSA struct {
@@ -130,6 +131,7 @@ func NewSecurityAdvisoryAlert(
 	ruleType *pb.RuleType,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	cli provifv1.GitHub,
+	setting models.ActionOpt,
 ) (*Alert, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -161,6 +163,7 @@ func NewSecurityAdvisoryAlert(
 		summaryTmpl:          sumT,
 		descriptionTmpl:      descT,
 		descriptionNoRemTmpl: descNoRemT,
+		setting:              setting,
 	}, nil
 }
 
@@ -175,15 +178,14 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (alert *Alert) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(alert.setting, models.ActionOptOff)
 }
 
 // Do alerts through security advisory
 func (alert *Alert) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -195,7 +197,7 @@ func (alert *Alert) Do(
 	}
 
 	// Process the command based on the action setting
-	switch setting {
+	switch alert.setting {
 	case models.ActionOptOn:
 		return alert.run(ctx, p, cmd)
 	case models.ActionOptDryRun:

@@ -42,6 +42,7 @@ type GhBranchProtectRemediator struct {
 	actionType    interfaces.ActionType
 	cli           provifv1.GitHub
 	patchTemplate *util.SafeTemplate
+	setting       models.ActionOpt
 }
 
 // NewGhBranchProtectRemediator creates a new remediation engine that uses the GitHub API for branch protection
@@ -49,6 +50,7 @@ func NewGhBranchProtectRemediator(
 	actionType interfaces.ActionType,
 	ghp *pb.RuleType_Definition_Remediate_GhBranchProtectionType,
 	cli provifv1.GitHub,
+	setting models.ActionOpt,
 ) (*GhBranchProtectRemediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -63,6 +65,7 @@ func NewGhBranchProtectRemediator(
 		actionType:    actionType,
 		cli:           cli,
 		patchTemplate: patchTemplate,
+		setting:       setting,
 	}, nil
 }
 
@@ -87,15 +90,14 @@ func (_ *GhBranchProtectRemediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *GhBranchProtectRemediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (r *GhBranchProtectRemediator) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(r.setting, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *GhBranchProtectRemediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	remAction models.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
@@ -161,7 +163,7 @@ func (r *GhBranchProtectRemediator) Do(
 		return nil, fmt.Errorf("error patching request: %w", err)
 	}
 
-	switch remAction {
+	switch r.setting {
 	case models.ActionOptOn:
 		err = r.cli.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
 	case models.ActionOptDryRun:

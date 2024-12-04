@@ -183,8 +183,6 @@ func (e *executor) evaluateRule(
 		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
-	evalParams.SetActionsOnOff(actionEngine.GetOnOffState())
-
 	// Update the lock lease at the end of the evaluation
 	defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 

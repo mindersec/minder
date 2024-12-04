@@ -129,16 +129,19 @@ func (ts *TelemetryStore) AddRuleEval(
 		RuleType:   RuleType{Name: ruleTypeName, ID: evalInfo.GetRule().RuleTypeID},
 		Profile:    Profile{Name: evalInfo.GetProfile().Name, ID: evalInfo.GetProfile().ID},
 		EvalResult: errors.EvalErrorAsString(evalInfo.GetEvalErr()),
-		Actions: map[interfaces.ActionType]ActionEvalData{
-			remediate.ActionType: {
-				State:  evalInfo.GetActionsOnOff()[remediate.ActionType].String(),
-				Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
-			},
-			alert.ActionType: {
-				State:  evalInfo.GetActionsOnOff()[alert.ActionType].String(),
-				Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
-			},
-		},
+		Actions:    map[interfaces.ActionType]ActionEvalData{},
+	}
+
+	if p := evalInfo.GetProfile(); p != nil {
+		actionCfg := p.ActionConfig
+		red.Actions[remediate.ActionType] = ActionEvalData{
+			State:  actionCfg.Remediate.String(),
+			Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
+		}
+		red.Actions[alert.ActionType] = ActionEvalData{
+			State:  actionCfg.Alert.String(),
+			Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
+		}
 	}
 
 	ts.Evals = append(ts.Evals, red)

@@ -15,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert/security_advisory"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -26,6 +27,7 @@ func NewRuleAlert(
 	ctx context.Context,
 	ruletype *pb.RuleType,
 	provider provinfv1.Provider,
+	setting models.ActionOpt,
 ) (engif.Action, error) {
 	alertCfg := ruletype.Def.GetAlert()
 	if alertCfg == nil {
@@ -44,7 +46,8 @@ func NewRuleAlert(
 				Msg("provider is not a GitHub provider. Silently skipping alerts.")
 			return noop.NewNoopAlert(ActionType)
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype, alertCfg.GetSecurityAdvisory(), client)
+		return security_advisory.NewSecurityAdvisoryAlert(
+			ActionType, ruletype, alertCfg.GetSecurityAdvisory(), client, setting)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

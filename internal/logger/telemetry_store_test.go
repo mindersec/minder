@@ -13,8 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/engine/actions/alert"
-	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/logger"
@@ -42,12 +40,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 			ep.Profile = &models.ProfileAggregate{
 				Name: "artifact_profile",
 				ID:   testUUID,
+				ActionConfig: models.ActionConfiguration{
+					Remediate: models.ActionOptOff,
+					Alert:     models.ActionOptOn,
+				},
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
-				alert.ActionType:     models.ActionOptOn,
-				remediate.ActionType: models.ActionOptOff,
-			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
 				AlertErr:     enginerr.ErrActionSkipped,
@@ -70,12 +68,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 			ep.Profile = &models.ProfileAggregate{
 				Name: "artifact_profile",
 				ID:   testUUID,
+				ActionConfig: models.ActionConfiguration{
+					Remediate: models.ActionOptOn,
+					Alert:     models.ActionOptOff,
+				},
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
-				alert.ActionType:     models.ActionOptOff,
-				remediate.ActionType: models.ActionOptOn,
-			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
 				AlertErr:     enginerr.ErrActionSkipped,

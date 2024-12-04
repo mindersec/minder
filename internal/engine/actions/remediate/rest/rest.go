@@ -43,10 +43,15 @@ type Remediator struct {
 	cli              provifv1.REST
 	endpointTemplate *util.SafeTemplate
 	bodyTemplate     *util.SafeTemplate
+	// Setting defines the current action setting. e.g. dry-run, on, off
+	setting models.ActionOpt
 }
 
 // NewRestRemediate creates a new REST rule data ingest engine
-func NewRestRemediate(actionType interfaces.ActionType, restCfg *pb.RestType, cli provifv1.REST) (*Remediator, error) {
+func NewRestRemediate(
+	actionType interfaces.ActionType, restCfg *pb.RestType, cli provifv1.REST,
+	setting models.ActionOpt,
+) (*Remediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
@@ -72,6 +77,7 @@ func NewRestRemediate(actionType interfaces.ActionType, restCfg *pb.RestType, cl
 		method:           method,
 		endpointTemplate: endpointTmpl,
 		bodyTemplate:     bodyTmpl,
+		setting:          setting,
 	}, nil
 }
 
@@ -96,15 +102,14 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (r *Remediator) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(r.setting, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
@@ -137,7 +142,7 @@ func (r *Remediator) Do(
 		Msgf("remediating with endpoint: [%s] and body [%+v]", endpoint.String(), body.String())
 
 	var err error
-	switch setting {
+	switch r.setting {
 	case models.ActionOptOn:
 		err = r.run(ctx, endpoint.String(), body.Bytes())
 	case models.ActionOptDryRun:

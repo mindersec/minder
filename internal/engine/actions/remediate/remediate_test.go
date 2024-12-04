@@ -19,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -117,7 +118,8 @@ func TestNewRuleRemediator(t *testing.T) {
 				provider, err = tt.provider()
 				require.NoError(t, err)
 			}
-			result, err := remediate.NewRuleRemediator(tt.ruleType, provider)
+			result, err := remediate.NewRuleRemediator(
+				tt.ruleType, provider, models.ActionOptOn)
 			if tt.wantError {
 				require.Error(t, err)
 				return

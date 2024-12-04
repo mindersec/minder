@@ -140,7 +140,8 @@ func TestNewRestRemediate(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, restProvider)
+			got, err := NewRestRemediate(
+				tt.args.actionType, tt.args.restCfg, restProvider, models.ActionOptOn)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -372,7 +373,8 @@ func TestRestRemediate(t *testing.T) {
 			defer testServer.Close()
 			provider, err := testGithubProvider(testServer.URL)
 			require.NoError(t, err)
-			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, provider)
+			engine, err := NewRestRemediate(
+				TestActionTypeValid, tt.newRemArgs.restCfg, provider, tt.remArgs.remAction)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
@@ -383,7 +385,8 @@ func TestRestRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
+			retMeta, err := engine.Do(
+				context.Background(), interfaces.ActionCmdOn, tt.remArgs.ent,
 				evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")

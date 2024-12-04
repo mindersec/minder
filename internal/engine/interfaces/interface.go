@@ -26,8 +26,8 @@ type ActionType string
 type Action interface {
 	Class() ActionType
 	Type() string
-	GetOnOffState(models.ActionOpt) models.ActionOpt
-	Do(ctx context.Context, cmd ActionCmd, setting models.ActionOpt, entity protoreflect.ProtoMessage,
+	GetOnOffState() models.ActionOpt
+	Do(ctx context.Context, cmd ActionCmd, entity protoreflect.ProtoMessage,
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
@@ -60,13 +60,11 @@ type EvalStatusParams struct {
 	EntityID         uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
-	actionsOnOff     map[ActionType]models.ActionOpt
 	actionsErr       evalerrors.ActionsError
 	ExecutionID      uuid.UUID
 }
 
 // Ensure EvalStatusParams implements the necessary interfaces
-var _ ActionsParams = (*EvalStatusParams)(nil)
 var _ EvalParamsReader = (*EvalStatusParams)(nil)
 var _ interfaces.ResultSink = (*EvalStatusParams)(nil)
 
@@ -78,16 +76,6 @@ func (e *EvalStatusParams) GetEvalErr() error {
 // SetEvalErr sets the evaluation error
 func (e *EvalStatusParams) SetEvalErr(err error) {
 	e.evalErr = err
-}
-
-// GetActionsOnOff returns the actions' on/off state
-func (e *EvalStatusParams) GetActionsOnOff() map[ActionType]models.ActionOpt {
-	return e.actionsOnOff
-}
-
-// SetActionsOnOff sets the actions' on/off state
-func (e *EvalStatusParams) SetActionsOnOff(actionsOnOff map[ActionType]models.ActionOpt) {
-	e.actionsOnOff = actionsOnOff
 }
 
 // SetActionsErr sets the actions' error
@@ -173,7 +161,6 @@ type EvalParamsReader interface {
 type ActionsParams interface {
 	EvalParamsReader
 	interfaces.ResultSink
-	GetActionsOnOff() map[ActionType]models.ActionOpt
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
