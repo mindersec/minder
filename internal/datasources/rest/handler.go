@@ -63,6 +63,10 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 	}, nil
 }
 
+func (h *restHandler) GetArgsSchema() any {
+	return h.rawInputSchema
+}
+
 func (h *restHandler) ValidateArgs(args any) error {
 	if h.inputSchema == nil {
 		return errors.New("input schema cannot be nil")
