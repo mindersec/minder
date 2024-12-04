@@ -589,5 +589,76 @@ func (rest *RestDataSource_Def) Validate() error {
 		return fmt.Errorf("%w: rest function input schema is nil", ErrValidationFailed)
 	}
 
+	if rest.GetBody() != nil {
+		switch rest.GetBody().(type) {
+		case *RestDataSource_Def_Bodyobj:
+			if rest.GetBodyobj() == nil {
+				return fmt.Errorf("%w: rest function body is nil", ErrValidationFailed)
+			}
+		case *RestDataSource_Def_BodyFromField:
+			if rest.GetBodyFromField() == "" {
+				return fmt.Errorf("%w: rest function body from field is empty", ErrValidationFailed)
+			}
+			if err := keyInProperties(rest.GetBodyFromField(), rest.GetInputSchema().AsMap()); err != nil {
+				return fmt.Errorf("%w: %v", ErrValidationFailed, err)
+			}
+		case *RestDataSource_Def_Bodystr:
+			if rest.GetBodystr() == "" {
+				return fmt.Errorf("%w: rest function body from input is empty", ErrValidationFailed)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validate that the given key exists in the given properties.
+// they key must exist in the top level properties. It must contain a default
+// or be marked as required.
+func keyInProperties(key string, schema map[string]any) error {
+	if schema == nil {
+		return fmt.Errorf("properties are missing")
+	}
+
+	// check required
+	required, ok := schema["required"]
+	if ok {
+		req, ok := required.([]any)
+		if !ok {
+			return fmt.Errorf("required is invalid")
+		}
+		for _, r := range req {
+			if r == key {
+				return nil
+			}
+		}
+	}
+
+	props, ok := schema["properties"]
+	if !ok {
+		return fmt.Errorf("properties are missing")
+	}
+
+	properties, ok := props.(map[string]any)
+	if !ok {
+		return fmt.Errorf("properties are invalid")
+	}
+
+	prop, ok := properties[key]
+	if !ok {
+		return fmt.Errorf("key %q is missing", key)
+	}
+
+	p, ok := prop.(map[string]any)
+	if !ok {
+		return fmt.Errorf("key %q is invalid", key)
+	}
+
+	if _, ok := p["default"]; !ok {
+		if _, ok := p["required"]; !ok {
+			return fmt.Errorf("key %q is missing default or required", key)
+		}
+	}
+
 	return nil
 }

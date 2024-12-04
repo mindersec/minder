@@ -4055,6 +4055,17 @@ message RestDataSource {
                     max_len: 1000,
                 }
             ];
+
+            // body_from_field is the field in the input to use as the body.
+            // If the value is an string, it will be used as the body, as is.
+            // If the value is an object, it will be serialized as JSON.
+            // If the value is not found in the input, the request will fail.
+            string body_from_field = 10 [
+                (buf.validate.field).string = {
+                    // We're assuming fairly short field names here.
+                    max_len: 50,
+                }
+            ];
         }
 
         // parse is the parse configuration for the response.

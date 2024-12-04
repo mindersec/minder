@@ -2350,6 +2350,7 @@ RestDataSource is the REST data source driver.
 | headers | <TypeLink type="minder-v1-RestDataSource-Def-HeadersEntry">RestDataSource.Def.HeadersEntry</TypeLink> | repeated | headers is a map of headers to send with the request. |
 | bodyobj | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | body is the body of the request. |
 | bodystr | <TypeLink type="string">string</TypeLink> |  | bodystr is the body of the request as a string. |
+| body_from_field | <TypeLink type="string">string</TypeLink> |  | body_from_field is the field in the input to use as the body. If the value is an string, it will be used as the body, as is. If the value is an object, it will be serialized as JSON. If the value is not found in the input, the request will fail. |
 | parse | <TypeLink type="string">string</TypeLink> |  | parse is the parse configuration for the response. This allows us to serialize the response into a structured format, or not. If left unset, the response will be treated as a string. If set to "json", the response will be parsed as JSON. |
 | fallback | <TypeLink type="minder-v1-RestDataSource-Def-Fallback">RestDataSource.Def.Fallback</TypeLink> | repeated | fallback is the fallback configuration for the response in case of an unexpected status code. |
 | expected_status | <TypeLink type="int32">int32</TypeLink> | repeated | expected_status is the expected status code for the response. This may be repeated to allow for multiple expected status codes. If left unset, it will default to 200. |
