@@ -56,6 +56,20 @@ func (mr *MockDataSourceFuncDefMockRecorder) Call(ctx, args any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Call", reflect.TypeOf((*MockDataSourceFuncDef)(nil).Call), ctx, args)
 }
 
+// GetArgsSchema mocks base method.
+func (m *MockDataSourceFuncDef) GetArgsSchema() any {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetArgsSchema")
+	ret0, _ := ret[0].(any)
+	return ret0
+}
+
+// GetArgsSchema indicates an expected call of GetArgsSchema.
+func (mr *MockDataSourceFuncDefMockRecorder) GetArgsSchema() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetArgsSchema", reflect.TypeOf((*MockDataSourceFuncDef)(nil).GetArgsSchema))
+}
+
 // ValidateArgs mocks base method.
 func (m *MockDataSourceFuncDef) ValidateArgs(obj any) error {
 	m.ctrl.T.Helper()

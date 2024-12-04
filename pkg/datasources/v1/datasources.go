@@ -40,6 +40,8 @@ type DataSourceFuncDef interface {
 	// It is also the responsibility of the caller to validate the arguments
 	// before calling the function.
 	Call(ctx context.Context, args any) (any, error)
+	// GetArgsSchema returns the schema of the arguments.
+	GetArgsSchema() any
 }
 
 // DataSource is the interface that a data source must implement.
