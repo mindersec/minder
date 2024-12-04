@@ -17,4 +17,6 @@ const (
 	AlternateMessageDriver Experiment = "alternate_message_driver"
 	// DataSources enables data sources management.
 	DataSources Experiment = "data_sources"
+	// PRCommentAlert enables the pull request comment alert engine.
+	PRCommentAlert Experiment = "pr_comment_alert"
 )

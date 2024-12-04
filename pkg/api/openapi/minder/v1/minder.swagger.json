@@ -3085,6 +3085,17 @@
     }
   },
   "definitions": {
+    "AlertAlertTypePRComment": {
+      "type": "object",
+      "properties": {
+        "reviewMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewMessage"
+      ]
+    },
     "AlertAlertTypeSA": {
       "type": "object",
       "properties": {
@@ -3101,6 +3112,9 @@
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
+        },
+        "pullRequestComment": {
+          "$ref": "#/definitions/AlertAlertTypePRComment"
         }
       }
     },

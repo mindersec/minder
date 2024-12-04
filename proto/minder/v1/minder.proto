@@ -2810,7 +2810,7 @@ message RuleType {
         message Alert {
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["security_advisory"],
+                    in: ["security_advisory", "pull_request_comment"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
@@ -2824,6 +2824,16 @@ message RuleType {
                 ];
             }
             optional AlertTypeSA security_advisory = 2;
+
+            message AlertTypePRComment {
+                string review_message = 1 [
+                    (buf.validate.field).string = {
+                        max_len: 1000,
+                    },
+                    (google.api.field_behavior) = REQUIRED
+                ];
+            }
+            optional AlertTypePRComment pull_request_comment = 3;
         }
         Alert alert = 7;
     }

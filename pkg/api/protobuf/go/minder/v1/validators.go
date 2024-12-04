@@ -310,6 +310,10 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
 			return err
 		}
+	} else if alert.Type == "pull_request_comment" {
+		if err := alert.GetPullRequestComment().Validate(); err != nil {
+			return err
+		}
 	} else {
 		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
@@ -320,6 +324,19 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
 	if sa == nil {
 		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type alert pull request comment
+func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
+	if comment == nil {
+		return fmt.Errorf("%w: pull request comment is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if comment.GetReviewMessage() == "" {
+		return fmt.Errorf("%w: pull request comment review message cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
 
 	return nil

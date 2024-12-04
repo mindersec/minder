@@ -180,6 +180,11 @@ func (s *Server) CreateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
 	}
 
+	prCommentAlert := crt.GetRuleType().GetDef().GetAlert().GetPullRequestComment()
+	if prCommentAlert != nil && !flags.Bool(ctx, s.featureFlags, flags.PRCommentAlert) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "Pull request comment alert type is disabled")
+	}
+
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
