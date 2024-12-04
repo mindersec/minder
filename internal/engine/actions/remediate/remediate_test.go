@@ -5,7 +5,6 @@
 package remediate_test
 
 import (
-	"github.com/mindersec/minder/pkg/profiles/models"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

@@ -5,13 +5,13 @@ package logger
 
 import (
 	"context"
-	"github.com/mindersec/minder/internal/engine/actions/alert"
-	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 )

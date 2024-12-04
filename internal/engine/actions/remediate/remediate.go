@@ -8,7 +8,6 @@ package remediate
 import (
 	"errors"
 	"fmt"
-	"github.com/mindersec/minder/pkg/profiles/models"
 
 	"github.com/mindersec/minder/internal/engine/actions/remediate/gh_branch_protect"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
@@ -16,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

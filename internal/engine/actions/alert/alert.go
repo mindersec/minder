@@ -8,7 +8,6 @@ package alert
 import (
 	"context"
 	"fmt"
-	"github.com/mindersec/minder/pkg/profiles/models"
 
 	"github.com/rs/zerolog"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert/security_advisory"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
