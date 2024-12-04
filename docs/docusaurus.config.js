@@ -18,6 +18,10 @@ const redocusaurus = [
         spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
       },
     ],
+    theme: {
+      primaryColor: '#000000',
+      primaryColorDark: '#b0e0e6',
+    },
   }
 ]
 
