@@ -34,9 +34,11 @@ type restHandler struct {
 	inputSchema    *jsonschema.Schema
 	endpointTmpl   string
 	method         string
-	body           string
-	headers        map[string]string
-	parse          string
+	// contains the request body or the key
+	body          string
+	bodyFromInput bool
+	headers       map[string]string
+	parse         string
 	// TODO implement fallback
 	// TODO implement auth
 }
@@ -52,13 +54,16 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 		return nil, err
 	}
 
+	bodyFromInput, body := parseRequestBodyConfig(def)
+
 	return &restHandler{
 		rawInputSchema: def.GetInputSchema(),
 		inputSchema:    schema,
 		endpointTmpl:   def.GetEndpoint(),
 		method:         util.HttpMethodFromString(def.GetMethod(), http.MethodGet),
 		headers:        def.GetHeaders(),
-		body:           parseRequestBodyConfig(def),
+		body:           body,
+		bodyFromInput:  bodyFromInput,
 		parse:          def.GetParse(),
 	}, nil
 }
@@ -118,9 +123,9 @@ func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 		Timeout: 5 * time.Second,
 	}
 
-	var b io.Reader
-	if h.body != "" {
-		b = strings.NewReader(h.body)
+	b, err := h.getBody(argsMap)
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequest(h.method, expandedEndpoint, b)
@@ -147,6 +152,44 @@ func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 	// TODO: Handle fallback here.
 
 	return buildRestOutput(resp.StatusCode, bout), nil
+}
+
+func (h *restHandler) getBody(args map[string]any) (io.Reader, error) {
+	if h.bodyFromInput {
+		return h.getBodyFromInput(args)
+	}
+
+	if h.body == "" {
+		return nil, nil
+	}
+
+	return strings.NewReader(h.body), nil
+}
+
+func (h *restHandler) getBodyFromInput(args map[string]any) (io.Reader, error) {
+	if h.body == "" {
+		return nil, errors.New("body key is empty")
+	}
+
+	body, ok := args[h.body]
+	if !ok {
+		return nil, fmt.Errorf("body key %q not found in args", h.body)
+	}
+
+	switch outb := body.(type) {
+	case string:
+		return strings.NewReader(outb), nil
+	case map[string]any:
+		// stringify the object
+		obj, err := json.Marshal(outb)
+		if err != nil {
+			return nil, fmt.Errorf("cannot marshal body object: %w", err)
+		}
+
+		return strings.NewReader(string(obj)), nil
+	default:
+		return nil, fmt.Errorf("body key %q is not a string or object", h.body)
+	}
 }
 
 func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
@@ -178,26 +221,26 @@ func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 	return data, nil
 }
 
-// body may be unset, in which case it is nil
-// or it may be an object or a string. We are using
-// a oneof in the protobuf definition to represent this.
-func parseRequestBodyConfig(def *minderv1.RestDataSource_Def) string {
+func parseRequestBodyConfig(def *minderv1.RestDataSource_Def) (bool, string) {
 	defBody := def.GetBody()
 	if defBody == nil {
-		return ""
+		return false, ""
 	}
 
-	if def.GetBodyobj() != nil {
+	switch defBody.(type) {
+	case *minderv1.RestDataSource_Def_Bodyobj:
 		// stringify the object
 		obj, err := json.Marshal(def.GetBodyobj())
 		if err != nil {
-			return ""
+			return false, ""
 		}
 
-		return string(obj)
+		return false, string(obj)
+	case *minderv1.RestDataSource_Def_BodyFromField:
+		return true, def.GetBodyFromField()
 	}
 
-	return def.GetBodystr()
+	return false, def.GetBodystr()
 }
 
 func buildRestOutput(statusCode int, body any) any {
