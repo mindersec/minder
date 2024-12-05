@@ -16,7 +16,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/githubactions"
 	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth/jwt/dynamic"
+	"github.com/mindersec/minder/internal/auth/jwt/merged"
 	"github.com/mindersec/minder/internal/auth/keycloak"
 	"github.com/mindersec/minder/internal/authz"
 	cpmetrics "github.com/mindersec/minder/internal/controlplane/metrics"
@@ -28,9 +31,6 @@ import (
 	"github.com/mindersec/minder/internal/service"
 	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
-	"github.com/stacklok/minder/internal/auth/githubactions"
-	"github.com/stacklok/minder/internal/auth/jwt/dynamic"
-	"github.com/stacklok/minder/internal/auth/jwt/merged"
 )
 
 var serveCmd = &cobra.Command{

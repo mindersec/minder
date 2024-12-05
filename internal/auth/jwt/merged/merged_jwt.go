@@ -21,7 +21,7 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	stacklok_jwt "github.com/stacklok/minder/internal/auth/jwt"
+	stacklok_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
 
 // Validator is a struct that combines multiple JWT validators.

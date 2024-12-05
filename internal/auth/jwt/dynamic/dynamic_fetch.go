@@ -31,7 +31,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	stacklok_jwt "github.com/stacklok/minder/internal/auth/jwt"
+	stacklok_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
 
 // a subset of the openID well-known configuration for JSON parsing

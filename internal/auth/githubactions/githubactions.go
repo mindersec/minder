@@ -24,7 +24,7 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
 
-	"github.com/stacklok/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth"
 )
 
 // GitHubActions is an implementation of the auth.IdentityProvider interface.
