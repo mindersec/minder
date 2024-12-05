@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -106,7 +107,7 @@ func (h *restHandler) ValidateUpdate(obj any) error {
 	}
 }
 
-func (h *restHandler) Call(_ context.Context, args any) (any, error) {
+func (h *restHandler) Call(ctx context.Context, args any) (any, error) {
 	argsMap, ok := args.(map[string]any)
 	if !ok {
 		return nil, errors.New("args is not a map")
@@ -118,7 +119,7 @@ func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 	}
 
 	// TODO: Add option to use custom client
-	cli := http.Client{
+	cli := &http.Client{
 		// TODO: Make timeout configurable
 		Timeout: 5 * time.Second,
 	}
@@ -128,7 +129,7 @@ func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(h.method, expandedEndpoint, b)
+	req, err := http.NewRequestWithContext(ctx, h.method, expandedEndpoint, b)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,11 @@ func (h *restHandler) Call(_ context.Context, args any) (any, error) {
 		req.Header.Add(k, v)
 	}
 
-	resp, err := cli.Do(req)
+	return h.doRequest(cli, req)
+}
+
+func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error) {
+	resp, err := retriableDo(cli, req)
 	if err != nil {
 		return nil, err
 	}
@@ -248,4 +253,27 @@ func buildRestOutput(statusCode int, body any) any {
 		"status_code": statusCode,
 		"body":        body,
 	}
+}
+
+func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	err := backoff.Retry(func() error {
+		var err error
+		resp, err = cli.Do(req)
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return errors.New("rate limited")
+		}
+
+		return nil
+	}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 5))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
