@@ -1,14 +1,14 @@
 ![minder logo](./docs/docs/images/Minder_darkMode.png)
 
-[![Continuous integration](https://github.com/stacklok/minder/actions/workflows/main.yml/badge.svg)](https://github.com/stacklok/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/stacklok/minder/badge.svg?branch=main)](https://coveralls.io/github/stacklok/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
+[![Continuous integration](https://github.com/mindersec/minder/actions/workflows/main.yml/badge.svg)](https://github.com/mindersec/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/mindersec/minder/badge.svg?branch=main)](https://coveralls.io/github/mindersec/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
 ---
 
-[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://minder-docs.stacklok.dev) | [Releases](https://github.com/stacklok/minder/releases)
+[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://mindersec.github.io/) | [Releases](https://github.com/mindersec/minder/releases)
 ---
 
 # What is Minder?
 
-Minder by [Stacklok](https://stacklok.com/) is an open source platform that helps development teams and open source communities build more
+Minder is an open source platform that helps development teams and open source communities build more
 secure software, and prove to others that what they’ve built is secure. Minder helps project owners proactively manage
 their security posture by providing a set of checks and policies to minimize risk along the software supply chain,
 and attest their security practices to downstream consumers.
@@ -17,8 +17,8 @@ Minder allows users to enroll repositories and define policy to ensure repositor
 consistently and securely. Policies can be set to alert only or auto-remediate. Minder provides a predefined set of
 rules and can also be configured to apply custom rules.
 
-Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, the company behind Minder, also
-provides a free-to-use hosted version of Minder (for public repositories only). Minder is designed to be extensible,
+Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, a company supporting Minder, also
+provides a [free-to-use hosted version of Minder (for public repositories only)](#public-instance). Minder is designed to be extensible,
 allowing users to integrate with their existing tooling and processes.
 
 ## Features
@@ -26,14 +26,11 @@ allowing users to integrate with their existing tooling and processes.
 * **Repo configuration and security:** Simplify configuration and management of security settings and policies across repos.
 * **Proactive security enforcement:** Continuously enforce best practice security configurations by setting granular policies to alert only or auto-remediate.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
-* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [Trusty by Stacklok](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
+* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [OSV](https://osv.dev/) and [Trusty](https://trustypkg.dev) to enable policy-driven dependency management based on the risk level of dependencies.
 
-## Minder Cloud
+## Public Instance
 
-Stacklok, the company behind Minder, provides a [free-to-use SaaS version of Minder](https://cloud.stacklok.com/) that includes a UI (for public repositories only). You can access Minder Cloud documentation [here](https://docs.stacklok.com/minder).
-
-Note that it's not possible to register private repositories. If you'd like to use Minder with private repositories,
-feel free to [contact us](mailto:hello@stacklok.com)! We'd be thrilled to help you out.
+Stacklok, a company supporting Minder, provides a free-to-use public instance of Minder. This is the default instance used when you use the `minder` CLI. This instance is available for public repositories only.
 
 ---
 # Getting Started (< 1 minute)
@@ -46,7 +43,7 @@ Getting up and running with Minder takes under a minute and is as easy as:
 
 In just a few seconds, you will register your repositories and enable secret scanning protection for all of them! 🤯
 
-<img src="https://github.com/stacklok/minder/assets/16540482/00646f28-2f48-43f2-bb2b-4a791782d7e3" width="80%"/>
+<img src="https://github.com/mindersec/minder/assets/16540482/00646f28-2f48-43f2-bb2b-4a791782d7e3" width="80%"/>
 
 ## Installation
 
@@ -57,7 +54,7 @@ Choose your preferred method to install `minder`:
 Make sure you have [Homebrew](https://brew.sh/) installed.
 
 ```bash
-brew install stacklok/tap/minder
+brew install minder
 ```
 
 ### Windows (Winget)
@@ -70,7 +67,7 @@ winget install stacklok.minder
 
 ### Download a release
 
-Download the latest release from [minder/releases](https://github.com/stacklok/minder/releases).
+Download the latest release from [minder/releases](https://github.com/mindersec/minder/releases).
 
 ### Build it from source
 
@@ -121,7 +118,7 @@ various rules, and much more. There's a lot more to Minder than just secret scan
 The `secret_scanning` rule is just one of the many rule types that Minder supports. 
 
 You can see the full list of ready-to-use rules and profiles
-maintained by Minder's team here - [stacklok/minder-rules-and-profiles](https://github.com/stacklok/minder-rules-and-profiles).
+maintained by Minder's team here - [mindersec/minder-rules-and-profiles](https://github.com/mindersec/minder-rules-and-profiles).
 
 In case there's something you don't find there yet, Minder is designed to be extensible.
 This allows for users to create their own custom rule types and profiles and ensure the specifics of their security
@@ -132,19 +129,19 @@ where you can manage your registered repositories, create profiles, rules and mu
 configured consistently and securely.
 
 For more information about `minder`, see:
-* `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
-* `minder` REST API Documentation - [Docs](https://minder-docs.stacklok.dev/ref/api).
-* `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/stacklok/minder-rules-and-profiles).
-* Minder documentation - [Docs](https://minder-docs.stacklok.dev).
+* `minder` CLI commands - [Docs](https://mindersec.github.io/ref/cli/minder).
+* `minder` REST API Documentation - [Docs](https://mindersec.github.io/ref/api).
+* `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/mindersec/minder-rules-and-profiles).
+* Minder documentation - [Docs](https://mindersec.github.io/).
 
 # Roadmap
 
 The Minder community are actively working on new features and improvements for Minder.
 
-You can find our roadmap [here](https://minder-docs.stacklok.dev/about/roadmap).
+You can find our roadmap [here](https://mindersec.github.io/about/roadmap).
 
 Should you wish to request or contribute a feature or improvement, please use the following
-[issue template](https://github.com/stacklok/minder/issues/new?template=enhancement.yml)
+[issue template](https://github.com/mindersec/minder/issues/new?template=enhancement.yml)
 
 # Development
 
@@ -165,7 +162,7 @@ To invoke the `run-docker` make target, you will need [yq](https://github.com/mi
 ### Clone the repository
 
 ```bash
-git clone git@github.com:stacklok/minder.git
+git clone git@github.com:mindersec/minder.git
 ```
 
 ## Build 
@@ -202,7 +199,7 @@ cp config/server-config.yaml.example server-config.yaml
 
 You'd also have to set up an OAuth2 application for `minder-server` to use.
 Once completed, update the configuration file with the appropriate values.
-See the documentation on how to do that - [Docs](https://minder-docs.stacklok.dev/run_minder_server/config_oauth).
+See the documentation on how to do that - [Docs](https://mindersec.github.io/run_minder_server/config_oauth).
 
 #### Run `minder-server`
 
@@ -243,17 +240,17 @@ By default, the `minder` CLI will point to the production Stacklok environment i
 
 ### Development guidelines
 
-You can find more detailed information about the development process in the [Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
+You can find more detailed information about the development process in the [Developer Guide](https://mindersec.github.io/developer_guide/get-hacking).
 
 ## Minder API
 
-* REST API documentation - [Link](https://minder-docs.stacklok.dev/ref/api).
+* REST API documentation - [Link](https://mindersec.github.io/ref/api).
 
-* Proto API documentation - [Link](https://minder-docs.stacklok.dev/ref/proto).
+* Proto API documentation - [Link](https://mindersec.github.io/ref/proto).
 
-* Protobuf - [Link](https://github.com/stacklok/minder/blob/main/proto/minder/v1/minder.proto).
+* Protobuf - [Link](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
 
-* OpenAPI/swagger spec (JSON) - [Link](https://github.com/stacklok/minder/blob/main/pkg/api/openapi/minder/v1/minder.swagger.json).
+* OpenAPI/swagger spec (JSON) - [Link](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/minder/v1/minder.swagger.json).
 
 ## Contributing
 

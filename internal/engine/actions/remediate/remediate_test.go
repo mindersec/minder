@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package remediate_test provides tests for the remediate package.
 package remediate_test
@@ -23,15 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/noop"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/providers/testproviders"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/providers/testproviders"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var (
@@ -129,7 +118,8 @@ func TestNewRuleRemediator(t *testing.T) {
 				provider, err = tt.provider()
 				require.NoError(t, err)
 			}
-			result, err := remediate.NewRuleRemediator(tt.ruleType, provider)
+			result, err := remediate.NewRuleRemediator(
+				tt.ruleType, provider, models.ActionOptOn)
 			if tt.wantError {
 				require.Error(t, err)
 				return

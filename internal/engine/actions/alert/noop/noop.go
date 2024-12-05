@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package noop provides a fallback alert engine for cases where
 // no alert is set.
@@ -23,9 +12,9 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 // Alert is the structure backing the noop alert
@@ -49,7 +38,7 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the off state of the noop engine
-func (_ *Alert) GetOnOffState(_ models.ActionOpt) models.ActionOpt {
+func (_ *Alert) GetOnOffState() models.ActionOpt {
 	return models.ActionOptOff
 }
 
@@ -57,7 +46,6 @@ func (_ *Alert) GetOnOffState(_ models.ActionOpt) models.ActionOpt {
 func (a *Alert) Do(
 	_ context.Context,
 	_ interfaces.ActionCmd,
-	_ models.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ interfaces.ActionsParams,
 	_ *json.RawMessage,

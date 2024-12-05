@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package schemaupdate contains utility functions to compare two schemas
 // for updates
@@ -30,18 +19,26 @@ import (
 // ValidateSchemaUpdate validates that the new json schema doesn't break
 // profiles using this rule type
 func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structpb.Struct) error {
-	if len(newRuleSchema.GetFields()) == 0 {
+	oldSchemaMap := oldRuleSchema.AsMap()
+	newSchemaMap := newRuleSchema.AsMap()
+
+	return ValidateSchemaUpdateMap(oldSchemaMap, newSchemaMap)
+}
+
+// ValidateSchemaUpdateMap validates that the new json schema doesn't break
+// profiles using this rule type
+func ValidateSchemaUpdateMap(oldSchemaMap, newSchemaMap map[string]any) error {
+	if len(newSchemaMap) == 0 {
 		// If the new schema is empty (including nil), we're good
 		// The rule type has removed the schema and profiles
 		// won't break
 		return nil
 	}
 
-	if schemaIsNilOrEmpty(oldRuleSchema) && !schemaIsNilOrEmpty(newRuleSchema) {
+	if schemaIsNilOrEmpty(oldSchemaMap) && !schemaIsNilOrEmpty(newSchemaMap) {
 		// If old is nil and new is not, we need to verify that
 		// the new definition is not introducing required fields
-		newrs := newRuleSchema.AsMap()
-		if _, ok := newrs["required"]; ok {
+		if _, ok := newSchemaMap["required"]; ok {
 			return fmt.Errorf("cannot add required fields to rule schema")
 		}
 
@@ -49,9 +46,6 @@ func ValidateSchemaUpdate(oldRuleSchema *structpb.Struct, newRuleSchema *structp
 		// profiles using this rule type won't break
 		return nil
 	}
-
-	oldSchemaMap := oldRuleSchema.AsMap()
-	newSchemaMap := newRuleSchema.AsMap()
 
 	oldTypeCast, err := getOrInferType(oldSchemaMap)
 	if err != nil {
@@ -108,29 +102,41 @@ func validateObjectSchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error
 }
 
 func validateProperties(oldSchemaMap, newSchemaMap map[string]any) error {
-	dst, err := deepcopy.Anything(newSchemaMap)
-	if err != nil {
-		return fmt.Errorf("failed to deepcopy old schema: %v", err)
+	oldProperties, hasOldProperties := oldSchemaMap["properties"]
+	newProperties, hasNewProperties := newSchemaMap["properties"]
+
+	if !hasNewProperties || !hasOldProperties {
+		return fmt.Errorf("cannot remove properties from object type rule schema")
 	}
 
-	castedDst := dst.(map[string]any)
+	oldPropertiesMap, ok := oldProperties.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid old properties field")
+	}
+	newPropertiesMap, ok := newProperties.(map[string]any)
+	if !ok {
+		return fmt.Errorf("invalid new properties field")
+	}
 
-	err = mergo.Merge(&castedDst, &oldSchemaMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
+	// copy new schema to avoid modifying the original
+	mergedSchema, err := copySchema(newPropertiesMap)
+	if err != nil {
+		return fmt.Errorf("failed to copy new schema: %v", err)
+	}
+
+	// Merge the old schema into the new schema.
+	// The merged schema should equal the new schema if the old schema
+	// is a subset of the new schema
+	err = mergo.Merge(&mergedSchema, &oldPropertiesMap, mergo.WithOverride, mergo.WithSliceDeepCopy)
 	if err != nil {
 		return fmt.Errorf("failed to merge old and new schema: %v", err)
 	}
 
-	// We need to ignore the description field when comparing the old and new schema to allow
-	// to update the ruletype text. We also need to ignore changing defaults as they are advisory
-	// for the UI at the moment
-	opts := []cmp.Option{
-		cmp.FilterPath(isScalarDescription, cmp.Ignore()),
-		cmp.FilterPath(isDefaultValue, cmp.Ignore()),
-	}
-
 	// The new schema should be a superset of the old schema
 	// if it's not, we may break profiles using this rule type
-	if !cmp.Equal(newSchemaMap, castedDst, opts...) {
+	// The mergedSchema is the new schema with the old schema merged in
+	// so we can compare it to the new schema directly
+	if !schemasAreEqual(mergedSchema, newPropertiesMap) {
 		return fmt.Errorf("cannot remove properties from rule schema")
 	}
 
@@ -215,12 +221,15 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 	oldRequired, hasOldRequired := oldSchemaMap["required"]
 	newRequired, hasNewRequired := newSchemaMap["required"]
 
+	// If we don't have required fields in either schema, we're good
 	if !hasNewRequired && !hasOldRequired {
 		// If we don't have required fields in either schema, we're good
 		// profiles using this rule type won't break
 		return nil
 	}
 
+	// If the new schema doesn't have required fields, but the old schema does,
+	// we're good
 	if !hasNewRequired && hasOldRequired {
 		// If we don't have required fields in the new schema but do
 		// in the old schema, we're good.
@@ -228,6 +237,8 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 		return nil
 	}
 
+	// If the new schema has required fields, but the old schema doesn't,
+	// we may break profiles using this rule type
 	if hasNewRequired && !hasOldRequired {
 		// If we have required fields in the new schema but not the old
 		// schema, we may break profiles using this rule type
@@ -246,21 +257,26 @@ func validateRequired(oldSchemaMap, newSchemaMap map[string]any) error {
 
 	// We need to make sure that the old required fields are
 	// a superset of the new required fields
-	oldSet := sets.New(oldRequiredSlice...)
-	newSet := sets.New(newRequiredSlice...)
-	if !oldSet.IsSuperset(newSet) {
+	if !requiredIsSuperset(oldRequiredSlice, newRequiredSlice) {
 		return fmt.Errorf("cannot add required fields to rule schema")
 	}
 
 	return nil
 }
 
-func schemaIsNilOrEmpty(schema *structpb.Struct) bool {
+func requiredIsSuperset(oldRequired, newRequired []interface{}) bool {
+	oldSet := sets.New(oldRequired...)
+	newSet := sets.New(newRequired...)
+
+	return oldSet.IsSuperset(newSet)
+}
+
+func schemaIsNilOrEmpty(schema map[string]any) bool {
 	if schema == nil {
 		return true
 	}
 
-	return len(schema.AsMap()) == 0
+	return len(schema) == 0
 }
 
 func validateArraySchemaUpdate(oldSchemaMap, newSchemaMap map[string]any) error {
@@ -298,4 +314,26 @@ func validateItems(oldSchemaMap, newSchemaMap map[string]any) error {
 	}
 
 	return nil
+}
+func copySchema(s map[string]any) (map[string]any, error) {
+	dst, err := deepcopy.Anything(s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deepcopy: %v", err)
+	}
+
+	castedDst, ok := dst.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to cast schema to map")
+	}
+	return castedDst, nil
+}
+
+func schemasAreEqual(a, b map[string]any) bool {
+	// We need to ignore the description field when comparing the old and new schema to allow
+	// to update the ruletype text. We also need to ignore changing defaults as they are advisory
+	// for the UI at the moment
+	return cmp.Equal(a, b,
+		cmp.FilterPath(isScalarDescription, cmp.Ignore()),
+		cmp.FilterPath(isDefaultValue, cmp.Ignore()),
+	)
 }

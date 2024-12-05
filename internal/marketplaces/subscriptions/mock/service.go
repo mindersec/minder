@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	reader "github.com/stacklok/minder/pkg/mindpak/reader"
+	db "github.com/mindersec/minder/internal/db"
+	reader "github.com/mindersec/minder/pkg/mindpak/reader"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -23,6 +23,7 @@ import (
 type MockSubscriptionService struct {
 	ctrl     *gomock.Controller
 	recorder *MockSubscriptionServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockSubscriptionServiceMockRecorder is the mock recorder for MockSubscriptionService.

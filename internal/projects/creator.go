@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package projects
 
@@ -23,11 +12,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/authz"
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/pkg/mindpak"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/mindpak"
 )
 
 // ProjectCreator encapsulates operations for managing projects
@@ -50,17 +39,20 @@ type projectCreator struct {
 	authzClient authz.Client
 	marketplace marketplaces.Marketplace
 	profilesCfg *server.DefaultProfilesConfig
+	featuresCfg *server.FeaturesConfig
 }
 
 // NewProjectCreator creates a new instance of the project creator
 func NewProjectCreator(authzClient authz.Client,
 	marketplace marketplaces.Marketplace,
 	profilesCfg *server.DefaultProfilesConfig,
+	featuresCfg *server.FeaturesConfig,
 ) ProjectCreator {
 	return &projectCreator{
 		authzClient: authzClient,
 		marketplace: marketplace,
 		profilesCfg: profilesCfg,
+		featuresCfg: featuresCfg,
 	}
 }
 
@@ -114,6 +106,15 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 			return nil, ErrProjectAlreadyExists
 		}
 		return nil, fmt.Errorf("failed to create default project: %v", err)
+	}
+
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Features:  projectFeatures,
+		ProjectID: project.ID,
+	}); err != nil {
+		return nil, fmt.Errorf("error creating entitlements: %w", err)
 	}
 
 	// Enable any default profiles and rule types in the project.

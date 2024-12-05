@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -24,15 +13,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // ReconcileEntityRegistration reconciles the registration of an entity.
@@ -111,7 +100,7 @@ func (s *Server) ReconcileEntityRegistration(
 
 func (s *Server) publishEntityMessage(l *zerolog.Logger, msg *message.Message) error {
 	l.Info().Str("messageID", msg.UUID).Msg("publishing register entities message for execution")
-	return s.evt.Publish(events.TopicQueueReconcileEntityAdd, msg)
+	return s.evt.Publish(constants.TopicQueueReconcileEntityAdd, msg)
 }
 
 func createEntityMessage(

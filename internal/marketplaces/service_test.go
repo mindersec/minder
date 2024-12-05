@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package marketplaces_test
 
@@ -22,14 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	dbf "github.com/stacklok/minder/internal/db/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces"
-	mockbundle "github.com/stacklok/minder/internal/marketplaces/bundles/mock"
-	bsf "github.com/stacklok/minder/internal/marketplaces/bundles/mock/fixtures"
-	"github.com/stacklok/minder/internal/marketplaces/subscriptions"
-	ssf "github.com/stacklok/minder/internal/marketplaces/subscriptions/mock/fixtures"
-	"github.com/stacklok/minder/pkg/mindpak"
-	"github.com/stacklok/minder/pkg/mindpak/sources"
+	dbf "github.com/mindersec/minder/internal/db/fixtures"
+	"github.com/mindersec/minder/internal/marketplaces"
+	mockbundle "github.com/mindersec/minder/internal/marketplaces/bundles/mock"
+	bsf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
+	"github.com/mindersec/minder/internal/marketplaces/subscriptions"
+	ssf "github.com/mindersec/minder/internal/marketplaces/subscriptions/mock/fixtures"
+	"github.com/mindersec/minder/pkg/mindpak"
+	"github.com/mindersec/minder/pkg/mindpak/sources"
 )
 
 // scenario structure is same for both tests

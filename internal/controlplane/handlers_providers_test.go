@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -35,26 +24,27 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz/mock"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/crypto/algorithms"
-	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	"github.com/stacklok/minder/internal/entities/models"
-	propSvc "github.com/stacklok/minder/internal/entities/properties/service/mock"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/dockerhub"
-	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
-	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
-	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/crypto/algorithms"
+	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/entities/models"
+	propSvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
+	ghmanager "github.com/mindersec/minder/internal/providers/github/manager"
+	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
+	mockprovsvc "github.com/mindersec/minder/internal/providers/github/service/mock"
+	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func newPbStruct(t *testing.T, data map[string]interface{}) *structpb.Struct {
@@ -95,6 +85,8 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(mockCryptoEngine, mockStore)
 
@@ -591,6 +583,8 @@ func TestDeleteProvider(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	ctx := context.Background()
 	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)
@@ -714,6 +708,8 @@ func TestDeleteProviderByID(t *testing.T) {
 		mockStore,
 		mockProvidersSvc,
 		mockprops,
+		metrics.NewNoopMetrics(),
+		nil,
 	)
 	ctx := context.Background()
 	providerManager, closer, err := manager.NewProviderManager(context.Background(), providerStore, githubProviderManager)

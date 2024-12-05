@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package util provides helper functions for the minder CLI.
 package util
@@ -23,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"math"
 	"net/http"
 	"net/url"
@@ -42,7 +29,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/util/jsonyaml"
+	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
 var (
@@ -130,7 +117,10 @@ func GetGrpcConnection(
 		}
 	}
 
-	credentialOpts := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})
+	credentialOpts := credentials.NewTLS(&tls.Config{
+		MinVersion: tls.VersionTLS13,
+		ServerName: grpc_host,
+	})
 	if allowInsecure {
 		credentialOpts = insecure.NewCredentials()
 	}
@@ -418,41 +408,51 @@ func OpenFileArg(f string, dashOpen io.Reader) (desc io.Reader, closer func(), e
 	return desc, closer, nil
 }
 
+// ExpandedFile is a struct to hold a file path and whether it was expanded
+type ExpandedFile struct {
+	Path     string
+	Expanded bool
+}
+
 // ExpandFileArgs expands a list of file arguments into a list of files.
 // If the file list contains "-" or regular files, it will leave them as-is.
 // If the file list contains directories, it will expand them into a list of files.
-func ExpandFileArgs(files []string) ([]string, error) {
-	var expandedFiles []string
+func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
+	var expandedFiles []ExpandedFile
 	for _, f := range files {
 		if f == "-" {
-			expandedFiles = append(expandedFiles, f)
+			expandedFiles = append(expandedFiles, ExpandedFile{
+				Path:     f,
+				Expanded: false,
+			})
 			continue
 		}
+
 		f = filepath.Clean(f)
 		fi, err := os.Stat(f)
 		if err != nil {
 			return nil, fmt.Errorf("error getting file info: %w", err)
 		}
 
-		if fi.IsDir() {
-			// expand directory
-			err := filepath.Walk(f, func(path string, info fs.FileInfo, err error) error {
-				if err != nil {
-					return fmt.Errorf("error walking directory: %w", err)
-				}
-
-				if !info.IsDir() {
-					expandedFiles = append(expandedFiles, path)
-				}
-
-				return nil
-			})
-			if err != nil {
-				return nil, fmt.Errorf("error walking directory: %w", err)
+		expanded := fi.IsDir()
+		err = filepath.Walk(f, func(path string, info os.FileInfo, walkerr error) error {
+			if walkerr != nil {
+				return fmt.Errorf("error walking path %s: %w", path, walkerr)
 			}
-		} else {
-			// add file
-			expandedFiles = append(expandedFiles, f)
+
+			if info.IsDir() {
+				return nil
+			}
+
+			expandedFiles = append(expandedFiles, ExpandedFile{
+				Path:     path,
+				Expanded: expanded,
+			})
+
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error walking directory: %w", err)
 		}
 	}
 

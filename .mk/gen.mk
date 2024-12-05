@@ -1,17 +1,5 @@
-#
-# Copyright 2023 Stacklok, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
 
 .PHONY: clean-gen
 clean-gen: ## clean generated files
@@ -40,7 +28,7 @@ oapi: ## generate openapi files
 .PHONY: mock
 mock: ## generate mocks
 	go generate ./...
-	mockgen -package mockdb -destination database/mock/store.go github.com/stacklok/minder/internal/db Store
+	mockgen -package mockdb -destination database/mock/store.go github.com/mindersec/minder/internal/db Store
 	mockgen -package mock_github -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
 	mockgen -package mockbundle -destination internal/marketplaces/bundles/mock/reader.go -source pkg/mindpak/reader/reader.go
 	mockgen -package mockbundle -destination internal/marketplaces/bundles/mock/source.go -source pkg/mindpak/sources/source.go

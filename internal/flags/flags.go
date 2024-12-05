@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package flags containts utilities for managing feature flags.
 package flags
@@ -25,9 +13,9 @@ import (
 	gofeature "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever/fileretriever"
 
-	"github.com/stacklok/minder/internal/auth/jwt"
-	config "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 // Experiment is a type alias for a feature flag experiment, to ensure that all feature flags
@@ -51,6 +39,10 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 
 // Bool provides a simple wrapper around client.Boolean to normalize usage for Minder.
 func Bool(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
+	if client == nil {
+		zerolog.Ctx(ctx).Debug().Str("flag", string(feature)).Msg("Bool called with <nil> client, returning false")
+		return false
+	}
 	ret := client.Boolean(ctx, string(feature), false, fromContext(ctx))
 	// TODO: capture in telemetry records
 	return ret

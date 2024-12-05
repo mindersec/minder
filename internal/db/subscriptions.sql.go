@@ -77,21 +77,17 @@ func (q *Queries) GetSubscriptionByProjectBundle(ctx context.Context, arg GetSub
 	return i, err
 }
 
-const setCurrentVersion = `-- name: SetCurrentVersion :exec
-UPDATE subscriptions
-SET current_version = $1
-FROM subscriptions AS su
-JOIN bundles as bu ON su.bundle_id = bu.id
-WHERE su.project_id = $2 AND bu.namespace = $1 AND bu.name = $2
+const setSubscriptionBundleVersion = `-- name: SetSubscriptionBundleVersion :exec
+UPDATE subscriptions SET current_version = $2 WHERE project_id = $1
 `
 
-type SetCurrentVersionParams struct {
-	CurrentVersion string    `json:"current_version"`
+type SetSubscriptionBundleVersionParams struct {
 	ProjectID      uuid.UUID `json:"project_id"`
+	CurrentVersion string    `json:"current_version"`
 }
 
-func (q *Queries) SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error {
-	_, err := q.db.ExecContext(ctx, setCurrentVersion, arg.CurrentVersion, arg.ProjectID)
+func (q *Queries) SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error {
+	_, err := q.db.ExecContext(ctx, setSubscriptionBundleVersion, arg.ProjectID, arg.CurrentVersion)
 	return err
 }
 
@@ -107,19 +103,8 @@ type UpsertBundleParams struct {
 	Name      string `json:"name"`
 }
 
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 // Bundles --
 func (q *Queries) UpsertBundle(ctx context.Context, arg UpsertBundleParams) error {
 	_, err := q.db.ExecContext(ctx, upsertBundle, arg.Namespace, arg.Name)

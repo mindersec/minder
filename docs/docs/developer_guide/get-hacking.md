@@ -10,6 +10,11 @@ Follow the steps in the [Installing a Development version](./../run_minder_serve
 
 The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
 
+When iterating, it can be helpful to only rebuild and reload the `minder` container.  You can do this with:
+```bash
+make run-docker services=minder
+```
+
 ## Run the tests
 ```bash
 make test
@@ -25,9 +30,9 @@ go run cmd/cli/main.go --help
 
 ## APIs
 
-The APIs are defined in protobuf [here](https://github.com/stacklok/minder/blob/main/proto/minder/v1/minder.proto).
+The APIs are defined in protobuf [here](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
 
-An OpenAPI / swagger spec is generated to [here](https://github.com/stacklok/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
+An OpenAPI / swagger spec is generated to [here](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
 
 It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 

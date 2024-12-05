@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package security_advisory provides necessary interfaces and implementations for
 // creating alerts of type security advisory.
@@ -22,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	htmltemplate "html/template"
 	"strings"
 
@@ -29,14 +18,14 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/profiles/models"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/profiles/models"
 
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -48,6 +37,8 @@ const (
 	tmplDescriptionNameRem   = "description"
 	// nolint:lll
 	tmplPart1Top = `
+{{.EvaluationError}}
+
 Minder has detected a potential security exposure in your repository - **{{.Repository}}**.
 This exposure has been classified with a severity level of **{{.Severity}}**, as per the configuration defined in the **{{.Rule}}** rule type.
 
@@ -104,6 +95,7 @@ type Alert struct {
 	summaryTmpl          *htmltemplate.Template
 	descriptionTmpl      *htmltemplate.Template
 	descriptionNoRemTmpl *htmltemplate.Template
+	setting              models.ActionOpt
 }
 
 type paramsSA struct {
@@ -126,6 +118,7 @@ type templateParamsSA struct {
 	Guidance        string
 	RuleRemediation string
 	Name            string
+	EvaluationError string
 }
 
 type alertMetadata struct {
@@ -138,6 +131,7 @@ func NewSecurityAdvisoryAlert(
 	ruleType *pb.RuleType,
 	saCfg *pb.RuleType_Definition_Alert_AlertTypeSA,
 	cli provifv1.GitHub,
+	setting models.ActionOpt,
 ) (*Alert, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -169,6 +163,7 @@ func NewSecurityAdvisoryAlert(
 		summaryTmpl:          sumT,
 		descriptionTmpl:      descT,
 		descriptionNoRemTmpl: descNoRemT,
+		setting:              setting,
 	}, nil
 }
 
@@ -183,15 +178,14 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Alert) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (alert *Alert) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(alert.setting, models.ActionOptOff)
 }
 
 // Do alerts through security advisory
 func (alert *Alert) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting models.ActionOpt,
 	entity protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -203,7 +197,7 @@ func (alert *Alert) Do(
 	}
 
 	// Process the command based on the action setting
-	switch setting {
+	switch alert.setting {
 	case models.ActionOptOn:
 		return alert.run(ctx, p, cmd)
 	case models.ActionOptDryRun:
@@ -319,7 +313,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	case *pb.Repository:
 		result.Owner = entity.GetOwner()
 		result.Repo = entity.GetName()
-	case *pb.PullRequest:
+	case *pbinternal.PullRequest:
 		result.Owner = entity.GetRepoOwner()
 		result.Repo = entity.GetRepoName()
 	case *pb.Artifact:
@@ -373,6 +367,8 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 		return nil, fmt.Errorf("error executing summary template: %w", err)
 	}
 	result.Summary = summaryStr.String()
+
+	result.Template.EvaluationError = enginerr.ErrorAsEvalDetails(params.GetEvalErr())
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available

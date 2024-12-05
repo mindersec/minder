@@ -1,0 +1,60 @@
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
+package server
+
+import (
+	"crypto/rsa"
+	"fmt"
+
+	"github.com/golang-jwt/jwt/v4"
+
+	"github.com/mindersec/minder/pkg/config"
+)
+
+// GitHubAppConfig is the configuration for the GitHub App providers
+type GitHubAppConfig struct {
+	OAuthClientConfig `mapstructure:",squash"`
+
+	// AppName is the name of the GitHub App
+	AppName string `mapstructure:"app_name"`
+	// AppID is the ID of the GitHub App
+	AppID int64 `mapstructure:"app_id" default:"0"`
+	// UserID is the ID of the GitHub App user
+	UserID int64 `mapstructure:"user_id" default:"0"`
+	// PrivateKey is the path to the GitHub App's private key in PEM format
+	PrivateKey string `mapstructure:"private_key"`
+	// WebhookSecret is the GitHub App's webhook secret
+	WebhookSecret string `mapstructure:"webhook_secret"`
+	// WebhookSecretFile is the location of the file containing the GitHub App's webhook secret
+	WebhookSecretFile string `mapstructure:"webhook_secret_file"`
+	// FallbackToken is the fallback token to use when listing packages
+	FallbackToken string `mapstructure:"fallback_token"`
+	// FallbackTokenFile is the location of the file containing the fallback token to use when listing packages
+	FallbackTokenFile string `mapstructure:"fallback_token_file"`
+}
+
+// GetPrivateKey returns the GitHub App's private key
+func (ghcfg *GitHubAppConfig) GetPrivateKey() (*rsa.PrivateKey, error) {
+	privateKeyBytes, err := config.ReadKey(ghcfg.PrivateKey)
+	if err != nil {
+		return nil, fmt.Errorf("error reading private key: %w", err)
+	}
+
+	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(privateKeyBytes)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing private key: %w", err)
+	}
+
+	return privateKey, err
+}
+
+// GetWebhookSecret returns the GitHub App's webhook secret
+func (ghcfg *GitHubAppConfig) GetWebhookSecret() (string, error) {
+	return fileOrArg(ghcfg.WebhookSecretFile, ghcfg.WebhookSecret, "github app webhook secret")
+}
+
+// GetFallbackToken returns the GitHub App's fallback token
+func (ghcfg *GitHubAppConfig) GetFallbackToken() (string, error) {
+	return fileOrArg(ghcfg.FallbackTokenFile, ghcfg.FallbackToken, "github app fallback token")
+}

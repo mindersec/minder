@@ -1,17 +1,6 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
 
 // Package apply provides the apply command for the medctl CLI
 // @ts-check
@@ -29,6 +18,10 @@ const redocusaurus = [
         spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
       },
     ],
+    theme: {
+      primaryColor: '#000000',
+      primaryColorDark: '#b0e0e6',
+    },
   }
 ]
 
@@ -91,12 +84,12 @@ const config = {
           respectPrefersColorScheme: false,
         },        
       // Replace with your project's social card
-      image: 'img/Stacklok_darkMode_b.png',
+      image: 'img/Minder_darkMode.png',
       navbar: {
         title: 'Minder docs',
         logo: {
-          alt: 'Stacklok Logo',
-          src: 'img/Stacklok_darkMode_b.png',
+          alt: 'Minder Logo',
+          src: 'img/Minder_darkMode.png',
         },
         items: [
           // {
@@ -109,7 +102,7 @@ const config = {
           //   position: 'right',
           // },
           {
-            href: 'https://github.com/stacklok/minder',
+            href: 'https://github.com/mindersec/minder',
             label: 'GitHub',
             position: 'right',
           },
@@ -131,30 +124,14 @@ const config = {
             title: 'Community',
             items: [
               {
-                label: 'Website',
-                href: 'https://stacklok.com',
-              },
-              {
-                label: 'Twitter',
-                href: 'https://twitter.com/StackLokHQ',
-              },
-            ],
-          },
-          {
-            title: 'More',
-            items: [
-              {
-                label: 'Blog',
-                to: 'https://www.stacklok.com/blog',
-              },
-              {
                 label: 'GitHub',
-                href: 'https://github.com/stacklok/minder',
+                href: 'https://github.com/mindersec/minder',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Stacklok, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Minder a Series of LF Projects, LLC
+For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,

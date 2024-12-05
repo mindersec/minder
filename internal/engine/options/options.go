@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package options provides necessary interfaces and implementations
 // for implementing evaluator configuration options.
@@ -19,7 +8,8 @@ package options
 import (
 	"github.com/open-feature/go-sdk/openfeature"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // SupportsFlags interface advertises the fact that the implementer
@@ -42,5 +32,25 @@ func WithFlagsClient(client openfeature.IClient) Option {
 			return nil
 		}
 		return inner.SetFlagsClient(client)
+	}
+}
+
+// SupportsDataSources interface advertises the fact that the implementer
+// can register data sources with the evaluator.
+type SupportsDataSources interface {
+	RegisterDataSources(ds *v1datasources.DataSourceRegistry)
+}
+
+// WithDataSources provides the evaluation engine with a list of data sources
+// to register. In case the given evaluator does not support data sources,
+// WithDataSources silently ignores the error.
+func WithDataSources(ds *v1datasources.DataSourceRegistry) Option {
+	return func(e interfaces.Evaluator) error {
+		inner, ok := e.(SupportsDataSources)
+		if !ok {
+			return nil
+		}
+		inner.RegisterDataSources(ds)
+		return nil
 	}
 }

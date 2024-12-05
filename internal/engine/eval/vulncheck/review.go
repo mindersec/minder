@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package vulncheck provides the vulnerability check evaluator
 package vulncheck
@@ -27,9 +16,8 @@ import (
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
 
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -116,7 +104,7 @@ func reviewBodyWithSuggestion(comment string) string {
 
 type reviewPrHandler struct {
 	cli provifv1.GitHub
-	pr  *pb.PullRequest
+	pr  *pbinternal.PullRequest
 
 	trackedDeps []dependencyVulnerabilities
 
@@ -142,7 +130,7 @@ func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
 
 func newReviewPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 	opts ...reviewPrHandlerOption,
 ) (*reviewPrHandler, error) {
@@ -480,7 +468,7 @@ type commitStatusPrHandler struct {
 
 func newCommitStatusPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	client provifv1.GitHub,
 ) (prStatusHandler, error) {
 	// create a reviewPrHandler and embed it in the commitStatusPrHandler
@@ -542,7 +530,7 @@ func (csh *commitStatusPrHandler) setCommitStatus(
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
 	cli provifv1.GitHub
-	pr  *pb.PullRequest
+	pr  *pbinternal.PullRequest
 
 	logger      zerolog.Logger
 	trackedDeps []dependencyVulnerabilities
@@ -588,7 +576,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 
 func newSummaryPrHandler(
 	ctx context.Context,
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 ) *summaryPrHandler {
 	logger := zerolog.Ctx(ctx).With().

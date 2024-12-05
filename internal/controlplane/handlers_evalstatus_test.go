@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -24,10 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/db"
-	entmodels "github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/history"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	entmodels "github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/history"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
@@ -203,7 +191,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 						entmodels.EntityInstance{
 							ID:   entityid1,
 							Type: minderv1.Entity_ENTITY_REPOSITORIES,
-							Name: "stacklok/minder",
+							Name: "mindersec/minder",
 						}, nil),
 					EvalHistoryRow: db.ListEvaluationHistoryRow{
 						EvaluationID: uuid1,
@@ -227,7 +215,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 						entmodels.EntityInstance{
 							ID:   entityid1,
 							Type: minderv1.Entity_ENTITY_REPOSITORIES,
-							Name: "stacklok/minder",
+							Name: "mindersec/minder",
 						}, nil),
 					EvalHistoryRow: db.ListEvaluationHistoryRow{
 						EvaluationID: uuid1,
@@ -270,7 +258,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 						entmodels.EntityInstance{
 							ID:   entityid1,
 							Type: minderv1.Entity_ENTITY_REPOSITORIES,
-							Name: "stacklok/minder",
+							Name: "mindersec/minder",
 						}, nil),
 					EvalHistoryRow: db.ListEvaluationHistoryRow{
 						EvaluationID: uuid1,
@@ -296,7 +284,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 						entmodels.EntityInstance{
 							ID:   entityid1,
 							Type: minderv1.Entity_ENTITY_REPOSITORIES,
-							Name: "stacklok/minder",
+							Name: "mindersec/minder",
 						}, nil),
 					EvalHistoryRow: db.ListEvaluationHistoryRow{
 						EvaluationID:       uuid1,

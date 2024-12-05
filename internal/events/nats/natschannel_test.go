@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package nats provides a nants+cloudevents implementation of the eventer interface
 package nats
@@ -27,13 +15,11 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	natsserver "github.com/nats-io/nats-server/v2/test"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/events/common"
+	"github.com/mindersec/minder/internal/events/common"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestNatsChannel(t *testing.T) {
-	t.Skip("Skipping test that is failing in CI") // https://github.com/stacklok/minder/issues/4542
-
 	t.Parallel()
 	server := natsserver.RunRandClientPortServer()
 	if err := server.EnableJetStream(nil); err != nil {
@@ -54,6 +40,7 @@ func TestNatsChannel(t *testing.T) {
 	m1.Metadata.Set("foo", "bar")
 	m2 := message.NewMessage("456", []byte(`{"msg":"hola"}`))
 	m3 := message.NewMessage("789", []byte(`{"msg":"konnichiwa"}`))
+	m4 := message.NewMessage("456", []byte(`{"msg":"ni hao"}`))
 
 	pub1, sub1, closer1, out1, err := buildDriverPair(ctx, cfg)
 	if err != nil {
@@ -75,11 +62,19 @@ func TestNatsChannel(t *testing.T) {
 	if err := pub2.Publish("test", m2); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
-	// Don't let sub1 see the last message, even though it's published by pub1.
+	// There is some asynchronous machinery in Publish which can cause
+	// the last message published be dropped if the following Close call
+	// is within a few milliseconds of the Publish call.
+	time.Sleep(5 * time.Millisecond)
+	// Don't let sub1 see the last two messages, even though it's published by pub1.
 	if err := sub1.Close(); err != nil {
 		t.Fatalf("failed to close sub1: %v", err)
 	}
-	if err := pub1.Publish("test", m3); err != nil {
+	time.Sleep(5 * time.Millisecond)
+	if err := pub2.Publish("test", m3); err != nil {
+		t.Fatalf("failed to publish message: %v", err)
+	}
+	if err := pub1.Publish("test", m4); err != nil {
 		t.Fatalf("failed to publish message: %v", err)
 	}
 
@@ -93,7 +88,7 @@ func TestNatsChannel(t *testing.T) {
 	// meaningful in a multi-process world).
 	results := make([]*message.Message, 0, 7)
 loop:
-	for i := 0; i < 7; i++ {
+	for i := 0; len(results) < 4; i++ {
 		select {
 		case m := <-out1:
 			results = append(results, m)
@@ -101,26 +96,28 @@ loop:
 		case m := <-out2:
 			results = append(results, m)
 			t.Logf("Got %s from out2", m.Payload)
-		case <-time.After(25 * time.Second):
+		case <-time.After(5 * time.Second):
 			t.Logf("timeout waiting for message %d", i)
 			break loop
 		}
-	}
-	slices.SortFunc(results, func(a, b *message.Message) int {
-		return bytes.Compare(a.Payload, b.Payload)
-	})
-	// We sometimes get message duplicates.  Retransmissions are okay; deduplicate them.
-	results = slices.CompactFunc(results, func(a, b *message.Message) bool {
-		return bytes.Equal(a.Payload, b.Payload)
-	})
 
-	if len(results) != 3 {
-		t.Fatalf("expected 3 messages, got %d: %+v", len(results), results)
+		slices.SortFunc(results, func(a, b *message.Message) int {
+			return bytes.Compare(a.Payload, b.Payload)
+		})
+		// We sometimes get message duplicates.  Retransmissions are okay; deduplicate them.
+		results = slices.CompactFunc(results, func(a, b *message.Message) bool {
+			return bytes.Equal(a.Payload, b.Payload)
+		})
+	}
+
+	if len(results) != 4 {
+		t.Fatalf("expected 4 messages, got %d: %+v", len(results), results)
 	}
 
 	expectMessageEqual(t, m1, results[0])
 	expectMessageEqual(t, m2, results[1])
 	expectMessageEqual(t, m3, results[2])
+	expectMessageEqual(t, m4, results[3])
 }
 
 func buildDriverPair(ctx context.Context, cfg serverconfig.EventConfig) (message.Publisher, message.Subscriber, common.DriverCloser, <-chan *message.Message, error) {

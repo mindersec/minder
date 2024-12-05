@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package ingestcache a cache that is used to cache the results of ingesting data.
 // The intent is to reduce the number of calls to external services.
@@ -19,11 +8,11 @@ package ingestcache
 import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // Cache is the interface for the ingest cache.
 type Cache interface {
-	Get(ingester engif.Ingester, entity protoreflect.ProtoMessage, params map[string]any) (*engif.Result, bool)
-	Set(ingester engif.Ingester, entity protoreflect.ProtoMessage, params map[string]any, result *engif.Result)
+	Get(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, bool)
+	Set(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any, result *interfaces.Result)
 }

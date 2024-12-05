@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package actions provide necessary interfaces and implementations for
 // processing actions, such as remediation and alerts.
@@ -27,21 +15,20 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/actions/remediate/pull_request"
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
-	actions      map[engif.ActionType]engif.Action
-	actionsOnOff map[engif.ActionType]models.ActionOpt
+	actions map[engif.ActionType]engif.Action
 }
 
 // NewRuleActions creates a new rule actions engine
@@ -52,13 +39,13 @@ func NewRuleActions(
 	actionConfig *models.ActionConfiguration,
 ) (*RuleActionsEngine, error) {
 	// Create the remediation engine
-	remEngine, err := remediate.NewRuleRemediator(ruletype, provider)
+	remEngine, err := remediate.NewRuleRemediator(ruletype, provider, actionConfig.Remediate)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 
 	// Create the alert engine
-	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider)
+	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider, actionConfig.Alert)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
 	}
@@ -68,18 +55,7 @@ func NewRuleActions(
 			remEngine.Class():   remEngine,
 			alertEngine.Class(): alertEngine,
 		},
-		// The on/off state of the actions is an integral part of the action engine
-		// and should be set upon creation.
-		actionsOnOff: map[engif.ActionType]models.ActionOpt{
-			remEngine.Class():   remEngine.GetOnOffState(actionConfig.Remediate),
-			alertEngine.Class(): alertEngine.GetOnOffState(actionConfig.Alert),
-		},
 	}, nil
-}
-
-// GetOnOffState returns the on/off state of the actions
-func (rae *RuleActionsEngine) GetOnOffState() map[engif.ActionType]models.ActionOpt {
-	return rae.actionsOnOff
 }
 
 // DoActions processes all actions i.e., remediation and alerts
@@ -155,7 +131,7 @@ func (rae *RuleActionsEngine) processAction(
 	// Get action engine
 	action := rae.actions[actionType]
 	// Return the result of the action
-	return action.Do(ctx, cmd, rae.actionsOnOff[actionType], ent, params, metadata)
+	return action.Do(ctx, cmd, ent, params, metadata)
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
@@ -269,14 +245,14 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 		Str("action", string(actionType))
 
 	// Get the profile option set for this action type
-	actionOnOff, ok := rae.actionsOnOff[actionType]
+	action, ok := rae.actions[actionType]
 	if !ok {
 		// If the action is not found, definitely skip it
 		logger.Msg("action type not found, skipping")
 		return true
 	}
 	// Check the action option
-	switch actionOnOff {
+	switch action.GetOnOffState() {
 	case models.ActionOptOff:
 		// Action is off, skip
 		logger.Msg("action is off, skipping")

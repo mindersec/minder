@@ -21,19 +21,19 @@ Appropriate usages of feature flags:
 
 We expect that feature flags will generally be short-lived (a few months in most cases).  There are costs (testing, maintenance, complexity, and general opportunity costs) to maintaining two code paths, so we aim to retire feature flags once the feature is considered "stable".  Here are some examples of alternative mechanisms to use for long-term behavior changes:
 
-* **Server Configuration**.  See [`internal/config/server`](https://github.com/stacklok/minder/tree/main/internal/config/server) for long-term options that should be on or off at server startup and don't need to change based on the invocation.
+* **Server Configuration**.  See [`internal/config/server`](https://github.com/mindersec/minder/tree/main/internal/config/server) for long-term options that should be on or off at server startup and don't need to change based on the invocation.
 
-* **Entitlements**.  See [`internal/projects/features`](https://github.com/stacklok/minder/tree/main/internal/projects/features) for functionality that should be able to be turned on or off on a per-project basis (for example, for paid customers).
+* **Entitlements**.  See [`internal/projects/features`](https://github.com/mindersec/minder/tree/main/internal/projects/features) for functionality that should be able to be turned on or off on a per-project basis (for example, for paid customers).
 
 ## How to Use Feature Flags
 
-If you're working on a new Minder feature and want to merge it incrementally, check out [this code (linked to commit)](https://github.com/stacklok/minder/blob/d8f7d5709540bd33a2200adc2dbd330bbeceae86/internal/controlplane/handlers_authz.go#L222) for an example.  The process is basically:
+If you're working on a new Minder feature and want to merge it incrementally, check out [this code (linked to commit)](https://github.com/mindersec/minder/blob/d8f7d5709540bd33a2200adc2dbd330bbeceae86/internal/controlplane/handlers_authz.go#L222) for an example.  The process is basically:
 
-1. Add a feature flag declaration to [`internal/flags/constants.go`](https://github.com/stacklok/minder/blob/main/internal/flags/constants.go)
+1. Add a feature flag declaration to [`internal/flags/constants.go`](https://github.com/mindersec/minder/blob/main/internal/flags/constants.go)
 
 1. At the call site(s), put the new functionality behind `if flags.Bool(ctx, s.featureFlags, flags.MyFlagName) {...`
 
-1. You can use the [`flags.FakeClient`](https://github.com/stacklok/minder/blob/main/internal/flags/test_client.go) in tests to test the new code path as well as the old one.
+1. You can use the [`flags.FakeClient`](https://github.com/mindersec/minder/blob/main/internal/flags/test_client.go) in tests to test the new code path as well as the old one.
 
 Using `flags.Bool` from our own repo will enable a couple bits of default behavior over OpenFeature:
 

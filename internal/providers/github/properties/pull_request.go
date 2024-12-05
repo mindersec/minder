@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package properties provides utility functions for fetching and managing properties
 package properties
@@ -26,9 +14,9 @@ import (
 
 	go_github "github.com/google/go-github/v63/github"
 
-	"github.com/stacklok/minder/internal/entities/properties"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -199,8 +187,8 @@ func getPrWrapperAttrsFromProps(props *properties.Properties) (string, string, i
 }
 
 // PullRequestV1FromProperties creates a PullRequestV1 from a properties object
-func PullRequestV1FromProperties(props *properties.Properties) (*minderv1.PullRequest, error) {
-	return &minderv1.PullRequest{
+func PullRequestV1FromProperties(props *properties.Properties) (*pbinternal.PullRequest, error) {
+	return &pbinternal.PullRequest{
 		Url:            props.GetProperty(PullPropertyURL).GetString(),
 		CommitSha:      props.GetProperty(PullPropertySha).GetString(),
 		TargetRef:      props.GetProperty(PullPropertyTargetRef).GetString(),

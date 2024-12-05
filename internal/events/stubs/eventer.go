@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package stubs contains stubs for the eventer package
 package stubs
@@ -21,12 +10,12 @@ import (
 
 	"github.com/ThreeDotsLabs/watermill/message"
 
-	"github.com/stacklok/minder/internal/events"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // StubEventer is a stub implementation of events.Interface and the events.Publisher interface
-var _ events.Interface = (*StubEventer)(nil)
-var _ events.Publisher = (*StubEventer)(nil)
+var _ interfaces.Interface = (*StubEventer)(nil)
+var _ interfaces.Publisher = (*StubEventer)(nil)
 
 // StubEventer is an eventer that's useful for testing.
 type StubEventer struct {
@@ -40,7 +29,7 @@ func (*StubEventer) Close() error {
 }
 
 // ConsumeEvents implements events.Interface.
-func (*StubEventer) ConsumeEvents(...events.Consumer) {
+func (*StubEventer) ConsumeEvents(...interfaces.Consumer) {
 	panic("unimplemented")
 }
 

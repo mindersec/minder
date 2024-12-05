@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package service contains the business logic for the minder services.
 package service
@@ -24,46 +12,48 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/eea"
-	"github.com/stacklok/minder/internal/email/awsses"
-	"github.com/stacklok/minder/internal/email/noop"
-	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/engine/selectors"
-	"github.com/stacklok/minder/internal/entities/handlers"
-	propService "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/flags"
-	"github.com/stacklok/minder/internal/history"
-	"github.com/stacklok/minder/internal/invites"
-	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/internal/metrics/meters"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/dockerhub"
-	ghprov "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/installations"
-	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
-	"github.com/stacklok/minder/internal/providers/github/service"
-	gitlabmanager "github.com/stacklok/minder/internal/providers/gitlab/manager"
-	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/session"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/reconcilers"
-	"github.com/stacklok/minder/internal/reminderprocessor"
-	"github.com/stacklok/minder/internal/repositories"
-	"github.com/stacklok/minder/internal/roles"
-	"github.com/stacklok/minder/internal/ruletypes"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/controlplane"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	datasourcessvc "github.com/mindersec/minder/internal/datasources/service"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/eea"
+	"github.com/mindersec/minder/internal/email/awsses"
+	"github.com/mindersec/minder/internal/email/noop"
+	"github.com/mindersec/minder/internal/engine"
+	"github.com/mindersec/minder/internal/entities/handlers"
+	propService "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/internal/history"
+	"github.com/mindersec/minder/internal/invites"
+	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/metrics/meters"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
+	ghprov "github.com/mindersec/minder/internal/providers/github"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/installations"
+	ghmanager "github.com/mindersec/minder/internal/providers/github/manager"
+	"github.com/mindersec/minder/internal/providers/github/service"
+	gitlabmanager "github.com/mindersec/minder/internal/providers/gitlab/manager"
+	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/session"
+	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/reconcilers"
+	"github.com/mindersec/minder/internal/reminderprocessor"
+	"github.com/mindersec/minder/internal/repositories"
+	"github.com/mindersec/minder/internal/roles"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
 // AllInOneServerService is a helper function that starts the gRPC and HTTP servers,
@@ -84,13 +74,14 @@ func AllInOneServerService(
 	meterFactory meters.MeterFactory,
 ) error {
 	errg, ctx := errgroup.WithContext(ctx)
+	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
+	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
-	evt, err := events.Setup(ctx, &cfg.Events)
+	evt, err := eventer.New(ctx, featureFlagClient, &cfg.Events)
 	if err != nil {
 		return fmt.Errorf("unable to setup eventer: %w", err)
 	}
 
-	flags.OpenFeatureProviderFromFlags(ctx, cfg.Flags)
 	cryptoEngine, err := crypto.NewEngineFromConfig(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to create crypto engine: %w", err)
@@ -112,9 +103,8 @@ func AllInOneServerService(
 	fallbackTokenClient := ghprov.NewFallbackTokenClient(cfg.Provider)
 	ghClientFactory := clients.NewGitHubClientFactory(providerMetrics)
 	providerStore := providers.NewProviderStore(store)
-	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles)
+	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles, &cfg.Features)
 	propSvc := propService.NewPropertiesService(store)
-	featureFlagClient := openfeature.NewClient(cfg.Flags.AppName)
 
 	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
 	// webhook handling to make this viable.
@@ -136,6 +126,8 @@ func AllInOneServerService(
 		store,
 		ghProviders,
 		propSvc,
+		serverMetrics,
+		evt,
 	)
 
 	provmans := []manager.ProviderClassManager{githubProviderManager}
@@ -179,6 +171,7 @@ func AllInOneServerService(
 	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
+	dataSourcesSvc := datasourcessvc.NewDataSourceService(store)
 
 	s := controlplane.NewServer(
 		store,
@@ -196,6 +189,7 @@ func AllInOneServerService(
 		profileSvc,
 		historySvc,
 		ruleSvc,
+		dataSourcesSvc,
 		ghProviders,
 		providerManager,
 		providerAuthManager,
@@ -280,7 +274,7 @@ func AllInOneServerService(
 	evt.ConsumeEvents(getAndDeleteEntity)
 
 	// Register the email manager to handle email invitations
-	var mailClient events.Consumer
+	var mailClient interfaces.Consumer
 	if cfg.Email.AWSSES.Region != "" && cfg.Email.AWSSES.Sender != "" {
 		// If AWS SES is configured, use it to send emails
 		mailClient, err = awsses.New(ctx, cfg.Email.AWSSES.Sender, cfg.Email.AWSSES.Region)

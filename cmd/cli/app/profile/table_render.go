@@ -1,30 +1,21 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package profile
 
 import (
+	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 
-	"github.com/stacklok/minder/cmd/cli/app/common"
-	"github.com/stacklok/minder/internal/util/cli/table"
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/cmd/cli/app/common"
+	"github.com/mindersec/minder/internal/util/cli/table"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func marshalStructOrEmpty(v *structpb.Struct) string {
@@ -116,11 +107,15 @@ func RenderRuleEvaluationStatusTable(
 	statuses []*minderv1.RuleEvaluationStatus,
 	t table.Table,
 ) {
+	// sort by entity
+	slices.SortFunc(statuses, func(a *minderv1.RuleEvaluationStatus, b *minderv1.RuleEvaluationStatus) int {
+		return strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"])
+	})
+
 	for _, eval := range statuses {
 		t.AddRowWithColor(
-			layouts.NoColor(eval.RuleDescriptionName),
-			layouts.NoColor(eval.RuleTypeName),
-			layouts.NoColor(eval.Entity),
+			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.RuleDescriptionName, eval.RuleTypeName)),
+			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
 			common.GetEvalStatusColor(eval.Status),
 			common.GetRemediateStatusColor(eval.RemediationStatus),
 			layouts.NoColor(mapToYAMLOrEmpty(eval.EntityInfo)),

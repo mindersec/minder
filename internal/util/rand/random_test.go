@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rand_test
 
@@ -20,18 +8,18 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/stacklok/minder/internal/util/rand"
+	"github.com/mindersec/minder/internal/util/rand"
 )
 
 func TestRandomInt(t *testing.T) {
 	t.Parallel()
 
-	min := int64(1)
-	max := int64(10)
+	minVal := int64(1)
+	maxVal := int64(10)
 	seed := int64(12345)
-	randomInt := rand.RandomInt(min, max, seed)
-	require.GreaterOrEqual(t, randomInt, min)
-	require.LessOrEqual(t, randomInt, max)
+	randomInt := rand.RandomInt(minVal, maxVal, seed)
+	require.GreaterOrEqual(t, randomInt, minVal)
+	require.LessOrEqual(t, randomInt, maxVal)
 }
 
 func TestRandomString(t *testing.T) {

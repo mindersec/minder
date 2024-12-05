@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # This is an example .goreleaser.yml file with some sensible defaults.
 # Make sure to check the documentation at https://goreleaser.com
 
@@ -25,7 +28,7 @@ builds:
       - "-X main.Commit={{ .Env.COMMIT }}"
       - "-X main.CommitDate={{ .Env.COMMIT_DATE }}"
       - "-X main.TreeState={{ .Env.TREE_STATE }}"
-      - "-X github.com/stacklok/minder/internal/constants.CLIVersion={{ .Env.VERSION }}"
+      - "-X github.com/mindersec/minder/internal/constants.CLIVersion={{ .Env.VERSION }}"
     goos:
       - linux
       - windows
@@ -41,32 +44,18 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
-# This section defines how to release to homebrew.
-brews:
-  - homepage: 'https://github.com/stacklok/minder'
-    description: 'minder is the client CLI for interacting with Minder by Stacklok.'
-    directory: Formula
-    commit_author:
-      name: stacklokbot
-      email: info@stacklok.com
-    repository:
-      owner: stacklok
-      name: homebrew-tap
-      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    test: |
-      system "#{bin}/minder --help"
 # This section defines how to release to winget.
 winget:
   - name: minder
     publisher: stacklok
     license: Apache-2.0
-    license_url: "https://github.com/stacklok/minder/blob/main/LICENSE"
+    license_url: "https://github.com/mindersec/minder/blob/main/LICENSE"
     copyright: Stacklok, Inc.
     homepage: https://stacklok.com
     short_description: 'minder is the client CLI for interacting with Minder by Stacklok.'
-    publisher_support_url: "https://github.com/stacklok/minder/issues/new/choose"
+    publisher_support_url: "https://github.com/mindersec/minder/issues/new/choose"
     package_identifier: "stacklok.minder"
-    url_template: "https://github.com/stacklok/minder/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    url_template: "https://github.com/mindersec/minder/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     skip_upload: auto
     release_notes: "{{.Changelog}}"
     tags:
@@ -104,7 +93,7 @@ release:
   # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
   prerelease: auto
   github:
-    owner: stacklok
+    owner: mindersec
     name: minder
 # This section defines how and which artifacts we want to sign for the release.
 signs:

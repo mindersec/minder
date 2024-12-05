@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package rest provides tests for the REST remediation engine
 // we use the package rest directly because we need to test non-exported symbols
@@ -29,16 +18,16 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/providers/testproviders"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/providers/testproviders"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var (
@@ -151,7 +140,8 @@ func TestNewRestRemediate(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			got, err := NewRestRemediate(tt.args.actionType, tt.args.restCfg, restProvider)
+			got, err := NewRestRemediate(
+				tt.args.actionType, tt.args.restCfg, restProvider, models.ActionOptOn)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, got, "expected nil")
@@ -383,7 +373,8 @@ func TestRestRemediate(t *testing.T) {
 			defer testServer.Close()
 			provider, err := testGithubProvider(testServer.URL)
 			require.NoError(t, err)
-			engine, err := NewRestRemediate(TestActionTypeValid, tt.newRemArgs.restCfg, provider)
+			engine, err := NewRestRemediate(
+				TestActionTypeValid, tt.newRemArgs.restCfg, provider, tt.remArgs.remAction)
 			require.NoError(t, err, "unexpected error creating remediate engine")
 			require.NotNil(t, engine, "expected non-nil remediate engine")
 
@@ -394,7 +385,8 @@ func TestRestRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent,
+			retMeta, err := engine.Do(
+				context.Background(), interfaces.ActionCmdOn, tt.remArgs.ent,
 				evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")

@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package logger_test
 
@@ -24,12 +13,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	enginerr "github.com/stacklok/minder/internal/engine/errors"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/profiles/models"
+	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 func TestTelemetryStore_Record(t *testing.T) {
@@ -53,12 +40,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 			ep.Profile = &models.ProfileAggregate{
 				Name: "artifact_profile",
 				ID:   testUUID,
+				ActionConfig: models.ActionConfiguration{
+					Remediate: models.ActionOptOff,
+					Alert:     models.ActionOptOn,
+				},
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
-				alert.ActionType:     models.ActionOptOn,
-				remediate.ActionType: models.ActionOptOff,
-			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
 				AlertErr:     enginerr.ErrActionSkipped,
@@ -81,12 +68,12 @@ func TestTelemetryStore_Record(t *testing.T) {
 			ep.Profile = &models.ProfileAggregate{
 				Name: "artifact_profile",
 				ID:   testUUID,
+				ActionConfig: models.ActionConfiguration{
+					Remediate: models.ActionOptOn,
+					Alert:     models.ActionOptOff,
+				},
 			}
 			ep.SetEvalErr(enginerr.NewErrEvaluationFailed("evaluation failure reason"))
-			ep.SetActionsOnOff(map[engif.ActionType]models.ActionOpt{
-				alert.ActionType:     models.ActionOptOff,
-				remediate.ActionType: models.ActionOptOn,
-			})
 			ep.SetActionsErr(context.Background(), enginerr.ActionsError{
 				RemediateErr: nil,
 				AlertErr:     enginerr.ErrActionSkipped,

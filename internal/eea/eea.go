@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package eea provides objects and event handlers for the EEA. EEA stands for
 // Event Execution Aggregator. The EEA is responsible for aggregating events
@@ -29,19 +17,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/manager"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/internal/providers/manager"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // EEA is the Event Execution Aggregator
 type EEA struct {
 	querier db.Store
-	evt     events.Publisher
+	evt     interfaces.Publisher
 	cfg     *serverconfig.AggregatorConfig
 
 	entityFetcher service.PropertiesService
@@ -49,7 +39,7 @@ type EEA struct {
 }
 
 // NewEEA creates a new EEA
-func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.AggregatorConfig,
+func NewEEA(querier db.Store, evt interfaces.Publisher, cfg *serverconfig.AggregatorConfig,
 	ef service.PropertiesService, provMan manager.ProviderManager) *EEA {
 	return &EEA{
 		querier:       querier,
@@ -61,8 +51,8 @@ func NewEEA(querier db.Store, evt events.Publisher, cfg *serverconfig.Aggregator
 }
 
 // Register implements the Consumer interface.
-func (e *EEA) Register(r events.Registrar) {
-	r.Register(events.TopicQueueEntityFlush, e.FlushMessageHandler)
+func (e *EEA) Register(r interfaces.Registrar) {
+	r.Register(constants.TopicQueueEntityFlush, e.FlushMessageHandler)
 }
 
 // AggregateMiddleware will pass on the event to the executor engine
@@ -355,7 +345,7 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
 	}
 
-	pr, ok := rawPR.(*minderv1.PullRequest)
+	pr, ok := rawPR.(*pbinternal.PullRequest)
 	if !ok {
 		return nil, fmt.Errorf("error converting entity to pull request")
 	}

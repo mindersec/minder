@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package trusty provides an evaluator that uses the trusty API
 package trusty
@@ -18,21 +7,23 @@ package trusty
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
 	"github.com/rs/zerolog"
-	trusty "github.com/stacklok/trusty-sdk-go/pkg/client"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
+	trusty "github.com/stacklok/trusty-sdk-go/pkg/v2/client"
+	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/constants"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -46,7 +37,7 @@ const (
 type Evaluator struct {
 	cli      provifv1.GitHub
 	endpoint string
-	client   *trusty.Trusty
+	client   trusty.Trusty
 }
 
 // NewTrustyEvaluator creates a new trusty evaluator
@@ -94,7 +85,7 @@ func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *engif.Result,
+	res *interfaces.Result,
 ) error {
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
@@ -172,7 +163,7 @@ func getEcosystemConfig(
 }
 
 // readPullRequestDependencies returns the dependencies found in theingestion results
-func readPullRequestDependencies(res *engif.Result) (*pbinternal.PrDependencies, error) {
+func readPullRequestDependencies(res *interfaces.Result) (*pbinternal.PrDependencies, error) {
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")
@@ -211,9 +202,7 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	// Craft an evaluation failed error with the dependency data:
 	var lowScoringPackages, maliciousPackages []string
 	for _, d := range prSummary.trackedAlternatives {
-		if d.trustyReply.PackageData.Malicious != nil &&
-			d.trustyReply.PackageData.Malicious.Published != nil &&
-			d.trustyReply.PackageData.Malicious.Published.String() != "" {
+		if d.trustyReply.Malicious != nil {
 			maliciousPackages = append(maliciousPackages, d.trustyReply.PackageName)
 		} else {
 			lowScoringPackages = append(lowScoringPackages, d.trustyReply.PackageName)
@@ -251,26 +240,295 @@ func buildEvalResult(prSummary *summaryPrHandler) error {
 	return nil
 }
 
+type trustyReport struct {
+	PackageName     string
+	PackageType     string
+	PackageVersion  string
+	TrustyURL       string
+	IsDeprecated    bool
+	IsArchived      bool
+	Score           *float64
+	ActivityScore   float64
+	ProvenanceScore float64
+	ScoreComponents []scoreComponent
+	Alternatives    []alternative
+	Provenance      *provenance
+	Malicious       *malicious
+}
+
+type scoreComponent struct {
+	Label string
+	Value any
+}
+
+type provenance struct {
+	Historical *historicalProvenance
+	Sigstore   *sigstoreProvenance
+}
+
+type historicalProvenance struct {
+	Versions int
+	Tags     int
+	Common   int
+	Overlap  float64
+}
+
+type sigstoreProvenance struct {
+	SourceRepository string
+	Workflow         string
+	Issuer           string
+	RekorURI         string
+}
+
+type malicious struct {
+	Summary string
+	Details string
+}
+
+type alternative struct {
+	PackageName string
+	PackageType string
+	Score       *float64
+	TrustyURL   string
+}
+
 func getDependencyScore(
-	ctx context.Context, trustyClient *trusty.Trusty, dep *pbinternal.PrDependencies_ContextualDependency,
-) (*trustytypes.Reply, error) {
+	ctx context.Context,
+	trustyClient trusty.Trusty,
+	dep *pbinternal.PrDependencies_ContextualDependency,
+) (*trustyReport, error) {
 	// Call the Trusty API
-	resp, err := trustyClient.Report(ctx, &trustytypes.Dependency{
-		Name:      dep.Dep.Name,
-		Version:   dep.Dep.Version,
-		Ecosystem: trustytypes.Ecosystem(dep.Dep.Ecosystem),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+	packageType := dep.Dep.Ecosystem.AsString()
+	input := &trustytypes.Dependency{
+		PackageName:    dep.Dep.Name,
+		PackageType:    packageType,
+		PackageVersion: &dep.Dep.Version,
 	}
-	return resp, nil
+
+	summary := make(chan *trustytypes.PackageSummaryAnnotation, 1)
+	metadata := make(chan *trustytypes.TrustyPackageData, 1)
+	alternatives := make(chan *trustytypes.PackageAlternatives, 1)
+	provenance := make(chan *trustytypes.Provenance, 1)
+	errors := make(chan error)
+
+	defer func() {
+		close(summary)
+		close(metadata)
+		close(alternatives)
+		close(provenance)
+		close(errors)
+	}()
+
+	go func() {
+		resp, err := trustyClient.Summary(ctx, input)
+		errors <- err
+		summary <- resp
+	}()
+
+	go func() {
+		resp, err := trustyClient.PackageMetadata(ctx, input)
+		errors <- err
+		metadata <- resp
+	}()
+
+	go func() {
+		resp, err := trustyClient.Alternatives(ctx, input)
+		errors <- err
+		alternatives <- resp
+	}()
+
+	go func() {
+		resp, err := trustyClient.Provenance(ctx, input)
+		errors <- err
+		provenance <- resp
+	}()
+
+	// Beware of the magic number 4, which is the number of
+	// asynchronous calls fired in the previous lines. This must
+	// be kept in sync.
+	for i := 0; i < 4; i++ {
+		err := <-errors
+		if err != nil {
+			return nil, fmt.Errorf("Trusty call failed: %w", err)
+		}
+	}
+	respSummary := <-summary
+	respPkg := <-metadata
+	respAlternatives := <-alternatives
+	respProvenance := <-provenance
+
+	res := makeTrustyReport(dep,
+		*respSummary,
+		*respPkg,
+		*respAlternatives,
+		*respProvenance,
+	)
+
+	return res, nil
+}
+
+func makeTrustyReport(
+	dep *pbinternal.PrDependencies_ContextualDependency,
+	respSummary trustytypes.PackageSummaryAnnotation,
+	respPkg trustytypes.TrustyPackageData,
+	respAlternatives trustytypes.PackageAlternatives,
+	respProvenance trustytypes.Provenance,
+) *trustyReport {
+	res := &trustyReport{
+		PackageName:    dep.Dep.Name,
+		PackageVersion: dep.Dep.Version,
+		PackageType:    dep.Dep.Ecosystem.AsString(),
+		TrustyURL:      makeTrustyURL(dep.Dep.Name, strings.ToLower(dep.Dep.Ecosystem.AsString())),
+	}
+
+	addSummaryDetails(res, respSummary)
+	addMetadataDetails(res, respPkg)
+
+	res.ScoreComponents = makeScoreComponents(respSummary.Description)
+	res.Alternatives = makeAlternatives(dep.Dep.Ecosystem.AsString(), respAlternatives.Packages)
+
+	if respSummary.Description.Malicious {
+		res.Malicious = makeMaliciousDetails(respPkg.Malicious)
+	}
+
+	res.Provenance = makeProvenance(respProvenance)
+
+	return res
+}
+
+func addSummaryDetails(res *trustyReport, resp trustytypes.PackageSummaryAnnotation) {
+	res.Score = resp.Score
+	res.ActivityScore = resp.Description.Activity
+	res.ProvenanceScore = resp.Description.Provenance
+}
+
+func addMetadataDetails(res *trustyReport, resp trustytypes.TrustyPackageData) {
+	res.IsDeprecated = resp.IsDeprecated != nil && *resp.IsDeprecated
+	res.IsArchived = resp.Archived != nil && *resp.Archived
+}
+
+func makeScoreComponents(resp trustytypes.SummaryDescription) []scoreComponent {
+	scoreComponents := make([]scoreComponent, 0)
+
+	// activity scores
+	if resp.Activity != 0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Package activity",
+			Value: resp.Activity,
+		})
+	}
+	if resp.ActivityRepo != 0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Repository activity",
+			Value: resp.ActivityRepo,
+		})
+	}
+	if resp.ActivityUser != 0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "User activity",
+			Value: resp.ActivityUser,
+		})
+	}
+
+	// provenance information
+	if resp.ProvenanceType != nil {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Provenance",
+			Value: string(*resp.ProvenanceType),
+		})
+	}
+
+	// typosquatting information
+	if resp.TypoSquatting != 0 && resp.TypoSquatting <= 5.0 {
+		scoreComponents = append(scoreComponents, scoreComponent{
+			Label: "Typosquatting",
+			Value: "⚠️ Dependency may be trying to impersonate a well known package",
+		})
+	}
+
+	// Note: in the previous implementation based on Trusty v1
+	// API, if new fields were added to the `"description"` field
+	// of a package they were implicitly added to the table of
+	// score components.
+	//
+	// This was possible because the `Description` field of the go
+	// struct was defined as `map[string]any`.
+	//
+	// This is not the case with v2 API, so we need to keep track
+	// of new measures being added to the API.
+
+	return scoreComponents
+}
+
+func makeAlternatives(
+	ecosystem string,
+	trustyAlternatives []*trustytypes.PackageBasicInfo,
+) []alternative {
+	alternatives := []alternative{}
+	for _, alt := range trustyAlternatives {
+		alternatives = append(alternatives, alternative{
+			PackageName: alt.PackageName,
+			PackageType: ecosystem,
+			Score:       alt.Score,
+			TrustyURL:   makeTrustyURL(alt.PackageName, ecosystem),
+		})
+	}
+
+	return alternatives
+}
+
+func makeMaliciousDetails(
+	maliciousInfo *trustytypes.PackageMaliciousPayload,
+) *malicious {
+	return &malicious{
+		Summary: maliciousInfo.Summary,
+		Details: preprocessDetails(maliciousInfo.Details),
+	}
+}
+
+func makeProvenance(
+	resp trustytypes.Provenance,
+) *provenance {
+	prov := &provenance{}
+	if resp.Historical.Overlap != 0 {
+		prov.Historical = &historicalProvenance{
+			Versions: int(resp.Historical.Versions),
+			Tags:     int(resp.Historical.Tags),
+			Common:   int(resp.Historical.Common),
+			Overlap:  resp.Historical.Overlap,
+		}
+	}
+
+	if resp.Sigstore.Issuer != "" {
+		prov.Sigstore = &sigstoreProvenance{
+			SourceRepository: resp.Sigstore.SourceRepo,
+			Workflow:         resp.Sigstore.Workflow,
+			Issuer:           resp.Sigstore.Issuer,
+			RekorURI:         resp.Sigstore.Transparency,
+		}
+	}
+
+	return prov
+}
+
+func makeTrustyURL(packageName string, ecosystem string) string {
+	trustyURL, _ := url.JoinPath(
+		constants.TrustyHttpURL,
+		"report",
+		strings.ToLower(ecosystem),
+		url.PathEscape(packageName))
+	return trustyURL
 }
 
 // classifyDependency checks the dependencies from the PR for maliciousness or
 // low scores and adds them to the summary if needed
 func classifyDependency(
-	_ context.Context, logger *zerolog.Logger, resp *trustytypes.Reply, ruleConfig *config,
-	prSummary *summaryPrHandler, dep *pbinternal.PrDependencies_ContextualDependency,
+	_ context.Context,
+	logger *zerolog.Logger,
+	resp *trustyReport,
+	ruleConfig *config,
+	prSummary *summaryPrHandler,
+	dep *pbinternal.PrDependencies_ContextualDependency,
 ) {
 	// Check all the policy violations
 	reasons := []RuleViolationReason{}
@@ -285,7 +543,7 @@ func classifyDependency(
 
 	// If the package is malicious, ensure that the score is 0 to avoid it
 	// getting ignored from the report
-	if resp.PackageData.Malicious != nil && resp.PackageData.Malicious.Summary != "" {
+	if resp.Malicious != nil && resp.Malicious.Summary != "" {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
 			Str("malicious", "true").
@@ -299,11 +557,11 @@ func classifyDependency(
 	}
 
 	// Note if the packages is deprecated or archived
-	if resp.PackageData.Deprecated || resp.PackageData.Archived {
+	if resp.IsDeprecated || resp.IsArchived {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
-			Bool("deprecated", resp.PackageData.Deprecated).
-			Bool("archived", resp.PackageData.Archived).
+			Bool("deprecated", resp.IsDeprecated).
+			Bool("archived", resp.IsArchived).
 			Msgf("deprecated dependency")
 
 		if !ecoConfig.AllowDeprecated {
@@ -314,26 +572,24 @@ func classifyDependency(
 	} else {
 		logger.Debug().
 			Str("dependency", fmt.Sprintf("%s@%s", dep.Dep.Name, dep.Dep.Version)).
-			Bool("deprecated", resp.PackageData.Deprecated).
+			Bool("deprecated", resp.IsDeprecated).
 			Msgf("not deprecated dependency")
 	}
 
 	packageScore := float64(0)
-	if resp.Summary.Score != nil {
-		packageScore = *resp.Summary.Score
+	if resp.Score != nil {
+		packageScore = *resp.Score
 	}
-
-	descr := readPackageDescription(resp)
 
 	if ecoConfig.Score > packageScore {
 		reasons = append(reasons, TRUSTY_LOW_SCORE)
 	}
 
-	if ecoConfig.Provenance > descr["provenance"].(float64) && descr["provenance"].(float64) > 0 {
+	if ecoConfig.Provenance > resp.ProvenanceScore && resp.ProvenanceScore > 0 {
 		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
 	}
 
-	if ecoConfig.Activity > descr["activity"].(float64) && descr["activity"].(float64) > 0 {
+	if ecoConfig.Activity > resp.ActivityScore && resp.ActivityScore > 0 {
 		reasons = append(reasons, TRUSTY_LOW_ACTIVITY)
 	}
 
@@ -353,28 +609,7 @@ func classifyDependency(
 	} else {
 		logger.Debug().
 			Str("dependency", dep.Dep.Name).
-			Float64("score", *resp.Summary.Score).
 			Float64("threshold", ecoConfig.Score).
 			Msgf("dependency ok")
 	}
-}
-
-// readPackageDescription reads the description from the package summary and
-// normlizes the required values when missing from a partial Trusty response
-func readPackageDescription(resp *trustytypes.Reply) map[string]any {
-	descr := map[string]any{}
-	if resp == nil {
-		resp = &trustytypes.Reply{}
-	}
-	if resp.Summary.Description != nil {
-		descr = resp.Summary.Description
-	}
-
-	// Ensure don't panic checking all fields are there
-	for _, fld := range []string{"activity", "provenance"} {
-		if _, ok := descr[fld]; !ok || descr[fld] == nil {
-			descr[fld] = float64(0)
-		}
-	}
-	return descr
 }

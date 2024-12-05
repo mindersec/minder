@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package entities
 
@@ -23,8 +12,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/events"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // EntityInfoWrapper is a helper struct to gather information
@@ -111,7 +102,7 @@ func (eiw *EntityInfoWrapper) WithRepository(r *minderv1.Repository) *EntityInfo
 }
 
 // WithPullRequest sets the entity to a repository
-func (eiw *EntityInfoWrapper) WithPullRequest(p *minderv1.PullRequest) *EntityInfoWrapper {
+func (eiw *EntityInfoWrapper) WithPullRequest(p *pbinternal.PullRequest) *EntityInfoWrapper {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
 	eiw.Entity = p
 
@@ -166,7 +157,7 @@ func (eiw *EntityInfoWrapper) AsArtifact() *EntityInfoWrapper {
 // AsPullRequest sets the entity type to a pull request
 func (eiw *EntityInfoWrapper) AsPullRequest() {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
-	eiw.Entity = &minderv1.PullRequest{}
+	eiw.Entity = &pbinternal.PullRequest{}
 }
 
 // AsEntityInstance sets the entity type to an entity instance
@@ -191,13 +182,13 @@ func (eiw *EntityInfoWrapper) BuildMessage() (*message.Message, error) {
 }
 
 // Publish builds a message.Message and publishes it to the event bus
-func (eiw *EntityInfoWrapper) Publish(evt events.Publisher) error {
+func (eiw *EntityInfoWrapper) Publish(evt interfaces.Publisher) error {
 	msg, err := eiw.BuildMessage()
 	if err != nil {
 		return err
 	}
 
-	if err := evt.Publish(events.TopicQueueEntityEvaluate, msg); err != nil {
+	if err := evt.Publish(constants.TopicQueueEntityEvaluate, msg); err != nil {
 		return fmt.Errorf("error publishing entity event: %w", err)
 	}
 

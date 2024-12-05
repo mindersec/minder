@@ -24,6 +24,9 @@
       "name": "ProfileService"
     },
     {
+      "name": "DataSourceService"
+    },
+    {
       "name": "RuleTypeService"
     },
     {
@@ -77,7 +80,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -121,7 +124,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -165,7 +168,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -178,6 +181,7 @@
           },
           {
             "name": "from",
+            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -215,7 +219,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -228,6 +232,7 @@
           },
           {
             "name": "from",
+            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -278,19 +283,14 @@
         "parameters": [
           {
             "name": "cli",
+            "description": "cli is true if the request is being made from a CLI.",
             "in": "query",
             "required": false,
             "type": "boolean"
           },
           {
-            "name": "port",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
             "name": "owner",
+            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -304,7 +304,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -317,6 +317,7 @@
           },
           {
             "name": "redirectUrl",
+            "description": "redirect_url is the URL to redirect to after the authorization is complete.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -362,7 +363,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -377,7 +378,7 @@
             "name": "enrollmentNonce",
             "description": "enrollment_nonce is the state parameter returned when enrolling the provider",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           }
         ],
@@ -421,7 +422,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -473,7 +474,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -522,6 +523,238 @@
         ]
       }
     },
+    "/api/v1/data_source": {
+      "post": {
+        "operationId": "DataSourceService_CreateDataSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateDataSourceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateDataSourceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      },
+      "put": {
+        "operationId": "DataSourceService_UpdateDataSource",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateDataSourceResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1UpdateDataSourceRequest"
+            }
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      }
+    },
+    "/api/v1/data_source/name/{name}": {
+      "get": {
+        "operationId": "DataSourceService_GetDataSourceByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetDataSourceByNameResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      },
+      "delete": {
+        "operationId": "DataSourceService_DeleteDataSourceByName",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteDataSourceByNameResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "pattern": ".+"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      }
+    },
+    "/api/v1/data_source/{id}": {
+      "get": {
+        "operationId": "DataSourceService_GetDataSourceById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetDataSourceByIdResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      },
+      "delete": {
+        "operationId": "DataSourceService_DeleteDataSourceById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteDataSourceByIdResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      }
+    },
+    "/api/v1/data_sources": {
+      "get": {
+        "operationId": "DataSourceService_ListDataSources",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListDataSourcesResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider. Set to empty string when not applicable.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "DataSourceService"
+        ]
+      }
+    },
     "/api/v1/health": {
       "get": {
         "operationId": "HealthService_CheckHealth",
@@ -559,7 +792,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -653,17 +886,28 @@
             "format": "date-time"
           },
           {
+            "name": "labelFilter",
+            "description": "Filter evaluation history to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
             "name": "cursor.cursor",
-            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis.",
+            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "cursor.size",
-            "description": "size is the number of items to retrieve from the collection.",
+            "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "integer",
             "format": "int64"
           }
@@ -700,7 +944,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -739,45 +983,6 @@
         ],
         "tags": [
           "InviteService"
-        ]
-      }
-    },
-    "/api/v1/my/providers": {
-      "get": {
-        "summary": "GetUnclaimedProviders returns a list of known provider configurations\nthat this user could claim based on their identity.  This is a read-only\noperation for use by clients which wish to present a menu of options.",
-        "operationId": "ProvidersService_GetUnclaimedProviders",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/v1GetUnclaimedProvidersResponse"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "ProvidersService"
         ]
       }
     },
@@ -828,7 +1033,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -866,7 +1071,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -881,7 +1086,7 @@
             "name": "roleAssignment.role",
             "description": "role is the role that is assigned.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
@@ -953,7 +1158,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1075,7 +1280,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1121,7 +1326,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1136,7 +1341,7 @@
             "name": "entity.type",
             "description": "entity is the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string",
             "enum": [
               "ENTITY_UNSPECIFIED",
@@ -1155,11 +1360,12 @@
             "name": "entity.id",
             "description": "id is the ID of the entity to get status for. Incompatible with `all`",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           },
           {
             "name": "all",
+            "description": "all is true if the status of all entities should be returned.\nIncompatible with `entity`. This is optional.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1173,12 +1379,14 @@
           },
           {
             "name": "ruleType",
+            "description": "rule_type is the type of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "ruleName",
+            "description": "rule_name is the name of the rule to filter on.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1217,7 +1425,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1260,7 +1468,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1312,7 +1520,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1350,7 +1558,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1388,7 +1596,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1447,7 +1655,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1540,7 +1748,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1597,7 +1805,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1669,7 +1877,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1707,7 +1915,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1720,9 +1928,9 @@
           },
           {
             "name": "limit",
-            "description": "limit is the maximum number of providers to return.",
+            "description": "limit is the maximum number of providers to return.\n0 uses a server-defined default.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "integer",
             "format": "int32"
           },
@@ -1758,7 +1966,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1826,7 +2034,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1871,7 +2079,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1916,7 +2124,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1953,6 +2161,7 @@
           },
           {
             "name": "limit",
+            "description": "limit is the maximum number of results to return.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -1967,7 +2176,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1980,6 +2189,7 @@
           },
           {
             "name": "cursor",
+            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2010,6 +2220,7 @@
           },
           {
             "name": "limit",
+            "description": "limit is the maximum number of results to return.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -2024,7 +2235,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2037,6 +2248,7 @@
           },
           {
             "name": "cursor",
+            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2074,7 +2286,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2118,7 +2330,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2162,7 +2374,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2204,7 +2416,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2255,7 +2467,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2304,7 +2516,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2355,7 +2567,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2404,7 +2616,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2500,7 +2712,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2623,7 +2835,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2668,7 +2880,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2711,7 +2923,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2749,7 +2961,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2897,7 +3109,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "title": "type is the type of the data evaluation.\nRight now only `jq` is supported as a driver"
+          "description": "type is the type of the data evaluation."
         },
         "jq": {
           "type": "array",
@@ -2922,9 +3134,20 @@
         "homoglyphs": {
           "$ref": "#/definitions/EvalHomoglyphs",
           "description": "homoglyphs is only used if the `homoglyphs` type is selected."
+        },
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DataSourceReference"
+          },
+          "description": "Data sources that the rule refers to. These are used to\ninstantiate the relevant data sources for the rule and keep\ntrack of them as dependencies.\n\nNote that the data source must exist in the project hierarchy\nin order to be used in the rule."
         }
       },
-      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule."
+      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionIngest": {
       "type": "object",
@@ -2943,18 +3166,25 @@
         },
         "artifact": {
           "$ref": "#/definitions/v1ArtifactType",
-          "description": "artifact is the artifact data ingestion."
+          "description": "artifact is the artifact data ingestion.\nartifact currently only applies to artifacts."
         },
         "git": {
           "$ref": "#/definitions/v1GitType",
-          "description": "git is the git data ingestion."
+          "description": "git is the git data ingestion.\ngit currently only applies to repositories."
         },
         "diff": {
           "$ref": "#/definitions/v1DiffType",
-          "description": "diff is the diff data ingestion."
+          "description": "diff is the diff data ingestion.\ndiff currently only applies to pull_requests."
+        },
+        "deps": {
+          "$ref": "#/definitions/v1DepsType",
+          "description": "deps is the deps data ingestion.\ndeps currently only applies to repositories."
         }
       },
-      "description": "Ingest defines how the data is ingested."
+      "description": "Ingest defines how the data is ingested.",
+      "required": [
+        "type"
+      ]
     },
     "DefinitionRemediate": {
       "type": "object",
@@ -2972,6 +3202,15 @@
           "$ref": "#/definitions/RemediatePullRequestRemediation"
         }
       }
+    },
+    "DepsTypeRepoConfigs": {
+      "type": "object",
+      "properties": {
+        "branch": {
+          "type": "string"
+        }
+      },
+      "description": "branch is the branch of the git repository, when applied to repository entities.\nHas no meaning or effect on other entity types."
     },
     "DiffTypeEcosystem": {
       "type": "object",
@@ -3003,12 +3242,15 @@
         },
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
-          "description": "Profile points to the profile itself."
+          "description": "Profile points to the profile itself.\nThis is mutually exclusive with the `constant` field."
         },
         "constant": {
-          "title": "Constant points to a constant value"
+          "description": "Constant points to a constant value.\nThis is mutually exclusive with the `profile` field."
         }
-      }
+      },
+      "required": [
+        "ingested"
+      ]
     },
     "EvalRego": {
       "type": "object",
@@ -3025,7 +3267,10 @@
           "type": "string",
           "description": "how are violations reported. This is only used if the\n`constraints` type is selected. The default is `text`\nwhich returns human-readable text. The other option is\n`json` which returns a JSON array containing the violations."
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "EvalTrusty": {
       "type": "object",
@@ -3046,7 +3291,10 @@
         "def": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "def"
+      ]
     },
     "ListEvaluationResultsResponseEntityEvaluationResults": {
       "type": "object",
@@ -3084,15 +3332,20 @@
       "type": "object",
       "properties": {
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "access_token is the token to store."
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "accessToken"
+      ]
     },
     "ProfileRule": {
       "type": "object",
@@ -3183,11 +3436,11 @@
       "properties": {
         "title": {
           "type": "string",
-          "title": "the title of the PR"
+          "description": "the title of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
         },
         "body": {
           "type": "string",
-          "title": "the body of the PR"
+          "description": "the body of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
         },
         "contents": {
           "type": "array",
@@ -3198,7 +3451,11 @@
         },
         "method": {
           "type": "string",
-          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA"
+          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA\n-- minder.yq.evaluate - evaluates a yq expression on a file"
+        },
+        "params": {
+          "type": "object",
+          "description": "params are unstructured parameters passed to the method. These are optional\nand evaluated by the method."
         },
         "actionsReplaceTagsWithSha": {
           "$ref": "#/definitions/PullRequestRemediationActionsReplaceTagsWithSha",
@@ -3211,21 +3468,81 @@
       "type": "object",
       "properties": {
         "repository": {
-          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+          "$ref": "#/definitions/v1UpstreamRepositoryRef",
+          "description": "repository is the repository to register. This is optional if entity\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
-    "RestTypeFallback": {
+    "RestDataSourceDef": {
       "type": "object",
       "properties": {
-        "httpCode": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "headers is a map of headers to send with the request."
+        },
+        "bodyobj": {
+          "type": "object",
+          "description": "body is the body of the request."
+        },
+        "bodystr": {
+          "type": "string",
+          "description": "bodystr is the body of the request as a string."
+        },
+        "bodyFromField": {
+          "type": "string",
+          "description": "body_from_field is the field in the input to use as the body.\nIf the value is an string, it will be used as the body, as is.\nIf the value is an object, it will be serialized as JSON.\nIf the value is not found in the input, the request will fail."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RestDataSourceDefFallback"
+          },
+          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
+        },
+        "expectedStatus": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
+        },
+        "inputSchema": {
+          "type": "object",
+          "description": "input_schema is the schema for the input to the REST API."
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
+    },
+    "RestDataSourceDefFallback": {
+      "type": "object",
+      "properties": {
+        "httpStatus": {
           "type": "integer",
           "format": "int32"
         },
@@ -3262,7 +3579,11 @@
           "$ref": "#/definitions/DefinitionAlert"
         }
       },
-      "description": "Definition defines the rule type. It encompases the schema and the data evaluation."
+      "description": "Definition defines the rule type. It encompases the schema and the data evaluation.",
+      "required": [
+        "ingest",
+        "eval"
+      ]
     },
     "protobufNullValue": {
       "type": "string",
@@ -3279,7 +3600,8 @@
           "type": "string"
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the artifact owner. This is optional."
         },
         "name": {
           "type": "string"
@@ -3291,7 +3613,8 @@
           "type": "string"
         },
         "repository": {
-          "type": "string"
+          "type": "string",
+          "description": "repository is the repository the artifact originated from.\nThis is optional."
         },
         "versions": {
           "type": "array",
@@ -3307,7 +3630,14 @@
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "artifactPk",
+        "name",
+        "type",
+        "visibility",
+        "createdAt"
+      ]
     },
     "v1ArtifactType": {
       "type": "object",
@@ -3333,7 +3663,8 @@
           "type": "string",
           "format": "date-time"
         }
-      }
+      },
+      "description": "ArtifactVersion is a version of an artifact.\nThis is currently not populated in any requests or responses."
     },
     "v1AssignRoleRequest": {
       "type": "object",
@@ -3346,18 +3677,21 @@
           "$ref": "#/definitions/v1RoleAssignment",
           "description": "role_assignment is the role assignment to be created."
         }
-      }
+      },
+      "required": [
+        "roleAssignment"
+      ]
     },
     "v1AssignRoleResponse": {
       "type": "object",
       "properties": {
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment that was created."
+          "description": "role_assignment is the role assignment that was created.\nThis is optional."
         },
         "invitation": {
           "$ref": "#/definitions/v1Invitation",
-          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member."
+          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member. This is optional."
         }
       }
     },
@@ -3396,7 +3730,10 @@
         "status": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1Context": {
       "type": "object",
@@ -3407,7 +3744,7 @@
         },
         "project": {
           "type": "string",
-          "title": "ID of the project"
+          "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project."
         },
         "retiredOrganization": {
           "type": "string"
@@ -3420,7 +3757,7 @@
       "properties": {
         "projectId": {
           "type": "string",
-          "title": "project is the project ID"
+          "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project."
         },
         "provider": {
           "type": "string",
@@ -3428,6 +3765,23 @@
         }
       },
       "description": "ContextV2 defines the context in which a rule is evaluated."
+    },
+    "v1CreateDataSourceRequest": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      },
+      "title": "DataSource service"
+    },
+    "v1CreateDataSourceResponse": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
     },
     "v1CreateEntityReconciliationTaskRequest": {
       "type": "object",
@@ -3440,7 +3794,10 @@
           "$ref": "#/definitions/v1Context",
           "description": "context is the context in which the entity reconciliation task is created."
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1CreateEntityReconciliationTaskResponse": {
       "type": "object"
@@ -3452,7 +3809,10 @@
           "$ref": "#/definitions/v1Profile"
         }
       },
-      "title": "Profile service"
+      "title": "Profile service",
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProfileResponse": {
       "type": "object",
@@ -3460,7 +3820,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1CreateProjectRequest": {
       "type": "object",
@@ -3473,7 +3836,10 @@
           "type": "string",
           "description": "name is the name of the project to create."
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1CreateProjectResponse": {
       "type": "object",
@@ -3482,7 +3848,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was created."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1CreateProviderRequest": {
       "type": "object",
@@ -3495,7 +3864,10 @@
           "$ref": "#/definitions/v1Provider",
           "description": "provider is the provider to be created."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1CreateProviderResponse": {
       "type": "object",
@@ -3508,7 +3880,10 @@
           "$ref": "#/definitions/v1AuthorizationParams",
           "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1CreateRuleTypeRequest": {
       "type": "object",
@@ -3518,7 +3893,10 @@
           "description": "rule_type is the rule type to be created."
         }
       },
-      "description": "CreateRuleTypeRequest is the request to create a rule type."
+      "description": "CreateRuleTypeRequest is the request to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateRuleTypeResponse": {
       "type": "object",
@@ -3528,7 +3906,10 @@
           "description": "rule_type is the rule type that was created."
         }
       },
-      "description": "CreateRuleTypeResponse is the response to create a rule type."
+      "description": "CreateRuleTypeResponse is the response to create a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1CreateUserRequest": {
       "type": "object",
@@ -3563,22 +3944,32 @@
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "projectName",
+        "identitySubject",
+        "createdAt"
+      ]
     },
     "v1Cursor": {
       "type": "object",
       "properties": {
         "cursor": {
           "type": "string",
-          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis."
+          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection."
         },
         "size": {
           "type": "integer",
           "format": "int64",
-          "description": "size is the number of items to retrieve from the collection."
+          "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default."
         }
       },
-      "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve."
+      "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve.",
+      "required": [
+        "size"
+      ]
     },
     "v1CursorPage": {
       "type": "object",
@@ -3590,14 +3981,75 @@
         },
         "next": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed after the\nones shipped with the message containing this struct."
+          "description": "Cursor pointing to retrieve results logically placed after the\nones shipped with the message containing this struct. This is optional."
         },
         "prev": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed before the\nones shipped with the message containing this struct."
+          "description": "Cursor pointing to retrieve results logically placed before the\nones shipped with the message containing this struct. This is optional."
         }
       },
       "description": "CursorPage message used in response messages. Its purpose is to\nsend to clients links pointing to next and/or previous collection\nsubsets with respect to the one containing this struct."
+    },
+    "v1DataSource": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "version is the version of the data source API."
+        },
+        "type": {
+          "type": "string",
+          "title": "type is the data source type"
+        },
+        "context": {
+          "$ref": "#/definitions/v1ContextV2",
+          "description": "context is the context in which the data source is evaluated.\nNote that in this case we only need the project in the\ncontext, since data sources are not provider-specific."
+        },
+        "name": {
+          "type": "string",
+          "description": "name is the name of the data source.\nNote that this is unique within a project hierarchy.\nNames must be lowercase and can only contain letters, numbers,\nhyphens, and underscores."
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the data source.",
+          "readOnly": true
+        },
+        "rest": {
+          "$ref": "#/definitions/v1RestDataSource",
+          "description": "rest is the REST data source driver."
+        }
+      },
+      "description": "DataSource is a Data source instance. Data sources represent\nexternal integrations that enrich the data in Minder, but do not\nhave explicit lifecycle objects (entities).  Integrations which\ncreate entities are called Providers.",
+      "required": [
+        "version",
+        "name"
+      ]
+    },
+    "v1DataSourceReference": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "refer to a data source by name."
+        }
+      },
+      "description": "DataSourceReference is a reference to a data source.\nNote that for a resource to refer to a data source the data source must\nbe available in the same project hierarchy."
+    },
+    "v1DeleteDataSourceByIdResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteDataSourceByNameResponse": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
     },
     "v1DeleteProfileResponse": {
       "type": "object"
@@ -3609,7 +4061,10 @@
           "type": "string",
           "description": "project_id is the id of the project that was deleted."
         }
-      }
+      },
+      "required": [
+        "projectId"
+      ]
     },
     "v1DeleteProviderByIDResponse": {
       "type": "object",
@@ -3618,7 +4073,10 @@
           "type": "string",
           "title": "id is the id of the provider that was deleted"
         }
-      }
+      },
+      "required": [
+        "id"
+      ]
     },
     "v1DeleteProviderResponse": {
       "type": "object",
@@ -3627,7 +4085,10 @@
           "type": "string",
           "title": "name is the name of the provider that was deleted"
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",
@@ -3635,7 +4096,10 @@
         "repositoryId": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "repositoryId"
+      ]
     },
     "v1DeleteRepositoryByNameResponse": {
       "type": "object",
@@ -3643,7 +4107,10 @@
         "name": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1DeleteRuleTypeResponse": {
       "type": "object",
@@ -3651,6 +4118,15 @@
     },
     "v1DeleteUserResponse": {
       "type": "object"
+    },
+    "v1DepsType": {
+      "type": "object",
+      "properties": {
+        "repo": {
+          "$ref": "#/definitions/DepsTypeRepoConfigs"
+        }
+      },
+      "description": "DepsType defines the \"deps\" ingester which can extract depndencies in protobom\nformat for rule evaluation."
     },
     "v1DiffType": {
       "type": "object",
@@ -3698,7 +4174,11 @@
           "title": "id is the ID of the entity to get status for. Incompatible with `all`"
         }
       },
-      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ..."
+      "description": "EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...",
+      "required": [
+        "type",
+        "id"
+      ]
     },
     "v1EvalResultAlert": {
       "type": "object",
@@ -3740,11 +4220,11 @@
         },
         "alert": {
           "$ref": "#/definitions/v1EvaluationHistoryAlert",
-          "description": "alert contains details of the alerts for this evaluation."
+          "description": "alert contains details of the alerts for this evaluation.\nThis is optional."
         },
         "remediation": {
           "$ref": "#/definitions/v1EvaluationHistoryRemediation",
-          "description": "remediation contains details of the remediation for this evaluation."
+          "description": "remediation contains details of the remediation for this evaluation.\nThis is optional."
         },
         "evaluatedAt": {
           "type": "string",
@@ -3755,7 +4235,15 @@
           "type": "string",
           "description": "id is the unique identifier of the evaluation."
         }
-      }
+      },
+      "description": "EvaluationHistory represents the history of an entity evaluation.\nThis is only used in responses.",
+      "required": [
+        "entity",
+        "rule",
+        "status",
+        "evaluatedAt",
+        "id"
+      ]
     },
     "v1EvaluationHistoryAlert": {
       "type": "object",
@@ -3768,7 +4256,10 @@
           "type": "string",
           "description": "details contains optional details about the alert.\nthe structure and contents are alert specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1EvaluationHistoryEntity": {
       "type": "object",
@@ -3785,7 +4276,12 @@
           "type": "string",
           "description": "name is the entity name."
         }
-      }
+      },
+      "required": [
+        "id",
+        "type",
+        "name"
+      ]
     },
     "v1EvaluationHistoryRemediation": {
       "type": "object",
@@ -3798,7 +4294,10 @@
           "type": "string",
           "description": "details contains optional details about the remediation.\nthe structure and contents are remediation specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1EvaluationHistoryRule": {
       "type": "object",
@@ -3819,7 +4318,13 @@
           "$ref": "#/definitions/v1Severity",
           "description": "severity is the severity of the rule type."
         }
-      }
+      },
+      "required": [
+        "name",
+        "ruleType",
+        "profile",
+        "severity"
+      ]
     },
     "v1EvaluationHistoryStatus": {
       "type": "object",
@@ -3832,7 +4337,11 @@
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status",
+        "details"
+      ]
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -3845,9 +4354,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ArtifactVersion"
-          }
+          },
+          "description": "This is optional and currently always nil."
         }
-      }
+      },
+      "required": [
+        "artifact"
+      ]
     },
     "v1GetArtifactByNameResponse": {
       "type": "object",
@@ -3860,9 +4373,13 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1ArtifactVersion"
-          }
+          },
+          "description": "This is optional and currently always nil."
         }
-      }
+      },
+      "required": [
+        "artifact"
+      ]
     },
     "v1GetAuthorizationURLResponse": {
       "type": "object",
@@ -3872,6 +4389,26 @@
         },
         "state": {
           "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "state"
+      ]
+    },
+    "v1GetDataSourceByIdResponse": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
+    },
+    "v1GetDataSourceByNameResponse": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
         }
       }
     },
@@ -3883,7 +4420,10 @@
           "title": "The requested record"
         }
       },
-      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC."
+      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC.",
+      "required": [
+        "evaluation"
+      ]
     },
     "v1GetInviteDetailsResponse": {
       "type": "object",
@@ -3905,7 +4445,13 @@
           "type": "boolean",
           "title": "expired is true if the invitation has expired"
         }
-      }
+      },
+      "required": [
+        "projectDisplay",
+        "sponsorDisplay",
+        "expiresAt",
+        "expired"
+      ]
     },
     "v1GetProfileByIdResponse": {
       "type": "object",
@@ -3913,7 +4459,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileByNameResponse": {
       "type": "object",
@@ -3921,7 +4470,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1GetProfileStatusByNameResponse": {
       "type": "object",
@@ -3938,7 +4490,10 @@
           },
           "title": "rule_evaluation_status is the status of the rules"
         }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProfileStatusByProjectResponse": {
       "type": "object",
@@ -3951,7 +4506,10 @@
           },
           "title": "profile_status is the status of the profile"
         }
-      }
+      },
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1GetProviderResponse": {
       "type": "object",
@@ -3960,7 +4518,10 @@
           "$ref": "#/definitions/v1Provider",
           "description": "provider is the provider that was retrieved."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1GetRepositoryByIdResponse": {
       "type": "object",
@@ -3968,7 +4529,10 @@
         "repository": {
           "$ref": "#/definitions/v1Repository"
         }
-      }
+      },
+      "required": [
+        "repository"
+      ]
     },
     "v1GetRepositoryByNameResponse": {
       "type": "object",
@@ -3976,7 +4540,10 @@
         "repository": {
           "$ref": "#/definitions/v1Repository"
         }
-      }
+      },
+      "required": [
+        "repository"
+      ]
     },
     "v1GetRuleTypeByIdResponse": {
       "type": "object",
@@ -3986,7 +4553,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id."
+      "description": "GetRuleTypeByIdResponse is the response to get a rule type by id.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetRuleTypeByNameResponse": {
       "type": "object",
@@ -3996,20 +4566,10 @@
           "description": "rule_type is the rule type."
         }
       },
-      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name."
-    },
-    "v1GetUnclaimedProvidersResponse": {
-      "type": "object",
-      "properties": {
-        "providers": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/v1ProviderParameter"
-          },
-          "description": "providers is a set of parameters which can be supplied to allow the user\nto assign existing unclaimed credentials to a new provider in the project\nvia CreateProvider()."
-        }
-      }
+      "description": "GetRuleTypeByNameResponse is the response to get a rule type by name.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1GetUserResponse": {
       "type": "object",
@@ -4032,7 +4592,11 @@
             "$ref": "#/definitions/v1ProjectRole"
           }
         }
-      }
+      },
+      "required": [
+        "user",
+        "projectRoles"
+      ]
     },
     "v1GitHubAppParams": {
       "type": "object",
@@ -4121,7 +4685,12 @@
           "type": "boolean",
           "description": "emailSkipped is true if the email was not sent to the invitee."
         }
-      }
+      },
+      "description": "Invitation is an invitation to join a project. This is only used in responses.",
+      "required": [
+        "role",
+        "project"
+      ]
     },
     "v1ListArtifactsResponse": {
       "type": "object",
@@ -4133,7 +4702,10 @@
             "$ref": "#/definitions/v1Artifact"
           }
         }
-      }
+      },
+      "required": [
+        "results"
+      ]
     },
     "v1ListChildProjectsResponse": {
       "type": "object",
@@ -4143,6 +4715,21 @@
           "items": {
             "type": "object",
             "$ref": "#/definitions/v1Project"
+          }
+        }
+      },
+      "required": [
+        "projects"
+      ]
+    },
+    "v1ListDataSourcesResponse": {
+      "type": "object",
+      "properties": {
+        "dataSources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1DataSource"
           }
         }
       }
@@ -4163,7 +4750,10 @@
           "description": "Metadata of the current page and pointers to next and/or\nprevious pages."
         }
       },
-      "description": "ListEvaluationHistoryResponse represents a response message for the\nListEvaluationHistory RPC.\n\nIt ships a collection of records retrieved and pointers to get to\nthe next and/or previous pages of data."
+      "description": "ListEvaluationHistoryResponse represents a response message for the\nListEvaluationHistory RPC.\n\nIt ships a collection of records retrieved and pointers to get to\nthe next and/or previous pages of data.",
+      "required": [
+        "data"
+      ]
     },
     "v1ListEvaluationResultsResponse": {
       "type": "object",
@@ -4176,7 +4766,10 @@
           },
           "description": "Each entity selected by the list request will have _single_ entry in entities which contains results of all evaluations for each profile."
         }
-      }
+      },
+      "required": [
+        "entities"
+      ]
     },
     "v1ListInvitationsResponse": {
       "type": "object",
@@ -4188,7 +4781,10 @@
             "$ref": "#/definitions/v1Invitation"
           }
         }
-      }
+      },
+      "required": [
+        "invitations"
+      ]
     },
     "v1ListProfilesResponse": {
       "type": "object",
@@ -4200,7 +4796,10 @@
             "$ref": "#/definitions/v1Profile"
           }
         }
-      }
+      },
+      "required": [
+        "profiles"
+      ]
     },
     "v1ListProjectsResponse": {
       "type": "object",
@@ -4212,7 +4811,10 @@
             "$ref": "#/definitions/v1Project"
           }
         }
-      }
+      },
+      "required": [
+        "projects"
+      ]
     },
     "v1ListProviderClassesResponse": {
       "type": "object",
@@ -4224,7 +4826,10 @@
           },
           "description": "provider_classes is the list of provider classes."
         }
-      }
+      },
+      "required": [
+        "providerClasses"
+      ]
     },
     "v1ListProvidersResponse": {
       "type": "object",
@@ -4240,7 +4845,10 @@
           "type": "string",
           "title": "cursor is the cursor to use for the next page of results, empty if at the end"
         }
-      }
+      },
+      "required": [
+        "providers"
+      ]
     },
     "v1ListRemoteRepositoriesFromProviderResponse": {
       "type": "object",
@@ -4260,7 +4868,11 @@
           },
           "description": "entities is the same list as the repositories, but it\nuses the new UpstreamEntityRef message. This is what\nwe'll migrate to eventually."
         }
-      }
+      },
+      "required": [
+        "results",
+        "entities"
+      ]
     },
     "v1ListRepositoriesResponse": {
       "type": "object",
@@ -4276,7 +4888,10 @@
           "type": "string",
           "title": "cursor is the cursor to use for the next page of results, empty if at the end"
         }
-      }
+      },
+      "required": [
+        "results"
+      ]
     },
     "v1ListRoleAssignmentsResponse": {
       "type": "object",
@@ -4297,7 +4912,11 @@
           },
           "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
         }
-      }
+      },
+      "required": [
+        "roleAssignments",
+        "invitations"
+      ]
     },
     "v1ListRolesResponse": {
       "type": "object",
@@ -4309,7 +4928,10 @@
             "$ref": "#/definitions/v1Role"
           }
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1ListRuleTypesResponse": {
       "type": "object",
@@ -4323,7 +4945,10 @@
           "description": "rule_types is the list of rule types."
         }
       },
-      "description": "ListRuleTypesResponse is the response to list rule types."
+      "description": "ListRuleTypesResponse is the response to list rule types.",
+      "required": [
+        "ruleTypes"
+      ]
     },
     "v1PatchProfileResponse": {
       "type": "object",
@@ -4331,7 +4956,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1PatchProjectResponse": {
       "type": "object",
@@ -4340,7 +4968,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1PatchProviderResponse": {
       "type": "object",
@@ -4348,7 +4979,10 @@
         "provider": {
           "$ref": "#/definitions/v1Provider"
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1Profile": {
       "type": "object",
@@ -4457,18 +5091,18 @@
           "description": "display_name is the display name of the profile."
         }
       },
-      "description": "Profile defines a profile that is user defined."
+      "description": "Profile defines a profile that is user defined.\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProfileStatus": {
       "type": "object",
       "properties": {
         "profileId": {
           "type": "string",
-          "title": "profile_id is the id of the profile"
+          "description": "profile_id is the id of the profile.  One of profile_id or profile_name must be set."
         },
         "profileName": {
           "type": "string",
-          "title": "profile_name is the name of the profile"
+          "description": "profile_name is the name of the profile.  One of profile_id or profile_name must be set."
         },
         "profileStatus": {
           "type": "string",
@@ -4484,7 +5118,10 @@
           "title": "profile_display_name is the display name of the profile"
         }
       },
-      "title": "get the overall profile status"
+      "title": "get the overall profile status as output",
+      "required": [
+        "profileStatus"
+      ]
     },
     "v1Project": {
       "type": "object",
@@ -4496,7 +5133,8 @@
           "type": "string"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "description is a human-readable description of the project.\nThis is optional."
         },
         "createdAt": {
           "type": "string",
@@ -4508,10 +5146,16 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc."
+          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc.\nThis is optional."
         }
       },
-      "title": "Project API Objects"
+      "description": "Project API Objects. This is only used in responses.",
+      "required": [
+        "projectId",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "v1ProjectPatch": {
       "type": "object",
@@ -4536,7 +5180,11 @@
           "$ref": "#/definitions/v1Project"
         }
       },
-      "title": "ProjectRole has the project along with the role the user has in the project"
+      "title": "ProjectRole has the project along with the role the user has in the project",
+      "required": [
+        "role",
+        "project"
+      ]
     },
     "v1Provider": {
       "type": "object",
@@ -4582,8 +5230,13 @@
         "credentialsState": {
           "type": "string",
           "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+        },
+        "id": {
+          "type": "string",
+          "description": "id is the unique identifier of the provider."
         }
-      }
+      },
+      "description": "Provider represents a provider that is used to interact with external systems.\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProviderParameter": {
       "type": "object",
@@ -4614,9 +5267,13 @@
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
-          "type": "string"
+          "type": "string",
+          "title": "entity is the entity type"
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1ReconcileEntityRegistrationResponse": {
       "type": "object"
@@ -4630,7 +5287,10 @@
         "status": {
           "$ref": "#/definitions/v1RegisterRepoResultStatus"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1RegisterRepoResultStatus": {
       "type": "object",
@@ -4650,14 +5310,15 @@
           "type": "string"
         },
         "repository": {
-          "$ref": "#/definitions/v1UpstreamRepositoryRef"
+          "$ref": "#/definitions/v1UpstreamRepositoryRef",
+          "description": "repository is the repository to register. This is optional if entity\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually."
+          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
@@ -4667,7 +5328,10 @@
         "result": {
           "$ref": "#/definitions/v1RegisterRepoResult"
         }
-      }
+      },
+      "required": [
+        "result"
+      ]
     },
     "v1RegistrableUpstreamEntityRef": {
       "type": "object",
@@ -4679,7 +5343,10 @@
           "type": "boolean",
           "description": "True if the entity is already registered in Minder."
         }
-      }
+      },
+      "required": [
+        "entity"
+      ]
     },
     "v1RemoveRoleResponse": {
       "type": "object",
@@ -4699,7 +5366,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "title": "This is optional when returning remote repositories"
+          "description": "id is the unique identifier of the repository within Minder.\nIt is always populated, but the optional keyword is used for\nbackwards compatibility."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -4760,7 +5427,15 @@
           "type": "object",
           "description": "properties is a map of properties of the entity."
         }
-      }
+      },
+      "description": "Repository API objects. This is only used in responses.",
+      "required": [
+        "id",
+        "owner",
+        "name",
+        "isPrivate",
+        "isFork"
+      ]
     },
     "v1ResolveInvitationResponse": {
       "type": "object",
@@ -4785,14 +5460,32 @@
           "type": "string",
           "description": "project_display is the display name of the project to which the user\nis invited."
         }
-      }
+      },
+      "required": [
+        "role",
+        "project",
+        "isAccepted"
+      ]
+    },
+    "v1RestDataSource": {
+      "type": "object",
+      "properties": {
+        "def": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/RestDataSourceDef"
+          },
+          "description": "defs is the list of definitions for the REST API."
+        }
+      },
+      "description": "RestDataSource is the REST data source driver."
     },
     "v1RestType": {
       "type": "object",
       "properties": {
         "endpoint": {
           "type": "string",
-          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or the path on the API.bool\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
+          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or path on the API.\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
         },
         "method": {
           "type": "string",
@@ -4807,7 +5500,7 @@
         },
         "body": {
           "type": "string",
-          "description": "body is the body to be sent to the endpoint."
+          "description": "body is the body to be sent to the endpoint.\nThis is expected to be a valid JSON string."
         },
         "parse": {
           "type": "string",
@@ -4817,12 +5510,28 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/RestTypeFallback"
+            "$ref": "#/definitions/v1RestTypeFallback"
           },
           "description": "fallback provides a body that the ingester would return in case\nthe REST call returns a non-200 status code."
         }
       },
-      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint."
+      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint.",
+      "required": [
+        "endpoint"
+      ]
+    },
+    "v1RestTypeFallback": {
+      "type": "object",
+      "properties": {
+        "httpCode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "body": {
+          "type": "string",
+          "description": "This is expected to be a valid JSON string."
+        }
+      }
     },
     "v1Role": {
       "type": "object",
@@ -4839,7 +5548,12 @@
           "type": "string",
           "description": "description is the description of the role."
         }
-      }
+      },
+      "required": [
+        "name",
+        "displayName",
+        "description"
+      ]
     },
     "v1RoleAssignment": {
       "type": "object",
@@ -4872,7 +5586,10 @@
           "type": "string",
           "description": "last_name is the last name of the subject."
         }
-      }
+      },
+      "required": [
+        "role"
+      ]
     },
     "v1RuleEvaluationStatus": {
       "type": "object",
@@ -4944,7 +5661,7 @@
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",
-          "title": "severity is the severity of the rule"
+          "description": "severity is the severity of the rule. This may be empty."
         },
         "ruleEvaluationId": {
           "type": "string",
@@ -4963,11 +5680,26 @@
           "title": "release_phase is the phase of the release"
         }
       },
-      "title": "get the status of the rules for a given profile"
+      "title": "get the status of the rules for a given profile",
+      "required": [
+        "ruleId",
+        "entity",
+        "status",
+        "ruleTypeName",
+        "releasePhase"
+      ]
     },
     "v1RuleType": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "description": "version is the version of the rule type API."
+        },
+        "type": {
+          "type": "string",
+          "description": "type is the type of the rule."
+        },
         "id": {
           "type": "string",
           "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
@@ -4994,11 +5726,11 @@
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the rule type."
+          "description": "description is the description of the rule type.\nThis is expected to be a valid markdown formatted string."
         },
         "guidance": {
           "type": "string",
-          "description": "guidance are instructions we give the user in case a rule fails."
+          "description": "guidance are instructions we give the user in case a rule fails.\nThis is expected to be a valid markdown formatted string."
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",
@@ -5009,7 +5741,13 @@
           "description": "release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
-      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version."
+      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version.",
+      "required": [
+        "name",
+        "def",
+        "description",
+        "guidance"
+      ]
     },
     "v1RuleTypeReleasePhase": {
       "type": "string",
@@ -5054,18 +5792,39 @@
           "type": "string"
         },
         "accessToken": {
-          "type": "string"
+          "type": "string",
+          "description": "access_token is the token to store."
         },
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         }
-      }
+      },
+      "required": [
+        "accessToken"
+      ]
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
+    },
+    "v1UpdateDataSourceRequest": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
+    },
+    "v1UpdateDataSourceResponse": {
+      "type": "object",
+      "properties": {
+        "dataSource": {
+          "$ref": "#/definitions/v1DataSource"
+        }
+      }
     },
     "v1UpdateProfileRequest": {
       "type": "object",
@@ -5073,7 +5832,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProfileResponse": {
       "type": "object",
@@ -5081,7 +5843,10 @@
         "profile": {
           "$ref": "#/definitions/v1Profile"
         }
-      }
+      },
+      "required": [
+        "profile"
+      ]
     },
     "v1UpdateProjectRequest": {
       "type": "object",
@@ -5092,11 +5857,11 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name is the display name of the project to update."
+          "description": "display_name is the display name of the project to update.\nThis is optional."
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the project to update."
+          "description": "description is the description of the project to update.\nThis is optional."
         }
       }
     },
@@ -5107,7 +5872,10 @@
           "$ref": "#/definitions/v1Project",
           "description": "project is the project that was updated."
         }
-      }
+      },
+      "required": [
+        "project"
+      ]
     },
     "v1UpdateRoleRequest": {
       "type": "object",
@@ -5131,7 +5899,10 @@
           "type": "string",
           "title": "email is the email address of the subject used for updating invitations"
         }
-      }
+      },
+      "required": [
+        "roles"
+      ]
     },
     "v1UpdateRoleResponse": {
       "type": "object",
@@ -5162,7 +5933,10 @@
           "description": "rule_type is the rule type to be updated."
         }
       },
-      "description": "UpdateRuleTypeRequest is the request to update a rule type."
+      "description": "UpdateRuleTypeRequest is the request to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpdateRuleTypeResponse": {
       "type": "object",
@@ -5172,7 +5946,10 @@
           "description": "rule_type is the rule type that was updated."
         }
       },
-      "description": "UpdateRuleTypeResponse is the response to update a rule type."
+      "description": "UpdateRuleTypeResponse is the response to update a rule type.",
+      "required": [
+        "ruleType"
+      ]
     },
     "v1UpstreamEntityRef": {
       "type": "object",
@@ -5196,7 +5973,8 @@
       "type": "object",
       "properties": {
         "owner": {
-          "type": "string"
+          "type": "string",
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
         },
         "name": {
           "type": "string"
@@ -5213,7 +5991,10 @@
           "type": "boolean",
           "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1UserRecord": {
       "type": "object",
@@ -5234,19 +6015,30 @@
           "format": "date-time"
         }
       },
-      "title": "user record to be returned"
+      "title": "user record to be returned",
+      "required": [
+        "id",
+        "identitySubject",
+        "createdAt",
+        "updatedAt"
+      ]
     },
     "v1VerifyProviderCredentialResponse": {
       "type": "object",
       "properties": {
         "created": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "created is true if the provider was created."
         },
         "providerName": {
-          "type": "string"
+          "type": "string",
+          "description": "provider_name is the name of the provider that was created.\nThis is populated if creation was successful."
         }
       },
-      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created"
+      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created",
+      "required": [
+        "created"
+      ]
     },
     "v1VerifyProviderTokenFromResponse": {
       "type": "object",
@@ -5254,7 +6046,10 @@
         "status": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     }
   }
 }

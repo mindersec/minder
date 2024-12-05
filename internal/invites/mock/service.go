@@ -14,12 +14,12 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	auth "github.com/stacklok/minder/internal/auth"
-	authz "github.com/stacklok/minder/internal/authz"
-	server "github.com/stacklok/minder/internal/config/server"
-	db "github.com/stacklok/minder/internal/db"
-	events "github.com/stacklok/minder/internal/events"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	auth "github.com/mindersec/minder/internal/auth"
+	authz "github.com/mindersec/minder/internal/authz"
+	db "github.com/mindersec/minder/internal/db"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	server "github.com/mindersec/minder/pkg/config/server"
+	interfaces "github.com/mindersec/minder/pkg/eventer/interfaces"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -27,6 +27,7 @@ import (
 type MockInviteService struct {
 	ctrl     *gomock.Controller
 	recorder *MockInviteServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockInviteServiceMockRecorder is the mock recorder for MockInviteService.
@@ -47,7 +48,7 @@ func (m *MockInviteService) EXPECT() *MockInviteServiceMockRecorder {
 }
 
 // CreateInvite mocks base method.
-func (m *MockInviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
+func (m *MockInviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateInvite", ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 	ret0, _ := ret[0].(*v1.Invitation)
@@ -77,7 +78,7 @@ func (mr *MockInviteServiceMockRecorder) RemoveInvite(ctx, qtx, idClient, target
 }
 
 // UpdateInvite mocks base method.
-func (m *MockInviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
+func (m *MockInviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateInvite", ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 	ret0, _ := ret[0].(*v1.Invitation)

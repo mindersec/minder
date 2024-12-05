@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance cf.With the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package fixtures contains code for creating RepositoryService
 // fixtures and is used in various parts of the code. For testing use
@@ -21,14 +10,14 @@ package fixtures
 
 import (
 	"github.com/google/uuid"
-	"github.com/stacklok/minder/internal/entities/properties"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/entities/properties"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	mockSvc "github.com/stacklok/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	mockSvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
 )
 
 type (

@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package manager contains the GitLabProviderClassManager
 package manager
@@ -29,13 +18,13 @@ import (
 	"github.com/sqlc-dev/pqtype"
 	"golang.org/x/oauth2"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/gitlab"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/gitlab"
+	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // tokenExpirationThreshold is the time before the token expires that we should
@@ -49,7 +38,7 @@ type providerClassManager struct {
 	glpcfg        *server.GitLabConfig
 	webhookURL    string
 	parentContext context.Context
-	pub           events.Publisher
+	pub           interfaces.Publisher
 
 	// secrets for the webhook. These are stored in the
 	// structure to allow efficient fetching. Rotation
@@ -60,7 +49,7 @@ type providerClassManager struct {
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
 func NewGitLabProviderClassManager(
-	ctx context.Context, crypteng crypto.Engine, store db.Store, pub events.Publisher,
+	ctx context.Context, crypteng crypto.Engine, store db.Store, pub interfaces.Publisher,
 	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
 ) (*providerClassManager, error) {
 	webhookURLBase := wgCfg.ExternalWebhookURL

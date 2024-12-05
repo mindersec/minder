@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package logger
 
@@ -21,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
 )
 
 type key int
@@ -140,16 +129,19 @@ func (ts *TelemetryStore) AddRuleEval(
 		RuleType:   RuleType{Name: ruleTypeName, ID: evalInfo.GetRule().RuleTypeID},
 		Profile:    Profile{Name: evalInfo.GetProfile().Name, ID: evalInfo.GetProfile().ID},
 		EvalResult: errors.EvalErrorAsString(evalInfo.GetEvalErr()),
-		Actions: map[interfaces.ActionType]ActionEvalData{
-			remediate.ActionType: {
-				State:  evalInfo.GetActionsOnOff()[remediate.ActionType].String(),
-				Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
-			},
-			alert.ActionType: {
-				State:  evalInfo.GetActionsOnOff()[alert.ActionType].String(),
-				Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
-			},
-		},
+		Actions:    map[interfaces.ActionType]ActionEvalData{},
+	}
+
+	if p := evalInfo.GetProfile(); p != nil {
+		actionCfg := p.ActionConfig
+		red.Actions[remediate.ActionType] = ActionEvalData{
+			State:  actionCfg.Remediate.String(),
+			Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
+		}
+		red.Actions[alert.ActionType] = ActionEvalData{
+			State:  actionCfg.Alert.String(),
+			Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
+		}
 	}
 
 	ts.Evals = append(ts.Evals, red)

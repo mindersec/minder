@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package util provides helper functions for the minder CLI.
 package util
@@ -57,6 +45,33 @@ func jQReadAsAny(ctx context.Context, path string, obj any) (any, error) {
 	}
 
 	return out, nil
+}
+
+// JQEvalBoolExpression evaluates the given path on the object and returns the string value
+// the path is the accessor path in jq format which must return a boolean value.
+func JQEvalBoolExpression(ctx context.Context, path string, obj any) (bool, error) {
+	accessor, err := gojq.Parse(path)
+	if err != nil {
+		return false, fmt.Errorf("data parse: cannot parse key: %w", err)
+	}
+
+	iter := accessor.RunWithContext(ctx, obj)
+	v, ok := iter.Next()
+	if !ok {
+		// No values returned
+		return false, nil
+	}
+
+	if err, ok := v.(error); ok {
+		return false, fmt.Errorf("error processing JQ statement: %w", err)
+	}
+
+	// If the value is not a boolean, return an error
+	if _, ok := v.(bool); !ok {
+		return false, fmt.Errorf("expected boolean value, got %v", reflect.TypeOf(v))
+	}
+
+	return v.(bool), nil
 }
 
 // ErrNoValueFound is an error that is returned when the accessor doesn't find anything

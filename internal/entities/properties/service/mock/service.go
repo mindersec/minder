@@ -14,12 +14,12 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	models "github.com/stacklok/minder/internal/entities/models"
-	properties "github.com/stacklok/minder/internal/entities/properties"
-	service "github.com/stacklok/minder/internal/entities/properties/service"
-	manager "github.com/stacklok/minder/internal/providers/manager"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v10 "github.com/stacklok/minder/pkg/providers/v1"
+	models "github.com/mindersec/minder/internal/entities/models"
+	properties "github.com/mindersec/minder/internal/entities/properties"
+	service "github.com/mindersec/minder/internal/entities/properties/service"
+	manager "github.com/mindersec/minder/internal/providers/manager"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v10 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -28,6 +28,7 @@ import (
 type MockPropertiesService struct {
 	ctrl     *gomock.Controller
 	recorder *MockPropertiesServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockPropertiesServiceMockRecorder is the mock recorder for MockPropertiesService.
@@ -147,21 +148,6 @@ func (m *MockPropertiesService) RetrieveAllPropertiesForEntity(ctx context.Conte
 func (mr *MockPropertiesServiceMockRecorder) RetrieveAllPropertiesForEntity(ctx, efp, provMan, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveAllPropertiesForEntity", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveAllPropertiesForEntity), ctx, efp, provMan, opts)
-}
-
-// RetrieveProperty mocks base method.
-func (m *MockPropertiesService) RetrieveProperty(ctx context.Context, provider v10.Provider, projectId, providerID uuid.UUID, lookupProperties *properties.Properties, entType v1.Entity, key string, opts *service.ReadOptions) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RetrieveProperty", ctx, provider, projectId, providerID, lookupProperties, entType, key, opts)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RetrieveProperty indicates an expected call of RetrieveProperty.
-func (mr *MockPropertiesServiceMockRecorder) RetrieveProperty(ctx, provider, projectId, providerID, lookupProperties, entType, key, opts any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetrieveProperty", reflect.TypeOf((*MockPropertiesService)(nil).RetrieveProperty), ctx, provider, projectId, providerID, lookupProperties, entType, key, opts)
 }
 
 // SaveAllProperties mocks base method.

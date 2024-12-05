@@ -43,7 +43,7 @@ This step will upload the `secret_scanning` rule type to the server.
 
 A _rule type_ is a definition of an individual security setting and how to evaluate it; for example, the `secret_scanning` rule type contains the logic to query GitHub and evaluate whether secret scanning is enabled for an individual repository.
 
-Minder allows you to build custom rule types, or use [one of our pre-defined rule types](https://github.com/stacklok/minder-rules-and-profiles/pulls). But in either case, these rules must be uploaded to the Minder server before you can use them.
+Minder allows you to build custom rule types, or use [one of our pre-defined rule types](https://github.com/mindersec/minder-rules-and-profiles/pulls). But in either case, these rules must be uploaded to the Minder server before you can use them.
 
 #### Create the `quickstart` profile
 
@@ -74,7 +74,7 @@ where you can manage your registered repositories, create profiles, rules and mu
 configured consistently and securely.
 
 * [Register more repositories](register_repos) to take advantage of Minder for more of your organization
-* [Add additional rules and profiles](first_profile) to define your full security profile for your organization; you can see all of Minder's ready-to-use rules and example profiles [on GitHub](https://github.com/stacklok/minder-rules-and-profiles).
+* [Add additional rules and profiles](first_profile) to define your full security profile for your organization; you can see all of Minder's ready-to-use rules and example profiles [on GitHub](https://github.com/mindersec/minder-rules-and-profiles).
 
 In case there's something you don't find there yet, Minder is designed to be extensible. This allows for users to create their own custom rule types and profiles and ensure the specifics of their security posture are attested to.
 
@@ -83,5 +83,5 @@ In case there's something you don't find there yet, Minder is designed to be ext
 For more information about `minder`, see:
 * `minder` CLI commands - [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
 * `minder` REST API Documentation - [Docs](https://minder-docs.stacklok.dev/ref/api).
-* `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/stacklok/minder-rules-and-profiles).
+* `minder` rules and profiles maintained by Minder's team - [GitHub](https://github.com/mindersec/minder-rules-and-profiles).
 * Minder documentation - [Docs](https://minder-docs.stacklok.dev).

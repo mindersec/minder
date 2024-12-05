@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # This test verifies that the docker-compose.yml file is valid and that the
 # containers can be started and stopped. It also verifies the database migrations.
 name: Compose Migrate test
@@ -9,13 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Setup Go
-        uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
         with:
           go-version-file: 'go.mod'
       - name: Install ko
         uses: ko-build/setup-ko@3aebd0597dc1e9d1a26bcfdb7cbeb19c131d3037 # v0.7
+        with:
+          version: v0.16.0
       - name: Copy server-config.yaml
         run: cp config/server-config.yaml.example server-config.yaml
       - name: Start containers

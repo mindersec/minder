@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package manager contains the GitHubProviderClassManager
 package manager
@@ -29,18 +18,20 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"
 
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	propssvc "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/github/service"
-	m "github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/github/service"
+	m "github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // NewGitHubProviderClassManager creates an instance of ProviderClassManager
@@ -55,6 +46,8 @@ func NewGitHubProviderClassManager(
 	store db.Store,
 	ghService service.GitHubProviderService,
 	propSvc propssvc.PropertiesService,
+	mt metrics.Metrics,
+	publisher interfaces.Publisher,
 ) m.ProviderClassManager {
 	return &githubProviderManager{
 		restClientCache:     restClientCache,
@@ -66,6 +59,8 @@ func NewGitHubProviderClassManager(
 		store:               store,
 		propsSvc:            propSvc,
 		ghService:           ghService,
+		mt:                  mt,
+		publisher:           publisher,
 	}
 }
 
@@ -79,6 +74,8 @@ type githubProviderManager struct {
 	propsSvc            propssvc.PropertiesService
 	store               db.Store
 	ghService           service.GitHubProviderService
+	mt                  metrics.Metrics
+	publisher           interfaces.Publisher
 }
 
 var (

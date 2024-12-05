@@ -1,7 +1,10 @@
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 name: Pull Request Validation
 on:
   pull_request:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, synchronize]
 jobs:
   check-pr-content:
     runs-on: ubuntu-latest

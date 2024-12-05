@@ -1,35 +1,27 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package projects_test
 
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/authz/mock"
-	"github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/internal/projects"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestProvisionSelfEnrolledProject(t *testing.T) {
@@ -45,10 +37,28 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 		Return(db.Project{
 			ID: uuid.New(),
 		}, nil)
+	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ context.Context, params db.CreateEntitlementsParams) error {
+			expectedFeatures := []string{"featureA", "featureB"}
+			if !reflect.DeepEqual(params.Features, expectedFeatures) {
+				t.Errorf("expected features %v, got %v", expectedFeatures, params.Features)
+			}
+			return nil
+		})
 
-	ctx := context.Background()
+	ctx := prepareTestToken(context.Background(), t, []any{
+		"teamA",
+		"teamB",
+		"teamC",
+	})
 
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{
+		MembershipFeatureMapping: map[string]string{
+			"teamA": "featureA",
+			"teamB": "featureB",
+		},
+	})
+
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -74,8 +84,7 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 		Return(db.Project{}, fmt.Errorf("failed to create project"))
 
 	ctx := context.Background()
-
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -106,7 +115,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
 
 	for _, tc := range testCases {
 		_, err := creator.ProvisionSelfEnrolledProject(
@@ -118,4 +127,16 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 		assert.EqualError(t, err, "invalid project name: validation failed")
 	}
 
+}
+
+// prepareTestToken creates a JWT token with the specified roles and returns the context with the token.
+func prepareTestToken(ctx context.Context, t *testing.T, roles []any) context.Context {
+	t.Helper()
+
+	token := openid.New()
+	require.NoError(t, token.Set("realm_access", map[string]any{
+		"roles": roles,
+	}))
+
+	return jwt.WithAuthTokenContext(ctx, token)
 }

@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package jq_test
 
@@ -20,12 +8,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/jq"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/jq"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func TestNewJQEvaluatorValid(t *testing.T) {
@@ -376,7 +366,7 @@ func TestValidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
+			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
 			assert.NoError(t, err, "Got unexpected error")
 		})
 	}
@@ -586,7 +576,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
+			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
 			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
@@ -654,13 +644,70 @@ func TestInvalidJQEvals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jqe, err := jq.NewJQEvaluator(tt.assertions)
-			assert.NoError(t, err, "Got unexpected error")
-			assert.NotNil(t, jqe, "Got unexpected nil")
+			_, err := jq.NewJQEvaluator(tt.assertions)
+			assert.Error(t, err, "Expected error")
+		})
+	}
+}
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &engif.Result{Object: tt.args.obj})
-			assert.Error(t, err, "Got unexpected error")
-			assert.NotErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
+func TestEvaluationDetailRendering(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		msg     string
+		msgArgs []any
+		tmpl    string
+		args    any
+		error   string
+		details string
+	}{
+		// JQ template
+		{
+			name: "JQ template with different actual and expected values",
+			msg:  "this is the message",
+			tmpl: templates.JqTemplate,
+			args: map[string]any{
+				"path":     ".simple",
+				"expected": true,
+				"actual":   false,
+			},
+			error: "evaluation failure: this is the message",
+			details: "The detected configuration does not match the desired configuration:\n" +
+				"Expected \".simple\" to equal true, but was false.",
+		},
+		{
+			name: "JQ template with different actual value equal nil",
+			msg:  "this is the message",
+			tmpl: templates.JqTemplate,
+			args: map[string]any{
+				"path":     ".simple",
+				"expected": 5,
+				"actual":   nil,
+			},
+			error: "evaluation failure: this is the message",
+			details: "The detected configuration does not match the desired configuration:\n" +
+				"Expected \".simple\" to equal 5, but was not set.",
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := evalerrors.NewDetailedErrEvaluationFailed(
+				tt.tmpl,
+				tt.args,
+				tt.msg,
+				tt.msgArgs...,
+			)
+
+			require.Equal(t, tt.error, err.Error())
+			evalErr, ok := err.(*evalerrors.EvaluationError)
+			require.True(t, ok)
+			require.Equal(t, tt.details, evalErr.Details())
 		})
 	}
 }

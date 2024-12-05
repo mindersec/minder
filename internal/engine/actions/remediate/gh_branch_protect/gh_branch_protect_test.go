@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package gh_branch_protect provides the github branch protection remediation engine
 package gh_branch_protect
@@ -26,16 +15,16 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	mock_ghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	mock_ghclient "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -219,6 +208,43 @@ func TestBranchProtectionRemediate(t *testing.T) {
 			},
 		},
 		{
+			name: "No branch parameter required",
+			newRemArgs: &newBranchProtectionRemediateArgs{
+				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
+					Patch: reviewCountPatch,
+				},
+				actionType: TestActionTypeValid,
+			},
+			remArgs: &remediateArgs{
+				remAction: models.ActionOptOn,
+				ent: &pb.Repository{
+					Owner:         repoOwner,
+					Name:          repoName,
+					DefaultBranch: "main",
+				},
+				pol: map[string]any{
+					"required_approving_review_count": 2,
+				},
+			},
+			mockSetup: func(mockGitHub *mock_ghclient.MockGitHub) {
+				mockGitHub.EXPECT().
+					GetBranchProtection(gomock.Any(), repoOwner, repoName, "main").
+					Return(nil, github.ErrBranchNotProtected)
+				mockGitHub.EXPECT().
+					UpdateBranchProtection(gomock.Any(), repoOwner, repoName, "main",
+						// nested pointers to structs confuse gmock
+						eqProtectionRequest(
+							&github.ProtectionRequest{
+								RequiredPullRequestReviews: &github.PullRequestReviewsEnforcementRequest{
+									RequiredApprovingReviewCount: 2,
+								},
+							},
+						),
+					).
+					Return(nil)
+			},
+		},
+		{
 			name: "Some protection was in place, remediator merges the patch",
 			newRemArgs: &newBranchProtectionRemediateArgs{
 				ghp: &pb.RuleType_Definition_Remediate_GhBranchProtectionType{
@@ -295,7 +321,8 @@ func TestBranchProtectionRemediate(t *testing.T) {
 
 			prov, err := testGithubProvider(ghApiUrl)
 			require.NoError(t, err)
-			engine, err := NewGhBranchProtectRemediator(tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov)
+			engine, err := NewGhBranchProtectRemediator(
+				tt.newRemArgs.actionType, tt.newRemArgs.ghp, prov, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
@@ -317,7 +344,7 @@ func TestBranchProtectionRemediate(t *testing.T) {
 				},
 			}
 
-			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.remAction, tt.remArgs.ent, evalParams, nil)
+			retMeta, err := engine.Do(context.Background(), interfaces.ActionCmdOn, tt.remArgs.ent, evalParams, nil)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Nil(t, retMeta, "expected nil metadata")

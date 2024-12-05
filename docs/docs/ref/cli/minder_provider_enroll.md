@@ -38,6 +38,7 @@ minder provider enroll [flags]
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
   -j, --project string           ID of the project
+  -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO

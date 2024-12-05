@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package reminderprocessor processes the incoming reminders
 package reminderprocessor
@@ -22,24 +10,25 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/events"
-	reconcilermessages "github.com/stacklok/minder/internal/reconcilers/messages"
-	remindermessages "github.com/stacklok/minder/internal/reminder/messages"
+	reconcilermessages "github.com/mindersec/minder/internal/reconcilers/messages"
+	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 // ReminderProcessor processes the incoming reminders
 type ReminderProcessor struct {
-	evt events.Interface
+	evt interfaces.Interface
 }
 
 // NewReminderProcessor creates a new ReminderProcessor
-func NewReminderProcessor(evt events.Interface) *ReminderProcessor {
+func NewReminderProcessor(evt interfaces.Interface) *ReminderProcessor {
 	return &ReminderProcessor{evt: evt}
 }
 
 // Register implements the Consumer interface.
-func (rp *ReminderProcessor) Register(r events.Registrar) {
-	r.Register(events.TopicQueueRepoReminder, rp.reminderMessageHandler)
+func (rp *ReminderProcessor) Register(r interfaces.Registrar) {
+	r.Register(constants.TopicQueueRepoReminder, rp.reminderMessageHandler)
 }
 
 func (rp *ReminderProcessor) reminderMessageHandler(msg *message.Message) error {
@@ -56,7 +45,7 @@ func (rp *ReminderProcessor) reminderMessageHandler(msg *message.Message) error 
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err := rp.evt.Publish(events.TopicQueueReconcileRepoInit, repoReconcileMsg); err != nil {
+	if err := rp.evt.Publish(constants.TopicQueueReconcileRepoInit, repoReconcileMsg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 	return nil

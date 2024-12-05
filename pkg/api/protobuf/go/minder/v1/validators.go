@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package v1
 
@@ -19,6 +8,12 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/itchyny/gojq"
+	"github.com/open-policy-agent/opa/ast"
+
+	"github.com/mindersec/minder/internal/util"
 )
 
 var (
@@ -34,6 +29,10 @@ var (
 	ErrBadDNSStyleName = errors.New(
 		"name may only contain letters, numbers, hyphens and underscores, and is limited to a maximum of 63 characters",
 	)
+)
+
+var (
+	validate = validator.New(validator.WithRequiredStructEnabled())
 )
 
 // Validator is an interface which allows for the validation of a struct.
@@ -153,10 +152,6 @@ func (rt *RuleType) Validate() error {
 		return fmt.Errorf("%w: %w", ErrInvalidRuleType, err)
 	}
 
-	if rt.Def == nil {
-		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleType)
-	}
-
 	if err := rt.Def.Validate(); err != nil {
 		return errors.Join(ErrInvalidRuleType, err)
 	}
@@ -166,6 +161,10 @@ func (rt *RuleType) Validate() error {
 
 // Validate validates a rule type definition
 func (def *RuleType_Definition) Validate() error {
+	if def == nil {
+		return fmt.Errorf("%w: rule type definition is nil", ErrInvalidRuleTypeDefinition)
+	}
+
 	if !EntityFromString(def.InEntity).IsValid() {
 		return fmt.Errorf("%w: invalid entity type: %s", ErrInvalidRuleTypeDefinition, def.InEntity)
 	}
@@ -180,8 +179,100 @@ func (def *RuleType_Definition) Validate() error {
 		return err
 	}
 
-	if def.Eval == nil {
-		return fmt.Errorf("%w: data eval is nil", ErrInvalidRuleTypeDefinition)
+	// Alert is not required and can be nil
+	if def.Alert != nil {
+		if err := def.Alert.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return def.Eval.Validate()
+}
+
+// Validate validates a rule type definition eval
+func (ev *RuleType_Definition_Eval) Validate() error {
+	if ev == nil {
+		return fmt.Errorf("%w: eval is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	// Not using import to avoid circular dependency
+	if ev.Type == "rego" {
+		if err := ev.GetRego().Validate(); err != nil {
+			return err
+		}
+	} else if ev.Type == "jq" {
+		if len(ev.GetJq()) == 0 {
+			return fmt.Errorf("%w: jq definition is empty", ErrInvalidRuleTypeDefinition)
+		}
+
+		for i, jq := range ev.GetJq() {
+			if err := jq.Validate(); err != nil {
+				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
+			}
+		}
+	}
+	return nil
+}
+
+// Validate validates a rule type definition eval rego
+func (rego *RuleType_Definition_Eval_Rego) Validate() error {
+	if rego == nil {
+		return fmt.Errorf("%w: rego is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if rego.Def == "" {
+		return fmt.Errorf("%w: rego definition is empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := ast.ParseModule("minder-ruletype-def.rego", rego.Def)
+	if err != nil {
+		return fmt.Errorf("%w: rego definition is invalid: %s", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition eval jq
+func (jq *RuleType_Definition_Eval_JQComparison) Validate() error {
+	if jq == nil {
+		return fmt.Errorf("%w: jq is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if err := jq.GetIngested().Validate(); err != nil {
+		return fmt.Errorf("%w: jq ingested definition is invalid: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	if jq.GetProfile() != nil && jq.GetConstant() != nil {
+		return fmt.Errorf("%w: jq profile and constant accessors are mutually exclusive", ErrInvalidRuleTypeDefinition)
+	} else if jq.GetProfile() == nil && jq.GetConstant() == nil {
+		return fmt.Errorf("%w: jq missing profile or constant accessor", ErrInvalidRuleTypeDefinition)
+	}
+
+	if jq.GetProfile() != nil {
+		if err := jq.GetProfile().Validate(); err != nil {
+			return fmt.Errorf("%w: jq profile accessor is invalid: %w", ErrInvalidRuleTypeDefinition, err)
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition eval jq operator
+func (op *RuleType_Definition_Eval_JQComparison_Operator) Validate() error {
+	if op == nil {
+		return fmt.Errorf("%w: operator is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if op.GetDef() == "" {
+		return fmt.Errorf("%w: definition is empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	q, err := gojq.Parse(op.GetDef())
+	if err != nil {
+		return fmt.Errorf("%w: definition is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+	if _, err = gojq.Compile(q); err != nil {
+		return fmt.Errorf("%w: definition is invalid: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
@@ -199,6 +290,115 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
+	} else if ing.Type == "rest" {
+		if err := ing.GetRest().Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition alert
+func (alert *RuleType_Definition_Alert) Validate() error {
+	if alert == nil {
+		return nil
+	}
+
+	// Not using import to avoid circular dependency
+	if alert.Type == "security_advisory" {
+		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+	return nil
+}
+
+// Validate validates a rule type alert security advisory
+func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
+	if sa == nil {
+		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type definition remediate
+func (rem *RuleType_Definition_Remediate) Validate() error {
+	if rem == nil {
+		return nil
+	}
+
+	// Not using import to avoid circular dependency
+	if rem.Type == "rest" {
+		if err := rem.GetRest().Validate(); err != nil {
+			return err
+		}
+	} else if rem.Type == "pull_request" {
+		if err := rem.GetPullRequest().Validate(); err != nil {
+			return err
+		}
+	} else if rem.Type == "gh_branch_protection" {
+		if err := rem.GetGhBranchProtection().Validate(); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("%w: remediate type cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+	return nil
+}
+
+// Validate validates a rest remediation
+func (rest *RestType) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if rest.Endpoint == "" {
+		return fmt.Errorf("%w: rest endpoint cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a GitHub branch protection remediation
+func (ghp *RuleType_Definition_Remediate_GhBranchProtectionType) Validate() error {
+	if ghp == nil {
+		return fmt.Errorf("%w: github branch protection remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeTextTemplate(&ghp.Patch, "patch")
+	if err != nil {
+		return fmt.Errorf("%w: patch template is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	return nil
+}
+
+// Validate validates a pull request remediation
+func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() error {
+	if prRem == nil {
+		return fmt.Errorf("%w: pull request remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if prRem.Title == "" {
+		return fmt.Errorf("%w: pull request title cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	if prRem.Body == "" {
+		return fmt.Errorf("%w: pull request body cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeHTMLTemplate(&prRem.Title, "title")
+	if err != nil {
+		return fmt.Errorf("%w: pull request title is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	_, err = util.NewSafeHTMLTemplate(&prRem.Body, "body")
+	if err != nil {
+		return fmt.Errorf("%w: pull request body is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
@@ -295,23 +495,6 @@ func validateRule(r *Profile_Rule) error {
 
 var _ Validator = (*RuleType_Definition_Remediate_PullRequestRemediation)(nil)
 
-// Validate validates a rule definition
-func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() error {
-	if prRem == nil {
-		return errors.New("pull request remediation is nil")
-	}
-
-	if prRem.Title == "" {
-		return errors.New("title is required")
-	}
-
-	if prRem.Body == "" {
-		return errors.New("body is required")
-	}
-
-	return nil
-}
-
 func validateNamespacedName(name string) error {
 	components := strings.Split(name, "/")
 	if len(components) > 2 {
@@ -323,5 +506,159 @@ func validateNamespacedName(name string) error {
 			return ErrBadDNSStyleName
 		}
 	}
+	return nil
+}
+
+// Validate validates data sources
+func (ds *DataSource) Validate() error {
+	if ds == nil {
+		return fmt.Errorf("%w: data source is nil", ErrValidationFailed)
+	}
+
+	if ds.GetName() == "" {
+		return fmt.Errorf("%w: data source name cannot be empty", ErrValidationFailed)
+	}
+
+	if ds.GetDriver() == nil {
+		return fmt.Errorf("%w: data source driver cannot be nil", ErrValidationFailed)
+	}
+
+	// All data source drivers must include validation
+	val, ok := ds.GetDriver().(Validator)
+	if !ok {
+		return fmt.Errorf("%w: data source driver is not a valid driver", ErrValidationFailed)
+	}
+
+	return val.Validate()
+}
+
+// Validate is the entrypoint for the actual driver's validation
+func (dsRestDriver *DataSource_Rest) Validate() error {
+	if dsRestDriver == nil {
+		return fmt.Errorf("%w: rest driver is nil", ErrValidationFailed)
+	}
+
+	if dsRestDriver.Rest == nil {
+		return fmt.Errorf("%w: rest driver is nil", ErrValidationFailed)
+	}
+
+	return dsRestDriver.Rest.Validate()
+}
+
+// Validate validates a rest data source
+func (rest *RestDataSource) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest data source is nil", ErrValidationFailed)
+	}
+
+	if len(rest.GetDef()) == 0 {
+		return fmt.Errorf("%w: rest definition is empty", ErrValidationFailed)
+	}
+
+	var errs []error
+	for i, def := range rest.GetDef() {
+		if i == "" {
+			errs = append(errs, fmt.Errorf("rest function name %s is empty", i))
+		}
+
+		// TODO: Should we validate valid characters here? We already do that
+		// in the protobuf definition.
+		if err := def.Validate(); err != nil {
+			errs = append(errs, fmt.Errorf("rest function %s is invalid: %w", i, err))
+		}
+	}
+
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+
+	return nil
+}
+
+// Validate validates a rest function
+func (rest *RestDataSource_Def) Validate() error {
+	if rest == nil {
+		return fmt.Errorf("%w: rest function is nil", ErrValidationFailed)
+	}
+
+	if rest.GetEndpoint() == "" {
+		return fmt.Errorf("%w: rest function endpoint is empty", ErrValidationFailed)
+	}
+
+	if rest.GetInputSchema() == nil {
+		return fmt.Errorf("%w: rest function input schema is nil", ErrValidationFailed)
+	}
+
+	if rest.GetBody() != nil {
+		switch rest.GetBody().(type) {
+		case *RestDataSource_Def_Bodyobj:
+			if rest.GetBodyobj() == nil {
+				return fmt.Errorf("%w: rest function body is nil", ErrValidationFailed)
+			}
+		case *RestDataSource_Def_BodyFromField:
+			if rest.GetBodyFromField() == "" {
+				return fmt.Errorf("%w: rest function body from field is empty", ErrValidationFailed)
+			}
+			if err := keyInProperties(rest.GetBodyFromField(), rest.GetInputSchema().AsMap()); err != nil {
+				return fmt.Errorf("%w: %v", ErrValidationFailed, err)
+			}
+		case *RestDataSource_Def_Bodystr:
+			if rest.GetBodystr() == "" {
+				return fmt.Errorf("%w: rest function body from input is empty", ErrValidationFailed)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validate that the given key exists in the given properties.
+// they key must exist in the top level properties. It must contain a default
+// or be marked as required.
+func keyInProperties(key string, schema map[string]any) error {
+	if schema == nil {
+		return fmt.Errorf("properties are missing")
+	}
+
+	// check required
+	required, ok := schema["required"]
+	if ok {
+		req, ok := required.([]any)
+		if !ok {
+			return fmt.Errorf("required is invalid")
+		}
+		for _, r := range req {
+			if r == key {
+				return nil
+			}
+		}
+	}
+
+	props, ok := schema["properties"]
+	if !ok {
+		return fmt.Errorf("properties are missing")
+	}
+
+	properties, ok := props.(map[string]any)
+	if !ok {
+		return fmt.Errorf("properties are invalid")
+	}
+
+	prop, ok := properties[key]
+	if !ok {
+		return fmt.Errorf("key %q is missing", key)
+	}
+
+	p, ok := prop.(map[string]any)
+	if !ok {
+		return fmt.Errorf("key %q is invalid", key)
+	}
+
+	if _, ok := p["default"]; !ok {
+		if _, ok := p["required"]; !ok {
+			return fmt.Errorf("key %q is missing default or required", key)
+		}
+	}
+
 	return nil
 }

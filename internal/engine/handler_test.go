@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package engine_test
 
@@ -24,13 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/engine"
-	"github.com/stacklok/minder/internal/engine/entities"
-	mockengine "github.com/stacklok/minder/internal/engine/mock"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/util/testqueue"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/engine"
+	"github.com/mindersec/minder/internal/engine/entities"
+	mockengine "github.com/mindersec/minder/internal/engine/mock"
+	"github.com/mindersec/minder/internal/util/testqueue"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
@@ -49,7 +39,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	// -- end expectations
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,
@@ -62,7 +52,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	go func() {
 		t.Log("Running eventer")
-		evt.Register(events.TopicQueueEntityFlush, pq.Pass)
+		evt.Register(constants.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
 		require.NoError(t, err, "failed to run eventer")
 	}()

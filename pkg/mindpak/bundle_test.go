@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package mindpak
 
@@ -46,13 +34,13 @@ func TestReadSource(t *testing.T) {
 					Profiles: []*File{
 						{
 							Name:   "branch-protection.yaml",
-							Hashes: map[HashAlgorithm]string{SHA256: "51437d1e5049a16513b9cc9d6d93d6b25625f51e74e0861fba837cdf1d2b5f01"},
+							Hashes: map[HashAlgorithm]string{SHA256: "21e74a8d380c2940b0b26798f7ba7a5236b5444b02ff0bf45ce28f0016a24f65"},
 						},
 					},
 					RuleTypes: []*File{
 						{
 							Name:   "secret_scanning.yaml",
-							Hashes: map[HashAlgorithm]string{SHA256: "fc3e782516d0de46e89610af0b0bab04783e0e6e875c6efa64c9dfb3ef127964"},
+							Hashes: map[HashAlgorithm]string{SHA256: "3857bca2ccabdac3d136eb3df4549ddd87a00ddef9fdcf88d8f824e5e796d34c"},
 						},
 					},
 				},

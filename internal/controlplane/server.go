@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -51,31 +39,34 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/assets"
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	propSvc "github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/history"
-	"github.com/stacklok/minder/internal/invites"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/providers"
-	ghprov "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/providers/github/service"
-	"github.com/stacklok/minder/internal/providers/manager"
-	"github.com/stacklok/minder/internal/providers/session"
-	reposvc "github.com/stacklok/minder/internal/repositories"
-	"github.com/stacklok/minder/internal/roles"
-	"github.com/stacklok/minder/internal/ruletypes"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/api"
+	"github.com/mindersec/minder/internal/assets"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	datasourcessvc "github.com/mindersec/minder/internal/datasources/service"
+	"github.com/mindersec/minder/internal/db"
+	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/history"
+	"github.com/mindersec/minder/internal/invites"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/providers"
+	ghprov "github.com/mindersec/minder/internal/providers/github"
+	"github.com/mindersec/minder/internal/providers/github/service"
+	"github.com/mindersec/minder/internal/providers/github/webhook"
+	"github.com/mindersec/minder/internal/providers/manager"
+	"github.com/mindersec/minder/internal/providers/session"
+	reposvc "github.com/mindersec/minder/internal/repositories"
+	"github.com/mindersec/minder/internal/roles"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
 const metricsPath = "/metrics"
@@ -92,7 +83,7 @@ var (
 type Server struct {
 	store        db.Store
 	cfg          *serverconfig.Config
-	evt          events.Publisher
+	evt          interfaces.Publisher
 	mt           metrics.Metrics
 	grpcServer   *grpc.Server
 	jwt          jwt.Validator
@@ -106,6 +97,7 @@ type Server struct {
 	props               propSvc.PropertiesService
 	invites             invites.InviteService
 	ruleTypes           ruletypes.RuleTypeService
+	dataSourcesService  datasourcessvc.DataSourcesService
 	repos               reposvc.RepositoryService
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
@@ -132,12 +124,13 @@ type Server struct {
 	pb.UnimplementedProvidersServiceServer
 	pb.UnimplementedEvalResultsServiceServer
 	pb.UnimplementedInviteServiceServer
+	pb.UnimplementedDataSourceServiceServer
 }
 
 // NewServer creates a new server instance
 func NewServer(
 	store db.Store,
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	cfg *serverconfig.Config,
 	serverMetrics metrics.Metrics,
 	jwtValidator jwt.Validator,
@@ -151,6 +144,7 @@ func NewServer(
 	profileService profiles.ProfileService,
 	historyService history.EvaluationHistoryService,
 	ruleService ruletypes.RuleTypeService,
+	dataSourcesService datasourcessvc.DataSourcesService,
 	ghProviders service.GitHubProviderService,
 	providerManager manager.ProviderManager,
 	providerAuthManager manager.AuthManager,
@@ -170,6 +164,7 @@ func NewServer(
 		profiles:            profileService,
 		history:             historyService,
 		ruleTypes:           ruleService,
+		dataSourcesService:  dataSourcesService,
 		providerStore:       providerStore,
 		featureFlags:        featureFlagClient,
 		ghClient:            &ghprov.ClientServiceImplementation{},
@@ -245,10 +240,19 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		return fmt.Errorf("failed to listen: %v", err)
 	}
 
+	validator, err := api.NewValidator()
+	if err != nil {
+		return fmt.Errorf("failed to create validator: %w", err)
+	}
+
 	// add logger and tracing (if enabled)
 	interceptors := []grpc.UnaryServerInterceptor{
 		// TODO: this has no test coverage!
 		util.SanitizingInterceptor(),
+		api.ProtoValidationInterceptor(validator),
+		// This adds `Grpc-Metadata-Request-Id` to the
+		// response.
+		logger.RequestIDInterceptor("request-id"),
 		logger.Interceptor(s.cfg.LoggingConfig),
 		TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
@@ -372,10 +376,12 @@ func (s *Server) StartHTTPServer(ctx context.Context) error {
 		mux.Handle(path, otelmw(withMiddleware(handler)))
 	}
 
-	// This requires explicit middleware. CORS is not required here.
-	mux.Handle("/api/v1/webhook/github/", otelmw(withMiddleware(s.HandleGitHubWebHook())))
-	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(s.HandleGitHubAppWebhook())))
-	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(s.NoopWebhookHandler())))
+	// GitHub is a special case, as it has a separate handler for app events and uses a noop handler
+	// for marketplace events
+	appHandler := webhook.HandleGitHubAppWebhook(s.store, s.ghProviders, s.mt, s.evt)
+	mux.Handle("/api/v1/ghapp/", otelmw(withMiddleware(appHandler)))
+	mux.Handle("/api/v1/gh-marketplace/", otelmw(withMiddleware(webhook.NoopWebhookHandler(s.mt))))
+
 	mux.Handle("/static/", fs)
 
 	errch := make(chan error)

@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package reminder sends reminders to the minder server to process entities in background.
 package reminder
@@ -26,11 +15,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	reminderconfig "github.com/stacklok/minder/internal/config/reminder"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/events/common"
-	remindermessages "github.com/stacklok/minder/internal/reminder/messages"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/events/common"
+	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
+	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // Interface is an interface over the reminder service
@@ -154,7 +143,7 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
-	err = r.eventPublisher.Publish(events.TopicQueueRepoReminder, messages...)
+	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
 	}

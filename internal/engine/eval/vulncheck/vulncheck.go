@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package vulncheck provides the vulnerability check evaluator
 package vulncheck
@@ -26,13 +15,13 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/templates"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/flags"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/templates"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/flags"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -82,7 +71,7 @@ func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *engif.Result,
+	res *interfaces.Result,
 ) error {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
@@ -111,7 +100,7 @@ func (e *Evaluator) Eval(
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
 // TODO: it would be nice if we could express this in rego over
 // `input.ingested.deps[_].dep`, rather than building this in to core.
-func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *engif.Result) ([]string, error) {
+func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *interfaces.Result) ([]string, error) {
 	var vulnerablePackages []string
 
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)

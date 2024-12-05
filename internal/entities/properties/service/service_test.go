@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package service
 
@@ -27,16 +15,16 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	mock_github "github.com/stacklok/minder/internal/providers/github/mock"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/util/rand"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/db/embedded"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/util/rand"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type githubMockBuilder func(*gomock.Controller) *mock_github.MockGitHub
@@ -60,18 +48,6 @@ func withUpstreamRepoProperties(repoProperties map[string]any, entType minderv1.
 		mock.EXPECT().
 			FetchAllProperties(gomock.Any(), gomock.Any(), entType, gomock.Any()).
 			Return(props, nil)
-	}
-}
-
-func withUpstreamRepoProperty(key string, val any, entType minderv1.Entity) func(mock *mock_github.MockGitHub) {
-	return func(mock *mock_github.MockGitHub) {
-		prop, err := properties.NewProperty(val)
-		if err != nil {
-			panic(err)
-		}
-		mock.EXPECT().
-			FetchProperty(gomock.Any(), gomock.Any(), entType, key).
-			Return(prop, nil)
 	}
 }
 
@@ -107,8 +83,6 @@ type fetchParams struct {
 
 	providerID uuid.UUID
 	projectID  uuid.UUID
-
-	other map[string]any
 }
 
 type testCtx struct {
@@ -423,196 +397,6 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			updatedProps, err := models.DbPropsToModel(dbProps)
 			require.NoError(t, err)
 			tt.checkFn(t, updatedProps)
-		})
-	}
-}
-
-func TestPropertiesService_RetrieveProperty(t *testing.T) {
-	t.Parallel()
-
-	seed := time.Now().UnixNano()
-
-	scenarios := []struct {
-		name        string
-		propName    string
-		dbSetup     func(t *testing.T, store db.Store, params fetchParams)
-		githubSetup func(params fetchParams) githubMockBuilder
-		params      fetchParams
-		expectErr   string
-		checkResult func(t *testing.T, props *properties.Property)
-		opts        []propertiesServiceOption
-	}{
-		{
-			name:     "No cache, fetch from provider",
-			propName: properties.RepoPropertyIsPrivate,
-			dbSetup: func(_ *testing.T, _ db.Store, _ fetchParams) {
-			},
-			githubSetup: func(params fetchParams) githubMockBuilder {
-				return newGithubMock(
-					withUpstreamRepoProperty(properties.RepoPropertyIsPrivate, true, params.entType),
-				)
-			},
-			params: fetchParams{
-				entType: minderv1.Entity_ENTITY_REPOSITORIES,
-				entName: rand.RandomName(seed),
-			},
-			checkResult: func(t *testing.T, prop *properties.Property) {
-				t.Helper()
-				require.Equal(t, prop.GetBool(), true)
-			},
-		},
-		{
-			name:     "Cache miss, fetch from provider",
-			propName: ghprop.RepoPropertyId,
-			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
-				t.Helper()
-				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
-					EntityType: entities.EntityTypeToDB(params.entType),
-					Name:       params.entName,
-					ProjectID:  params.projectID,
-					ProviderID: params.providerID,
-				})
-				require.NoError(t, err)
-
-				// these are different than tt.params.properties
-				oldPropMap := map[string]any{
-					ghprop.RepoPropertyId: int64(1234),
-				}
-				insertPropertiesFromMap(context.TODO(), t, store, ent.ID, oldPropMap)
-			},
-			githubSetup: func(params fetchParams) githubMockBuilder {
-				t.Helper()
-				return newGithubMock(
-					withUpstreamRepoProperty(ghprop.RepoPropertyId, int64(123), params.entType),
-				)
-			},
-			params: fetchParams{
-				entType: minderv1.Entity_ENTITY_REPOSITORIES,
-				entName: rand.RandomName(seed),
-			},
-			checkResult: func(t *testing.T, prop *properties.Property) {
-				t.Helper()
-				require.Equal(t, prop.GetInt64(), int64(123))
-			},
-			opts: []propertiesServiceOption{
-				WithEntityTimeout(bypassCacheTimeout),
-			},
-		},
-		{
-			name:     "Cache hit by name, fetch from cache",
-			propName: ghprop.RepoPropertyId,
-			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
-				t.Helper()
-
-				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
-					EntityType: entities.EntityTypeToDB(params.entType),
-					Name:       params.entName,
-					ProjectID:  params.projectID,
-					ProviderID: params.providerID,
-				})
-				require.NoError(t, err)
-
-				propMap := map[string]any{
-					ghprop.RepoPropertyId: int64(123),
-				}
-				props, err := properties.NewProperties(propMap)
-				require.NoError(t, err)
-				insertProperties(context.TODO(), t, store, ent.ID, props)
-			},
-			githubSetup: func(_ fetchParams) githubMockBuilder {
-				return newGithubMock()
-			},
-			params: fetchParams{
-				entType: minderv1.Entity_ENTITY_REPOSITORIES,
-				entName: rand.RandomName(seed),
-			},
-			checkResult: func(t *testing.T, prop *properties.Property) {
-				t.Helper()
-
-				require.Equal(t, prop.GetInt64(), int64(123))
-			},
-		},
-		{
-			name:     "Cache hit by upstream ID, fetch from cache",
-			propName: properties.RepoPropertyIsArchived,
-			dbSetup: func(t *testing.T, store db.Store, params fetchParams) {
-				t.Helper()
-
-				ent, err := store.CreateEntity(context.TODO(), db.CreateEntityParams{
-					EntityType: entities.EntityTypeToDB(params.entType),
-					Name:       params.entName,
-					ProjectID:  params.projectID,
-					ProviderID: params.providerID,
-				})
-				require.NoError(t, err)
-
-				propMap := map[string]any{
-					properties.PropertyUpstreamID:     "this is an upstream ID",
-					properties.RepoPropertyIsArchived: true,
-				}
-				props, err := properties.NewProperties(propMap)
-				require.NoError(t, err)
-				insertProperties(context.TODO(), t, store, ent.ID, props)
-			},
-			githubSetup: func(_ fetchParams) githubMockBuilder {
-				return newGithubMock()
-			},
-			params: fetchParams{
-				entType: minderv1.Entity_ENTITY_REPOSITORIES,
-				other: map[string]any{
-					properties.PropertyUpstreamID: "this is an upstream ID",
-				},
-			},
-			checkResult: func(t *testing.T, prop *properties.Property) {
-				t.Helper()
-
-				// This is checking for IsArchived
-				require.Equal(t, prop.GetBool(), true)
-			},
-		},
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-
-	tctx := createTestCtx(ctx, t)
-
-	for _, tt := range scenarios {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctrl := gomock.NewController(t)
-			t.Cleanup(ctrl.Finish)
-
-			tt.params.providerID = tctx.ghAppProvider.ID
-			tt.params.projectID = tctx.dbProj.ID
-
-			githubSetup := tt.githubSetup(tt.params)
-			githubMock := githubSetup(ctrl)
-
-			tt.dbSetup(t, tctx.testQueries, tt.params)
-
-			propSvc := NewPropertiesService(tctx.testQueries, tt.opts...)
-
-			propSearch := map[string]any{}
-			if tt.params.entName == "" {
-				propSearch[properties.PropertyUpstreamID] = tt.params.other[properties.PropertyUpstreamID]
-			} else {
-				propSearch[properties.PropertyName] = tt.params.entName
-			}
-			getByProps, err := properties.NewProperties(propSearch)
-			require.NoError(t, err)
-
-			gotProps, err := propSvc.RetrieveProperty(
-				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType, tt.propName, nil)
-
-			if tt.expectErr != "" {
-				require.Contains(t, err.Error(), tt.expectErr)
-				return
-			}
-
-			require.NoError(t, err)
-			tt.checkResult(t, gotProps)
 		})
 	}
 }

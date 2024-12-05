@@ -17,9 +17,9 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	manager "github.com/stacklok/minder/internal/providers/manager"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	db "github.com/mindersec/minder/internal/db"
+	manager "github.com/mindersec/minder/internal/providers/manager"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -27,6 +27,7 @@ import (
 type MockProviderManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderManagerMockRecorder is the mock recorder for MockProviderManager.
@@ -167,6 +168,7 @@ func (mr *MockProviderManagerMockRecorder) PatchProviderConfig(ctx, providerName
 type MockProviderClassManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderClassManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderClassManagerMockRecorder is the mock recorder for MockProviderClassManager.

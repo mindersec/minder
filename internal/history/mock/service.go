@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	history "github.com/stacklok/minder/internal/history"
+	db "github.com/mindersec/minder/internal/db"
+	history "github.com/mindersec/minder/internal/history"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -23,6 +23,7 @@ import (
 type MockEvaluationHistoryService struct {
 	ctrl     *gomock.Controller
 	recorder *MockEvaluationHistoryServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockEvaluationHistoryServiceMockRecorder is the mock recorder for MockEvaluationHistoryService.

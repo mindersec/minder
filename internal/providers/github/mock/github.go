@@ -19,9 +19,9 @@ import (
 	authn "github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	github "github.com/google/go-github/v63/github"
-	properties "github.com/stacklok/minder/internal/entities/properties"
-	v10 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	v11 "github.com/stacklok/minder/pkg/providers/v1"
+	properties "github.com/mindersec/minder/internal/entities/properties"
+	v10 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v11 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 )
@@ -30,6 +30,7 @@ import (
 type MockProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockProviderMockRecorder
+	isgomock struct{}
 }
 
 // MockProviderMockRecorder is the mock recorder for MockProvider.
@@ -184,6 +185,7 @@ func (mr *MockProviderMockRecorder) SupportsEntity(entType any) *gomock.Call {
 type MockGit struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitMockRecorder
+	isgomock struct{}
 }
 
 // MockGitMockRecorder is the mock recorder for MockGit.
@@ -353,6 +355,7 @@ func (mr *MockGitMockRecorder) SupportsEntity(entType any) *gomock.Call {
 type MockREST struct {
 	ctrl     *gomock.Controller
 	recorder *MockRESTMockRecorder
+	isgomock struct{}
 }
 
 // MockRESTMockRecorder is the mock recorder for MockREST.
@@ -551,6 +554,7 @@ func (mr *MockRESTMockRecorder) SupportsEntity(entType any) *gomock.Call {
 type MockRepoLister struct {
 	ctrl     *gomock.Controller
 	recorder *MockRepoListerMockRecorder
+	isgomock struct{}
 }
 
 // MockRepoListerMockRecorder is the mock recorder for MockRepoLister.
@@ -720,6 +724,7 @@ func (mr *MockRepoListerMockRecorder) SupportsEntity(entType any) *gomock.Call {
 type MockGetArtifactVersionsFilter struct {
 	ctrl     *gomock.Controller
 	recorder *MockGetArtifactVersionsFilterMockRecorder
+	isgomock struct{}
 }
 
 // MockGetArtifactVersionsFilterMockRecorder is the mock recorder for MockGetArtifactVersionsFilter.
@@ -757,6 +762,7 @@ func (mr *MockGetArtifactVersionsFilterMockRecorder) IsSkippable(createdAt, tags
 type MockArtifactProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockArtifactProviderMockRecorder
+	isgomock struct{}
 }
 
 // MockArtifactProviderMockRecorder is the mock recorder for MockArtifactProvider.
@@ -795,6 +801,7 @@ func (mr *MockArtifactProviderMockRecorder) GetArtifactVersions(ctx, artifact, f
 type MockGitHub struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubMockRecorder is the mock recorder for MockGitHub.
@@ -1571,6 +1578,7 @@ func (mr *MockGitHubMockRecorder) UpdateReview(arg0, arg1, arg2, arg3, arg4, arg
 type MockImageLister struct {
 	ctrl     *gomock.Controller
 	recorder *MockImageListerMockRecorder
+	isgomock struct{}
 }
 
 // MockImageListerMockRecorder is the mock recorder for MockImageLister.
@@ -1754,6 +1762,7 @@ func (mr *MockImageListerMockRecorder) SupportsEntity(entType any) *gomock.Call 
 type MockOCI struct {
 	ctrl     *gomock.Controller
 	recorder *MockOCIMockRecorder
+	isgomock struct{}
 }
 
 // MockOCIMockRecorder is the mock recorder for MockOCI.

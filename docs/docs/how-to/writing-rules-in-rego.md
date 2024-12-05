@@ -301,7 +301,7 @@ This verifies that a repository does not have untriaged security advisories with
 
 ## Linting
 
-In order to enforce correctness and best practices for our rule types, we have a command-line utility called [mindev](https://github.com/stacklok/minder/tree/main/cmd/dev) that has a lint sub-command.
+In order to enforce correctness and best practices for our rule types, we have a command-line utility called [mindev](https://github.com/mindersec/minder/tree/main/cmd/dev) that has a lint sub-command.
 
 You can run it by doing the following from the Minder repository:
 
@@ -319,4 +319,4 @@ This introductory guide provides a foundation for leveraging Rego and Minder to 
 
 Minder is constantly evolving, so don’t be surprised if we soon add more custom functions or even more evaluation engines! The project is in full steam and more features are coming!
 
-[You can see a list of rule types that we actively maintain here.](https://github.com/stacklok/minder-rules-and-profiles)
+[You can see a list of rule types that we actively maintain here.](https://github.com/mindersec/minder-rules-and-profiles)

@@ -15,7 +15,7 @@ import (
 	reflect "reflect"
 
 	jwt "github.com/lestrrat-go/jwx/v2/jwt"
-	auth "github.com/stacklok/minder/internal/auth"
+	auth "github.com/mindersec/minder/internal/auth"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -23,6 +23,7 @@ import (
 type MockResolver struct {
 	ctrl     *gomock.Controller
 	recorder *MockResolverMockRecorder
+	isgomock struct{}
 }
 
 // MockResolverMockRecorder is the mock recorder for MockResolver.
@@ -76,6 +77,7 @@ func (mr *MockResolverMockRecorder) Validate(ctx, token any) *gomock.Call {
 type MockIdentityProvider struct {
 	ctrl     *gomock.Controller
 	recorder *MockIdentityProviderMockRecorder
+	isgomock struct{}
 }
 
 // MockIdentityProviderMockRecorder is the mock recorder for MockIdentityProvider.

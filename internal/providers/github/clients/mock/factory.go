@@ -13,8 +13,8 @@ import (
 	reflect "reflect"
 
 	github "github.com/google/go-github/v63/github"
-	github0 "github.com/stacklok/minder/internal/providers/github"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	github0 "github.com/mindersec/minder/internal/providers/github"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -22,6 +22,7 @@ import (
 type MockGitHubClientFactory struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubClientFactoryMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubClientFactoryMockRecorder is the mock recorder for MockGitHubClientFactory.

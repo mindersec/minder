@@ -102,3 +102,12 @@ WHERE id = $1 RETURNING *;
 UPDATE projects
 SET metadata = $2
 WHERE id = $1 RETURNING *;
+
+-- name: ListAllRootProjects :many
+SELECT * FROM projects
+WHERE parent_id IS NULL AND is_organization = FALSE;
+
+-- name: GetRootProjectByID :one
+SELECT * FROM projects
+WHERE id = $1
+AND parent_id IS NULL AND is_organization = FALSE LIMIT 1;

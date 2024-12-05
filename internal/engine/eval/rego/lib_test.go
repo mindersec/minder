@@ -1,31 +1,22 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rego_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	memfs "github.com/go-git/go-billy/v5/memfs"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/rego"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 func TestFileExistsWithExistingFile(t *testing.T) {
@@ -55,7 +46,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -84,7 +75,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -121,7 +112,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -158,7 +149,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -188,7 +179,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -220,7 +211,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -257,7 +248,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -294,7 +285,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -334,7 +325,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -377,7 +368,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -415,7 +406,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -512,7 +503,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -548,7 +539,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -583,7 +574,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -629,7 +620,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -665,7 +656,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -702,7 +693,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -752,9 +743,266 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &engif.Result{
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
 	require.NoError(t, err, "could not evaluate")
+}
+
+func TestJQIsTrue(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		yaml    string
+		matches bool
+	}{
+		{
+			name: "match a string",
+			yaml: `
+on:
+  pull_request_target
+`,
+			matches: true,
+		},
+		{
+			name: "don't match a different string",
+			yaml: `
+on:
+  push
+`,
+			matches: false,
+		},
+		{
+			name: "match an array",
+			yaml: `
+on:
+  - pull_request_target
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an array without pull_request_target",
+			yaml: `
+on:
+  - push
+`,
+			matches: false,
+		},
+		{
+			name: "match an array with multiple elements",
+			yaml: `
+on:
+  - pull_request_target
+  - push
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an array with multiple elements without pull_request_target",
+			yaml: `
+on:
+  - push
+  - workflow_dispatch
+`,
+			matches: false,
+		},
+		{
+			name: "match an object",
+			yaml: `
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+`,
+			matches: true,
+		},
+		{
+			name: "don't match an object without pull_request_target",
+			yaml: `
+on:
+  push:
+    branches: [main]
+`,
+			matches: false,
+		},
+		{
+			name: "match a complex object",
+			yaml: `
+on:
+  push:
+    branches: [master]
+  pull_request_target:
+    types: [opened, synchronize]
+`,
+			matches: true,
+		},
+		{
+			name: "don't match a complex object without pull_request_target",
+			yaml: `
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+`,
+			matches: false,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			const jqQuery = `.on | (type == "string" and . == "pull_request_target") or (type == "object" and has("pull_request_target")) or (type == "array" and any(.[]; . == "pull_request_target"))`
+
+			fs := memfs.New()
+
+			// Create a unique file name for each test
+			workflowFile := fmt.Sprintf("workflow_%d.yaml", time.Now().UnixNano())
+			f, err := fs.Create(workflowFile)
+			require.NoError(t, err, "could not create file in memfs")
+
+			_, err = f.Write([]byte(s.yaml))
+			require.NoError(t, err, "could not write to file in memfs")
+			err = f.Close()
+			require.NoError(t, err, "could not close file in memfs")
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+	workflowstr := file.read("%s")
+    parsed := parse_yaml(workflowstr)
+	jq.is_true(parsed, %q)
+}`, workflowFile, jqQuery)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			emptyPol := map[string]any{}
+
+			var evalErr *engerrors.EvaluationError
+			err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+				Object: nil,
+				Fs:     fs,
+			})
+			if s.matches {
+				require.NoError(t, err, "expected the policy to be allowed")
+			} else if !errors.As(err, &evalErr) {
+				t.Fatalf("expected the policy to be denied by default, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestParseYaml(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		yaml    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple key-value",
+			yaml: "foo: bar",
+			want: `{"foo": "bar"}`,
+		},
+		{
+			name: "nested structure",
+			yaml: `
+foo:
+  bar:
+    baz: qux`,
+			want: `{"foo": {"bar": {"baz": "qux"}}}`,
+		},
+		{
+			name: "yaml with 'on' key",
+			yaml: `
+on: push
+name: test`,
+			want: `{"on": "push", "name": "test"}`,
+		},
+		{
+			name: "complex github workflow",
+			yaml: `
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]`,
+			want: `{"on": {"push": {"branches": ["main"]}, "pull_request": {"branches": ["main"]}}}`,
+		},
+		{
+			name: "array values",
+			yaml: `
+items:
+  - foo
+  - bar
+  - baz`,
+			want: `{"items": ["foo", "bar", "baz"]}`,
+		},
+		{
+			name: "mixed types",
+			yaml: `
+string: hello
+number: 42
+boolean: true
+null_value: null
+array: [1, 2, 3]`,
+			want: `{"string": "hello", "number": 42, "boolean": true, "null_value": null, "array": [1, 2, 3]}`,
+		},
+		{
+			name:    "invalid yaml",
+			yaml:    "foo: [bar: invalid",
+			want:    "",
+			wantErr: true,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+    parsed := parse_yaml(%q)
+    expected := json.unmarshal(%q)
+    parsed == expected
+}`, s.yaml, s.want)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+
+			if s.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

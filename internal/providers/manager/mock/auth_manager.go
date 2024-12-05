@@ -15,9 +15,9 @@ import (
 	http "net/http"
 	reflect "reflect"
 
-	db "github.com/stacklok/minder/internal/db"
-	manager "github.com/stacklok/minder/internal/providers/manager"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	db "github.com/mindersec/minder/internal/db"
+	manager "github.com/mindersec/minder/internal/providers/manager"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -26,6 +26,7 @@ import (
 type MockAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockAuthManagerMockRecorder is the mock recorder for MockAuthManager.
@@ -83,6 +84,7 @@ func (mr *MockAuthManagerMockRecorder) ValidateCredentials(ctx, providerClass, c
 type MockproviderClassAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockproviderClassAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockproviderClassAuthManagerMockRecorder is the mock recorder for MockproviderClassAuthManager.
@@ -106,6 +108,7 @@ func (m *MockproviderClassAuthManager) EXPECT() *MockproviderClassAuthManagerMoc
 type MockproviderClassOAuthManager struct {
 	ctrl     *gomock.Controller
 	recorder *MockproviderClassOAuthManagerMockRecorder
+	isgomock struct{}
 }
 
 // MockproviderClassOAuthManagerMockRecorder is the mock recorder for MockproviderClassOAuthManager.

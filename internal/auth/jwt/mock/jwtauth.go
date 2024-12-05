@@ -21,6 +21,7 @@ import (
 type MockValidator struct {
 	ctrl     *gomock.Controller
 	recorder *MockValidatorMockRecorder
+	isgomock struct{}
 }
 
 // MockValidatorMockRecorder is the mock recorder for MockValidator.
@@ -59,6 +60,7 @@ func (mr *MockValidatorMockRecorder) ParseAndValidate(tokenString any) *gomock.C
 type MockKeySetFetcher struct {
 	ctrl     *gomock.Controller
 	recorder *MockKeySetFetcherMockRecorder
+	isgomock struct{}
 }
 
 // MockKeySetFetcherMockRecorder is the mock recorder for MockKeySetFetcher.

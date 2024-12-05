@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package testserver spawns a test server useful for integration testing.
 package testserver
@@ -29,18 +18,17 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/stacklok/minder/internal/auth"
-	noopauth "github.com/stacklok/minder/internal/auth/jwt/noop"
-	mockauthz "github.com/stacklok/minder/internal/authz/mock"
-	"github.com/stacklok/minder/internal/config"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/db/embedded"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/metrics/meters"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provtelemetry "github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/service"
+	"github.com/mindersec/minder/internal/auth"
+	noopauth "github.com/mindersec/minder/internal/auth/jwt/noop"
+	mockauthz "github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/db/embedded"
+	"github.com/mindersec/minder/internal/metrics/meters"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	provtelemetry "github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/service"
+	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 // CmdTestServer starts a test server for integration testing.
@@ -65,7 +53,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 	ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
 	defer cancel()
 
-	ctx = logger.FromFlags(cfg.LoggingConfig).WithContext(ctx)
+	ctx = serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(ctx)
 	l := zerolog.Ctx(ctx)
 	l.Info().Msgf("Initializing logger in level: %s", cfg.LoggingConfig.Level)
 

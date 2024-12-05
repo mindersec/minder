@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package history
 
@@ -660,6 +649,80 @@ func TestFilterOptions(t *testing.T) {
 			option: func(t *testing.T) FilterOpt {
 				t.Helper()
 				return WithProfileName("repository")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+
+		// label
+		{
+			name: "label in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(LabelFilter)
+				require.NotNil(t, f.IncludedLabels())
+				require.Nil(t, f.ExcludedLabels())
+				require.Equal(t, []string{"label"}, f.IncludedLabels())
+			},
+		},
+		{
+			name: "label not in filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("!label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			check: func(t *testing.T, filter Filter) {
+				t.Helper()
+				f := filter.(LabelFilter)
+				require.Nil(t, f.IncludedLabels())
+				require.NotNil(t, f.ExcludedLabels())
+				require.Equal(t, []string{"label"}, f.ExcludedLabels())
+			},
+		},
+		{
+			name: "empty label",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return &listEvaluationFilter{}
+			},
+			err: true,
+		},
+		{
+			name: "wrong label filter",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("label")
+			},
+			filter: func(t *testing.T) Filter {
+				t.Helper()
+				return foo
+			},
+			err: true,
+		},
+		{
+			name: "label exclude star",
+			option: func(t *testing.T) FilterOpt {
+				t.Helper()
+				return WithLabel("!*")
 			},
 			filter: func(t *testing.T) Filter {
 				t.Helper()

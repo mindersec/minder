@@ -1,17 +1,5 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package handlers
 
@@ -28,24 +16,26 @@ import (
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	df "github.com/stacklok/minder/database/mock/fixtures"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/entities/properties/service/mock/fixtures"
-	"github.com/stacklok/minder/internal/events"
-	stubeventer "github.com/stacklok/minder/internal/events/stubs"
-	mockgithub "github.com/stacklok/minder/internal/providers/github/mock"
-	ghprops "github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/manager"
-	mock_manager "github.com/stacklok/minder/internal/providers/manager/mock"
-	provManFixtures "github.com/stacklok/minder/internal/providers/manager/mock/fixtures"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	df "github.com/mindersec/minder/database/mock/fixtures"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/entities/properties/service/mock/fixtures"
+	stubeventer "github.com/mindersec/minder/internal/events/stubs"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
+	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/manager"
+	mock_manager "github.com/mindersec/minder/internal/providers/manager/mock"
+	provManFixtures "github.com/mindersec/minder/internal/providers/manager/mock/fixtures"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 var (
@@ -192,60 +182,60 @@ func checkPullRequestMessage(t *testing.T, msg *watermill.Message) {
 	require.NoError(t, err)
 	require.NotNil(t, eiw)
 
-	pbpr, ok := eiw.Entity.(*minderv1.PullRequest)
+	pbpr, ok := eiw.Entity.(*pbinternal.PullRequest)
 	require.True(t, ok)
 	assert.Equal(t, pullRequestPropMap[ghprops.PullPropertyNumber].(int64), pbpr.Number)
 }
 
 type handlerBuilder func(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer
+) interfaces.Consumer
 
 func refreshEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRefreshEntityAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func refreshByIDHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, provMgr)
 }
 
 func addOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewAddOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func removeOriginatingEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	provMgr manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewRemoveOriginatingEntityHandler(evt, store, propSvc, provMgr)
 }
 
 func getAndDeleteEntityHandlerBuilder(
-	evt events.Publisher,
+	evt interfaces.Publisher,
 	store db.Store,
 	propSvc service.PropertiesService,
 	_ manager.ProviderManager,
-) events.Consumer {
+) interfaces.Consumer {
 	return NewGetEntityAndDeleteHandler(evt, store, propSvc)
 }
 
@@ -286,7 +276,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -301,7 +291,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			mockStoreFunc:   df.NewMockStore(),
 			expectedPublish: false,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -331,7 +321,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -366,7 +356,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithTransaction(),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -430,7 +420,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				df.WithSuccessfulGetFeatureInProject(true),
 			),
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkRepoMessage,
 		},
 		{
@@ -620,7 +610,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			providerSetup: newProviderMock(
 				withSuccessfulGetEntityName(pullName),
 				withSuccessfulFetchAllProperties(getPullRequestProperties()),
-				WithSuccessfulPropertiesToProtoMessage(&minderv1.PullRequest{
+				WithSuccessfulPropertiesToProtoMessage(&pbinternal.PullRequest{
 					Number: 789,
 				}),
 			),
@@ -630,7 +620,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				)
 			},
 			expectedPublish: true,
-			topic:           events.TopicQueueEntityEvaluate,
+			topic:           constants.TopicQueueEntityEvaluate,
 			checkWmMsg:      checkPullRequestMessage,
 		},
 		{
@@ -695,7 +685,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			},
 			expectedPublish: true,
 			checkWmMsg:      checkRepoEntityMessage,
-			topic:           events.TopicQueueReconcileEntityDelete,
+			topic:           constants.TopicQueueReconcileEntityDelete,
 		},
 		{
 			name:             "NewGetEntityAndDeleteHandler: failure to get entity does not publish",

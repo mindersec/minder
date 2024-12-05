@@ -14,10 +14,10 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	auth "github.com/stacklok/minder/internal/auth"
-	authz "github.com/stacklok/minder/internal/authz"
-	db "github.com/stacklok/minder/internal/db"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	auth "github.com/mindersec/minder/internal/auth"
+	authz "github.com/mindersec/minder/internal/authz"
+	db "github.com/mindersec/minder/internal/db"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -25,6 +25,7 @@ import (
 type MockRoleService struct {
 	ctrl     *gomock.Controller
 	recorder *MockRoleServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockRoleServiceMockRecorder is the mock recorder for MockRoleService.

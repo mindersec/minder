@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package logger provides a general logging tools
 package logger
@@ -21,12 +10,13 @@ import (
 	"path"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	config "github.com/stacklok/minder/internal/config/server"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 // Text is the constant for the text format
@@ -97,6 +87,26 @@ func Interceptor(cfg config.LoggingConfig) grpc.UnaryServerInterceptor {
 
 		// Note: Zerolog makes it hard to add attributes in multiple calls.
 		logMsg.Dict("Attributes", attrs).Send()
+
+		return resp, err
+	}
+}
+
+// RequestIDInterceptor traces request ids.
+//
+// It's job is to add a request id (UUID) to the context so that all
+// subsequent logs inherit it, making it easier to track down problems
+// on a per-request basis. It also sends back it back in a header.
+func RequestIDInterceptor(headerSuffix string) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		rID := uuid.New().String()
+		ctx = zerolog.Ctx(ctx).With().Str("request_id", rID).Logger().WithContext(ctx)
+
+		resp, err := handler(ctx, req)
+
+		if err := grpc.SendHeader(ctx, metadata.Pairs(headerSuffix, rID)); err != nil {
+			zerolog.Ctx(ctx).Trace().Err(err).Msg("unable to attach request id to trailer")
+		}
 
 		return resp, err
 	}

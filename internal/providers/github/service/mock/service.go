@@ -15,7 +15,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
+	db "github.com/mindersec/minder/internal/db"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -24,6 +24,7 @@ import (
 type MockGitHubProviderService struct {
 	ctrl     *gomock.Controller
 	recorder *MockGitHubProviderServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockGitHubProviderServiceMockRecorder is the mock recorder for MockGitHubProviderService.

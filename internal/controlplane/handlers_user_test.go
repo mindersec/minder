@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -32,22 +21,22 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
-	mockidentity "github.com/stacklok/minder/internal/auth/mock"
-	"github.com/stacklok/minder/internal/authz/mock"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	mockcrypto "github.com/stacklok/minder/internal/crypto/mock"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/flags"
-	"github.com/stacklok/minder/internal/marketplaces"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/providers"
-	mockprov "github.com/stacklok/minder/internal/providers/github/service/mock"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
+	mockidentity "github.com/mindersec/minder/internal/auth/mock"
+	"github.com/mindersec/minder/internal/authz/mock"
+	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/providers"
+	mockprov "github.com/mindersec/minder/internal/providers/github/service/mock"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 const (
@@ -94,6 +83,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 				store.EXPECT().
 					CreateUser(gomock.Any(), gomock.Any()).
 					Return(returnedUser, nil)
+				store.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+					Return(nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
 				tokenResult, _ := openid.NewBuilder().GivenName("Foo").FamilyName("Bar").Email("test@stacklok.com").Subject("subject1").Build()
@@ -273,6 +264,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 					authz,
 					marketplaces.NewNoopMarketplace(),
 					&serverconfig.DefaultProfilesConfig{},
+					&serverconfig.FeaturesConfig{},
 				),
 			}
 
@@ -450,7 +442,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

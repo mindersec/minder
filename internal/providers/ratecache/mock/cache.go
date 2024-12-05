@@ -12,8 +12,8 @@ package mock_ratecache
 import (
 	reflect "reflect"
 
-	db "github.com/stacklok/minder/internal/db"
-	v1 "github.com/stacklok/minder/pkg/providers/v1"
+	db "github.com/mindersec/minder/internal/db"
+	v1 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -21,6 +21,7 @@ import (
 type MockRestClientCache struct {
 	ctrl     *gomock.Controller
 	recorder *MockRestClientCacheMockRecorder
+	isgomock struct{}
 }
 
 // MockRestClientCacheMockRecorder is the mock recorder for MockRestClientCache.

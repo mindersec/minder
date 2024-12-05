@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -41,28 +30,28 @@ import (
 	"golang.org/x/oauth2/github"
 	"google.golang.org/grpc/codes"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/crypto"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/engcontext"
-	mockprops "github.com/stacklok/minder/internal/entities/properties/service/mock"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers"
-	"github.com/stacklok/minder/internal/providers/dockerhub"
-	mockclients "github.com/stacklok/minder/internal/providers/github/clients/mock"
-	ghmanager "github.com/stacklok/minder/internal/providers/github/manager"
-	mockgh "github.com/stacklok/minder/internal/providers/github/mock"
-	ghService "github.com/stacklok/minder/internal/providers/github/service"
-	mockprovsvc "github.com/stacklok/minder/internal/providers/github/service/mock"
-	"github.com/stacklok/minder/internal/providers/manager"
-	mockmanager "github.com/stacklok/minder/internal/providers/manager/mock"
-	"github.com/stacklok/minder/internal/providers/session"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/providers"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
+	mockclients "github.com/mindersec/minder/internal/providers/github/clients/mock"
+	ghmanager "github.com/mindersec/minder/internal/providers/github/manager"
+	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
+	ghService "github.com/mindersec/minder/internal/providers/github/service"
+	mockprovsvc "github.com/mindersec/minder/internal/providers/github/service/mock"
+	"github.com/mindersec/minder/internal/providers/manager"
+	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
+	"github.com/mindersec/minder/internal/providers/session"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func Test_NewOAuthConfig(t *testing.T) {
@@ -174,6 +163,8 @@ func Test_NewOAuthConfig(t *testing.T) {
 				nil,
 				nil,
 				propssvc,
+				metrics.NewNoopMetrics(),
+				nil,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -221,8 +212,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -257,8 +247,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubAppProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -292,8 +281,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &nonGithubProviderName,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(_ *mockdb.MockStore) {},
 
@@ -312,8 +300,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 					Provider: &githubProviderClass,
 					Project:  &projectIdStr,
 				},
-				Port: 8080,
-				Cli:  true,
+				Cli: true,
 			},
 			buildStubs: func(store *mockdb.MockStore) {
 				store.EXPECT().
@@ -387,7 +374,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 			store := mockdb.NewMockStore(ctrl)
 			tc.buildStubs(store)
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -617,7 +604,7 @@ func TestProviderCallback(t *testing.T) {
 
 			mockGhProviderService := mockprovsvc.NewMockGitHubProviderService(ctrl)
 			tc.buildStubs(mockGhProviderService)
-			s, _ := newDefaultServer(t, store, nil, nil, clientFactory)
+			s := newDefaultServer(t, store, nil, nil, clientFactory)
 			s.ghProviders = mockGhProviderService
 			s.cfg.Provider = serverconfig.ProviderConfig{
 				GitHub: &serverconfig.GitHubConfig{
@@ -671,6 +658,8 @@ func TestProviderCallback(t *testing.T) {
 				nil,
 				ghClientService,
 				propssvc,
+				metrics.NewNoopMetrics(),
+				nil,
 			)
 			dockerhubProviderManager := dockerhub.NewDockerHubProviderClassManager(nil, nil)
 
@@ -897,7 +886,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})
@@ -1053,7 +1042,7 @@ func TestVerifyProviderCredential(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
 				GoChannel: serverconfig.GoChannelEventConfig{},
 			})

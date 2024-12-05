@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package repositories contains logic relating to the management of repos
 package repositories
@@ -20,25 +9,24 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/entities/models"
-	"github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/projects/features"
-	ghprop "github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/manager"
-	reconcilers "github.com/stacklok/minder/internal/reconcilers/messages"
-	"github.com/stacklok/minder/internal/util/ptr"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/projects/features"
+	"github.com/mindersec/minder/internal/providers/manager"
+	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/internal/util/ptr"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -94,11 +82,6 @@ type RepositoryService interface {
 		projectID uuid.UUID,
 		providerName string,
 	) (db.Repository, error)
-
-	RefreshRepositoryByUpstreamID(
-		ctx context.Context,
-		upstreamRepoID int64,
-	) (*models.EntityWithProperties, error)
 }
 
 var (
@@ -113,7 +96,7 @@ var (
 
 type repositoryService struct {
 	store           db.Store
-	eventProducer   events.Publisher
+	eventProducer   interfaces.Publisher
 	providerManager manager.ProviderManager
 	propSvc         service.PropertiesService
 }
@@ -122,7 +105,7 @@ type repositoryService struct {
 func NewRepositoryService(
 	store db.Store,
 	propSvc service.PropertiesService,
-	eventProducer events.Publisher,
+	eventProducer interfaces.Publisher,
 	providerManager manager.ProviderManager,
 ) RepositoryService {
 	return &repositoryService{
@@ -368,165 +351,6 @@ func (r *repositoryService) DeleteByName(
 	return r.deleteRepository(ctx, prov, ent)
 }
 
-func (r *repositoryService) RefreshRepositoryByUpstreamID(
-	ctx context.Context,
-	upstreamRepoID int64,
-) (*models.EntityWithProperties, error) {
-	zerolog.Ctx(ctx).Debug().Int64("upstream_repo_id", upstreamRepoID).Msg("refreshing repository")
-
-	ewp, err := db.WithTransaction(r.store, func(qtx db.ExtendQuerier) (*models.EntityWithProperties, error) {
-		entRepo, isLegacy, err := getRepoEntityWithLegacyFallback(ctx, upstreamRepoID, qtx)
-		if err != nil {
-			return nil, fmt.Errorf("error fetching repository: %w", err)
-		}
-
-		prov, err := r.providerManager.InstantiateFromID(ctx, entRepo.ProviderID)
-		if err != nil {
-			return nil, fmt.Errorf("error instantiating provider: %w", err)
-		}
-
-		fetchByProps, err := properties.NewProperties(map[string]any{
-			properties.PropertyName: entRepo.Name,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating properties: %w", err)
-		}
-
-		repoProperties, err := r.propSvc.RetrieveAllProperties(
-			ctx,
-			prov,
-			entRepo.ProjectID,
-			entRepo.ProviderID,
-			fetchByProps,
-			pb.Entity_ENTITY_REPOSITORIES,
-			service.ReadBuilder().WithStoreOrTransaction(qtx))
-		if errors.Is(err, service.ErrEntityNotFound) {
-			// return the entity without properties in case the upstream entity is not found
-			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
-			return ewp, nil
-		} else if err != nil {
-			return nil, fmt.Errorf("error fetching properties for repository: %w", err)
-		}
-
-		if !isLegacy {
-			// this is not a migration from the legacy tables, we're done
-			ewp := models.NewEntityWithProperties(entRepo, repoProperties)
-			return ewp, nil
-		}
-
-		zerolog.Ctx(ctx).Debug().Str("repo_name", entRepo.Name).Msg("migrating legacy repository")
-
-		// TODO: this is temporary until all entities are migrated to the new properties
-		legacyProps, err := getLegacyOperationalAttrs(ctx, entRepo.ID, repoProperties, qtx)
-		if err != nil {
-			return nil, fmt.Errorf("error merging legacy operational attributes: %w", err)
-		}
-
-		err = r.propSvc.SaveAllProperties(ctx, entRepo.ID, legacyProps,
-			service.CallBuilder().WithStoreOrTransaction(qtx))
-		if err != nil {
-			return nil, fmt.Errorf("error saving properties for repository: %w", err)
-		}
-
-		// we could as well call RetrieveAllProperties again, we should just get the same data
-		ewp := models.NewEntityWithProperties(entRepo, repoProperties.Merge(legacyProps))
-		return ewp, nil
-	})
-
-	if err != nil {
-		return nil, fmt.Errorf("error refreshing repository: %w", err)
-	}
-
-	return ewp, nil
-}
-
-func getRepoEntityWithLegacyFallback(
-	ctx context.Context,
-	upstreamRepoID int64,
-	qtx db.ExtendQuerier,
-) (db.EntityInstance, bool, error) {
-	entities, err := qtx.GetTypedEntitiesByPropertyV1(
-		ctx,
-		db.EntitiesRepository,
-		properties.PropertyUpstreamID,
-		strconv.FormatInt(upstreamRepoID, 10),
-		db.GetTypedEntitiesOptions{})
-	if errors.Is(err, sql.ErrNoRows) {
-		return db.EntityInstance{}, false, ErrRepoNotFound
-	} else if err != nil {
-		return db.EntityInstance{}, false, fmt.Errorf("error fetching entities by property: %w", err)
-	}
-
-	if len(entities) > 1 {
-		return db.EntityInstance{}, false, fmt.Errorf("expected 1 entity, got %d", len(entities))
-	} else if len(entities) == 1 {
-		return entities[0], false, nil
-	}
-
-	// 0 entities found, check the legacy table
-	legacyRepo, err := qtx.GetRepositoryByRepoID(ctx, upstreamRepoID)
-	if errors.Is(err, sql.ErrNoRows) {
-		// when removing this code after the migration, remember to add a
-		// clause above to return NotFound on len(entities) == 0
-		return db.EntityInstance{}, false, ErrRepoNotFound
-	} else if err != nil {
-		return db.EntityInstance{}, false, fmt.Errorf("error fetching legacy repository: %w", err)
-	}
-
-	// check if the repo has been created in the entities table but without
-	// properties
-	ent, err := qtx.GetEntityByID(ctx, legacyRepo.ID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		// we have an entity in the entities table but without properties
-		return db.EntityInstance{}, false, fmt.Errorf("error fetching entity: %w", err)
-	} else if err == nil {
-		// we have an entity in the entities table but without properties (half-way migrated)
-		zerolog.Ctx(ctx).Debug().Str("repo_name", ent.Name).Msg("repo has an entity but no properties")
-		return ent, false, nil
-	}
-
-	// only sql.ErrNoRows left, we have to create the entity
-	// at this point we didn't have a repo in the entities table but did have
-	// a repo in the legacy table. Insert into the entities table and return
-	zerolog.Ctx(ctx).Debug().Str("repo_name", legacyRepo.RepoName).Msg("migrating legacy repository")
-	ent, err = qtx.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
-		ID:         legacyRepo.ID,
-		EntityType: db.EntitiesRepository,
-		// it's OK to use an sprintf here, this is code that will be removed soon
-		Name:           fmt.Sprintf("%s/%s", legacyRepo.RepoOwner, legacyRepo.RepoName),
-		ProjectID:      legacyRepo.ProjectID,
-		ProviderID:     legacyRepo.ProviderID,
-		OriginatedFrom: uuid.NullUUID{},
-	})
-	if err != nil {
-		return db.EntityInstance{}, false, fmt.Errorf("error creating entity: %w", err)
-	}
-
-	return ent, true, nil
-}
-
-func getLegacyOperationalAttrs(
-	ctx context.Context,
-	repoID uuid.UUID,
-	repoProps *properties.Properties,
-	qtx db.ExtendQuerier,
-) (*properties.Properties, error) {
-	legacyRepo, err := qtx.GetRepositoryByID(ctx, repoID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return repoProps, nil
-	}
-
-	legacyPropMap := map[string]any{
-		ghprop.RepoPropertyHookUrl: legacyRepo.WebhookUrl,
-	}
-
-	if legacyRepo.WebhookID.Valid {
-		legacyPropMap[ghprop.RepoPropertyHookId] = legacyRepo.WebhookID.Int64
-	}
-
-	return properties.NewProperties(legacyPropMap)
-}
-
 func (r *repositoryService) deleteRepository(
 	ctx context.Context, client provifv1.Provider, repo *models.EntityWithProperties,
 ) error {
@@ -571,7 +395,7 @@ func (r *repositoryService) pushReconcilerEvent(entityID uuid.UUID, projectID uu
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err = r.eventProducer.Publish(events.TopicQueueReconcileRepoInit, msg); err != nil {
+	if err = r.eventProducer.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
 		log.Printf("error publishing reconciler event: %v", err)
 	}
 

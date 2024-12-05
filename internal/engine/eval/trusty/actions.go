@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package trusty provides an evaluator that uses the trusty API
 package trusty
@@ -24,17 +13,14 @@ import (
 	"slices"
 	"strings"
 	template "text/template"
-	"unicode"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
-	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/types"
 
-	"github.com/stacklok/minder/internal/constants"
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	pbinternal "github.com/stacklok/minder/internal/proto"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/constants"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	pbinternal "github.com/mindersec/minder/internal/proto"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -205,13 +191,13 @@ type dependencyAlternatives struct {
 	BlockPR bool
 
 	// trustyReply is the complete response from trusty for this package
-	trustyReply *trustytypes.Reply
+	trustyReply *trustyReport
 }
 
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
 	cli       provifv1.GitHub
-	pr        *pb.PullRequest
+	pr        *pbinternal.PullRequest
 	trustyUrl string
 
 	trackedAlternatives []dependencyAlternatives
@@ -287,8 +273,8 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	for _, alternative := range sph.trackedAlternatives {
 		if _, ok := lowScorePackages[alternative.Dependency.Name]; !ok {
 			var score float64
-			if alternative.trustyReply.Summary.Score != nil {
-				score = *alternative.trustyReply.Summary.Score
+			if alternative.trustyReply.Score != nil {
+				score = *alternative.trustyReply.Score
 			}
 
 			packageUIURL, err := url.JoinPath(
@@ -311,38 +297,46 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 			if slices.Contains(alternative.Reasons, TRUSTY_MALICIOUS_PKG) {
 				malicious = append(malicious, maliciousTemplateData{
 					templatePackageData: packageData,
-					Summary:             alternative.trustyReply.PackageData.Malicious.Summary,
-					Details:             preprocessDetails(alternative.trustyReply.PackageData.Malicious.Details),
+					Summary:             alternative.trustyReply.Malicious.Summary,
+					Details:             alternative.trustyReply.Malicious.Details,
 				})
 				continue
 			}
 
 			lowScorePackages[alternative.Dependency.Name] = templatePackage{
 				templatePackageData: packageData,
-				Deprecated:          alternative.trustyReply.PackageData.Deprecated,
-				Archived:            alternative.trustyReply.PackageData.Archived,
-				ScoreComponents:     buildScoreMatrix(alternative),
+				Deprecated:          alternative.trustyReply.IsDeprecated,
+				Archived:            alternative.trustyReply.IsArchived,
+				ScoreComponents:     buildScoreMatrix(alternative.trustyReply.ScoreComponents),
 				Alternatives:        []templateAlternative{},
 				Provenance:          buildProvenanceStruct(alternative.trustyReply),
 			}
 		}
 
-		for _, altData := range alternative.trustyReply.Alternatives.Packages {
-			if altData.Score <= lowScorePackages[alternative.Dependency.Name].Score {
+		for _, altData := range alternative.trustyReply.Alternatives {
+			// Note: now that the score is deprecated and
+			// effectively `nil` for all packages, this
+			// loop will always discard all alternatives,
+			// rendering the whole block dead code.
+			//
+			// Since (1) we don't have score anymore, and
+			// (2) we don't suggest malicious packages, I
+			// suggest getting rid of this check
+			// altogether and always report all available
+			// alternatives.
+			if comparePackages(altData, lowScorePackages[alternative.Dependency.Name]) == worse {
 				continue
 			}
 
 			altPackageData := templateAlternative{
 				templatePackageData: templatePackageData{
-					Ecosystem:   alternative.Dependency.Ecosystem.AsString(),
+					Ecosystem:   altData.PackageType,
 					PackageName: altData.PackageName,
-					TrustyURL: fmt.Sprintf(
-						"%s%s/%s", constants.TrustyHttpURL,
-						strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-						url.PathEscape(altData.PackageName),
-					),
-					Score: altData.Score,
+					TrustyURL:   altData.TrustyURL,
 				},
+			}
+			if altData.Score != nil {
+				altPackageData.templatePackageData.Score = *altData.Score
 			}
 
 			dep := lowScorePackages[alternative.Dependency.Name]
@@ -354,28 +348,45 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 	return sph.compileTemplate(malicious, lowScorePackages)
 }
 
+type packageComparison int
+
+const (
+	better packageComparison = iota
+	worse
+)
+
+// comparePackages compares two packages to determine whether the
+// first argument is better or worse than the second one. It does so
+// by checking Trusty scores.
+func comparePackages(alt alternative, examined templatePackage) packageComparison {
+	if alt.Score != nil && *alt.Score != 0 && *alt.Score <= examined.Score {
+		return worse
+	}
+	return better
+}
+
 // buildProvenanceStruct builds the provenance data structure for the PR template
-func buildProvenanceStruct(r *trustytypes.Reply) *templateProvenance {
+func buildProvenanceStruct(r *trustyReport) *templateProvenance {
 	if r == nil || r.Provenance == nil {
 		return nil
 	}
 	var provenance *templateProvenance
 	if r.Provenance != nil {
 		provenance = &templateProvenance{}
-		if r.Provenance.Description.Historical.Overlap != 0 {
+		if r.Provenance.Historical != nil && r.Provenance.Historical.Overlap != 0 {
 			provenance.Historical = &templateHistoricalProvenance{
-				NumVersions:     int(r.Provenance.Description.Historical.Versions),
-				NumTags:         int(r.Provenance.Description.Historical.Tags),
-				MatchedVersions: int(r.Provenance.Description.Historical.Common),
+				NumVersions:     int(r.Provenance.Historical.Versions),
+				NumTags:         int(r.Provenance.Historical.Tags),
+				MatchedVersions: int(r.Provenance.Historical.Common),
 			}
 		}
 
-		if r.Provenance.Description.Sigstore.Issuer != "" {
+		if r.Provenance.Sigstore != nil && r.Provenance.Sigstore.Issuer != "" {
 			provenance.Sigstore = &templateSigstoreProvenance{
-				SourceRepository: r.Provenance.Description.Sigstore.SourceRepository,
-				Workflow:         r.Provenance.Description.Sigstore.Workflow,
-				Issuer:           r.Provenance.Description.Sigstore.Issuer,
-				RekorURI:         r.Provenance.Description.Sigstore.Transparency,
+				SourceRepository: r.Provenance.Sigstore.SourceRepository,
+				Workflow:         r.Provenance.Sigstore.Workflow,
+				Issuer:           r.Provenance.Sigstore.Issuer,
+				RekorURI:         r.Provenance.Sigstore.RekorURI,
 			}
 		}
 
@@ -388,35 +399,12 @@ func buildProvenanceStruct(r *trustytypes.Reply) *templateProvenance {
 
 // buildScoreMatrix builds the score components matrix that populates
 // the score table in the PR comment template
-func buildScoreMatrix(alternative dependencyAlternatives) []templateScoreComponent {
+//
+//nolint:gosimple // This code is legacy and should be removed
+func buildScoreMatrix(components []scoreComponent) []templateScoreComponent {
 	scoreComp := []templateScoreComponent{}
-	if alternative.trustyReply.Summary.Description != nil {
-		for l, v := range alternative.trustyReply.Summary.Description {
-			switch l {
-			case "activity":
-				l = "Package activity"
-			case "activity_user":
-				l = "User activity"
-			case "provenance":
-				l = "Provenance"
-			case "typosquatting":
-				if v.(float64) > 5.00 {
-					continue
-				}
-				v = "⚠️ Dependency may be trying to impersonate a well known package"
-				l = "Typosquatting"
-			case "activity_repo":
-				l = "Repository activity"
-			default:
-				if len(l) > 1 {
-					l = string(unicode.ToUpper([]rune(l)[0])) + l[1:]
-				}
-			}
-			scoreComp = append(scoreComp, templateScoreComponent{
-				Label: l,
-				Value: v,
-			})
-		}
+	for _, component := range components {
+		scoreComp = append(scoreComp, templateScoreComponent(component))
 	}
 	return scoreComp
 }
@@ -441,7 +429,7 @@ func (sph *summaryPrHandler) compileTemplate(malicious []maliciousTemplateData, 
 }
 
 func newSummaryPrHandler(
-	pr *pb.PullRequest,
+	pr *pbinternal.PullRequest,
 	cli provifv1.GitHub,
 	trustyUrl string,
 ) (*summaryPrHandler, error) {
@@ -459,8 +447,12 @@ func newSummaryPrHandler(
 	}, nil
 }
 
-func preprocessDetails(s string) string {
-	scanner := bufio.NewScanner(strings.NewReader(s))
+func preprocessDetails(s *string) string {
+	if s == nil {
+		return ""
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(*s))
 	text := ""
 	for scanner.Scan() {
 		if strings.HasPrefix(scanner.Text(), "#") {

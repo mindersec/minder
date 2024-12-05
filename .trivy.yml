@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 ---
 exit-code: 1
 severity:
@@ -10,3 +13,4 @@ scan:
   # Default is empty
   skip-dirs:
     - docs/
+    - ".cache/trivy/"

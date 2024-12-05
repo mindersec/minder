@@ -1,26 +1,14 @@
-#
-# Copyright 2023 Stacklok, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
 
 DOCKERARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 
 RUN_DOCKER_NO_TEARDOWN?=false
 
 YQ_BUILD_REPLACE_STRING := 'del(.services.minder.build) | \
-.services.minder.image |= "ko://github.com/stacklok/minder/cmd/server" | \
+.services.minder.image |= "ko://github.com/mindersec/minder/cmd/server" | \
 del(.services.migrate.build) | \
-.services.migrate.image |= "ko://github.com/stacklok/minder/cmd/server"'
+.services.migrate.image |= "ko://github.com/mindersec/minder/cmd/server"'
 
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
@@ -33,8 +21,8 @@ run-server: ## run the app
 .PHONY: run-docker-teardown
 run-docker-teardown: ## teardown the docker compose environment
 ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
-	@echo "Running docker compose down"
-	@$(COMPOSE) down
+	@echo "Running docker compose down $(services)..."
+	@$(COMPOSE) down $(services)
 else
 	@echo "Skipping docker compose down"
 endif
@@ -54,7 +42,7 @@ run-docker: run-docker-teardown ## run the app under docker compose
 .PHONY: stop-docker
 stop-docker: ## stop the app under docker compose
 	@echo "Running docker compose down $(services)..."
-	@$(COMPOSE) down
+	@$(COMPOSE) down $(services)
 
 .PHONY: pre-commit
 pre-commit:	## run pre-commit hooks

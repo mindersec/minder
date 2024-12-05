@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package engine
 
@@ -23,26 +12,27 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/actions"
-	"github.com/stacklok/minder/internal/engine/actions/alert"
-	"github.com/stacklok/minder/internal/engine/actions/remediate"
-	"github.com/stacklok/minder/internal/engine/entities"
-	evalerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/engine/rtengine"
-	"github.com/stacklok/minder/internal/engine/selectors"
-	"github.com/stacklok/minder/internal/entities/properties/service"
-	"github.com/stacklok/minder/internal/history"
-	minderlogger "github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/manager"
-	provsel "github.com/stacklok/minder/internal/providers/selectors"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/actions"
+	"github.com/mindersec/minder/internal/engine/actions/alert"
+	"github.com/mindersec/minder/internal/engine/actions/remediate"
+	"github.com/mindersec/minder/internal/engine/entities"
+	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/engine/rtengine"
+	"github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/history"
+	minderlogger "github.com/mindersec/minder/internal/logger"
+	"github.com/mindersec/minder/internal/providers/manager"
+	provsel "github.com/mindersec/minder/internal/providers/selectors"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -89,12 +79,15 @@ func NewExecutor(
 // EvalEntityEvent evaluates the entity specified in the EntityInfoWrapper
 // against all relevant rules in the project hierarchy.
 func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfoWrapper) error {
-	logger := zerolog.Ctx(ctx).Info().
+	logger := zerolog.Ctx(ctx).With().
 		Str("entity_type", inf.Type.ToString()).
 		Str("execution_id", inf.ExecutionID.String()).
 		Str("provider_id", inf.ProviderID.String()).
-		Str("project_id", inf.ProjectID.String())
-	logger.Msg("entity evaluation - started")
+		Str("project_id", inf.ProjectID.String()).
+		Logger()
+	logger.Info().Msg("entity evaluation - started")
+	// Propagate info to remaining log messages
+	ctx = logger.WithContext(ctx)
 
 	// track the time taken to evaluate each entity
 	entityStartTime := time.Now()
@@ -120,6 +113,8 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 
 	defer e.releaseLockAndFlush(ctx, inf)
 
+	dssvc := datasourceservice.NewDataSourceService(e.querier)
+
 	entityType := entities.EntityTypeToDB(inf.Type)
 	// Load all the relevant rule type engines for this entity
 	ruleEngineCache, err := rtengine.NewRuleEngineCache(
@@ -129,6 +124,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		inf.ProjectID,
 		provider,
 		ingestCache,
+		dssvc,
 		eoptions.WithFlagsClient(e.featureFlags),
 	)
 	if err != nil {
@@ -187,8 +183,6 @@ func (e *executor) evaluateRule(
 		return fmt.Errorf("cannot create rule actions engine: %w", err)
 	}
 
-	evalParams.SetActionsOnOff(actionEngine.GetOnOffState())
-
 	// Update the lock lease at the end of the evaluation
 	defer e.updateLockLease(ctx, *inf.ExecutionID, evalParams)
 
@@ -197,7 +191,13 @@ func (e *executor) evaluateRule(
 	if profileEvalStatus != nil {
 		evalErr = profileEvalStatus
 	} else {
-		evalErr = ruleEngine.Eval(ctx, inf, evalParams)
+		// enrich the logger with the entity type and execution ID
+		ctx := zerolog.Ctx(ctx).With().
+			Str("entity_type", inf.Type.ToString()).
+			Str("execution_id", inf.ExecutionID.String()).
+			Logger().WithContext(ctx)
+		evalErr = ruleEngine.Eval(ctx, inf.Entity, evalParams.GetRule().Def, evalParams.GetRule().Params, evalParams)
+
 	}
 	evalParams.SetEvalErr(evalErr)
 

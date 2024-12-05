@@ -10,7 +10,7 @@ Minder's policy engine is flexible enough that you can write your own rule types
 
 Minder allows you to check and enforce that certain settings are set up for several stages in your supply chain. To configure those settings, you need to create a Profile. This profile is composed of several rules that represent the settings you want in your supply chain. These rules are actually instantiations of another handy object for Minder called Rule Types. These rule types define the nitty-gritty details of how the specific setting you care about will be checked, how you'll be alerted when something goes out of order, and how it will be automatically remediated.
 
-You can browse a curated collection of rule types in the [rules and profiles repository])(https://github.com/stacklok/minder-rules-and-profiles).
+You can browse a curated collection of rule types in the [rules and profiles repository])(https://github.com/mindersec/minder-rules-and-profiles).
 
 Some of the rules include:
 
@@ -171,7 +171,7 @@ guidance: |
 
 ## Trying the rule out
 
-The whole rule can be seen in the [Rules and Profiles GitHub repository](https://github.com/stacklok/minder-rules-and-profiles). In order to try it out, we’ll use the minder CLI, which points to the Minder server hosted by your friends at Stacklok.
+The whole rule can be seen in the [Rules and Profiles GitHub repository](https://github.com/mindersec/minder-rules-and-profiles). In order to try it out, we’ll use the minder CLI, which points to the Minder server hosted by your friends at Stacklok.
 
 Before continuing, make sure you use our Quickstart to install the CLI and enroll your GitHub repos.
 

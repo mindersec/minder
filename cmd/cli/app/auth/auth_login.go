@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package auth
 
@@ -20,11 +8,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/stacklok/minder/internal/config"
-	clientconfig "github.com/stacklok/minder/internal/config/client"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/config"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 // loginCmd represents the login command
@@ -33,13 +22,11 @@ var loginCmd = &cobra.Command{
 	Short: "Login to Minder",
 	Long: `The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
 $XDG_CONFIG_HOME/minder/credentials.json`,
-	RunE: LoginCommand,
+	RunE: cli.GRPCClientWrapRunE(LoginCommand),
 }
 
 // LoginCommand is the login subcommand
-func LoginCommand(cmd *cobra.Command, _ []string) error {
-	ctx := context.Background()
-
+func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
@@ -53,11 +40,13 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error ensuring credentials", err)
 	}
 
-	conn, err := cli.GrpcForCommand(viper.GetViper())
+	// Get a connection to the GRPC server after we have the credentials
+	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 	if err != nil {
-		return cli.MessageAndError("Error getting grpc connection", err)
+		return err
 	}
 	defer conn.Close()
+
 	client := minderv1.NewUserServiceClient(conn)
 
 	// check if the user already exists in the local database

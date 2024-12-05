@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package alert provides necessary interfaces and implementations for
 // processing alerts.
@@ -23,11 +11,12 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/stacklok/minder/internal/engine/actions/alert/noop"
-	"github.com/stacklok/minder/internal/engine/actions/alert/security_advisory"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/actions/alert/noop"
+	"github.com/mindersec/minder/internal/engine/actions/alert/security_advisory"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // ActionType is the type of the alert engine
@@ -38,6 +27,7 @@ func NewRuleAlert(
 	ctx context.Context,
 	ruletype *pb.RuleType,
 	provider provinfv1.Provider,
+	setting models.ActionOpt,
 ) (engif.Action, error) {
 	alertCfg := ruletype.Def.GetAlert()
 	if alertCfg == nil {
@@ -56,7 +46,8 @@ func NewRuleAlert(
 				Msg("provider is not a GitHub provider. Silently skipping alerts.")
 			return noop.NewNoopAlert(ActionType)
 		}
-		return security_advisory.NewSecurityAdvisoryAlert(ActionType, ruletype, alertCfg.GetSecurityAdvisory(), client)
+		return security_advisory.NewSecurityAdvisoryAlert(
+			ActionType, ruletype, alertCfg.GetSecurityAdvisory(), client, setting)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

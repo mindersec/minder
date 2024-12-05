@@ -1,22 +1,11 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package invites
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -27,16 +16,16 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/stacklok/minder/internal/auth"
-	"github.com/stacklok/minder/internal/auth/jwt"
-	"github.com/stacklok/minder/internal/authz"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/email"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/projects"
-	"github.com/stacklok/minder/internal/util"
-	minder "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/email"
+	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/util"
+	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -44,12 +33,12 @@ import (
 // InviteService encapsulates the methods to manage user invites to a project
 type InviteService interface {
 	// CreateInvite creates a new user invite
-	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
 	// UpdateInvite updates the invite status
-	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
@@ -67,7 +56,7 @@ func NewInviteService() InviteService {
 	return &inviteService{}
 }
 
-func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
@@ -144,7 +133,10 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 			identity.Human(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error generating UUID: %w", err)
+			if errors.Is(err, email.ErrValidationFailed) {
+				return nil, util.UserVisibleError(codes.InvalidArgument, "error creating email message: %v", err)
+			}
+			return nil, status.Errorf(codes.Internal, "error creating email message: %v", err)
 		}
 		err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)
 		if err != nil {
@@ -241,10 +233,9 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 	}, nil
 }
 
-func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub events.Publisher,
+func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
-
 	// Get the sponsor's user information (current user)
 	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
 	if err != nil {
@@ -317,7 +308,10 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		sponsorDisplay,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error generating UUID: %w", err)
+		if errors.Is(err, email.ErrValidationFailed) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "error creating email message: %v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "error creating email message: %v", err)
 	}
 
 	err = eventsPub.Publish(email.TopicQueueInviteEmail, msg)

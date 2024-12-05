@@ -13,6 +13,12 @@ import (
 )
 
 type Querier interface {
+	// AddDataSourceFunction adds a function to a datasource.
+	AddDataSourceFunction(ctx context.Context, arg AddDataSourceFunctionParams) (DataSourcesFunction, error)
+	// AddRuleTypeDataSourceReference adds a link between one rule type
+	// and one data source it uses.
+	//
+	AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
@@ -20,6 +26,9 @@ type Querier interface {
 	CountRepositories(ctx context.Context) (int64, error)
 	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
+	// CreateDataSource creates a new datasource in a given project.
+	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
+	CreateEntitlements(ctx context.Context, arg CreateEntitlementsParams) error
 	// CreateEntity adds an entry to the entity_instances table so it can be tracked by Minder.
 	CreateEntity(ctx context.Context, arg CreateEntityParams) (EntityInstance, error)
 	// CreateEntityWithID adds an entry to the entities table with a specific ID so it can be tracked by Minder.
@@ -46,6 +55,11 @@ type Querier interface {
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
 	DeleteArtifact(ctx context.Context, id uuid.UUID) error
+	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
+	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
+	// DeleteDataSourceFunctions deletes all functions associated with a given datasource
+	// in a specific project.
+	DeleteDataSourceFunctions(ctx context.Context, arg DeleteDataSourceFunctionsParams) ([]DataSourcesFunction, error)
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
@@ -62,7 +76,9 @@ type Querier interface {
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeleteRepository(ctx context.Context, id uuid.UUID) error
+	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
+	DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTypeDataSourceParams) error
 	DeleteSelector(ctx context.Context, id uuid.UUID) error
 	DeleteSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) error
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
@@ -82,6 +98,17 @@ type Querier interface {
 	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
+	// GetDataSource retrieves a datasource by its id and a project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	GetDataSource(ctx context.Context, arg GetDataSourceParams) (DataSource, error)
+	// GetDataSourceByName retrieves a datasource by its name and
+	// a project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	GetDataSourceByName(ctx context.Context, arg GetDataSourceByNameParams) (DataSource, error)
 	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
 	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
 	// GetEntitiesByProvider retrieves all entities of a given provider.
@@ -119,19 +146,8 @@ type Querier interface {
 	GetInvitationsByEmail(ctx context.Context, email string) ([]GetInvitationsByEmailRow, error)
 	// GetInvitationsByEmailAndProject retrieves all invitations by email and project.
 	GetInvitationsByEmailAndProject(ctx context.Context, arg GetInvitationsByEmailAndProjectParams) ([]GetInvitationsByEmailAndProjectRow, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	GetLatestEvalStateForRuleEntity(ctx context.Context, arg GetLatestEvalStateForRuleEntityParams) (EvaluationStatus, error)
 	GetParentProjects(ctx context.Context, id uuid.UUID) ([]uuid.UUID, error)
 	GetParentProjectsUntil(ctx context.Context, arg GetParentProjectsUntilParams) ([]uuid.UUID, error)
@@ -159,6 +175,7 @@ type Querier interface {
 	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
 	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
 	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
+	GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
 	GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error)
@@ -183,7 +200,15 @@ type Querier interface {
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
+	ListAllRootProjects(ctx context.Context) ([]Project, error)
 	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
+	// ListDataSourceFunctions retrieves all functions for a datasource.
+	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
+	// ListDataSources retrieves all datasources for project hierarchy.
+	//
+	// Note that to get a datasource for a given project, one can simply
+	// pass one project id in the project_id array.
+	ListDataSources(ctx context.Context, projects []uuid.UUID) ([]DataSource, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -208,6 +233,10 @@ type Querier interface {
 	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
+	// ListRuleTypesReferencesByDataSource retrieves all rule types
+	// referencing a given data source in a given project.
+	//
+	ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourcesID uuid.UUID) ([]RuleTypeDataSource, error)
 	// When doing a key/algorithm rotation, identify the secrets which need to be
 	// rotated. The criteria for rotation are:
 	// 1) The encrypted_access_token is NULL (this should be removed when we make
@@ -231,7 +260,12 @@ type Querier interface {
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
 	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
-	SetCurrentVersion(ctx context.Context, arg SetCurrentVersionParams) error
+	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
+	// UpdateDataSource updates a datasource in a given project.
+	UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error)
+	// UpdateDataSourceFunction updates a function in a datasource. We're
+	// only able to update the type and definition of the function.
+	UpdateDataSourceFunction(ctx context.Context, arg UpdateDataSourceFunctionParams) (DataSourcesFunction, error)
 	UpdateEncryptedSecret(ctx context.Context, arg UpdateEncryptedSecretParams) error
 	// UpdateInvitationRole updates an invitation by its code. This is intended to be
 	// called by a user who has issued an invitation and then decided to change the
@@ -246,38 +280,16 @@ type Querier interface {
 	UpdateSelector(ctx context.Context, arg UpdateSelectorParams) (ProfileSelector, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
 	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	// Bundles --
 	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
-	// Copyright 2024 Stacklok, Inc
-	//
-	// Licensed under the Apache License, Version 2.0 (the "License");
-	// you may not use this file except in compliance with the License.
-	// You may obtain a copy of the License at
-	//
-	//      http://www.apache.org/licenses/LICENSE-2.0
-	//
-	// Unless required by applicable law or agreed to in writing, software
-	// distributed under the License is distributed on an "AS IS" BASIS,
-	// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	// See the License for the specific language governing permissions and
-	// limitations under the License.
+	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
 	UpsertRuleInstance(ctx context.Context, arg UpsertRuleInstanceParams) (uuid.UUID, error)
 }
 

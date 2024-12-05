@@ -1,17 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// Package rule provides the CLI subcommand for managing rules
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package ingester provides necessary interfaces and implementations for ingesting
 // data for rules.
@@ -21,25 +9,26 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/stacklok/minder/internal/engine/ingester/artifact"
-	"github.com/stacklok/minder/internal/engine/ingester/builtin"
-	"github.com/stacklok/minder/internal/engine/ingester/diff"
-	"github.com/stacklok/minder/internal/engine/ingester/git"
-	"github.com/stacklok/minder/internal/engine/ingester/rest"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/ingester/artifact"
+	"github.com/mindersec/minder/internal/engine/ingester/builtin"
+	"github.com/mindersec/minder/internal/engine/ingester/deps"
+	"github.com/mindersec/minder/internal/engine/ingester/diff"
+	"github.com/mindersec/minder/internal/engine/ingester/git"
+	"github.com/mindersec/minder/internal/engine/ingester/rest"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // test that the ingester implementations implements the interface
 // this would be probably nicer in the implementation file, but that would cause an import loop
-var _ engif.Ingester = (*artifact.Ingest)(nil)
-var _ engif.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
-var _ engif.Ingester = (*rest.Ingestor)(nil)
+var _ interfaces.Ingester = (*artifact.Ingest)(nil)
+var _ interfaces.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
+var _ interfaces.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (engif.Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces.Ingester, error) {
 	ing := rt.Def.GetIngest()
 
 	switch ing.GetType() {
@@ -77,6 +66,12 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (engif.Inge
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return diff.NewDiffIngester(ing.GetDiff(), client)
+	case deps.DepsRuleDataIngestType:
+		client, err := provinfv1.As[provinfv1.Git](provider)
+		if err != nil {
+			return nil, errors.New("provider does not implement git trait")
+		}
+		return deps.NewDepsIngester(ing.GetDeps(), client)
 	default:
 		return nil, fmt.Errorf("unsupported rule type engine: %s", rt.Def.Ingest.Type)
 	}

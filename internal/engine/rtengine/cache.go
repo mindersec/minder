@@ -1,16 +1,5 @@
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rtengine
 
@@ -22,26 +11,29 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/ingestcache"
-	eoptions "github.com/stacklok/minder/internal/engine/options"
-	"github.com/stacklok/minder/internal/ruletypes"
-	provinfv1 "github.com/stacklok/minder/pkg/providers/v1"
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/ingestcache"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
+	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
 // Cache contains a set of RuleTypeEngine instances
 type Cache interface {
 	// GetRuleEngine retrieves the rule type engine instance for the specified rule type
-	GetRuleEngine(context.Context, uuid.UUID) (*RuleTypeEngine, error)
+	GetRuleEngine(context.Context, uuid.UUID) (*rtengine2.RuleTypeEngine, error)
 }
 
-type cacheType = map[uuid.UUID]*RuleTypeEngine
+type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
 
 type ruleEngineCache struct {
 	store       db.Store
 	provider    provinfv1.Provider
 	ingestCache ingestcache.Cache
 	engines     cacheType
+	dssvc       datasourceservice.DataSourcesService
 	opts        []eoptions.Option
 }
 
@@ -50,13 +42,15 @@ type ruleEngineCache struct {
 // for this entity and project hierarchy.
 func NewRuleEngineCache(
 	ctx context.Context,
-	store db.Querier,
+	store db.Store,
 	entityType db.Entities,
 	projectID uuid.UUID,
 	provider provinfv1.Provider,
 	ingestCache ingestcache.Cache,
+	dssvc datasourceservice.DataSourcesService,
 	opts ...eoptions.Option,
 ) (Cache, error) {
+
 	// Get the full project hierarchy
 	hierarchy, err := store.GetParentProjects(ctx, projectID)
 	if err != nil {
@@ -76,17 +70,25 @@ func NewRuleEngineCache(
 	// Populate the cache with rule type engines for the rule types we found.
 	engines := make(cacheType, len(ruleTypes))
 	for _, ruleType := range ruleTypes {
-		ruleEngine, err := cacheRuleEngine(ctx, &ruleType, provider, ingestCache, engines, opts...)
+		ruleEngine, err := cacheRuleEngine(
+			ctx, &ruleType, provider, ingestCache, engines, dssvc, opts...)
 		if err != nil {
 			return nil, err
 		}
 		engines[ruleType.ID] = ruleEngine
 	}
 
-	return &ruleEngineCache{engines: engines, opts: opts}, nil
+	return &ruleEngineCache{
+		store:       store,
+		provider:    provider,
+		ingestCache: ingestCache,
+		engines:     engines,
+		opts:        opts,
+		dssvc:       dssvc,
+	}, nil
 }
 
-func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*RuleTypeEngine, error) {
+func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUID) (*rtengine2.RuleTypeEngine, error) {
 	if ruleTypeEngine, ok := r.engines[ruleTypeID]; ok {
 		return ruleTypeEngine, nil
 	}
@@ -110,7 +112,7 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUI
 	}
 
 	// If we find the rule type, insert into the cache and return.
-	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines, r.opts...)
+	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines, r.dssvc, r.opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error while caching rule type engine: %w", err)
 	}
@@ -123,16 +125,32 @@ func cacheRuleEngine(
 	provider provinfv1.Provider,
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
+	dssvc datasourceservice.DataSourcesService,
 	opts ...eoptions.Option,
-) (*RuleTypeEngine, error) {
+) (*rtengine2.RuleTypeEngine, error) {
 	// Parse the rule type
 	pbRuleType, err := ruletypes.RuleTypePBFromDB(ruleType)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing rule type when parsing rule type %s: %w", ruleType.ID, err)
 	}
 
+	// Build a registry instance per rule type. This allows us to have an
+	// isolated data source list per instance of the rule type engine which is
+	// what we want. We don't want rule types using data sources they haven't
+	// instantiated. It is in this spot that we would add something like a cache
+	// so data sources could optimize in a per-execution context.
+	//
+	// TODO: Do we need to pass in a transaction here?
+	// TODO: We _might_ want to pass in a slice of the hierarchy here.
+	dsreg, err := dssvc.BuildDataSourceRegistry(ctx, pbRuleType, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error building data source registry: %w", err)
+	}
+
+	opts = append(opts, eoptions.WithDataSources(dsreg))
+
 	// Create the rule type engine
-	ruleEngine, err := NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
+	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

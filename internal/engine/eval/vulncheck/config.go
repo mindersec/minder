@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package vulncheck provides the vulnerability check evaluator
 package vulncheck
@@ -22,14 +11,47 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/go-viper/mapstructure/v2"
 
-	"github.com/stacklok/minder/internal/engine/eval/pr_actions"
-	pbinternal "github.com/stacklok/minder/internal/proto"
+	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 )
 
 type vulnDbType string
 
 const (
 	vulnDbTypeOsv vulnDbType = "osv"
+	defaultAction            = pr_actions.ActionReviewPr
+)
+
+var (
+	defaultEcosystemConfig = []ecosystemConfig{
+		{
+			Name:       "npm",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://registry.npmjs.org",
+			},
+		},
+		{
+			Name:       "pypi",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://pypi.org/pypi",
+			},
+		},
+		{
+			Name:       "go",
+			DbType:     vulnDbTypeOsv,
+			DbEndpoint: "https://api.osv.dev/v1/query",
+			PackageRepository: packageRepository{
+				Url: "https://proxy.golang.org",
+			},
+			SumRepository: packageRepository{
+				Url: "https://sum.golang.org",
+			},
+		},
+	}
 )
 
 type packageRepository struct {
@@ -52,45 +74,20 @@ type config struct {
 	EcosystemConfig []ecosystemConfig `json:"ecosystem_config" mapstructure:"ecosystem_config" validate:"required"`
 }
 
-func defaultConfig() *config {
-	return &config{
-		Action: pr_actions.ActionReviewPr,
-		EcosystemConfig: []ecosystemConfig{
-			{
-				Name:       "npm",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://registry.npmjs.org",
-				},
-			},
-			{
-				Name:       "pypi",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://pypi.org/pypi",
-				},
-			},
-			{
-				Name:       "go",
-				DbType:     vulnDbTypeOsv,
-				DbEndpoint: "https://api.osv.dev/v1/query",
-				PackageRepository: packageRepository{
-					Url: "https://proxy.golang.org",
-				},
-				SumRepository: packageRepository{
-					Url: "https://sum.golang.org",
-				},
-			},
-		},
+func populateDefaultsIfEmpty(ruleCfg map[string]any) {
+	if ruleCfg["ecosystem_config"] == nil {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	} else if ecoCfg, ok := ruleCfg["ecosystem_config"].([]interface{}); ok && len(ecoCfg) == 0 {
+		ruleCfg["ecosystem_config"] = defaultEcosystemConfig
+	}
+
+	if ruleCfg["action"] == nil {
+		ruleCfg["action"] = defaultAction
 	}
 }
 
 func parseConfig(ruleCfg map[string]any) (*config, error) {
-	if len(ruleCfg) == 0 {
-		return defaultConfig(), nil
-	}
+	populateDefaultsIfEmpty(ruleCfg)
 
 	var conf config
 	validate := validator.New(validator.WithRequiredStructEnabled())

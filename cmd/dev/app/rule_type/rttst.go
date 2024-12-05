@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package rule_type
 
@@ -28,31 +17,33 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/db"
-	"github.com/stacklok/minder/internal/engine/actions"
-	"github.com/stacklok/minder/internal/engine/entities"
-	"github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/eval/rego"
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/engine/rtengine"
-	"github.com/stacklok/minder/internal/engine/selectors"
-	entModels "github.com/stacklok/minder/internal/entities/models"
-	entProps "github.com/stacklok/minder/internal/entities/properties"
-	"github.com/stacklok/minder/internal/logger"
-	"github.com/stacklok/minder/internal/profiles"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/dockerhub"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/gitlab"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	provsel "github.com/stacklok/minder/internal/providers/selectors"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	"github.com/stacklok/minder/internal/util/jsonyaml"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	internalds "github.com/mindersec/minder/internal/datasources"
+	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/actions"
+	"github.com/mindersec/minder/internal/engine/entities"
+	"github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/eval/rego"
+	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/engine/options"
+	entModels "github.com/mindersec/minder/internal/entities/models"
+	entProps "github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/dockerhub"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/gitlab"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	provsel "github.com/mindersec/minder/internal/providers/selectors"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	"github.com/mindersec/minder/internal/util/jsonyaml"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/profiles"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // CmdTest is the root command for the rule subcommands
@@ -75,6 +66,7 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("remediate-metadata", "", "", "YAML file containing the remediate metadata (optional)")
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the TEST_AUTH_TOKEN environment variable.")
+	testCmd.Flags().StringArrayP("data-source", "d", []string{}, "YAML file containing the data source to test the rule with")
 
 	if err := testCmd.MarkFlagRequired("rule-type"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -96,6 +88,7 @@ func CmdTest() *cobra.Command {
 	return testCmd
 }
 
+//nolint:gocyclo // this function is a cobra command and is expected to be complex
 func testCmdRun(cmd *cobra.Command, _ []string) error {
 	rtpath := cmd.Flag("rule-type")
 	epath := cmd.Flag("entity")
@@ -105,6 +98,24 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	token := viper.GetString("test.auth.token")
 	providerclass := cmd.Flag("provider")
 	providerconfig := cmd.Flag("provider-config")
+
+	dataSourceFileStrings, err := cmd.Flags().GetStringArray("data-source")
+	if err != nil {
+		return fmt.Errorf("error getting data source files: %w", err)
+	}
+
+	dataSourcefiles, err := getDataSourceFiles(dataSourceFileStrings)
+	if err != nil {
+		return fmt.Errorf("error getting data source files: %w", err)
+	}
+
+	// close the files when done
+	defer func() {
+		for _, f := range dataSourcefiles {
+			//nolint:gosec // we are closing the file
+			f.Close()
+		}
+	}()
 
 	// set rego env variable for debugging
 	if err := os.Setenv(rego.EnablePrintEnvVar, "true"); err != nil {
@@ -160,7 +171,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	off := "off"
 	profile.Alert = &off
 
-	rules, err := rtengine.GetRulesFromProfileOfType(profile, ruletype)
+	rules, err := profiles.GetRulesFromProfileOfType(profile, ruletype)
 	if err != nil {
 		return fmt.Errorf("error getting relevant fragment: %w", err)
 	}
@@ -179,9 +190,14 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		Alert:     actionOptFromString(profile.Alert, models.ActionOptOff),
 	}
 
+	dsRegistry, err := getDataSources(dataSourcefiles)
+	if err != nil {
+		return fmt.Errorf("error getting data sources: %w", err)
+	}
+
 	// TODO: use cobra context here
 	ctx := context.Background()
-	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov)
+	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, options.WithDataSources(dsRegistry))
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
@@ -241,7 +257,7 @@ func runEvaluationForRules(
 		}
 		cmd.Printf("Profile valid according to the JSON schema!\n")
 
-		if err := val.ValidateParamsAgainstSchema(frag.GetParams()); err != nil {
+		if err := val.ValidateParamsAgainstSchema(frag.GetParams().AsMap()); err != nil {
 			return fmt.Errorf("error validating params against schema: %w", err)
 		}
 
@@ -262,7 +278,7 @@ func runEvaluationForRules(
 		// Enable logging for the engine
 		ctx := context.Background()
 		logConfig := serverconfig.LoggingConfig{Level: cmd.Flag("log-level").Value.String()}
-		ctx = logger.FromFlags(logConfig).WithContext(ctx)
+		ctx = serverconfig.LoggerFromConfigFlags(logConfig).WithContext(ctx)
 
 		// convert to EntityInfoWrapper as that's what the engine operates on
 		inf, err := entityWithPropertiesToEntityInfoWrapper(ewp, prov)
@@ -311,7 +327,7 @@ func selectAndEval(
 
 	var evalErr error
 	if selected {
-		evalErr = eng.Eval(ctx, inf, evalStatus)
+		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {
 		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}
@@ -325,7 +341,13 @@ func readRuleTypeFromFile(fpath string) (*minderv1.RuleType, error) {
 		return nil, fmt.Errorf("error opening file: %w", err)
 	}
 
-	return minderv1.ParseRuleType(f)
+	rt := &minderv1.RuleType{}
+	err = minderv1.ParseResource(f, rt)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing rule type: %w", err)
+	}
+
+	return rt, nil
 }
 
 func readEntityWithPropertiesFromFile(
@@ -480,4 +502,42 @@ func actionOptFromString(s *string, defAction models.ActionOpt) models.ActionOpt
 	}
 
 	return models.ActionOptUnknown
+}
+
+func getDataSources(readers []*os.File) (*v1datasources.DataSourceRegistry, error) {
+	reg := v1datasources.NewDataSourceRegistry()
+	for _, r := range readers {
+		fname := r.Name()
+		ds := &minderv1.DataSource{}
+		if err := minderv1.ParseResourceProto(r, ds); err != nil {
+			return nil, fmt.Errorf("error parsing data source %s: %w", fname, err)
+		}
+
+		if err := ds.Validate(); err != nil {
+			return nil, fmt.Errorf("error validating data source %s: %w", fname, err)
+		}
+
+		intds, err := internalds.BuildFromProtobuf(ds)
+		if err != nil {
+			return nil, fmt.Errorf("error building data source %s: %w", fname, err)
+		}
+
+		if err := reg.RegisterDataSource(ds.GetName(), intds); err != nil {
+			return nil, fmt.Errorf("error registering data source %s: %w", fname, err)
+		}
+	}
+
+	return reg, nil
+}
+
+func getDataSourceFiles(files []string) ([]*os.File, error) {
+	dataSourceFiles := make([]*os.File, 0, len(files))
+	for _, f := range files {
+		file, err := os.Open(filepath.Clean(f))
+		if err != nil {
+			return nil, fmt.Errorf("error opening file: %w", err)
+		}
+		dataSourceFiles = append(dataSourceFiles, file)
+	}
+	return dataSourceFiles, nil
 }

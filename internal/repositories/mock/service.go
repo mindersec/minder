@@ -14,10 +14,10 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	db "github.com/stacklok/minder/internal/db"
-	models "github.com/stacklok/minder/internal/entities/models"
-	properties "github.com/stacklok/minder/internal/entities/properties"
-	v1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	db "github.com/mindersec/minder/internal/db"
+	models "github.com/mindersec/minder/internal/entities/models"
+	properties "github.com/mindersec/minder/internal/entities/properties"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -25,6 +25,7 @@ import (
 type MockRepositoryService struct {
 	ctrl     *gomock.Controller
 	recorder *MockRepositoryServiceMockRecorder
+	isgomock struct{}
 }
 
 // MockRepositoryServiceMockRecorder is the mock recorder for MockRepositoryService.
@@ -130,19 +131,4 @@ func (m *MockRepositoryService) ListRepositories(ctx context.Context, projectID,
 func (mr *MockRepositoryServiceMockRecorder) ListRepositories(ctx, projectID, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositories", reflect.TypeOf((*MockRepositoryService)(nil).ListRepositories), ctx, projectID, providerID)
-}
-
-// RefreshRepositoryByUpstreamID mocks base method.
-func (m *MockRepositoryService) RefreshRepositoryByUpstreamID(ctx context.Context, upstreamRepoID int64) (*models.EntityWithProperties, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RefreshRepositoryByUpstreamID", ctx, upstreamRepoID)
-	ret0, _ := ret[0].(*models.EntityWithProperties)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RefreshRepositoryByUpstreamID indicates an expected call of RefreshRepositoryByUpstreamID.
-func (mr *MockRepositoryServiceMockRecorder) RefreshRepositoryByUpstreamID(ctx, upstreamRepoID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshRepositoryByUpstreamID", reflect.TypeOf((*MockRepositoryService)(nil).RefreshRepositoryByUpstreamID), ctx, upstreamRepoID)
 }

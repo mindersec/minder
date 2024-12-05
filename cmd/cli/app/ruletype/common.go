@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package ruletype
 
@@ -26,11 +14,11 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli"
-	"github.com/stacklok/minder/internal/util/cli/table"
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/internal/util/cli/table"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 func execOnOneRuleType(
@@ -50,8 +38,8 @@ func execOnOneRuleType(
 	}
 	defer closer()
 
-	r, err := minderv1.ParseRuleType(reader)
-	if err != nil {
+	r := &minderv1.RuleType{}
+	if err := minderv1.ParseResource(reader, r); err != nil {
 		return fmt.Errorf("error parsing rule type: %w", err)
 	}
 

@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package controlplane
 
@@ -19,34 +7,39 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
+	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 
-	mockdb "github.com/stacklok/minder/database/mock"
-	"github.com/stacklok/minder/internal/auth"
-	mockjwt "github.com/stacklok/minder/internal/auth/jwt/mock"
-	mockauthz "github.com/stacklok/minder/internal/authz/mock"
-	serverconfig "github.com/stacklok/minder/internal/config/server"
-	"github.com/stacklok/minder/internal/controlplane/metrics"
-	"github.com/stacklok/minder/internal/crypto"
-	mock_service "github.com/stacklok/minder/internal/entities/properties/service/mock"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/providers"
-	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
-	ghService "github.com/stacklok/minder/internal/providers/github/service"
-	mock_reposvc "github.com/stacklok/minder/internal/repositories/mock"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth"
+	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
+	mockauthz "github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/controlplane/metrics"
+	"github.com/mindersec/minder/internal/crypto"
+	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	"github.com/mindersec/minder/internal/providers"
+	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
+	ghService "github.com/mindersec/minder/internal/providers/github/service"
+	mock_reposvc "github.com/mindersec/minder/internal/repositories/mock"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer"
 )
 
 const bufSize = 1024 * 1024
@@ -75,16 +68,18 @@ func init() {
 	// It would be nice if we could Close() the httpServer, but we leak it in the test instead
 }
 
+// nolint: unparam
 func newDefaultServer(
 	t *testing.T,
 	mockStore *mockdb.MockStore,
+	// TODO: can be removed?
 	mockRepoSvc *mock_reposvc.MockRepositoryService,
 	mockPropSvc *mock_service.MockPropertiesService,
 	ghClientFactory ghclient.GitHubClientFactory,
-) (*Server, events.Interface) {
+) *Server {
 	t.Helper()
 
-	evt, err := events.Setup(context.Background(), &serverconfig.EventConfig{
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver:    "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{},
 	})
@@ -135,7 +130,7 @@ func newDefaultServer(
 		cryptoEngine:  eng,
 	}
 
-	return server, evt
+	return server
 }
 
 func generateTokenKey(t *testing.T) string {
@@ -166,4 +161,67 @@ func TestWebhook(t *testing.T) {
 		t.Fatalf("Failed to get webhook: %v", err)
 	}
 	defer resp.Body.Close()
+}
+
+func TestHandleRequestTooLarge(t *testing.T) {
+	t.Parallel()
+
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		// Reading the body to trigger the limit check
+		_, err := io.ReadAll(r.Body)
+		if err != nil {
+			var maxErr *http.MaxBytesError
+			if errors.As(err, &maxErr) {
+				// this is the expected error
+				http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+				return
+			}
+			// this is an unexpected error
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		// a 200 isn't necessary, but it would fail the test if the handler didn't return 413
+		w.WriteHeader(http.StatusOK)
+	}
+
+	ts := httptest.NewServer(withMaxSizeMiddleware(http.HandlerFunc(handler)))
+
+	event := github.PackageEvent{
+		Action: github.String("published"),
+		Repo: &github.Repository{
+			ID:   github.Int64(12345),
+			Name: github.String("stacklok/minder"),
+		},
+		Org: &github.Organization{
+			Login: github.String("stacklok"),
+		},
+	}
+	packageJson, err := json.Marshal(event)
+	require.NoError(t, err, "failed to marshal package event")
+
+	maliciousBody := strings.NewReader(strings.Repeat("1337", 100000000))
+	maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
+	_ = packageJson
+
+	req, err := http.NewRequest("POST", ts.URL, maliciousBodyReader)
+	require.NoError(t, err, "failed to create request")
+
+	req.Header.Add("X-GitHub-Event", "meta")
+	req.Header.Add("X-GitHub-Delivery", "12345")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := httpDoWithRetry(ts.Client(), req)
+	require.NoError(t, err, "failed to make request")
+	require.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "unexpected status code")
+}
+
+func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
+	var resp *http.Response
+	err := backoff.Retry(func() error {
+		var err error
+		resp, err = client.Do(req)
+		return err
+	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
+
+	return resp, err
 }

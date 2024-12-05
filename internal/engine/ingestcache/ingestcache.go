@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package ingestcache
 
@@ -25,7 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engif "github.com/stacklok/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // ErrBuildingCacheKey is the error returned when building a cache key fails
@@ -33,22 +22,22 @@ var ErrBuildingCacheKey = errors.New("error building cache key")
 
 type cache struct {
 	// cache is the actual cache
-	cache *xsync.MapOf[string, *engif.Result]
+	cache *xsync.MapOf[string, *interfaces.Result]
 }
 
 // NewCache returns a new cache
 func NewCache() Cache {
 	return &cache{
-		cache: xsync.NewMapOf[string, *engif.Result](),
+		cache: xsync.NewMapOf[string, *interfaces.Result](),
 	}
 }
 
 // Get attempts to get a result from the cache
 func (c *cache) Get(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-) (*engif.Result, bool) {
+) (*interfaces.Result, bool) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
 		// TODO we might want to log this
@@ -61,10 +50,10 @@ func (c *cache) Get(
 
 // Set sets a result in the cache
 func (c *cache) Set(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-	result *engif.Result,
+	result *interfaces.Result,
 ) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
@@ -77,7 +66,7 @@ func (c *cache) Set(
 }
 
 func buildCacheKey(
-	ingester engif.Ingester,
+	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	ruleparams map[string]any,
 ) (string, error) {

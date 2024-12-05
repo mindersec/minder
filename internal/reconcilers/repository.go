@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package reconcilers
 
@@ -25,9 +14,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	entityMessage "github.com/stacklok/minder/internal/entities/handlers/message"
-	"github.com/stacklok/minder/internal/events"
-	"github.com/stacklok/minder/internal/reconcilers/messages"
+	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
+	"github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // handleRepoReconcilerEvent handles events coming from the reconciler topic
@@ -75,7 +64,7 @@ func (r *Reconciler) handleRepositoryReconcilerEvent(ctx context.Context, evt *m
 	}
 
 	m.SetContext(ctx)
-	if err := r.evt.Publish(events.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
+	if err := r.evt.Publish(constants.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {
 		// we retry in case watermill is having a bad day
 		return fmt.Errorf("error publishing message: %w", err)
 	}

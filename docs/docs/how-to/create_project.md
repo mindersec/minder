@@ -21,11 +21,9 @@ project.
 
 ## Creating a New Project
 
-To create a new project, enable the Minder GitHub application
-([Minder by Stacklok](https://github.com/apps/minder-by-stacklok) for the
-cloud-hosted application) on a new GitHub organization. If the GitHub App is
-installed on a GitHub organization which is not already registered in Minder,
-Minder will create a new project to manage those resources. Using
-[`minder provider enroll`](../ref/cli/minder_provider_enroll.md) within a
+To create a new project, enable a minder [GitHub application](../run_minder_server/config_provider.md)
+on a GitHub organization or user account. If the GitHub App is installed on a GitHub organization
+which is not already registered in Minder, Minder will create a new project to
+manage those resources. Using [`minder provider enroll`](../ref/cli/minder_provider_enroll.md) within a
 project to add a new GitHub provider will _not_ create a new project and will
 add the selected organization to an existing project.

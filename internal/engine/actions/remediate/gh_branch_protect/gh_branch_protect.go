@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package gh_branch_protect provides the github branch protection remediation engine
 package gh_branch_protect
@@ -29,13 +18,13 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engerrors "github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	mindergh "github.com/stacklok/minder/internal/providers/github"
-	"github.com/stacklok/minder/internal/util"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	mindergh "github.com/mindersec/minder/internal/providers/github"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -53,6 +42,7 @@ type GhBranchProtectRemediator struct {
 	actionType    interfaces.ActionType
 	cli           provifv1.GitHub
 	patchTemplate *util.SafeTemplate
+	setting       models.ActionOpt
 }
 
 // NewGhBranchProtectRemediator creates a new remediation engine that uses the GitHub API for branch protection
@@ -60,6 +50,7 @@ func NewGhBranchProtectRemediator(
 	actionType interfaces.ActionType,
 	ghp *pb.RuleType_Definition_Remediate_GhBranchProtectionType,
 	cli provifv1.GitHub,
+	setting models.ActionOpt,
 ) (*GhBranchProtectRemediator, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
@@ -74,6 +65,7 @@ func NewGhBranchProtectRemediator(
 		actionType:    actionType,
 		cli:           cli,
 		patchTemplate: patchTemplate,
+		setting:       setting,
 	}, nil
 }
 
@@ -98,15 +90,14 @@ func (_ *GhBranchProtectRemediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *GhBranchProtectRemediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (r *GhBranchProtectRemediator) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(r.setting, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *GhBranchProtectRemediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	remAction models.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	_ *json.RawMessage,
@@ -129,20 +120,20 @@ func (r *GhBranchProtectRemediator) Do(
 	}
 
 	branch, err := util.JQReadFrom[string](ctx, ".branch", params.GetRule().Params)
-	if err != nil {
+	if err != nil && !errors.Is(err, util.ErrNoValueFound) {
 		return nil, fmt.Errorf("error reading branch from params: %w", err)
-	}
-
-	// This check avoids passing around an empty branch name which
-	// causes issues down the road. Besides, it does not make
-	// sense to protect what does not exist. (cit. Ozz 2024-05-27)
-	if branch == "" && repo.DefaultBranch == "" {
-		return nil, fmt.Errorf("both rule param and default branch names are empty: %w", engerrors.ErrActionSkipped)
 	}
 	// This sets the branch to the default one of the repository
 	// in case no branch is configured via rule parameters.
 	if branch == "" {
 		branch = repo.DefaultBranch
+	}
+
+	// This check avoids passing around an empty branch name which
+	// causes issues down the road. Besides, it does not make
+	// sense to protect what does not exist. (cit. Ozz 2024-05-27)
+	if branch == "" {
+		return nil, fmt.Errorf("both rule param branch name and repo default branch are empty: %w", engerrors.ErrActionSkipped)
 	}
 
 	// get the current protection
@@ -172,7 +163,7 @@ func (r *GhBranchProtectRemediator) Do(
 		return nil, fmt.Errorf("error patching request: %w", err)
 	}
 
-	switch remAction {
+	switch r.setting {
 	case models.ActionOptOn:
 		err = r.cli.UpdateBranchProtection(ctx, repo.Owner, repo.Name, branch, updatedRequest)
 	case models.ActionOptDryRun:

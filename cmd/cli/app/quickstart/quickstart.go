@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package quickstart provides the quickstart command for the minder CLI
 // which is used to provide the means to quickly get started with minder.
@@ -30,15 +18,15 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/cmd/cli/app"
-	"github.com/stacklok/minder/cmd/cli/app/auth"
-	"github.com/stacklok/minder/cmd/cli/app/profile"
-	minderprov "github.com/stacklok/minder/cmd/cli/app/provider"
-	"github.com/stacklok/minder/cmd/cli/app/repo"
-	"github.com/stacklok/minder/internal/profiles"
-	ghclient "github.com/stacklok/minder/internal/providers/github/clients"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app/auth"
+	"github.com/mindersec/minder/cmd/cli/app/profile"
+	minderprov "github.com/mindersec/minder/cmd/cli/app/provider"
+	"github.com/mindersec/minder/cmd/cli/app/repo"
+	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles"
 )
 
 const (
@@ -116,13 +104,13 @@ You can now continue to explore Minder's features by adding or removing more rep
 For more information about Minder, see the following resources:
 
 GitHub:
-* https://github.com/stacklok/minder
+* https://github.com/mindersec/minder
 Official documentation:
 * https://minder-docs.stacklok.dev
 CLI commands:
 * https://minder-docs.stacklok.dev/ref/cli/minder
 Minder Rules & profiles:
-* https://github.com/stacklok/minder-rules-and-profiles
+* https://github.com/mindersec/minder-rules-and-profiles
 
 Thank you for using Minder!
 `
@@ -153,7 +141,12 @@ var cmd = &cobra.Command{
 // quickstartCommand is the quickstart command
 //
 //nolint:gocyclo
-func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func quickstartCommand(
+	ctx context.Context,
+	cmd *cobra.Command,
+	_ []string,
+	conn *grpc.ClientConn,
+) error {
 	var err error
 	repoClient := minderv1.NewRepositoryServiceClient(conn)
 	profileClient := minderv1.NewProfileServiceClient(conn)
@@ -180,13 +173,13 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 	userClient := minderv1.NewUserServiceClient(conn)
 	_, err = userClient.GetUser(cmd.Context(), &minderv1.GetUserRequest{})
 	if err != nil {
-		err = loginPromptErrWrapper(cmd, err)
+		err = loginPromptErrWrapper(ctx, cmd, conn, err)
 		if err != nil {
 			return cli.MessageAndError("", err)
 		}
 		// User logged in successfully
 		// We now have to re-create the gRPC connection
-		newConn, err := cli.GrpcForCommand(viper.GetViper())
+		newConn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return err
 		}
@@ -276,8 +269,9 @@ func quickstartCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *
 		return cli.MessageAndError("error opening rule type", err)
 	}
 
-	rt, err := minderv1.ParseRuleType(reader)
-	if err != nil {
+	rt := &minderv1.RuleType{}
+
+	if err := minderv1.ParseResource(reader, rt); err != nil {
 		return cli.MessageAndError("error parsing rule type", err)
 	}
 
@@ -399,7 +393,12 @@ func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context,
 	return cli.GetAppContextWithTimeoutDuration(ctx, v, 30)
 }
 
-func loginPromptErrWrapper(cmnd *cobra.Command, inErr error) error {
+func loginPromptErrWrapper(
+	ctx context.Context,
+	cmnd *cobra.Command,
+	conn *grpc.ClientConn,
+	inErr error,
+) error {
 	// Check if the error is unauthenticated, if so, prompt the user to log in
 	if rpcStatus, ok := status.FromError(inErr); ok {
 		if rpcStatus.Code() == codes.Unauthenticated {
@@ -411,7 +410,7 @@ func loginPromptErrWrapper(cmnd *cobra.Command, inErr error) error {
 				true)
 			if yes {
 				// Run the login command
-				err := auth.LoginCommand(cmnd, []string{})
+				err := auth.LoginCommand(ctx, cmnd, []string{}, conn)
 				if err != nil {
 					return err
 				}

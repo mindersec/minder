@@ -1,17 +1,5 @@
-//
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 package ruletype
 
@@ -26,9 +14,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/stacklok/minder/internal/util"
-	"github.com/stacklok/minder/internal/util/cli"
-	minderv1 "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/util"
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 var applyCmd = &cobra.Command{
@@ -53,7 +41,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError("Error validating file flag", err)
 	}
 
-	files, err := util.ExpandFileArgs(fileFlag)
+	files, err := util.ExpandFileArgs(fileFlag...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}
@@ -95,13 +83,18 @@ func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	}
 
 	for _, f := range files {
-		if shouldSkipFile(f) {
+		if f.Path != "-" && shouldSkipFile(f.Path) {
 			continue
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f, os.Stdin, project, applyFunc); err != nil {
-			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f), err)
+		if err = execOnOneRuleType(cmd.Context(), table, f.Path, os.Stdin, project, applyFunc); err != nil {
+			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
+				cmd.PrintErrf("Skipping file %s: not a rule type\n", f.Path)
+				// We'll skip the file if it's not a rule type
+				continue
+			}
+			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f.Path), err)
 		}
 	}
 	// Render the table

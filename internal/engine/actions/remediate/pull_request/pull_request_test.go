@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package pull_request provides the pull request remediation engine
 package pull_request
@@ -38,17 +27,18 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/stacklok/minder/internal/engine/errors"
-	"github.com/stacklok/minder/internal/engine/interfaces"
-	"github.com/stacklok/minder/internal/profiles/models"
-	"github.com/stacklok/minder/internal/providers/credentials"
-	"github.com/stacklok/minder/internal/providers/github/clients"
-	mockghclient "github.com/stacklok/minder/internal/providers/github/mock"
-	"github.com/stacklok/minder/internal/providers/github/properties"
-	"github.com/stacklok/minder/internal/providers/ratecache"
-	"github.com/stacklok/minder/internal/providers/telemetry"
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
-	provifv1 "github.com/stacklok/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github/clients"
+	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
+	"github.com/mindersec/minder/internal/providers/github/properties"
+	"github.com/mindersec/minder/internal/providers/ratecache"
+	"github.com/mindersec/minder/internal/providers/telemetry"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/profiles/models"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -66,6 +56,9 @@ const (
 	frizbeeCommitTitle        = "Replace tags with sha"
 	frizbeePrBody             = `This PR replaces tags with sha`
 	frizbeePrBodyWithExcludes = `This PR replaces tags with sha`
+
+	yqCommitTitle = "Replace dangerous PR events"
+	yqPrBody      = `This PR replaces dangerous PR events`
 
 	actionWithTags = `
 on:
@@ -139,6 +132,14 @@ func frizbeePrRemWithExcludes(e []string) *pb.RuleType_Definition_Remediate_Pull
 		ActionsReplaceTagsWithSha: &pb.RuleType_Definition_Remediate_PullRequestRemediation_ActionsReplaceTagsWithSha{
 			Exclude: e,
 		},
+	}
+}
+
+func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
+	return &pb.RuleType_Definition_Remediate_PullRequestRemediation{
+		Method: "minder.yq.evaluate",
+		Title:  yqCommitTitle,
+		Body:   yqPrBody,
 	}
 }
 
@@ -579,6 +580,30 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":44}`),
 		},
+		{
+			name: "replace PR events with YQ",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      yqPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(t *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				t.Helper()
+
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						yqCommitTitle, yqPrBody,
+						refFromBranch(branchBaseName(yqCommitTitle)), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(45)}, nil)
+			},
+			remArgs:          createTestRemArgs(),
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
+		},
 	}
 
 	for _, tt := range tests {
@@ -596,7 +621,8 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			provider, err := testGithubProvider()
 			require.NoError(t, err)
-			engine, err := NewPullRequestRemediate(tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider)
+			engine, err := NewPullRequestRemediate(
+				tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
@@ -624,13 +650,12 @@ func TestPullRequestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating test worktree")
 
 			evalParams.SetIngestResult(
-				&interfaces.Result{
+				&interfaces2.Result{
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})
 			retMeta, err := engine.Do(context.Background(),
 				interfaces.ActionCmdOn,
-				tt.remArgs.remAction,
 				tt.remArgs.ent,
 				evalParams,
 				nil)

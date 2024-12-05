@@ -13,7 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	verifyif "github.com/stacklok/minder/internal/verifier/verifyif"
+	verifyif "github.com/mindersec/minder/internal/verifier/verifyif"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -21,6 +21,7 @@ import (
 type MockArtifactVerifier struct {
 	ctrl     *gomock.Controller
 	recorder *MockArtifactVerifierMockRecorder
+	isgomock struct{}
 }
 
 // MockArtifactVerifierMockRecorder is the mock recorder for MockArtifactVerifier.

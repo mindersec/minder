@@ -1,16 +1,5 @@
-// Copyright 2023 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//	http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package simple contains a simple table
 package simple
@@ -20,7 +9,7 @@ import (
 
 	"github.com/olekukonko/tablewriter"
 
-	"github.com/stacklok/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 )
 
 // Table is a wrapper around tablewriter.Table
@@ -54,6 +43,8 @@ func New(layout layouts.TableLayout, header []string) *Table {
 		roleListLayout(table)
 	case layouts.EvaluationHistory:
 		evaluationHistoryLayout(table)
+	case layouts.DataSourceList:
+		dataSourceListLayout(table)
 	case layouts.Default:
 		table.SetHeader(header)
 		defaultLayout(table)
@@ -117,7 +108,7 @@ func profileStatusLayout(table *tablewriter.Table) {
 func ruleEvaluationsLayout(table *tablewriter.Table) {
 	defaultLayout(table)
 	table.SetHeader([]string{
-		"Rule Name", "Rule Type", "Entity", "Status", "Remediation", "Entity Info"})
+		"Rule Name", "Entity", "Status", "Remediation", "Entity Info"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0, 1})
 	// This is needed for the rule definition and rule parameters
 	table.SetAutoWrapText(true)
@@ -163,5 +154,12 @@ func evaluationHistoryLayout(table *tablewriter.Table) {
 		"Time", "Rule", "Entity", "Status", "Remediation Status", "Alert Status"})
 	table.SetAutoMergeCellsByColumnIndex([]int{0})
 	// This is needed for the rule definition and rule parameters
+	table.SetAutoWrapText(true)
+}
+
+func dataSourceListLayout(table *tablewriter.Table) {
+	defaultLayout(table)
+	table.SetHeader([]string{"Project ID", "ID", "Name", "Description"})
+	table.SetAutoMergeCellsByColumnIndex([]int{0, 1, 2, 3})
 	table.SetAutoWrapText(true)
 }
