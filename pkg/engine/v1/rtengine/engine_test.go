@@ -98,11 +98,11 @@ allow {
 			// Override ingester. This is needed for the test.
 			rte.WithCustomIngester(tk)
 
-			err = rte.Eval(ctx, tt.ent, tt.ri.Def, tt.ri.Params, tkv1.NewVoidResultSink())
+			result := rte.Eval(ctx, tt.ent, tt.ri.Def, tt.ri.Params, tkv1.NewVoidResultSink())
 			if tt.wantErr {
-				assert.Error(t, err, "Eval() should have failed")
+				assert.Error(t, result.Error, "Eval() should have failed")
 			} else {
-				assert.NoError(t, err, "Eval() failed")
+				assert.NoError(t, result.Error, "Eval() failed")
 			}
 		})
 	}

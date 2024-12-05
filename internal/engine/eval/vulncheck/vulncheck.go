@@ -67,34 +67,43 @@ func NewVulncheckEvaluator(
 }
 
 // Eval implements the Evaluator interface.
+
 func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Result,
-) error {
+) *interfaces.EvaluationResult {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
-		return err
+		return &interfaces.EvaluationResult{
+			Error: err,
+		}
 	}
 
 	if len(vulnerablePackages) > 0 {
 		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.VulnCheckErrorTemplate) {
-			return evalerrors.NewDetailedErrEvaluationFailed(
-				templates.VulncheckTemplate,
-				map[string]any{"packages": vulnerablePackages},
-				"vulnerable packages: %s",
-				strings.Join(vulnerablePackages, ","),
-			)
+			return &interfaces.EvaluationResult{
+				Error: evalerrors.NewDetailedErrEvaluationFailed(
+					templates.VulncheckTemplate,
+					map[string]any{"packages": vulnerablePackages},
+					"vulnerable packages: %s",
+					strings.Join(vulnerablePackages, ","),
+				),
+			}
 		}
 
-		return evalerrors.NewErrEvaluationFailed(
-			"vulnerable packages: %s",
-			strings.Join(vulnerablePackages, ","),
-		)
+		return &interfaces.EvaluationResult{
+			Error: evalerrors.NewErrEvaluationFailed(
+				"vulnerable packages: %s",
+				strings.Join(vulnerablePackages, ","),
+			),
+		}
 	}
 
-	return nil
+	return &interfaces.EvaluationResult{
+		Error: nil,
+	}
 }
 
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.

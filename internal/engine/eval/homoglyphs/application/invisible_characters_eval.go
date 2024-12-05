@@ -49,19 +49,23 @@ func (ice *InvisibleCharactersEvaluator) Eval(
 	_ map[string]any,
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Result,
-) error {
+) *interfaces.EvaluationResult {
 	violations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {
-		return err
+		return &interfaces.EvaluationResult{
+			Error: err,
+		}
 	}
 
 	if len(violations) > 0 {
-		return evalerrors.NewDetailedErrEvaluationFailed(
-			templates.InvisibleCharactersTemplate,
-			map[string]any{"violations": violations},
-			"found invisible characters violations",
-		)
+		return &interfaces.EvaluationResult{
+			Error: evalerrors.NewDetailedErrEvaluationFailed(
+				templates.InvisibleCharactersTemplate,
+				map[string]any{"violations": violations},
+				"found invisible characters violations",
+			),
+		}
 	}
 
-	return nil
+	return &interfaces.EvaluationResult{}
 }
