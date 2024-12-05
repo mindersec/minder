@@ -10,8 +10,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
 
 	scalibr "github.com/google/osv-scalibr"
+	"github.com/google/osv-scalibr/extractor/filesystem"
+	"github.com/google/osv-scalibr/extractor/filesystem/language/golang/gobinary"
 	"github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
@@ -35,26 +38,32 @@ func (*Extractor) ScanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeLis
 
 func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	if iofs == nil {
-		return nil, errors.New("unable to scan dependencies, no active defined")
+		return nil, errors.New("unable to scan dependencies, no filesystem")
 	}
 	// have to down-cast here, because scalibr needs multiple io/fs types
 	wrapped, ok := iofs.(scalibr_fs.FS)
 	if !ok {
-		return nil, fmt.Errorf("error converting filesystem to ReadDirFS")
+		return nil, errors.New("error converting filesystem to ReadDirFS")
 	}
 
 	desiredCaps := scalibr_plugin.Capabilities{
 		OS:            scalibr_plugin.OSLinux,
-		Network:       true,
+		Network:       false, // Don't fetch over the network, as we may be running in a trusted context.
 		DirectFS:      false,
 		RunningSystem: false,
 	}
 
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
+	extractors := list.FilterByCapabilities(list.Default, &desiredCaps)
+	// Don't run the go binary extractor; it sometimes panics on certain files.
+	extractors = slices.DeleteFunc(extractors, func(e filesystem.Extractor) bool {
+		_, ok := e.(*gobinary.Extractor)
+		return ok
+	})
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
 		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		FilesystemExtractors: list.FilterByCapabilities(list.Default, &desiredCaps),
+		FilesystemExtractors: extractors,
 		Capabilities:         &desiredCaps,
 	}
 
