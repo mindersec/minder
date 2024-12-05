@@ -83,9 +83,9 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 
 func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
 	var logger = zerolog.Ctx(ctx)
-	userCfg := &Config{
-		Branch: defaultBranch,
-	}
+	// the branch is left unset since we want to auto-discover it
+	// in case it's not explicitly set
+	userCfg := &Config{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read dependency ingester configuration from params: %w", err)
 	}
@@ -143,16 +143,16 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 	}, nil
 }
 
-func (gi *Deps) getBranch(repo *pb.Repository, branch string) string {
+func (gi *Deps) getBranch(repo *pb.Repository, userConfigBranch string) string {
 	// If the user has specified a branch, use that
-	if branch != "" {
-		return branch
+	if userConfigBranch != "" {
+		return userConfigBranch
 	}
 
 	// If the branch is provided in the rule-type
 	// configuration, use that
-	if gi.cfg.GetRepo().Branch != "" {
-		return gi.cfg.GetRepo().Branch
+	if gi.cfg.GetRepo().GetBranch() != "" {
+		return gi.cfg.GetRepo().GetBranch()
 	}
 	if repo.GetDefaultBranch() != "" {
 		return repo.GetDefaultBranch()
