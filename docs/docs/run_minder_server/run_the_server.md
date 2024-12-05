@@ -17,7 +17,7 @@ Once you complete this guide, you will have a Minder server built from source an
 
 ## Prerequisites
 
-- [Go 1.22](https://golang.org/doc/install)
+- [Go 1.23](https://golang.org/doc/install)
 - [Docker](https://docs.docker.com/get-docker/)
 - [Docker Compose](https://docs.docker.com/compose/install/)
 - [ko](https://ko.build/install/)
