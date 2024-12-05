@@ -4,7 +4,7 @@
 name: Pull Request Validation
 on:
   pull_request:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, synchronize]
 jobs:
   check-pr-content:
     runs-on: ubuntu-latest
