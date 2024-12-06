@@ -106,7 +106,7 @@ const config = {
         title: 'Minder docs',
         logo: {
           alt: 'Minder Logo',
-          src: 'img/Minder_darkMode.png',
+          src: 'img/Minder-whitetxt.svg',
         },
         items: [
           // {
