@@ -12,7 +12,7 @@ Minder organizes policies into Rule Types, each with specific sections defining 
 
 * Ingesting Data: Fetching relevant data, often from external sources like GitHub API.
 
-* Evaluation: Applying policy logic to the ingested data. Minder offers a set of engines to evaluate data: jq and rego being general-purpose engines, while trusty and vulncheck are more use case-specific ones.
+* Evaluation: Applying policy logic to the ingested data. Minder offers a set of engines to evaluate data: jq and rego being general-purpose engines, while Stacklok Insight and vulncheck are more use case-specific ones.
 
 * Remediation and Alerting: Taking actions or providing notifications based on evaluation results. E.g. creating a pull request or generating a GitHub security advisory.
 

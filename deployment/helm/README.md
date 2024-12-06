@@ -114,4 +114,4 @@ installed in the namespace specified by your current Kubernetes context.
 | sessionExpirationPurgeJobSettings.restartPolicy | string | `"OnFailure"` |  |
 | sessionExpirationPurgeJobSettings.schedule | string | `"0 0 * * *"` |  |
 | sessionExpirationPurgeJobSettings.sidecarContainers | list | `[]` |  |
-| trusty.endpoint | string | `"https://api.trustypkg.dev"` | Trusty host to use |
+| trusty.endpoint | string | `"https://api.trustypkg.dev"` | Stacklok Insight host to use |
