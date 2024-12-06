@@ -46,11 +46,11 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileExistsWithNonExistentFile(t *testing.T) {
@@ -75,11 +75,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "could not evaluate")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "could not evaluate")
 }
 
 func TestFileReadWithContentsMatching(t *testing.T) {
@@ -112,11 +112,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileReadWithContentsNotMatching(t *testing.T) {
@@ -149,11 +149,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "could not evaluate")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "could not evaluate")
 }
 
 func TestFileLsWithUnexistentFile(t *testing.T) {
@@ -179,11 +179,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithEmptyDirectory(t *testing.T) {
@@ -211,11 +211,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithSingleFile(t *testing.T) {
@@ -248,11 +248,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithSingleFileDirect(t *testing.T) {
@@ -285,11 +285,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithMultipleFiles(t *testing.T) {
@@ -325,11 +325,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithSimpleSymlink(t *testing.T) {
@@ -368,11 +368,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileLsWithSymlinkToDir(t *testing.T) {
@@ -406,11 +406,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 const (
@@ -503,11 +503,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestListGithubActionsFile(t *testing.T) {
@@ -539,11 +539,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestListYamlUsingLSGlob(t *testing.T) {
@@ -574,11 +574,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestListYamlsUsingLSGlob(t *testing.T) {
@@ -620,11 +620,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestHTTPTypeWithTextFile(t *testing.T) {
@@ -656,11 +656,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestHTTPTypeWithBinaryFile(t *testing.T) {
@@ -693,11 +693,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestFileWalk(t *testing.T) {
@@ -743,11 +743,11 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 }
 
 func TestJQIsTrue(t *testing.T) {
@@ -894,14 +894,14 @@ allow {
 			emptyPol := map[string]any{}
 
 			var evalErr *engerrors.EvaluationError
-			err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+			result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 				Object: nil,
 				Fs:     fs,
 			})
 			if s.matches {
-				require.NoError(t, err, "expected the policy to be allowed")
-			} else if !errors.As(err, &evalErr) {
-				t.Fatalf("expected the policy to be denied by default, got: %v", err)
+				require.NoError(t, result.Error, "expected the policy to be allowed")
+			} else if !errors.As(result.Error, &evalErr) {
+				t.Fatalf("expected the policy to be denied by default, got: %v", result.Error)
 			}
 		})
 	}
@@ -996,12 +996,12 @@ allow {
 			)
 			require.NoError(t, err, "could not create evaluator")
 
-			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+			result := e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
 
 			if s.wantErr {
-				require.Error(t, err)
+				require.Error(t, result.Error)
 			} else {
-				require.NoError(t, err)
+				require.NoError(t, result.Error)
 			}
 		})
 	}

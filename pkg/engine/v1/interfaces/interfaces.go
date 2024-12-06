@@ -26,7 +26,7 @@ type Ingester interface {
 
 // Evaluator is the interface for a rule type evaluator
 type Evaluator interface {
-	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) error
+	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) *EvaluationResult
 }
 
 // Result is the result of an ingester
@@ -46,6 +46,11 @@ type Result struct {
 	// Checkpoint is the checkpoint at which the ingestion was done. This is
 	// used to persist the state of the entity at ingestion time.
 	Checkpoint *checkpoints.CheckpointEnvelopeV1
+}
+
+type EvaluationResult struct {
+	Error  error
+	Output any
 }
 
 // GetCheckpoint returns the checkpoint of the result
