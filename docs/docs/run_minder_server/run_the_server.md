@@ -73,6 +73,11 @@ you should see 4 new services running:
 - openfga
 - postgres
 
+At this point, you might also want to ensure that created folders are owned by the current user - e.g.:
+```bash
+sudo chown "$(id -un):$(id -gn)" {flags-config.yaml,.secrets,.ssh}
+```
+
 
 ### Configure Keycloak
 Now that the Keycloak application is running, you need to configure it using the GitHub App you previously configured. 
@@ -99,12 +104,15 @@ minder auth login
 ```
 
 This will open Keycloak login window in your browser.
+
 ![Keycloak Login](./images/keycloak-login.png)
 
 Click GitHub to sign in. This should display a GitHub authorization window asking if you'd like to give permission to your Minder server. 
+
 ![Github Auth](./images/github-auth.png)
 
 Click Authorize. The browser window should say Authentication Successful and the command line should say you've been successfully registered. 
+
 ![Successful Minder Auth](./images/successful-install.png)
 
 
