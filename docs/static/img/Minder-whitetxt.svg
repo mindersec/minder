@@ -10,9 +10,10 @@
 	.st4{fill:#002A3E;}
 	.st5{fill:none;stroke:#002A3E;stroke-width:3.0465;stroke-miterlimit:10;}
 	.st6{opacity:0.44;fill:#5A21FF;enable-background:new    ;}
+	.st7{fill:none;}
 </style>
 <g>
-	<rect y="0" class="st0" width="800" height="179.3"/>
+	<rect y="0" class="st7" width="800" height="179.3"/>
 	<g>
 		<g>
 			<polyline class="st1" points="155.3,16.5 215.2,16.5 215.2,137.6 177.4,175.6 3.6,175.6 3.6,56 42.1,16.5 102.4,16.5 			"/>
