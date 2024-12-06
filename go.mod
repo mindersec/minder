@@ -55,6 +55,7 @@ require (
 	github.com/open-policy-agent/opa v0.70.0
 	github.com/openfga/go-sdk v0.6.3
 	github.com/openfga/openfga v1.8.0
+	github.com/package-url/packageurl-go v0.1.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.20.5
 	github.com/protobom/protobom v0.5.0
@@ -223,7 +224,6 @@ require (
 	github.com/opencontainers/selinux v1.11.1 // indirect
 	github.com/openfga/api/proto v0.0.0-20241107182745-c14fb4b3d4b4 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20240926131254-992b301a003f // indirect
-	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pressly/goose/v3 v3.22.1 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
