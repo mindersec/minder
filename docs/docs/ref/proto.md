@@ -2557,6 +2557,18 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ----- | ---- | ----- | ----------- |
 | type | <TypeLink type="string">string</TypeLink> |  |  |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
+| pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| review_message | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
