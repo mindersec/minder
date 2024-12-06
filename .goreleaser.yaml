@@ -47,14 +47,14 @@ archives:
 # This section defines how to release to winget.
 winget:
   - name: minder
-    publisher: stacklok
+    publisher: mindersec
     license: Apache-2.0
     license_url: "https://github.com/mindersec/minder/blob/main/LICENSE"
-    copyright: Stacklok, Inc.
-    homepage: https://stacklok.com
-    short_description: 'minder is the client CLI for interacting with Minder by Stacklok.'
+    copyright: Minder
+    homepage: https://mindersec.github.io/
+    short_description: 'minder is the client CLI for interacting with Minder'
     publisher_support_url: "https://github.com/mindersec/minder/issues/new/choose"
-    package_identifier: "stacklok.minder"
+    package_identifier: "mindersec.minder"
     url_template: "https://github.com/mindersec/minder/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
     skip_upload: auto
     release_notes: "{{.Changelog}}"
@@ -66,7 +66,7 @@ winget:
       email: info@stacklok.com
     goamd64: v1
     repository:
-      owner: stacklok
+      owner: mindersec
       name: winget-pkgs
       branch: "minder-{{.Version}}"
       token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
