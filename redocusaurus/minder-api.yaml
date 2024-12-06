@@ -2333,6 +2333,13 @@ paths:
       tags:
         - UserService
 definitions:
+  AlertAlertTypePRComment:
+    type: object
+    properties:
+      reviewMessage:
+        type: string
+    required:
+      - reviewMessage
   AlertAlertTypeSA:
     type: object
     properties:
@@ -2345,6 +2352,8 @@ definitions:
         type: string
       securityAdvisory:
         $ref: '#/definitions/AlertAlertTypeSA'
+      pullRequestComment:
+        $ref: '#/definitions/AlertAlertTypePRComment'
   DefinitionEval:
     type: object
     properties:
