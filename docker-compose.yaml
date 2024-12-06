@@ -106,7 +106,7 @@ services:
         condition: service_healthy
   postgres:
       container_name: postgres_container
-      image: postgres:16.2-alpine
+      image: postgres:17.2-alpine
       restart: always
       user: postgres
       environment:
@@ -165,7 +165,7 @@ services:
 
   openfga:
     container_name: openfga
-    image: openfga/openfga:v1.5.0
+    image: openfga/openfga:v1.8.1
     command: [
       "run",
       "--playground-port=8085"
@@ -184,7 +184,7 @@ services:
 
   nats:
     container_name: nats
-    image: nats:2.10.18
+    image: nats:2.10.22
     entrypoint: ["./nats-server"]
     command: ["--http_port", "8222", "-js"]
     healthcheck:
@@ -198,4 +198,3 @@ services:
 networks:
   app_net:
     driver: bridge
-

@@ -44,7 +44,6 @@ Thumbs.db
 .tool-versions
 
 # Minder-specific files
-.ssh/
 cmd/server/__debug_bin
 .resolved-compose.yaml
 .github_client_id/
