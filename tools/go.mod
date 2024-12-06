@@ -1,6 +1,6 @@
 module github.com/mindersec/minder/tools
 
-go 1.23.1
+go 1.23.4
 
 require (
 	github.com/bufbuild/buf v1.47.2
