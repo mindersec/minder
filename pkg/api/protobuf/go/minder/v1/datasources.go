@@ -25,6 +25,8 @@ func (ds *DataSource) GetDriverType() string {
 	switch ds.GetDriver().(type) {
 	case *DataSource_Rest:
 		return v1datasources.DataSourceDriverRest
+	case *DataSource_Deps:
+		return v1datasources.DataSourceDriverDeps
 	default:
 		return "unknown"
 	}

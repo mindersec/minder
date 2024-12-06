@@ -11,6 +11,7 @@ import (
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
+	"github.com/rs/zerolog/log"
 
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -56,6 +57,7 @@ func buildFromDataSource(
 			}
 
 			if err := dsf.ValidateArgs(jsonObj); err != nil {
+				log.Error().Interface("dsfunction", k).Err(err).Msg("error validating datasource function arguments")
 				return nil, err
 			}
 
@@ -69,6 +71,7 @@ func buildFromDataSource(
 			)
 			ret, err := dsf.Call(ctx, jsonObj)
 			if err != nil {
+				log.Error().Interface("dsfunction", k).Err(err).Msgf("function call returned error")
 				return nil, err
 			}
 

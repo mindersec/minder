@@ -662,3 +662,11 @@ func keyInProperties(key string, schema map[string]any) error {
 
 	return nil
 }
+
+// Validate checks the state of the dependencies driver
+func (driver *DataSource_Deps) Validate() error {
+	if driver == nil {
+		return fmt.Errorf("%w: deps function is nil", ErrValidationFailed)
+	}
+	return nil
+}

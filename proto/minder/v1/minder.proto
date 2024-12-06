@@ -4017,7 +4017,23 @@ message DataSource {
     oneof driver {
         // rest is the REST data source driver.
         RestDataSource rest = 6;
+
+        // deps is the dependencies extractor data source driver.
+        DepsDataSource deps = 7;
     }
+}
+
+// DepsDataSource is the dependency data source driver
+message DepsDataSource {
+    message Def {
+        // Path where the dependency extractor will look for dependency data
+        string path = 1;
+        
+        // List of ecosystems to check, defaults all supported by the extractor
+        repeated string ecosystems = 2;
+    }
+    
+    map<string, Def> def = 1;
 }
 
 // RestDataSource is the REST data source driver.

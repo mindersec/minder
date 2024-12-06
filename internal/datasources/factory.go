@@ -7,6 +7,7 @@ package datasources
 import (
 	"fmt"
 
+	"github.com/mindersec/minder/internal/datasources/deps"
 	"github.com/mindersec/minder/internal/datasources/rest"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
@@ -26,6 +27,8 @@ func BuildFromProtobuf(ds *minderv1.DataSource) (v1datasources.DataSource, error
 	switch ds.GetDriver().(type) {
 	case *minderv1.DataSource_Rest:
 		return rest.NewRestDataSource(ds.GetRest())
+	case *minderv1.DataSource_Deps:
+		return deps.NewDepsDataSource(ds.GetDeps())
 	default:
 		return nil, fmt.Errorf("unknown data source type: %T", ds)
 	}
