@@ -23,6 +23,11 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+var (
+	// ErrDataSourceNotFound is returned when a data source is not found
+	ErrDataSourceNotFound = errors.New("data source not found")
+)
+
 // RuleTypeService encapsulates the creation and update of rule types
 // TODO: in future, other operations such as delete should be moved here
 type RuleTypeService interface {
@@ -155,7 +160,7 @@ func (_ *ruleTypeService) CreateRuleType(
 	// we need from the previous code is project id and rule id.
 	ds := ruleTypeDef.GetEval().GetDataSources()
 	if err := processDataSources(ctx, newDBRecord.ID, ds, projectID, projects, qtx); err != nil {
-		return nil, fmt.Errorf("failed updating references to data sources: %w", err)
+		return nil, fmt.Errorf("failed adding references to data sources: %w", err)
 	}
 
 	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: newDBRecord.Name, ID: newDBRecord.ID}
@@ -334,7 +339,8 @@ func processDataSources(
 	// available within the project hierarchy.
 	datasources, err := getAvailableDataSources(ctx, ds, projectHierarchy, qtx)
 	if err != nil {
-		return fmt.Errorf("data source not available: %w", err)
+		// We already have enough context. Let's not over-wrap the error.
+		return err
 	}
 
 	// Then, we proceed to delete any data source reference we
@@ -377,7 +383,7 @@ func getAvailableDataSources(
 		}
 		dbDataSource, err := qtx.GetDataSourceByName(ctx, qarg)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("data source of name %s not found", datasource.Name)
+			return nil, fmt.Errorf("%w: %s", ErrDataSourceNotFound, datasource.Name)
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed getting data sources: %w", err)
