@@ -40,6 +40,7 @@ import (
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/profiles/models"
@@ -326,10 +327,15 @@ func selectAndEval(
 	}
 
 	var evalErr error
+	var result *interfaces.EvaluationResult
 	if selected {
-		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
+		result = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
+		evalErr = result.Error
 	} else {
-		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
+		result = &interfaces.EvaluationResult{
+			Error: errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector),
+		}
+		evalErr = result.Error
 	}
 
 	return evalErr

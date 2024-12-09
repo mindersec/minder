@@ -47,20 +47,20 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
 
 func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
@@ -89,12 +89,12 @@ skip {
 	emptyPol := map[string]any{}
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationSkipped, "should have been skipped")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationSkipped, "should have been skipped")
 }
 
 func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
@@ -117,21 +117,21 @@ violations[{"msg": msg}] {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	require.ErrorContains(t, err, "data did not contain foo", "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorContains(t, result.Error, "data did not contain foo", "should have failed the evaluation")
 }
 
 func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
@@ -159,15 +159,15 @@ violations[{"msg": msg}] {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	require.ErrorContains(t, err, "- data should not contain foo\n")
-	require.ErrorContains(t, err, "- datum should not contain bar")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorContains(t, result.Error, "- data should not contain foo\n")
+	require.ErrorContains(t, result.Error, "- datum should not contain bar")
 }
 
 // Evaluates a simple query against a simple profile
@@ -198,20 +198,20 @@ allow {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	result = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }
 
 func TestConstrainedEvaluationWithProfile(t *testing.T) {
@@ -236,21 +236,21 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	result = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	assert.ErrorContains(t, err, "data did not match profile: foo", "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorContains(t, result.Error, "data did not match profile: foo", "should have failed the evaluation")
 }
 
 const (
@@ -299,15 +299,15 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalresult := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, evalresult.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := engerrors.ErrorAsEvalDetails(evalresult.Error)
 	var result []struct {
 		ActionsNotAllowed []string `json:"actions_not_allowed"`
 	}
@@ -340,15 +340,15 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalresult := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, evalresult.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := engerrors.ErrorAsEvalDetails(evalresult.Error)
 	var result []struct {
 		Msg string `json:"msg"`
 	}
@@ -372,15 +372,15 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
 	})
-	require.Error(t, err, "should have failed the evaluation")
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.Error(t, result.Error, "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := engerrors.ErrorAsEvalDetails(result.Error)
 	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
 	assert.Contains(t, errmsg, "three", "should have the expected content")
 }
@@ -430,9 +430,9 @@ violations[{"msg": msg}] {`,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, nil,
+	result := e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Result{Object: map[string]any{}})
-	assert.Error(t, err, "should have failed to evaluate")
+	assert.Error(t, result.Error, "should have failed to evaluate")
 }
 
 func TestCantEvaluateWithCompilerError(t *testing.T) {
@@ -454,9 +454,9 @@ violations[{"msg": msg}] {
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, nil,
+	result := e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Result{Object: map[string]any{}})
-	assert.Error(t, err, "should have failed to evaluate")
+	assert.Error(t, result.Error, "should have failed to evaluate")
 }
 
 func TestCustomDatasourceRegister(t *testing.T) {
@@ -498,19 +498,19 @@ allow {
 
 	// Matches
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("foo", nil)
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result := e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, result.Error, "could not evaluate")
 
 	// Doesn't match
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("bar", nil)
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	result = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, result.Error, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 }

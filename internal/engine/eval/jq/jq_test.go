@@ -366,8 +366,8 @@ func TestValidJQEvals(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
-			assert.NoError(t, err, "Got unexpected error")
+			result := jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
+			assert.NoError(t, result.Error, "Got unexpected error")
 		})
 	}
 }
@@ -576,8 +576,8 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			assert.NoError(t, err, "Got unexpected error")
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
-			err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
-			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
+			result := jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Result{Object: tt.args.obj})
+			assert.ErrorIs(t, result.Error, evalerrors.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
 }
