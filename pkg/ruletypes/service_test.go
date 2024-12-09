@@ -233,14 +233,14 @@ func TestRuleTypeService(t *testing.T) {
 		{
 			Name:          "CreateRuleType with Data Sources not found",
 			RuleType:      newRuleType(withBasicStructure, withDataSources),
-			ExpectedError: "data source not available",
+			ExpectedError: "data source not found",
 			DBSetup:       dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withNotFoundGetDataSourcesByName),
 			TestMethod:    create,
 		},
 		{
 			Name:          "UpdateRuleType with Data Sources not found",
 			RuleType:      newRuleType(withBasicStructure, withDataSources),
-			ExpectedError: "data source not available",
+			ExpectedError: "data source not found",
 			DBSetup:       dbf.NewDBMock(withHierarchyGet, withSuccessfulGet, withSuccessfulUpdate, withNotFoundGetDataSourcesByName),
 			TestMethod:    update,
 		},
