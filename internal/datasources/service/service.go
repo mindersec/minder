@@ -431,6 +431,23 @@ func addDataSourceFunctions(
 	projectID uuid.UUID,
 ) error {
 	switch drv := ds.GetDriver().(type) {
+	case *minderv1.DataSource_Structured:
+		for name, def := range drv.Structured.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return fmt.Errorf("failed to marshal structured data definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverStruct,
+				Definition:   defBytes,
+			}); err != nil {
+				return fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
 	case *minderv1.DataSource_Rest:
 		for name, def := range drv.Rest.GetDef() {
 			defBytes, err := protojson.Marshal(def)

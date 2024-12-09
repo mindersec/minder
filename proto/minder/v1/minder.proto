@@ -4025,9 +4025,31 @@ message DataSource {
     ];
 
     oneof driver {
+        // structured is the structired data - data source.
+        StructDataSource structured = 8;
         // rest is the REST data source driver.
         RestDataSource rest = 6;
     }
+}
+
+// StructDataSource is the REST data source driver.
+message StructDataSource {
+    message Def {
+        // Path is the path specification for the structured data daou
+        Path path = 1 [
+              (google.api.field_behavior) = REQUIRED
+        ];
+
+        message Path {
+            string file_name = 1;
+            repeated string alternatives = 2 [
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
+        }
+    }
+
+    // defs is the list of definitions for the REST API.
+    map<string, Def> def = 1;
 }
 
 // RestDataSource is the REST data source driver.
