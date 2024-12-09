@@ -33,6 +33,8 @@ func dataSourceDBToProtobuf(ds db.DataSource, dsfuncs []db.DataSourcesFunction) 
 	dsfType := dsfuncs[0].Type
 
 	switch dsfType {
+	case v1datasources.DataSourceDriverStruct:
+		return dataSourceStructDBToProtobuf(outds, dsfuncs)
 	case v1datasources.DataSourceDriverRest:
 		return dataSourceRestDBToProtobuf(outds, dsfuncs)
 	default:
@@ -56,6 +58,30 @@ func dataSourceRestDBToProtobuf(ds *minderv1.DataSource, dsfuncs []db.DataSource
 		}
 
 		ds.GetRest().Def[key] = dsfToParse
+	}
+
+	return ds, nil
+}
+
+func dataSourceStructDBToProtobuf(ds *minderv1.DataSource, dsfuncs []db.DataSourcesFunction) (*minderv1.DataSource, error) {
+	structured := &minderv1.StructDataSource{
+		Def: make(map[string]*minderv1.StructDataSource_Def, len(dsfuncs)),
+	}
+
+	for _, dsf := range dsfuncs {
+		key := dsf.Name
+		dsfToParse := &minderv1.StructDataSource_Def{
+			Path: &minderv1.StructDataSource_Def_Path{},
+		}
+		if err := protojson.Unmarshal(dsf.Definition, dsfToParse); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal data source definition for %s: %w", key, err)
+		}
+
+		structured.Def[key] = dsfToParse
+	}
+
+	ds.Driver = &minderv1.DataSource_Structured{
+		Structured: structured,
 	}
 
 	return ds, nil
