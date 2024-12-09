@@ -833,6 +833,18 @@ format for rule evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repo | <TypeLink type="minder-v1-DepsType-RepoConfigs">DepsType.RepoConfigs</TypeLink> |  |  |
+| pr | <TypeLink type="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filter | <TypeLink type="string">string</TypeLink> |  | filter is the filter to apply to the PRs. The default value is "NEW_AND_UPDATED". |
 
 
 
