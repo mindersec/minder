@@ -52,6 +52,8 @@ func (_ ghEntityFetcher) EntityPropertyFetcher(entType minderv1.Entity) GhProper
 		return NewRepositoryFetcher()
 	case minderv1.Entity_ENTITY_ARTIFACTS:
 		return NewArtifactFetcher()
+	case minderv1.Entity_ENTITY_RELEASE:
+		return NewReleaseFetcher()
 	}
 
 	return nil
