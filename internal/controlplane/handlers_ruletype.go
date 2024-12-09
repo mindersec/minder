@@ -192,7 +192,9 @@ func (s *Server) CreateRuleType(
 		if errors.Is(err, ruletypes.ErrRuleTypeInvalid) {
 			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type definition: %s", err)
 		} else if errors.Is(err, ruletypes.ErrRuleAlreadyExists) {
-			return nil, status.Errorf(codes.AlreadyExists, "rule type %s already exists", crt.RuleType.GetName())
+			return nil, util.UserVisibleError(codes.AlreadyExists, "rule type %s already exists", crt.RuleType.GetName())
+		} else if errors.Is(err, ruletypes.ErrDataSourceNotFound) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to create rule type: %s", err)
 	}
