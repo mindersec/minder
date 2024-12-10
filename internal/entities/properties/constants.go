@@ -29,9 +29,11 @@ const (
 	PullRequestBaseCloneURL = "base_clone_url"
 	// PullRequestBaseDefaultBranch represents the default branch of the base repository
 	PullRequestBaseDefaultBranch = "base_default_branch"
-	// PullRequestTargetCloneURL represents the clone URL of the target repository
+	// PullRequestTargetCloneURL represents the clone URL of the target repository.
+	// Where the pull request comes from.
 	PullRequestTargetCloneURL = "target_clone_url"
-	// PullRequestTargetBranch represents the default branch of the target repository
+	// PullRequestTargetBranch represents the default branch of the target repository.
+	// Where the pull request comes from.
 	PullRequestTargetBranch = "target_branch"
 	// PullRequestUpstreamURL represents the URL of the pull request in the provider
 	PullRequestUpstreamURL = "upstream_url"
