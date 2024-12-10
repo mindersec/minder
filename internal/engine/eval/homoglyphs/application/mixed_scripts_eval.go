@@ -55,19 +55,23 @@ func (mse *MixedScriptsEvaluator) Eval(
 	_ map[string]any,
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Result,
-) error {
+) *interfaces.EvaluationResult {
 	violations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
 	if err != nil {
-		return err
+		return &interfaces.EvaluationResult{
+			Error: err,
+		}
 	}
 
 	if len(violations) > 0 {
-		return evalerrors.NewDetailedErrEvaluationFailed(
-			templates.MixedScriptsTemplate,
-			map[string]any{"violations": violations},
-			"found mixed scripts violations",
-		)
+		return &interfaces.EvaluationResult{
+			Error: evalerrors.NewDetailedErrEvaluationFailed(
+				templates.MixedScriptsTemplate,
+				map[string]any{"violations": violations},
+				"found mixed scripts violations",
+			),
+		}
 	}
 
-	return nil
+	return &interfaces.EvaluationResult{}
 }
