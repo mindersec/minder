@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/mindersec/minder/internal/reminder/metrics"
 	"sync"
 	"time"
 
@@ -44,6 +45,8 @@ type reminder struct {
 
 	eventPublisher message.Publisher
 	eventDBCloser  common.DriverCloser
+
+	metricsProvider *metrics.Provider
 }
 
 // NewReminder creates a new reminder instance
@@ -66,6 +69,13 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 
 	r.eventPublisher = pub
 	r.eventDBCloser = cl
+
+	metricsProvider, err := metrics.NewProvider(&config.MetricsConfig)
+	if err != nil {
+		return nil, fmt.Errorf("error creating metrics provider: %w", err)
+	}
+
+	r.metricsProvider = metricsProvider
 	return r, nil
 }
 
@@ -76,6 +86,11 @@ func (r *reminder) Start(ctx context.Context) error {
 	case <-r.stop:
 		return errors.New("reminder stopped, cannot start again")
 	default:
+	}
+
+	err := r.metricsProvider.Start(ctx)
+	if err != nil {
+		return fmt.Errorf("error starting metrics provider: %w", err)
 	}
 
 	interval := r.cfg.RecurrenceConfig.Interval
@@ -119,6 +134,11 @@ func (r *reminder) Stop() {
 	r.stopOnce.Do(func() {
 		close(r.stop)
 		r.eventDBCloser()
+
+		err := r.metricsProvider.Shutdown(context.Background())
+		if err != nil {
+			zerolog.Ctx(context.Background()).Error().Err(err).Msg("error shutting down metrics provider")
+		}
 	})
 }
 
@@ -143,6 +163,11 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
+	remMetrics := r.metricsProvider.Metrics()
+	if remMetrics != nil {
+		remMetrics.RecordBatch(ctx, int64(len(repos)))
+	}
+
 	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
@@ -151,13 +176,18 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 	repoIds := make([]uuid.UUID, len(repos))
 	for _, repo := range repos {
 		repoIds = append(repoIds, repo.ID)
+		if remMetrics != nil {
+			// sendDelay = Now() - ReminderLastSent - MinElapsed
+			reminderLastSent := repo.ReminderLastSent
+			if reminderLastSent.Valid {
+				remMetrics.SendDelay.Record(ctx, (time.Now().Sub(reminderLastSent.Time) - r.cfg.RecurrenceConfig.MinElapsed).Seconds())
+			} else {
+				// TODO: Should the send delay be zero if the reminder has never been sent?
+				remMetrics.SendDelay.Record(ctx, 0)
+				//remMetrics.SendDelay.Record(ctx, r.cfg.RecurrenceConfig.MinElapsed.Seconds())
+			}
+		}
 	}
-
-	// TODO: Collect Metrics
-	// Potential metrics:
-	// - Gauge: Number of reminders in the current batch
-	// - UpDownCounter: Average reminders sent per batch
-	// - Histogram: reminder_last_sent time distribution
 
 	err = r.store.UpdateReminderLastSentForRepositories(ctx, repoIds)
 	if err != nil {
