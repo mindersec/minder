@@ -19,6 +19,24 @@ const (
 	RepoPropertyIsArchived = "is_archived"
 	// RepoPropertyIsFork represents whether the repository is a fork
 	RepoPropertyIsFork = "is_fork"
+	// RepoPropertyDefaultBranch represents the default branch of the repository
+	RepoPropertyDefaultBranch = "default_branch"
+)
+
+// Pull Request property keys
+const (
+	// PullRequestCommitSHA represents the commit SHA of the pull request
+	PullRequestCommitSHA = "commit_sha"
+	// PullRequestBaseCloneURL represents the clone URL of the base repository
+	PullRequestBaseCloneURL = "base_clone_url"
+	// PullRequestBaseDefaultBranch represents the default branch of the base repository
+	PullRequestBaseDefaultBranch = "base_default_branch"
+	// PullRequestTargetCloneURL represents the clone URL of the target repository
+	PullRequestTargetCloneURL = "target_clone_url"
+	// PullRequestTargetBranch represents the default branch of the target repository
+	PullRequestTargetBranch = "target_branch"
+	// PullRequestUpstreamURL represents the URL of the pull request in the provider
+	PullRequestUpstreamURL = "upstream_url"
 )
 
 // Artifact property keys

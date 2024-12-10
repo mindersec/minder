@@ -38,16 +38,8 @@ const (
 	PullRequestProjectID = "gitlab/project_id"
 	// PullRequestNumber represents the gitlab merge request number
 	PullRequestNumber = "gitlab/merge_request_number"
-	// PullRequestSourceBranch represents the gitlab source branch
-	PullRequestSourceBranch = "gitlab/source_branch"
-	// PullRequestTargetBranch represents the gitlab target branch
-	PullRequestTargetBranch = "gitlab/target_branch"
 	// PullRequestAuthor represents the gitlab author
 	PullRequestAuthor = "gitlab/author"
-	// PullRequestCommitSHA represents the gitlab commit SHA
-	PullRequestCommitSHA = "gitlab/commit_sha"
-	// PullRequestURL represents the gitlab merge request URL
-	PullRequestURL = "gitlab/merge_request_url"
 )
 
 // Release Properties
