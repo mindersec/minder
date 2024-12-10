@@ -5229,7 +5229,7 @@
         },
         "version": {
           "type": "string",
-          "description": "version is the version of the provider."
+          "description": "version is the version of the provider.\nif unset, \"v1\" is assumed."
         },
         "implements": {
           "type": "array",

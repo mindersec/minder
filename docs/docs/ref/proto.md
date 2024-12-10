@@ -2131,7 +2131,7 @@ All fields are optional because we want to allow partial updates.
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider. |
 | class | <TypeLink type="string">string</TypeLink> |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
 | project | <TypeLink type="string">string</TypeLink> |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
-| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. if unset, "v1" is assumed. |
 | implements | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | implements is the list of interfaces that the provider implements. |
 | config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is the configuration of the provider. |
 | auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | auth_flows is the list of authorization flows that the provider supports. |
