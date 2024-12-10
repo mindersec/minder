@@ -2412,8 +2412,19 @@ message DepsType {
         ];
     }
 
+    message PullRequestConfigs {
+        // filter is the filter to apply to the PRs.  The default value is "NEW_AND_UPDATED".
+        string filter = 1 [
+            (buf.validate.field).string = {
+                in: ["NEW_AND_UPDATED", "NEW_ONLY"],
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
+    }
+
     oneof entity_type {
         RepoConfigs repo = 1;
+        PullRequestConfigs pr = 2;
     }
 }
 
