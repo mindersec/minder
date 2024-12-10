@@ -25,6 +25,7 @@ func FormatPullRequestUpstreamID(id int) string {
 	return fmt.Sprintf("%d", id)
 }
 
+//nolint:gocyclo // TODO: Refactor to reduce complexity
 func (c *gitlabClient) getPropertiesForPullRequest(
 	ctx context.Context, getByProps *properties.Properties,
 ) (*properties.Properties, error) {
@@ -87,7 +88,15 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 		return nil, fmt.Errorf("failed to get project: %w", err)
 	}
 
-	outProps, err := gitlabMergeRequestToProperties(mr, proj)
+	sourceproj := proj
+	if mr.SourceProjectID != 0 && mr.SourceProjectID != proj.ID {
+		sourceproj, err = c.getGitLabProject(ctx, FormatRepositoryUpstreamID(mr.SourceProjectID))
+		if err != nil {
+			return nil, fmt.Errorf("failed to get target project: %w", err)
+		}
+	}
+
+	outProps, err := gitlabMergeRequestToProperties(mr, proj, sourceproj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert merge request to properties: %w", err)
 	}
@@ -95,7 +104,8 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 	return outProps, nil
 }
 
-func gitlabMergeRequestToProperties(mr *gitlab.MergeRequest, proj *gitlab.Project) (*properties.Properties, error) {
+func gitlabMergeRequestToProperties(
+	mr *gitlab.MergeRequest, proj *gitlab.Project, sourceproj *gitlab.Project) (*properties.Properties, error) {
 	ns, err := getGitlabProjectNamespace(proj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace: %w", err)
@@ -105,18 +115,20 @@ func gitlabMergeRequestToProperties(mr *gitlab.MergeRequest, proj *gitlab.Projec
 
 	outProps, err := properties.NewProperties(map[string]any{
 		// Unique upstream ID for the merge request
-		properties.PropertyUpstreamID: FormatPullRequestUpstreamID(mr.ID),
-		properties.PropertyName:       formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
-		RepoPropertyNamespace:         ns,
-		RepoPropertyProjectName:       projName,
+		properties.PropertyUpstreamID:           FormatPullRequestUpstreamID(mr.ID),
+		properties.PropertyName:                 formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
+		properties.PullRequestCommitSHA:         mr.SHA,
+		properties.PullRequestBaseCloneURL:      sourceproj.HTTPURLToRepo,
+		properties.PullRequestBaseDefaultBranch: mr.SourceBranch,
+		properties.PullRequestTargetCloneURL:    proj.HTTPURLToRepo,
+		properties.PullRequestTargetBranch:      mr.TargetBranch,
+		properties.PullRequestUpstreamURL:       mr.WebURL,
+		RepoPropertyNamespace:                   ns,
+		RepoPropertyProjectName:                 projName,
 		// internal ID of the merge request
-		PullRequestNumber:       FormatPullRequestUpstreamID(mr.IID),
-		PullRequestProjectID:    FormatRepositoryUpstreamID(proj.ID),
-		PullRequestSourceBranch: mr.SourceBranch,
-		PullRequestTargetBranch: mr.TargetBranch,
-		PullRequestCommitSHA:    mr.SHA,
-		PullRequestAuthor:       int64(mr.Author.ID),
-		PullRequestURL:          mr.WebURL,
+		PullRequestNumber:    FormatPullRequestUpstreamID(mr.IID),
+		PullRequestProjectID: FormatRepositoryUpstreamID(proj.ID),
+		PullRequestAuthor:    int64(mr.Author.ID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create properties: %w", err)
@@ -146,12 +158,12 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.Pu
 		return nil, fmt.Errorf("failed to get project name: %w", err)
 	}
 
-	commitSha, err := getStringProp(prProps, PullRequestCommitSHA)
+	commitSha, err := getStringProp(prProps, properties.PullRequestCommitSHA)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get commit SHA: %w", err)
 	}
 
-	mrURL, err := getStringProp(prProps, PullRequestURL)
+	mrURL, err := getStringProp(prProps, properties.PullRequestUpstreamURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get merge request URL: %w", err)
 	}
@@ -161,6 +173,11 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.Pu
 		return nil, fmt.Errorf("failed to get author ID: %w", err)
 	}
 
+	basecloneurl := prProps.GetProperty(properties.PullRequestBaseCloneURL).GetString()
+	targetcloneurl := prProps.GetProperty(properties.PullRequestTargetCloneURL).GetString()
+	basebranch := prProps.GetProperty(properties.PullRequestBaseDefaultBranch).GetString()
+	targetbranch := prProps.GetProperty(properties.PullRequestTargetBranch).GetString()
+
 	// parse UpstreamID to int64
 	id, err := strconv.ParseInt(iid, 10, 64)
 	if err != nil {
@@ -168,13 +185,17 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.Pu
 	}
 
 	pbPR := &pbinternal.PullRequest{
-		Number:     id,
-		RepoOwner:  ns,
-		RepoName:   projName,
-		CommitSha:  commitSha,
-		AuthorId:   authorID,
-		Url:        mrURL,
-		Properties: prProps.ToProtoStruct(),
+		Number:         id,
+		RepoOwner:      ns,
+		RepoName:       projName,
+		CommitSha:      commitSha,
+		AuthorId:       authorID,
+		Url:            mrURL,
+		BaseCloneUrl:   basecloneurl,
+		TargetCloneUrl: targetcloneurl,
+		BaseRef:        basebranch,
+		TargetRef:      targetbranch,
+		Properties:     prProps.ToProtoStruct(),
 	}
 
 	return pbPR, nil
