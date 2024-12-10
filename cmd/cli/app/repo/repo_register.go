@@ -5,6 +5,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -50,13 +51,22 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 		providerClient := minderv1.NewProvidersServiceClient(conn)
 
-		err := enableAutoRegistration(ctx, cmd, providerClient, project, provider)
+		ret, err := enableAutoRegistration(ctx, providerClient, project, provider)
 		if err != nil {
-			return cli.MessageAndError("Error enabling auto registration", err)
+			cmd.Println("Enabling auto registration failed for one or more providers.")
+		} else {
+			cmd.Println("Enabling auto registration succeeded.")
 		}
-		cmd.Println("Enabled auto registration for future repositories")
-		cmd.Println("Issued task to register all currently available repositories")
-		cmd.Println("Use `minder repo list` to check the list registered repositories")
+		if len(ret.alreadyEnabled) > 0 {
+			cmd.Println(fmt.Sprintf("Auto registration is already enabled for: %v", ret.alreadyEnabled))
+		}
+		if len(ret.failedProviders) > 0 {
+			cmd.Println(fmt.Sprintf("Failed to enable: %v", ret.failedProviders))
+		}
+		if len(ret.updatedProviders) > 0 {
+			cmd.Println(fmt.Sprintf("Successfully enabled: %v", ret.updatedProviders))
+			cmd.Println("Use `minder repo list` to check the list of registered repositories.")
+		}
 		return nil
 	}
 
@@ -244,26 +254,39 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 	t.Render()
 }
 
+var errAutoRegistrationAlreadyEnabled = errors.New("auto registration is already enabled")
+
+type autoRegisterResult struct {
+	updatedProviders []string
+	failedProviders  []string
+	alreadyEnabled   []string
+}
+
 func enableAutoRegistration(
 	ctx context.Context,
-	cmd *cobra.Command,
 	provCli minderv1.ProvidersServiceClient,
 	project, provName string,
-) error {
+) (autoRegisterResult, error) {
 	if provName != "" {
-		return enableAutoRegistrationForProvider(ctx, cmd, provCli, project, provName)
+		err := enableAutoRegistrationForProvider(ctx, provCli, project, provName)
+		if err != nil {
+			if errors.Is(err, errAutoRegistrationAlreadyEnabled) {
+				return autoRegisterResult{alreadyEnabled: []string{provName}}, nil
+			}
+			return autoRegisterResult{failedProviders: []string{provName}}, err
+		}
+		return autoRegisterResult{updatedProviders: []string{provName}}, nil
 	}
-
-	return enableAutoRegistrationAllProviders(ctx, cmd, provCli, project)
+	return enableAutoRegistrationAllProviders(ctx, provCli, project)
 }
 
 func enableAutoRegistrationAllProviders(
 	ctx context.Context,
-	cmd *cobra.Command,
 	provCli minderv1.ProvidersServiceClient,
 	project string,
-) error {
+) (autoRegisterResult, error) {
 	var cursor string
+	ret := autoRegisterResult{}
 
 	for {
 		allProviders, err := provCli.ListProviders(ctx, &minderv1.ListProvidersRequest{
@@ -274,7 +297,7 @@ func enableAutoRegistrationAllProviders(
 		})
 
 		if err != nil {
-			return cli.MessageAndError("failed to get providers", err)
+			return ret, cli.MessageAndError("failed to get providers", err)
 		}
 
 		cursor = allProviders.Cursor
@@ -284,12 +307,21 @@ func enableAutoRegistrationAllProviders(
 				continue
 			}
 
-			err := enableAutoRegistrationForProvider(ctx, cmd, provCli, project, provider.Name)
+			err := enableAutoRegistrationForProvider(ctx, provCli, project, provider.Name)
 			if err != nil {
-				// we could print a diagnostical message here, but since the legacy github provider doesn't support
+				if errors.Is(err, errAutoRegistrationAlreadyEnabled) {
+					// Store the provider name that was already enabled
+					ret.alreadyEnabled = append(ret.alreadyEnabled, provider.Name)
+					continue
+				}
+				// Store the provider name that failed to update
+				ret.failedProviders = append(ret.failedProviders, provider.Name)
+				// we could print a diagnostic message here, but since the legacy github provider doesn't support
 				// auto-enrollment and we still pre-create it, the user would see the message all the time.
 				continue
 			}
+			// Store the provider name that was successfully updated
+			ret.updatedProviders = append(ret.updatedProviders, provider.Name)
 		}
 
 		if allProviders.Cursor == "" {
@@ -297,12 +329,15 @@ func enableAutoRegistrationAllProviders(
 		}
 	}
 
-	return nil
+	// If there are failed providers, return an error
+	if len(ret.failedProviders) > 0 {
+		return ret, fmt.Errorf("failed to enable auto registration for some providers")
+	}
+	return ret, nil
 }
 
 func enableAutoRegistrationForProvider(
 	ctx context.Context,
-	cmd *cobra.Command,
 	provCli minderv1.ProvidersServiceClient,
 	project, providerName string,
 ) error {
@@ -333,7 +368,7 @@ func enableAutoRegistrationForProvider(
 	}
 
 	if repoReg.GetEnabled() {
-		cmd.Printf("Auto registration is already enabled for %s\n", providerName)
+		return errAutoRegistrationAlreadyEnabled
 	}
 
 	repoReg.Enabled = proto.Bool(true)
