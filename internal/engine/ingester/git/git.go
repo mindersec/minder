@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
@@ -122,12 +123,12 @@ func (gi *Git) getBranch(ent protoreflect.ProtoMessage, userCfg *IngesterConfig)
 		return gi.cfg.Branch
 	}
 
-	// If the entity is a repository get it from the entity
-	// else, use the default
 	if repo, ok := ent.(*pb.Repository); ok {
 		if repo.GetDefaultBranch() != "" {
 			return repo.GetDefaultBranch()
 		}
+	} else if pr, ok := ent.(*pbinternal.PullRequest); ok {
+		return pr.GetTargetRef()
 	}
 
 	// If the branch is not provided in the rule-type
@@ -140,10 +141,10 @@ func getCloneUrl(ent protoreflect.ProtoMessage, cfg *IngesterConfig) string {
 		return cfg.CloneURL
 	}
 
-	// If the entity is a repository get it from the entity
-	// else, get it from the configuration
 	if repo, ok := ent.(*pb.Repository); ok {
 		return repo.GetCloneUrl()
+	} else if pr, ok := ent.(*pbinternal.PullRequest); ok {
+		return pr.GetTargetCloneUrl()
 	}
 
 	return ""
