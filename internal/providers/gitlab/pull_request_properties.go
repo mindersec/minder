@@ -88,15 +88,15 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 		return nil, fmt.Errorf("failed to get project: %w", err)
 	}
 
-	sourceproj := proj
+	targetproj := proj
 	if mr.SourceProjectID != 0 && mr.SourceProjectID != proj.ID {
-		sourceproj, err = c.getGitLabProject(ctx, FormatRepositoryUpstreamID(mr.SourceProjectID))
+		targetproj, err = c.getGitLabProject(ctx, FormatRepositoryUpstreamID(mr.SourceProjectID))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get target project: %w", err)
 		}
 	}
 
-	outProps, err := gitlabMergeRequestToProperties(mr, proj, sourceproj)
+	outProps, err := gitlabMergeRequestToProperties(mr, proj, targetproj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert merge request to properties: %w", err)
 	}
@@ -105,7 +105,7 @@ func (c *gitlabClient) getPropertiesForPullRequest(
 }
 
 func gitlabMergeRequestToProperties(
-	mr *gitlab.MergeRequest, proj *gitlab.Project, sourceproj *gitlab.Project) (*properties.Properties, error) {
+	mr *gitlab.MergeRequest, proj *gitlab.Project, targetproj *gitlab.Project) (*properties.Properties, error) {
 	ns, err := getGitlabProjectNamespace(proj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get namespace: %w", err)
@@ -118,10 +118,10 @@ func gitlabMergeRequestToProperties(
 		properties.PropertyUpstreamID:           FormatPullRequestUpstreamID(mr.ID),
 		properties.PropertyName:                 formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
 		properties.PullRequestCommitSHA:         mr.SHA,
-		properties.PullRequestBaseCloneURL:      sourceproj.HTTPURLToRepo,
-		properties.PullRequestBaseDefaultBranch: mr.SourceBranch,
-		properties.PullRequestTargetCloneURL:    proj.HTTPURLToRepo,
-		properties.PullRequestTargetBranch:      mr.TargetBranch,
+		properties.PullRequestBaseCloneURL:      proj.HTTPURLToRepo,
+		properties.PullRequestBaseDefaultBranch: mr.TargetBranch,
+		properties.PullRequestTargetCloneURL:    targetproj.HTTPURLToRepo,
+		properties.PullRequestTargetBranch:      mr.SourceBranch,
 		properties.PullRequestUpstreamURL:       mr.WebURL,
 		RepoPropertyNamespace:                   ns,
 		RepoPropertyProjectName:                 projName,
