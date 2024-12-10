@@ -2451,6 +2451,14 @@ definitions:
         $ref: '#/definitions/RemediateGhBranchProtectionType'
       pullRequest:
         $ref: '#/definitions/RemediatePullRequestRemediation'
+  DepsTypePullRequestConfigs:
+    type: object
+    properties:
+      filter:
+        type: string
+        description: >-
+          filter is the filter to apply to the PRs.  The default value is
+          "NEW_AND_UPDATED".
   DepsTypeRepoConfigs:
     type: object
     properties:
@@ -3282,6 +3290,8 @@ definitions:
     properties:
       repo:
         $ref: '#/definitions/DepsTypeRepoConfigs'
+      pr:
+        $ref: '#/definitions/DepsTypePullRequestConfigs'
     description: >-
       DepsType defines the "deps" ingester which can extract depndencies in
       protobom
