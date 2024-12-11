@@ -3668,10 +3668,12 @@ message Provider {
     // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
+    // if unset, "v1" is assumed.
     string version = 3 [
         (buf.validate.field).string = {
             pattern: "v1",
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // implements is the list of interfaces that the provider implements.
