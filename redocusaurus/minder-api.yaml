@@ -4196,7 +4196,9 @@ definitions:
           in favor of the context field in CreateProviderRequest.
       version:
         type: string
-        description: version is the version of the provider.
+        description: |-
+          version is the version of the provider.
+          if unset, "v1" is assumed.
       implements:
         type: array
         items:
