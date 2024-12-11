@@ -31,6 +31,13 @@ type Action interface {
 		params ActionsParams, metadata *json.RawMessage) (json.RawMessage, error)
 }
 
+// AggregatingAction is the interface for an action that aggregates multiple
+// pieces to form a final action. Normally this will come from the result of a
+// `Do` call on an action.
+type AggregatingAction interface {
+	Flush(item ...any) error
+}
+
 // ActionCmd is the type that defines what effect an action should have
 type ActionCmd string
 
