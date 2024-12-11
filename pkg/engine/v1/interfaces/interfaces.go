@@ -38,6 +38,9 @@ type Result struct {
 	// is normally used by the evaluator to do rule evaluation. The filesystem
 	// may be a git repo, or a memory filesystem.
 	Fs billy.Filesystem
+	// BaseFs is the base filesystem for a pull request.  It can be used in the
+	// evaluator for diffing the PR target files against the base files.
+	BaseFs billy.Filesystem
 	// Storer is the git storer that was created as a result of the ingestion.
 	// FIXME: It might be cleaner to either wrap both Fs and Storer in a struct
 	// or pass out the git.Repository structure instead of the storer.

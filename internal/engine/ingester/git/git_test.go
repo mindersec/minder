@@ -72,7 +72,7 @@ func TestGitIngestWithCloneURLFromParams(t *testing.T) {
 	)
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 	})
 	require.NoError(t, err, "expected no error")
@@ -100,7 +100,7 @@ func TestGitIngestWithCustomBranchFromParams(t *testing.T) {
 	)
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 		"branch":    "test",
 	})
@@ -161,7 +161,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 		"branch":    "unexistent-branch",
 	})
@@ -181,7 +181,7 @@ func TestGitIngestFailsBecauseOfAuthorization(t *testing.T) {
 
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/mindersec/minder.git",
 	})
 	require.Error(t, err, "expected error")
@@ -195,7 +195,7 @@ func TestGitIngestFailsBecauseOfUnexistentCloneUrl(t *testing.T) {
 		&pb.GitType{}, testproviders.NewGitProvider(credentials.NewEmptyCredential()))
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/unexistent-git-repo.git",
 	})
 	require.Error(t, err, "expected error")
@@ -222,7 +222,7 @@ func TestGitIngestFailsWhenRepoTooLarge(t *testing.T) {
 
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 	})
 	require.Error(t, err, "expected error")
@@ -250,7 +250,7 @@ func TestGitIngestFailsWhenRepoHasTooManyFiles(t *testing.T) {
 
 	require.NoError(t, err, "expected no error")
 
-	got, err := gi.Ingest(context.Background(), &pb.Artifact{}, map[string]any{
+	got, err := gi.Ingest(context.Background(), &pb.Repository{}, map[string]any{
 		"clone_url": "https://github.com/octocat/Hello-World.git",
 	})
 	require.Error(t, err, "expected error")

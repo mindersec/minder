@@ -87,7 +87,7 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 	case *pbinternal.PullRequest:
 		return gi.ingestPullRequest(ctx, entity, params)
 	default:
-		return nil, fmt.Errorf("deps is only supported for repositories")
+		return nil, fmt.Errorf("deps is only supported for repositories and pull requests")
 	}
 }
 
