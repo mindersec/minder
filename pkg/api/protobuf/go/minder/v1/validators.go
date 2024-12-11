@@ -549,6 +549,15 @@ func (ds *DataSource) Validate() error {
 	return val.Validate()
 }
 
+// Validate checks a structured data source to ensure it is valid
+func (dsStructuredDriver *DataSource_Structured) Validate() error {
+	if dsStructuredDriver == nil || dsStructuredDriver.Structured == nil {
+		return fmt.Errorf("%w: structured driver is nil", ErrValidationFailed)
+	}
+
+	return nil
+}
+
 // Validate is the entrypoint for the actual driver's validation
 func (dsRestDriver *DataSource_Rest) Validate() error {
 	if dsRestDriver == nil {

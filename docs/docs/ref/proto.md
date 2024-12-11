@@ -599,6 +599,7 @@ create entities are called Providers.
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the data source is evaluated. Note that in this case we only need the project in the context, since data sources are not provider-specific. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. Names must be lowercase and can only contain letters, numbers, hyphens, and underscores. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
+| structured | <TypeLink type="minder-v1-StructDataSource">StructDataSource</TypeLink> |  | structured is the structired data - data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
 
 
@@ -2792,6 +2793,52 @@ Severity defines the severity of the rule.
 <Message id="minder-v1-StoreProviderTokenResponse">StoreProviderTokenResponse</Message>
 
 
+
+
+
+<Message id="minder-v1-StructDataSource">StructDataSource</Message>
+
+StructDataSource is the structured data source driver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| def | <TypeLink type="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</TypeLink> | repeated | defs is the list of definitions for the structured data API. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def">StructDataSource.Def</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | <TypeLink type="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</TypeLink> |  | Path is the path specification for the structured data source. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| file_name | <TypeLink type="string">string</TypeLink> |  |  |
+| alternatives | <TypeLink type="string">string</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-StructDataSource-Def">StructDataSource.Def</TypeLink> |  |  |
 
 
 
