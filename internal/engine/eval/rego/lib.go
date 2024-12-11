@@ -38,7 +38,7 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileHTTPType,
 	FileRead,
 	FileWalk,
-	FileBundle,
+	FileArchive,
 	ListGithubActions,
 	BaseFileExists,
 	BaseFileLs,
@@ -47,7 +47,7 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	BaseFileRead,
 	BaseFileWalk,
 	BaseListGithubActions,
-	BaseFileBundle,
+	BaseFileArchive,
 	ParseYaml,
 	JQIsTrue,
 }
@@ -428,36 +428,36 @@ func fileLsHandleDir(path string, bfs billy.Filesystem) (*ast.Term, error) {
 		ast.NewArray(files...)), nil
 }
 
-// FileBundle packages a set of files form the the specified directory into
+// FileArchive packages a set of files form the the specified directory into
 // a tarball.  It takes one argument: a list of file or directory paths to
 // include, and outputs the tarball as a string.
-// It's exposed as 'file.bundle`.
-func FileBundle(res *interfaces.Result) func(*rego.Rego) {
+// It's exposed as 'file.archive`.
+func FileArchive(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
-			Name: "file.bundle",
+			Name: "file.archive",
 			Decl: types.NewFunction(types.Args(types.NewArray(nil, types.S)), types.S),
 		},
-		fsBundle(res.Fs),
+		fsArchive(res.Fs),
 	)
 }
 
-// BaseFileBundle packages a set of files form the the specified directory
+// BaseFileArchive packages a set of files form the the specified directory
 // in the base filesystem (from a pull_request or other diff context) into
 // a tarball.  It takes one argument: a list of file or directory paths to
 // include, and outputs the tarball as a string.
-// It's exposed as 'base_file.bundle`.
-func BaseFileBundle(res *interfaces.Result) func(*rego.Rego) {
+// It's exposed as 'base_file.archive`.
+func BaseFileArchive(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
-			Name: "base_file.bundle",
+			Name: "base_file.archive",
 			Decl: types.NewFunction(types.Args(types.NewArray(nil, types.S)), types.S),
 		},
-		fsBundle(res.BaseFs),
+		fsArchive(res.BaseFs),
 	)
 }
 
-func fsBundle(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
+func fsArchive(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
 	return func(_ rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 		var paths []string
 		if err := ast.As(op1.Value, &paths); err != nil {
@@ -465,7 +465,7 @@ func fsBundle(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.T
 		}
 
 		if vfs == nil {
-			return nil, fmt.Errorf("cannot bundle files without a filesystem")
+			return nil, fmt.Errorf("cannot archive files without a filesystem")
 		}
 
 		out := bytes.Buffer{}
