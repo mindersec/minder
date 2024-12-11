@@ -76,7 +76,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/styrainc/regal v0.29.2
 	github.com/thomaspoignant/go-feature-flag v1.39.1
-	github.com/xanzy/go-gitlab v0.114.0
+	github.com/xanzy/go-gitlab v0.115.0
 	github.com/yuin/goldmark v1.7.8
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.57.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.57.0
