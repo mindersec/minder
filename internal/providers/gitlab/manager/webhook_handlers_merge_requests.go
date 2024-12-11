@@ -10,7 +10,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	gitlablib "github.com/xanzy/go-gitlab"
+	gitlablib "gitlab.com/gitlab-org/api/client-go"
 
 	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/properties"
