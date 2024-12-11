@@ -5,12 +5,14 @@ package rego_test
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	memfs "github.com/go-git/go-billy/v5/memfs"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -49,6 +51,37 @@ allow {
 	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileExistsInBase(t *testing.T) {
+	t.Parallel()
+	fs := memfs.New()
+
+	_, err := fs.Create("foo")
+	require.NoError(t, err, "could not create file")
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+    base_file.exists("foo")
+}`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	// Matches
+	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		BaseFs: fs,
 	})
 	require.NoError(t, err, "could not evaluate")
 }
@@ -744,6 +777,62 @@ allow {
 	emptyPol := map[string]any{}
 
 	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileBundle(t *testing.T) {
+	t.Parallel()
+	fs := memfs.New()
+	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
+	require.NoError(t, fs.MkdirAll("bar", 0755), "could not create directory")
+
+	require.NoError(t, billyutil.WriteFile(fs, "foo/bar", []byte("bar"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "foo/baz", []byte("bar"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "file.txt", []byte("words"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "README", []byte("docs"), 0644))
+
+	// N.B. This was constructed by examining the output of the tarball, and
+	// and verifying by untarring the data with `cat file | tar -tzvf -`
+	expectedTarball := []byte{
+		31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 236, 147, 65, 10, 2, 49, 12, 69, 115,
+		148, 57, 129, 254, 98, 211, 158, 103, 68, 11, 130, 16, 232, 84, 20, 79,
+		47, 234, 202, 34, 10, 74, 170, 67, 243, 54, 153, 213, 252, 52, 159, 151,
+		68, 72, 27, 0, 136, 204, 183, 9, 160, 158, 79, 190, 99, 116, 142, 6, 86,
+		223, 140, 136, 14, 83, 25, 51, 1, 223, 254, 167, 126, 220, 76, 72, 34,
+		203, 245, 152, 85, 51, 174, 247, 8, 222, 191, 232, 127, 245, 216, 191,
+		131, 103, 208, 208, 228, 136, 157, 247, 175, 221, 189, 241, 223, 220,
+		253, 63, 171, 102, 124, 226, 127, 48, 255, 155, 96, 254, 247, 77, 218,
+		237, 183, 139, 114, 42, 154, 25, 239, 253, 231, 218, 255, 96, 254, 183,
+		225, 40, 121, 51, 253, 122, 9, 195, 48, 12, 163, 57, 151, 0, 0, 0, 255,
+		255, 203, 184, 208, 59, 0, 18, 0, 0,
+	}
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+import rego.v1
+
+tarball := file.bundle(["foo", "file.txt"])
+encoded := base64.encode(tarball)
+expectedTar := base64.decode(input.profile.expected)
+violations contains {"msg": sprintf("Expected: %s", [input.profile.expected])} if tarball != expectedTar
+violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != expectedTar
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	policy := map[string]any{
+		// Encode to string in Go, to force checking that Go & Rego perform the same encoding
+		"expected": base64.StdEncoding.EncodeToString(expectedTarball),
+	}
+
+	err = e.Eval(context.Background(), policy, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
