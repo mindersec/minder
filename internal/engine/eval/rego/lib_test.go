@@ -783,7 +783,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 }
 
-func TestFileBundle(t *testing.T) {
+func TestFileArchive(t *testing.T) {
 	t.Parallel()
 	fs := memfs.New()
 	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
@@ -817,7 +817,7 @@ func TestFileBundle(t *testing.T) {
 package minder
 import rego.v1
 
-tarball := file.bundle(["foo", "file.txt"])
+tarball := file.archive(["foo", "file.txt"])
 encoded := base64.encode(tarball)
 expectedTar := base64.decode(input.profile.expected)
 violations contains {"msg": sprintf("Expected: %s", [input.profile.expected])} if tarball != expectedTar
