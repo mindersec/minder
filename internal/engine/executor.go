@@ -139,21 +139,23 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		return fmt.Errorf("error while retrieving profiles and rule instances: %w", err)
 	}
 
+	sacctx, sac := actions.WithSharedActionsContext(ctx)
+
 	// For each profile, get the profileEvalStatus first. Then, if the profileEvalStatus is nil
 	// evaluate each rule and store the outcome in the database. If profileEvalStatus is non-nil,
 	// just store it for all rules without evaluation.
 	for _, profile := range profileAggregates {
 
-		profileEvalStatus := e.profileEvalStatus(ctx, inf, profile)
+		profileEvalStatus := e.profileEvalStatus(sacctx, inf, profile)
 
 		for _, rule := range profile.Rules {
-			if err := e.evaluateRule(ctx, inf, provider, &profile, &rule, ruleEngineCache, profileEvalStatus); err != nil {
+			if err := e.evaluateRule(sacctx, inf, provider, &profile, &rule, ruleEngineCache, profileEvalStatus); err != nil {
 				return fmt.Errorf("error evaluating entity event: %w", err)
 			}
 		}
 	}
 
-	return nil
+	return sac.Flush()
 }
 
 func (e *executor) evaluateRule(
