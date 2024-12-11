@@ -105,7 +105,8 @@ func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params
 	}, nil
 }
 
-func (gi *Git) ingestPullRequest(ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
+func (gi *Git) ingestPullRequest(
+	ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
@@ -138,7 +139,8 @@ func (gi *Git) ingestPullRequest(ctx context.Context, ent *pbinternal.PullReques
 	}, nil
 }
 
-func (gi *Git) fetchClone(ctx context.Context, url, branch string) (billy.Filesystem, storage.Storer, *plumbing.Reference, error) {
+func (gi *Git) fetchClone(
+	ctx context.Context, url, branch string) (billy.Filesystem, storage.Storer, *plumbing.Reference, error) {
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is
 	// because we want to be able to run this in a sandboxed environment
