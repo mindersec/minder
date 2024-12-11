@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/mindersec/minder/internal/entities/properties"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
