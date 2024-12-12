@@ -79,8 +79,6 @@ func getReleaseNameFromParams(owner, repo, tag string) string {
 func getReleaseWrapper(
 	ctx context.Context, ghCli *go_github.Client, _ bool, getByProps *properties.Properties,
 ) (map[string]any, error) {
-	// TODO: Should I be parsing this as string or int64?
-	// if string, then I should convert it to int64
 	upstreamID, err := getByProps.GetProperty(properties.PropertyUpstreamID).AsInt64()
 	if err != nil {
 		return nil, fmt.Errorf("upstream ID not found or invalid: %w", err)
@@ -108,13 +106,47 @@ func getReleaseWrapper(
 		return nil, fmt.Errorf("failed to fetch release: %w", fetchErr)
 	}
 
+	branch, commitSha, err := getBranchAndCommit(ctx, owner, repo, release.GetTagName(), ghCli)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get branch and commit SHA: %w", err)
+	}
+
 	return map[string]any{
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(release.GetID()),
-		properties.PropertyName:       getReleaseNameFromParams(owner, repo, release.GetTagName()),
-		ReleasePropertyOwner:          owner,
-		ReleasePropertyRepo:           repo,
-		properties.ReleasePropertyTag: release.GetTagName(),
+		properties.PropertyUpstreamID:    properties.NumericalValueToUpstreamID(release.GetID()),
+		properties.PropertyName:          getReleaseNameFromParams(owner, repo, release.GetTagName()),
+		ReleasePropertyOwner:             owner,
+		ReleasePropertyRepo:              repo,
+		properties.ReleasePropertyTag:    release.GetTagName(),
+		properties.ReleaseCommitSHA:      commitSha,
+		properties.ReleasePropertyBranch: branch,
 	}, nil
+}
+
+func getBranchAndCommit(
+	ctx context.Context,
+	owner string,
+	repo string,
+	commitish string,
+	ghCli *go_github.Client,
+) (branch string, commitSha string, err error) {
+	if commitish == "" {
+		// We have no info, but this is not an error. We simply don't fill this
+		// information just yet. We'll get it on entity refresh.
+		return "", "", nil
+	}
+
+	// check if the target commitish is a branch
+	br, res, err := ghCli.Repositories.GetBranch(ctx, owner, repo, commitish, 1)
+	if err == nil {
+		return br.GetName(), br.GetCommit().GetSHA(), nil
+	}
+
+	if res == nil || res.StatusCode != http.StatusNotFound {
+		return "", "", fmt.Errorf("failed to fetch branch: %w", err)
+	}
+
+	// The commitish is a commit SHA
+	return "", commitish, nil
 }
 
 // EntityInstanceV1FromReleaseProperties creates a new EntityInstance from the given properties
@@ -127,11 +159,6 @@ func EntityInstanceV1FromReleaseProperties(props *properties.Properties) (*minde
 	tag, err := props.GetProperty(properties.ReleasePropertyTag).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("tag not found or invalid: %w", err)
-	}
-
-	_, err = props.GetProperty(properties.ReleasePropertyBranch).AsString()
-	if err != nil {
-		return nil, fmt.Errorf("branch not found or invalid: %w", err)
 	}
 
 	owner := props.GetProperty(ReleasePropertyOwner).GetString()
