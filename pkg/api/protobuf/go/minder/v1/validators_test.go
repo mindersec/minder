@@ -323,6 +323,20 @@ func TestRuleType_Definition_Alert_AlertTypePRComment_Validate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "valid PR comment alert template",
+			prAlert: &RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "This is a PR comment with a template {{ .EvalErrorDetails }}",
+			},
+			wantErr: false,
+		},
+		{
+			name: "unparsable PR comment alert template",
+			prAlert: &RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "{{ ",
+			},
+			wantErr: true,
+		},
+		{
 			name:    "empty PR comment message is invalid",
 			wantErr: true,
 		},
