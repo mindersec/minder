@@ -19,6 +19,7 @@ type Config struct {
 	RecurrenceConfig RecurrenceConfig      `mapstructure:"recurrence"`
 	EventConfig      EventConfig           `mapstructure:"events"`
 	LoggingConfig    LoggingConfig         `mapstructure:"logging"`
+	MetricsConfig    MetricsConfig         `mapstructure:"metrics"`
 }
 
 // Validate validates the configuration
