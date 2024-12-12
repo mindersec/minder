@@ -27,7 +27,7 @@ require (
 	github.com/go-git/go-git/v5 v5.12.0
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
-	github.com/goccy/go-json v0.10.3
+	github.com/goccy/go-json v0.10.4
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang-migrate/migrate/v4 v4.18.1
 	github.com/google/cel-go v0.22.1
@@ -87,7 +87,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.32.0
 	go.opentelemetry.io/otel/trace v1.32.0
 	go.uber.org/mock v0.5.0
-	golang.org/x/crypto v0.30.0
+	golang.org/x/crypto v0.31.0
 	golang.org/x/exp v0.0.0-20241009180824-f66d83c29e7c
 	golang.org/x/oauth2 v0.24.0
 	golang.org/x/sync v0.10.0
