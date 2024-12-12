@@ -475,7 +475,6 @@ func fsArchive(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.
 		defer tarWriter.Close()
 
 		for _, f := range paths {
-			fmt.Printf("++ Adding %s\n", f)
 			err := billyutil.Walk(vfs, f, func(path string, info fs.FileInfo, err error) error {
 				if err != nil {
 					return err
@@ -502,7 +501,6 @@ func fsArchive(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.
 						return err
 					}
 				}
-				fmt.Printf("  -> Added %s (%s): %d\n", path, info.Mode(), out.Len())
 				return nil
 			})
 			if err != nil {

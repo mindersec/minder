@@ -107,6 +107,7 @@ func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params
 
 func (gi *Git) ingestPullRequest(
 	ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
+	// TODO: we don't actually have any configuration here.  Do we need to read the configuration?
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)

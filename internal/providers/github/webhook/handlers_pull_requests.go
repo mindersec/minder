@@ -150,7 +150,7 @@ func processPullRequestEvent(
 		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
+	l.Info().Msgf("evaluating PR %s: %s => %s\n", event.GetPullRequest().GetURL(), event.GetAction(), topic)
 
 	return &processingResult{topic: topic, wrapper: prMsg}, nil
 }
