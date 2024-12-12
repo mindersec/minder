@@ -53,7 +53,7 @@ func NewRuleAlert(
 		if alertCfg.GetPullRequestComment() == nil {
 			return nil, fmt.Errorf("alert engine missing pull_request_review configuration")
 		}
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := provinfv1.As[provinfv1.PullRequestCommenter](provider)
 		if err != nil {
 			zerolog.Ctx(ctx).Debug().Str("rule-type", ruletype.GetName()).
 				Msg("provider is not a GitHub provider. Silently skipping alerts.")

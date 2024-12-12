@@ -8,11 +8,7 @@ package pull_request_comment
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"math"
-	"strconv"
-	"time"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
@@ -21,6 +17,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/internal/entities/properties"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -39,7 +36,7 @@ const (
 // Alert is the structure backing the noop alert
 type Alert struct {
 	actionType interfaces.ActionType
-	gh         provifv1.GitHub
+	commenter  provifv1.PullRequestCommenter
 	reviewCfg  *pb.RuleType_Definition_Alert_AlertTypePRComment
 	setting    models.ActionOpt
 }
@@ -54,26 +51,17 @@ type PrCommentTemplateParams struct {
 }
 
 type paramsPR struct {
-	Owner      string
-	Repo       string
-	CommitSha  string
-	Number     int
 	Comment    string
-	Metadata   *alertMetadata
+	props      *properties.Properties
+	Metadata   *provifv1.CommentResultMeta
 	prevStatus *db.ListRuleEvaluationsByProfileIdRow
-}
-
-type alertMetadata struct {
-	ReviewID       string     `json:"review_id,omitempty"`
-	SubmittedAt    *time.Time `json:"submitted_at,omitempty"`
-	PullRequestUrl *string    `json:"pull_request_url,omitempty"`
 }
 
 // NewPullRequestCommentAlert creates a new pull request comment alert action
 func NewPullRequestCommentAlert(
 	actionType interfaces.ActionType,
 	reviewCfg *pb.RuleType_Definition_Alert_AlertTypePRComment,
-	gh provifv1.GitHub,
+	gh provifv1.PullRequestCommenter,
 	setting models.ActionOpt,
 ) (*Alert, error) {
 	if actionType == "" {
@@ -82,7 +70,7 @@ func NewPullRequestCommentAlert(
 
 	return &Alert{
 		actionType: actionType,
-		gh:         gh,
+		commenter:  gh,
 		reviewCfg:  reviewCfg,
 		setting:    setting,
 	}, nil
@@ -134,70 +122,20 @@ func (alert *Alert) Do(
 }
 
 func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx)
-
 	// Process the command
 	switch cmd {
-	// Create a review
 	case interfaces.ActionCmdOn:
-		review := &github.PullRequestReviewRequest{
-			CommitID: github.String(params.CommitSha),
-			Event:    github.String("COMMENT"),
-			Body:     github.String(params.Comment),
-		}
-
-		r, err := alert.gh.CreateReview(
-			ctx,
-			params.Owner,
-			params.Repo,
-			params.Number,
-			review,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
-		}
-
-		newMeta, err := json.Marshal(alertMetadata{
-			ReviewID:       strconv.FormatInt(r.GetID(), 10),
-			SubmittedAt:    r.SubmittedAt.GetTime(),
-			PullRequestUrl: r.PullRequestURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
-		}
-
-		logger.Info().Int64("review_id", *r.ID).Msg("PR review created")
-		return newMeta, nil
-	// Dismiss the review
+		// Create a review
+		return alert.runDoReview(ctx, params)
 	case interfaces.ActionCmdOff:
-		if params.Metadata == nil {
-			// We cannot do anything without the PR review ID, so we assume that turning the alert off is a success
-			return nil, fmt.Errorf("no PR comment ID provided: %w", enginerr.ErrActionTurnedOff)
-		}
-
-		reviewID, err := strconv.ParseInt(params.Metadata.ReviewID, 10, 64)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Str("review_id", params.Metadata.ReviewID).Msg("failed to parse review_id")
-			return nil, fmt.Errorf("no PR comment ID provided: %w, %w", err, enginerr.ErrActionTurnedOff)
-		}
-
-		_, err = alert.gh.DismissReview(ctx, params.Owner, params.Repo, params.Number, reviewID,
-			&github.PullRequestReviewDismissalRequest{
-				Message: github.String("Dismissed due to alert being turned off"),
-			})
-		if err != nil {
-			if errors.Is(err, enginerr.ErrNotFound) {
-				// There's no PR review with that ID anymore.
-				// We exit by stating that the action was turned off.
-				return nil, fmt.Errorf("PR comment already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
-			}
-			return nil, fmt.Errorf("error dismissing PR comment: %w, %w", err, enginerr.ErrActionFailed)
-		}
-		logger.Info().Str("review_id", params.Metadata.ReviewID).Msg("PR comment dismissed")
-		// Success - return ErrActionTurnedOff to indicate the action was successful
-		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
+		return json.RawMessage(`{}`), nil
 	case interfaces.ActionCmdDoNothing:
-		// Return the previous alert status.
+		// If the previous status didn't change (still a failure, for instance) we
+		// want to refresh the alert.
+		if alert.setting == models.ActionOptOn {
+			return alert.runDoReview(ctx, params)
+		}
+		// Else, we just do nothing.
 		return alert.runDoNothing(ctx, params)
 	}
 	return nil, enginerr.ErrActionSkipped
@@ -211,16 +149,16 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 	switch cmd {
 	case interfaces.ActionCmdOn:
 		body := github.String(params.Comment)
-		logger.Info().Msgf("dry run: create a PR comment on PR %d in repo %s/%s with the following body: %s",
-			params.Number, params.Owner, params.Repo, *body)
+		logger.Info().Dict("properties", params.props.ToLogDict()).
+			Msgf("dry run: create a PR comment on PR with body: %s", *body)
 		return nil, nil
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil {
 			// We cannot do anything without the PR review ID, so we assume that turning the alert off is a success
 			return nil, fmt.Errorf("no PR comment ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
-		logger.Info().Msgf("dry run: dismiss PR comment %s on PR PR %d in repo %s/%s", params.Metadata.ReviewID,
-			params.Number, params.Owner, params.Repo)
+		logger.Info().Dict("properties", params.props.ToLogDict()).
+			Msgf("dry run: dismiss PR comment on PR")
 	case interfaces.ActionCmdDoNothing:
 		// Return the previous alert status.
 		return alert.runDoNothing(ctx, params)
@@ -231,7 +169,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 
 // runDoNothing returns the previous alert status
 func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx).With().Str("repo", params.Repo).Logger()
+	logger := zerolog.Ctx(ctx).With().Dict("properties", params.props.ToLogDict()).Logger()
 
 	logger.Debug().Msg("Running do nothing")
 
@@ -245,6 +183,30 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMes
 	return nil, err
 }
 
+func (alert *Alert) runDoReview(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx)
+
+	r, err := alert.commenter.CommentOnPullRequest(ctx, params.props, provifv1.PullRequestCommentInfo{
+		// TODO: We should add the header to identify the alert. We could use the
+		// rule type name.
+		Commit: params.props.GetProperty(properties.PullRequestCommitSHA).GetString(),
+		Body:   params.Comment,
+		// TODO: Determine the priority from the rule type severity
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
+	}
+	logger.Info().Str("review_id", r.ID).Msg("PR review created")
+
+	// serialize r to json
+	meta, err := json.Marshal(r)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling PR review metadata: %w", err)
+	}
+
+	return meta, nil
+}
+
 // getParamsForSecurityAdvisory extracts the details from the entity
 func (alert *Alert) getParamsForPRComment(
 	ctx context.Context,
@@ -253,19 +215,15 @@ func (alert *Alert) getParamsForPRComment(
 	metadata *json.RawMessage,
 ) (*paramsPR, error) {
 	logger := zerolog.Ctx(ctx)
-	result := &paramsPR{
-		prevStatus: params.GetEvalStatusFromDb(),
-		Owner:      pr.GetRepoOwner(),
-		Repo:       pr.GetRepoName(),
-		CommitSha:  pr.GetCommitSha(),
+	props, err := properties.NewProperties(pr.GetProperties().AsMap())
+	if err != nil {
+		return nil, fmt.Errorf("error creating properties: %w", err)
 	}
 
-	// The GitHub Go API takes an int32, but our proto stores an int64; make sure we don't overflow
-	// The PR number is an int in GitHub and Gitlab; in practice overflow will never happen.
-	if pr.Number > math.MaxInt {
-		return nil, fmt.Errorf("pr number is too large")
+	result := &paramsPR{
+		prevStatus: params.GetEvalStatusFromDb(),
+		props:      props,
 	}
-	result.Number = int(pr.Number)
 
 	commentTmpl, err := util.NewSafeHTMLTemplate(&alert.reviewCfg.ReviewMessage, "message")
 	if err != nil {
@@ -289,7 +247,7 @@ func (alert *Alert) getParamsForPRComment(
 
 	// Unmarshal the existing alert metadata, if any
 	if metadata != nil {
-		meta := &alertMetadata{}
+		meta := &provifv1.CommentResultMeta{}
 		err := json.Unmarshal(*metadata, meta)
 		if err != nil {
 			// There's nothing saved apparently, so no need to fail here, but do log the error

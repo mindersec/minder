@@ -213,6 +213,15 @@ func (o *GitHubOAuthDelegate) GetUserId(ctx context.Context) (int64, error) {
 	return user.GetID(), nil
 }
 
+// GetMinderUserId returns the user id for the authenticated user
+func (o *GitHubOAuthDelegate) GetMinderUserId(ctx context.Context) (int64, error) {
+	user, _, err := o.client.Users.Get(ctx, "")
+	if err != nil {
+		return 0, err
+	}
+	return user.GetID(), nil
+}
+
 // GetName returns the username for the authenticated user
 func (o *GitHubOAuthDelegate) GetName(ctx context.Context) (string, error) {
 	user, _, err := o.client.Users.Get(ctx, "")
