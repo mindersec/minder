@@ -2016,3 +2016,173 @@ func (mr *MockOCIMockRecorder) SupportsEntity(entType any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockOCI)(nil).SupportsEntity), entType)
 }
+
+// MockPullRequestCommenter is a mock of PullRequestCommenter interface.
+type MockPullRequestCommenter struct {
+	ctrl     *gomock.Controller
+	recorder *MockPullRequestCommenterMockRecorder
+	isgomock struct{}
+}
+
+// MockPullRequestCommenterMockRecorder is the mock recorder for MockPullRequestCommenter.
+type MockPullRequestCommenterMockRecorder struct {
+	mock *MockPullRequestCommenter
+}
+
+// NewMockPullRequestCommenter creates a new mock instance.
+func NewMockPullRequestCommenter(ctrl *gomock.Controller) *MockPullRequestCommenter {
+	mock := &MockPullRequestCommenter{ctrl: ctrl}
+	mock.recorder = &MockPullRequestCommenterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPullRequestCommenter) EXPECT() *MockPullRequestCommenterMockRecorder {
+	return m.recorder
+}
+
+// CanImplement mocks base method.
+func (m *MockPullRequestCommenter) CanImplement(trait v10.ProviderType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanImplement", trait)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanImplement indicates an expected call of CanImplement.
+func (mr *MockPullRequestCommenterMockRecorder) CanImplement(trait any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockPullRequestCommenter)(nil).CanImplement), trait)
+}
+
+// CommentOnPullRequest mocks base method.
+func (m *MockPullRequestCommenter) CommentOnPullRequest(ctx context.Context, getByProps *properties.Properties, comment v11.PullRequestCommentInfo) (*v11.CommentResultMeta, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommentOnPullRequest", ctx, getByProps, comment)
+	ret0, _ := ret[0].(*v11.CommentResultMeta)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CommentOnPullRequest indicates an expected call of CommentOnPullRequest.
+func (mr *MockPullRequestCommenterMockRecorder) CommentOnPullRequest(ctx, getByProps, comment any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommentOnPullRequest", reflect.TypeOf((*MockPullRequestCommenter)(nil).CommentOnPullRequest), ctx, getByProps, comment)
+}
+
+// DeregisterEntity mocks base method.
+func (m *MockPullRequestCommenter) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeregisterEntity indicates an expected call of DeregisterEntity.
+func (mr *MockPullRequestCommenterMockRecorder) DeregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterEntity", reflect.TypeOf((*MockPullRequestCommenter)(nil).DeregisterEntity), ctx, entType, props)
+}
+
+// FetchAllProperties mocks base method.
+func (m *MockPullRequestCommenter) FetchAllProperties(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, cachedProps *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchAllProperties", ctx, getByProps, entType, cachedProps)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchAllProperties indicates an expected call of FetchAllProperties.
+func (mr *MockPullRequestCommenterMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockPullRequestCommenter)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
+}
+
+// FetchProperty mocks base method.
+func (m *MockPullRequestCommenter) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
+	ret0, _ := ret[0].(*properties.Property)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FetchProperty indicates an expected call of FetchProperty.
+func (mr *MockPullRequestCommenterMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockPullRequestCommenter)(nil).FetchProperty), ctx, getByProps, entType, key)
+}
+
+// GetEntityName mocks base method.
+func (m *MockPullRequestCommenter) GetEntityName(entType v10.Entity, props *properties.Properties) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEntityName", entType, props)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEntityName indicates an expected call of GetEntityName.
+func (mr *MockPullRequestCommenterMockRecorder) GetEntityName(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityName", reflect.TypeOf((*MockPullRequestCommenter)(nil).GetEntityName), entType, props)
+}
+
+// PropertiesToProtoMessage mocks base method.
+func (m *MockPullRequestCommenter) PropertiesToProtoMessage(entType v10.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesToProtoMessage", entType, props)
+	ret0, _ := ret[0].(protoreflect.ProtoMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesToProtoMessage indicates an expected call of PropertiesToProtoMessage.
+func (mr *MockPullRequestCommenterMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockPullRequestCommenter)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// RegisterEntity mocks base method.
+func (m *MockPullRequestCommenter) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(*properties.Properties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegisterEntity indicates an expected call of RegisterEntity.
+func (mr *MockPullRequestCommenterMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockPullRequestCommenter)(nil).RegisterEntity), ctx, entType, props)
+}
+
+// ReregisterEntity mocks base method.
+func (m *MockPullRequestCommenter) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ReregisterEntity indicates an expected call of ReregisterEntity.
+func (mr *MockPullRequestCommenterMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockPullRequestCommenter)(nil).ReregisterEntity), ctx, entType, props)
+}
+
+// SupportsEntity mocks base method.
+func (m *MockPullRequestCommenter) SupportsEntity(entType v10.Entity) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SupportsEntity", entType)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SupportsEntity indicates an expected call of SupportsEntity.
+func (mr *MockPullRequestCommenterMockRecorder) SupportsEntity(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SupportsEntity", reflect.TypeOf((*MockPullRequestCommenter)(nil).SupportsEntity), entType)
+}
