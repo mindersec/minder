@@ -21,10 +21,6 @@ const (
 	ReleasePropertyOwner = "github/owner"
 	// ReleasePropertyRepo represents the github repo
 	ReleasePropertyRepo = "github/repo"
-	// ReleasePropertyTag represents the github release tag name.
-	ReleasePropertyTag = "github/tag"
-	// ReleasePropertyBranch represents the github release branch
-	ReleasePropertyBranch = "github/branch"
 )
 
 // ReleaseFetcher is a property fetcher for releases
@@ -43,8 +39,10 @@ func NewReleaseFetcher() *ReleaseFetcher {
 						properties.PropertyName,
 						properties.PropertyUpstreamID,
 						// general release
-						ReleasePropertyTag,
-						ReleasePropertyBranch,
+						properties.ReleasePropertyTag,
+						properties.ReleasePropertyBranch,
+						ReleasePropertyOwner,
+						ReleasePropertyRepo,
 					},
 					wrapper: getReleaseWrapper,
 				},
@@ -62,7 +60,7 @@ func (_ *ReleaseFetcher) GetName(props *properties.Properties) (string, error) {
 		return "", fmt.Errorf("failed to get repo name: %w", err)
 	}
 
-	tag, err := props.GetProperty(ReleasePropertyTag).AsString()
+	tag, err := props.GetProperty(properties.ReleasePropertyTag).AsString()
 	if err != nil {
 		return "", fmt.Errorf("failed to get tag name: %w", err)
 	}
@@ -115,8 +113,7 @@ func getReleaseWrapper(
 		properties.PropertyName:       getReleaseNameFromParams(owner, repo, release.GetTagName()),
 		ReleasePropertyOwner:          owner,
 		ReleasePropertyRepo:           repo,
-		ReleasePropertyTag:            release.GetTagName(),
-		ReleasePropertyBranch:         release.GetTargetCommitish(),
+		properties.ReleasePropertyTag: release.GetTagName(),
 	}, nil
 }
 
@@ -127,12 +124,12 @@ func EntityInstanceV1FromReleaseProperties(props *properties.Properties) (*minde
 		return nil, fmt.Errorf("upstream ID not found or invalid: %w", err)
 	}
 
-	tag, err := props.GetProperty(ReleasePropertyTag).AsString()
+	tag, err := props.GetProperty(properties.ReleasePropertyTag).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("tag not found or invalid: %w", err)
 	}
 
-	_, err = props.GetProperty(ReleasePropertyBranch).AsString()
+	_, err = props.GetProperty(properties.ReleasePropertyBranch).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("branch not found or invalid: %w", err)
 	}
