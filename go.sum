@@ -217,8 +217,6 @@ github.com/bmatcuk/doublestar/v4 v4.7.1 h1:fdDeAqgT47acgwd9bd9HxJRDmc9UAmPpc+2m0
 github.com/bmatcuk/doublestar/v4 v4.7.1/go.mod h1:xBQ8jztBU6kakFMg+8WGxn0c6z1fTSPVIjEY1Wr7jzc=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0 h1:any4BmKE+jGIaMpnU8YgH/I2LPiLBufr6oMMlVBbn9M=
 github.com/bradleyjkemp/cupaloy/v2 v2.8.0/go.mod h1:bm7JXdkRd4BHJk9HpwqAI8BoAY1lps46Enkdqw6aRX0=
-github.com/bufbuild/protovalidate-go v0.7.3 h1:kKnoSueygR3xxppvuBpm9SEwIsP359MMRfMBGmRByPg=
-github.com/bufbuild/protovalidate-go v0.7.3/go.mod h1:CFv34wMqiBzAHdQ4q/tWYi9ILFYKuaC3/4zh6eqdUck=
 github.com/bufbuild/protovalidate-go v0.8.0 h1:Xs3kCLCJ4tQiogJ0iOXm+ClKw/KviW3nLAryCGW2I3Y=
 github.com/bufbuild/protovalidate-go v0.8.0/go.mod h1:JPWZInGm2y2NBg3vKDKdDIkvDjyLv31J3hLH5GIFc/Q=
 github.com/bwesterb/go-ristretto v1.2.3/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
