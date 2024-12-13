@@ -339,6 +339,11 @@ func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
 		return fmt.Errorf("%w: pull request comment review message cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
 
+	_, err := util.NewSafeHTMLTemplate(&comment.ReviewMessage, "message")
+	if err != nil {
+		return fmt.Errorf("%w: pull request comment message is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
 	return nil
 }
 
