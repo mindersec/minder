@@ -62,7 +62,7 @@ brew install minder
 Make sure you have [Winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) installed.
 
 ```bash
-winget install stacklok.minder
+winget install mindersec.minder
 ```
 
 ### Download a release
