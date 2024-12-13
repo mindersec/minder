@@ -168,3 +168,13 @@ func (_ *FakeClient) StringValueDetails(_ context.Context, _ string, _ string,
 	_ openfeature.EvaluationContext, _ ...openfeature.Option) (openfeature.StringEvaluationDetails, error) {
 	panic("unimplemented")
 }
+
+// State implements openfeature.IClient.
+func (_ *FakeClient) State() openfeature.State {
+	panic("unimplemented")
+}
+
+// Track implements openfeature.ITracking.
+func (_ *FakeClient) Track(ctx context.Context, trackingEventName string, evalCtx openfeature.EvaluationContext, details openfeature.TrackingEventDetails) {
+	panic("unimplemented")
+}
