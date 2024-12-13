@@ -60,7 +60,33 @@ func NewValidator() (*protovalidate.Validator, error) {
 func formatViolations(violations *validate.Violations) string {
 	var res []string
 	for _, v := range violations.Violations {
-		res = append(res, fmt.Sprintf("- Field '%s': %s", *v.FieldPath, *v.Message))
+		res = append(res, fmt.Sprintf("- Field '%s': %s", getFullPath(v.Field), *v.Message))
 	}
 	return strings.Join(res, "\n")
+}
+
+func getFullPath(field *validate.FieldPath) string {
+	var pathElements []string
+	for _, element := range field.GetElements() {
+		if element.GetFieldName() != "" {
+			pathElements = append(pathElements, element.GetFieldName())
+		} else if element.GetFieldNumber() != 0 {
+			pathElements = append(pathElements, fmt.Sprintf("%d", element.GetFieldNumber()))
+		}
+		if element.GetSubscript() != nil {
+			switch subscript := element.GetSubscript().(type) {
+			case *validate.FieldPathElement_Index:
+				pathElements[len(pathElements)-1] = fmt.Sprintf("%s[%d]", pathElements[len(pathElements)-1], subscript.Index)
+			case *validate.FieldPathElement_BoolKey:
+				pathElements[len(pathElements)-1] = fmt.Sprintf("%s[%t]", pathElements[len(pathElements)-1], subscript.BoolKey)
+			case *validate.FieldPathElement_IntKey:
+				pathElements[len(pathElements)-1] = fmt.Sprintf("%s[%d]", pathElements[len(pathElements)-1], subscript.IntKey)
+			case *validate.FieldPathElement_UintKey:
+				pathElements[len(pathElements)-1] = fmt.Sprintf("%s[%d]", pathElements[len(pathElements)-1], subscript.UintKey)
+			case *validate.FieldPathElement_StringKey:
+				pathElements[len(pathElements)-1] = fmt.Sprintf("%s[%s]", pathElements[len(pathElements)-1], subscript.StringKey)
+			}
+		}
+	}
+	return strings.Join(pathElements, ".")
 }
