@@ -47,7 +47,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -55,7 +55,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -89,7 +89,7 @@ skip {
 	emptyPol := map[string]any{}
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -117,7 +117,7 @@ violations[{"msg": msg}] {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -125,7 +125,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -159,7 +159,7 @@ violations[{"msg": msg}] {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
@@ -198,7 +198,7 @@ allow {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -206,7 +206,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -236,7 +236,7 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -244,7 +244,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -299,7 +299,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
@@ -340,7 +340,7 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -372,7 +372,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
@@ -430,7 +430,7 @@ violations[{"msg": msg}] {`,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, nil,
+	_, err = e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
@@ -454,7 +454,7 @@ violations[{"msg": msg}] {
 	)
 	require.NoError(t, err, "could not create evaluator")
 
-	err = e.Eval(context.Background(), map[string]any{}, nil,
+	_, err = e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Result{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
@@ -498,7 +498,7 @@ allow {
 
 	// Matches
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("foo", nil)
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -507,7 +507,7 @@ allow {
 
 	// Doesn't match
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("bar", nil)
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},

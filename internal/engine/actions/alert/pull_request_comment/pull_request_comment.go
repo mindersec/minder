@@ -48,6 +48,9 @@ type Alert struct {
 type PrCommentTemplateParams struct {
 	// EvalErrorDetails is the details of the error that occurred during evaluation, which may be empty
 	EvalErrorDetails string
+
+	// EvalResult is the output of the evaluation, which may be empty
+	EvalResultOutput any
 }
 
 type paramsPR struct {
@@ -271,6 +274,10 @@ func (alert *Alert) getParamsForPRComment(
 
 	tmplParams := &PrCommentTemplateParams{
 		EvalErrorDetails: enginerr.ErrorAsEvalDetails(params.GetEvalErr()),
+	}
+
+	if params.GetEvalResult() != nil {
+		tmplParams.EvalResultOutput = params.GetEvalResult().Output
 	}
 
 	comment, err := commentTmpl.Render(ctx, tmplParams, PrCommentMaxLength)

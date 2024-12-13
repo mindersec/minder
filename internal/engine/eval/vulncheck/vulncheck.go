@@ -72,15 +72,15 @@ func (e *Evaluator) Eval(
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Result,
-) error {
+) (*interfaces.EvaluationResult, error) {
 	vulnerablePackages, err := e.getVulnerableDependencies(ctx, pol, res)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if len(vulnerablePackages) > 0 {
 		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.VulnCheckErrorTemplate) {
-			return evalerrors.NewDetailedErrEvaluationFailed(
+			return nil, evalerrors.NewDetailedErrEvaluationFailed(
 				templates.VulncheckTemplate,
 				map[string]any{"packages": vulnerablePackages},
 				"vulnerable packages: %s",
@@ -88,13 +88,13 @@ func (e *Evaluator) Eval(
 			)
 		}
 
-		return evalerrors.NewErrEvaluationFailed(
+		return nil, evalerrors.NewErrEvaluationFailed(
 			"vulnerable packages: %s",
 			strings.Join(vulnerablePackages, ","),
 		)
 	}
 
-	return nil
+	return &interfaces.EvaluationResult{}, nil
 }
 
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
