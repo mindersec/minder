@@ -70,7 +70,7 @@ func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 	}
 
 	if flagProvider != nil {
-		if err := openfeature.SetProvider(flagProvider); err != nil {
+		if err := openfeature.SetProviderAndWait(flagProvider); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to set flag provider, continuing without flag data")
 		} else {
 			zerolog.Ctx(ctx).Info().Msg("Feature flag provider installed")
