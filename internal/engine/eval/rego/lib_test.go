@@ -1003,7 +1003,7 @@ allow {
 					Def:  regoCode,
 				},
 				nil,
-	)
+			)
 			require.NoError(t, err, "could not create evaluator")
 
 			emptyPol := map[string]any{}
@@ -1109,7 +1109,7 @@ allow {
 					Def:  regoCode,
 				},
 				nil,
-	)
+			)
 			require.NoError(t, err, "could not create evaluator")
 
 			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})

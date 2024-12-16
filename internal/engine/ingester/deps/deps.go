@@ -262,6 +262,7 @@ func (gi *Deps) ingestPullRequest(
 	}, nil
 }
 
+// TODO: this first part is fairly shared with fetchClone from ../git/git.go.
 func (gi *Deps) scanFromUrl(ctx context.Context, url string, branch string) (*sbom.NodeList, *plumbing.Reference, error) {
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is

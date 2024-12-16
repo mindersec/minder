@@ -21,6 +21,7 @@ const (
 	PRCommentAlert Experiment = "pr_comment_alert"
 	// GitPRDiffs enables the git ingester for pull requests.
 	GitPRDiffs Experiment = "git_pr_diffs"
-	// Add tar.gz functions to the rego evaluation environment.
+	// TarGzFunctions enables functions to produce tar.gz data in the rego
+	// evaluation environment.
 	TarGzFunctions Experiment = "tar_gz_functions"
 )

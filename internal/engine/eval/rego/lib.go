@@ -45,6 +45,8 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	JQIsTrue,
 }
 
+// MinderRegoLibExperiments contains Minder-specific functions which
+// should only be exposed when the given experiment is enabled.
 var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Result) func(*rego.Rego){
 	flags.TarGzFunctions: {FileArchive, BaseFileArchive},
 	flags.GitPRDiffs: {

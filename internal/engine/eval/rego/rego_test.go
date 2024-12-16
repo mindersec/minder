@@ -419,7 +419,7 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 				Type: "invalid",
 			},
 			nil,
-	)
+		)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 }

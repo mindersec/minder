@@ -128,7 +128,7 @@ func cacheRuleEngine(
 	ctx context.Context,
 	ruleType *db.RuleType,
 	provider provinfv1.Provider,
-	experiments openfeature.IClient,
+	featureFlags openfeature.IClient,
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
 	dssvc datasourceservice.DataSourcesService,
@@ -156,7 +156,7 @@ func cacheRuleEngine(
 	opts = append(opts, eoptions.WithDataSources(dsreg))
 
 	// Create the rule type engine
-	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, experiments, opts...)
+	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, featureFlags, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}
