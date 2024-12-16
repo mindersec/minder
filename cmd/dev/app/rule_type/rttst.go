@@ -326,7 +326,6 @@ func selectAndEval(
 	}
 
 	var evalErr error
-	//var result *interfaces.EvaluationResult
 	if selected {
 		_, evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {

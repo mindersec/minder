@@ -85,7 +85,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		BaseFs: fs,
 	})
 	require.NoError(t, err, "could not evaluate")
@@ -857,7 +857,7 @@ violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != ex
 		"expected": base64.StdEncoding.EncodeToString(expectedTarball),
 	}
 
-	err = e.Eval(context.Background(), policy, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), policy, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
