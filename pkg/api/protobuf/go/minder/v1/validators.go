@@ -339,6 +339,11 @@ func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
 		return fmt.Errorf("%w: pull request comment review message cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
 
+	_, err := util.NewSafeHTMLTemplate(&comment.ReviewMessage, "message")
+	if err != nil {
+		return fmt.Errorf("%w: pull request comment message is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
 	return nil
 }
 
@@ -547,6 +552,15 @@ func (ds *DataSource) Validate() error {
 	}
 
 	return val.Validate()
+}
+
+// Validate checks a structured data source to ensure it is valid
+func (dsStructuredDriver *DataSource_Structured) Validate() error {
+	if dsStructuredDriver == nil || dsStructuredDriver.Structured == nil {
+		return fmt.Errorf("%w: structured driver is nil", ErrValidationFailed)
+	}
+
+	return nil
 }
 
 // Validate is the entrypoint for the actual driver's validation

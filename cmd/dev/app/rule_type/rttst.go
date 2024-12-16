@@ -326,8 +326,9 @@ func selectAndEval(
 	}
 
 	var evalErr error
+	//var result *interfaces.EvaluationResult
 	if selected {
-		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
+		_, evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {
 		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}

@@ -30,6 +30,7 @@ import (
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -189,6 +190,7 @@ func (e *executor) evaluateRule(
 
 	// Evaluate the rule
 	var evalErr error
+	var result *interfaces.EvaluationResult
 	if profileEvalStatus != nil {
 		evalErr = profileEvalStatus
 	} else {
@@ -197,8 +199,8 @@ func (e *executor) evaluateRule(
 			Str("entity_type", inf.Type.ToString()).
 			Str("execution_id", inf.ExecutionID.String()).
 			Logger().WithContext(ctx)
-		evalErr = ruleEngine.Eval(ctx, inf.Entity, evalParams.GetRule().Def, evalParams.GetRule().Params, evalParams)
-
+		result, evalErr = ruleEngine.Eval(ctx, inf.Entity, evalParams.GetRule().Def, evalParams.GetRule().Params, evalParams)
+		evalParams.SetEvalResult(result)
 	}
 	evalParams.SetEvalErr(evalErr)
 

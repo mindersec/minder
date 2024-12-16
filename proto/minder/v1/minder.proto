@@ -2839,7 +2839,7 @@ message RuleType {
             message AlertTypePRComment {
                 string review_message = 1 [
                     (buf.validate.field).string = {
-                        max_len: 1000,
+                        max_len: 65536,
                     },
                     (google.api.field_behavior) = REQUIRED
                 ];
@@ -3668,10 +3668,12 @@ message Provider {
     // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
+    // if unset, "v1" is assumed.
     string version = 3 [
         (buf.validate.field).string = {
             pattern: "v1",
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // implements is the list of interfaces that the provider implements.
@@ -4036,9 +4038,31 @@ message DataSource {
     ];
 
     oneof driver {
+        // structured is the structired data - data source.
+        StructDataSource structured = 8;
         // rest is the REST data source driver.
         RestDataSource rest = 6;
     }
+}
+
+// StructDataSource is the structured data source driver.
+message StructDataSource {
+    message Def {
+        // Path is the path specification for the structured data source.
+        Path path = 1 [
+              (google.api.field_behavior) = REQUIRED
+        ];
+
+        message Path {
+            string file_name = 1;
+            repeated string alternatives = 2 [
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
+        }
+    }
+
+    // defs is the list of definitions for the structured data API.
+    map<string, Def> def = 1;
 }
 
 // RestDataSource is the REST data source driver.

@@ -137,7 +137,7 @@ func (r *RuleTypeEngine) Eval(
 	ruleDef map[string]any,
 	ruleParams map[string]any,
 	params interfaces.ResultSink,
-) (finalErr error) {
+) (res *interfaces.EvaluationResult, finalErr error) {
 	logger := zerolog.Ctx(ctx)
 	defer func() {
 		if r := recover(); r != nil {
@@ -154,13 +154,13 @@ func (r *RuleTypeEngine) Eval(
 	// rule definition.
 	if ruleDef != nil {
 		if err := r.ruleValidator.ValidateRuleDefAgainstSchema(ruleDef); err != nil {
-			return fmt.Errorf("rule definition validation failed: %w", err)
+			return nil, fmt.Errorf("rule definition validation failed: %w", err)
 		}
 	}
 
 	if ruleParams != nil {
 		if err := r.ruleValidator.ValidateParamsAgainstSchema(ruleParams); err != nil {
-			return fmt.Errorf("rule parameters validation failed: %w", err)
+			return nil, fmt.Errorf("rule parameters validation failed: %w", err)
 		}
 	}
 
@@ -174,7 +174,7 @@ func (r *RuleTypeEngine) Eval(
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
-			return fmt.Errorf("error ingesting data: %w", err)
+			return nil, fmt.Errorf("error ingesting data: %w", err)
 		}
 		r.ingestCache.Set(r.ingester, entity, ruleParams, result)
 	} else {
@@ -185,9 +185,9 @@ func (r *RuleTypeEngine) Eval(
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, result)
+	res, err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, result)
 	logger.Info().Msg("entity evaluation - evaluation completed")
-	return err
+	return res, err
 }
 
 // WithCustomIngester sets a custom ingester for the rule type engine. This is handy for testing

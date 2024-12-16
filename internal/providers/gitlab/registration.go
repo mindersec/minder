@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/gitlab/webhooksecret"

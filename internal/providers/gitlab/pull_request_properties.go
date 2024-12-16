@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/mindersec/minder/internal/entities/properties"
 	pbinternal "github.com/mindersec/minder/internal/proto"

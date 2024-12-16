@@ -16,7 +16,8 @@ minder datasource [flags]
 ### Options
 
 ```
-  -h, --help   help for datasource
+  -h, --help             help for datasource
+  -j, --project string   ID of the project
 ```
 
 ### Options inherited from parent commands
