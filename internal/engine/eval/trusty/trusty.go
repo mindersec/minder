@@ -86,14 +86,14 @@ func (e *Evaluator) Eval(
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
 	res *interfaces.Result,
-) error {
+) (*interfaces.EvaluationResult, error) {
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
 	if err != nil {
-		return fmt.Errorf("reading pull request dependencies: %w", err)
+		return nil, fmt.Errorf("reading pull request dependencies: %w", err)
 	}
 	if len(prDependencies.Deps) == 0 {
-		return nil
+		return &interfaces.EvaluationResult{}, nil
 	}
 
 	logger := zerolog.Ctx(ctx).With().
@@ -104,12 +104,12 @@ func (e *Evaluator) Eval(
 	// Parse the profile data to get the policy configuration
 	ruleConfig, err := parseRuleConfig(pol)
 	if err != nil {
-		return fmt.Errorf("parsing policy configuration: %w", err)
+		return nil, fmt.Errorf("parsing policy configuration: %w", err)
 	}
 
 	prSummaryHandler, err := newSummaryPrHandler(prDependencies.Pr, e.cli, e.endpoint)
 	if err != nil {
-		return fmt.Errorf("failed to create summary handler: %w", err)
+		return nil, fmt.Errorf("failed to create summary handler: %w", err)
 	}
 
 	// Classify all dependencies, tracking all that are malicious or scored low
@@ -121,7 +121,7 @@ func (e *Evaluator) Eval(
 				Str("dependency_name", dep.Dep.Name).
 				Str("dependency_version", dep.Dep.Version).
 				Msg("error fetching trusty data")
-			return fmt.Errorf("getting dependency score: %w", err)
+			return nil, fmt.Errorf("getting dependency score: %w", err)
 		}
 
 		if depscore == nil || depscore.PackageName == "" {
@@ -137,15 +137,20 @@ func (e *Evaluator) Eval(
 	// If there are no problematic dependencies, return here
 	if len(prSummaryHandler.trackedAlternatives) == 0 {
 		logger.Debug().Msgf("no action, no packages tracked")
-		return nil
+		return &interfaces.EvaluationResult{}, nil
 	}
 
 	if err := submitSummary(ctx, prSummaryHandler, ruleConfig); err != nil {
 		logger.Err(err).Msgf("Failed generating PR summary: %s", err.Error())
-		return fmt.Errorf("submitting pull request summary: %w", err)
+		return nil, fmt.Errorf("submitting pull request summary: %w", err)
 	}
 
-	return buildEvalResult(prSummaryHandler)
+	err = buildEvalResult(prSummaryHandler)
+	if err != nil {
+		return nil, err
+	}
+
+	return &interfaces.EvaluationResult{}, nil
 }
 
 func getEcosystemConfig(

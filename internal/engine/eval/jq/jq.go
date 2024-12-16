@@ -56,9 +56,14 @@ func NewJQEvaluator(
 }
 
 // Eval calls the jq library to evaluate the rule
-func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protoreflect.ProtoMessage, res *interfaces.Result) error {
+func (jqe *Evaluator) Eval(
+	ctx context.Context,
+	pol map[string]any,
+	_ protoreflect.ProtoMessage,
+	res *interfaces.Result,
+) (*interfaces.EvaluationResult, error) {
 	if res.Object == nil {
-		return fmt.Errorf("missing object")
+		return nil, fmt.Errorf("missing object")
 	}
 	obj := res.Object
 
@@ -72,7 +77,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protorefle
 		if a.Profile == nil {
 			expectedVal, err = util.JQReadConstant[any](a.Constant.AsInterface())
 			if err != nil {
-				return fmt.Errorf("cannot get values from profile accessor: %w", err)
+				return nil, fmt.Errorf("cannot get values from profile accessor: %w", err)
 			}
 		} else {
 			// Get the expected value from the profile accessor
@@ -80,13 +85,13 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protorefle
 			// we ignore util.ErrNoValueFound because we want to allow the JQ accessor to return the default value
 			// which is fine for DeepEqual
 			if err != nil && !errors.Is(err, util.ErrNoValueFound) {
-				return fmt.Errorf("cannot get values from profile accessor: %w", err)
+				return nil, fmt.Errorf("cannot get values from profile accessor: %w", err)
 			}
 		}
 
 		dataVal, err = util.JQReadFrom[any](ctx, a.Ingested.Def, obj)
 		if err != nil && !errors.Is(err, util.ErrNoValueFound) {
-			return fmt.Errorf("cannot get values from data accessor: %w", err)
+			return nil, fmt.Errorf("cannot get values from data accessor: %w", err)
 		}
 
 		// Deep compare
@@ -99,7 +104,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protorefle
 				msg = fmt.Sprintf("%s\nassertion: %s", msg, string(marshalledAssertion))
 			}
 
-			return evalerrors.NewDetailedErrEvaluationFailed(
+			return nil, evalerrors.NewDetailedErrEvaluationFailed(
 				templates.JqTemplate,
 				map[string]any{
 					"path":     a.Ingested.Def,
@@ -112,7 +117,7 @@ func (jqe *Evaluator) Eval(ctx context.Context, pol map[string]any, _ protorefle
 		}
 	}
 
-	return nil
+	return &interfaces.EvaluationResult{}, nil
 }
 
 // Convert numeric types to float64

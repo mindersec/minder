@@ -109,7 +109,7 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(
 	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Result,
-) error {
+) (*interfaces.EvaluationResult, error) {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check
 	// this explicitly.
@@ -131,7 +131,7 @@ func (e *Evaluator) Eval(
 
 	pq, err := r.PrepareForEval(ctx)
 	if err != nil {
-		return fmt.Errorf("could not prepare Rego: %w", err)
+		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
 	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
@@ -140,8 +140,13 @@ func (e *Evaluator) Eval(
 		OutputFormat: e.cfg.ViolationFormat,
 	}))
 	if err != nil {
-		return fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
+		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
-	return e.reseval.parseResult(rs, entity)
+	err = e.reseval.parseResult(rs, entity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &interfaces.EvaluationResult{}, nil
 }

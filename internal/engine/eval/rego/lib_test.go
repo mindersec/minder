@@ -46,7 +46,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -75,7 +75,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -112,7 +112,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -149,7 +149,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -179,7 +179,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -211,7 +211,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -248,7 +248,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -285,7 +285,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -325,7 +325,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -368,7 +368,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -406,7 +406,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -503,7 +503,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -539,7 +539,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -574,7 +574,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -620,7 +620,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -656,7 +656,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -693,7 +693,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -743,7 +743,7 @@ allow {
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -894,7 +894,7 @@ allow {
 			emptyPol := map[string]any{}
 
 			var evalErr *engerrors.EvaluationError
-			err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+			_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 				Object: nil,
 				Fs:     fs,
 			})
@@ -996,7 +996,7 @@ allow {
 			)
 			require.NoError(t, err, "could not create evaluator")
 
-			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
 
 			if s.wantErr {
 				require.Error(t, err)
