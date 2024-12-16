@@ -17,6 +17,7 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -42,6 +43,7 @@ allow {
 	file.exists("foo")
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -62,6 +64,8 @@ func TestFileExistsInBase(t *testing.T) {
 	_, err := fs.Create("foo")
 	require.NoError(t, err, "could not create file")
 
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"git_pr_diffs": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
@@ -74,6 +78,7 @@ allow {
     base_file.exists("foo")
 }`,
 		},
+		featureClient,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -103,6 +108,7 @@ allow {
 	file.exists("unexistent")
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -140,6 +146,7 @@ allow {
 	contents == "bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -177,6 +184,7 @@ allow {
 	contents == "bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -207,6 +215,7 @@ allow {
 	is_null(files)
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -239,6 +248,7 @@ allow {
 	count(files) == 0
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -276,6 +286,7 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -313,6 +324,7 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -353,6 +365,7 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -396,6 +409,7 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -434,6 +448,7 @@ allow {
 	count(files) == 1
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -531,6 +546,7 @@ allow {
 	actions == expected_set
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -567,6 +583,7 @@ allow {
 	actions == expected_set
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -602,6 +619,7 @@ allow {
 	count(files) == 1
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -648,6 +666,7 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -684,6 +703,7 @@ allow {
 	htype == "text/plain; charset=utf-8"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -721,6 +741,7 @@ allow {
 	htype == "application/octet-stream"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -771,6 +792,7 @@ allow {
 	count(files) == 7
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -810,6 +832,8 @@ func TestFileArchive(t *testing.T) {
 		255, 203, 184, 208, 59, 0, 18, 0, 0,
 	}
 
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"tar_gz_functions": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
@@ -824,6 +848,7 @@ violations contains {"msg": sprintf("Expected: %s", [input.profile.expected])} i
 violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != expectedTar
 `,
 		},
+		featureClient,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -977,7 +1002,8 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
-			)
+				nil,
+	)
 			require.NoError(t, err, "could not create evaluator")
 
 			emptyPol := map[string]any{}
@@ -1082,7 +1108,8 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
-			)
+				nil,
+	)
 			require.NoError(t, err, "could not create evaluator")
 
 			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})

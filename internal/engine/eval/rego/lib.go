@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	billyutil "github.com/go-git/go-billy/v5/util"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/types"
@@ -26,6 +27,7 @@ import (
 	"github.com/stacklok/frizbee/pkg/utils/config"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -38,24 +40,35 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileHTTPType,
 	FileRead,
 	FileWalk,
-	FileArchive,
 	ListGithubActions,
-	BaseFileExists,
-	BaseFileLs,
-	BaseFileLsGlob,
-	BaseFileHTTPType,
-	BaseFileRead,
-	BaseFileWalk,
-	BaseListGithubActions,
-	BaseFileArchive,
 	ParseYaml,
 	JQIsTrue,
 }
 
-func instantiateRegoLib(res *interfaces.Result) []func(*rego.Rego) {
+var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Result) func(*rego.Rego){
+	flags.TarGzFunctions: {FileArchive, BaseFileArchive},
+	flags.GitPRDiffs: {
+		BaseFileExists,
+		BaseFileLs,
+		BaseFileLsGlob,
+		BaseFileHTTPType,
+		BaseFileRead,
+		BaseFileWalk,
+		BaseListGithubActions,
+	},
+}
+
+func instantiateRegoLib(ctx context.Context, featureFlags openfeature.IClient, res *interfaces.Result) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
+	}
+	for flag, funcs := range MinderRegoLibExperiments {
+		if flags.Bool(ctx, featureFlags, flag) {
+			for _, f := range funcs {
+				lib = append(lib, f(res))
+			}
+		}
 	}
 	return lib
 }

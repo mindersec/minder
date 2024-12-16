@@ -123,6 +123,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		entityType,
 		inf.ProjectID,
 		provider,
+		e.featureFlags,
 		ingestCache,
 		dssvc,
 		eoptions.WithFlagsClient(e.featureFlags),

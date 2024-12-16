@@ -41,6 +41,7 @@ allow {
 	input.ingested.data == "foo"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -83,6 +84,7 @@ skip {
 }
 `,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -111,6 +113,7 @@ violations[{"msg": msg}] {
 	msg := "data did not contain foo"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -154,6 +157,7 @@ violations[{"msg": msg}] {
 }
 `,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -190,6 +194,7 @@ allow {
 	input.profile.data == input.ingested.data
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -228,6 +233,7 @@ violations[{"msg": msg}] {
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -292,6 +298,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 			ViolationFormat: &violationFormat,
 			Def:             jsonPolicyDef,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -333,6 +340,7 @@ violations[{"msg": msg}] {
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -365,6 +373,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def:  jsonPolicyDef,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -391,14 +400,14 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 	t.Run("nil", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := rego.NewRegoEvaluator(nil)
+		_, err := rego.NewRegoEvaluator(nil, nil)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := rego.NewRegoEvaluator(&minderv1.RuleType_Definition_Eval_Rego{})
+		_, err := rego.NewRegoEvaluator(&minderv1.RuleType_Definition_Eval_Rego{}, nil)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 
@@ -409,7 +418,8 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 			&minderv1.RuleType_Definition_Eval_Rego{
 				Type: "invalid",
 			},
-		)
+			nil,
+	)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 }
@@ -427,6 +437,7 @@ package minder
 
 violations[{"msg": msg}] {`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -451,6 +462,7 @@ violations[{"msg": msg}] {
 	msg := "data did not contain foo"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -490,6 +502,7 @@ allow {
 	minder.datasource.fake.source({"datasourcetest": input.ingested.data}) == "foo"
 }`,
 		},
+		nil,
 		options.WithDataSources(fdsr),
 	)
 	require.NoError(t, err, "could not create evaluator")

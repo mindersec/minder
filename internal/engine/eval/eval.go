@@ -19,6 +19,7 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
@@ -26,6 +27,7 @@ func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	featureFlags openfeature.IClient,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
@@ -41,7 +43,7 @@ func NewRuleEvaluator(
 		}
 		return jq.NewJQEvaluator(e.GetJq(), opts...)
 	case rego.RegoEvalType:
-		return rego.NewRegoEvaluator(e.GetRego(), opts...)
+		return rego.NewRegoEvaluator(e.GetRego(), featureFlags, opts...)
 	case vulncheck.VulncheckEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {
