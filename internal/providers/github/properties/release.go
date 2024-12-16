@@ -106,7 +106,7 @@ func getReleaseWrapper(
 		return nil, fmt.Errorf("failed to fetch release: %w", fetchErr)
 	}
 
-	branch, commitSha, err := getBranchAndCommit(ctx, owner, repo, release.GetTagName(), ghCli)
+	branch, commitSha, err := getBranchAndCommit(ctx, owner, repo, release.GetTargetCommitish(), ghCli)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get branch and commit SHA: %w", err)
 	}
@@ -145,7 +145,7 @@ func getBranchAndCommit(
 		return "", "", fmt.Errorf("failed to fetch branch: %w", err)
 	}
 
-	// The commitish is a commit SHA
+	// The commitish is a commit SHA without a branch
 	return "", commitish, nil
 }
 
