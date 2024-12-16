@@ -299,7 +299,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
@@ -308,13 +308,22 @@ func TestConstraintsJSONOutput(t *testing.T) {
 
 	// check that the error payload msg is JSON in the expected format
 	errmsg := engerrors.ErrorAsEvalDetails(err)
-	var result []struct {
+	var errDetails []struct {
 		ActionsNotAllowed []string `json:"actions_not_allowed"`
 	}
-	err = json.Unmarshal([]byte(errmsg), &result)
+	err = json.Unmarshal([]byte(errmsg), &errDetails)
 	require.NoError(t, err, "could not unmarshal error JSON")
-	assert.Len(t, result, 1, "should have one result")
-	assert.Contains(t, result[0].ActionsNotAllowed, "baz", "should have baz in the result")
+	assert.Len(t, errDetails, 1, "should have one result")
+	assert.Contains(t, errDetails[0].ActionsNotAllowed, "baz", "should have baz in the result")
+
+	// check that result is a list with a single element
+	outputList, ok := evalResult.Output.([]map[string]interface{})
+	require.True(t, ok, "evaluation result output should be a list")
+
+	assert.Len(t, outputList, 1, "evaluation result should have one element")
+
+	assert.Contains(t, outputList[0], "actions_not_allowed", "evaluation result should contain actions_not_allowed key")
+	assert.Contains(t, outputList[0]["actions_not_allowed"], "baz", "evaluation result should contain baz")
 }
 
 func TestConstraintsJSONFalback(t *testing.T) {
@@ -340,7 +349,7 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -349,12 +358,15 @@ violations[{"msg": msg}] {
 
 	// check that the error payload msg is JSON in the expected format
 	errmsg := engerrors.ErrorAsEvalDetails(err)
-	var result []struct {
+	var errDetails []struct {
 		Msg string `json:"msg"`
 	}
-	err = json.Unmarshal([]byte(errmsg), &result)
+	err = json.Unmarshal([]byte(errmsg), &errDetails)
 	require.NoError(t, err, "could not unmarshal error JSON")
-	assert.Len(t, result, 1, "should have one result")
+	assert.Len(t, errDetails, 1, "error details should have one element")
+
+	// check that result is a list with a single element
+	assert.Len(t, evalResult.Output, 1, "evaluation result should have one element")
 }
 
 func TestOutputTypePassedIntoRule(t *testing.T) {
