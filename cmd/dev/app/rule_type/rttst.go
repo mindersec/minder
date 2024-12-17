@@ -67,6 +67,7 @@ func CmdTest() *cobra.Command {
 	testCmd.Flags().StringP("token", "t", "", "token to authenticate to the provider."+
 		"Can also be set via the TEST_AUTH_TOKEN environment variable.")
 	testCmd.Flags().StringArrayP("data-source", "d", []string{}, "YAML file containing the data source to test the rule with")
+	testCmd.Flags().BoolP("debug", "", false, "Start REGO debugger (only works for REGO-based rules types)")
 
 	if err := testCmd.MarkFlagRequired("rule-type"); err != nil {
 		fmt.Fprintf(os.Stderr, "Error marking flag as required: %s\n", err)
@@ -98,6 +99,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 	token := viper.GetString("test.auth.token")
 	providerclass := cmd.Flag("provider")
 	providerconfig := cmd.Flag("provider-config")
+	debug := cmd.Flag("debug").Value.String() == "true"
 
 	dataSourceFileStrings, err := cmd.Flags().GetStringArray("data-source")
 	if err != nil {
@@ -197,7 +199,10 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// TODO: use cobra context here
 	ctx := context.Background()
-	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, nil /*experiments*/, options.WithDataSources(dsRegistry))
+	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, nil, /*experiments*/
+		options.WithDataSources(dsRegistry),
+		options.WithDebugger(debug),
+	)
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
