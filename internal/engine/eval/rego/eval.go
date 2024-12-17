@@ -12,6 +12,7 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -49,6 +50,9 @@ type Input struct {
 	Profile map[string]any `json:"profile"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
+	// Properties contains the entity's properties as defined by
+	// the provider
+	Properties map[string]any `json:"properties"`
 	// OutputFormat is the format to output violations in
 	OutputFormat ConstraintsViolationsFormat `json:"output_format"`
 }
@@ -134,14 +138,30 @@ func (e *Evaluator) Eval(
 		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
-	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
+	input := &Input{
 		Profile:      pol,
 		Ingested:     obj,
 		OutputFormat: e.cfg.ViolationFormat,
-	}))
+	}
+
+	enrichInputWithEntityProps(input, entity)
+	rs, err := pq.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
 	return e.reseval.parseResult(rs, entity)
+}
+
+type propertiesFetcher interface {
+	GetProperties() *structpb.Struct
+}
+
+func enrichInputWithEntityProps(
+	input *Input,
+	entity protoreflect.ProtoMessage,
+) {
+	if inner, ok := entity.(propertiesFetcher); ok {
+		input.Properties = inner.GetProperties().AsMap()
+	}
 }
