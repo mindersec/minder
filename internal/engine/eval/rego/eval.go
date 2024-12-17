@@ -143,10 +143,5 @@ func (e *Evaluator) Eval(
 		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
-	err = e.reseval.parseResult(rs, entity)
-	if err != nil {
-		return nil, err
-	}
-
-	return &interfaces.EvaluationResult{}, nil
+	return e.reseval.parseResult(rs, entity)
 }
