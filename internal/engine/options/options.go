@@ -35,6 +35,20 @@ func WithFlagsClient(client openfeature.IClient) Option {
 	}
 }
 
+type RegoBased interface {
+	SetDebugFlag(bool) error
+}
+
+func WithRegoDebugger(flag bool) Option {
+	return func(e interfaces.Evaluator) error {
+		inner, ok := e.(RegoBased)
+		if !ok {
+			return nil
+		}
+		return inner.SetDebugFlag(flag)
+	}
+}
+
 // SupportsDataSources interface advertises the fact that the implementer
 // can register data sources with the evaluator.
 type SupportsDataSources interface {
