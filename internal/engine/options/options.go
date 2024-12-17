@@ -35,6 +35,26 @@ func WithFlagsClient(client openfeature.IClient) Option {
 	}
 }
 
+// HasDebuggerSupport interface should be implemented by evaluation
+// engines that support interactive debugger. Currently, only
+// REGO-based engines should implement this.
+type HasDebuggerSupport interface {
+	SetDebugFlag(bool) error
+}
+
+// WithDebugger sets the evaluation engine to start an interactive
+// debugging session. This MUST NOT be used in backend servers, and is
+// only meant to be used in CLI tools.
+func WithDebugger(flag bool) Option {
+	return func(e interfaces.Evaluator) error {
+		inner, ok := e.(HasDebuggerSupport)
+		if !ok {
+			return nil
+		}
+		return inner.SetDebugFlag(flag)
+	}
+}
+
 // SupportsDataSources interface advertises the fact that the implementer
 // can register data sources with the evaluator.
 type SupportsDataSources interface {

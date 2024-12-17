@@ -44,6 +44,15 @@ type Evaluator struct {
 	regoOpts     []func(*rego.Rego)
 	reseval      resultEvaluator
 	datasources  *v1datasources.DataSourceRegistry
+	debug        bool
+}
+
+var _ eoptions.HasDebuggerSupport = (*Evaluator)(nil)
+
+// SetDebugFlag implements `HasDebuggerSupport` interface.
+func (e *Evaluator) SetDebugFlag(flag bool) error {
+	e.debug = flag
+	return nil
 }
 
 // Input is the input for the rego evaluator
@@ -132,6 +141,26 @@ func (e *Evaluator) Eval(
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
 
+	input := &Input{
+		Profile:      pol,
+		Ingested:     obj,
+		OutputFormat: e.cfg.ViolationFormat,
+	}
+	enrichInputWithEntityProps(input, entity)
+
+	if e.debug {
+		err := e.Debug(
+			ctx,
+			res,
+			input,
+			regoFuncOptions...,
+		)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
 	// Create the rego object
 	r := e.newRegoFromOptions(
 		regoFuncOptions...,
@@ -142,13 +171,6 @@ func (e *Evaluator) Eval(
 		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
-	input := &Input{
-		Profile:      pol,
-		Ingested:     obj,
-		OutputFormat: e.cfg.ViolationFormat,
-	}
-
-	enrichInputWithEntityProps(input, entity)
 	rs, err := pq.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
