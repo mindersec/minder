@@ -212,5 +212,6 @@ func PullRequestV1FromProperties(props *properties.Properties) (*pbinternal.Pull
 		Action:         props.GetProperty(PullPropertyAction).GetString(),
 		BaseCloneUrl:   props.GetProperty(PullPropertyBaseCloneURL).GetString(),
 		TargetCloneUrl: props.GetProperty(PullPropertyTargetCloneURL).GetString(),
+		Properties:     props.ToProtoStruct(),
 	}, nil
 }
