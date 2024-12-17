@@ -20,6 +20,7 @@ import (
 
 type fsEntry struct {
 	contentTemplate *util.SafeTemplate
+	pathTemplate    *util.SafeTemplate
 
 	Path    string `json:"path"`
 	Content string `json:"content"`
