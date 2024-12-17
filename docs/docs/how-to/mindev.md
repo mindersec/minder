@@ -38,7 +38,7 @@ external resources. This will allow you to identify syntax errors
 quickly.  To lint your rule type, run:
 
 ```bash
-mindev ruletype lint -f path/to/rule-type.yaml
+mindev ruletype lint -r path/to/rule-type.yaml
 ```
 
 This will give you basic validations on the rule type file.
