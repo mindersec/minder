@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package actions
+package context
 
 import (
 	"context"
@@ -32,7 +32,9 @@ type SharedActionsContext struct {
 // WithSharedActionsContext returns a new context.Context with the shared actions
 // context set.
 func WithSharedActionsContext(ctx context.Context) (context.Context, *SharedActionsContext) {
-	sac := &SharedActionsContext{}
+	sac := &SharedActionsContext{
+		shared: make(map[SharedFlusherKey]*sharedFlusher),
+	}
 	return context.WithValue(ctx, SharedActionsContextKey{}, sac), sac
 }
 
@@ -71,13 +73,13 @@ func (sac *SharedActionsContext) ShareAndRegister(key SharedFlusherKey, flusher 
 }
 
 // Flush returns all the shared values and clears the shared actions context.
-func (sac *SharedActionsContext) Flush() error {
+func (sac *SharedActionsContext) Flush(ctx context.Context) error {
 	sac.mux.Lock()
 	defer sac.mux.Unlock()
 	var errs []error
 
 	for key, f := range sac.shared {
-		err := f.flusher.Flush(f.items...)
+		err := f.flusher.Flush(ctx, f.items...)
 		if err != nil {
 			errs = append(errs, err)
 		}

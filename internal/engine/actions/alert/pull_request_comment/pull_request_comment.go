@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
+	actionContext "github.com/mindersec/minder/internal/engine/actions/context"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/entities/properties"
@@ -184,27 +185,21 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMes
 }
 
 func (alert *Alert) runDoReview(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx)
-
-	r, err := alert.commenter.CommentOnPullRequest(ctx, params.props, provifv1.PullRequestCommentInfo{
-		// TODO: We should add the header to identify the alert. We could use the
-		// rule type name.
-		Commit: params.props.GetProperty(properties.PullRequestCommitSHA).GetString(),
-		Body:   params.Comment,
-		// TODO: Determine the priority from the rule type severity
-	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
-	}
-	logger.Info().Str("review_id", r.ID).Msg("PR review created")
-
-	// serialize r to json
-	meta, err := json.Marshal(r)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling PR review metadata: %w", err)
+	sac := actionContext.GetSharedActionsContext(ctx)
+	if sac == nil {
+		return nil, fmt.Errorf("shared actions context not found")
 	}
 
-	return meta, nil
+	sac.ShareAndRegister("pull_request_comment",
+		newAlertFlusher(params.props, params.props.GetProperty(properties.PullRequestCommitSHA).GetString(), alert.commenter),
+		&provifv1.PullRequestCommentInfo{
+			// TODO: We should add the header to identify the alert. We could use the
+			// rule type name.
+			Commit: params.props.GetProperty(properties.PullRequestCommitSHA).GetString(),
+			Body:   params.Comment,
+			// TODO: Determine the priority from the rule type severity
+		})
+	return json.RawMessage("{}"), nil
 }
 
 // getParamsForSecurityAdvisory extracts the details from the entity
@@ -258,4 +253,45 @@ func (alert *Alert) getParamsForPRComment(
 	}
 
 	return result, nil
+}
+
+type alertFlusher struct {
+	props     *properties.Properties
+	commitSha string
+	commenter provifv1.PullRequestCommenter
+}
+
+func newAlertFlusher(props *properties.Properties, commitSha string, commenter provifv1.PullRequestCommenter) *alertFlusher {
+	return &alertFlusher{
+		props:     props,
+		commitSha: commitSha,
+		commenter: commenter,
+	}
+}
+
+func (a *alertFlusher) Flush(ctx context.Context, items ...any) error {
+	logger := zerolog.Ctx(ctx)
+
+	var aggregatedCommentBody string
+
+	// iterate and aggregate
+	for _, item := range items {
+		fp, ok := item.(*provifv1.PullRequestCommentInfo)
+		if !ok {
+			logger.Error().Msgf("expected PullRequestCommentInfo, got %T", item)
+			continue
+		}
+
+		aggregatedCommentBody += fmt.Sprintf("\n\n%s", fp.Body)
+	}
+
+	_, err := a.commenter.CommentOnPullRequest(ctx, a.props, provifv1.PullRequestCommentInfo{
+		Commit: a.commitSha,
+		Body:   aggregatedCommentBody,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating PR review: %w", err)
+	}
+
+	return nil
 }

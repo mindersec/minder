@@ -16,6 +16,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
+	actionContext "github.com/mindersec/minder/internal/engine/actions/context"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/entities"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -140,7 +141,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		return fmt.Errorf("error while retrieving profiles and rule instances: %w", err)
 	}
 
-	sacctx, sac := actions.WithSharedActionsContext(ctx)
+	sacctx, sac := actionContext.WithSharedActionsContext(ctx)
 
 	// For each profile, get the profileEvalStatus first. Then, if the profileEvalStatus is nil
 	// evaluate each rule and store the outcome in the database. If profileEvalStatus is non-nil,
@@ -156,7 +157,7 @@ func (e *executor) EvalEntityEvent(ctx context.Context, inf *entities.EntityInfo
 		}
 	}
 
-	return sac.Flush()
+	return sac.Flush(sacctx)
 }
 
 func (e *executor) evaluateRule(
