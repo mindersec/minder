@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -38,10 +39,11 @@ const (
 // It initializes the rego engine and evaluates the rules
 // The default rego package is "minder"
 type Evaluator struct {
-	cfg         *Config
-	regoOpts    []func(*rego.Rego)
-	reseval     resultEvaluator
-	datasources *v1datasources.DataSourceRegistry
+	cfg          *Config
+	featureFlags openfeature.IClient
+	regoOpts     []func(*rego.Rego)
+	reseval      resultEvaluator
+	datasources  *v1datasources.DataSourceRegistry
 }
 
 // Input is the input for the rego evaluator
@@ -70,6 +72,7 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
+	featureFlags openfeature.IClient,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
@@ -80,8 +83,9 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:     c,
-		reseval: re,
+		cfg:          c,
+		featureFlags: featureFlags,
+		reseval:      re,
 		regoOpts: []func(*rego.Rego){
 			re.getQuery(),
 			rego.Module(MinderRegoFile, c.Def),
@@ -123,7 +127,7 @@ func (e *Evaluator) Eval(
 	regoFuncOptions := []func(*rego.Rego){}
 
 	// Initialize the built-in minder library rego functions
-	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
+	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(ctx, e.featureFlags, res)...)
 
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
