@@ -18,10 +18,10 @@ import (
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
+	mockcommenter "github.com/mindersec/minder/pkg/providers/v1/mock"
 )
 
 var TestActionTypeValid engif.ActionType = "alert-test"
@@ -44,7 +44,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 		cmd              engif.ActionCmd
 		reviewMsg        string
 		inputMetadata    *json.RawMessage
-		mockSetup        func(*mockghclient.MockGitHub)
+		mockSetup        func(commenter *mockcommenter.MockPullRequestCommenter)
 		expectedErr      error
 		expectedMetadata json.RawMessage
 	}{
@@ -53,9 +53,9 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			actionType: TestActionTypeValid,
 			reviewMsg:  "This is a constant review message",
 			cmd:        engif.ActionCmdOn,
-			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(mockGitHub *mockcommenter.MockPullRequestCommenter) {
 				mockGitHub.EXPECT().
-					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					CommentOnPullRequest(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&github.PullRequestReview{ID: &reviewID}, nil)
 			},
 			expectedMetadata: json.RawMessage(fmt.Sprintf(`{"review_id":"%s"}`, reviewIDStr)),
@@ -65,9 +65,9 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			actionType: TestActionTypeValid,
 			reviewMsg:  "{{ .EvalErrorDetails }}",
 			cmd:        engif.ActionCmdOn,
-			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(mockGitHub *mockcommenter.MockPullRequestCommenter) {
 				mockGitHub.EXPECT().
-					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.AssignableToTypeOf(&github.PullRequestReviewRequest{})).
+					CommentOnPullRequest(gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(validateReviewBodyAndReturn(evaluationFailureDetails, reviewID))
 			},
 			expectedMetadata: json.RawMessage(fmt.Sprintf(`{"review_id":"%s"}`, reviewIDStr)),
@@ -77,9 +77,9 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			actionType: TestActionTypeValid,
 			reviewMsg:  "{{ .EvalResultOutput.ViolationMsg }}",
 			cmd:        engif.ActionCmdOn,
-			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(mockGitHub *mockcommenter.MockPullRequestCommenter) {
 				mockGitHub.EXPECT().
-					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.AssignableToTypeOf(&github.PullRequestReviewRequest{})).
+					CommentOnPullRequest(gomock.Any(), gomock.Any(), gomock.Any()).
 					DoAndReturn(validateReviewBodyAndReturn(violationMsg, reviewID))
 			},
 			expectedMetadata: json.RawMessage(fmt.Sprintf(`{"review_id":"%s"}`, reviewIDStr)),
@@ -89,9 +89,9 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			actionType: TestActionTypeValid,
 			reviewMsg:  "This is a constant review message",
 			cmd:        engif.ActionCmdOn,
-			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(mockGitHub *mockcommenter.MockPullRequestCommenter) {
 				mockGitHub.EXPECT().
-					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					CommentOnPullRequest(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil, fmt.Errorf("failed to create PR comment"))
 			},
 			expectedErr: enginerr.ErrActionFailed,
@@ -102,9 +102,9 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			reviewMsg:     "This is a constant review message",
 			cmd:           engif.ActionCmdOff,
 			inputMetadata: &successfulRunMetadata,
-			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(mockGitHub *mockcommenter.MockPullRequestCommenter) {
 				mockGitHub.EXPECT().
-					DismissReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					CommentOnPullRequest(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&github.PullRequestReview{}, nil)
 			},
 			expectedErr: enginerr.ErrActionTurnedOff,
@@ -126,7 +126,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 				ReviewMessage: tt.reviewMsg,
 			}
 
-			mockClient := mockghclient.NewMockGitHub(ctrl)
+			mockClient := mockcommenter.NewMockPullRequestCommenter(ctrl)
 			tt.mockSetup(mockClient)
 
 			prCommentAlert, err := NewPullRequestCommentAlert(
