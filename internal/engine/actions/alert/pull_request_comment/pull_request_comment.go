@@ -195,6 +195,11 @@ func (alert *Alert) runDoReview(ctx context.Context, params *paramsPR) (json.Raw
 		return nil, fmt.Errorf("shared actions context not found")
 	}
 
+	// This was a successful result, so we don't need to alert
+	if params.Comment == "" {
+		return json.RawMessage("{}"), nil
+	}
+
 	sac.ShareAndRegister("pull_request_comment",
 		newAlertFlusher(params.props, params.props.GetProperty(properties.PullRequestCommitSHA).GetString(), alert.commenter),
 		&provifv1.PullRequestCommentInfo{

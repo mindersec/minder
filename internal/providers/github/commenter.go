@@ -159,17 +159,12 @@ func (c *GitHub) updateOrSubmitComment(ctx context.Context, mci magicCommentInfo
 		return mci, fmt.Errorf("could not render comment: %w", err)
 	}
 
-	// TODO: Should we keep this?
-	if mci.ContentSha != comment.Commit {
-		err := c.UpdateIssueComment(ctx, owner, repoName, mci.ExistingCommentID, body)
-		if err != nil {
-			return mci, fmt.Errorf("failed to update minder status report comment: %w", err)
-		}
-
-		mci.SubmittedAt = time.Now()
-		return mci, nil
+	err = c.UpdateIssueComment(ctx, owner, repoName, mci.ExistingCommentID, body)
+	if err != nil {
+		return mci, fmt.Errorf("failed to update minder status report comment: %w", err)
 	}
 
+	mci.SubmittedAt = time.Now()
 	return mci, nil
 }
 

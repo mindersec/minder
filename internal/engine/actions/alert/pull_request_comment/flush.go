@@ -6,6 +6,8 @@ package pull_request_comment
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/rs/zerolog"
 
@@ -33,9 +35,29 @@ func newAlertFlusher(props *properties.Properties, commitSha string, commenter p
 }
 
 func (a *alertFlusher) Flush(ctx context.Context, items ...any) error {
+	title := title1("Minder Alerts")
+
+	aggregatedAlerts := getAlerts(ctx, items...)
+
+	_, err := a.commenter.CommentOnPullRequest(ctx, a.props, provifv1.PullRequestCommentInfo{
+		Commit: a.commitSha,
+		Body:   fmt.Sprintf("%s\n\n%s", title, aggregatedAlerts),
+	})
+	if err != nil {
+		return fmt.Errorf("error creating PR review: %w", err)
+	}
+
+	return nil
+}
+
+func getAlerts(ctx context.Context, items ...any) string {
 	logger := zerolog.Ctx(ctx)
 
-	aggregatedCommentBody := paragraph(title1("Minder Alerts"))
+	if len(items) == 0 {
+		return "Minder found no issues."
+	}
+
+	var alerts []string
 
 	// iterate and aggregate
 	for _, item := range items {
@@ -45,16 +67,12 @@ func (a *alertFlusher) Flush(ctx context.Context, items ...any) error {
 			continue
 		}
 
-		aggregatedCommentBody += paragraph(alert(fp.Header, fp.Body))
+		alerts = append(alerts, alert(fp.Header, fp.Body))
 	}
 
-	_, err := a.commenter.CommentOnPullRequest(ctx, a.props, provifv1.PullRequestCommentInfo{
-		Commit: a.commitSha,
-		Body:   aggregatedCommentBody,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating PR review: %w", err)
-	}
+	// Ensure predictable ordering
+	// TODO: This should be sorted by severity
+	slices.Sort(alerts)
 
-	return nil
+	return strings.Join(alerts, spacing())
 }

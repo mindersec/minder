@@ -14,16 +14,16 @@ func alert(title, body string) string {
 	return fmt.Sprintf("%s\n\n%s", title2(title), body)
 }
 
-func paragraph(text string) string {
-	return fmt.Sprintf("%s\n\n", text)
-}
-
 func title1(title string) string {
 	return fmt.Sprintf("# %s", title)
 }
 
 func title2(title string) string {
 	return fmt.Sprintf("## %s", title)
+}
+
+func spacing() string {
+	return "\n\n"
 }
 
 func separator() string {
