@@ -53,11 +53,12 @@ type PrCommentTemplateParams struct {
 }
 
 type paramsPR struct {
-	Title      string
-	Comment    string
-	props      *properties.Properties
-	Metadata   *provifv1.CommentResultMeta
-	prevStatus *db.ListRuleEvaluationsByProfileIdRow
+	Title       string
+	Comment     string
+	props       *properties.Properties
+	Metadata    *provifv1.CommentResultMeta
+	prevStatus  *db.ListRuleEvaluationsByProfileIdRow
+	shouldAlert bool
 }
 
 // NewPullRequestCommentAlert creates a new pull request comment alert action
@@ -196,7 +197,7 @@ func (alert *Alert) runDoReview(ctx context.Context, params *paramsPR) (json.Raw
 	}
 
 	// This was a successful result, so we don't need to alert
-	if params.Comment == "" {
+	if !params.shouldAlert {
 		return json.RawMessage("{}"), nil
 	}
 
@@ -225,8 +226,9 @@ func (alert *Alert) getParamsForPRComment(
 	}
 
 	result := &paramsPR{
-		prevStatus: params.GetEvalStatusFromDb(),
-		props:      props,
+		prevStatus:  params.GetEvalStatusFromDb(),
+		props:       props,
+		shouldAlert: params.GetEvalErr() != nil,
 	}
 
 	commentTmpl, err := util.NewSafeHTMLTemplate(&alert.reviewCfg.ReviewMessage, "message")
