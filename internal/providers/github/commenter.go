@@ -180,6 +180,9 @@ func (c *GitHub) doReview(
 	logger := zerolog.Ctx(ctx)
 
 	// if the previous review was on the same commit, keep it
+	// TODO: This should only apply if the profile has not changed. That is, we need
+	// to detect if there was a change in the profile and if there was, we should
+	// dismiss the previous review.
 	if mci.ContentSha == commitSha {
 		logger.Debug().
 			Int64("review-id", mci.ReviewID).
