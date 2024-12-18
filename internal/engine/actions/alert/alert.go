@@ -60,8 +60,16 @@ func NewRuleAlert(
 			return noop.NewNoopAlert(ActionType)
 		}
 		return pull_request_comment.NewPullRequestCommentAlert(
-			ActionType, alertCfg.GetPullRequestComment(), client, setting)
+			ActionType, alertCfg.GetPullRequestComment(), client, setting,
+			defaultName(ruletype))
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())
+}
+
+func defaultName(ruletype *pb.RuleType) string {
+	if ruletype.GetDisplayName() != "" {
+		return ruletype.GetDisplayName()
+	}
+	return ruletype.GetName()
 }

@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package context contains the shared actions context for sharing
+// data between actions.
 package context
 
 import (

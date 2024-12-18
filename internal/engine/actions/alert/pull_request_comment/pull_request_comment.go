@@ -36,10 +36,11 @@ const (
 
 // Alert is the structure backing the noop alert
 type Alert struct {
-	actionType interfaces.ActionType
-	commenter  provifv1.PullRequestCommenter
-	reviewCfg  *pb.RuleType_Definition_Alert_AlertTypePRComment
-	setting    models.ActionOpt
+	actionType  interfaces.ActionType
+	commenter   provifv1.PullRequestCommenter
+	reviewCfg   *pb.RuleType_Definition_Alert_AlertTypePRComment
+	setting     models.ActionOpt
+	displayName string
 }
 
 // PrCommentTemplateParams is the parameters for the PR comment templates
@@ -52,6 +53,7 @@ type PrCommentTemplateParams struct {
 }
 
 type paramsPR struct {
+	Title      string
 	Comment    string
 	props      *properties.Properties
 	Metadata   *provifv1.CommentResultMeta
@@ -64,16 +66,19 @@ func NewPullRequestCommentAlert(
 	reviewCfg *pb.RuleType_Definition_Alert_AlertTypePRComment,
 	gh provifv1.PullRequestCommenter,
 	setting models.ActionOpt,
+// The display name for the alert
+	displayName string,
 ) (*Alert, error) {
 	if actionType == "" {
 		return nil, fmt.Errorf("action type cannot be empty")
 	}
 
 	return &Alert{
-		actionType: actionType,
-		commenter:  gh,
-		reviewCfg:  reviewCfg,
-		setting:    setting,
+		actionType:  actionType,
+		commenter:   gh,
+		reviewCfg:   reviewCfg,
+		setting:     setting,
+		displayName: displayName,
 	}, nil
 }
 
@@ -193,8 +198,7 @@ func (alert *Alert) runDoReview(ctx context.Context, params *paramsPR) (json.Raw
 	sac.ShareAndRegister("pull_request_comment",
 		newAlertFlusher(params.props, params.props.GetProperty(properties.PullRequestCommitSHA).GetString(), alert.commenter),
 		&provifv1.PullRequestCommentInfo{
-			// TODO: We should add the header to identify the alert. We could use the
-			// rule type name.
+			Header: params.Title,
 			Commit: params.props.GetProperty(properties.PullRequestCommitSHA).GetString(),
 			Body:   params.Comment,
 			// TODO: Determine the priority from the rule type severity
@@ -238,6 +242,7 @@ func (alert *Alert) getParamsForPRComment(
 		return nil, fmt.Errorf("cannot execute title template: %w", err)
 	}
 
+	result.Title = formatTitle(alert.displayName)
 	result.Comment = comment
 
 	// Unmarshal the existing alert metadata, if any
@@ -253,45 +258,4 @@ func (alert *Alert) getParamsForPRComment(
 	}
 
 	return result, nil
-}
-
-type alertFlusher struct {
-	props     *properties.Properties
-	commitSha string
-	commenter provifv1.PullRequestCommenter
-}
-
-func newAlertFlusher(props *properties.Properties, commitSha string, commenter provifv1.PullRequestCommenter) *alertFlusher {
-	return &alertFlusher{
-		props:     props,
-		commitSha: commitSha,
-		commenter: commenter,
-	}
-}
-
-func (a *alertFlusher) Flush(ctx context.Context, items ...any) error {
-	logger := zerolog.Ctx(ctx)
-
-	var aggregatedCommentBody string
-
-	// iterate and aggregate
-	for _, item := range items {
-		fp, ok := item.(*provifv1.PullRequestCommentInfo)
-		if !ok {
-			logger.Error().Msgf("expected PullRequestCommentInfo, got %T", item)
-			continue
-		}
-
-		aggregatedCommentBody += fmt.Sprintf("\n\n%s", fp.Body)
-	}
-
-	_, err := a.commenter.CommentOnPullRequest(ctx, a.props, provifv1.PullRequestCommentInfo{
-		Commit: a.commitSha,
-		Body:   aggregatedCommentBody,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating PR review: %w", err)
-	}
-
-	return nil
 }

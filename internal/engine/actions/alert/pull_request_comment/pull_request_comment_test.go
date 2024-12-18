@@ -130,7 +130,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			tt.mockSetup(mockClient)
 
 			prCommentAlert, err := NewPullRequestCommentAlert(
-				tt.actionType, &prCommentCfg, mockClient, models.ActionOptOn)
+				tt.actionType, &prCommentCfg, mockClient, models.ActionOptOn, "Title")
 			require.NoError(t, err)
 			require.NotNil(t, prCommentAlert)
 
