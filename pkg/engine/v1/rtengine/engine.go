@@ -10,6 +10,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -67,6 +68,7 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	experiments openfeature.IClient,
 	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
 	rval, err := profiles.NewRuleValidator(ruletype)
@@ -79,7 +81,7 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider, opts...)
+	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider, experiments, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}

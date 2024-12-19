@@ -87,7 +87,7 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 	case *pbinternal.PullRequest:
 		return gi.ingestPullRequest(ctx, entity, params)
 	default:
-		return nil, fmt.Errorf("deps is only supported for repositories")
+		return nil, fmt.Errorf("deps is only supported for repositories and pull requests")
 	}
 }
 
@@ -262,6 +262,7 @@ func (gi *Deps) ingestPullRequest(
 	}, nil
 }
 
+// TODO: this first part is fairly shared with fetchClone from ../git/git.go.
 func (gi *Deps) scanFromUrl(ctx context.Context, url string, branch string) (*sbom.NodeList, *plumbing.Reference, error) {
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is

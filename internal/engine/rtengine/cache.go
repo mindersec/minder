@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
@@ -29,12 +30,13 @@ type Cache interface {
 type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
 
 type ruleEngineCache struct {
-	store       db.Store
-	provider    provinfv1.Provider
-	ingestCache ingestcache.Cache
-	engines     cacheType
-	dssvc       datasourceservice.DataSourcesService
-	opts        []eoptions.Option
+	store        db.Store
+	provider     provinfv1.Provider
+	featureFlags openfeature.IClient
+	ingestCache  ingestcache.Cache
+	engines      cacheType
+	dssvc        datasourceservice.DataSourcesService
+	opts         []eoptions.Option
 }
 
 // NewRuleEngineCache creates the rule engine cache
@@ -46,6 +48,7 @@ func NewRuleEngineCache(
 	entityType db.Entities,
 	projectID uuid.UUID,
 	provider provinfv1.Provider,
+	featureFlags openfeature.IClient,
 	ingestCache ingestcache.Cache,
 	dssvc datasourceservice.DataSourcesService,
 	opts ...eoptions.Option,
@@ -71,7 +74,7 @@ func NewRuleEngineCache(
 	engines := make(cacheType, len(ruleTypes))
 	for _, ruleType := range ruleTypes {
 		ruleEngine, err := cacheRuleEngine(
-			ctx, &ruleType, provider, ingestCache, engines, dssvc, opts...)
+			ctx, &ruleType, provider, featureFlags, ingestCache, engines, dssvc, opts...)
 		if err != nil {
 			return nil, err
 		}
@@ -79,12 +82,13 @@ func NewRuleEngineCache(
 	}
 
 	return &ruleEngineCache{
-		store:       store,
-		provider:    provider,
-		ingestCache: ingestCache,
-		engines:     engines,
-		opts:        opts,
-		dssvc:       dssvc,
+		store:        store,
+		provider:     provider,
+		featureFlags: featureFlags,
+		ingestCache:  ingestCache,
+		engines:      engines,
+		opts:         opts,
+		dssvc:        dssvc,
 	}, nil
 }
 
@@ -112,7 +116,8 @@ func (r *ruleEngineCache) GetRuleEngine(ctx context.Context, ruleTypeID uuid.UUI
 	}
 
 	// If we find the rule type, insert into the cache and return.
-	ruleTypeEngine, err := cacheRuleEngine(ctx, &ruleType, r.provider, r.ingestCache, r.engines, r.dssvc, r.opts...)
+	ruleTypeEngine, err := cacheRuleEngine(
+		ctx, &ruleType, r.provider, r.featureFlags, r.ingestCache, r.engines, r.dssvc, r.opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error while caching rule type engine: %w", err)
 	}
@@ -123,6 +128,7 @@ func cacheRuleEngine(
 	ctx context.Context,
 	ruleType *db.RuleType,
 	provider provinfv1.Provider,
+	featureFlags openfeature.IClient,
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
 	dssvc datasourceservice.DataSourcesService,
@@ -150,7 +156,7 @@ func cacheRuleEngine(
 	opts = append(opts, eoptions.WithDataSources(dsreg))
 
 	// Create the rule type engine
-	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
+	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, featureFlags, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

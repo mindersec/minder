@@ -44,3 +44,13 @@ const (
 	// ArtifactPropertyType represents the type of the artifact (e.g 'container')
 	ArtifactPropertyType = "type"
 )
+
+// Release property keys
+const (
+	// ReleasePropertyTag represents the release tag name.
+	ReleasePropertyTag = "tag"
+	// ReleasePropertyBranch represents the release branch
+	ReleasePropertyBranch = "branch"
+	// ReleaseCommitSHA represents the commit SHA of the release
+	ReleaseCommitSHA = "commit_sha"
+)

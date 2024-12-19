@@ -2730,7 +2730,6 @@ message RuleType {
                     // the file to patch
                     string path = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$",
                             min_len: 1,
                             max_len: 200,
                         }

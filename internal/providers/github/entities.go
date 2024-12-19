@@ -247,6 +247,8 @@ func (c *GitHub) PropertiesToProtoMessage(
 		return ghprop.ArtifactV1FromProperties(props)
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return ghprop.PullRequestV1FromProperties(props)
+	case minderv1.Entity_ENTITY_RELEASE:
+		return ghprop.EntityInstanceV1FromReleaseProperties(props)
 	}
 
 	return nil, fmt.Errorf("conversion of entity type %s is not handled by the github provider", entType)

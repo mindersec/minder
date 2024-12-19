@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -37,10 +39,11 @@ const (
 // It initializes the rego engine and evaluates the rules
 // The default rego package is "minder"
 type Evaluator struct {
-	cfg         *Config
-	regoOpts    []func(*rego.Rego)
-	reseval     resultEvaluator
-	datasources *v1datasources.DataSourceRegistry
+	cfg          *Config
+	featureFlags openfeature.IClient
+	regoOpts     []func(*rego.Rego)
+	reseval      resultEvaluator
+	datasources  *v1datasources.DataSourceRegistry
 }
 
 // Input is the input for the rego evaluator
@@ -49,6 +52,9 @@ type Input struct {
 	Profile map[string]any `json:"profile"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
+	// Properties contains the entity's properties as defined by
+	// the provider
+	Properties map[string]any `json:"properties"`
 	// OutputFormat is the format to output violations in
 	OutputFormat ConstraintsViolationsFormat `json:"output_format"`
 }
@@ -66,6 +72,7 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
+	featureFlags openfeature.IClient,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
@@ -76,8 +83,9 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:     c,
-		reseval: re,
+		cfg:          c,
+		featureFlags: featureFlags,
+		reseval:      re,
 		regoOpts: []func(*rego.Rego){
 			re.getQuery(),
 			rego.Module(MinderRegoFile, c.Def),
@@ -119,7 +127,7 @@ func (e *Evaluator) Eval(
 	regoFuncOptions := []func(*rego.Rego){}
 
 	// Initialize the built-in minder library rego functions
-	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
+	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(ctx, e.featureFlags, res)...)
 
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
@@ -134,19 +142,30 @@ func (e *Evaluator) Eval(
 		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
-	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
+	input := &Input{
 		Profile:      pol,
 		Ingested:     obj,
 		OutputFormat: e.cfg.ViolationFormat,
-	}))
+	}
+
+	enrichInputWithEntityProps(input, entity)
+	rs, err := pq.Eval(ctx, rego.EvalInput(input))
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
-	err = e.reseval.parseResult(rs, entity)
-	if err != nil {
-		return nil, err
-	}
+	return e.reseval.parseResult(rs, entity)
+}
 
-	return &interfaces.EvaluationResult{}, nil
+type propertiesFetcher interface {
+	GetProperties() *structpb.Struct
+}
+
+func enrichInputWithEntityProps(
+	input *Input,
+	entity protoreflect.ProtoMessage,
+) {
+	if inner, ok := entity.(propertiesFetcher); ok {
+		input.Properties = inner.GetProperties().AsMap()
+	}
 }

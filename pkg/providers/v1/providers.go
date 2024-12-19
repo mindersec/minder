@@ -33,6 +33,8 @@ const (
 // ErrEntityNotFound is the error returned when an entity is not found
 var ErrEntityNotFound = errors.New("entity not found")
 
+//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
 // Provider is the general interface for all providers
 type Provider interface {
 	// CanImplement returns true/false depending on whether the Provider

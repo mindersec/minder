@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
@@ -175,14 +177,9 @@ func (s *Server) CreateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
-	ruleDS := crt.GetRuleType().GetDef().GetEval().GetDataSources()
-	if len(ruleDS) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
-	}
-
-	prCommentAlert := crt.GetRuleType().GetDef().GetAlert().GetPullRequestComment()
-	if prCommentAlert != nil && !flags.Bool(ctx, s.featureFlags, flags.PRCommentAlert) {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "Pull request comment alert type is disabled")
+	ruleDef := crt.GetRuleType().GetDef()
+	if err := checkRuleDefinitionFlags(ctx, s.featureFlags, ruleDef); err != nil {
+		return nil, err
 	}
 
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
@@ -202,6 +199,27 @@ func (s *Server) CreateRuleType(
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: newRuleType,
 	}, nil
+}
+
+func checkRuleDefinitionFlags(
+	ctx context.Context, featureFlags openfeature.IClient, ruleDef *minderv1.RuleType_Definition) *util.NiceStatus {
+	ruleDS := ruleDef.GetEval().GetDataSources()
+	if len(ruleDS) > 0 && !flags.Bool(ctx, featureFlags, flags.DataSources) {
+		return util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
+	}
+
+	prCommentAlert := ruleDef.GetAlert().GetPullRequestComment()
+	if prCommentAlert != nil && !flags.Bool(ctx, featureFlags, flags.PRCommentAlert) {
+		return util.UserVisibleError(codes.InvalidArgument, "Pull request comment alert type is disabled")
+	}
+
+	usesGitPR := ruleDef.GetIngest().GetType() == git.GitRuleDataIngestType &&
+		ruleDef.GetInEntity() == minderv1.PullRequestEntity.String()
+	if usesGitPR && !flags.Bool(ctx, featureFlags, flags.GitPRDiffs) {
+		return util.UserVisibleError(codes.InvalidArgument, "Git pull request ingest is disabled")
+	}
+
+	return nil
 }
 
 // UpdateRuleType is a method to update a rule type
@@ -227,9 +245,9 @@ func (s *Server) UpdateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
-	ruleDS := urt.GetRuleType().GetDef().GetEval().GetDataSources()
-	if len(ruleDS) > 0 && !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
+	ruleDef := urt.GetRuleType().GetDef()
+	if err := checkRuleDefinitionFlags(ctx, s.featureFlags, ruleDef); err != nil {
+		return nil, err
 	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {

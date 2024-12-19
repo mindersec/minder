@@ -113,7 +113,7 @@ func (alert *Alert) Do(
 ) (json.RawMessage, error) {
 	pr, ok := entity.(*pbinternal.PullRequest)
 	if !ok {
-		return nil, fmt.Errorf("expected repository, got %T", entity)
+		return nil, fmt.Errorf("expected pull request, got %T", entity)
 	}
 
 	commentParams, err := alert.getParamsForPRComment(ctx, pr, params, metadata)
