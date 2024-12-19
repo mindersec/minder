@@ -16,6 +16,7 @@ func CmdRuleType() *cobra.Command {
 	rtCmd.AddCommand(CmdTest())
 	rtCmd.AddCommand(CmdLint())
 	rtCmd.AddCommand(CmdValidateUpdate())
+	rtCmd.AddCommand(CmdInit())
 
 	return rtCmd
 }
