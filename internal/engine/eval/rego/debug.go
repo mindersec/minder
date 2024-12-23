@@ -24,40 +24,25 @@ import (
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
-func MakeEventHandler(ch chan<- *debug.Event) func(debug.Event) {
+func makeEventHandler(ch chan<- *debug.Event) func(debug.Event) {
 	return func(event debug.Event) {
 		ch <- &event
 	}
 }
 
-func MakeTracingEventHandler(ch chan<- *debug.Event) func(debug.Event) {
+//nolint:unused
+func makeTracingEventHandler(ch chan<- *debug.Event) func(debug.Event) {
 	return func(event debug.Event) {
 		fmt.Fprintf(os.Stderr, "%+v\n", event)
 		ch <- &event
 	}
 }
 
-func (ds *debugSession) WaitFor(
-	ctx context.Context,
-	eventTypes ...debug.EventType,
-) *debug.Event {
-	for {
-		select {
-		case e := <-ds.ch:
-			if slices.Contains(eventTypes, e.Type) {
-				return e
-			}
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
 var (
 	errEmptySource  = errors.New("empty source code")
-	errInvalidInput = errors.New("invalid input")
 	errInvalidInstr = errors.New("invalid instruction")
 	errInvalidBP    = errors.New("invalid breakpoint")
+	errUserAbort    = errors.New("user abort")
 )
 
 // Debug implements an interactive debugger for REGO-based evaluators.
@@ -67,9 +52,6 @@ func (e *Evaluator) Debug(
 	input *Input,
 	funcs ...func(*rego.Rego),
 ) error {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
 	allOpts := make([]func(*rego.Rego), 0, len(e.regoOpts)+len(funcs))
 	allOpts = append(allOpts, e.regoOpts...)
 	allOpts = append(allOpts, funcs...)
@@ -80,7 +62,7 @@ func (e *Evaluator) Debug(
 		withInput(input),
 		withQuery(e.reseval.getQueryString()),
 		withOpts(allOpts...),
-		withTracingEventHandler(),
+		// withTracingEventHandler(),
 	)
 	if err != nil {
 		return fmt.Errorf("error initializing debugger: %w", err)
@@ -93,7 +75,7 @@ type debugSession struct {
 	prompt  string
 	src     string
 	lines   int
-	input   *Input
+	input   any
 	query   string
 	opts    []debug.LaunchOption
 	ch      chan *debug.Event
@@ -125,11 +107,7 @@ func withSource(src string) debugSessionOption {
 
 func withInput(input any) debugSessionOption {
 	return func(ds *debugSession) error {
-		inner, ok := input.(*Input)
-		if !ok {
-			return fmt.Errorf("%w: wrong type %T", errInvalidInput, input)
-		}
-		ds.input = inner
+		ds.input = input
 		return nil
 	}
 }
@@ -159,11 +137,20 @@ func withOpts(opts ...func(*rego.Rego)) debugSessionOption {
 	}
 }
 
+//nolint:unused
 func withTracingEventHandler() debugSessionOption {
 	return func(ds *debugSession) error {
+		// NOTE: this channel must be buffered, because REGO
+		// interpreter emits several events that we're
+		// currently handling in the same thread of execition
+		// of the CLI interface.
+		//
+		// The solution would be handling CLI events and
+		// debuggee events asynchronously, but we're not there
+		// yet.
 		ch := make(chan *debug.Event, 10)
 		ds.ch = ch
-		ds.handler = MakeTracingEventHandler(ch)
+		ds.handler = makeTracingEventHandler(ch)
 		return nil
 	}
 }
@@ -180,12 +167,36 @@ func newDebugSession(
 	}
 
 	if ds.handler == nil {
+		// NOTE: this channel must be buffered, because REGO
+		// interpreter emits several events that we're
+		// currently handling in the same thread of execition
+		// of the CLI interface.
+		//
+		// The solution would be handling CLI events and
+		// debuggee events asynchronously, but we're not there
+		// yet.
 		ch := make(chan *debug.Event, 10)
 		ds.ch = ch
-		ds.handler = MakeEventHandler(ch)
+		ds.handler = makeEventHandler(ch)
 	}
 
 	return ds, nil
+}
+
+func (ds *debugSession) waitFor(
+	ctx context.Context,
+	eventTypes ...debug.EventType,
+) *debug.Event {
+	for {
+		select {
+		case e := <-ds.ch:
+			if slices.Contains(eventTypes, e.Type) {
+				return e
+			}
+		case <-ctx.Done():
+			return nil
+		}
+	}
 }
 
 func (ds *debugSession) startDebugger(
@@ -194,6 +205,24 @@ func (ds *debugSession) startDebugger(
 	debugger := debug.NewDebugger(
 		debug.SetEventHandler(ds.handler),
 	)
+	// This combination of flags provides roughly the same user
+	// experience as one would have while debugging imperative
+	// languages using a standard debugger like lldb or gdb.
+	//
+	// Specifically, `StopOnEntry` stops when entering an
+	// expression, which is like stepping through some, but not
+	// all, lines and even inside the same line multiple times in
+	// the case of list/set comprehensions, while `StopOnFail`
+	// results in stopping at all expressions producing a `false`
+	// value, which is similar to the previous case in that it
+	// stops every time a check fails during a list/set
+	// comprehension.
+	//
+	// The previous descriptions must be taken with a grain of
+	// salt and are likely missing useful cases. That said, the
+	// described cases are hardly seen when debugging imperative
+	// languages, which is the user experience we want to provide
+	// at the moment. Of course, this might change in the future.
 	launchProps := debug.LaunchEvalProperties{
 		LaunchProperties: debug.LaunchProperties{
 			StopOnEntry:  false,
@@ -242,11 +271,11 @@ func (ds *debugSession) Start(ctx context.Context) error {
 			}
 			fmt.Fprintf(&b, "Restarted")
 		case line == "c":
-			if err := ds.session.Resume(thr); err != nil {
+			if err := ds.session.ResumeAll(); err != nil {
 				return fmt.Errorf("error resuming execution: %w", err)
 			}
 
-			evt := ds.WaitFor(ctx,
+			evt := ds.waitFor(ctx,
 				debug.ExceptionEventType,
 				debug.StoppedEventType,
 				debug.StdoutEventType,
@@ -280,6 +309,9 @@ func (ds *debugSession) Start(ctx context.Context) error {
 			case debug.TerminatedEventType:
 				fmt.Fprintf(&b, "\nTerminated\n")
 			}
+		case line == "q":
+			return errUserAbort
+
 		case line == "locals":
 			if err := printLocals(&b, ds.session, thr); err != nil {
 				return fmt.Errorf("error printing locals: %w", err)
@@ -343,11 +375,23 @@ func (ds *debugSession) Start(ctx context.Context) error {
 				return fmt.Errorf("error getting stack trace: %w", err)
 			}
 			if loc := getCurrentLocation(stack); loc != nil {
-				loc.Row += 1 // let's hope it always exists...
-				loc.Col = 0
+				// Unfortunately, getting the column
+				// right is tricky, since source-level
+				// breakpoints only look at line
+				// numbers in the REGO interpreter, so
+				// the safest assumption is starting
+				// from 0.
+				//
+				// It would be great if the frame
+				// struct contained details about the
+				// position in the source.
+				nextloc := location.Location{
+					Row: loc.Row + 1, // let's hope it always exists...
+					Col: 0,
+				}
 
 				// add internal breakpoint
-				bp, err := ds.session.AddBreakpoint(*loc)
+				bp, err := ds.session.AddBreakpoint(nextloc)
 				if err != nil {
 					return fmt.Errorf("error setting breakpoint: %w", err)
 				}
@@ -357,7 +401,7 @@ func (ds *debugSession) Start(ctx context.Context) error {
 					return fmt.Errorf("error resuming execution: %w", err)
 				}
 
-				evt := ds.WaitFor(ctx, debug.StoppedEventType)
+				evt := ds.waitFor(ctx, debug.StoppedEventType)
 				stack, err := ds.session.StackTrace(evt.Thread)
 				if err != nil {
 					return fmt.Errorf("error getting stack trace: %w", err)
@@ -374,43 +418,39 @@ func (ds *debugSession) Start(ctx context.Context) error {
 		case line == "s",
 			line == "sv":
 			if err := ds.session.StepOver(thr); err != nil {
-				panic(err)
+				return fmt.Errorf("error on step-over: %w", err)
 			}
-			evt := ds.WaitFor(ctx, debug.StoppedEventType)
+			evt := ds.waitFor(ctx, debug.StoppedEventType)
 			stack, err := ds.session.StackTrace(evt.Thread)
 			if err != nil {
 				return fmt.Errorf("error getting stack trace: %w", err)
 			}
 			printSource(&b, ds.src, stack)
 		case line == "si":
-			go func() {
-				if err := ds.session.StepIn(thr); err != nil {
-					panic(err)
-				}
-			}()
-			evt := ds.WaitFor(ctx, debug.StoppedEventType)
+			if err := ds.session.StepIn(thr); err != nil {
+				return fmt.Errorf("error on step-in: %w", err)
+			}
+			evt := ds.waitFor(ctx, debug.StoppedEventType)
 			stack, err := ds.session.StackTrace(evt.Thread)
 			if err != nil {
 				return fmt.Errorf("error getting stack trace: %w", err)
 			}
 			printSource(&b, ds.src, stack)
 		case line == "so":
-			go func() {
-				if err := ds.session.StepOut(thr); err != nil {
-					panic(err)
-				}
-			}()
-			evt := ds.WaitFor(ctx, debug.StoppedEventType)
+			if err := ds.session.StepOut(thr); err != nil {
+				return fmt.Errorf("error on step-out: %w", err)
+			}
+			evt := ds.waitFor(ctx, debug.StoppedEventType)
 			stack, err := ds.session.StackTrace(evt.Thread)
 			if err != nil {
 				return fmt.Errorf("error getting stack trace: %w", err)
 			}
 			printSource(&b, ds.src, stack)
-		case line == "q":
-			return fmt.Errorf("user abort")
+
 		case line == "h",
 			line == "help":
 			printHelp(&b)
+
 		case strings.HasPrefix(line, "p"):
 			varname, err := toVarName(line)
 			if err != nil {
@@ -433,6 +473,7 @@ func (ds *debugSession) Start(ctx context.Context) error {
 			if err := printVar(&b, r, ds.session, thr); err != nil {
 				return fmt.Errorf("error printing variables: %w", err)
 			}
+
 		case strings.HasPrefix(line, "b"):
 			loc, err := toLocation(line, ds.lines)
 			if err != nil {
@@ -627,10 +668,24 @@ func printSource(b *strings.Builder, src string, stack debug.StackTrace) {
 		for idx, line := range strings.Split(src, "\n") {
 			fmt.Fprintf(b, "%*d: %s", padding, idx+1, line)
 			if idx+1 == loc.Row {
-				theline := strings.Split(string(loc.Text), "\n")[0]
+				// `theline` is the very first line of
+				// the expression starting at the
+				// given position.
+				//
+				// In REGO expressions can span
+				// multiple lines (for example, rules
+				// do), but we really are interested
+				// in underlining only the first line
+				// of the given expression.
+				//
+				// For weird underlyining starting
+				// from column 0 of the line, see
+				// comment on setting source-level
+				// breakpoints.
+				theline := strings.Split(line, "\n")[0]
 				fmt.Fprintf(b, "\n%s%s",
-					strings.Repeat(" ", loc.Col+int(padding)+2-1),
-					cli.SimpleBoldStyle.Render(strings.Repeat("^", len(theline))),
+					strings.Repeat(" ", int(padding)+2+loc.Col-1),
+					cli.SimpleBoldStyle.Render(strings.Repeat("^", len(theline)-loc.Col+1)),
 				)
 			}
 			fmt.Fprintln(b)
@@ -654,6 +709,7 @@ func printLocals(b *strings.Builder, s debug.Session, thrID debug.ThreadID) erro
 	}
 
 	if len(trace) == 0 {
+		fmt.Fprintln(b, "No locals")
 		return nil
 	}
 
@@ -843,7 +899,7 @@ Breakpoints:
     clearall/cla -- clear all breakpoints
 
 Stepping:
-    n ------------- next line
+    n/next--------- next line
     s/sv ---------- step over
     so ------------ step out
     si ------------ step into
