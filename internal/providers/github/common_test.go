@@ -959,3 +959,182 @@ func TestNewFallbackTokenClient(t *testing.T) {
 		})
 	}
 }
+
+func TestStartCheckRun(t *testing.T) {
+	tests := []struct {
+		name        string
+		owner       string
+		repo        string
+		opts        *github.CreateCheckRunOptions
+		setupMocks  func(*testGitHub)
+		wantErr     bool
+		expectedErr error
+	}{
+		{
+			name:  "successful check run creation",
+			owner: "test-owner",
+			repo:  "test-repo",
+			opts: &github.CreateCheckRunOptions{
+				Name:      "test-check",
+				HeadSHA:   "abc123",
+				Status:    github.String("in_progress"),
+				StartedAt: &github.Timestamp{Time: time.Now()},
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusCreated,
+							Body: io.NopCloser(strings.NewReader(`{
+								"id": 1,
+								"name": "test-check",
+								"head_sha": "abc123",
+								"status": "in_progress"
+							}`)),
+							Header: make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: false,
+		},
+		{
+			name:  "missing check permissions",
+			owner: "test-owner",
+			repo:  "test-repo",
+			opts: &github.CreateCheckRunOptions{
+				Name:    "test-check",
+				HeadSHA: "abc123",
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusForbidden,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Resource not accessible by integration"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr:     true,
+			expectedErr: ErroNoCheckPermissions,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			run, err := th.gh.StartCheckRun(context.Background(), tt.owner, tt.repo, tt.opts)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErr != nil {
+					assert.Equal(t, tt.expectedErr, err)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, run)
+				assert.Equal(t, tt.opts.Name, run.GetName())
+				assert.Equal(t, tt.opts.HeadSHA, run.GetHeadSHA())
+			}
+		})
+	}
+}
+
+func TestUpdateCheckRun(t *testing.T) {
+	tests := []struct {
+		name        string
+		owner       string
+		repo        string
+		checkRunID  int64
+		opts        *github.UpdateCheckRunOptions
+		setupMocks  func(*testGitHub)
+		wantErr     bool
+		expectedErr error
+	}{
+		{
+			name:       "successful check run update",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			checkRunID: 1,
+			opts: &github.UpdateCheckRunOptions{
+				Name:       "test-check",
+				Status:     github.String("completed"),
+				Conclusion: github.String("success"),
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusOK,
+							Body: io.NopCloser(strings.NewReader(`{
+								"id": 1,
+								"name": "test-check",
+								"status": "completed",
+								"conclusion": "success"
+							}`)),
+							Header: make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: false,
+		},
+		{
+			name:       "missing check permissions",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			checkRunID: 1,
+			opts: &github.UpdateCheckRunOptions{
+				Name:   "test-check",
+				Status: github.String("completed"),
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusForbidden,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Resource not accessible by integration"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr:     true,
+			expectedErr: ErroNoCheckPermissions,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			run, err := th.gh.UpdateCheckRun(context.Background(), tt.owner, tt.repo, tt.checkRunID, tt.opts)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErr != nil {
+					assert.Equal(t, tt.expectedErr, err)
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, run)
+				assert.Equal(t, tt.opts.Name, run.GetName())
+				assert.Equal(t, *tt.opts.Status, run.GetStatus())
+				assert.Equal(t, *tt.opts.Conclusion, run.GetConclusion())
+			}
+		})
+	}
+}
