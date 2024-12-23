@@ -2730,7 +2730,6 @@ message RuleType {
                     // the file to patch
                     string path = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$",
                             min_len: 1,
                             max_len: 200,
                         }
@@ -2839,7 +2838,7 @@ message RuleType {
             message AlertTypePRComment {
                 string review_message = 1 [
                     (buf.validate.field).string = {
-                        max_len: 1000,
+                        max_len: 65536,
                     },
                     (google.api.field_behavior) = REQUIRED
                 ];

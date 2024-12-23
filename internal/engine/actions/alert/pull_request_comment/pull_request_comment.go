@@ -22,6 +22,7 @@ import (
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -30,6 +31,9 @@ import (
 const (
 	// AlertType is the type of the pull request comment alert engine
 	AlertType = "pull_request_comment"
+	// PrCommentMaxLength is the maximum length of the pull request comment
+	// (this was derived from the limit of the GitHub API)
+	PrCommentMaxLength = 65536
 )
 
 // Alert is the structure backing the noop alert
@@ -40,11 +44,21 @@ type Alert struct {
 	setting    models.ActionOpt
 }
 
+// PrCommentTemplateParams is the parameters for the PR comment templates
+type PrCommentTemplateParams struct {
+	// EvalErrorDetails is the details of the error that occurred during evaluation, which may be empty
+	EvalErrorDetails string
+
+	// EvalResult is the output of the evaluation, which may be empty
+	EvalResultOutput any
+}
+
 type paramsPR struct {
 	Owner      string
 	Repo       string
 	CommitSha  string
 	Number     int
+	Comment    string
 	Metadata   *alertMetadata
 	prevStatus *db.ListRuleEvaluationsByProfileIdRow
 }
@@ -99,10 +113,10 @@ func (alert *Alert) Do(
 ) (json.RawMessage, error) {
 	pr, ok := entity.(*pbinternal.PullRequest)
 	if !ok {
-		return nil, fmt.Errorf("expected repository, got %T", entity)
+		return nil, fmt.Errorf("expected pull request, got %T", entity)
 	}
 
-	commentParams, err := getParamsForPRComment(ctx, pr, params, metadata)
+	commentParams, err := alert.getParamsForPRComment(ctx, pr, params, metadata)
 	if err != nil {
 		return nil, fmt.Errorf("error extracting parameters for PR comment: %w", err)
 	}
@@ -129,7 +143,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 		review := &github.PullRequestReviewRequest{
 			CommitID: github.String(params.CommitSha),
 			Event:    github.String("COMMENT"),
-			Body:     github.String(alert.reviewCfg.ReviewMessage),
+			Body:     github.String(params.Comment),
 		}
 
 		r, err := alert.gh.CreateReview(
@@ -196,7 +210,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 	// Process the command
 	switch cmd {
 	case interfaces.ActionCmdOn:
-		body := github.String(alert.reviewCfg.ReviewMessage)
+		body := github.String(params.Comment)
 		logger.Info().Msgf("dry run: create a PR comment on PR %d in repo %s/%s with the following body: %s",
 			params.Number, params.Owner, params.Repo, *body)
 		return nil, nil
@@ -232,7 +246,7 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMes
 }
 
 // getParamsForSecurityAdvisory extracts the details from the entity
-func getParamsForPRComment(
+func (alert *Alert) getParamsForPRComment(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
 	params interfaces.ActionsParams,
@@ -252,6 +266,26 @@ func getParamsForPRComment(
 		return nil, fmt.Errorf("pr number is too large")
 	}
 	result.Number = int(pr.Number)
+
+	commentTmpl, err := util.NewSafeHTMLTemplate(&alert.reviewCfg.ReviewMessage, "message")
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse review message template: %w", err)
+	}
+
+	tmplParams := &PrCommentTemplateParams{
+		EvalErrorDetails: enginerr.ErrorAsEvalDetails(params.GetEvalErr()),
+	}
+
+	if params.GetEvalResult() != nil {
+		tmplParams.EvalResultOutput = params.GetEvalResult().Output
+	}
+
+	comment, err := commentTmpl.Render(ctx, tmplParams, PrCommentMaxLength)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute title template: %w", err)
+	}
+
+	result.Comment = comment
 
 	// Unmarshal the existing alert metadata, if any
 	if metadata != nil {

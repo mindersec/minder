@@ -51,6 +51,16 @@ type PullRequestConfig struct {
 	Filter string `json:"filter" yaml:"filter" mapstructure:"filter"`
 }
 
+const (
+	// PullRequestIngestTypeNew is a filter that exposes only new dependencies in the pull request
+	PullRequestIngestTypeNew = "new"
+	// PullRequestIngestTypeNewAndUpdated is a filter that exposes new and updated
+	// dependencies in the pull request
+	PullRequestIngestTypeNewAndUpdated = "new_and_updated"
+	// PullRequestIngestTypeAll is a filter that exposes all dependencies in the pull request
+	PullRequestIngestTypeAll = "all"
+)
+
 // NewDepsIngester creates a new deps rule data ingest engine
 func NewDepsIngester(cfg *pb.DepsType, gitprov provifv1.Git) (*Deps, error) {
 	if gitprov == nil {
@@ -87,7 +97,7 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 	case *pbinternal.PullRequest:
 		return gi.ingestPullRequest(ctx, entity, params)
 	default:
-		return nil, fmt.Errorf("deps is only supported for repositories")
+		return nil, fmt.Errorf("deps is only supported for repositories and pull requests")
 	}
 }
 
@@ -151,13 +161,13 @@ func (gi *Deps) getBranch(repo *pb.Repository, userConfigBranch string) string {
 // ingestTypes returns a sorter function for the given filter type.
 // items which compare equal are skipped in output.
 var ingestTypes = map[string]func(*sbom.Node, *sbom.Node) int{
-	"new": func(base *sbom.Node, updated *sbom.Node) int {
+	PullRequestIngestTypeNew: func(base *sbom.Node, updated *sbom.Node) int {
 		return cmp.Compare(base.GetName(), updated.GetName())
 	},
-	"new_and_updated": func(base *sbom.Node, updated *sbom.Node) int {
+	PullRequestIngestTypeNewAndUpdated: func(base *sbom.Node, updated *sbom.Node) int {
 		return nodeSorter(base, updated)
 	},
-	"all": func(_ *sbom.Node, _ *sbom.Node) int {
+	PullRequestIngestTypeAll: func(_ *sbom.Node, _ *sbom.Node) int {
 		return -1
 	},
 }
@@ -223,10 +233,20 @@ func filterNodes(base []*sbom.Node, updated []*sbom.Node, compare func(*sbom.Nod
 
 func (gi *Deps) ingestPullRequest(
 	ctx context.Context, pr *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
-	userCfg := &PullRequestConfig{}
+	userCfg := &PullRequestConfig{
+		// We default to new_and_updated for user convenience.
+		Filter: PullRequestIngestTypeNewAndUpdated,
+	}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read dependency ingester configuration from params: %w", err)
 	}
+
+	// Enforce that the filter is valid if left empty.
+	if userCfg.Filter == "" {
+		userCfg.Filter = PullRequestIngestTypeNewAndUpdated
+	}
+
+	// At this point the user really set a wrong configuration. So, let's error out.
 	if _, ok := ingestTypes[userCfg.Filter]; !ok {
 		return nil, fmt.Errorf("invalid filter type: %s", userCfg.Filter)
 	}
@@ -262,6 +282,7 @@ func (gi *Deps) ingestPullRequest(
 	}, nil
 }
 
+// TODO: this first part is fairly shared with fetchClone from ../git/git.go.
 func (gi *Deps) scanFromUrl(ctx context.Context, url string, branch string) (*sbom.NodeList, *plumbing.Reference, error) {
 	// We clone to the memfs go-billy filesystem driver, which doesn't
 	// allow for direct access to the underlying filesystem. This is

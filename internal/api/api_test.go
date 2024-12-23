@@ -46,6 +46,21 @@ func TestProtoValidationInterceptor(t *testing.T) {
 			errMsg:  "Validation failed:\n- Field 'name': value does not match regex pattern",
 			errCode: codes.InvalidArgument,
 		},
+		{
+			name: "invalid request with nested field",
+			req: &v1.ListEvaluationResultsRequest{
+				Context: &v1.Context{
+					Project: ptr.Ptr(uuid.New().String()),
+				},
+				Entity: []*v1.EntityTypedId{
+					{
+						Id: "invalid-id",
+					},
+				},
+			},
+			errMsg:  "Validation failed:\n- Field 'entity[0].id': value must be a valid UUID",
+			errCode: codes.InvalidArgument,
+		},
 	}
 
 	validator, err := NewValidator()
