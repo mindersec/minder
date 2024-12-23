@@ -3,6 +3,7 @@ package github
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -1134,6 +1135,280 @@ func TestUpdateCheckRun(t *testing.T) {
 				assert.Equal(t, tt.opts.Name, run.GetName())
 				assert.Equal(t, *tt.opts.Status, run.GetStatus())
 				assert.Equal(t, *tt.opts.Conclusion, run.GetConclusion())
+			}
+		})
+	}
+}
+
+func TestListFiles(t *testing.T) {
+	tests := []struct {
+		name          string
+		owner         string
+		repo          string
+		prNumber      int
+		perPage       int
+		pageNumber    int
+		setupMocks    func(*testGitHub)
+		wantFiles     []*github.CommitFile
+		wantResponse  *github.Response
+		wantErr       bool
+		expectedError error
+	}{
+		{
+			name:       "successful listing with single file",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			prNumber:   123,
+			perPage:    30,
+			pageNumber: 1,
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusOK,
+							Body: io.NopCloser(strings.NewReader(`[
+								{
+									"sha": "abc123",
+									"filename": "test.go",
+									"status": "modified",
+									"additions": 10,
+									"deletions": 5,
+									"changes": 15
+								}
+							]`)),
+							Header: make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantFiles: []*github.CommitFile{
+				{
+					SHA:       github.String("abc123"),
+					Filename:  github.String("test.go"),
+					Status:    github.String("modified"),
+					Additions: github.Int(10),
+					Deletions: github.Int(5),
+					Changes:   github.Int(15),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "rate limit error then success",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			prNumber:   123,
+			perPage:    30,
+			pageNumber: 1,
+			setupMocks: func(th *testGitHub) {
+				rateLimitHeaders := make(http.Header)
+				rateLimitHeaders.Set("X-RateLimit-Remaining", "0")
+				rateLimitHeaders.Set("X-RateLimit-Reset", fmt.Sprint(time.Now().Add(100*time.Millisecond).Unix()))
+
+				th.delegate.EXPECT().GetCredential().Return(&mockCredential{}).AnyTimes()
+				th.delegate.EXPECT().GetOwner().Return("test-owner").AnyTimes()
+				th.cache.EXPECT().Set(
+					"test-owner",
+					gomock.Any(),
+					db.ProviderTypeGithub,
+					th.gh,
+				).AnyTimes()
+
+				responses := []*http.Response{
+					{
+						StatusCode: http.StatusForbidden,
+						Body: io.NopCloser(strings.NewReader(`{
+							"message": "API rate limit exceeded",
+							"documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+						}`)),
+						Header:  rateLimitHeaders,
+						Request: &http.Request{Method: "GET", URL: &url.URL{Path: "/test"}},
+					},
+					{
+						StatusCode: http.StatusOK,
+						Body: io.NopCloser(strings.NewReader(`[
+							{
+								"sha": "abc123",
+								"filename": "test.go",
+								"status": "modified",
+								"additions": 10,
+								"deletions": 5,
+								"changes": 15
+							}
+						]`)),
+						Header: make(http.Header),
+					},
+				}
+
+				var currentResponse int
+				client := &http.Client{
+					Transport: &mockTransportSequence{
+						responses: responses,
+						current:   &currentResponse,
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantFiles: []*github.CommitFile{
+				{
+					SHA:       github.String("abc123"),
+					Filename:  github.String("test.go"),
+					Status:    github.String("modified"),
+					Additions: github.Int(10),
+					Deletions: github.Int(5),
+					Changes:   github.Int(15),
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name:       "permanent error",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			prNumber:   123,
+			perPage:    30,
+			pageNumber: 1,
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Not Found"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr:       true,
+			expectedError: &github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusNotFound}, Message: "Not Found"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			files, resp, err := th.gh.ListFiles(
+				context.Background(),
+				tt.owner,
+				tt.repo,
+				tt.prNumber,
+				tt.perPage,
+				tt.pageNumber,
+			)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedError != nil {
+					var ghErr *github.ErrorResponse
+					if errors.As(err, &ghErr) {
+						expectedGHErr := tt.expectedError.(*github.ErrorResponse)
+						assert.Equal(t, expectedGHErr.Response.StatusCode, ghErr.Response.StatusCode)
+						assert.Equal(t, expectedGHErr.Message, ghErr.Message)
+					}
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantFiles, files)
+				if tt.wantResponse != nil {
+					assert.Equal(t, tt.wantResponse, resp)
+				}
+			}
+		})
+	}
+}
+
+type mockTransportSequence struct {
+	responses []*http.Response
+	current   *int
+}
+
+func (t *mockTransportSequence) RoundTrip(*http.Request) (*http.Response, error) {
+	if *t.current >= len(t.responses) {
+		return nil, errors.New("no more responses")
+	}
+	resp := t.responses[*t.current]
+	*t.current++
+	return resp, nil
+}
+
+func TestListAllRepositories(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMocks    func(*testGitHub)
+		expectedRepos []*minderv1.Repository
+		expectedError error
+	}{
+		{
+			name: "successful repository listing",
+			setupMocks: func(th *testGitHub) {
+				expectedRepos := []*minderv1.Repository{
+					{
+						Name:     "repo1",
+						Owner:    "test-owner",
+						CloneUrl: "https://github.com/test-owner/repo1.git",
+					},
+					{
+						Name:     "repo2",
+						Owner:    "test-owner",
+						CloneUrl: "https://github.com/test-owner/repo2.git",
+					},
+				}
+				th.delegate.EXPECT().ListAllRepositories(gomock.Any()).Return(expectedRepos, nil)
+			},
+			expectedRepos: []*minderv1.Repository{
+				{
+					Name:     "repo1",
+					Owner:    "test-owner",
+					CloneUrl: "https://github.com/test-owner/repo1.git",
+				},
+				{
+					Name:     "repo2",
+					Owner:    "test-owner",
+					CloneUrl: "https://github.com/test-owner/repo2.git",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error listing repositories",
+			setupMocks: func(th *testGitHub) {
+				th.delegate.EXPECT().ListAllRepositories(gomock.Any()).
+					Return(nil, errors.New("failed to list repositories"))
+			},
+			expectedRepos: nil,
+			expectedError: errors.New("failed to list repositories"),
+		},
+		{
+			name: "empty repository list",
+			setupMocks: func(th *testGitHub) {
+				th.delegate.EXPECT().ListAllRepositories(gomock.Any()).
+					Return([]*minderv1.Repository{}, nil)
+			},
+			expectedRepos: []*minderv1.Repository{},
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			repos, err := th.gh.ListAllRepositories(context.Background())
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedRepos, repos)
 			}
 		})
 	}
