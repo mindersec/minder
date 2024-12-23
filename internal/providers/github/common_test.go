@@ -22,6 +22,7 @@ import (
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	config "github.com/mindersec/minder/pkg/config/server"
 )
 
 type testGitHub struct {
@@ -856,6 +857,104 @@ func TestCreateHook(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantHook, hook)
+			}
+		})
+	}
+}
+
+func TestCanHandleOwner(t *testing.T) {
+	tests := []struct {
+		name     string
+		provider db.Provider
+		owner    string
+		want     bool
+	}{
+		{
+			name: "github app provider with matching owner",
+			provider: db.Provider{
+				Name:  "github-app-test-owner",
+				Class: db.ProviderClassGithubApp,
+			},
+			owner: "test-owner",
+			want:  true,
+		},
+		{
+			name: "github app provider with non-matching owner",
+			provider: db.Provider{
+				Name:  "github-app-different-owner",
+				Class: db.ProviderClassGithubApp,
+			},
+			owner: "test-owner",
+			want:  false,
+		},
+		{
+			name: "github provider class",
+			provider: db.Provider{
+				Name:  "any-name",
+				Class: db.ProviderClassGithub,
+			},
+			owner: "test-owner",
+			want:  true,
+		},
+		{
+			name: "non-github provider class",
+			provider: db.Provider{
+				Name:  "any-name",
+				Class: "other-provider",
+			},
+			owner: "test-owner",
+			want:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := CanHandleOwner(context.Background(), tt.provider, tt.owner)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestNewFallbackTokenClient(t *testing.T) {
+	tests := []struct {
+		name      string
+		appConfig config.ProviderConfig
+		wantNil   bool
+	}{
+		{
+			name: "valid fallback token",
+			appConfig: config.ProviderConfig{
+				GitHubApp: &config.GitHubAppConfig{
+					FallbackToken: "valid-token",
+				},
+			},
+			wantNil: false,
+		},
+		{
+			name: "empty fallback token",
+			appConfig: config.ProviderConfig{
+				GitHubApp: &config.GitHubAppConfig{
+					FallbackToken: "",
+				},
+			},
+			wantNil: true,
+		},
+		{
+			name: "nil github app config",
+			appConfig: config.ProviderConfig{
+				GitHubApp: nil,
+			},
+			wantNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := NewFallbackTokenClient(tt.appConfig)
+			if tt.wantNil {
+				assert.Nil(t, client)
+			} else {
+				assert.NotNil(t, client)
 			}
 		})
 	}
