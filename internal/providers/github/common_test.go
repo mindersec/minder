@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
 package github
 
 import (
@@ -12,18 +15,18 @@ import (
 	"time"
 
 	"github.com/google/go-github/v63/github"
-	"github.com/mindersec/minder/internal/db"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/oauth2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/mindersec/minder/internal/db"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type testGitHub struct {
@@ -34,6 +37,7 @@ type testGitHub struct {
 }
 
 func setupTest(t *testing.T) *testGitHub {
+	t.Helper()
 	ctrl := gomock.NewController(t)
 	delegate := mock_github.NewMockDelegate(ctrl)
 	cache := mock_ratecache.NewMockRestClientCache(ctrl)
@@ -57,6 +61,7 @@ func setupTest(t *testing.T) *testGitHub {
 }
 
 func TestWaitForRateLimitReset(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name        string
 		inputErr    error
@@ -146,13 +151,15 @@ func TestWaitForRateLimitReset(t *testing.T) {
 		{
 			name:       "non-rate limit error",
 			inputErr:   errors.New("random error"),
-			setupMocks: func(th *testGitHub) {},
+			setupMocks: func(_ *testGitHub) {},
 			wantErr:    false,
 		},
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -174,6 +181,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 }
 
 func TestPerformWithRetry(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name       string
 		operation  func() (string, error)
@@ -210,7 +218,9 @@ func TestPerformWithRetry(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := performWithRetry(context.Background(), tt.operation)
 
 			if tt.wantErr {
@@ -228,10 +238,12 @@ type mockCredential struct {
 }
 
 func (m *mockCredential) GetCacheKey() string {
+	_ = m
 	return "mock-cache-key"
 }
 
 func TestListPackagesByRepository(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name           string
 		owner          string
@@ -307,6 +319,7 @@ func TestListPackagesByRepository(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -331,6 +344,8 @@ func TestListPackagesByRepository(t *testing.T) {
 }
 
 func TestGetPackageVersions(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		owner          string
@@ -430,6 +445,8 @@ func TestGetPackageVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -555,8 +572,8 @@ func TestGetArtifactVersions(t *testing.T) {
 					Name:  tt.artifactName,
 				},
 				&testFilter{
-					pageNumber:   int32(tt.pageNumber),
-					itemsPerPage: int32(tt.itemsPerPage),
+					pageNumber:   safeInt32(tt.pageNumber),
+					itemsPerPage: safeInt32(tt.itemsPerPage),
 				},
 			)
 
@@ -578,7 +595,8 @@ type testFilter struct {
 
 func (f *testFilter) GetPageNumber() int32   { return f.pageNumber }
 func (f *testFilter) GetItemsPerPage() int32 { return f.itemsPerPage }
-func (f *testFilter) IsSkippable(createdAt time.Time, tags []string) error {
+func (f *testFilter) IsSkippable(_ time.Time, _ []string) error {
+	_ = f
 	return nil
 }
 
@@ -591,6 +609,8 @@ func (t *mockTransport) RoundTrip(*http.Request) (*http.Response, error) {
 }
 
 func TestIsMinderHook(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		hook         *github.Hook
@@ -644,6 +664,8 @@ func TestIsMinderHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			isMinder, err := IsMinderHook(tt.hook, tt.hostURL)
 
 			if tt.wantErr {
@@ -657,6 +679,8 @@ func TestIsMinderHook(t *testing.T) {
 }
 
 func TestCreateHook(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		owner       string
@@ -828,6 +852,8 @@ func TestCreateHook(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -864,6 +890,8 @@ func TestCreateHook(t *testing.T) {
 }
 
 func TestCanHandleOwner(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		provider db.Provider
@@ -910,6 +938,8 @@ func TestCanHandleOwner(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := CanHandleOwner(context.Background(), tt.provider, tt.owner)
 			assert.Equal(t, tt.want, got)
 		})
@@ -917,6 +947,8 @@ func TestCanHandleOwner(t *testing.T) {
 }
 
 func TestNewFallbackTokenClient(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name      string
 		appConfig config.ProviderConfig
@@ -951,6 +983,8 @@ func TestNewFallbackTokenClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			client := NewFallbackTokenClient(tt.appConfig)
 			if tt.wantNil {
 				assert.Nil(t, client)
@@ -962,6 +996,8 @@ func TestNewFallbackTokenClient(t *testing.T) {
 }
 
 func TestStartCheckRun(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		owner       string
@@ -1029,6 +1065,8 @@ func TestStartCheckRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -1050,6 +1088,8 @@ func TestStartCheckRun(t *testing.T) {
 }
 
 func TestUpdateCheckRun(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		owner       string
@@ -1119,6 +1159,8 @@ func TestUpdateCheckRun(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -1141,12 +1183,15 @@ func TestUpdateCheckRun(t *testing.T) {
 }
 
 func TestListFiles(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
-		name          string
-		owner         string
-		repo          string
-		prNumber      int
-		perPage       int
+		name     string
+		owner    string
+		repo     string
+		prNumber int
+		perPage  int
+
 		pageNumber    int
 		setupMocks    func(*testGitHub)
 		wantFiles     []*github.CommitFile
@@ -1291,6 +1336,8 @@ func TestListFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -1339,6 +1386,8 @@ func (t *mockTransportSequence) RoundTrip(*http.Request) (*http.Response, error)
 }
 
 func TestListAllRepositories(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name          string
 		setupMocks    func(*testGitHub)
@@ -1398,6 +1447,8 @@ func TestListAllRepositories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -1415,6 +1466,8 @@ func TestListAllRepositories(t *testing.T) {
 }
 
 func TestCreateSecurityAdvisory(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name          string
 		owner         string
@@ -1512,6 +1565,8 @@ func TestCreateSecurityAdvisory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
@@ -1537,6 +1592,8 @@ func TestCreateSecurityAdvisory(t *testing.T) {
 }
 
 func TestCloseSecurityAdvisory(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name          string
 		owner         string
@@ -1638,12 +1695,15 @@ func TestCloseSecurityAdvisory(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			th := setupTest(t)
 			tt.setupMocks(th)
 
 			err := th.gh.CloseSecurityAdvisory(
 				context.Background(),
 				tt.owner,
+
 				tt.repo,
 				tt.id,
 			)
@@ -1661,4 +1721,14 @@ func TestCloseSecurityAdvisory(t *testing.T) {
 			}
 		})
 	}
+}
+
+func safeInt32(n int) int32 {
+	if n > 1<<31-1 {
+		return 1<<31 - 1
+	}
+	if n < -(1 << 31) {
+		return -(1 << 31)
+	}
+	return int32(n)
 }
