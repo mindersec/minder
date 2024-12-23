@@ -1413,3 +1413,252 @@ func TestListAllRepositories(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateSecurityAdvisory(t *testing.T) {
+	tests := []struct {
+		name          string
+		owner         string
+		repo          string
+		severity      string
+		summary       string
+		description   string
+		vulns         []*github.AdvisoryVulnerability
+		setupMocks    func(*testGitHub)
+		expectedID    string
+		expectedError error
+	}{
+		{
+			name:        "successful advisory creation",
+			owner:       "test-owner",
+			repo:        "test-repo",
+			severity:    "critical",
+			summary:     "Test vulnerability",
+			description: "Test vulnerability description",
+			vulns: []*github.AdvisoryVulnerability{
+				{
+					Package: &github.VulnerabilityPackage{
+						Name:      github.String("test-package"),
+						Ecosystem: github.String("npm"),
+					},
+				},
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusCreated,
+							Body: io.NopCloser(strings.NewReader(`{
+								"ghsa_id": "GHSA-test-1234"
+							}`)),
+							Header: make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedID:    "GHSA-test-1234",
+			expectedError: nil,
+		},
+		{
+			name:        "server error",
+			owner:       "test-owner",
+			repo:        "test-repo",
+			severity:    "high",
+			summary:     "Test vulnerability",
+			description: "Test vulnerability description",
+			vulns:       []*github.AdvisoryVulnerability{},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusInternalServerError,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Internal Server Error"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedID:    "",
+			expectedError: fmt.Errorf("500 Internal Server Error []"),
+		},
+		{
+			name:        "unauthorized error",
+			owner:       "test-owner",
+			repo:        "test-repo",
+			severity:    "medium",
+			summary:     "Test vulnerability",
+			description: "Test vulnerability description",
+			vulns:       []*github.AdvisoryVulnerability{},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusUnauthorized,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Bad credentials"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedID:    "",
+			expectedError: &github.ErrorResponse{Response: &http.Response{StatusCode: http.StatusUnauthorized}, Message: "Bad credentials"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			id, err := th.gh.CreateSecurityAdvisory(
+				context.Background(),
+				tt.owner,
+				tt.repo,
+				tt.severity,
+				tt.summary,
+				tt.description,
+				tt.vulns,
+			)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedID, id)
+			}
+		})
+	}
+}
+
+func TestCloseSecurityAdvisory(t *testing.T) {
+	tests := []struct {
+		name          string
+		owner         string
+		repo          string
+		id            string
+		setupMocks    func(*testGitHub)
+		expectedError error
+	}{
+		{
+			name:  "successful advisory closure",
+			owner: "test-owner",
+			repo:  "test-repo",
+			id:    "GHSA-test-1234",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusOK,
+							Body:       io.NopCloser(strings.NewReader(`{}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "not_found_error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			id:    "GHSA-invalid",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Not Found"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedError: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusNotFound},
+				Message:  "Not Found",
+			},
+		},
+		{
+			name:  "unauthorized_error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			id:    "GHSA-test-1234",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusUnauthorized,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Bad credentials"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedError: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusUnauthorized},
+				Message:  "Bad credentials",
+			},
+		},
+		{
+			name:  "server_error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			id:    "GHSA-test-1234",
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusInternalServerError,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Internal Server Error"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			expectedError: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusInternalServerError},
+				Message:  "Internal Server Error",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			err := th.gh.CloseSecurityAdvisory(
+				context.Background(),
+				tt.owner,
+				tt.repo,
+				tt.id,
+			)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				var ghErr *github.ErrorResponse
+				if errors.As(err, &ghErr) {
+					expectedGHErr := tt.expectedError.(*github.ErrorResponse)
+					assert.Equal(t, expectedGHErr.Message, ghErr.Message)
+					assert.Equal(t, expectedGHErr.Response.StatusCode, ghErr.Response.StatusCode)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
