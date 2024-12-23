@@ -587,3 +587,276 @@ type mockTransport struct {
 func (t *mockTransport) RoundTrip(*http.Request) (*http.Response, error) {
 	return t.response, nil
 }
+
+func TestIsMinderHook(t *testing.T) {
+	tests := []struct {
+		name         string
+		hook         *github.Hook
+		hostURL      string
+		wantIsMinder bool
+		wantErr      bool
+	}{
+		{
+			name: "valid minder hook",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("https://minder.example.com/webhook"),
+				},
+			},
+			hostURL:      "minder.example.com",
+			wantIsMinder: true,
+			wantErr:      false,
+		},
+		{
+			name: "non-minder hook",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("https://other-service.com/webhook"),
+				},
+			},
+			hostURL:      "minder.example.com",
+			wantIsMinder: false,
+			wantErr:      false,
+		},
+		{
+			name: "empty hook config",
+			hook: &github.Hook{
+				Config: &github.HookConfig{},
+			},
+			hostURL:      "minder.example.com",
+			wantIsMinder: false,
+			wantErr:      true,
+		},
+		{
+			name: "invalid URL in hook config",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("://invalid-url"),
+				},
+			},
+			hostURL:      "minder.example.com",
+			wantIsMinder: false,
+			wantErr:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			isMinder, err := IsMinderHook(tt.hook, tt.hostURL)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantIsMinder, isMinder)
+			}
+		})
+	}
+}
+
+func TestCreateHook(t *testing.T) {
+	tests := []struct {
+		name        string
+		owner       string
+		repo        string
+		hook        *github.Hook
+		setupMocks  func(*testGitHub)
+		wantHook    *github.Hook
+		wantErr     bool
+		expectedErr error
+	}{
+		{
+			name:  "successful hook creation",
+			owner: "test-owner",
+			repo:  "test-repo",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL:         github.String("https://minder.example.com/webhook"),
+					ContentType: github.String("json"),
+				},
+				Events: []string{"push", "pull_request"},
+				Active: github.Bool(true),
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusCreated,
+							Body: io.NopCloser(strings.NewReader(`{
+								"id": 1,
+								"url": "https://api.github.com/repos/test-owner/test-repo/hooks/1",
+								"config": {
+									"url": "https://minder.example.com/webhook",
+									"content_type": "json"
+								},
+								"events": ["push", "pull_request"],
+								"active": true
+							}`)),
+							Header: make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantHook: &github.Hook{
+				ID:  github.Int64(1),
+				URL: github.String("https://api.github.com/repos/test-owner/test-repo/hooks/1"),
+				Config: &github.HookConfig{
+					URL:         github.String("https://minder.example.com/webhook"),
+					ContentType: github.String("json"),
+				},
+				Events: []string{"push", "pull_request"},
+				Active: github.Bool(true),
+			},
+			wantErr: false,
+		},
+		{
+			name:  "unauthorized error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("https://minder.example.com/webhook"),
+				},
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusUnauthorized,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Bad credentials"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: true,
+			expectedErr: &github.ErrorResponse{
+				Response: &http.Response{
+					StatusCode: http.StatusUnauthorized,
+				},
+				Message: "Bad credentials",
+			},
+		},
+		{
+			name:  "repository not found",
+			owner: "test-owner",
+			repo:  "test-repo",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("https://minder.example.com/webhook"),
+				},
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusNotFound,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Not Found"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: true,
+			expectedErr: &github.ErrorResponse{
+				Response: &http.Response{
+					StatusCode: http.StatusNotFound,
+				},
+				Message: "Not Found",
+			},
+		},
+		{
+			name:  "rate limit exceeded",
+			owner: "test-owner",
+			repo:  "test-repo",
+			hook: &github.Hook{
+				Config: &github.HookConfig{
+					URL: github.String("https://minder.example.com/webhook"),
+				},
+			},
+			setupMocks: func(th *testGitHub) {
+				headers := make(http.Header)
+				headers.Set("X-RateLimit-Limit", "60")
+				headers.Set("X-RateLimit-Remaining", "0")
+				headers.Set("X-RateLimit-Reset", "1632182400")
+				headers.Set("Content-Type", "application/json; charset=utf-8")
+
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusForbidden,
+							Body: io.NopCloser(strings.NewReader(`{
+								"message": "API rate limit exceeded for xxx.xxx.xxx.xxx",
+								"documentation_url": "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"
+							}`)),
+							Header: headers,
+							Request: &http.Request{
+								Method: "GET",
+								URL: &url.URL{
+									Scheme: "https",
+									Host:   "api.github.com",
+									Path:   "/repos/test-owner/test-repo/hooks",
+								},
+							},
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+
+				th.delegate.EXPECT().GetCredential().Return(&mockCredential{}).AnyTimes()
+				th.delegate.EXPECT().GetOwner().Return("test-owner").AnyTimes()
+				th.cache.EXPECT().Set(
+					"test-owner",
+					gomock.Any(),
+					db.ProviderTypeGithub,
+					th.gh,
+				).AnyTimes()
+			},
+			wantErr:     true,
+			expectedErr: &github.RateLimitError{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := setupTest(t)
+			tt.setupMocks(th)
+
+			hook, err := th.gh.CreateHook(context.Background(), tt.owner, tt.repo, tt.hook)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErr != nil {
+					assert.IsType(t, tt.expectedErr, err)
+
+					var ghErr *github.ErrorResponse
+					if errors.As(err, &ghErr) {
+						var expectedErr *github.ErrorResponse
+						errors.As(tt.expectedErr, &expectedErr)
+						assert.Equal(t, expectedErr.Message, ghErr.Message)
+						assert.Equal(t, expectedErr.Response.StatusCode, ghErr.Response.StatusCode)
+					}
+
+					var rateLimitErr *github.RateLimitError
+					if errors.As(err, &rateLimitErr) {
+						// For rate limit errors, we just check the type match
+						// since the specific rate limit details may vary
+						var rateLimitError *github.RateLimitError
+						ok := errors.As(tt.expectedErr, &rateLimitError)
+						assert.True(t, ok)
+					}
+				}
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantHook, hook)
+			}
+		})
+	}
+}
