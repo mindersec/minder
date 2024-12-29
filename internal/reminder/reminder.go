@@ -16,7 +16,6 @@ import (
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/events/common"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
 	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 	"github.com/mindersec/minder/pkg/eventer/constants"
@@ -43,7 +42,6 @@ type reminder struct {
 	ticker *time.Ticker
 
 	eventPublisher message.Publisher
-	eventDBCloser  common.DriverCloser
 }
 
 // NewReminder creates a new reminder instance
@@ -59,13 +57,12 @@ func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Con
 	logger := zerolog.Ctx(ctx)
 	logger.Info().Msgf("initial repository cursor: %s", r.repositoryCursor)
 
-	pub, cl, err := r.setupSQLPublisher(ctx)
+	pub, err := r.getMessagePublisher(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	r.eventPublisher = pub
-	r.eventDBCloser = cl
 	return r, nil
 }
 
@@ -118,7 +115,10 @@ func (r *reminder) Stop() {
 	}
 	r.stopOnce.Do(func() {
 		close(r.stop)
-		r.eventDBCloser()
+		err := r.eventPublisher.Close()
+		if err != nil {
+			zerolog.Ctx(context.Background()).Error().Err(err).Msg("error closing event publisher")
+		}
 	})
 }
 
