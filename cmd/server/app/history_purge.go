@@ -169,6 +169,6 @@ func deleteEvaluationHistory(
 
 func init() {
 	historyCmd.AddCommand(historyPurgeCmd)
-	historyPurgeCmd.Flags().UintP("batch-size", "s", 1000, "Size of the deletion batch")
+	historyPurgeCmd.Flags().UintP("batch-size", "", 1000, "Size of the deletion batch")
 	historyPurgeCmd.Flags().Bool("dry-run", false, "Avoids deleting, printing out details about the operation")
 }
