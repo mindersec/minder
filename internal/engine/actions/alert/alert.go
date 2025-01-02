@@ -53,15 +53,23 @@ func NewRuleAlert(
 		if alertCfg.GetPullRequestComment() == nil {
 			return nil, fmt.Errorf("alert engine missing pull_request_review configuration")
 		}
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := provinfv1.As[provinfv1.PullRequestCommenter](provider)
 		if err != nil {
 			zerolog.Ctx(ctx).Debug().Str("rule-type", ruletype.GetName()).
 				Msg("provider is not a GitHub provider. Silently skipping alerts.")
 			return noop.NewNoopAlert(ActionType)
 		}
 		return pull_request_comment.NewPullRequestCommentAlert(
-			ActionType, alertCfg.GetPullRequestComment(), client, setting)
+			ActionType, alertCfg.GetPullRequestComment(), client, setting,
+			defaultName(ruletype))
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())
+}
+
+func defaultName(ruletype *pb.RuleType) string {
+	if ruletype.GetDisplayName() != "" {
+		return ruletype.GetDisplayName()
+	}
+	return ruletype.GetName()
 }

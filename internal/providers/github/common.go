@@ -25,6 +25,7 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	entprops "github.com/mindersec/minder/internal/entities/properties"
 	gitclient "github.com/mindersec/minder/internal/providers/git"
 	"github.com/mindersec/minder/internal/providers/github/ghcr"
 	"github.com/mindersec/minder/internal/providers/github/properties"
@@ -145,6 +146,7 @@ type Delegate interface {
 	GetCredential() provifv1.GitHubCredential
 	ListAllRepositories(context.Context) ([]*minderv1.Repository, error)
 	GetUserId(ctx context.Context) (int64, error)
+	GetMinderUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
 	GetPrimaryEmail(ctx context.Context) (string, error)
@@ -417,6 +419,33 @@ func (c *GitHub) ListFiles(
 
 	resp, err := performWithRetry(ctx, op)
 	return resp.files, resp.resp, err
+}
+
+// CommentOnPullRequest implements the CommentOnPullRequest method of the GitHub interface
+func (c *GitHub) CommentOnPullRequest(
+	ctx context.Context, getByProps *entprops.Properties, comment provifv1.PullRequestCommentInfo,
+) (*provifv1.CommentResultMeta, error) {
+	owner := getByProps.GetProperty(properties.PullPropertyRepoOwner).GetString()
+	name := getByProps.GetProperty(properties.PullPropertyRepoName).GetString()
+	prNum := getByProps.GetProperty(properties.PullPropertyNumber).GetInt64()
+	authorID := getByProps.GetProperty(properties.PullPropertyAuthorID).GetInt64()
+
+	authorizedUser, err := c.delegate.GetMinderUserId(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("could not get authenticated user: %w", err)
+	}
+	mci, err := c.findPreviousStatusComment(ctx, owner, name, prNum, authorizedUser)
+	if err != nil {
+		return nil, fmt.Errorf("could not find previous status comment: %w", err)
+	}
+
+	mci, err = c.updateOrSubmitComment(
+		ctx, mci, comment, owner, name, prNum, comment.Commit, authorID, authorizedUser)
+	if err != nil {
+		// this should be fatal. In case we can't submit the review, we can't proceed
+		return nil, fmt.Errorf("could not submit review: %w", err)
+	}
+	return mci.ToCommentResultMeta(), nil
 }
 
 // CreateReview is a wrapper for the GitHub API to create a review
