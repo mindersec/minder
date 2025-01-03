@@ -26,6 +26,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
@@ -140,6 +141,35 @@ func yqPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation {
 		Method: "minder.yq.evaluate",
 		Title:  yqCommitTitle,
 		Body:   yqPrBody,
+		Params: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"expression": {
+					Kind: &structpb.Value_StringValue{
+						StringValue: ".on = \"workflow_dispatch\"",
+					},
+				},
+				"patterns": {
+					Kind: &structpb.Value_ListValue{
+						ListValue: &structpb.ListValue{
+							Values: []*structpb.Value{
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(".github/workflows/*.yml"),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+								structpb.NewStructValue(&structpb.Struct{
+									Fields: map[string]*structpb.Value{
+										"pattern": structpb.NewStringValue(".github/workflows/*.yaml"),
+										"type":    structpb.NewStringValue("glob"),
+									},
+								}),
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
