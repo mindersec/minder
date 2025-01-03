@@ -27,7 +27,8 @@ var (
 
 // Common styles
 var (
-	CursorStyle = lipgloss.NewStyle().Foreground(SecondaryColor)
+	CursorStyle     = lipgloss.NewStyle().Foreground(SecondaryColor)
+	SimpleBoldStyle = lipgloss.NewStyle().Bold(true)
 )
 
 // Banner styles
