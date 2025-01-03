@@ -206,7 +206,8 @@ func resolveActionMockSetup(t *testing.T, mockGitHub *mockghclient.MockGitHub, u
 
 	checkoutRef := github.Reference{
 		Object: &github.GitObject{
-			SHA: github.String(ref),
+			SHA:  github.String(ref),
+			Type: github.String("commit"),
 		},
 	}
 	jsonCheckoutRef, err := json.Marshal(checkoutRef)
