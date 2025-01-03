@@ -8,6 +8,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/mindersec/minder/internal/reminder/metrics"
+	"go.opentelemetry.io/otel"
 	"sync"
 	"time"
 
@@ -44,6 +46,8 @@ type reminder struct {
 
 	eventPublisher message.Publisher
 	eventDBCloser  common.DriverCloser
+
+	metrics *metrics.Metrics
 }
 
 // NewReminder creates a new reminder instance
@@ -81,6 +85,20 @@ func (r *reminder) Start(ctx context.Context) error {
 	interval := r.cfg.RecurrenceConfig.Interval
 	if interval <= 0 {
 		return fmt.Errorf("invalid interval: %s", r.cfg.RecurrenceConfig.Interval)
+	}
+
+	if r.cfg.MetricsConfig.Enabled {
+		go func() {
+			if err := r.startMetricServer(ctx); err != nil {
+				logger.Error().Err(err).Msg("error starting metrics server")
+			}
+		}()
+
+		var err error
+		r.metrics, err = metrics.NewMetrics(otel.Meter("reminder"))
+		if err != nil {
+			return err
+		}
 	}
 
 	r.ticker = time.NewTicker(interval)
@@ -143,6 +161,10 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
+	if r.metrics != nil {
+		r.metrics.RecordBatch(ctx, int64(len(repos)))
+	}
+
 	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
@@ -151,13 +173,18 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 	repoIds := make([]uuid.UUID, len(repos))
 	for _, repo := range repos {
 		repoIds = append(repoIds, repo.ID)
+		if r.metrics != nil {
+			// sendDelay = Now() - ReminderLastSent - MinElapsed
+			reminderLastSent := repo.ReminderLastSent
+			if reminderLastSent.Valid {
+				r.metrics.SendDelay.Record(ctx, (time.Now().Sub(reminderLastSent.Time) - r.cfg.RecurrenceConfig.MinElapsed).Seconds())
+			} else {
+				// TODO: Should the send delay be zero if the reminder has never been sent?
+				r.metrics.SendDelay.Record(ctx, 0)
+				//remMetrics.SendDelay.Record(ctx, r.cfg.RecurrenceConfig.MinElapsed.Seconds())
+			}
+		}
 	}
-
-	// TODO: Collect Metrics
-	// Potential metrics:
-	// - Gauge: Number of reminders in the current batch
-	// - UpDownCounter: Average reminders sent per batch
-	// - Histogram: reminder_last_sent time distribution
 
 	err = r.store.UpdateReminderLastSentForRepositories(ctx, repoIds)
 	if err != nil {
