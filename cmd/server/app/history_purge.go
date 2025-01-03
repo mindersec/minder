@@ -11,6 +11,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres" // nolint
 	_ "github.com/golang-migrate/migrate/v4/source/file"       // nolint
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -53,9 +54,9 @@ func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
 	// We maintain up to 30 days of history, plus any record
 	// that's the latest for any entity/rule pair.
 	threshold := time.Now().UTC().AddDate(0, 0, -30)
-	cmd.Printf("Calculated threshold is %s", threshold)
+	zerolog.Ctx(ctx).Info().Msgf("Calculated threshold is %s", threshold)
 
-	if err := purgeLoop(ctx, store, threshold, batchSize, dryRun, cmd.Printf); err != nil {
+	if err := purgeLoop(ctx, store, threshold, batchSize, dryRun); err != nil {
 		cliErrorf(cmd, "failed purging evaluation log: %s", err)
 	}
 
@@ -88,7 +89,6 @@ func purgeLoop(
 	threshold time.Time,
 	batchSize uint,
 	dryRun bool,
-	printf func(format string, a ...any),
 ) error {
 	deleted := 0
 
@@ -107,7 +107,7 @@ func purgeLoop(
 	}
 
 	if len(records) == 0 {
-		printf("No records to delete\n")
+		zerolog.Ctx(ctx).Info().Msg("No records to delete\n")
 		return nil
 	}
 
@@ -124,7 +124,7 @@ func purgeLoop(
 		}
 	}
 
-	printf("Done purging history, deleted %d records\n",
+	zerolog.Ctx(ctx).Info().Msgf("Done purging history, deleted %d records",
 		deleted,
 	)
 

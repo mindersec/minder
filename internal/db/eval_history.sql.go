@@ -9,7 +9,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,21 +17,11 @@ import (
 
 const deleteEvaluationHistoryByIDs = `-- name: DeleteEvaluationHistoryByIDs :execrows
 DELETE FROM evaluation_statuses s
- WHERE s.id = ANY($1)
+ WHERE s.id = ANY($1::uuid[])
 `
 
 func (q *Queries) DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error) {
-	query := deleteEvaluationHistoryByIDs
-	var queryParams []interface{}
-	if len(evaluationids) > 0 {
-		for _, v := range evaluationids {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:evaluationids*/?", strings.Repeat(",?", len(evaluationids))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:evaluationids*/?", "NULL", 1)
-	}
-	result, err := q.db.ExecContext(ctx, query, queryParams...)
+	result, err := q.db.ExecContext(ctx, deleteEvaluationHistoryByIDs, pq.Array(evaluationids))
 	if err != nil {
 		return 0, err
 	}
