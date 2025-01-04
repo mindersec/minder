@@ -721,7 +721,7 @@ func (s *Server) processProfileStatusById(
 		}
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    profileID,
-			EntityID:     *&entityID,
+			EntityID:     entityID,
 			RuleTypeName: *ruleType,
 			RuleName:     *ruleName,
 		})
