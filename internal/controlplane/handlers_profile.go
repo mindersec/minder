@@ -662,11 +662,14 @@ func (s *Server) processProfileStatusByName(
 		return nil, err
 	}
 
-	// Only fetch rule evaluations if selector is present or all is requested
 	if selector != nil || req.GetAll() {
+		var entityID uuid.NullUUID
+		if selector != nil {
+			entityID = *selector
+		}
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    profileID,
-			EntityID:     *selector, // Safe now as we check for nil
+			EntityID:     entityID,
 			RuleTypeName: *ruleType,
 			RuleName:     *ruleName,
 		})
@@ -712,9 +715,13 @@ func (s *Server) processProfileStatusById(
 
 	// Only fetch rule evaluations if selector is present or all is requested
 	if selector != nil || req.GetAll() {
+		var entityID uuid.NullUUID
+		if selector != nil {
+			entityID = *selector
+		}
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    profileID,
-			EntityID:     *selector, // Safe now as we check for nil
+			EntityID:     *&entityID,
 			RuleTypeName: *ruleType,
 			RuleName:     *ruleName,
 		})
@@ -743,7 +750,9 @@ func (s *Server) processProfileStatusById(
 	}, nil
 }
 
-func extractFiltersFromNameRequest(req *minderv1.GetProfileStatusByNameRequest) (*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
+func extractFiltersFromNameRequest(
+	req *minderv1.GetProfileStatusByNameRequest) (
+	*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
 	if e := req.GetEntity(); e != nil {
 		if !e.GetType().IsValid() {
 			return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
@@ -774,7 +783,9 @@ func extractFiltersFromNameRequest(req *minderv1.GetProfileStatusByNameRequest) 
 	return selector, ruleType, ruleName, nil
 }
 
-func extractFiltersFromIdRequest(req *minderv1.GetProfileStatusByIdRequest) (*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
+func extractFiltersFromIdRequest(
+	req *minderv1.GetProfileStatusByIdRequest) (
+	*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
 	if e := req.GetEntity(); e != nil {
 		if !e.GetType().IsValid() {
 			return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
