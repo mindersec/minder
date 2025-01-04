@@ -159,7 +159,7 @@ func Test_getRepositoryBatch(t *testing.T) {
 
 			r := createTestReminder(t, store, cfg)
 
-			got, err := r.getRepositoryBatch(context.Background())
+			got, _, err := r.getRepositoryBatch(context.Background())
 			if test.err != "" {
 				require.ErrorContains(t, err, test.err)
 				return
