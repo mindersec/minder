@@ -1950,16 +1950,14 @@ message GetProfileStatusByIdRequest {
     EntityTypedId entity = 3;
     bool all = 4;
 
-    // rule is the type of the rule. Deprecated in favor of rule_type
-    string rule = 5 [deprecated=true];
-    string rule_type = 6 [
+    string rule_type = 5 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
-    string rule_name = 7 [
+    string rule_name = 6 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,

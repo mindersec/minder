@@ -1260,7 +1260,6 @@ get profile by name
 | id | <TypeLink type="string">string</TypeLink> |  | id is the id of the profile to get |
 | entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
 | all | <TypeLink type="bool">bool</TypeLink> |  |  |
-| rule | <TypeLink type="string">string</TypeLink> |  | **Deprecated.** rule is the type of the rule. Deprecated in favor of rule_type |
 | rule_type | <TypeLink type="string">string</TypeLink> |  |  |
 | rule_name | <TypeLink type="string">string</TypeLink> |  |  |
 

@@ -1609,13 +1609,6 @@
             "type": "boolean"
           },
           {
-            "name": "rule",
-            "description": "rule is the type of the rule. Deprecated in favor of rule_type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "ruleType",
             "in": "query",
             "required": false,
