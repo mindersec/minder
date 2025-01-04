@@ -13,6 +13,8 @@ import (
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 const (
+	// DataSourceDriverStruct is the driver type for the structured data source
+	DataSourceDriverStruct = "structured"
 	// DataSourceDriverRest is the driver type for a REST data source.
 	DataSourceDriverRest = "rest"
 )
@@ -40,6 +42,8 @@ type DataSourceFuncDef interface {
 	// It is also the responsibility of the caller to validate the arguments
 	// before calling the function.
 	Call(ctx context.Context, args any) (any, error)
+	// GetArgsSchema returns the schema of the arguments.
+	GetArgsSchema() any
 }
 
 // DataSource is the interface that a data source must implement.

@@ -9,8 +9,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 
+	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -104,4 +107,39 @@ func listRelevantProjects(
 	}
 
 	return []uuid.UUID{project}, nil
+}
+
+func validateDataSourceFunctionsUpdate(
+	existingDS, newDS *minderv1.DataSource,
+) error {
+	existingImpl, err := datasources.BuildFromProtobuf(existingDS)
+	if err != nil {
+		// If we got here, it means the existing data source is invalid.
+		return fmt.Errorf("failed to build data source from protobuf: %w", err)
+	}
+
+	updatedImpl, err := datasources.BuildFromProtobuf(newDS)
+	if err != nil {
+		return fmt.Errorf("failed to build data source from protobuf: %w", err)
+	}
+
+	// We can't validate that the function is not being used. So, we
+	// prevent folks from deleting functions.
+	// Updates are thus limited to adding new functions and updating existing ones.
+	newFuncs := updatedImpl.GetFuncs()
+	for key, def := range existingImpl.GetFuncs() {
+		newFunc, ok := newFuncs[key]
+		if !ok {
+			return util.UserVisibleError(codes.InvalidArgument,
+				"function %s is missing in the update", key)
+		}
+
+		// we validate that the schema update is valid
+		if err := def.ValidateUpdate(newFunc.GetArgsSchema()); err != nil {
+			return util.UserVisibleError(codes.InvalidArgument,
+				"function %s update is invalid: %v", key, err)
+		}
+	}
+
+	return nil
 }

@@ -66,6 +66,7 @@ type pullRequestMetadata struct {
 type Remediator struct {
 	ghCli      provifv1.GitHub
 	actionType interfaces.ActionType
+	setting    models.ActionOpt
 
 	prCfg                *pb.RuleType_Definition_Remediate_PullRequestRemediation
 	modificationRegistry modificationRegistry
@@ -89,6 +90,7 @@ func NewPullRequestRemediate(
 	actionType interfaces.ActionType,
 	prCfg *pb.RuleType_Definition_Remediate_PullRequestRemediation,
 	ghCli provifv1.GitHub,
+	setting models.ActionOpt,
 ) (*Remediator, error) {
 	err := prCfg.Validate()
 	if err != nil {
@@ -113,6 +115,7 @@ func NewPullRequestRemediate(
 		prCfg:                prCfg,
 		actionType:           actionType,
 		modificationRegistry: modRegistry,
+		setting:              setting,
 
 		titleTemplate: titleTmpl,
 		bodyTemplate:  bodyTmpl,
@@ -140,15 +143,14 @@ func (_ *Remediator) Type() string {
 }
 
 // GetOnOffState returns the alert action state read from the profile
-func (_ *Remediator) GetOnOffState(actionOpt models.ActionOpt) models.ActionOpt {
-	return models.ActionOptOrDefault(actionOpt, models.ActionOptOff)
+func (r *Remediator) GetOnOffState() models.ActionOpt {
+	return models.ActionOptOrDefault(r.setting, models.ActionOptOff)
 }
 
 // Do perform the remediation
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	setting models.ActionOpt,
 	ent protoreflect.ProtoMessage,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
@@ -158,7 +160,7 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot get PR remediation params: %w", err)
 	}
 	var remErr error
-	switch setting {
+	switch r.setting {
 	case models.ActionOptOn:
 		return r.run(ctx, cmd, p)
 	case models.ActionOptDryRun:

@@ -10,6 +10,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
@@ -26,6 +28,7 @@ func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
+	featureFlags openfeature.IClient,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
@@ -41,7 +44,7 @@ func NewRuleEvaluator(
 		}
 		return jq.NewJQEvaluator(e.GetJq(), opts...)
 	case rego.RegoEvalType:
-		return rego.NewRegoEvaluator(e.GetRego(), opts...)
+		return rego.NewRegoEvaluator(e.GetRego(), featureFlags, opts...)
 	case vulncheck.VulncheckEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {

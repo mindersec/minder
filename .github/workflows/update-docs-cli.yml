@@ -16,7 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Go
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        uses: actions/setup-go@3041bf56c941b39c61721a86cd11f3bb1338122a # v5.2.0
         with:
           go-version-file: "go.mod"
       - name: Update documentation
@@ -34,7 +34,7 @@ jobs:
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@5e914681df9dc83aa4e4905692ca88beb2f9e91f # v7.0.5
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7.0.6
         with:
           commit-message: Update documentation
           committer: GitHub <noreply@github.com>

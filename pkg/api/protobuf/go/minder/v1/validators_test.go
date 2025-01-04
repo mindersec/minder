@@ -308,6 +308,53 @@ func TestRuleType_Definition_Alert_Validate(t *testing.T) {
 	}
 }
 
+func TestRuleType_Definition_Alert_AlertTypePRComment_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		prAlert *RuleType_Definition_Alert_AlertTypePRComment
+		wantErr bool
+	}{
+		{
+			name: "valid PR comment alert",
+			prAlert: &RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "This is a PR comment",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid PR comment alert template",
+			prAlert: &RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "This is a PR comment with a template {{ .EvalErrorDetails }}",
+			},
+			wantErr: false,
+		},
+		{
+			name: "unparsable PR comment alert template",
+			prAlert: &RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "{{ ",
+			},
+			wantErr: true,
+		},
+		{
+			name:    "empty PR comment message is invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.prAlert.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestRuleType_Definition_Remediate_Validate(t *testing.T) {
 	t.Parallel()
 	tests := []struct {

@@ -2514,7 +2514,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			ghMocks: []func(hubMock gf.GitHubMock){
 				gf.WithSuccessfulGetEntityName("mindersec/minder/42"),
 			},
-			topic:      constants.TopicQueueOriginatingEntityAdd,
+			topic:      constants.TopicQueueRefreshEntityAndEvaluate,
 			statusCode: http.StatusOK,
 			queued: func(t *testing.T, event string, ch <-chan *message.Message) {
 				t.Helper()

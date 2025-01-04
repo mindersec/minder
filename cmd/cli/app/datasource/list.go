@@ -63,7 +63,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name", "Type"})
 		for _, ds := range resp.GetDataSources() {
-			t.AddRow(ds.Id, ds.Name, getDataSourceType(ds))
+			t.AddRow(ds.Id, ds.Name, ds.GetDriverType())
 		}
 		t.Render()
 	default:

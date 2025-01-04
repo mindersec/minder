@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
-	gitlablib "github.com/xanzy/go-gitlab"
+	gitlablib "gitlab.com/gitlab-org/api/client-go"
 
 	"github.com/mindersec/minder/internal/providers/gitlab/webhooksecret"
 )

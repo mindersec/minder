@@ -12,7 +12,7 @@ Minder organizes policies into Rule Types, each with specific sections defining 
 
 * Ingesting Data: Fetching relevant data, often from external sources like GitHub API.
 
-* Evaluation: Applying policy logic to the ingested data. Minder offers a set of engines to evaluate data: jq and rego being general-purpose engines, while trusty and vulncheck are more use case-specific ones.
+* Evaluation: Applying policy logic to the ingested data. Minder offers a set of engines to evaluate data: jq and rego being general-purpose engines, while Stacklok Insight and vulncheck are more use case-specific ones.
 
 * Remediation and Alerting: Taking actions or providing notifications based on evaluation results. E.g. creating a pull request or generating a GitHub security advisory.
 
@@ -30,19 +30,29 @@ Note that these are known patterns in the OPA community, so we’re not doing an
 
 Given the context in which Minder operates, we did need to add some custom functionality that OPA doesn’t provide out of the box. Namely, we added the following custom functions:
 
-* **file.exists**: Verifies that the given file exists in the Git repository.
+* **file.exists(filepath)**: Verifies that the given filepath exists in the Git repository, returns a boolean.
 
-* **file.read**: Reads the contents of the given file in the Git repository.
+* **file.read(filepath)**: Reads the contents of the given file in the Git repository and returns the contents as a string.
 
-* **file.ls**: Lists files in the given directory in the Git repository.
+* **file.ls(directory)**: Lists files in the given directory in the Git repository, returning the filenames as an array of strings.
 
-* **file.ls_glob**: Lists files in the given directory in the Git repository that match the given glob pattern.
+* **file.ls_glob(pattern)**: Lists files in the given directory in the Git repository that match the given glob pattern, returning matched filenames as an array of strings.
 
-* **file.http_type**: Returns the HTTP content type of the given file.
+* **file.http_type(filepath)**: Determines the HTTP (MIME) content type of the given file by [examining the first 512 bytes of the file](https://mimesniff.spec.whatwg.org/). It returns the content type as a string.
 
-* **file.walk**: Walks the given directory in the Git repository and lists all files.
+* **file.walk(path)**: Walks the given path (directory or file) in the Git repository and returns a list of paths to all regular files (not directories) as an array of strings.
 
-* **github_workflow.ls_actions**: Lists all actions in the given GitHub workflow directory.
+* **github_workflow.ls_actions(directory)**: Lists all actions in the given GitHub workflow directory, returning the filenames as an array of strings.
+
+* **parse_yaml**: Parses a YAML string into a JSON object.  This implementation uses https://gopkg.in/yaml.v3, which avoids bugs when parsing `"on"` as an object _key_ (for example, in GitHub workflows).
+
+* **jq.is_true(object, query)**: Evaluates a jq query against the specified object, returning `true` if the query result is a true boolean value, andh `false` otherwise.
+
+* **file.archive(paths)**: _(experimental)_ Builds a `.tar.gz` format archive containing all files under the given paths.  Returns the archive contents as a (binary) string.
+
+_(experimental)_ In addition, when operating in a pull request context, `base_file` versions of the `file` operations are available for accessing the files in the base branch of the pull request.  The `file` versions of the operations operate on the head (proposed changes) versions of the files in a pull request context.
+
+In addition, most of the [standard OPA functions are available in the Minder runtime](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions).
 
 ## Example: CodeQL-Enabled Check
 

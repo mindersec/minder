@@ -137,18 +137,12 @@ func processPullRequestEvent(
 	}
 	pullProps.SetProperty(properties.PropertyName, nameProp)
 
-	var topic string
-	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
-	case webhookActionEventOpened,
-		webhookActionEventReopened,
-		webhookActionEventSynchronize:
-		topic = constants.TopicQueueOriginatingEntityAdd
-	case webhookActionEventClosed:
-		topic = constants.TopicQueueOriginatingEntityDelete
-	default:
-		zerolog.Ctx(ctx).Info().Msgf("action %s is not handled for pull requests",
-			pullProps.GetProperty(ghprop.PullPropertyAction).GetString())
-		return nil, errNotHandled
+	topic, err := getPREventHandlingTopic(pullProps)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).
+			Str("action", event.GetAction()).
+			Msg("error getting PR event handling topic")
+		return nil, err
 	}
 
 	prMsg := entityMessage.NewEntityRefreshAndDoMessage().
@@ -156,7 +150,21 @@ func processPullRequestEvent(
 		WithOriginator(pb.Entity_ENTITY_REPOSITORIES, repoProps).
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
-	l.Info().Msgf("evaluating PR %s\n", event.GetPullRequest().GetURL())
+	l.Info().Msgf("evaluating PR %s: %s => %s\n", event.GetPullRequest().GetURL(), event.GetAction(), topic)
 
 	return &processingResult{topic: topic, wrapper: prMsg}, nil
+}
+
+func getPREventHandlingTopic(pullProps *properties.Properties) (string, error) {
+	switch pullProps.GetProperty(ghprop.PullPropertyAction).GetString() {
+	case webhookActionEventOpened,
+		webhookActionEventReopened:
+		return constants.TopicQueueOriginatingEntityAdd, nil
+	case webhookActionEventSynchronize:
+		return constants.TopicQueueRefreshEntityAndEvaluate, nil
+	case webhookActionEventClosed:
+		return constants.TopicQueueOriginatingEntityDelete, nil
+	default:
+		return "", errNotHandled
+	}
 }

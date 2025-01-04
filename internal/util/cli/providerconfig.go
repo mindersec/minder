@@ -97,7 +97,8 @@ func SetProviderConfig(
 			Provider: &providerName,
 		},
 		Patch: &minderv1.Provider{
-			Config: cfg,
+			Config:  cfg,
+			Version: "v1",
 		},
 	}
 

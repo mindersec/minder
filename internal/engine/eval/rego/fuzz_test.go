@@ -20,6 +20,7 @@ func FuzzRegoEval(f *testing.F) {
 				Type: ConstraintsEvaluationType.String(),
 				Def:  policy,
 			},
+			nil,
 		)
 		if err != nil {
 			return

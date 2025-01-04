@@ -268,20 +268,24 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("invalid project ID: %w", err)
 	}
 
-	existing, err := tx.GetDataSourceByName(ctx, db.GetDataSourceByNameParams{
-		Name:     ds.GetName(),
-		Projects: []uuid.UUID{projectID},
-	})
+	// Build existing data source
+	existingDS, err := d.GetByName(ctx, ds.GetName(), projectID, ReadBuilder().WithTransaction(tx))
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound,
-				"data source with name %s not found", ds.GetName())
-		}
 		return nil, fmt.Errorf("failed to get existing data source: %w", err)
 	}
 
+	existingDSID, err := uuid.Parse(existingDS.Id)
+	if err != nil {
+		// This should not happen
+		return nil, fmt.Errorf("invalid data source ID: %w", err)
+	}
+
+	if err := validateDataSourceFunctionsUpdate(existingDS, ds); err != nil {
+		return nil, err
+	}
+
 	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
-		ID:          existing.ID,
+		ID:          existingDSID,
 		ProjectID:   projectID,
 		DisplayName: ds.GetName(),
 	}); err != nil {
@@ -289,13 +293,13 @@ func (d *dataSourceService) Update(
 	}
 
 	if _, err := tx.DeleteDataSourceFunctions(ctx, db.DeleteDataSourceFunctionsParams{
-		DataSourceID: existing.ID,
+		DataSourceID: existingDSID,
 		ProjectID:    projectID,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to delete existing functions: %w", err)
 	}
 
-	if err := addDataSourceFunctions(ctx, tx, ds, existing.ID, projectID); err != nil {
+	if err := addDataSourceFunctions(ctx, tx, ds, existingDSID, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create data source functions: %w", err)
 	}
 
@@ -304,7 +308,7 @@ func (d *dataSourceService) Update(
 	}
 
 	if ds.Id == "" {
-		ds.Id = existing.ID.String()
+		ds.Id = existingDSID.String()
 	}
 
 	return ds, nil
@@ -427,6 +431,23 @@ func addDataSourceFunctions(
 	projectID uuid.UUID,
 ) error {
 	switch drv := ds.GetDriver().(type) {
+	case *minderv1.DataSource_Structured:
+		for name, def := range drv.Structured.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return fmt.Errorf("failed to marshal structured data definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverStruct,
+				Definition:   defBytes,
+			}); err != nil {
+				return fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
 	case *minderv1.DataSource_Rest:
 		for name, def := range drv.Rest.GetDef() {
 			defBytes, err := protojson.Marshal(def)

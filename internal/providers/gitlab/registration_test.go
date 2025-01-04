@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/oauth2"
 
 	"github.com/mindersec/minder/internal/entities/properties"

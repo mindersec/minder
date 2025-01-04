@@ -600,6 +600,7 @@ create entities are called Providers.
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the data source is evaluated. Note that in this case we only need the project in the context, since data sources are not provider-specific. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. Names must be lowercase and can only contain letters, numbers, hyphens, and underscores. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
+| structured | <TypeLink type="minder-v1-StructDataSource">StructDataSource</TypeLink> |  | structured is the structired data - data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
 
 
@@ -834,6 +835,18 @@ format for rule evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repo | <TypeLink type="minder-v1-DepsType-RepoConfigs">DepsType.RepoConfigs</TypeLink> |  |  |
+| pr | <TypeLink type="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filter | <TypeLink type="string">string</TypeLink> |  | filter is the filter to apply to the PRs. The default value is "NEW_AND_UPDATED". |
 
 
 
@@ -941,7 +954,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 
 <Message id="minder-v1-EvaluationHistory">EvaluationHistory</Message>
 
-
+EvaluationHistory represents the history of an entity evaluation.
+This is only used in responses.
 
 
 | Field | Type | Label | Description |
@@ -949,8 +963,8 @@ EvalResultAlert holds the alert details for a given rule evaluation
 | entity | <TypeLink type="minder-v1-EvaluationHistoryEntity">EvaluationHistoryEntity</TypeLink> |  | entity contains details of the entity which was evaluated. |
 | rule | <TypeLink type="minder-v1-EvaluationHistoryRule">EvaluationHistoryRule</TypeLink> |  | rule contains details of the rule which the entity was evaluated against. |
 | status | <TypeLink type="minder-v1-EvaluationHistoryStatus">EvaluationHistoryStatus</TypeLink> |  | status contains the evaluation status. |
-| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. |
-| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. |
+| alert | <TypeLink type="minder-v1-EvaluationHistoryAlert">EvaluationHistoryAlert</TypeLink> |  | alert contains details of the alerts for this evaluation. This is optional. |
+| remediation | <TypeLink type="minder-v1-EvaluationHistoryRemediation">EvaluationHistoryRemediation</TypeLink> |  | remediation contains details of the remediation for this evaluation. This is optional. |
 | evaluated_at | <TypeLink type="google-protobuf-Timestamp">google.protobuf.Timestamp</TypeLink> |  | created_at is the timestamp of creation of this evaluation |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the evaluation. |
 
@@ -2009,7 +2023,7 @@ ListRuleTypesResponse is the response to list rule types.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the provider is updated. The provider name is required in this context. |
 | patch | <TypeLink type="minder-v1-Provider">Provider</TypeLink> |  |  |
 | update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  |  |
 
@@ -2150,7 +2164,8 @@ ProjectRole has the project along with the role the user has in the project
 
 <Message id="minder-v1-Provider">Provider</Message>
 
-
+Provider represents a provider that is used to interact with external systems.
+All fields are optional because we want to allow partial updates.
 
 
 | Field | Type | Label | Description |
@@ -2158,7 +2173,7 @@ ProjectRole has the project along with the role the user has in the project
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider. |
 | class | <TypeLink type="string">string</TypeLink> |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
 | project | <TypeLink type="string">string</TypeLink> |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
-| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. if unset, "v1" is assumed. |
 | implements | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | implements is the list of interfaces that the provider implements. |
 | config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is the configuration of the provider. |
 | auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | auth_flows is the list of authorization flows that the provider supports. |
@@ -2389,6 +2404,7 @@ RestDataSource is the REST data source driver.
 | headers | <TypeLink type="minder-v1-RestDataSource-Def-HeadersEntry">RestDataSource.Def.HeadersEntry</TypeLink> | repeated | headers is a map of headers to send with the request. |
 | bodyobj | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | body is the body of the request. |
 | bodystr | <TypeLink type="string">string</TypeLink> |  | bodystr is the body of the request as a string. |
+| body_from_field | <TypeLink type="string">string</TypeLink> |  | body_from_field is the field in the input to use as the body. If the value is an string, it will be used as the body, as is. If the value is an object, it will be serialized as JSON. If the value is not found in the input, the request will fail. |
 | parse | <TypeLink type="string">string</TypeLink> |  | parse is the parse configuration for the response. This allows us to serialize the response into a structured format, or not. If left unset, the response will be treated as a string. If set to "json", the response will be parsed as JSON. |
 | fallback | <TypeLink type="minder-v1-RestDataSource-Def-Fallback">RestDataSource.Def.Fallback</TypeLink> | repeated | fallback is the fallback configuration for the response in case of an unexpected status code. |
 | expected_status | <TypeLink type="int32">int32</TypeLink> | repeated | expected_status is the expected status code for the response. This may be repeated to allow for multiple expected status codes. If left unset, it will default to 200. |
@@ -2595,6 +2611,18 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ----- | ---- | ----- | ----------- |
 | type | <TypeLink type="string">string</TypeLink> |  |  |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
+| pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| review_message | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
@@ -2806,6 +2834,52 @@ Severity defines the severity of the rule.
 <Message id="minder-v1-StoreProviderTokenResponse">StoreProviderTokenResponse</Message>
 
 
+
+
+
+<Message id="minder-v1-StructDataSource">StructDataSource</Message>
+
+StructDataSource is the structured data source driver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| def | <TypeLink type="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</TypeLink> | repeated | defs is the list of definitions for the structured data API. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def">StructDataSource.Def</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | <TypeLink type="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</TypeLink> |  | Path is the path specification for the structured data source. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| file_name | <TypeLink type="string">string</TypeLink> |  |  |
+| alternatives | <TypeLink type="string">string</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-StructDataSource-Def">StructDataSource.Def</TypeLink> |  |  |
 
 
 

@@ -26,7 +26,7 @@ type Ingester interface {
 
 // Evaluator is the interface for a rule type evaluator
 type Evaluator interface {
-	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) error
+	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) (*EvaluationResult, error)
 }
 
 // Result is the result of an ingester
@@ -38,6 +38,9 @@ type Result struct {
 	// is normally used by the evaluator to do rule evaluation. The filesystem
 	// may be a git repo, or a memory filesystem.
 	Fs billy.Filesystem
+	// BaseFs is the base filesystem for a pull request.  It can be used in the
+	// evaluator for diffing the PR target files against the base files.
+	BaseFs billy.Filesystem
 	// Storer is the git storer that was created as a result of the ingestion.
 	// FIXME: It might be cleaner to either wrap both Fs and Storer in a struct
 	// or pass out the git.Repository structure instead of the storer.
@@ -46,6 +49,13 @@ type Result struct {
 	// Checkpoint is the checkpoint at which the ingestion was done. This is
 	// used to persist the state of the entity at ingestion time.
 	Checkpoint *checkpoints.CheckpointEnvelopeV1
+}
+
+// EvaluationResult is the result of an evaluation
+type EvaluationResult struct {
+	// Output is the output of the evaluation. This contains a list of additional
+	// information about the evaluation, which may be used in downstream actions.
+	Output any
 }
 
 // GetCheckpoint returns the checkpoint of the result

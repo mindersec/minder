@@ -38,7 +38,7 @@ func (_ *Alert) Type() string {
 }
 
 // GetOnOffState returns the off state of the noop engine
-func (_ *Alert) GetOnOffState(_ models.ActionOpt) models.ActionOpt {
+func (_ *Alert) GetOnOffState() models.ActionOpt {
 	return models.ActionOptOff
 }
 
@@ -46,7 +46,6 @@ func (_ *Alert) GetOnOffState(_ models.ActionOpt) models.ActionOpt {
 func (a *Alert) Do(
 	_ context.Context,
 	_ interfaces.ActionCmd,
-	_ models.ActionOpt,
 	_ protoreflect.ProtoMessage,
 	_ interfaces.ActionsParams,
 	_ *json.RawMessage,

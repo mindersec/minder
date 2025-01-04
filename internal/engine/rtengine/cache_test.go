@@ -120,7 +120,7 @@ func TestNewRuleTypeEngineCacheConstructor(t *testing.T) {
 
 			cache, err := NewRuleEngineCache(
 				ctx, store, db.EntitiesRepository, uuid.New(),
-				testproviders.NewGitProvider(nil), ingestcache.NewNoopCache(),
+				testproviders.NewGitProvider(nil), nil, ingestcache.NewNoopCache(),
 				dssvc)
 			if scenario.ExpectedError != "" {
 				require.ErrorContains(t, err, scenario.ExpectedError)

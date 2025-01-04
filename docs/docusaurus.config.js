@@ -18,6 +18,10 @@ const redocusaurus = [
         spec: '../pkg/api/openapi/minder/v1/minder.swagger.json',
       },
     ],
+    theme: {
+      primaryColor: '#000000',
+      primaryColorDark: '#b0e0e6',
+    },
   }
 ]
 
@@ -57,6 +61,7 @@ const config = {
   presets: [
     [
       'classic',
+      /** @type {import('@docusaurus/preset-classic').Options} */
       {
         docs: {
           routeBasePath: '/',
@@ -70,6 +75,22 @@ const config = {
     ],
     redocusaurus,
   ],
+
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        redirects: [
+          {
+            /* Trusty rebrand */
+            to: '/integrations/stacklok-insight',
+            from: '/integrations/trusty',
+          },
+        ],
+      },
+    ],
+  ],
+
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     (
@@ -85,7 +106,7 @@ const config = {
         title: 'Minder docs',
         logo: {
           alt: 'Minder Logo',
-          src: 'img/Minder_darkMode.png',
+          src: 'img/Minder-whitetxt.svg',
         },
         items: [
           // {

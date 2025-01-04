@@ -52,6 +52,12 @@ var prPropertyDefinitions = []propertyOrigin{
 			// general entity
 			properties.PropertyName,
 			properties.PropertyUpstreamID,
+			properties.PullRequestCommitSHA,
+			properties.PullRequestBaseCloneURL,
+			properties.PullRequestBaseDefaultBranch,
+			properties.PullRequestTargetCloneURL,
+			properties.PullRequestTargetBranch,
+			properties.PullRequestUpstreamURL,
 			// github-specific
 			PullPropertyURL,
 			PullPropertyNumber,
@@ -150,8 +156,14 @@ func getPrWrapper(
 
 	prProps := map[string]any{
 		// general entity
-		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(prReply.GetID()),
-		properties.PropertyName:       fmt.Sprintf("%s/%s/%d", owner, name, intId),
+		properties.PropertyUpstreamID:           properties.NumericalValueToUpstreamID(prReply.GetID()),
+		properties.PropertyName:                 fmt.Sprintf("%s/%s/%d", owner, name, intId),
+		properties.PullRequestCommitSHA:         prReply.GetHead().GetSHA(),
+		properties.PullRequestBaseCloneURL:      prReply.GetBase().GetRepo().GetCloneURL(),
+		properties.PullRequestBaseDefaultBranch: prReply.GetBase().GetRepo().GetDefaultBranch(),
+		properties.PullRequestTargetCloneURL:    prReply.GetHead().GetRepo().GetCloneURL(),
+		properties.PullRequestTargetBranch:      prReply.GetHead().GetRef(),
+		properties.PullRequestUpstreamURL:       prReply.GetHTMLURL(),
 		// github-specific
 		PullPropertyURL: prReply.GetHTMLURL(),
 		// our proto representation uses int64 for the number but GH uses int
@@ -200,5 +212,6 @@ func PullRequestV1FromProperties(props *properties.Properties) (*pbinternal.Pull
 		Action:         props.GetProperty(PullPropertyAction).GetString(),
 		BaseCloneUrl:   props.GetProperty(PullPropertyBaseCloneURL).GetString(),
 		TargetCloneUrl: props.GetProperty(PullPropertyTargetCloneURL).GetString(),
+		Properties:     props.ToProtoStruct(),
 	}, nil
 }

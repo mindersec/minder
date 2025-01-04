@@ -310,6 +310,10 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
 			return err
 		}
+	} else if alert.Type == "pull_request_comment" {
+		if err := alert.GetPullRequestComment().Validate(); err != nil {
+			return err
+		}
 	} else {
 		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
@@ -320,6 +324,24 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
 	if sa == nil {
 		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type alert pull request comment
+func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
+	if comment == nil {
+		return fmt.Errorf("%w: pull request comment is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if comment.GetReviewMessage() == "" {
+		return fmt.Errorf("%w: pull request comment review message cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeHTMLTemplate(&comment.ReviewMessage, "message")
+	if err != nil {
+		return fmt.Errorf("%w: pull request comment message is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
@@ -532,6 +554,15 @@ func (ds *DataSource) Validate() error {
 	return val.Validate()
 }
 
+// Validate checks a structured data source to ensure it is valid
+func (dsStructuredDriver *DataSource_Structured) Validate() error {
+	if dsStructuredDriver == nil || dsStructuredDriver.Structured == nil {
+		return fmt.Errorf("%w: structured driver is nil", ErrValidationFailed)
+	}
+
+	return nil
+}
+
 // Validate is the entrypoint for the actual driver's validation
 func (dsRestDriver *DataSource_Rest) Validate() error {
 	if dsRestDriver == nil {
@@ -587,6 +618,77 @@ func (rest *RestDataSource_Def) Validate() error {
 
 	if rest.GetInputSchema() == nil {
 		return fmt.Errorf("%w: rest function input schema is nil", ErrValidationFailed)
+	}
+
+	if rest.GetBody() != nil {
+		switch rest.GetBody().(type) {
+		case *RestDataSource_Def_Bodyobj:
+			if rest.GetBodyobj() == nil {
+				return fmt.Errorf("%w: rest function body is nil", ErrValidationFailed)
+			}
+		case *RestDataSource_Def_BodyFromField:
+			if rest.GetBodyFromField() == "" {
+				return fmt.Errorf("%w: rest function body from field is empty", ErrValidationFailed)
+			}
+			if err := keyInProperties(rest.GetBodyFromField(), rest.GetInputSchema().AsMap()); err != nil {
+				return fmt.Errorf("%w: %v", ErrValidationFailed, err)
+			}
+		case *RestDataSource_Def_Bodystr:
+			if rest.GetBodystr() == "" {
+				return fmt.Errorf("%w: rest function body from input is empty", ErrValidationFailed)
+			}
+		}
+	}
+
+	return nil
+}
+
+// validate that the given key exists in the given properties.
+// they key must exist in the top level properties. It must contain a default
+// or be marked as required.
+func keyInProperties(key string, schema map[string]any) error {
+	if schema == nil {
+		return fmt.Errorf("properties are missing")
+	}
+
+	// check required
+	required, ok := schema["required"]
+	if ok {
+		req, ok := required.([]any)
+		if !ok {
+			return fmt.Errorf("required is invalid")
+		}
+		for _, r := range req {
+			if r == key {
+				return nil
+			}
+		}
+	}
+
+	props, ok := schema["properties"]
+	if !ok {
+		return fmt.Errorf("properties are missing")
+	}
+
+	properties, ok := props.(map[string]any)
+	if !ok {
+		return fmt.Errorf("properties are invalid")
+	}
+
+	prop, ok := properties[key]
+	if !ok {
+		return fmt.Errorf("key %q is missing", key)
+	}
+
+	p, ok := prop.(map[string]any)
+	if !ok {
+		return fmt.Errorf("key %q is invalid", key)
+	}
+
+	if _, ok := p["default"]; !ok {
+		if _, ok := p["required"]; !ok {
+			return fmt.Errorf("key %q is missing default or required", key)
+		}
 	}
 
 	return nil

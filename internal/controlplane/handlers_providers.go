@@ -39,6 +39,10 @@ func (s *Server) CreateProvider(
 		return nil, status.Errorf(codes.InvalidArgument, "provider is required")
 	}
 
+	if provider.GetVersion() == "" {
+		provider.Version = "v1"
+	}
+
 	var provConfig json.RawMessage
 	if provider.Config != nil {
 		var marshallErr error
@@ -235,6 +239,10 @@ func (s *Server) PatchProvider(
 
 	if providerName == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "provider name is required")
+	}
+
+	if req.GetPatch() != nil && req.GetPatch().GetVersion() == "" {
+		req.Patch.Version = "v1"
 	}
 
 	err := s.providerManager.PatchProviderConfig(ctx, providerName, projectID, req.GetPatch().GetConfig().AsMap())

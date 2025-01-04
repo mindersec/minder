@@ -38,6 +38,7 @@ Complete the following fields:
    - Callback URL: `http://localhost:8080/api/v1/auth/callback/github-app/app`
    - Add an additional Callback URL for Keycloak: `http://localhost:8081/realms/stacklok/broker/github/endpoint`
    - Select the checkbox for "Request user authorization (OAuth) during installation"
+
 ![Configuring the GitHub Provider](./images/provider-ident-and-auth.png)
 
 ### Webhook
@@ -55,7 +56,11 @@ Select the following permissions:
      - Webhooks (read and write)
      - Workflows (read and write)
 
+   - Account permissions:
+     - Email addresses (read only)
+
 Once completed, double check your selected numbers match the ones in the screenshot.
+
 ![Permissions](./images/provider-permissions.png)
 
 ### Installation and Scope
@@ -77,6 +82,7 @@ Save the Client secret value for use in the Configure Minder step.
 
 ### Generate a private key 
 Scroll down to the bottom of the page and generate a private key.
+
 ![Generate a private key](./images/provider-generate-private.png)
 
 This will generate and download your private key.
@@ -102,7 +108,9 @@ github-app:
 ```
 Update the `client_id` and `client_secret` values with the following:
 - Client ID : Found in the General -> About section of your GitHub App on GitHub.
+
 ![Client ID](./images/provider-client-id.png)
+
 - Client Secret : The value you saved previously. 
 
 ### Add Provider configuration
@@ -117,9 +125,11 @@ provider:
     private_key: ".secrets/github-app.pem"
 ```
 Update the `app_name` with the name of your app, which you can get by looking at the GitHub URL when editing your GitHub App. For example, if the URL is https://github.com/settings/apps/my-test-app, then your app name is my-test-app.
+
 ![App name](./images/provider-app-name.png)
 
 Update `app_id` with the app ID of your GitHub App, which is found in the General -> About section of your GitHub App on GitHub.
+
 ![App ID](./images/provider-app-id.png)
 
 Finally, you need the `user_id` value. To get the value, run the following command, where `<app-name>` is the App name you used above:
@@ -127,7 +137,8 @@ Finally, you need the `user_id` value. To get the value, run the following comma
 ```bash
 curl https://api.github.com/users/<app-name>%5Bbot%5D
 ```
-Update the `user_id` value with the `id` value returned from that command. 
+Update the `user_id` value with the `id` value returned from that command.
+
 ![User ID](./images/provider-user-id.png)
 
 Now save the file. Your Provider is now created and the Minder server is configured to use it.

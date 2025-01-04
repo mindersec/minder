@@ -28,13 +28,18 @@ var historyPurgeCmd = &cobra.Command{
 }
 
 func historyPurgeCommand(cmd *cobra.Command, _ []string) error {
-	batchSize := viper.GetUint("batch-size")
-	dryRun := viper.GetBool("dry-run")
-
+	// TODO: This statement and the following could be refactored
+	// in a function similar to `GRPCClientWrapRunE`
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %s", err)
+	}
 	cfg, err := config.ReadConfigFromViper[serverconfig.Config](viper.GetViper())
 	if err != nil {
 		cliErrorf(cmd, "unable to read config: %s", err)
 	}
+
+	batchSize := viper.GetUint("batch-size")
+	dryRun := viper.GetBool("dry-run")
 
 	ctx := serverconfig.LoggerFromConfigFlags(cfg.LoggingConfig).WithContext(context.Background())
 
@@ -169,6 +174,6 @@ func deleteEvaluationHistory(
 
 func init() {
 	historyCmd.AddCommand(historyPurgeCmd)
-	historyPurgeCmd.Flags().UintP("batch-size", "s", 1000, "Size of the deletion batch")
+	historyPurgeCmd.Flags().UintP("batch-size", "", 1000, "Size of the deletion batch")
 	historyPurgeCmd.Flags().Bool("dry-run", false, "Avoids deleting, printing out details about the operation")
 }

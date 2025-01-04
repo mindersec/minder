@@ -2019,7 +2019,7 @@
             "name": "limit",
             "description": "limit is the maximum number of providers to return.\n0 uses a server-defined default.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "integer",
             "format": "int32"
           },
@@ -3174,11 +3174,36 @@
     }
   },
   "definitions": {
+    "AlertAlertTypePRComment": {
+      "type": "object",
+      "properties": {
+        "reviewMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewMessage"
+      ]
+    },
     "AlertAlertTypeSA": {
       "type": "object",
       "properties": {
         "severity": {
           "type": "string"
+        }
+      }
+    },
+    "DefPath": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -3190,6 +3215,9 @@
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
+        },
+        "pullRequestComment": {
+          "$ref": "#/definitions/AlertAlertTypePRComment"
         }
       }
     },
@@ -3289,6 +3317,15 @@
         },
         "pullRequest": {
           "$ref": "#/definitions/RemediatePullRequestRemediation"
+        }
+      }
+    },
+    "DepsTypePullRequestConfigs": {
+      "type": "object",
+      "properties": {
+        "filter": {
+          "type": "string",
+          "description": "filter is the filter to apply to the PRs.  The default value is \"NEW_AND_UPDATED\"."
         }
       }
     },
@@ -3568,61 +3605,6 @@
           "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
-    },
-    "RestDataSourceDef": {
-      "type": "object",
-      "properties": {
-        "endpoint": {
-          "type": "string",
-          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
-        },
-        "method": {
-          "type": "string",
-          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "headers is a map of headers to send with the request."
-        },
-        "bodyobj": {
-          "type": "object",
-          "description": "body is the body of the request."
-        },
-        "bodystr": {
-          "type": "string",
-          "description": "bodystr is the body of the request as a string."
-        },
-        "parse": {
-          "type": "string",
-          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
-        },
-        "fallback": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/RestDataSourceDefFallback"
-          },
-          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
-        },
-        "expectedStatus": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
-        },
-        "inputSchema": {
-          "type": "object",
-          "description": "input_schema is the schema for the input to the REST API."
-        }
-      },
-      "required": [
-        "endpoint"
-      ]
     },
     "RestDataSourceDefFallback": {
       "type": "object",
@@ -3949,7 +3931,10 @@
           "$ref": "#/definitions/v1Provider",
           "description": "provider is the provider to be created."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1CreateProviderResponse": {
       "type": "object",
@@ -3962,7 +3947,10 @@
           "$ref": "#/definitions/v1AuthorizationParams",
           "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1CreateRuleTypeRequest": {
       "type": "object",
@@ -4093,6 +4081,10 @@
           "description": "id is the unique identifier of the data source.",
           "readOnly": true
         },
+        "structured": {
+          "$ref": "#/definitions/v1StructDataSource",
+          "description": "structured is the structired data - data source."
+        },
         "rest": {
           "$ref": "#/definitions/v1RestDataSource",
           "description": "rest is the REST data source driver."
@@ -4152,7 +4144,10 @@
           "type": "string",
           "title": "id is the id of the provider that was deleted"
         }
-      }
+      },
+      "required": [
+        "id"
+      ]
     },
     "v1DeleteProviderResponse": {
       "type": "object",
@@ -4161,7 +4156,10 @@
           "type": "string",
           "title": "name is the name of the provider that was deleted"
         }
-      }
+      },
+      "required": [
+        "name"
+      ]
     },
     "v1DeleteRepositoryByIdResponse": {
       "type": "object",
@@ -4197,6 +4195,9 @@
       "properties": {
         "repo": {
           "$ref": "#/definitions/DepsTypeRepoConfigs"
+        },
+        "pr": {
+          "$ref": "#/definitions/DepsTypePullRequestConfigs"
         }
       },
       "description": "DepsType defines the \"deps\" ingester which can extract depndencies in protobom\nformat for rule evaluation."
@@ -4293,11 +4294,11 @@
         },
         "alert": {
           "$ref": "#/definitions/v1EvaluationHistoryAlert",
-          "description": "alert contains details of the alerts for this evaluation."
+          "description": "alert contains details of the alerts for this evaluation.\nThis is optional."
         },
         "remediation": {
           "$ref": "#/definitions/v1EvaluationHistoryRemediation",
-          "description": "remediation contains details of the remediation for this evaluation."
+          "description": "remediation contains details of the remediation for this evaluation.\nThis is optional."
         },
         "evaluatedAt": {
           "type": "string",
@@ -4308,7 +4309,15 @@
           "type": "string",
           "description": "id is the unique identifier of the evaluation."
         }
-      }
+      },
+      "description": "EvaluationHistory represents the history of an entity evaluation.\nThis is only used in responses.",
+      "required": [
+        "entity",
+        "rule",
+        "status",
+        "evaluatedAt",
+        "id"
+      ]
     },
     "v1EvaluationHistoryAlert": {
       "type": "object",
@@ -4321,7 +4330,10 @@
           "type": "string",
           "description": "details contains optional details about the alert.\nthe structure and contents are alert specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1EvaluationHistoryEntity": {
       "type": "object",
@@ -4338,7 +4350,12 @@
           "type": "string",
           "description": "name is the entity name."
         }
-      }
+      },
+      "required": [
+        "id",
+        "type",
+        "name"
+      ]
     },
     "v1EvaluationHistoryRemediation": {
       "type": "object",
@@ -4351,7 +4368,10 @@
           "type": "string",
           "description": "details contains optional details about the remediation.\nthe structure and contents are remediation specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status"
+      ]
     },
     "v1EvaluationHistoryRule": {
       "type": "object",
@@ -4372,7 +4392,13 @@
           "$ref": "#/definitions/v1Severity",
           "description": "severity is the severity of the rule type."
         }
-      }
+      },
+      "required": [
+        "name",
+        "ruleType",
+        "profile",
+        "severity"
+      ]
     },
     "v1EvaluationHistoryStatus": {
       "type": "object",
@@ -4385,7 +4411,11 @@
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
         }
-      }
+      },
+      "required": [
+        "status",
+        "details"
+      ]
     },
     "v1GetArtifactByIdResponse": {
       "type": "object",
@@ -4464,7 +4494,10 @@
           "title": "The requested record"
         }
       },
-      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC."
+      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC.",
+      "required": [
+        "evaluation"
+      ]
     },
     "v1GetInviteDetailsResponse": {
       "type": "object",
@@ -4579,7 +4612,10 @@
           "$ref": "#/definitions/v1Provider",
           "description": "provider is the provider that was retrieved."
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1GetRepositoryByIdResponse": {
       "type": "object",
@@ -4808,7 +4844,10 @@
           "description": "Metadata of the current page and pointers to next and/or\nprevious pages."
         }
       },
-      "description": "ListEvaluationHistoryResponse represents a response message for the\nListEvaluationHistory RPC.\n\nIt ships a collection of records retrieved and pointers to get to\nthe next and/or previous pages of data."
+      "description": "ListEvaluationHistoryResponse represents a response message for the\nListEvaluationHistory RPC.\n\nIt ships a collection of records retrieved and pointers to get to\nthe next and/or previous pages of data.",
+      "required": [
+        "data"
+      ]
     },
     "v1ListEvaluationResultsResponse": {
       "type": "object",
@@ -4881,7 +4920,10 @@
           },
           "description": "provider_classes is the list of provider classes."
         }
-      }
+      },
+      "required": [
+        "providerClasses"
+      ]
     },
     "v1ListProvidersResponse": {
       "type": "object",
@@ -4897,7 +4939,10 @@
           "type": "string",
           "title": "cursor is the cursor to use for the next page of results, empty if at the end"
         }
-      }
+      },
+      "required": [
+        "providers"
+      ]
     },
     "v1ListRemoteRepositoriesFromProviderResponse": {
       "type": "object",
@@ -5028,7 +5073,10 @@
         "provider": {
           "$ref": "#/definitions/v1Provider"
         }
-      }
+      },
+      "required": [
+        "provider"
+      ]
     },
     "v1Profile": {
       "type": "object",
@@ -5249,7 +5297,7 @@
         },
         "version": {
           "type": "string",
-          "description": "version is the version of the provider."
+          "description": "version is the version of the provider.\nif unset, \"v1\" is assumed."
         },
         "implements": {
           "type": "array",
@@ -5281,7 +5329,8 @@
           "type": "string",
           "description": "id is the unique identifier of the provider."
         }
-      }
+      },
+      "description": "Provider represents a provider that is used to interact with external systems.\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProviderParameter": {
       "type": "object",
@@ -5518,12 +5567,71 @@
         "def": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/RestDataSourceDef"
+            "$ref": "#/definitions/v1RestDataSourceDef"
           },
           "description": "defs is the list of definitions for the REST API."
         }
       },
       "description": "RestDataSource is the REST data source driver."
+    },
+    "v1RestDataSourceDef": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "headers is a map of headers to send with the request."
+        },
+        "bodyobj": {
+          "type": "object",
+          "description": "body is the body of the request."
+        },
+        "bodystr": {
+          "type": "string",
+          "description": "bodystr is the body of the request as a string."
+        },
+        "bodyFromField": {
+          "type": "string",
+          "description": "body_from_field is the field in the input to use as the body.\nIf the value is an string, it will be used as the body, as is.\nIf the value is an object, it will be serialized as JSON.\nIf the value is not found in the input, the request will fail."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RestDataSourceDefFallback"
+          },
+          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
+        },
+        "expectedStatus": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
+        },
+        "inputSchema": {
+          "type": "object",
+          "description": "input_schema is the schema for the input to the REST API."
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
     },
     "v1RestType": {
       "type": "object",
@@ -5854,6 +5962,31 @@
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
+    },
+    "v1StructDataSource": {
+      "type": "object",
+      "properties": {
+        "def": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1StructDataSourceDef"
+          },
+          "description": "defs is the list of definitions for the structured data API."
+        }
+      },
+      "description": "StructDataSource is the structured data source driver."
+    },
+    "v1StructDataSourceDef": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/DefPath",
+          "description": "Path is the path specification for the structured data source."
+        }
+      },
+      "required": [
+        "path"
+      ]
     },
     "v1UpdateDataSourceRequest": {
       "type": "object",

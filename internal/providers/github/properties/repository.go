@@ -225,6 +225,7 @@ func RepoV1FromProperties(repoProperties *properties.Properties) (*minderv1.Repo
 		IsFork:        isFork,
 		DefaultBranch: repoProperties.GetProperty(RepoPropertyDefaultBranch).GetString(),
 		License:       repoProperties.GetProperty(RepoPropertyLicense).GetString(),
+		Properties:    repoProperties.ToProtoStruct(),
 	}
 
 	return pbRepo, nil

@@ -90,7 +90,8 @@ func TestSecurityAdvisoryAlert(t *testing.T) {
 			mockClient := mockghclient.NewMockGitHub(ctrl)
 			tt.mockSetup(mockClient)
 
-			saAlert, err := NewSecurityAdvisoryAlert(tt.actionType, &ruleType, &saCfg, mockClient)
+			saAlert, err := NewSecurityAdvisoryAlert(
+				tt.actionType, &ruleType, &saCfg, mockClient, models.ActionOptOn)
 			require.NoError(t, err)
 			require.NotNil(t, saAlert)
 
@@ -103,7 +104,6 @@ func TestSecurityAdvisoryAlert(t *testing.T) {
 			retMeta, err := saAlert.Do(
 				context.Background(),
 				interfaces.ActionCmdOn,
-				models.ActionOptOn,
 				&pbinternal.PullRequest{},
 				evalParams,
 				nil,

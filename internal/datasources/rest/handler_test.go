@@ -89,9 +89,10 @@ func Test_parseRequestBodyConfig(t *testing.T) {
 		def *minderv1.RestDataSource_Def
 	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name          string
+		args          args
+		want          string
+		wantFromInput bool
 	}{
 		{
 			name: "Nil body",
@@ -124,13 +125,26 @@ func Test_parseRequestBodyConfig(t *testing.T) {
 			},
 			want: `{"key":"value"}`,
 		},
+		{
+			name: "Body from input",
+			args: args{
+				def: &minderv1.RestDataSource_Def{
+					Body: &minderv1.RestDataSource_Def_BodyFromField{
+						BodyFromField: "key",
+					},
+				},
+			},
+			want:          "key",
+			wantFromInput: true,
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := parseRequestBodyConfig(tt.args.def)
-			assert.Equal(t, tt.want, got)
+			gotFromInput, gotStr := parseRequestBodyConfig(tt.args.def)
+			assert.Equal(t, tt.want, gotStr)
+			assert.Equal(t, tt.wantFromInput, gotFromInput)
 		})
 	}
 }

@@ -5,25 +5,33 @@
 package reminder
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/pkg/config"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // Config contains the configuration for the reminder service
 type Config struct {
-	Database         config.DatabaseConfig `mapstructure:"database"`
-	RecurrenceConfig RecurrenceConfig      `mapstructure:"recurrence"`
-	EventConfig      EventConfig           `mapstructure:"events"`
-	LoggingConfig    LoggingConfig         `mapstructure:"logging"`
+	Database         config.DatabaseConfig    `mapstructure:"database"`
+	RecurrenceConfig RecurrenceConfig         `mapstructure:"recurrence"`
+	EventConfig      serverconfig.EventConfig `mapstructure:"events"`
+	LoggingConfig    LoggingConfig            `mapstructure:"logging"`
 }
 
 // Validate validates the configuration
 func (c Config) Validate() error {
 	err := c.RecurrenceConfig.Validate()
+	if err != nil {
+		return err
+	}
+
+	err = validateEventConfig(c.EventConfig)
 	if err != nil {
 		return err
 	}
@@ -51,4 +59,15 @@ func RegisterReminderFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 	}
 
 	return registerRecurrenceFlags(v, flags)
+}
+
+func validateEventConfig(cfg serverconfig.EventConfig) error {
+	switch cfg.Driver {
+	case constants.NATSDriver:
+	case constants.SQLDriver:
+	default:
+		return fmt.Errorf("events.driver %s is not supported", cfg.Driver)
+	}
+
+	return nil
 }

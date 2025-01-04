@@ -23,7 +23,7 @@ db:
 
 # trusty settings
 trusty:
-  # -- (string) Trusty host to use
+  # -- (string) Stacklok Insight host to use
   endpoint: "https://api.trustypkg.dev"
 
 # AWS-specific configuration
