@@ -572,8 +572,8 @@ func TestGetArtifactVersions(t *testing.T) {
 					Name:  tt.artifactName,
 				},
 				&testFilter{
-					pageNumber:   safeInt32(tt.pageNumber),
-					itemsPerPage: safeInt32(tt.itemsPerPage),
+					pageNumber:   int32(tt.pageNumber),
+					itemsPerPage: int32(tt.itemsPerPage),
 				},
 			)
 
@@ -1721,14 +1721,4 @@ func TestCloseSecurityAdvisory(t *testing.T) {
 			}
 		})
 	}
-}
-
-func safeInt32(n int) int32 {
-	if n > 1<<31-1 {
-		return 1<<31 - 1
-	}
-	if n < -(1 << 31) {
-		return -(1 << 31)
-	}
-	return int32(n)
 }
