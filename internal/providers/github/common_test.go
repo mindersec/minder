@@ -572,8 +572,8 @@ func TestGetArtifactVersions(t *testing.T) {
 					Name:  tt.artifactName,
 				},
 				&testFilter{
-					pageNumber:   int32(tt.pageNumber),
-					itemsPerPage: int32(tt.itemsPerPage),
+					pageNumber:   int32(tt.pageNumber),   //nolint:gosec
+					itemsPerPage: int32(tt.itemsPerPage), //nolint:gosec
 				},
 			)
 
