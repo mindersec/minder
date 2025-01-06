@@ -26,7 +26,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "redocusaurus": "^2.2.0",
-    "styled-components": "^6.1.13"
+    "styled-components": "^6.1.14"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.6.3"
