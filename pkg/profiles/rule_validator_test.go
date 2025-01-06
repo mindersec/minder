@@ -106,7 +106,7 @@ func TestExampleRulesAreValidatedCorrectly(t *testing.T) {
 		}
 
 		// skip test files
-		if strings.HasSuffix(path, ".test.yaml") || strings.HasSuffix(path, ".test.yml") {
+		if strings.HasSuffix(path, ".test.yaml") || strings.HasSuffix(path, ".test.yml") || strings.Contains(filepath.Dir(path), ".testdata") {
 			return nil
 		}
 

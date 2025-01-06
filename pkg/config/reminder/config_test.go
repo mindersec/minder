@@ -5,6 +5,7 @@ package reminder_test
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -16,6 +17,8 @@ import (
 
 	"github.com/mindersec/minder/pkg/config"
 	"github.com/mindersec/minder/pkg/config/reminder"
+	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 func TestValidateConfig(t *testing.T) {
@@ -34,9 +37,12 @@ func TestValidateConfig(t *testing.T) {
 					BatchSize:  100,
 					MinElapsed: parseTimeDuration(t, "1h"),
 				},
-				EventConfig: reminder.EventConfig{
-					Connection: config.DatabaseConfig{
-						Port: 8080,
+				EventConfig: serverconfig.EventConfig{
+					Driver: constants.SQLDriver,
+					SQLPubSub: serverconfig.SQLEventConfig{
+						Connection: config.DatabaseConfig{
+							Port: 8080,
+						},
 					},
 				},
 			},
@@ -49,6 +55,9 @@ func TestValidateConfig(t *testing.T) {
 					BatchSize:  100,
 					MinElapsed: parseTimeDuration(t, "1h"),
 				},
+				EventConfig: serverconfig.EventConfig{
+					Driver: constants.SQLDriver,
+				},
 			},
 			errMsg: "cannot be negative",
 		},
@@ -60,8 +69,25 @@ func TestValidateConfig(t *testing.T) {
 					BatchSize:  100,
 					MinElapsed: parseTimeDuration(t, "-1h"),
 				},
+				EventConfig: serverconfig.EventConfig{
+					Driver: constants.SQLDriver,
+				},
 			},
 			errMsg: "cannot be negative",
+		},
+		{
+			name: "UnsupportedDriver",
+			config: reminder.Config{
+				RecurrenceConfig: reminder.RecurrenceConfig{
+					Interval:   parseTimeDuration(t, "1h"),
+					BatchSize:  100,
+					MinElapsed: parseTimeDuration(t, "1h"),
+				},
+				EventConfig: serverconfig.EventConfig{
+					Driver: constants.GoChannelDriver,
+				},
+			},
+			errMsg: fmt.Sprintf("%s is not supported", constants.GoChannelDriver),
 		},
 	}
 
@@ -153,10 +179,9 @@ func TestSetViperDefaults(t *testing.T) {
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.interval")))
 	require.Equal(t, 100, v.GetInt("recurrence.batch_size"))
 	require.Equal(t, parseTimeDuration(t, "1h"), parseTimeDuration(t, v.GetString("recurrence.min_elapsed")))
-	require.Equal(t, "reminder", v.GetString("events.sql_connection.dbname"))
-	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql_connection.dbhost"))
-	require.Equal(t, "reminder-event-postgres", v.GetString("events.sql_connection.dbhost"))
-	require.Equal(t, "postgres", v.GetString("events.sql_connection.dbuser"))
+	require.Equal(t, "watermill", v.GetString("events.sql.connection.dbname"))
+	require.Equal(t, "localhost", v.GetString("events.sql.connection.dbhost"))
+	require.Equal(t, "postgres", v.GetString("events.sql.connection.dbuser"))
 }
 
 // TestOverrideConfigByEnvVar tests that the configuration can be overridden by environment variables
