@@ -193,4 +193,4 @@ SELECT s.evaluation_time,
 
 -- name: DeleteEvaluationHistoryByIDs :execrows
 DELETE FROM evaluation_statuses s
- WHERE s.id = ANY(sqlc.slice(evaluationIds));
+ WHERE s.id = ANY(sqlc.slice(evaluationIds)::uuid[]);

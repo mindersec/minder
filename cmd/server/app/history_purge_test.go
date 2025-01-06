@@ -220,7 +220,7 @@ func TestPurgeLoop(t *testing.T) {
 				store = tt.dbSetup(ctrl)
 			}
 
-			err := purgeLoop(ctx, store, tt.threshold, tt.size, tt.dryRun, t.Logf)
+			err := purgeLoop(ctx, store, tt.threshold, tt.size, tt.dryRun)
 			if tt.err {
 				require.Error(t, err)
 				return
