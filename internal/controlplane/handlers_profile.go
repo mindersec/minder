@@ -687,8 +687,6 @@ func (s *Server) processProfileStatusByName(
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
-	
-
 	return &minderv1.GetProfileStatusByNameResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
 			ProfileId:     profileID.String(),
