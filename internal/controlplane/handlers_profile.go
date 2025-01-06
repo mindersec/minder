@@ -654,7 +654,7 @@ func (s *Server) processProfileStatusByName(
 	lastUpdated *timestamppb.Timestamp,
 	profileStatus string,
 	req *minderv1.GetProfileStatusByNameRequest,
-) (*minderv1.GetProfileStatusResponse, error) {
+) (*minderv1.GetProfileStatusByNameResponse, error) {
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 
 	selector, ruleType, ruleName, err := extractFiltersFromNameRequest(req)
@@ -687,7 +687,9 @@ func (s *Server) processProfileStatusByName(
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
-	return &minderv1.GetProfileStatusResponse{
+	
+
+	return &minderv1.GetProfileStatusByNameResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
 			ProfileId:     profileID.String(),
 			ProfileName:   profileName,
@@ -705,7 +707,7 @@ func (s *Server) processProfileStatusById(
 	lastUpdated *timestamppb.Timestamp,
 	profileStatus string,
 	req *minderv1.GetProfileStatusByIdRequest,
-) (*minderv1.GetProfileStatusResponse, error) {
+) (*minderv1.GetProfileStatusByIdResponse, error) {
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 
 	selector, ruleType, ruleName, err := extractFiltersFromIdRequest(req)
@@ -739,7 +741,7 @@ func (s *Server) processProfileStatusById(
 	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
-	return &minderv1.GetProfileStatusResponse{
+	return &minderv1.GetProfileStatusByIdResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
 			ProfileId:     profileID.String(),
 			ProfileName:   profileName,

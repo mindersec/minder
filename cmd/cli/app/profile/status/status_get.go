@@ -43,11 +43,78 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := getProfileStatus(ctx, client, project, profileId, profileName, entityId, entityType)
-	if err != nil {
-		return cli.MessageAndError("Error getting profile status", err)
+	if profileId != "" {
+		resp, err := getProfileStatusById(ctx, client, project, profileId, entityId, entityType)
+		if err != nil {
+			return cli.MessageAndError("Error getting profile status", err)
+		}
+		return formatAndDisplayOutputById(cmd, format, resp)
+	} else if profileName != "" {
+		resp, err := getProfileStatusByName(ctx, client, project, profileName, entityId, entityType)
+		if err != nil {
+			return cli.MessageAndError("Error getting profile status", err)
+		}
+		return formatAndDisplayOutputByName(cmd, format, resp)
 	}
 
+	return cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id or profile name required"))
+}
+
+func getProfileStatusById(
+	ctx context.Context,
+	client minderv1.ProfileServiceClient,
+	project, profileId, entityId, entityType string,
+) (*minderv1.GetProfileStatusByIdResponse, error) {
+	if profileId == "" {
+		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id required"))
+	}
+
+	resp, err := client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
+		Context: &minderv1.Context{Project: &project},
+		Id:      profileId,
+		Entity: &minderv1.EntityTypedId{
+			Id:   entityId,
+			Type: minderv1.EntityFromString(entityType),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &minderv1.GetProfileStatusByIdResponse{
+		ProfileStatus:        resp.ProfileStatus,
+		RuleEvaluationStatus: resp.RuleEvaluationStatus,
+	}, nil
+}
+
+func getProfileStatusByName(
+	ctx context.Context,
+	client minderv1.ProfileServiceClient,
+	project, profileName, entityId, entityType string,
+) (*minderv1.GetProfileStatusByNameResponse, error) {
+	if profileName == "" {
+		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile name required"))
+	}
+
+	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
+		Context: &minderv1.Context{Project: &project},
+		Name:    profileName,
+		Entity: &minderv1.EntityTypedId{
+			Id:   entityId,
+			Type: minderv1.EntityFromString(entityType),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &minderv1.GetProfileStatusByNameResponse{
+		ProfileStatus:        resp.ProfileStatus,
+		RuleEvaluationStatus: resp.RuleEvaluationStatus,
+	}, nil
+}
+
+func formatAndDisplayOutputById(cmd *cobra.Command, format string, resp *minderv1.GetProfileStatusByIdResponse) error {
 	switch format {
 	case app.JSON:
 		out, err := util.GetJsonFromProto(resp)
@@ -66,58 +133,29 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
 		table.Render()
 	}
-
 	return nil
 }
 
-func getProfileStatus(
-	ctx context.Context,
-	client minderv1.ProfileServiceClient,
-	project, profileId, profileName, entityId, entityType string,
-) (*minderv1.GetProfileStatusResponse, error) {
-	var resp *minderv1.GetProfileStatusResponse
-
-	if profileId != "" {
-		idResp, err := client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
-			Context: &minderv1.Context{Project: &project},
-			Id:      profileId,
-			Entity: &minderv1.EntityTypedId{
-				Id:   entityId,
-				Type: minderv1.EntityFromString(entityType),
-			},
-		})
+func formatAndDisplayOutputByName(cmd *cobra.Command, format string, resp *minderv1.GetProfileStatusByNameResponse) error {
+	switch format {
+	case app.JSON:
+		out, err := util.GetJsonFromProto(resp)
 		if err != nil {
-			return nil, err
+			return cli.MessageAndError("Error getting json from proto", err)
 		}
-
-		// Convert to the common response type
-		resp = &minderv1.GetProfileStatusResponse{
-			ProfileStatus:        idResp.ProfileStatus,
-			RuleEvaluationStatus: idResp.RuleEvaluationStatus,
-		}
-	} else if profileName != "" {
-		nameResp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
-			Context: &minderv1.Context{Project: &project},
-			Name:    profileName,
-			Entity: &minderv1.EntityTypedId{
-				Id:   entityId,
-				Type: minderv1.EntityFromString(entityType),
-			},
-		})
+		cmd.Println(out)
+	case app.YAML:
+		out, err := util.GetYamlFromProto(resp)
 		if err != nil {
-			return nil, err
+			return cli.MessageAndError("Error getting yaml from proto", err)
 		}
-
-		// Convert to the common response type
-		resp = &minderv1.GetProfileStatusResponse{
-			ProfileStatus:        nameResp.ProfileStatus,
-			RuleEvaluationStatus: nameResp.RuleEvaluationStatus,
-		}
-	} else {
-		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id or profile name required"))
+		cmd.Println(out)
+	case app.Table:
+		table := profile.NewProfileStatusTable()
+		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
+		table.Render()
 	}
-
-	return resp, nil
+	return nil
 }
 
 func init() {

@@ -1342,18 +1342,6 @@ get profile by name
 
 
 
-<Message id="minder-v1-GetProfileStatusResponse">GetProfileStatusResponse</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile |
-| rule_evaluation_status | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | rule_evaluation_status is the status of the rules |
-
-
-
 <Message id="minder-v1-GetProviderRequest">GetProviderRequest</Message>
 
 

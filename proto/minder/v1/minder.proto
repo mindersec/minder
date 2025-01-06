@@ -1976,15 +1976,6 @@ message GetProfileStatusByIdResponse {
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
 
-message GetProfileStatusResponse {
-    // profile_status is the status of the profile
-    ProfileStatus profile_status = 1 [
-        (google.api.field_behavior) = REQUIRED
-    ];
-
-    // rule_evaluation_status is the status of the rules
-    repeated RuleEvaluationStatus rule_evaluation_status = 2;
-}
 
 message GetProfileStatusByProjectRequest {
     // context is the context in which the rule type is evaluated.
