@@ -476,8 +476,8 @@ func TestGetArtifactVersions(t *testing.T) {
 		owner          string
 		artifactType   string
 		artifactName   string
-		pageNumber     int
-		itemsPerPage   int
+		pageNumber     int32
+		itemsPerPage   int32
 		setupMocks     func(*testGitHub)
 		expectedResult []*minderv1.ArtifactVersion
 		expectedError  error
@@ -572,8 +572,8 @@ func TestGetArtifactVersions(t *testing.T) {
 					Name:  tt.artifactName,
 				},
 				&testFilter{
-					pageNumber:   int32(tt.pageNumber),   //nolint:gosec
-					itemsPerPage: int32(tt.itemsPerPage), //nolint:gosec
+					pageNumber:   tt.pageNumber,
+					itemsPerPage: tt.itemsPerPage,
 				},
 			)
 
