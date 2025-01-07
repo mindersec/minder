@@ -4,11 +4,13 @@
 package rule_type
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
+	"text/template"
 
 	"github.com/spf13/cobra"
 )
@@ -67,7 +69,7 @@ func initCmdRun(cmd *cobra.Command, args []string) error {
 
 	if !skipTests {
 		// Create rule type test file
-		if err := createRuleTypeTestFile(ruleTypeTestFileName); err != nil {
+		if err := createRuleTypeTestFile(ruleTypeTestFileName, name); err != nil {
 			return err
 		}
 		cmd.Printf("Created rule type test file: %s\n", ruleTypeTestFileName)
@@ -87,7 +89,7 @@ func validateRuleTypeName(name string) error {
 		return errors.New("name cannot be empty")
 	}
 
-	validName := regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
+	validName := regexp.MustCompile(`^[A-Za-z][-/[:word:]]*$`)
 
 	// regexp to validate name
 	if !validName.MatchString(name) {
@@ -99,9 +101,13 @@ func validateRuleTypeName(name string) error {
 
 func assertFilesDontExist(files ...string) error {
 	for _, file := range files {
-		if _, err := os.Stat(file); err == nil {
-
+		_, err := os.Stat(file)
+		if err == nil {
 			return fmt.Errorf("file %s already exists", file)
+		}
+
+		if errors.Is(err, os.ErrPermission) {
+			return fmt.Errorf("permission denied for file %s", file)
 		}
 	}
 
@@ -109,11 +115,11 @@ func assertFilesDontExist(files ...string) error {
 }
 
 func createRuleTypeFile(fileName, name string) error {
-	return createFileWithContent(fileName, fmt.Sprintf(`---
+	return createFileWithContent(fileName, renderwithRuleTypeName(`---
 version: v1
 release_phase: alpha
 type: rule-type
-name: %s
+name: {{ .RuleName }}
 display_name:  # Display name for the rule type
 short_failure_message:   # Short message to display when the rule fails
 severity:
@@ -146,8 +152,8 @@ def:
 `, name))
 }
 
-func createRuleTypeTestFile(fileName string) error {
-	return createFileWithContent(fileName, `---
+func createRuleTypeTestFile(fileName, name string) error {
+	return createFileWithContent(fileName, renderwithRuleTypeName(`---
 tests:
   - name: "TEST NAME GOES HERE""
     def: {}
@@ -159,17 +165,17 @@ tests:
         owner: "coolhead"
         name: "haze-wave"
     # When testing a rule, additional content can be supplied
-    # from files in the `{{ .RuleName }}.testdata` directory.
+    # from files in the "{{ .RuleName }}.testdata" directory.
     # File paths below are relative to this directory.
     # http:
-    #  # Input from the `http` ingest type.
+    #  # Input from the "http" ingest type.
     #  body_file: HTTP_BODY_FILE
     # git:
-    #   # Input from the `git` ingest type.  Base paths contain
+    #   # Input from the "git" ingest type.  Base paths contain
     #   # directory contents, but do not actually need to be a
     #   # git repository.
     #   repo_base: REPO_BASE_PATH
-`)
+`, name))
 }
 
 func createRuleTypeTestDataDir(dirName string) error {
@@ -181,15 +187,19 @@ func createRuleTypeTestDataDir(dirName string) error {
 }
 
 func createFileWithContent(fileName, content string) error {
-	file, err := os.Create(filepath.Clean(fileName))
+	return os.WriteFile(fileName, []byte(content), 0644)
+}
+
+func renderwithRuleTypeName(templ, name string) string {
+	tmpl, err := template.New("ruletype").Parse(templ)
 	if err != nil {
-		return fmt.Errorf("error creating file %s: %w", fileName, err)
-	}
-	defer file.Close()
-
-	if _, err := file.WriteString(content); err != nil {
-		return fmt.Errorf("error writing to file %s: %w", fileName, err)
+		panic(err)
 	}
 
-	return nil
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ RuleName string }{name}); err != nil {
+		panic(err)
+	}
+
+	return buf.String()
 }
