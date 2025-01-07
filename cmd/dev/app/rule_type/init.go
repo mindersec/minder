@@ -158,9 +158,16 @@ tests:
       entity:
         owner: "coolhead"
         name: "haze-wave"
+    # When testing a rule, additional content can be supplied
+    # from files in the `{{ .RuleName }}.testdata` directory.
+    # File paths below are relative to this directory.
     # http:
-    #   body_file: HTTP_BODY_FILE
+    #  # Input from the `http` ingest type.
+    #  body_file: HTTP_BODY_FILE
     # git:
+    #   # Input from the `git` ingest type.  Base paths contain
+    #   # directory contents, but do not actually need to be a
+    #   # git repository.
     #   repo_base: REPO_BASE_PATH
 `)
 }
