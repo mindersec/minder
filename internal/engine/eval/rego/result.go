@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"

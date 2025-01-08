@@ -52,7 +52,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.13.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
-	github.com/open-policy-agent/opa v0.70.0
+	github.com/open-policy-agent/opa v1.0.0
 	github.com/openfga/go-sdk v0.6.3
 	github.com/openfga/openfga v1.8.3
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -142,7 +142,7 @@ require (
 	github.com/containerd/containerd v1.7.24 // indirect
 	github.com/containerd/containerd/api v1.7.19 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
-	github.com/containerd/errdefs v0.3.0 // indirect
+	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
