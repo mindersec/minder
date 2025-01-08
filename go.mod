@@ -77,7 +77,7 @@ require (
 	github.com/styrainc/regal v0.29.2
 	github.com/thomaspoignant/go-feature-flag v1.40.0
 	github.com/yuin/goldmark v1.7.8
-	gitlab.com/gitlab-org/api/client-go v0.118.0
+	gitlab.com/gitlab-org/api/client-go v0.119.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.58.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.58.0
 	go.opentelemetry.io/otel v1.33.0
