@@ -164,6 +164,10 @@ func init() {
 	getCmd.Flags().StringP("entity", "e", "", "Entity ID to get profile status for")
 	getCmd.Flags().StringP("entity-type", "t", "",
 		fmt.Sprintf("the entity type to get profile status for (one of %s)", entities.KnownTypesCSV()))
+	getCmd.Flags().StringP("id", "i", "", "ID to get profile status for")
+	getCmd.Flags().StringP("name", "n", "", "Profile name to get profile status for")
+
+	getCmd.MarkFlagsOneRequired("id", "name")
 	// Required
 	if err := getCmd.MarkFlagRequired("entity"); err != nil {
 		getCmd.Printf("Error marking flag required: %s", err)

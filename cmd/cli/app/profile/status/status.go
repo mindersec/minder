@@ -27,10 +27,6 @@ var profileStatusCmd = &cobra.Command{
 func init() {
 	profile.ProfileCmd.AddCommand(profileStatusCmd)
 	// Flags
-	profileStatusCmd.PersistentFlags().StringP("name", "n", "", "Profile name to get profile status for")
-	profileStatusCmd.PersistentFlags().StringP("id", "i", "", "ID to get profile status for")
 	profileStatusCmd.PersistentFlags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
-	// Required
-	profileStatusCmd.MarkFlagsOneRequired("id", "name")
 }
