@@ -5,6 +5,7 @@ package controlplane
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"testing"
@@ -797,12 +798,10 @@ func TestPatchProfile(t *testing.T) {
 			baseProfile: &minderv1.CreateProfileRequest{
 				Profile: &minderv1.Profile{
 					Name: "test_patch_add_selectors",
-					Repository: []*minderv1.Profile_Rule{
-						{
-							Type: ruleTypeName("repo", 1),
-							Def:  &structpb.Struct{},
-						},
-					},
+					Repository: []*minderv1.Profile_Rule{{
+						Type: ruleTypeName("repo", 1),
+						Def:  &structpb.Struct{},
+					}},
 				},
 			},
 			patchRequest: &minderv1.PatchProfileRequest{
@@ -1053,7 +1052,6 @@ func TestPatchProfile(t *testing.T) {
 				evt:           evts,
 			}
 
-			// Create the base profile
 			baseProfile, err := s.CreateProfile(ctx, tc.baseProfile)
 			require.NoError(t, err)
 
@@ -1281,4 +1279,478 @@ func TestGetProfileStatusById(t *testing.T) {
 		require.Equal(t, dbProfile.ID.String(), resp.ProfileStatus.ProfileId, "Profile ID should match")
 		require.Equal(t, expectedProfileName, resp.ProfileStatus.ProfileName, "Profile name should match")
 	})
+}
+
+type deleteProfileTestCase struct {
+	name    string
+	req     *minderv1.DeleteProfileRequest
+	wantErr string
+}
+
+func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *db.Profile) {
+	t.Helper()
+
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	require.NoError(t, err, "Error creating fake store")
+
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	require.NoError(t, err, "Error creating project")
+
+	testProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      "test_profile",
+		ProjectID: dbproj.ID,
+		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+	})
+	require.NoError(t, err, "Error creating test profile")
+
+	err = dbStore.UpsertBundle(ctx, db.UpsertBundleParams{
+		Name:      "test_bundle",
+		Namespace: "testns",
+	})
+	require.NoError(t, err, "Error creating test bundle")
+
+	dbBundle, err := dbStore.GetBundle(ctx, db.GetBundleParams{
+		Name:      "test_bundle",
+		Namespace: "testns",
+	})
+	require.NoError(t, err, "Error getting test bundle")
+
+	dbSubscription, err := dbStore.CreateSubscription(ctx, db.CreateSubscriptionParams{
+		ProjectID: dbproj.ID,
+		BundleID:  dbBundle.ID,
+	})
+	require.NoError(t, err, "Error creating test subscription")
+
+	bundleProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:           "test_bundle_profile",
+		ProjectID:      dbproj.ID,
+		Alert:          db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+		SubscriptionID: uuid.NullUUID{UUID: dbSubscription.ID, Valid: true},
+	})
+	require.NoError(t, err, "Error creating test bundle profile")
+
+	return dbStore, &dbproj, &testProfile, &bundleProfile
+}
+
+func TestDeleteProfile(t *testing.T) {
+	t.Parallel()
+
+	dbStore, dbproj, testProfile, bundleProfile := setupDeleteProfileTest(t)
+
+	tests := []deleteProfileTestCase{
+		{
+			name: "Delete existing profile",
+			req: &minderv1.DeleteProfileRequest{
+				Id: testProfile.ID.String(),
+			},
+		},
+		{
+			name: "Delete non-existent profile",
+			req: &minderv1.DeleteProfileRequest{
+				Id: uuid.New().String(),
+			},
+			wantErr: "profile not found",
+		},
+		{
+			name: "Delete with invalid profile ID",
+			req: &minderv1.DeleteProfileRequest{
+				Id: "not-a-uuid",
+			},
+			wantErr: "invalid profile ID",
+		},
+		{
+			name: "Delete bundle profile",
+			req: &minderv1.DeleteProfileRequest{
+				Id: bundleProfile.ID.String(),
+			},
+			wantErr: "cannot delete profile from bundle",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
+			})
+
+			evts := &stubeventer.StubEventer{}
+			s := &Server{
+				store:         dbStore,
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
+			}
+
+			res, err := s.DeleteProfile(ctx, tc.req)
+			if tc.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, res)
+
+			_, err = dbStore.GetProfileByID(ctx, db.GetProfileByIDParams{
+				ID:        uuid.MustParse(tc.req.Id),
+				ProjectID: dbproj.ID,
+			})
+			require.ErrorIs(t, err, sql.ErrNoRows)
+		})
+	}
+}
+
+func TestListProfiles(t *testing.T) {
+	t.Parallel()
+
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	if err != nil {
+		t.Fatalf("Error creating fake store: %v", err)
+	}
+
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating project: %v", err)
+	}
+
+	testProfiles := []struct {
+		name   string
+		labels []string
+	}{
+		{name: "profile_c", labels: []string{"label1", "label2"}},
+		{name: "profile_a", labels: []string{"label1"}},
+		{name: "profile_b", labels: []string{"label2"}},
+	}
+
+	for _, tp := range testProfiles {
+		_, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+			Name:      tp.name,
+			ProjectID: dbproj.ID,
+			Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+			Labels:    tp.labels,
+		})
+		if err != nil {
+			t.Fatalf("Error creating test profile %s: %v", tp.name, err)
+		}
+	}
+
+	tests := []struct {
+		name         string
+		req          *minderv1.ListProfilesRequest
+		wantErr      string
+		wantProfiles []string
+	}{
+		{
+			name: "List profiles with label filter 2",
+			req: &minderv1.ListProfilesRequest{
+				LabelFilter: "label2",
+			},
+			wantProfiles: []string{
+				"profile_b",
+				"profile_c",
+			},
+		},
+		{
+			name: "List profiles with label filter1",
+			req: &minderv1.ListProfilesRequest{
+				LabelFilter: "label1",
+			},
+			wantProfiles: []string{
+				"profile_a",
+				"profile_c",
+			},
+		},
+		{
+			name: "List profiles with non-existent label",
+			req: &minderv1.ListProfilesRequest{
+				LabelFilter: "non-existent",
+			},
+			wantProfiles: []string{},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
+			})
+
+			evts := &stubeventer.StubEventer{}
+			s := &Server{
+				store:         dbStore,
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
+			}
+
+			res, err := s.ListProfiles(ctx, tc.req)
+			if tc.wantErr != "" {
+				if err == nil {
+					t.Errorf("ListProfiles() expected error containing %q, got nil", tc.wantErr)
+					return
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("ListProfiles() error = %v, wantErr %v", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("ListProfiles() unexpected error: %v", err)
+				return
+			}
+
+			if res == nil {
+				t.Error("Expected non-nil response")
+				return
+			}
+
+			if len(res.Profiles) != len(tc.wantProfiles) {
+				t.Errorf("ListProfiles() got %d profiles, want %d", len(res.Profiles), len(tc.wantProfiles))
+				return
+			}
+
+			for i, wantName := range tc.wantProfiles {
+				if res.Profiles[i].Name != wantName {
+					t.Errorf("ListProfiles() profile[%d].Name = %q, want %q", i, res.Profiles[i].Name, wantName)
+				}
+			}
+		})
+	}
+}
+
+func TestGetProfileById(t *testing.T) {
+	t.Parallel()
+
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	if err != nil {
+		t.Fatalf("Error creating fake store: %v", err)
+	}
+
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating project: %v", err)
+	}
+
+	testProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      "test_profile",
+		ProjectID: dbproj.ID,
+		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+	})
+	if err != nil {
+		t.Fatalf("Error creating test profile: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		req     *minderv1.GetProfileByIdRequest
+		wantErr string
+	}{
+		{
+			name: "Get existing profile",
+			req: &minderv1.GetProfileByIdRequest{
+				Id: testProfile.ID.String(),
+			},
+		},
+		{
+			name: "Get non-existent profile",
+			req: &minderv1.GetProfileByIdRequest{
+				Id: uuid.New().String(),
+			},
+			wantErr: "profile not found",
+		},
+		{
+			name: "Get with invalid profile ID",
+			req: &minderv1.GetProfileByIdRequest{
+				Id: "not-a-uuid",
+			},
+			wantErr: "invalid profile ID",
+		},
+		{
+			name: "Get with empty profile ID",
+			req: &minderv1.GetProfileByIdRequest{
+				Id: "",
+			},
+			wantErr: "invalid profile ID",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
+			})
+
+			evts := &stubeventer.StubEventer{}
+			s := &Server{
+				store:         dbStore,
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
+			}
+
+			res, err := s.GetProfileById(ctx, tc.req)
+			if tc.wantErr != "" {
+				if err == nil {
+					t.Errorf("GetProfileById() expected error containing %q, got nil", tc.wantErr)
+					return
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("GetProfileById() error = %v, wantErr %v", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("GetProfileById() unexpected error: %v", err)
+				return
+			}
+
+			if res == nil {
+				t.Error("Expected non-nil response")
+				return
+			}
+
+			if *(res.Profile.Id) != testProfile.ID.String() {
+				t.Errorf("GetProfileById() profile.Id = %v, want %v", res.Profile.Id, testProfile.ID.String())
+			}
+			if res.Profile.Name != testProfile.Name {
+				t.Errorf("GetProfileById() profile.Name = %v, want %v", res.Profile.Name, testProfile.Name)
+			}
+		})
+	}
+}
+
+func TestGetProfileByName(t *testing.T) {
+	t.Parallel()
+
+	dbStore, cancelFunc, err := embedded.GetFakeStore()
+	if cancelFunc != nil {
+		t.Cleanup(cancelFunc)
+	}
+	if err != nil {
+		t.Fatalf("Error creating fake store: %v", err)
+	}
+
+	ctx := context.Background()
+	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test",
+		Metadata: []byte(`{}`),
+	})
+	if err != nil {
+		t.Fatalf("Error creating project: %v", err)
+	}
+
+	testProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      "test_profile",
+		ProjectID: dbproj.ID,
+		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+	})
+	if err != nil {
+		t.Fatalf("Error creating test profile: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		req     *minderv1.GetProfileByNameRequest
+		wantErr string
+	}{
+		{
+			name: "Get existing profile",
+			req: &minderv1.GetProfileByNameRequest{
+				Name: "test_profile",
+			},
+		},
+		{
+			name: "Get non-existent profile",
+			req: &minderv1.GetProfileByNameRequest{
+				Name: "non_existent_profile",
+			},
+			wantErr: "profile \"non_existent_profile\" not found",
+		},
+		{
+			name: "Get with empty profile name",
+			req: &minderv1.GetProfileByNameRequest{
+				Name: "",
+			},
+			wantErr: "profile name must be specified",
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: dbproj.ID},
+			})
+
+			evts := &stubeventer.StubEventer{}
+			s := &Server{
+				store:         dbStore,
+				profiles:      profiles.NewProfileService(evts, selectors.NewEnv()),
+				providerStore: providers.NewProviderStore(dbStore),
+				evt:           evts,
+			}
+
+			res, err := s.GetProfileByName(ctx, tc.req)
+			if tc.wantErr != "" {
+				if err == nil {
+					t.Errorf("GetProfileByName() expected error containing %q, got nil", tc.wantErr)
+					return
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Errorf("GetProfileByName() error = %v, wantErr %v", err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("GetProfileByName() unexpected error: %v", err)
+				return
+			}
+
+			if res == nil {
+				t.Error("Expected non-nil response")
+				return
+			}
+
+			if *(res.Profile.Id) != testProfile.ID.String() {
+				t.Errorf("GetProfileByName() profile.Id = %v, want %v", res.Profile.Id, testProfile.ID.String())
+			}
+			if res.Profile.Name != testProfile.Name {
+				t.Errorf("GetProfileByName() profile.Name = %v, want %v", res.Profile.Name, testProfile.Name)
+			}
+		})
+	}
 }
