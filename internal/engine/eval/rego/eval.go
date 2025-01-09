@@ -10,8 +10,9 @@ import (
 	"os"
 
 	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown/print"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
@@ -124,7 +125,10 @@ func (e *Evaluator) Eval(
 	obj := res.Object
 
 	// Register options to expose functions
-	regoFuncOptions := []func(*rego.Rego){}
+	regoFuncOptions := []func(*rego.Rego){
+		// TODO: figure out a Rego V1 migration path (https://github.com/mindersec/minder/issues/5262)
+		rego.SetRegoVersion(ast.RegoV0),
+	}
 
 	// Initialize the built-in minder library rego functions
 	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(ctx, e.featureFlags, res)...)

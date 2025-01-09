@@ -606,6 +606,17 @@ service ProfileService {
         };
     }
 
+    rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/profile/{id}/status"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+
     rpc GetProfileStatusByProject (GetProfileStatusByProjectRequest) returns (GetProfileStatusByProjectResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile_status"
@@ -1920,13 +1931,51 @@ message GetProfileStatusByNameRequest {
 
 message GetProfileStatusByNameResponse {
     // profile_status is the status of the profile
-    ProfileStatus profile_status = 1 [
+    ProfileStatus profile_status = 1[
         (google.api.field_behavior) = REQUIRED
     ];
 
     // rule_evaluation_status is the status of the rules
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
+
+message GetProfileStatusByIdRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the profile to get
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+
+    EntityTypedId entity = 3;
+    bool all = 4;
+
+    string rule_type = 5 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+    string rule_name = 6 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+}
+
+message GetProfileStatusByIdResponse {
+    // profile_status is the status of the profile
+    ProfileStatus profile_status = 1[
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // rule_evaluation_status is the status of the rules
+    repeated RuleEvaluationStatus rule_evaluation_status = 2;
+}
+
 
 message GetProfileStatusByProjectRequest {
     // context is the context in which the rule type is evaluated.

@@ -18,6 +18,7 @@ minder profile status list [flags]
 ```
   -d, --detailed          List all profile violations
   -h, --help              help for list
+  -n, --name string       Profile name to list status for
       --ruleName string   Filter profile status list by rule name
   -r, --ruleType string   Filter profile status list by rule type
 ```
@@ -31,7 +32,6 @@ minder profile status list [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
-  -n, --name string              Profile name to get profile status for
   -o, --output string            Output format (one of json,yaml,table) (default "table")
   -j, --project string           ID of the project
   -v, --verbose                  Output additional messages to STDERR
