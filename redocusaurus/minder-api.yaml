@@ -1156,6 +1156,75 @@ paths:
           type: string
       tags:
         - ProfileService
+  /api/v1/profile/{id}/status:
+    get:
+      operationId: ProfileService_GetProfileStatusById
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetProfileStatusByIdResponse'
+      parameters:
+        - name: id
+          description: id is the id of the profile to get
+          in: path
+          required: true
+          type: string
+        - name: context.provider
+          description: name of the provider
+          in: query
+          required: false
+          type: string
+        - name: context.project
+          description: >-
+            ID of the project.  If empty or unset, will select the user's
+            default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.retiredOrganization
+          in: query
+          required: false
+          type: string
+        - name: entity.type
+          description: entity is the entity to get status for. Incompatible with `all`
+          in: query
+          required: true
+          type: string
+          enum:
+            - ENTITY_UNSPECIFIED
+            - ENTITY_REPOSITORIES
+            - ENTITY_BUILD_ENVIRONMENTS
+            - ENTITY_ARTIFACTS
+            - ENTITY_PULL_REQUESTS
+            - ENTITY_RELEASE
+            - ENTITY_PIPELINE_RUN
+            - ENTITY_TASK_RUN
+            - ENTITY_BUILD
+          default: ENTITY_UNSPECIFIED
+        - name: entity.id
+          description: >-
+            id is the ID of the entity to get status for. Incompatible with
+            `all`
+          in: query
+          required: true
+          type: string
+        - name: all
+          in: query
+          required: false
+          type: boolean
+        - name: ruleType
+          in: query
+          required: false
+          type: string
+        - name: ruleName
+          in: query
+          required: false
+          type: string
+      tags:
+        - ProfileService
   /api/v1/profile_status:
     get:
       operationId: ProfileService_GetProfileStatusByProject
@@ -3533,6 +3602,20 @@ definitions:
         $ref: '#/definitions/v1Profile'
     required:
       - profile
+  v1GetProfileStatusByIdResponse:
+    type: object
+    properties:
+      profileStatus:
+        $ref: '#/definitions/v1ProfileStatus'
+        title: profile_status is the status of the profile
+      ruleEvaluationStatus:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1RuleEvaluationStatus'
+        title: rule_evaluation_status is the status of the rules
+    required:
+      - profileStatus
   v1GetProfileStatusByNameResponse:
     type: object
     properties:
