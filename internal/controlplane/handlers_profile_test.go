@@ -6,7 +6,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -1053,7 +1052,6 @@ func TestPatchProfile(t *testing.T) {
 				evt:           evts,
 			}
 
-			// Create the base profile
 			baseProfile, err := s.CreateProfile(ctx, tc.baseProfile)
 			require.NoError(t, err)
 
@@ -1283,58 +1281,52 @@ func TestGetProfileStatusById(t *testing.T) {
 	})
 }
 
-func TestDeleteProfile(t *testing.T) {
-	t.Parallel()
+type deleteProfileTestCase struct {
+	name    string
+	req     *minderv1.DeleteProfileRequest
+	wantErr string
+}
+
+func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *db.Profile) {
+	t.Helper()
 
 	dbStore, cancelFunc, err := embedded.GetFakeStore()
 	if cancelFunc != nil {
 		t.Cleanup(cancelFunc)
 	}
-	if err != nil {
-		t.Fatalf("Error creating fake store: %v", err)
-	}
+	require.NoError(t, err, "Error creating fake store")
 
 	ctx := context.Background()
 	dbproj, err := dbStore.CreateProject(ctx, db.CreateProjectParams{
 		Name:     "test",
 		Metadata: []byte(`{}`),
 	})
-	if err != nil {
-		t.Fatalf("Error creating project: %v", err)
-	}
+	require.NoError(t, err, "Error creating project")
 
 	testProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
 		Name:      "test_profile",
 		ProjectID: dbproj.ID,
 		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
 	})
-	if err != nil {
-		t.Fatalf("Error creating test profile: %v", err)
-	}
+	require.NoError(t, err, "Error creating test profile")
 
 	err = dbStore.UpsertBundle(ctx, db.UpsertBundleParams{
 		Name:      "test_bundle",
 		Namespace: "testns",
 	})
-	if err != nil {
-		t.Fatalf("Error creating test bundle: %v", err)
-	}
+	require.NoError(t, err, "Error creating test bundle")
 
 	dbBundle, err := dbStore.GetBundle(ctx, db.GetBundleParams{
 		Name:      "test_bundle",
 		Namespace: "testns",
 	})
-	if err != nil {
-		t.Fatalf("Error getting test bundle: %v", err)
-	}
+	require.NoError(t, err, "Error getting test bundle")
 
 	dbSubscription, err := dbStore.CreateSubscription(ctx, db.CreateSubscriptionParams{
 		ProjectID: dbproj.ID,
 		BundleID:  dbBundle.ID,
 	})
-	if err != nil {
-		t.Fatalf("Error creating test subscription: %v", err)
-	}
+	require.NoError(t, err, "Error creating test subscription")
 
 	bundleProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
 		Name:           "test_bundle_profile",
@@ -1342,15 +1334,17 @@ func TestDeleteProfile(t *testing.T) {
 		Alert:          db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
 		SubscriptionID: uuid.NullUUID{UUID: dbSubscription.ID, Valid: true},
 	})
-	if err != nil {
-		t.Fatalf("Error creating test bundle profile: %v", err)
-	}
+	require.NoError(t, err, "Error creating test bundle profile")
 
-	tests := []struct {
-		name    string
-		req     *minderv1.DeleteProfileRequest
-		wantErr string
-	}{
+	return dbStore, &dbproj, &testProfile, &bundleProfile
+}
+
+func TestDeleteProfile(t *testing.T) {
+	t.Parallel()
+
+	dbStore, dbproj, testProfile, bundleProfile := setupDeleteProfileTest(t)
+
+	tests := []deleteProfileTestCase{
 		{
 			name: "Delete existing profile",
 			req: &minderv1.DeleteProfileRequest{
@@ -1382,7 +1376,6 @@ func TestDeleteProfile(t *testing.T) {
 
 	for _, tc := range tests {
 		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -1400,34 +1393,18 @@ func TestDeleteProfile(t *testing.T) {
 
 			res, err := s.DeleteProfile(ctx, tc.req)
 			if tc.wantErr != "" {
-				if err == nil {
-					t.Errorf("DeleteProfile() expected error containing %q, got nil", tc.wantErr)
-					return
-				}
-				if !strings.Contains(err.Error(), tc.wantErr) {
-					t.Errorf("DeleteProfile() error = %v, wantErr %v", err, tc.wantErr)
-				}
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.wantErr)
 				return
 			}
-			if err != nil {
-				t.Errorf("DeleteProfile() unexpected error: %v", err)
-				return
-			}
+			require.NoError(t, err)
+			require.NotNil(t, res)
 
 			_, err = dbStore.GetProfileByID(ctx, db.GetProfileByIDParams{
 				ID:        uuid.MustParse(tc.req.Id),
 				ProjectID: dbproj.ID,
 			})
-			if err == nil {
-				t.Error("Profile still exists after deletion")
-			}
-			if err != nil && !errors.Is(err, sql.ErrNoRows) {
-				t.Errorf("Unexpected error checking profile deletion: %v", err)
-			}
-
-			if res == nil {
-				t.Error("Expected non-nil response")
-			}
+			require.ErrorIs(t, err, sql.ErrNoRows)
 		})
 	}
 }
