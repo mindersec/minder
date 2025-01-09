@@ -37,7 +37,7 @@ func TestCreateDataSource(t *testing.T) {
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
 				featureClient.Data = map[string]interface{}{"data_sources": true}
 				dsService.EXPECT().
-					Create(gomock.Any(), gomock.Any(), gomock.Any()).
+					Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Name: "test-ds"}, nil)
 			},
 			request: &minderv1.CreateDataSourceRequest{
@@ -417,7 +417,7 @@ func TestUpdateDataSource(t *testing.T) {
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
 				featureClient.Data = map[string]interface{}{"data_sources": true}
 				dsService.EXPECT().
-					Update(gomock.Any(), gomock.Any(), gomock.Any()).
+					Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Id: dsIDStr, Name: "updated-ds"}, nil)
 			},
 			request: &minderv1.UpdateDataSourceRequest{

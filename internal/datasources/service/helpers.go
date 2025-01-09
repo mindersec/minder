@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -15,6 +16,39 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+)
+
+var (
+	getByNameQuery = func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID, name string) (db.DataSource, error) {
+		ds, err := tx.GetDataSourceByName(ctx, db.GetDataSourceByNameParams{
+			Name:     name,
+			Projects: projs,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return db.DataSource{}, util.UserVisibleError(codes.NotFound,
+					"data source of name %s not found", name)
+			}
+			return db.DataSource{}, fmt.Errorf("failed to get data source by name: %w", err)
+		}
+
+		return ds, nil
+	}
+	getByIDQuery = func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID, id uuid.UUID) (db.DataSource, error) {
+		ds, err := tx.GetDataSource(ctx, db.GetDataSourceParams{
+			ID:       id,
+			Projects: projs,
+		})
+		if errors.Is(err, sql.ErrNoRows) {
+			return db.DataSource{}, util.UserVisibleError(codes.NotFound,
+				"data source of id %s not found", id.String())
+		}
+		if err != nil {
+			return db.DataSource{}, fmt.Errorf("failed to get data source by name: %w", err)
+		}
+
+		return ds, nil
+	}
 )
 
 func (d *dataSourceService) getDataSourceSomehow(
@@ -33,11 +67,35 @@ func (d *dataSourceService) getDataSourceSomehow(
 
 	tx := stx.Q()
 
+	ds, err := getDataSourceFromDb(ctx, project, opts, tx, theSomehow)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data source from DB: %w", err)
+	}
+
+	dsfuncs, err := getDataSourceFunctions(ctx, tx, ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get data source functions: %w", err)
+	}
+
+	if err := stx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return dataSourceDBToProtobuf(*ds, dsfuncs)
+}
+
+func getDataSourceFromDb(
+	ctx context.Context,
+	project uuid.UUID,
+	opts *ReadOptions,
+	qtx db.ExtendQuerier,
+	dbQuery func(ctx context.Context, qtx db.ExtendQuerier, projs []uuid.UUID) (db.DataSource, error),
+) (*db.DataSource, error) {
 	var projs []uuid.UUID
 	if len(opts.hierarchy) > 0 {
 		projs = opts.hierarchy
 	} else {
-		prjs, err := listRelevantProjects(ctx, tx, project, opts.canSearchHierarchical())
+		prjs, err := listRelevantProjects(ctx, qtx, project, opts.canSearchHierarchical())
 		if err != nil {
 			return nil, fmt.Errorf("failed to list relevant projects: %w", err)
 		}
@@ -45,11 +103,19 @@ func (d *dataSourceService) getDataSourceSomehow(
 		projs = prjs
 	}
 
-	ds, err := theSomehow(ctx, tx, projs)
+	ds, err := dbQuery(ctx, qtx, projs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get data source by name: %w", err)
+		return nil, fmt.Errorf("failed to get data source from DB: %w", err)
 	}
 
+	return &ds, nil
+}
+
+func getDataSourceFunctions(
+	ctx context.Context,
+	tx db.ExtendQuerier,
+	ds *db.DataSource,
+) ([]db.DataSourcesFunction, error) {
 	dsfuncs, err := tx.ListDataSourceFunctions(ctx, db.ListDataSourceFunctionsParams{
 		DataSourceID: ds.ID,
 		ProjectID:    ds.ProjectID,
@@ -66,11 +132,7 @@ func (d *dataSourceService) getDataSourceSomehow(
 		return nil, errors.New("data source has no functions")
 	}
 
-	if err := stx.Commit(); err != nil {
-		return nil, fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return dataSourceDBToProtobuf(ds, dsfuncs)
+	return dsfuncs, nil
 }
 
 func (d *dataSourceService) instantiateDataSource(
@@ -110,9 +172,15 @@ func listRelevantProjects(
 }
 
 func validateDataSourceFunctionsUpdate(
-	existingDS, newDS *minderv1.DataSource,
+	existingDS *db.DataSource, existingFunctions []db.DataSourcesFunction, newDS *minderv1.DataSource,
 ) error {
-	existingImpl, err := datasources.BuildFromProtobuf(existingDS)
+	existingDsProto, err := dataSourceDBToProtobuf(*existingDS, existingFunctions)
+	if err != nil {
+		// If we got here, it means the existing data source is invalid.
+		return fmt.Errorf("failed to convert data source to protobuf: %w", err)
+	}
+
+	existingImpl, err := datasources.BuildFromProtobuf(existingDsProto)
 	if err != nil {
 		// If we got here, it means the existing data source is invalid.
 		return fmt.Errorf("failed to build data source from protobuf: %w", err)

@@ -69,14 +69,14 @@ func TestRuleTypeService(t *testing.T) {
 		{
 			Name:          "CreateRuleType rejects attempt to create a namespaced rule when no subscription ID is passed",
 			RuleType:      newRuleType(withBasicStructure, withRuleName(namespacedRuleName)),
-			ExpectedError: "cannot create a rule type or profile with a namespace through the API",
+			ExpectedError: "cannot create a rule type, data source or profile with a namespace through the API",
 			DBSetup:       dbf.NewDBMock(),
 			TestMethod:    create,
 		},
 		{
 			Name:           "CreateRuleType rejects attempt to create a non-namespaced rule when no subscription ID is passed",
 			RuleType:       newRuleType(withBasicStructure),
-			ExpectedError:  "rule types and profiles from subscriptions must have namespaced names",
+			ExpectedError:  "rule types, data sources and profiles from subscriptions must have namespaced names",
 			DBSetup:        dbf.NewDBMock(),
 			SubscriptionID: subscriptionID,
 			TestMethod:     create,
