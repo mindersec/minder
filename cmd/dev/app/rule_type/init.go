@@ -187,7 +187,7 @@ func createRuleTypeTestDataDir(dirName string) error {
 }
 
 func createFileWithContent(fileName, content string) error {
-	return os.WriteFile(fileName, []byte(content), 0644)
+	return os.WriteFile(fileName, []byte(content), 0600)
 }
 
 func renderwithRuleTypeName(templ, name string) string {
