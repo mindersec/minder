@@ -6,7 +6,6 @@ package status
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -28,12 +27,6 @@ var profileStatusCmd = &cobra.Command{
 func init() {
 	profile.ProfileCmd.AddCommand(profileStatusCmd)
 	// Flags
-	profileStatusCmd.PersistentFlags().StringP("name", "n", "", "Profile name to get profile status for")
 	profileStatusCmd.PersistentFlags().StringP("output", "o", app.Table,
 		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
-	// Required
-	if err := profileStatusCmd.MarkPersistentFlagRequired("name"); err != nil {
-		profileStatusCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
 }
