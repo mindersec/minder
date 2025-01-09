@@ -36,7 +36,7 @@ func (s *Server) CreateDataSource(ctx context.Context,
 	}
 
 	// Process the request
-	ret, err := s.dataSourcesService.Create(ctx, dsReq, nil)
+	ret, err := s.dataSourcesService.Create(ctx, uuid.Nil, dsReq, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 	}
 
 	// Process the request
-	ret, err := s.dataSourcesService.Update(ctx, dsReq, nil)
+	ret, err := s.dataSourcesService.Update(ctx, uuid.Nil, dsReq, nil)
 	if err != nil {
 		return nil, err
 	}

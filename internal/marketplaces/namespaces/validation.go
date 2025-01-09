@@ -15,18 +15,18 @@ import (
 
 // these functions are tested through the tests for RuleTypeService
 
-// ValidateNamespacedNameRules takes a name for a new profile or rule type and
+// ValidateNamespacedNameRules takes a name for a new profile, rule type or data source and
 // asserts that:
 // A) If the subscriptionID is empty, there name should not be namespaced
 // B) If subscriptionID is not empty, the name must be namespaced
 // This assumes the name has already been validated against the other
-// validation rules for profile and rule type names.
+// validation rules for profile, rule type and data source names.
 func ValidateNamespacedNameRules(name string, subscriptionID uuid.UUID) error {
 	hasNamespace := strings.Contains(name, "/")
 	if hasNamespace && subscriptionID == uuid.Nil {
-		return errors.New("cannot create a rule type or profile with a namespace through the API")
+		return errors.New("cannot create a rule type, data source or profile with a namespace through the API")
 	} else if !hasNamespace && subscriptionID != uuid.Nil {
-		return errors.New("rule types and profiles from subscriptions must have namespaced names")
+		return errors.New("rule types, data sources and profiles from subscriptions must have namespaced names")
 	}
 
 	// in future, we may want to check that the namespace in the profile/rule
