@@ -3,8 +3,6 @@ title: OSS tooling integrations
 sidebar_position: 30
 ---
 
-# OSS Tooling Integrations
-
 Minder's policy engine is flexible enough to integrate with a variety of open
 source tools. This allows you to leverage the tools you already use to make
 better decisions about your supply chain.

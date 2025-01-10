@@ -1,9 +1,8 @@
 ---
-title: GitHub Actions
-sidebar_position: 70
+title: GitHub Actions configuration rules
+sidebar_label: GitHub Actions
+sidebar_position: 50
 ---
-
-# GitHub Actions Configuration Rules
 
 There are several rule types that can be used to configure GitHub Actions.
 

@@ -1,9 +1,8 @@
 ---
-title: Stacklok Insight check
-sidebar_position: 20
+title: Stacklok Insight rule
+sidebar_label: Stacklok Insight check
+sidebar_position: 90
 ---
-
-# Stacklok Insight Rule
 
 The following rule type is available to check dependency risk with
 [Stacklok Insight](https://insight.stacklok.com/).
@@ -25,11 +24,11 @@ as failed.
 
 - `pr_trusty_check`
 
-## Rule Parameters
+## Rule parameters
 
 - None
 
-## Rule Definition Options
+## Rule definition options
 
 The `pr_trusty_check` rule supports the following options:
 

@@ -1,52 +1,51 @@
 ---
+title: Writing rules using Rego
 sidebar_position: 110
 ---
-
-# Writing rules using Rego
 
 Minder's policy engine is able to use pluggable drivers for evaluating rules.
 Rego is a language specifically designed for expressing policies in a clear and
 concise manner. Its declarative syntax makes it an excellent choice for defining
 policy logic. In the context of Minder, Rego plays a central role in crafting
-Rule Types, which are used to enforce security policies.
+rule types, which are used to enforce security policies.
 
-# Writing Rule Types in Minder
+## Writing rule types in Minder
 
-Minder organizes policies into Rule Types, each with specific sections defining
+Minder organizes policies into rule types, each with specific sections defining
 how policies are ingested, evaluated, and acted upon. Rule types are then called
 within profiles to express the security posture of your organization. Let's
-delve into the essential components of a Minder Rule Type:
+delve into the essential components of a Minder rule type:
 
-- Ingesting Data: Fetching relevant data, often from external sources like
+- Ingesting data: Fetching relevant data, often from external sources like
   GitHub API.
 
 - Evaluation: Applying policy logic to the ingested data. Minder offers a set of
   engines to evaluate data: jq and rego being general-purpose engines, while
   Stacklok Insight and vulncheck are more use case-specific ones.
 
-- Remediation and Alerting: Taking actions or providing notifications based on
+- Remediation and alerting: Taking actions or providing notifications based on
   evaluation results. E.g. creating a pull request or generating a GitHub
   security advisory.
 
-## Rego Evaluation types
+## Rego evaluation types
 
 With Rego being a flexible policy language, it allowed us to express policy
 checks via different constructs. We chose to implement two in Minder:
 
 - **deny-by-default**: Checks for an allowed boolean being set to true, and
-  denies the policy if it’s not the case.
+  denies the policy if it's not the case.
 
 - **constraints**: Checks for violations in the given policy. This allows us to
   express the violations and output them in a user friendly-manner.
 
-Note that these are known patterns in the OPA community, so we’re not doing
+Note that these are known patterns in the OPA community, so we're not doing
 anything out of the ordinary here. Instead, we leverage best practices that have
 already been established.
 
 ## Custom Rego functions
 
 Given the context in which Minder operates, we did need to add some custom
-functionality that OPA doesn’t provide out of the box. Namely, we added the
+functionality that OPA doesn't provide out of the box. Namely, we added the
 following custom functions:
 
 - **file.exists(filepath)**: Verifies that the given filepath exists in the Git
@@ -95,10 +94,10 @@ pull request context.
 In addition, most of the
 [standard OPA functions are available in the Minder runtime](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions).
 
-## Example: CodeQL-Enabled Check
+## Example: CodeQL-enabled check
 
 CodeQL is a very handy tool that GitHub provides to do static analysis on
-codebases. In this scenario, we’ll see a rule type that verifies that it’s
+codebases. In this scenario, we'll see a rule type that verifies that it's
 enabled via a GitHub action in the repository.
 
 ```yaml
@@ -179,13 +178,13 @@ def:
       severity: 'medium'
 ```
 
-The rego evaluation uses the `deny-by-default` type. It’ll set the policy as
+The rego evaluation uses the `deny-by-default` type. It'll set the policy as
 successful if there is a GitHub workflow that instantiates
 `github/codeql-action/analyze`.
 
-## Example: No 'latest' tag in Dockerfile
+## Example: no 'latest' tag in Dockerfile
 
-In this scenario, we’ll explore a Rule Type that verifies that a Dockerfile does
+In this scenario, we'll explore a rule type that verifies that a Dockerfile does
 not use the `latest` tag.
 
 ```yaml
@@ -248,9 +247,9 @@ This leverages the constraints Rego evaluation type, which will output a failure
 for each violation that it finds. This is handy for usability, as it will tell
 us exactly the lines that are not in conformance with our rules.
 
-## Example: Security Advisories Check
+## Example: security advisories check
 
-This is a more complex example. Here, we'll explore a Rule Type that checks for
+This is a more complex example. Here, we'll explore a rule type that checks for
 open security advisories in a GitHub repository.
 
 ```yaml
@@ -313,12 +312,12 @@ def:
         import future.keywords.in
 
         severity_to_number := {
-        	null: -1,
-        	"unknown": -1,
-        	"low": 0,
-        	"medium": 1,
-        	"high": 2,
-        	"critical": 3,
+          null: -1,
+          "unknown": -1,
+          "low": 0,
+          "medium": 1,
+          "high": 2,
+          "critical": 3,
         }
 
         default threshold := 1
@@ -326,30 +325,30 @@ def:
         threshold := severity_to_number[input.profile.severity] if input.profile.severity != null
 
         above_threshold(severity, threshold) if {
-        	severity_to_number[severity] >= threshold
+          severity_to_number[severity] >= threshold
         }
 
         had_fallback if {
-        	input.ingested.fallback
+          input.ingested.fallback
         }
 
         violations contains {"msg": "Security advisories not enabled."} if {
-        	had_fallback
+          had_fallback
         }
 
         violations contains {"msg": "Found open security advisories in or above threshold"} if {
-        	not had_fallback
+          not had_fallback
 
-        	some adv in input.ingested
+          some adv in input.ingested
 
-        	# Is not withdrawn
-        	adv.withdrawn_at == null
+          # Is not withdrawn
+          adv.withdrawn_at == null
 
-        	adv.state != "closed"
-        	adv.state != "published"
+          adv.state != "closed"
+          adv.state != "published"
 
-        	# We only care about advisories that are at or above the threshold
-        	above_threshold(adv.severity, threshold)
+          # We only care about advisories that are at or above the threshold
+          above_threshold(adv.severity, threshold)
         }
   alert:
     type: security_advisory
@@ -389,8 +388,9 @@ This introductory guide provides a foundation for leveraging Rego and Minder to
 write policies effectively. Experiment, explore, and tailor these techniques to
 meet the unique requirements of your projects.
 
-Minder is constantly evolving, so don’t be surprised if we soon add more custom
+Minder is constantly evolving, so don't be surprised if we soon add more custom
 functions or even more evaluation engines! The project is in full steam and more
 features are coming!
 
-[You can see a list of rule types that we actively maintain here.](https://github.com/mindersec/minder-rules-and-profiles)
+You can see a collection of rule types that we actively maintain in the
+[minder-rules-and-profiles repo](https://github.com/mindersec/minder-rules-and-profiles)

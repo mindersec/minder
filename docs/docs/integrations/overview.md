@@ -1,9 +1,8 @@
 ---
-title: Overview
+title: Minder integrations
+sidebar_label: Overview
 sidebar_position: 10
 ---
-
-# Minder Integrations
 
 Minder, as a platform, supports multiple integrations with different aspects of
 your supply chain, as well as sources of information to make relevant decisions.
@@ -17,7 +16,7 @@ Think of them as device drivers in an operating system. They provide a common
 interface to interact with different services.
 
 For more information, see the
-[Provider Integrations](provider_integrations/github.md) documentation.
+[Provider integrations](provider_integrations/github.md) documentation.
 
 ## Integration with other tools
 
@@ -31,7 +30,7 @@ Examples of integrations include:
 - CI/CD tools (e.g. GitHub Actions)
 - Automated dependency update tools (e.g. Dependabot)
 
-For more information, see the [OSS Integrations](community_integrations.md)
+For more information, see the [OSS integrations](community_integrations.md)
 documentation.
 
 ## Stacklok Insight

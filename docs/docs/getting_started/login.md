@@ -3,8 +3,6 @@ title: Logging in to Minder
 sidebar_position: 20
 ---
 
-# Logging in to Minder
-
 To start using Minder, you must first log in. Logging in to a Minder server for
 the first time will create your account.
 
@@ -52,7 +50,7 @@ minder auth login --grpc-host localhost --grpc-port 8090 --identity-url http://l
 Your web browser will be opened to log in to Keycloak, and then a banner will be
 printed an
 
-```
+```plain
     You have successfully logged in.
 
  Here are your details:

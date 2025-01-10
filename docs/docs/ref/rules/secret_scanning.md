@@ -1,9 +1,8 @@
 ---
-title: Secret scanning
-sidebar_position: 50
+title: Secret scanning rule
+sidebar_label: Secret scanning
+sidebar_position: 80
 ---
-
-# Secret Scanning Rule
 
 The following rule type is available for secret scanning.
 

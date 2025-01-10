@@ -3,8 +3,6 @@ title: Automatic remediations
 sidebar_position: 80
 ---
 
-# Automatic remediation with Minder
-
 After you've [created a profile](first_profile), you can
 [view the status](viewing_status) of your security profile, and you can
 optionally enable alerts through GitHub Security Advisories. But Minder can also
@@ -70,7 +68,7 @@ When remediation is on, the profile status should move quickly through three
 different states. After disabling secret scanning on a repository, check the
 status of the profile:
 
-```
+```bash
 minder profile status list --name my_profile
 ```
 
@@ -82,7 +80,7 @@ minder profile status list --name my_profile
 3. After Minder has remediated the problem, it will evaluate the rule again.
    Once this completes, Minder will set the profile `STATUS` to `Success`.
 
-# More information
+## More information
 
 For more information about automatic remediations, see the
 [additional documentation in "How Minder works"](../understand/remediations).

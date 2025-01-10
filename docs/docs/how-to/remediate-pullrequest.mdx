@@ -1,20 +1,19 @@
 ---
-title: Automatic remediation via Pull Request
+title: Automatic remediation via pull request
 sidebar_position: 65
 ---
 
-import Tabs from '@theme/Tabs'; import TabItem from '@theme/TabItem';
-
-# Creating a pull request for automatic remediation
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 ## Prerequisites
 
 - The `minder` CLI application
 - A Minder account with
   [at least `editor` permission](../user_management/user_roles.md)
-- An enrolled Provider (e.g., GitHub) and registered repositories
+- An enrolled provider (e.g., GitHub) and registered repositories
 
-## Create a rule type that has support for pull request automatic remediation
+## Create a rule type for automatic remediation via pull request
 
 The pull request automatic remediation feature provides the functionality to fix
 a failed rule type by creating a pull request.

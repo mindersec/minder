@@ -1,9 +1,8 @@
 ---
-title: Dependabot
-sidebar_position: 30
+title: Dependabot rule
+sidebar_label: Dependabot
+sidebar_position: 40
 ---
-
-# Dependabot Rule
 
 The following rule type is available for Dependabot.
 

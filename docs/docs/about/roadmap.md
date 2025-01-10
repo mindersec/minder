@@ -3,8 +3,6 @@ title: Roadmap
 sidebar_position: 70
 ---
 
-# Roadmap
-
 ## About this roadmap
 
 This roadmap should serve as a reference point for Minder users and community
@@ -22,7 +20,7 @@ Have any questions or comments about items on the Minder roadmap? Share your
 feedback via
 [Minder GitHub Discussions](https://github.com/mindersec/minder/discussions).
 
-_Last updated: June 2024_
+**Last updated:** June 2024
 
 ## In progress
 

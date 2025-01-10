@@ -1,8 +1,7 @@
 ---
+title: Writing custom rule types
 sidebar_position: 100
 ---
-
-# Writing custom rule types
 
 Minder's policy engine is flexible enough that you can write your own rule types
 to check for specific settings in your supply chain. This guide will walk you
@@ -12,30 +11,30 @@ through the process of writing a custom rule type.
 
 Minder allows you to check and enforce that certain settings are set up for
 several stages in your supply chain. To configure those settings, you need to
-create a Profile. This profile is composed of several rules that represent the
+create a profile. This profile is composed of several rules that represent the
 settings you want in your supply chain. These rules are actually instantiations
-of another handy object for Minder called Rule Types. These rule types define
+of another handy object for Minder called rule types. These rule types define
 the nitty-gritty details of how the specific setting you care about will be
 checked, how you'll be alerted when something goes out of order, and how it will
 be automatically remediated.
 
-You can browse a curated collection of rule types in the [rules and profiles
-repository])(https://github.com/mindersec/minder-rules-and-profiles).
+You can browse a curated collection of rule types in the
+[rules and profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
 Some of the rules include:
 
-- Verifying if you have GitHub’s secret scanning enabled
+- Verifying if you have GitHub's secret scanning enabled
 - Verifying if your artifacts are signed and verifiable on Sigstore
 - Verifying that your branch protection settings are secure
 
-## Rule Types
+## Rule types
 
-Rule types aren’t particularly complicated. They include the basic structure to
+Rule types aren't particularly complicated. They include the basic structure to
 get an observed state, evaluate the rule based on that observed state, do
 actions based on that state, and finally, give you some instructions in case you
 want to manage things manually.
 
-The Rule Type object in YAML looks as follows:
+The Rule type object in YAML looks as follows:
 
 ```yaml
 ---
@@ -57,11 +56,11 @@ def:
 
 The following are the components of a rule type:
 
-- **Description**: What does the rule do? This is handy to browse through rule
+- **description**: What does the rule do? This is handy to browse through rule
   types when building a profile.
-- **Guidance**: What do I do if this rule presents a “failure”? This is handy to
-  inform folks of what to do in case they’re not using automated remediations.
-- **in_entity**: What are we evaluating? This defines the entity that’s being
+- **guidance**: What do I do if this rule presents a “failure”? This is handy to
+  inform folks of what to do in case they're not using automated remediations.
+- **in_entity**: What are we evaluating? This defines the entity that's being
   evaluated. It could be repository, artifact, pull_request, and
   build_environment (coming soon).
 - **param_schema**: Optional fields to pass to the ingestion (more on this
@@ -69,16 +68,16 @@ The following are the components of a rule type:
   entity.
 - **rule_schema**: Optional fields to pass to the evaluation (more on this
   later). This is handy for customizing how a rule is evaluated.
-- **Ingest**: This step defines how we get the observed state for an entity. It
+- **ingest**: This step defines how we get the observed state for an entity. It
   could be a simple REST call, a cloning of a git repo, or even a custom action
-  if it’s a complex rule.
-- **Eval**: This is the evaluation stage, which defines the actual rule
+  if it's a complex rule.
+- **eval**: This is the evaluation stage, which defines the actual rule
   evaluation.
-- **Remediation**: How do we fix the issue? This defines the action to be taken
+- **remediation**: How do we fix the issue? This defines the action to be taken
   when we need to fix an issue. This is what happens when you enable automated
   remediations.
-- **Alert**: How do we notify folks about the issue? This may take the form of a
-  GitHub Security Advisory, but we’ll support more alerting systems in the near
+- **alert**: How do we notify folks about the issue? This may take the form of a
+  GitHub Security Advisory, but we'll support more alerting systems in the near
   future.
 
 ## Example: Automatically delete head branches
@@ -87,7 +86,7 @@ Let's write a rule type for checking that GitHub automatically deletes branches
 after a pull request has been merged. While this is not strictly a security
 setting, it is a good practice to keep your branches clean to avoid confusion.
 
-### Ingestion / Evaluation
+### Ingestion / evaluation
 
 The first thing we need to figure out is how to get the observed state of what
 we want to evaluate on. This is the ingestion part.
@@ -116,9 +115,9 @@ def:
 While you could hard-code the user/org and name of the repository you want to
 evaluate, that kind of rule is not handy, especially if you want to enroll
 multiple repositories in Minder. Thus, Minder has a templating system that
-allows you to base multiple parts of the rule type on the entity you’re
+allows you to base multiple parts of the rule type on the entity you're
 evaluating (remember the in_entity part of the rule type?). The fields you may
-use are part of the entity’s protobuf, which can be found in
+use are part of the entity's protobuf, which can be found in
 [our documentation](https://minder-docs.stacklok.dev/ref/proto#repository).
 
 Now, we want to tell Minder what to actually evaluate from that state. This is
@@ -159,7 +158,7 @@ registered for our rule type.
 
 ### Alerting
 
-We'll now describe how you may get a notification if your repository doesn’t
+We'll now describe how you may get a notification if your repository doesn't
 adhere to the rule. This is as simple as adding the following to the manifest:
 
 ```yaml
@@ -171,18 +170,18 @@ def:
       severity: 'low'
 ```
 
-This will create a security advisory in your GitHub repository that you’ll be
+This will create a security advisory in your GitHub repository that you'll be
 able to browse for information. Minder knows already what information to fill-in
 to make the alert relevant.
 
 ### Remediation
 
 Minder has the ability to auto-fix issues that it finds in your supply chain,
-let’s add an automated fix to this rule! Similarly to ingestion, remediations
+let's add an automated fix to this rule! Similarly to ingestion, remediations
 also have several flavors or types. For our case, a simple REST remediation
 suffices.
 
-Let’s see how it would look:
+Let's see how it would look:
 
 ```yaml
 ---
@@ -197,11 +196,11 @@ def:
 ```
 
 This effectively would do a PATCH REST call to the GitHub API if it finds that
-the rule is out of compliance. We’re able to parametrize the call with whatever
-we defined in the profile using golang templates (that’s the
-`{{ .Profile.enabled }}` section you see in the message’s body).
+the rule is out of compliance. We're able to parametrize the call with whatever
+we defined in the profile using golang templates (that's the
+`{{ .Profile.enabled }}` section you see in the message's body).
 
-### Description & Guidance
+### Description & guidance
 
 There are a couple of sections that allow us to give information to rule type
 users about the rule and what to do with it. These are the description and
@@ -233,23 +232,23 @@ guidance: |
 ## Trying the rule out
 
 The whole rule can be seen in the
-[Rules and Profiles GitHub repository](https://github.com/mindersec/minder-rules-and-profiles).
-In order to try it out, we’ll use the minder CLI, which points to the Minder
+[rules and profiles GitHub repository](https://github.com/mindersec/minder-rules-and-profiles).
+In order to try it out, we'll use the minder CLI, which points to the Minder
 server hosted by your friends at Stacklok.
 
 Before continuing, make sure you use our Quickstart to install the CLI and
 enroll your GitHub repos.
 
-Let’s create the rule:
+Let's create the rule:
 
 ```bash
-$ minder ruletype create -f rules/github/automatic_branch_deletion.yaml
+minder ruletype create -f rules/github/automatic_branch_deletion.yaml
 ```
 
 Here, you can already see how the description gets displayed. This same
 description will be handy when browsing rules through `minder ruletype list`.
 
-Let’s now try it out! We can call our rule in a profile as follows:
+Let's now try it out! We can call our rule in a profile as follows:
 
 ```yaml
 ---
@@ -266,16 +265,16 @@ repository:
       enabled: true
 ```
 
-We’ll call this degustation-profile.yaml. Let’s create it!
+We'll call this degustation-profile.yaml. Let's create it!
 
 ```bash
-$  minder profile create -f degustation-profile.yaml
+minder profile create -f degustation-profile.yaml
 ```
 
 Now, let's view the status of the profile:
 
 ```bash
-$ minder profile status list -n degustation-profile -d
+minder profile status list -n degustation-profile -d
 ```
 
 Depending on how your repository is set up, you may see a failure or a success.
@@ -284,7 +283,7 @@ fixes the issue for you.
 
 ## Conclusion
 
-We’ve now created a basic new rule for Minder. There are more ingestion types,
+We've now created a basic new rule for Minder. There are more ingestion types,
 rule evaluation engines, and remediation types that we can use today, and there
 will be more in the future! If you need support writing your own rule types,
 feel free to reach out to the Minder team.

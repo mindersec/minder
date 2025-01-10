@@ -1,16 +1,15 @@
 ---
-title: Install Minder CLI
+title: Installing the Minder CLI
+sidebar_label: Install Minder CLI
 sidebar_position: 10
 ---
-
-# Installing the Minder CLI
 
 The open source Minder CLI can communicate with either
 [the free public instance provided by Stacklok](../../#minder-public-instance),
 or with a [self managed server](../run_minder_server/run_the_server).
 
 The `minder` CLI is built for `amd64` and `arm64` architectures on Windows,
-MacOS, and Linux.
+macOS, and Linux.
 
 You can install `minder` using one of the following methods:
 
@@ -41,13 +40,13 @@ winget install stacklok.minder
 ```
 
 Alternatively, you can
-[download a zipfile containing the `minder` CLI](https://github.com/mindersec/minder/releases)
+[download a zip file containing the `minder` CLI](https://github.com/mindersec/minder/releases)
 and install the binary yourself.
 
 ## Linux
 
-We provide pre-built static binaries for Linux at:
-https://github.com/mindersec/minder/releases.
+We provide pre-built static binaries for Linux at
+[https://github.com/mindersec/minder/releases](https://github.com/mindersec/minder/releases).
 
 ## Building from source
 

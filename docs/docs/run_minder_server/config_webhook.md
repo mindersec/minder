@@ -1,9 +1,7 @@
 ---
-title: Configuring a Webhook
-sidebar_position: 70
+title: Configuring a webhook
+sidebar_position: 60
 ---
-
-# Configuring a Webhook
 
 Minder allows a webhook to be configured on the repository provider to respond
 to provider events. Currently, Minder only supports GitHub. The webhook allows

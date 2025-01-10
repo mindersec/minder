@@ -1,9 +1,8 @@
 ---
-title: Presence of a license file
-sidebar_position: 80
+title: Presence of a license file rule
+sidebar_label: Presence of a license file
+sidebar_position: 70
 ---
-
-# Presence of a License File Rule
 
 The following rule type is available for verifying if a license file is present
 and it is of a certain type.

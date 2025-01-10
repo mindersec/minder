@@ -3,16 +3,14 @@ title: Setting up a profile for automatic remediation
 sidebar_position: 60
 ---
 
-# Setting up a Profile for automatic remediation
-
 ## Prerequisites
 
 - The `minder` CLI application
 - A Minder account with
   [at least `editor` permission](../user_management/user_roles.md)
-- An enrolled Provider (e.g., GitHub) and registered repositories
+- An enrolled provider (e.g., GitHub) and registered repositories
 
-## Create a rule type that you want to use auto-remediation on
+## Create a rule type for auto-remediation
 
 The `remediate` feature is available for all rule types that have the
 `remediate` section defined in their `<alert-type>.yaml` file. When the

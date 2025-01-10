@@ -151,7 +151,7 @@ const config = {
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Minder a Series of LF Projects, LLC
-For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.. Built with Docusaurus.`,
+For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.`,
       },
       prism: {
         theme: lightCodeTheme,

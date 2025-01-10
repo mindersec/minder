@@ -3,16 +3,14 @@ title: Contributing to Minder
 sidebar_position: 80
 ---
 
-# Contributing to Minder
-
 Minder is an open-source project, and we welcome contributions from the
 community. There are several ways to contribute to Minder, including reporting
 bugs, suggesting new features, and submitting pull requests with code changes.
 
-## Reporting Security Vulnerabilities
+## Reporting security vulnerabilities
 
 If you think you have found a security vulnerability in Minder please DO NOT
-disclose it publicly until we’ve had a chance to fix it. Please don’t report
+disclose it publicly until we've had a chance to fix it. Please don't report
 security vulnerabilities using GitHub issues; instead, please follow this
 [process](https://github.com/mindersec/minder/blob/main/SECURITY.md).
 

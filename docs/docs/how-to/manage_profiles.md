@@ -3,10 +3,8 @@ title: Manage profiles and compliance
 sidebar_position: 20
 ---
 
-# Manage profiles
-
 In order to detect security deviations from repositories or other entities,
-Minder is relying on the concepts of **Profiles**. A profile is a definition of
+Minder is relying on the concepts of **profiles**. A profile is a definition of
 a verification we want to do on an entity in a pipeline. A **profile** is an
 instance of a profile type and applies to all repositories in a project, with
 the relevant settings filled in.
@@ -186,7 +184,7 @@ into use by creating a profile.
 
 ## Create a profile
 
-When there is a need to control the specific behaviours for a set of
+When there is a need to control the specific behaviors for a set of
 repositories, a profile can be created, based on the previous profile types.
 
 A profile needs to be associated with a provider, created within a certain

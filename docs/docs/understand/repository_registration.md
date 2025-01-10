@@ -11,7 +11,7 @@ when the repository is out of compliance.
 
 ## Registering repositories
 
-Once you have [enrolled the GitHub Provider](providers.md), you can register
+Once you have [enrolled the GitHub provider](providers.md), you can register
 repositories that you granted Minder access to within GitHub.
 
 To get a list of repositories, and select them using a menu in Minder's text
@@ -38,11 +38,11 @@ to your repositories and re-scan them for compliance with your profiles.
 
 ## Automatically registering new repositories
 
-The GitHub Provider can be configured to automatically register new repositories
+The GitHub provider can be configured to automatically register new repositories
 that are created in your organization. This is done by setting an attribute on
 the provider.
 
-First, identify the _name_ of your GitHub Provider. You can list your enrolled
+First, identify the _name_ of your GitHub provider. You can list your enrolled
 providers by running:
 
 ```bash
@@ -75,10 +75,14 @@ To disable automatic registration, set the
 minder provider update --set-attribute=auto_registration.entities.repository.enabled=false --name=github-app-myorg
 ```
 
-:::note Disabling automatic registration will not remove the repositories that
-have already been registered. :::
+:::note
 
-## List and get Repositories
+Disabling automatic registration will not remove the repositories that have
+already been registered.
+
+:::
+
+## List and get repositories
 
 You can list all repositories registered in Minder:
 

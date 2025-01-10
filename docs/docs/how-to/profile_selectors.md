@@ -1,9 +1,7 @@
 ---
-sidebar_position: 130
 title: Apply a profile to a subset of entities
+sidebar_position: 130
 ---
-
-# Apply a profile to a subset of entities
 
 Profiles allow you to apply a consistent set of rules to a group of entities
 within your project. By default, these profiles are applied universally across
@@ -17,7 +15,7 @@ entities a profile applies to.
 - The `minder` CLI application
 - A Minder account with
   [at least `editor` permission](../user_management/user_roles.md)
-- An enrolled Provider (e.g., GitHub) and registered repositories
+- An enrolled provider (e.g., GitHub) and registered repositories
 
 ## Add a selector to a profile
 
@@ -82,7 +80,7 @@ while the properties are provider-specific and prefixed with the provider name.
 | `name`       | The full name of the repository, e.g. mindersec/minder                                                | string           |
 | `is_fork`    | `true` if the repository is a fork, `nil` if unknown or not applicable to this provider               | bool             |
 | `is_private` | `true` if the repository is private, `nil` if unknown or not applicable to this provider              | bool             |
-| `provider`   | The provider of the repository, for more details see [Provider Selectors](#entity-provider-selectors) | ProviderSelector |
+| `provider`   | The provider of the repository, for more details see [Provider selectors](#entity-provider-selectors) | ProviderSelector |
 
 ## Repository properties set by the GitHub provider
 
@@ -91,9 +89,9 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/license`          | The license of the repository, e.g. MIT, GPL, Apache-2.0, etc.      | string  |
 | `github/primary_language` | The primary language of the repository, e.g. Go, Python, Java, etc. | string  |
 | `github/default_branch`   | The default branch of the repository, e.g. `main`, `master`, etc.   | string  |
-| `github/repo_id`          | The github repo ID                                                  | integer |
-| `github/repo_name`        | The github repo name (e.g. `stacklok`)                              | string  |
-| `github/repo_owner`       | The github repo owner (e.g. `minder`)                               | string  |
+| `github/repo_id`          | The GitHub repo ID                                                  | integer |
+| `github/repo_name`        | The GitHub repo name (e.g. `stacklok`)                              | string  |
+| `github/repo_owner`       | The GitHub repo owner (e.g. `minder`)                               | string  |
 
 ## Artifact selectors
 
@@ -101,7 +99,7 @@ while the properties are provider-specific and prefixed with the provider name.
 | ---------- | --------------------------------------------------------------------------------------------------- | ---------------- |
 | `name`     | The full name of the artifact, e.g. mindersec/minder-server                                         | string           |
 | `type`     | The type of the artifact, e.g. "container"                                                          | string           |
-| `provider` | The provider of the artifact, for more details see [Provider Selectors](#entity-provider-selectors) | ProviderSelector |
+| `provider` | The provider of the artifact, for more details see [Provider selectors](#entity-provider-selectors) | ProviderSelector |
 
 ## Artifact properties set by the GitHub provider
 
@@ -112,9 +110,9 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/type`       | The type of the artifact, e.g. "container"                                   | string |
 | `github/visibility` | The visibility of the artifact, e.g. "public"                                | string |
 | `github/owner`      | The full name of the artifact owner. Can be a repo or an org.                | string |
-| `github/repo`       | The github repo full name (e.g. `mindersec/minder`). Empty for org packages. | string |
-| `github/repo_name`  | The github repo name (e.g. `stacklok`). Empty for org packages.              | string |
-| `github/repo_owner` | The github repo owner (e.g. `minder`). Empty for org packages.               | string |
+| `github/repo`       | The GitHub repo full name (e.g. `mindersec/minder`). Empty for org packages. | string |
+| `github/repo_name`  | The GitHub repo name (e.g. `stacklok`). Empty for org packages.              | string |
+| `github/repo_owner` | The GitHub repo owner (e.g. `minder`). Empty for org packages.               | string |
 
 ## Pull request selectors
 
@@ -129,15 +127,15 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/pull_url`          | The URL of the pull request                        | string |
 | `github/pull_number`       | The number of the pull request                     | string |
 | `github/pull_author_id`    | The numerical ID of the author of the pull request | int    |
-| `github/pull_author_login` | The github login of the author of the pull request | string |
-| `github/repo_name`         | The github repo name (e.g. `stacklok`).            | string |
-| `github/repo_owner`        | The github repo owner (e.g. `minder`).             | string |
+| `github/pull_author_login` | The GitHub login of the author of the pull request | string |
+| `github/repo_name`         | The GitHub repo name (e.g. `stacklok`).            | string |
+| `github/repo_owner`        | The GitHub repo owner (e.g. `minder`).             | string |
 
 ## Entity provider selectors
 
 Each entity can be filtered based on its provider.
 
-| Field   | Description                                        | Type   |
-| ------- | -------------------------------------------------- | ------ |
-| `name`  | The name of the provider, e.g. github-app-stacklok | string |
-| `class` | The class of the provider, e.g. github-app         | string |
+| Field   | Description                                          | Type   |
+| ------- | ---------------------------------------------------- | ------ |
+| `name`  | The name of the provider, e.g. `github-app-stacklok` | string |
+| `class` | The class of the provider, e.g. `github-app`         | string |

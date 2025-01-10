@@ -1,9 +1,7 @@
 ---
-title: Branch protections
-sidebar_position: 10
+title: Branch protection rules
+sidebar_position: 20
 ---
-
-# Branch Protection Rules
 
 The following rule type is available for branch protection.
 

@@ -1,9 +1,7 @@
 ---
-title: Automatic remediations
+title: Automatic remediation
 sidebar_position: 70
 ---
-
-# Automatic Remediations in Minder
 
 Minder can perform _automatic remediation_ for many rules in an attempt to
 resolve problems in your software supply chain, and bring your resources into
@@ -18,7 +16,7 @@ Scanning should be enabled, and you have enabled automatic remediation in your
 profile, then Minder will attempt to turn Secret Scanning on in any repositories
 where it is not enabled.
 
-### Enabling remediations in a profile
+## Enabling remediations in a profile
 
 To activate the remediation feature within a profile, you need to adjust the
 YAML definition. Specifically, you should set the remediate parameter to "on":

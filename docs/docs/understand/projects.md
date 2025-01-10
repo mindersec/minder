@@ -3,8 +3,6 @@ title: Projects
 sidebar_position: 20
 ---
 
-# Projects in Minder
-
 Projects in Minder are a way to group entities together, and to share access
 with other people in your organization. They are a way to organize your entities
 (repositories, artifacts, etc.) based on the policy you want to enforce or the

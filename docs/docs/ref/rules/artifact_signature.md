@@ -1,9 +1,7 @@
 ---
-title: Artifact signature
-sidebar_position: 90
+title: Artifact signature verification
+sidebar_position: 10
 ---
-
-# Artifact signature verification
 
 The following rule type is available for checking that an artifact has a valid
 signature and its provenance conforms to a policy.
@@ -21,7 +19,7 @@ signature is valid.
 
 - `artifact_signature`
 
-## Rule Parameters
+## Rule parameters
 
 - `tags` - the tags that should be checked for signatures. If not specified, all
   tags will be checked. If specified, the artifact must be tagged with all of
@@ -35,7 +33,7 @@ signature is valid.
 
 It is an error to specify both `tags` and `tags_regex`.
 
-## Rule Definition Options
+## Rule definition options
 
 The `artifact_signature` rule has the following options:
 

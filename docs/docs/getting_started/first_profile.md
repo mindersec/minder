@@ -3,8 +3,6 @@ title: Creating your first profile
 sidebar_position: 60
 ---
 
-# Creating your first profile
-
 Once you have registered repositories, you can create a profile that specifies
 the common, consistent configuration that you expect your your repositories to
 comply with.
@@ -27,7 +25,7 @@ In this example, Minder will scan the repositories that you've registered and
 identify any repositories that do not have secret scanning enabled, and those
 that do not have secret push protection enabled.
 
-### Adding rule types
+### Add rule types
 
 In Minder, the rule type configuration is completely flexible, and you can
 author them yourself. Because of this, your Minder organization does not have
@@ -56,7 +54,7 @@ minder ruletype create -f secret_scanning.yaml
 minder ruletype create -f secret_push_protection.yaml
 ```
 
-### Creating a profile
+### Create the profile
 
 Once you have added the rule type definitions to Minder, you can create a
 profile that uses them to scan your repositories.
@@ -89,20 +87,20 @@ repository:
 
 Then upload the profile configuration to Minder:
 
-```
+```bash
 minder profile create -f my_profile.yaml
 ```
 
 Check the status of the profile:
 
-```
+```bash
 minder profile status list --name my_profile
 ```
 
 If all registered repositories have secret scanning enabled, you will see the
 `OVERALL STATUS` is `Success`, otherwise the overall status is `Failure`.
 
-```
+```plain
 +--------------------------------------+------------+----------------+----------------------+
 |                  ID                  |    NAME    | OVERALL STATUS |     LAST UPDATED     |
 +--------------------------------------+------------+----------------+----------------------+
@@ -114,6 +112,6 @@ If secret scanning is not enabled, you will see `Failure` instead of `Success`.
 
 See a detailed view of which repositories satisfy the secret scanning rule:
 
-```
+```bash
 minder profile status list --name my_profile --detailed
 ```

@@ -3,8 +3,6 @@ title: Viewing profile status
 sidebar_position: 70
 ---
 
-# Viewing the status of your profile
-
 When you have created a profile and registered repositories, Minder will
 evaluate your security profile against those repositories. Minder can report on
 the status, and can optionally alert you using GitHub Security Advisories.
@@ -31,8 +29,7 @@ For example, the profile named `my_profile` expects repositories to have secret
 scanning enabled. If any repository did not have secret scanning enabled, then
 the output will look like:
 
-```yaml
----
+```plain
 +--------------------------------------+------------+----------------+----------------------+
 |                  ID                  |    NAME    | OVERALL STATUS |     LAST
 UPDATED     |
@@ -63,7 +60,7 @@ is indicated by the `STATUS` column set to `Success`. However, that repository
 does not have secret push protection enabled, which is indicated by the `STATUS`
 column set to `Failure`.
 
-```yaml
+```plain
 +--------------------------------------+------------------------+------------+---------+-------------+--------------------------------------+
 |               RULE ID                |       RULE NAME        |   ENTITY   | STATUS  | REMEDIATION |             ENTITY INFO              |
 +--------------------------------------+------------------------+------------+---------+-------------+--------------------------------------+

@@ -3,8 +3,6 @@ title: Rule evaluations
 sidebar_position: 50
 ---
 
-# Rule evaluations
-
 When Minder evaluates the [rules in your profiles](profiles.md), it records the
 state of those evaluations. When those rules are not satisfied because the
 criteria that you defined was not met, it will issue [alerts](alerts.md).
@@ -25,13 +23,13 @@ In a rule evaluation, you'll see:
 - Whether [automatic remediation](remediations.md) was performed, and if so, its
   status
 
-### Viewing rule evaluations
+## Viewing rule evaluations
 
 To view the rule evaluations, run
 [`minder history list`](../ref/cli/minder_history_list.md). You can query the
 history to only look at certain entities, profiles, or statuses.
 
-### Evaluation status
+## Evaluation status
 
 The _status_ of a rule evaluation describes the outcome of executing the rule
 against an entity. Possible statuses are:
@@ -51,7 +49,7 @@ against an entity. Possible statuses are:
   [`secret_scanning`](../ref/rules/secret_scanning.md) rule, it can be
   configured to skip private repositories.
 
-### Alert status
+## Alert status
 
 When a rule evaluation occurs, an [alert](alerts.md) may be created. Each rule
 evaluation has an alert status:
@@ -62,7 +60,7 @@ evaluation has an alert status:
 - **Skipped**: the rule evaluation was successful, meaning an alert should not
   be created, or the profile is not configured to generate alerts
 
-### Remediation status
+## Remediation status
 
 - **Success**: the issue was automatically remediated
 - **Failure**: the issue could not be automatically remediated

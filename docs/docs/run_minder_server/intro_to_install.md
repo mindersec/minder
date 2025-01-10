@@ -3,8 +3,6 @@ title: Introduction to running Minder
 sidebar_position: 5
 ---
 
-# Introduction to running Minder
-
 Minder is platform, comprising of a control plane, a CLI, a database and an
 identity provider.
 

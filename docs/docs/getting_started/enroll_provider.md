@@ -1,9 +1,7 @@
 ---
-title: Enrolling the GitHub Provider
+title: Enrolling the GitHub provider
 sidebar_position: 40
 ---
-
-# Enrolling the GitHub Provider
 
 Once you have authenticated to Minder, you'll need to enroll your GitHub
 credentials to allow Minder to manage your GitHub repositories. This allows
@@ -14,13 +12,17 @@ In the future, Minder will support other source control and artifact
 repositories, and you will be able to enroll credentials for those providers in
 the same manner.
 
-:::note If you used the [minder `quickstart` command](quickstart), the GitHub
-Provider was enrolled as part of the quickstart, and you do not need to enroll a
-second time. :::
+:::note
+
+If you used the [minder `quickstart` command](quickstart), the GitHub provider
+was enrolled as part of the quickstart, and you do not need to enroll a second
+time.
+
+:::
 
 ## Prerequisites
 
-Before you can enroll the GitHub Provider, you must
+Before you can enroll the GitHub provider, you must
 [log in to Minder using the CLI](login).
 
 ## Enrolling and granting access
@@ -49,5 +51,5 @@ will not be visible within Minder, and you will not be able to
 You can change your repository selection within GitHub at any time.
 
 Once you authorize Minder within GitHub, the browser window will close, and you
-will have enrolled the GitHub Provider. The `minder` CLI application will report
+will have enrolled the GitHub provider. The `minder` CLI application will report
 the session is complete.

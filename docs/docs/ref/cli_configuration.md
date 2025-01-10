@@ -1,4 +1,7 @@
-# Minder CLI configuration
+---
+title: Minder CLI configuration
+sidebar_position: 10
+---
 
 The Minder CLI application is configured using a YAML file. The default location
 for the configuration file is `$PWD/config.yaml`. You can specify a different

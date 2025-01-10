@@ -1,9 +1,8 @@
 ---
-title: Stacklok Insight
+title: Stacklok Insight integration
+sidebar_label: Stacklok Insight
 sidebar_position: 40
 ---
-
-# Stacklok Insight Integration
 
 Minder integrates directly with [Stacklok Insight](http://insight.stacklok.com)
 to enable policy-driven dependency management based on the risk level of

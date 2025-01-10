@@ -3,14 +3,15 @@ title: Enabling pull request reviews
 sidebar_position: 50
 ---
 
-import Tabs from '@theme/Tabs'; import TabItem from '@theme/TabItem';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
 ## Prerequisites
 
 - The `minder` CLI application
 - A Minder account with
   [at least `editor` permission](../user_management/user_roles.md)
-- An enrolled Provider (e.g., GitHub) and registered repositories
+- An enrolled provider (e.g., GitHub) and registered repositories
 
 ## Create the PR vulnerability check rule
 
@@ -32,19 +33,19 @@ This is a reference rule provider by the Minder team.
 Fetch all the reference rules by cloning the
 [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
-```
+```bash
 git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory you can find all the reference rules and profiles.
 
-```
+```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `pr_vulnerability_check` rule type in Minder:
 
-```
+```bash
 minder ruletype create -f rule-types/github/pr_vulnerability_check.yaml
 ```
 
@@ -134,7 +135,7 @@ pull_request:
 
 Create the profile in Minder:
 
-```
+```bash
 minder profile create -f profile.yaml
 ```
 

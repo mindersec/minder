@@ -20,19 +20,19 @@ get started quickly, create a rule from the set of references.
 Fetch all the reference rules by cloning the
 [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
-```
+```bash
 git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory you can find all the reference rules and profiles.
 
-```
+```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `secret_scanning` rule type in Minder:
 
-```
+```bash
 minder ruletype create -f rule-types/github/secret_scanning.yaml
 ```
 
@@ -204,7 +204,7 @@ def:
 
 Finally, create the `secret_scanning` rule in Minder:
 
-```
+```bash
 minder ruletype create -f secret_scanning.yaml
 ```
 
@@ -291,12 +291,12 @@ repository `minder` and have failed, run the following command:
 minder profile status list --name stacklok-remediate-profile -d -ojson 2>/dev/null | jq  -C '.ruleEvaluationStatus | map(select(.entityInfo.repo_name == "minder" and .status == "failure"))'
 ```
 
-## Defining Rule Names in Profiles
+## Defining rule names in profiles
 
 In Minder profiles, rules are identified by their type and, optionally, a unique
 name.
 
-### Rule Types vs Rule Names
+### Rule types vs. rule names
 
 Rule types are mandatory and refer to the kind of rule being applied. Rule
 names, on the other hand, are optional identifiers that become crucial when
@@ -313,7 +313,7 @@ repository:
 In this example, `secret_scanning` is the rule type and `secret_scanning_github`
 is the rule name.
 
-### When are Rule Names Mandatory?
+### When are rule names mandatory?
 
 If you're using multiple rules of the same type under an entity, each rule must
 have a unique name. This helps distinguish between rules and understand their
@@ -334,7 +334,7 @@ repository:
 Here, we have two rules of the same type `secret_scanning` under the
 `repository` entity. Each rule has a unique name.
 
-### Uniqueness of Rule Names
+### Uniqueness of rule names
 
 No two rules, whether of the same type or different types, can have the same
 name under an entity. This avoids confusion and ensures each rule can be

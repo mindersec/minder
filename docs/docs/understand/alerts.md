@@ -3,8 +3,6 @@ title: Alerting
 sidebar_position: 60
 ---
 
-# Alerts from Minder
-
 Minder issues _alerts_ to notify you when the state of your software supply
 chain does not meet the criteria that you've defined in your
 [profile](profiles.md).
@@ -26,7 +24,7 @@ In the alert, you'll be able to see details such as:
 - Severity of the issue. The severity of the alert is based on what is set in
   the rule type definition.
 
-### Enabling alerts in a profile
+## Enabling alerts in a profile
 
 To activate the alert feature within a profile, you need to adjust the YAML
 definition. Specifically, you should set the alert parameter to "on":

@@ -1,9 +1,7 @@
 ---
-title: Profiles and Rules
+title: Profiles and rules
 sidebar_position: 10
 ---
-
-# Profiles in Minder
 
 A _profile_ defines your security policies that you want to apply to your
 software supply chain. Profiles contain rules that query data in a
@@ -29,8 +27,8 @@ Each engine is designed to be extensible, allowing you to integrate your own
 logic and processes.
 
 Stacklok has published
-[a set of example profiles on GitHub](https://github.com/mindersec/minder-rules-and-profiles/tree/main/profiles/github);
-see [Managing Profiles](../how-to/manage_profiles.md) for more details on how to
+[a set of example profiles on GitHub](https://github.com/mindersec/minder-rules-and-profiles/tree/main/profiles);
+see [Managing profiles](../how-to/manage_profiles.md) for more details on how to
 set up profiles and rule types.
 
 ## Rules
@@ -65,7 +63,7 @@ def:
 ```
 
 You can find a list of available rules in the
-[https://github.com/mindersec/minder-rules-and-profiles](https://github.com/mindersec/minder-rules-and-profiles/tree/main/rule-types/github)
+[https://github.com/mindersec/minder-rules-and-profiles](https://github.com/mindersec/minder-rules-and-profiles/tree/main/rule-types)
 repository.
 
 ## Actions

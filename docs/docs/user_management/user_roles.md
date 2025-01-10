@@ -1,4 +1,7 @@
-# User roles in Minder
+---
+title: User roles
+sidebar_position: 110
+---
 
 When incorporating a user into your project, it's crucial to assign them the
 appropriate role based on their responsibilities and required access levels.

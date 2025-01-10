@@ -3,8 +3,6 @@ title: Get hacking
 sidebar_position: 1
 ---
 
-# Get Hacking
-
 ## Run Minder
 
 Follow the steps in the

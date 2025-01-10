@@ -3,18 +3,18 @@ title: Registering repositories
 sidebar_position: 50
 ---
 
-Once you have enrolled the GitHub Provider, you can register your GitHub
+Once you have enrolled the GitHub provider, you can register your GitHub
 repositories with your Minder organization. This will define the repositories
 that your security profile will apply to.
 
 ## Prerequisites
 
 Before you can register a repository, you must
-[enroll the GitHub Provider](enroll_provider).
+[enroll the GitHub provider](enroll_provider).
 
 ## Register repositories
 
-Once you have enrolled the GitHub Provider, you can register repositories that
+Once you have enrolled the GitHub provider, you can register repositories that
 you granted Minder access to within GitHub.
 
 To get a list of repositories, and select them using a menu in Minder's text

@@ -1,9 +1,8 @@
 ---
-title: GitHub
+title: GitHub provider
+sidebar_label: GitHub
 sidebar_position: 10
 ---
-
-# Providers
 
 A provider connects Minder to your software supply chain. It lets Minder know
 where to look for your repositories, artifacts, and other entities are, in order
@@ -21,7 +20,7 @@ Stay tuned as we add more providers in the future!
 
 To enroll GitHub as a provider, use the following command:
 
-```
+```bash
 minder provider enroll
 ```
 
@@ -56,7 +55,7 @@ The provider configuration file should be a JSON file with the following format:
 
 See the following section for provider configuration reference
 
-### GitHub App Provider Configuration reference
+### GitHub App provider configuration reference
 
 The GitHub App provider has the following configuration options:
 

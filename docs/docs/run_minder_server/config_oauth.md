@@ -1,6 +1,6 @@
 ---
-title: Create a GitHub OAuth Application
-sidebar_position: 120
+title: Create a GitHub OAuth application
+sidebar_position: 70
 ---
 
 ## Prerequisites
@@ -28,4 +28,4 @@ application.
 8. Copy the "Client ID" , "Client Secret" and "Authorization callback URL"
    values into your `./server-config.yaml` file, under the `github` section.
 
-![github oauth2 page](./images/minder-server-oauth.png)
+![GitHub OAuth2 page](./images/minder-server-oauth.png)

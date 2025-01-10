@@ -3,8 +3,6 @@ title: Quickstart with Minder (< 1 min)
 sidebar_position: 30
 ---
 
-# Quickstart with Minder (< 1 min)
-
 Minder provides a straightforward "quickstart" functionality that will create
 your first profile in Minder which ensures that GitHub secret scanning is
 enabled, and lets you select the GitHub repositories that you want this profile
@@ -39,13 +37,13 @@ To get started, run:
 minder quickstart
 ```
 
-#### Enrolling the GitHub provider
+### Enrolling the GitHub provider
 
 This first step configures GitHub and produces an authentication token that
 allows Minder to inspect and manage your repository configuration. You will be
 prompted to grant Minder access.
 
-#### Registering repositories
+### Registering repositories
 
 This step allows you to select the repositories that you want Minder to manage.
 Every repository that you select will be scanned according to the profile that
@@ -53,7 +51,7 @@ quickstart will set up (next). This profile will ensure that
 [secret scanning](https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning)
 is enabled for these repositories.
 
-#### Create the `secret_scanning` rule type
+### Create the `secret_scanning` rule type
 
 This step will upload the `secret_scanning` rule type to the server.
 
@@ -67,7 +65,7 @@ Minder allows you to build custom rule types, or use
 But in either case, these rules must be uploaded to the Minder server before you
 can use them.
 
-#### Create the `quickstart` profile
+### Create the `quickstart` profile
 
 This step will create a profile named `quickstart-profile` that contains the
 `secret_scanning` rule type.

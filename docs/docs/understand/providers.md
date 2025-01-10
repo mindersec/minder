@@ -3,8 +3,6 @@ title: Providers
 sidebar_position: 20
 ---
 
-# Providers in Minder
-
 A _provider_ connects Minder to your software supply chain &mdash; giving Minder
 information about your source code repositories, and their pull requests,
 dependencies, and artifacts. Minder will apply your [profiles](profiles.md) to
@@ -22,7 +20,7 @@ Stay tuned as we add more providers in the future!
 
 To enroll GitHub as a provider, use the following command:
 
-```
+```bash
 minder provider enroll
 ```
 

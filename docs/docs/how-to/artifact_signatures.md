@@ -3,8 +3,6 @@ title: Check artifact provenance
 sidebar_position: 55
 ---
 
-# Check Artifact Provenance
-
 With Minder you can create rules that assert that artifacts built from your
 repositories are built from trusted sources and using trusted workflows based on
 their cryptographically signed provenance.
@@ -17,7 +15,7 @@ This is done by creating a profile which utilizes the `artifact_signature`
 - The `minder` CLI application
 - A Minder account with
   [at least `editor` permission](../user_management/user_roles.md)
-- An enrolled Provider (e.g., GitHub)
+- An enrolled provider (e.g., GitHub)
 - A repository that produces container images. At the moment Minder's artifact
   signature checks are only available for container images and only the
   `ghcr.io` registry is supported.
@@ -27,19 +25,19 @@ This is done by creating a profile which utilizes the `artifact_signature`
 Fetch all the reference rules by cloning the
 [minder-rules-and-profiles repository](https://github.com/mindersec/minder-rules-and-profiles).
 
-```
+```bash
 git clone https://github.com/mindersec/minder-rules-and-profiles.git
 ```
 
 In that directory you can find all the reference rules and profiles.
 
-```
+```bash
 cd minder-rules-and-profiles
 ```
 
 Create the `artifact_signature` rule type in Minder:
 
-```
+```bash
 minder ruletype create -f rule-types/github/artifact_signature.yaml
 ```
 
@@ -78,7 +76,7 @@ artifact:
 
 Create the profile in Minder:
 
-```
+```bash
 minder profile create -f profile-artifact-simple.yaml
 ```
 
@@ -95,7 +93,7 @@ artifact. Create a new file called `profile-artifact-provenance.yaml`.
 
 The profile would pass only if the container was built from the `main` branch of
 the `good-repo-go` repository, using the `build-image-signed-ghat.yml` workflow
-using a hosted github runner.
+using a hosted GitHub runner.
 
 ```yaml
 ---
@@ -122,7 +120,7 @@ artifact:
 
 Create the profile in Minder:
 
-```
+```bash
 minder profile create -f profile-artifact-provenance.yaml
 ```
 

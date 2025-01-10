@@ -1,9 +1,7 @@
 ---
-title: Configure a Provider
-sidebar_position: 20
+title: Configure a provider
+sidebar_position: 50
 ---
-
-# Configuring a Provider
 
 A provider connects Minder to your software supply chain — giving Minder
 information about your source code repositories, and their pull requests,
@@ -13,7 +11,7 @@ The currently supported providers are:
 
 - GitHub
 
-For GitHub, you configure a Provider by creating a GitHub App.
+For GitHub, you configure a provider by creating a GitHub App.
 
 ## Prerequisites
 
@@ -32,7 +30,7 @@ Minder can access.
 
 ![Adding a new GitHub App](./images/new-github-app.png)
 
-### Basic Information
+### Basic information
 
 Complete the following fields:
 
@@ -46,12 +44,12 @@ Complete the following fields:
 Complete the following fields:
 
 - Callback URL: `http://localhost:8080/api/v1/auth/callback/github-app/app`
-- Add an additional Callback URL for Keycloak:
+- Add an additional callback URL for Keycloak:
   `http://localhost:8081/realms/stacklok/broker/github/endpoint`
 - Select the checkbox for "Request user authorization (OAuth) during
   installation"
 
-![Configuring the GitHub Provider](./images/provider-ident-and-auth.png)
+![Configuring the GitHub provider](./images/provider-ident-and-auth.png)
 
 ### Webhook
 
@@ -80,7 +78,7 @@ screenshot.
 
 ![Permissions](./images/provider-permissions.png)
 
-### Installation and Scope
+### Installation and scope
 
 For the option "Where can this GitHub App be installed?":
 
@@ -142,7 +140,7 @@ Update the `client_id` and `client_secret` values with the following:
 
 - Client Secret : The value you saved previously.
 
-### Add Provider configuration
+### Add provider configuration
 
 Then, find the following section in the same `server-config.yaml` file:
 
@@ -177,5 +175,5 @@ Update the `user_id` value with the `id` value returned from that command.
 
 ![User ID](./images/provider-user-id.png)
 
-Now save the file. Your Provider is now created and the Minder server is
+Now save the file. Your provider is now created and the Minder server is
 configured to use it.

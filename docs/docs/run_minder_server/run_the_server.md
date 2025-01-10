@@ -1,9 +1,7 @@
 ---
-title: Installing a Development version
+title: Installing a development version
 sidebar_position: 10
 ---
-
-# Installing a Development version
 
 This guide shows you how to run a Minder server locally. It is intended for
 users who would like to contribute to the Minder project. It is not intended for
@@ -12,7 +10,7 @@ production use. This guide will walk you through how to:
 - Retrieve the latest source code
 - Set up your development environment
 - Run the dependent applications
-- Create a Provider
+- Create a provider
 - Set up authentication
 
 Once you complete this guide, you will have a Minder server built from source
@@ -37,7 +35,7 @@ git clone git@github.com:mindersec/minder.git
 cd minder
 ```
 
-### Set up Development Environment
+### Set up development environment
 
 To set up your development environment, run:
 
@@ -61,13 +59,13 @@ make build
 You may copy these into a location on your path, or run them directly from the
 `bin` directory.
 
-### Configure the Repository Provider
+### Configure the repository provider
 
-You now need to create a Provider to enable Minder to inspect and manage your
-repository configuration. Currently only GitHub is supported as a Provider, so
+You now need to create a provider to enable Minder to inspect and manage your
+repository configuration. Currently only GitHub is supported as a provider, so
 we'll do this using a GitHub App. This app will also provide Keycloak with an
 authentication source. Follow the steps in
-[Configuring a Provider](./config_provider.md) then return here to complete
+[Configuring a provider](./config_provider.md) then return here to complete
 configuring the server. Be sure to save the Client ID and Client secret values,
 because you will need them again below.
 
@@ -116,7 +114,7 @@ make KC_GITHUB_CLIENT_ID=<client_id> KC_GITHUB_CLIENT_SECRET=<client_secret> git
 You should see it create a new instance and new mappers. You may see a resource
 not found message. This is safe to ignore.
 
-### Authenticate minder
+### Authenticate Minder CLI
 
 At this point, you should have the following:
 
@@ -133,38 +131,38 @@ minder auth login
 
 This will open Keycloak login window in your browser.
 
-![Keycloak Login](./images/keycloak-login.png)
+![Keycloak login](./images/keycloak-login.png)
 
 Click GitHub to sign in. This should display a GitHub authorization window
 asking if you'd like to give permission to your Minder server.
 
-![Github Auth](./images/github-auth.png)
+![GitHub auth](./images/github-auth.png)
 
 Click Authorize. The browser window should say Authentication Successful and the
 command line should say you've been successfully registered.
 
-![Successful Minder Auth](./images/successful-install.png)
+![Successful Minder auth](./images/successful-install.png)
 
 Congratulations! You've set up a Minder server! Now you're all ready to
 contribute to Minder.
 
 For more information about the development process, please see the
-[Developer Guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
+[Developer guide](https://minder-docs.stacklok.dev/developer_guide/get-hacking).
 
 For more information on contributing, please see our
-[Contributing Guide](https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md).
+[Contributing guide](https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md).
 
 A list of good first issues can be found in the
 [Minder GitHub project](https://github.com/mindersec/minder/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22good%20first%20issue%22).
 
-## Optional Steps
+## Optional steps
 
-### Setting up a Webhook
+### Setting up a webhook
 
 With the basic setup, GitHub is unable to notify Minder when certain events
 occur in your repositories. MORE DETAILS WOULD BE NICE. Configuring a Webhook
 will allow GitHub to communicate back to the Minder instance. Details on how to
-set this up can be found in the [Configuring a Webhook](./config_webhook.md)
+set this up can be found in the [Configuring a webhook](./config_webhook.md)
 guide.
 
 ### Running Minder server directly
@@ -182,7 +180,7 @@ running.
 docker stop minder_server
 ```
 
-#### Configuration Changes
+#### Configuration changes
 
 Find the authz section in your `server-config.yaml` file located in your root
 Minder directory. Update the `api_url` to point to `http://localhost:8082`.

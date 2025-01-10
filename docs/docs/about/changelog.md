@@ -3,8 +3,6 @@ title: Changelog
 sidebar_position: 30
 ---
 
-# Changelog
-
 - **Profile selectors** - Sep 9, 2024  
    You can now specify which repositories a profile applies to using a Common
   Expression Language (CEL) grammar.
