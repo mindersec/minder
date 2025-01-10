@@ -49,6 +49,11 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
+	redirectUrl, err := url.Parse(req.GetRedirectUrl())
+	if err != nil || !s.alllowedRedirectURL(redirectUrl) {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid redirect URL")
+	}
+
 	var providerName string
 	if req.GetContext().GetProvider() == "" {
 		providerName = defaultProvider
@@ -184,6 +189,40 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		Url:   authorizationURL,
 		State: state,
 	}, nil
+}
+
+func (s *Server) alllowedRedirectURL(redirectUrl *url.URL) bool {
+	if redirectUrl == nil || redirectUrl.String() == "" {
+		return true // Empty URL is allowed
+	}
+	if redirectUrl.Host == "localhost" {
+		return true
+	}
+	hostUrl, err := redirectUrl.Parse("/")
+	if err != nil {
+		return false
+	}
+	hostUrlString := hostUrl.String()
+
+	providerCfg := s.cfg.Provider
+
+	if providerCfg.GitHub != nil && strings.HasPrefix(providerCfg.GitHub.RedirectURI, hostUrlString) {
+		return true
+	}
+	if providerCfg.GitHubApp != nil && strings.HasPrefix(providerCfg.GitHubApp.RedirectURI, hostUrlString) {
+		return true
+	}
+	if providerCfg.GitLab != nil && strings.HasPrefix(providerCfg.GitLab.RedirectURI, hostUrlString) {
+		return true
+	}
+
+	if slices.ContainsFunc(s.cfg.HTTPServer.CORS.AllowOrigins, func(u string) bool {
+		return u == hostUrlString || u+"/" == hostUrlString
+	}) {
+		return true
+	}
+
+	return false
 }
 
 // HandleOAuthCallback handles the OAuth 2.0 authorization code callback from the enrolled
