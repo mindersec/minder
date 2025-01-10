@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package rego provides the rego rule evaluator
@@ -11,19 +11,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLimitedDialer(t *testing.T) {
 	t.Parallel()
 
-	ts := httptest.NewServer(http.HandlerFunc(func (w http.ResponseWriter, r *http.Request) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		t.Log("FETCHED!")
 		_, _ = w.Write([]byte(`{"ok": 1}`))
 	}))
 	t.Cleanup(ts.Close)
@@ -41,16 +41,16 @@ func TestLimitedDialer(t *testing.T) {
 		`
 
 	tests := []struct {
-		name string
-		url string
+		name    string
+		url     string
 		wantErr string
 	}{{
-		name: "test blocked fetch by name",
-		url: ts.URL,
+		name:    "test blocked fetch by name",
+		url:     ts.URL,
 		wantErr: "remote address is not public",
-	},{
+	}, {
 		name: "google.com not blocked",
-		url: "http://www.google.com",
+		url:  "http://www.google.com",
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestLimitedDialer(t *testing.T) {
 			eval, err := rego.NewRegoEvaluator(
 				&minderv1.RuleType_Definition_Eval_Rego{
 					Type: rego.DenyByDefaultEvaluationType.String(),
-					Def: fmt.Sprintf(ruleDef, tt.url),
+					Def:  fmt.Sprintf(ruleDef, tt.url),
 				},
 				nil,
 			)

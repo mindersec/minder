@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package rego provides the rego rule evaluator
@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 )
-
 
 var blockedRequests metric.Int64Counter
 var metricsInit sync.Once
