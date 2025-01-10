@@ -4,4 +4,4 @@ build/
 
 # Auto-generated files
 docs/ref/cli/*.md
-docs/ref/proto.md
+docs/ref/proto.mdx

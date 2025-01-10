@@ -7,7 +7,7 @@
 /database/mock/*.go linguist-generated=true
 /docs/docs/ref/cli/*.md linguist-generated=true
 /docs/docs/ref/schema.md linguist-generated=true
-/docs/docs/ref/proto.md linguist-generated=true
+/docs/docs/ref/proto.mdx linguist-generated=true
 /pkg/api/openapi/** linguist-generated=true
 /pkg/api/protobuf/go/minder/v1/*.pb.go linguist-generated=true
 /pkg/api/protobuf/go/minder/v1/*.gw.go linguist-generated=true

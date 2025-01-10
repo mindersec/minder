@@ -11,13 +11,7 @@ import * as mdx from 'eslint-plugin-mdx';
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   {
-    ignores: [
-      '.docusaurus/',
-      'build/',
-      'import/',
-      'docs/minder/',
-      'node_modules/',
-    ],
+    ignores: ['.docusaurus/', 'build/', 'node_modules/', 'docs/ref/proto.mdx'],
   },
   { files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'] },
   { languageOptions: { globals: globals.node } },
