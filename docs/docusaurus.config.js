@@ -10,7 +10,7 @@
  * Docusaurus scaffolding. Remove this one it's converted to TypeScript.
  */
 
-const lightCodeTheme = require('prism-react-renderer/themes/github')
+const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 
 const redocusaurus = [
@@ -26,8 +26,8 @@ const redocusaurus = [
       primaryColor: '#000000',
       primaryColorDark: '#b0e0e6',
     },
-  }
-]
+  },
+];
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -97,13 +97,12 @@ const config = {
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
-    (
-      {
-        colorMode: {
-          defaultMode: 'dark',
-          disableSwitch: false,
-          respectPrefersColorScheme: false,
-        },        
+    ({
+      colorMode: {
+        defaultMode: 'dark',
+        disableSwitch: false,
+        respectPrefersColorScheme: false,
+      },
       // Replace with your project's social card
       image: 'img/Minder_darkMode.png',
       navbar: {
@@ -117,7 +116,7 @@ const config = {
           //   type: 'html',
           //   position: 'right',
           //   value: 'Minder version:',
-          // },   
+          // },
           // {
           //   type: 'docsVersionDropdown',
           //   position: 'right',

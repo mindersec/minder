@@ -5,19 +5,22 @@ sidebar_position: 30
 
 # OSS Tooling Integrations
 
-Minder's policy engine is flexible enough to integrate with a variety of open source tools.
-This allows you to leverage the tools you already use to make better decisions about your supply chain.
+Minder's policy engine is flexible enough to integrate with a variety of open
+source tools. This allows you to leverage the tools you already use to make
+better decisions about your supply chain.
 
-Most of the integrations supported are done via the policy engine. This is done either as a direct
-integration or by using a more dynamic language such as Rego as part of the rule type.
+Most of the integrations supported are done via the policy engine. This is done
+either as a direct integration or by using a more dynamic language such as Rego
+as part of the rule type.
 
 ## Trivy
 
-Trivy is a simple and comprehensive vulnerability scanner for repositories and container images.
-It can be used to scan your dependencies for known vulnerabilities. Minder integrates with Trivy
-by providing a dedicated rule type that ensures that Trivy is configured to run on your repositories.
+Trivy is a simple and comprehensive vulnerability scanner for repositories and
+container images. It can be used to scan your dependencies for known
+vulnerabilities. Minder integrates with Trivy by providing a dedicated rule type
+that ensures that Trivy is configured to run on your repositories.
 
-```bash
+````bash
 $ minder ruletype list
 ...
 +                                      +--------------------------------------+------------------------------------------------------------------------+--------------------------------+
@@ -66,15 +69,19 @@ $ minder ruletype get -i <ruletype_id>
 |             | https://github.com/marketplace/actions/aqua-security-trivy                            |
 |             |                                                                                       |
 +-------------+---------------------------------------------------------------------------------------+
-```
+````
 
-If the rule type is enabled and automatic remediation is configured, Minder will automatically create a pull request to enable Trivy scanning on your repository.
+If the rule type is enabled and automatic remediation is configured, Minder will
+automatically create a pull request to enable Trivy scanning on your repository.
 
 ## Dependabot
 
-Dependabot is a tool that helps you keep your dependencies up to date. It automatically creates pull requests to update your dependencies when new versions are available.
+Dependabot is a tool that helps you keep your dependencies up to date. It
+automatically creates pull requests to update your dependencies when new
+versions are available.
 
-Minder integrates with Dependabot by providing a dedicated rule type that ensures that Dependabot is configured to run on your repositories.
+Minder integrates with Dependabot by providing a dedicated rule type that
+ensures that Dependabot is configured to run on your repositories.
 
 ```bash
 $ minder ruletype list
@@ -115,18 +122,20 @@ $ minder ruletype get -i <ruletype_id>
 +-------------+----------------------------------------------------------------------------------------------------------------------------------+
 ```
 
-If the rule type is enabled and automatic remediation is configured, Minder will automatically create a pull request to enable Dependabot on your repository.
+If the rule type is enabled and automatic remediation is configured, Minder will
+automatically create a pull request to enable Dependabot on your repository.
 
-Note that you need to configure the ecosystem and package managers that dependabot should monitor. This is done by setting up
-the relevant parameters in the rule definition in the profile. For example:
+Note that you need to configure the ecosystem and package managers that
+dependabot should monitor. This is done by setting up the relevant parameters in
+the rule definition in the profile. For example:
 
 ```yaml
 ---
 version: v1
 type: profile
 name: profile-with-dependabot
-alert: "on"
-remediate: "on"
+alert: 'on'
+remediate: 'on'
 repository:
   - type: dependabot_configured
     name: go_dependabot
@@ -140,17 +149,22 @@ repository:
       apply_if_file: package.json
 ```
 
-In this example, we have two rules that configure Dependabot for Go and NPM packages. The `package_ecosystem` parameter specifies the package manager that
-Dependabot should monitor, and the `apply_if_file` parameter specifies the file that should be present in the repository for the rule to apply.
+In this example, we have two rules that configure Dependabot for Go and NPM
+packages. The `package_ecosystem` parameter specifies the package manager that
+Dependabot should monitor, and the `apply_if_file` parameter specifies the file
+that should be present in the repository for the rule to apply.
 
-The package ecosystem is anything that dependabot currently supports. For more information, see the
+The package ecosystem is anything that dependabot currently supports. For more
+information, see the
 [Dependabot documentation](https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file).
 
 ## OSV (Open Source Vulnerabilities)
 
-OSV is a vulnerability database and triage infrastructure for open source projects. It provides a curated list of vulnerabilities for open source projects
-and is used by Minder to check for known vulnerabilities in your dependencies. Minder integrates with OSV by providing a dedicated rule type as well
-as a dedicated integration point in the policy engine.
+OSV is a vulnerability database and triage infrastructure for open source
+projects. It provides a curated list of vulnerabilities for open source projects
+and is used by Minder to check for known vulnerabilities in your dependencies.
+Minder integrates with OSV by providing a dedicated rule type as well as a
+dedicated integration point in the policy engine.
 
 ```bash
 $ minder ruletype list
@@ -189,18 +203,25 @@ $ minder ruletype get -i <ruletype_id>
 +-------------+--------------------------------------------------------------------------------------------+
 ```
 
-As the description and guidance say, this rule type applies to pull requests and checks if any new dependencies added in the pull request have known vulnerabilities.
+As the description and guidance say, this rule type applies to pull requests and
+checks if any new dependencies added in the pull request have known
+vulnerabilities.
 
-The rule type is evaluated using the `vulncheck` evaluation type, which is a custom evaluation type that checks the dependencies against the OSV database.
-This is a direct minder integration, which means that there is custom code that fetches the vulnerabilities from the OSV database and
-checks them against the dependencies in the pull request. It will also comment and propose changes to the pull request if any vulnerabilities are found.
+The rule type is evaluated using the `vulncheck` evaluation type, which is a
+custom evaluation type that checks the dependencies against the OSV database.
+This is a direct minder integration, which means that there is custom code that
+fetches the vulnerabilities from the OSV database and checks them against the
+dependencies in the pull request. It will also comment and propose changes to
+the pull request if any vulnerabilities are found.
 
 ## Conclusion
 
-These were some of the open source tooling integrations that Minder supports. The policy engine is flexible enough to integrate with a variety of tools.
-For more custom integrations, contact the Minder team at Stacklok. If you feel adventurous, you can also write your own rule types and integrations.
+These were some of the open source tooling integrations that Minder supports.
+The policy engine is flexible enough to integrate with a variety of tools. For
+more custom integrations, contact the Minder team at Stacklok. If you feel
+adventurous, you can also write your own rule types and integrations.
 
 Here are some resources to get you started:
 
-* https://stacklok.com/blog/how-to-create-new-rule-types-in-minder-to-apply-custom-github-repo-security-settings
-* https://stacklok.com/blog/writing-minder-rule-types-with-open-policy-agent-and-rego
+- https://stacklok.com/blog/how-to-create-new-rule-types-in-minder-to-apply-custom-github-repo-security-settings
+- https://stacklok.com/blog/writing-minder-rule-types-with-open-policy-agent-and-rego
