@@ -196,6 +196,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 	githubAppProviderClass := "github-app"
 	nonGithubProviderName := "non-github"
 	projectIdStr := projectID.String()
+	attackerUrl := "https://www.attacker.com/collect/here"
 
 	testCases := []struct {
 		name               string
@@ -231,6 +232,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
+					return
 				}
 
 				if res.Url == "" {
@@ -265,6 +267,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
+					return
 				}
 
 				if res.Url == "" {
@@ -291,6 +294,24 @@ func TestGetAuthorizationURL(t *testing.T) {
 				assert.Error(t, err, "Expected error in GetAuthorizationURL")
 			},
 
+			expectedStatusCode: codes.InvalidArgument,
+		},
+		{
+			name: "Bad redirect URL",
+			req: &pb.GetAuthorizationURLRequest{
+				Context: &pb.Context{
+					Provider: &githubProviderClass,
+					Project:  &projectIdStr,
+				},
+				Cli:         true,
+				RedirectUrl: &attackerUrl,
+			},
+			buildStubs: func(_ *mockdb.MockStore) {},
+			checkResponse: func(t *testing.T, _ *pb.GetAuthorizationURLResponse, err error) {
+				t.Helper()
+
+				assert.Error(t, err, "Expected error in GetAuthorizationURL")
+			},
 			expectedStatusCode: codes.InvalidArgument,
 		},
 		{
@@ -325,6 +346,7 @@ func TestGetAuthorizationURL(t *testing.T) {
 
 				if err != nil {
 					t.Errorf("Unexpected error: %v", err)
+					return
 				}
 
 				if res.Url == "" {
