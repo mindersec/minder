@@ -153,7 +153,7 @@ func (e *Evaluator) Eval(
 	}
 
 	enrichInputWithEntityProps(input, entity)
-	rs, err := pq.Eval(ctx, rego.EvalInput(input))
+	rs, err := pq.Eval(ctx, rego.EvalInput(input), rego.EvalHTTPRoundTripper(LimitedDialer))
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
