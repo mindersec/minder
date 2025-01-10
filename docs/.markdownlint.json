@@ -1,0 +1,37 @@
+{
+  "code-block-style": {
+    "style": "fenced"
+  },
+  "code-fence-style": {
+    "style": "backtick"
+  },
+  "emphasis-style": {
+    "style": "underscore"
+  },
+  "heading-style": {
+    "style": "atx"
+  },
+  "hr-style": {
+    "style": "---"
+  },
+  "line-length": {
+    "code_blocks": false,
+    "line_length": 80,
+    "tables": false
+  },
+  "no-bare-urls": false,
+  "no-duplicate-heading": false,
+  "proper-names": {
+    "code_blocks": false,
+    "names": ["GitHub", "GitLab", "Bitbucket"]
+  },
+  "strong-style": {
+    "style": "asterisk"
+  },
+  "table-pipe-style": {
+    "style": "leading_and_trailing"
+  },
+  "ul-style": {
+    "style": "dash"
+  }
+}
