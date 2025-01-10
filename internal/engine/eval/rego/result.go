@@ -53,6 +53,7 @@ func (c ConstraintsViolationsFormat) String() string {
 }
 
 type resultEvaluator interface {
+	getQueryString() string
 	getQuery() func(*rego.Rego)
 	parseResult(rego.ResultSet, protoreflect.ProtoMessage) (*interfaces.EvaluationResult, error)
 }
@@ -60,8 +61,12 @@ type resultEvaluator interface {
 type denyByDefaultEvaluator struct {
 }
 
-func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
-	return rego.Query(RegoQueryPrefix)
+func (*denyByDefaultEvaluator) getQueryString() string {
+	return RegoQueryPrefix
+}
+
+func (d *denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
+	return rego.Query(d.getQueryString())
 }
 
 func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage,
@@ -168,8 +173,12 @@ type constraintsEvaluator struct {
 	format ConstraintsViolationsFormat
 }
 
-func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
-	return rego.Query(fmt.Sprintf("%s.violations[details]", RegoQueryPrefix))
+func (*constraintsEvaluator) getQueryString() string {
+	return fmt.Sprintf("%s.violations[details]", RegoQueryPrefix)
+}
+
+func (c *constraintsEvaluator) getQuery() func(r *rego.Rego) {
+	return rego.Query(c.getQueryString())
 }
 
 func (c *constraintsEvaluator) parseResult(rs rego.ResultSet, _ protoreflect.ProtoMessage) (*interfaces.EvaluationResult, error) {
