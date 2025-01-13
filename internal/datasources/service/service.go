@@ -414,12 +414,22 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 			return nil, fmt.Errorf("failed to build data source from protobuf: %w", err)
 		}
 
-		if err := reg.RegisterDataSource(inst.GetName(), impl); err != nil {
+		if err := reg.RegisterDataSource(getDataSourceReferenceAlias(ref), impl); err != nil {
 			return nil, fmt.Errorf("failed to register data source: %w", err)
 		}
 	}
 
 	return reg, nil
+}
+
+// getDataSourceReferenceKey gets the alias that the data source will be referred to by
+// in the registry.
+func getDataSourceReferenceAlias(dsr *minderv1.DataSourceReference) string {
+	key := dsr.GetAlias()
+	if key == "" {
+		return dsr.GetName()
+	}
+	return key
 }
 
 // addDataSourceFunctions adds functions to a data source based on its driver type.

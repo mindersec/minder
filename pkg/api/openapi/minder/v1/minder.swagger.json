@@ -4101,7 +4101,11 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "refer to a data source by name."
+          "description": "name is the name of the data source within the project hierarchy."
+        },
+        "alias": {
+          "type": "string",
+          "description": "alias is the alias used to refer to the data source in the rule\ndefinition.\nIf left unset, it will default to the name of the data source."
         }
       },
       "description": "DataSourceReference is a reference to a data source.\nNote that for a resource to refer to a data source the data source must\nbe available in the same project hierarchy."

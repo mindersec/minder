@@ -72,6 +72,81 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 	}
 }
 
+func TestRuleType_Definition_Eval_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		eval    *RuleType_Definition_Eval
+		wantErr bool
+	}{
+		{
+			name: "valid eval definition",
+			eval: &RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &RuleType_Definition_Eval_Rego{
+					Def: "package example.policy\n\nallow { true }",
+				},
+				DataSources: []*DataSourceReference{
+					{
+						Name:  "osv",
+						Alias: "osv_data",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "eval definition with duplicate alias",
+			eval: &RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &RuleType_Definition_Eval_Rego{
+					Def: "package example.policy\n\nallow { true }",
+				},
+				DataSources: []*DataSourceReference{
+					{
+						Name:  "osv1",
+						Alias: "osv_data",
+					},
+					{
+						Name:  "osv2",
+						Alias: "osv_data",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "eval definition with same name and alias",
+			eval: &RuleType_Definition_Eval{
+				Rego: &RuleType_Definition_Eval_Rego{
+					Def: "package example.policy\n\nallow { true }",
+				},
+				DataSources: []*DataSourceReference{
+					{
+						Name: "osv_data",
+					},
+					{
+						Name:  "osv",
+						Alias: "osv_data",
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.eval.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestRuleType_Definition_Eval_JQComparison_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -251,6 +326,55 @@ func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
 			t.Parallel()
 
 			err := tt.rego.Validate()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestDataSourceReference_Validate(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name    string
+		ds      *DataSourceReference
+		wantErr bool
+	}{
+		{
+			name: "valid data source reference with alias",
+			ds: &DataSourceReference{
+				Name:  "namespace/name",
+				Alias: "my_data_source",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid data source reference without alias",
+			ds: &DataSourceReference{
+				Name: "osv",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "no name",
+			ds:      &DataSourceReference{},
+			wantErr: true,
+		},
+		{
+			name: "no alias and name with invalid characters",
+			ds: &DataSourceReference{
+				Name: "invalid/name",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.ds.Validate()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

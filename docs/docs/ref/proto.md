@@ -614,7 +614,8 @@ be available in the same project hierarchy.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  | refer to a data source by name. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source within the project hierarchy. |
+| alias | <TypeLink type="string">string</TypeLink> |  | alias is the alias used to refer to the data source in the rule definition. If left unset, it will default to the name of the data source. |
 
 
 
