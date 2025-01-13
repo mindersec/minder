@@ -195,7 +195,7 @@ func (s *Server) alllowedRedirectURL(redirectUrl *url.URL) bool {
 	if redirectUrl == nil || redirectUrl.String() == "" {
 		return true // Empty URL is allowed
 	}
-	if redirectUrl.Host == "localhost" {
+	if redirectUrl.Hostname() == "localhost" {
 		return true
 	}
 	hostUrl, err := redirectUrl.Parse("/")
