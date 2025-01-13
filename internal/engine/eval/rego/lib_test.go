@@ -1122,3 +1122,78 @@ allow {
 		})
 	}
 }
+
+func TestParseToml(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		toml    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple key-value",
+			toml: "foo = \"bar\"",
+			want: `{"foo": "bar"}`,
+		},
+		{
+			name: "nested structure",
+			toml: `
+[foo.bar]
+baz = "qux"`,
+			want: `{"foo": {"bar": {"baz": "qux"}}}`,
+		},
+		{
+			name: "array values",
+			toml: `
+items = ["foo", "bar", "baz"]`,
+			want: `{"items": ["foo", "bar", "baz"]}`,
+		},
+		{
+			name: "parse array of tables",
+			toml: `
+[[items]]
+name = "foo"
+[[items]]
+name = "bar"`,
+			want: `{"items": [{"name": "foo"}, {"name": "bar"}]}`,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+	parsed := parse_toml(%q)
+	print(parsed)
+	expected := json.unmarshal(%q)
+	parsed == expected
+}`, s.toml, s.want)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+				nil,
+			)
+
+			require.NoError(t, err, "could not create evaluator")
+
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+
+			if s.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
