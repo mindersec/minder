@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package datasource provides the root command for the datasource subcommands
