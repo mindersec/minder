@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/itchyny/gojq"
 	"github.com/open-policy-agent/opa/v1/ast"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/mindersec/minder/internal/util"
 )
@@ -29,6 +30,8 @@ var (
 	ErrBadDNSStyleName = errors.New(
 		"name may only contain letters, numbers, hyphens and underscores, and is limited to a maximum of 63 characters",
 	)
+
+	dataSourceAliasRegex = regexp.MustCompile(`^[a-z][-_[:word:]]*$`)
 )
 
 var (
@@ -211,6 +214,22 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 			}
 		}
 	}
+
+	if ev.GetDataSources() != nil {
+		aliases := sets.New[string]()
+
+		for i, ds := range ev.GetDataSources() {
+			if err := ds.Validate(); err != nil {
+				return fmt.Errorf("%w: data source reference %d is invalid: %s", ErrInvalidRuleTypeDefinition, i, err)
+			}
+
+			alias := ds.getAliasWithDefault()
+			if aliases.Has(alias) {
+				return fmt.Errorf("cannot have multiple data sources with the same alias: %s", alias)
+			}
+			aliases.Insert(alias)
+		}
+	}
 	return nil
 }
 
@@ -278,6 +297,32 @@ func (op *RuleType_Definition_Eval_JQComparison_Operator) Validate() error {
 	}
 
 	return nil
+}
+
+// Validate validates a data source reference
+func (dsr *DataSourceReference) Validate() interface{} {
+	if dsr == nil {
+		return fmt.Errorf("%w: data source reference is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if dsr.GetName() == "" {
+		return fmt.Errorf("%w: data source reference name cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	alias := dsr.getAliasWithDefault()
+	if !dataSourceAliasRegex.MatchString(alias) {
+		return fmt.Errorf("%w: data source reference alias %q is invalid", ErrInvalidRuleTypeDefinition, alias)
+	}
+
+	return nil
+}
+
+func (dsr *DataSourceReference) getAliasWithDefault() string {
+	alias := dsr.GetAlias()
+	if alias == "" {
+		return dsr.GetName()
+	}
+	return alias
 }
 
 // Validate validates a rule type definition ingest
@@ -541,6 +586,9 @@ func (ds *DataSource) Validate() error {
 
 	if ds.GetName() == "" {
 		return fmt.Errorf("%w: data source name cannot be empty", ErrValidationFailed)
+	}
+	if err := validateNamespacedName(ds.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrValidationFailed, err)
 	}
 
 	if ds.GetDriver() == nil {
