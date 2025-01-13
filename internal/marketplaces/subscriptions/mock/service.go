@@ -58,7 +58,7 @@ func (mr *MockSubscriptionServiceMockRecorder) CreateProfile(ctx, projectID, bun
 }
 
 // Subscribe mocks base method.
-func (m *MockSubscriptionService) Subscribe(ctx context.Context, projectID uuid.UUID, bundle reader.BundleReader, qtx db.Querier) error {
+func (m *MockSubscriptionService) Subscribe(ctx context.Context, projectID uuid.UUID, bundle reader.BundleReader, qtx db.ExtendQuerier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Subscribe", ctx, projectID, bundle, qtx)
 	ret0, _ := ret[0].(error)

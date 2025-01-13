@@ -27,6 +27,10 @@ type BundleReader interface {
 	// and parse the rule type, and then applies the specified anonymous
 	// function to the rule type
 	ForEachRuleType(func(*v1.RuleType) error) error
+	// ForEachDataSource walks each data source in the bundle, attempts to read
+	// and parse the data source, and then applies the specified anonymous
+	// function to the rule type
+	ForEachDataSource(func(source *v1.DataSource) error) error
 }
 
 type profileSetType = map[string]struct{}
@@ -91,7 +95,10 @@ func (b *bundleReader) ForEachRuleType(fn func(*v1.RuleType) error) error {
 	var file fs.File
 	// used for error handling if we return during the loop
 	defer func() {
-		_ = file.Close()
+		// Add precaution to close file only if it was assigned
+		if file != nil {
+			_ = file.Close()
+		}
 	}()
 
 	for _, ruleType := range b.original.Files.RuleTypes {
@@ -113,6 +120,44 @@ func (b *bundleReader) ForEachRuleType(fn func(*v1.RuleType) error) error {
 
 		// apply operation from caller
 		err = fn(parsedRuleType)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *bundleReader) ForEachDataSource(fn func(source *v1.DataSource) error) error {
+	var err error
+	var file fs.File
+	// used for error handling if we return during the loop
+	defer func() {
+		// Add precaution to close file only if it was assigned
+		if file != nil {
+			_ = file.Close()
+		}
+	}()
+
+	for _, dataSource := range b.original.Files.DataSources {
+		// read from bundle
+		path := fmt.Sprintf("%s/%s", mindpak.PathDataSources, dataSource.Name)
+		file, err = b.original.Source.Open(path)
+		if err != nil {
+			return fmt.Errorf("error reading data source from bundle: %w", err)
+		}
+
+		// parse data source from YAML
+		parsedDataSource := &v1.DataSource{}
+		if err := v1.ParseResourceProto(file, parsedDataSource); err != nil {
+			return fmt.Errorf("error parsing data source yaml: %w", err)
+		}
+		if err = file.Close(); err != nil {
+			return fmt.Errorf("error closing file: %w", err)
+		}
+
+		// apply operation from caller
+		err = fn(parsedDataSource)
 		if err != nil {
 			return err
 		}

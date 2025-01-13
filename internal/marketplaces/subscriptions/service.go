@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/mindpak"
@@ -35,7 +36,7 @@ type SubscriptionService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		bundle reader.BundleReader,
-		qtx db.Querier,
+		qtx db.ExtendQuerier,
 	) error
 	// CreateProfile creates the specified profile from the bundle in the project.
 	CreateProfile(
@@ -48,18 +49,21 @@ type SubscriptionService interface {
 }
 
 type subscriptionService struct {
-	profiles profsvc.ProfileService
-	rules    ruletypes.RuleTypeService
+	profiles    profsvc.ProfileService
+	rules       ruletypes.RuleTypeService
+	dataSources datasourceservice.DataSourcesService
 }
 
 // NewSubscriptionService creates an instance of the SubscriptionService interface
 func NewSubscriptionService(
 	profiles profsvc.ProfileService,
 	rules ruletypes.RuleTypeService,
+	dataSources datasourceservice.DataSourcesService,
 ) SubscriptionService {
 	return &subscriptionService{
-		profiles: profiles,
-		rules:    rules,
+		profiles:    profiles,
+		rules:       rules,
+		dataSources: dataSources,
 	}
 }
 
@@ -67,7 +71,7 @@ func (s *subscriptionService) Subscribe(
 	ctx context.Context,
 	projectID uuid.UUID,
 	bundle reader.BundleReader,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 ) error {
 	metadata := bundle.GetMetadata()
 	_, err := qtx.GetSubscriptionByProjectBundle(ctx, db.GetSubscriptionByProjectBundleParams{
@@ -100,11 +104,19 @@ func (s *subscriptionService) Subscribe(
 		return fmt.Errorf("error while creating subscription: %w", err)
 	}
 
+	// populate all data sources from this bundle into the project
+	// this should happen before populating the rules, as rules may depend on data sources
+	err = s.upsertBundleDataSources(ctx, qtx, projectID, bundle, subscription.ID)
+	if err != nil {
+		return fmt.Errorf("error while creating data sources in project: %w", err)
+	}
+
 	// populate all rule types from this bundle into the project
 	err = s.upsertBundleRules(ctx, qtx, projectID, bundle, subscription.ID)
 	if err != nil {
 		return fmt.Errorf("error while creating rules in project: %w", err)
 	}
+
 	return nil
 }
 
@@ -192,5 +204,17 @@ func (s *subscriptionService) upsertBundleRules(
 ) error {
 	return bundle.ForEachRuleType(func(ruleType *minderv1.RuleType) error {
 		return s.rules.UpsertRuleType(ctx, projectID, subscriptionID, ruleType, qtx)
+	})
+}
+
+func (s *subscriptionService) upsertBundleDataSources(
+	ctx context.Context,
+	qtx db.ExtendQuerier,
+	projectID uuid.UUID,
+	bundle reader.BundleReader,
+	subscriptionID uuid.UUID,
+) error {
+	return bundle.ForEachDataSource(func(dataSource *minderv1.DataSource) error {
+		return s.dataSources.Upsert(ctx, projectID, subscriptionID, dataSource, datasourceservice.OptionsBuilder().WithTransaction(qtx))
 	})
 }

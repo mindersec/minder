@@ -75,3 +75,9 @@ func WithFailedGetByName() func(DataSourcesSvcMock) {
 			Return(nil, errDefault)
 	}
 }
+
+func WithSuccessfulUpsertDataSource(mock DataSourcesSvcMock) {
+	mock.EXPECT().
+		Upsert(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
+}

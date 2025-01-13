@@ -114,7 +114,7 @@ func (s *Server) CreateUser(ctx context.Context,
 	}, nil
 }
 
-func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.Querier) []*db.Project {
+func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) []*db.Project {
 	ghId, ok := jwt.GetUserClaimFromContext[string](ctx, "gh_id")
 	if !ok || ghId == "" {
 		return nil
@@ -484,7 +484,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 	return nil
 }
 
-func ensureUser(ctx context.Context, s *Server, store db.Querier) (db.User, error) {
+func ensureUser(ctx context.Context, s *Server, store db.ExtendQuerier) (db.User, error) {
 	sub := jwt.GetUserSubjectFromContext(ctx)
 	if sub == "" {
 		return db.User{}, status.Error(codes.Internal, "failed to get user subject")

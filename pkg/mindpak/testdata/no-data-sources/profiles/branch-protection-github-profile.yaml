@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+# A profile to verify branch protection settings
+version: v1
+type: profile
+name: branch-protection-github-profile
+context:
+  provider: github
+alert: "off"
+remediate: "off"
+repository:
+  - type: branch_protection_enabled
+    params:
+      branch: ""
+    def: {}
+  - type: branch_protection_allow_deletions
+    params:
+      branch: ""
+    def:
+      allow_deletions: false
+  - type: branch_protection_allow_force_pushes
+    params:
+      branch: ""
+    def:
+      allow_force_pushes: false
+  - type: branch_protection_enforce_admins
+    params:
+      branch: ""
+    def:
+      enforce_admins: true
+  - type: branch_protection_lock_branch
+    params:
+      branch: ""
+    def:
+      lock_branch: false
+  - type: branch_protection_require_conversation_resolution
+    params:
+      branch: ""
+    def:
+      required_conversation_resolution: false
+  - type: branch_protection_require_pull_request_approving_review_count
+    params:
+      branch: ""
+    def:
+      required_approving_review_count: 1
+  - type: branch_protection_require_pull_request_code_owners_review
+    params:
+      branch: ""
+    def:
+      require_code_owner_reviews: false
+  - type: branch_protection_require_pull_request_dismiss_stale_reviews
+    params:
+      branch: ""
+    def:
+      dismiss_stale_reviews: true
+  - type: branch_protection_require_pull_request_last_push_approval
+    params:
+      branch: ""
+    def:
+      require_last_push_approval: true
+  - type: branch_protection_require_pull_requests
+    params:
+      branch: ""
+    def:
+      required_pull_request_reviews: true
+  - type: branch_protection_require_signatures
+    params:
+      branch: ""
+    def:
+      required_signatures: false

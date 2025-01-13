@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
+	dsf "github.com/mindersec/minder/internal/datasources/service/mock/fixtures"
 	"github.com/mindersec/minder/internal/db"
 	dbf "github.com/mindersec/minder/internal/db/fixtures"
 	brf "github.com/mindersec/minder/internal/marketplaces/bundles/mock/fixtures"
@@ -27,11 +29,12 @@ import (
 func TestSubscriptionService_Subscribe(t *testing.T) {
 	t.Parallel()
 	scenarios := []struct {
-		Name          string
-		DBSetup       dbf.DBMockBuilder
-		BundleSetup   brf.BundleMockBuilder
-		RuleTypeSetup rsf.RuleTypeSvcMockBuilder
-		ExpectedError string
+		Name            string
+		DBSetup         dbf.DBMockBuilder
+		BundleSetup     brf.BundleMockBuilder
+		RuleTypeSetup   rsf.RuleTypeSvcMockBuilder
+		DataSourceSetup dsf.DataSourcesSvcMockBuilder
+		ExpectedError   string
 	}{
 		{
 			Name:        "Subscribe is a no-op when the subscription already exists",
@@ -57,23 +60,32 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			ExpectedError: "error while creating subscription",
 		},
 		{
-			Name:          "Subscribe returns error if rules cannot be read from bundle",
-			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithFailedForEachRuleType),
-			ExpectedError: "error while creating rules in project",
+			Name:            "Subscribe returns error if rules cannot be read from bundle",
+			DBSetup:         dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
+			BundleSetup:     brf.NewBundleReaderMock(brf.WithMetadata, brf.WithFailedForEachRuleType, brf.WithSuccessfulForEachDataSource),
+			DataSourceSetup: dsf.NewDataSourcesServiceMock(dsf.WithSuccessfulUpsertDataSource),
+			ExpectedError:   "error while creating rules in project",
 		},
 		{
-			Name:          "Subscribe returns error if rules cannot be upserted into database",
-			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
-			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithFailedUpsertRuleType),
-			ExpectedError: "error while creating rules in project",
+			Name:            "Subscribe returns error if rules cannot be upserted into database",
+			DBSetup:         dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
+			BundleSetup:     brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType, brf.WithSuccessfulForEachDataSource),
+			DataSourceSetup: dsf.NewDataSourcesServiceMock(dsf.WithSuccessfulUpsertDataSource),
+			RuleTypeSetup:   rsf.NewRuleTypeServiceMock(rsf.WithFailedUpsertRuleType),
+			ExpectedError:   "error while creating rules in project",
 		},
 		{
-			Name:          "Subscribe creates subscription",
-			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withSuccessfulCreateSubscription, withBundleUpsert),
-			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType),
-			RuleTypeSetup: rsf.NewRuleTypeServiceMock(rsf.WithSuccessfulUpsertRuleType),
+			Name:          "Subscribe returns error if data sources cannot be read from bundle",
+			DBSetup:       dbf.NewDBMock(withNotFoundFindSubscription, withBundleUpsert, withSuccessfulCreateSubscription),
+			BundleSetup:   brf.NewBundleReaderMock(brf.WithMetadata, brf.WithFailedForEachDataSource),
+			ExpectedError: "error while creating data sources in project",
+		},
+		{
+			Name:            "Subscribe creates subscription",
+			DBSetup:         dbf.NewDBMock(withNotFoundFindSubscription, withSuccessfulCreateSubscription, withBundleUpsert),
+			BundleSetup:     brf.NewBundleReaderMock(brf.WithMetadata, brf.WithSuccessfulForEachRuleType, brf.WithSuccessfulForEachDataSource),
+			RuleTypeSetup:   rsf.NewRuleTypeServiceMock(rsf.WithSuccessfulUpsertRuleType),
+			DataSourceSetup: dsf.NewDataSourcesServiceMock(dsf.WithSuccessfulUpsertDataSource),
 		},
 	}
 
@@ -92,7 +104,7 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 
 			querier := getQuerier(ctrl, scenario.DBSetup)
 
-			svc := createService(ctrl, nil, scenario.RuleTypeSetup)
+			svc := createService(ctrl, nil, scenario.RuleTypeSetup, scenario.DataSourceSetup)
 			err := svc.Subscribe(ctx, projectID, bundle, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
@@ -156,7 +168,7 @@ func TestSubscriptionService_CreateProfile(t *testing.T) {
 			bundle := scenario.BundleSetup(ctrl)
 			querier := getQuerier(ctrl, scenario.DBSetup)
 
-			svc := createService(ctrl, scenario.ProfileSetup, nil)
+			svc := createService(ctrl, scenario.ProfileSetup, nil, nil)
 			err := svc.CreateProfile(ctx, projectID, bundle, profileName, querier)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
@@ -228,6 +240,7 @@ func createService(
 	ctrl *gomock.Controller,
 	profileSetup psf.ProfileSvcMockBuilder,
 	ruleTypeSetup rsf.RuleTypeSvcMockBuilder,
+	dataSourceSetup dsf.DataSourcesSvcMockBuilder,
 ) subscriptions.SubscriptionService {
 	var rules ruletypes.RuleTypeService
 	if ruleTypeSetup != nil {
@@ -239,7 +252,12 @@ func createService(
 		profSvc = profileSetup(ctrl)
 	}
 
-	return subscriptions.NewSubscriptionService(profSvc, rules)
+	var dataSources datasourceservice.DataSourcesService
+	if dataSourceSetup != nil {
+		dataSources = dataSourceSetup(ctrl)
+	}
+
+	return subscriptions.NewSubscriptionService(profSvc, rules, dataSources)
 }
 
 func getQuerier(ctrl *gomock.Controller, dbSetup dbf.DBMockBuilder) db.ExtendQuerier {

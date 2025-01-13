@@ -17,6 +17,9 @@ const (
 	// PathRuleTypes is the name of the directory holding the rule types of a bundle
 	PathRuleTypes = "rule_types"
 
+	// PathDataSources is the name of the directory holding the data sources of a bundle
+	PathDataSources = "data_sources"
+
 	// ManifestFileName is the defaul filename for the manifest
 	ManifestFileName = "manifest.json"
 )
@@ -42,6 +45,7 @@ type File struct {
 
 // Files is a collection of the files included in the bundle organized by type
 type Files struct {
-	Profiles  []*File `json:"profiles,omitempty"`
-	RuleTypes []*File `json:"ruleTypes,omitempty"`
+	Profiles    []*File `json:"profiles,omitempty"`
+	RuleTypes   []*File `json:"ruleTypes,omitempty"`
+	DataSources []*File `json:"dataSources,omitempty"`
 }

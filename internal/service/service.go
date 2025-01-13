@@ -95,7 +95,8 @@ func AllInOneServerService(
 	profileSvc := profiles.NewProfileService(evt, selChecker)
 	ruleSvc := ruletypes.NewRuleTypeService()
 	roleScv := roles.NewRoleService()
-	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc)
+	dataSourcesSvc := datasourcessvc.NewDataSourceService(store)
+	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc, dataSourcesSvc)
 	if err != nil {
 		return fmt.Errorf("failed to create marketplace: %w", err)
 	}
@@ -171,7 +172,6 @@ func AllInOneServerService(
 	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
-	dataSourcesSvc := datasourcessvc.NewDataSourceService(store)
 
 	s := controlplane.NewServer(
 		store,
@@ -332,7 +332,7 @@ func makeProjectFactory(
 ) service.ProjectFactory {
 	return func(
 		ctx context.Context,
-		qtx db.Querier,
+		qtx db.ExtendQuerier,
 		name string,
 		ghUser int64,
 	) (*db.Project, error) {
