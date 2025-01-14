@@ -23,6 +23,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
 	"gopkg.in/yaml.v3"
@@ -42,6 +43,7 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileWalk,
 	ListGithubActions,
 	ParseYaml,
+	ParseToml,
 	JQIsTrue,
 }
 
@@ -710,6 +712,43 @@ func ParseYaml(_ *interfaces.Result) func(*rego.Rego) {
 			// Convert the YAML string into a Go map
 			var jsonObj any
 			err := yaml.Unmarshal([]byte(yamlStr), &jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
+			}
+
+			// Convert the Go value to an ast.Value
+			value, err := ast.InterfaceToValue(jsonObj)
+			if err != nil {
+				return nil, fmt.Errorf("error converting to AST value: %w", err)
+			}
+
+			return ast.NewTerm(value), nil
+		},
+	)
+}
+
+// ParseToml is a rego function that parses a TOML configuration string into a structured data format.
+// It takes one argument: the TOML content as a string.
+// It returns the parsed TOML data as an AST term.
+// It's exposed as `parse_toml`.
+func ParseToml(_ *interfaces.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "parse_toml",
+			// Takes one string argument (the YAML content) and returns any type
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		func(_ rego.BuiltinContext, content *ast.Term) (*ast.Term, error) {
+			var tomlStr string
+
+			// Convert the YAML input from the term into a string
+			if err := ast.As(content.Value, &tomlStr); err != nil {
+				return nil, err
+			}
+
+			// Convert the YAML string into a Go map
+			var jsonObj any
+			err := toml.Unmarshal([]byte(tomlStr), &jsonObj)
 			if err != nil {
 				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
 			}
