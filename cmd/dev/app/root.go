@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/cmd/dev/app/bundles"
+	"github.com/mindersec/minder/cmd/dev/app/datasource"
 	"github.com/mindersec/minder/cmd/dev/app/image"
 	"github.com/mindersec/minder/cmd/dev/app/rule_type"
 	"github.com/mindersec/minder/cmd/dev/app/testserver"
@@ -29,6 +30,7 @@ https://docs.stacklok.com/minder`,
 	cmd.AddCommand(image.CmdImage())
 	cmd.AddCommand(testserver.CmdTestServer())
 	cmd.AddCommand(bundles.CmdBundle())
+	cmd.AddCommand(datasource.CmdDataSource())
 
 	return cmd
 }
