@@ -25,6 +25,11 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+var (
+	// ErrDataSourceAlreadyExists is returned when a data source already exists
+	ErrDataSourceAlreadyExists = util.UserVisibleError(codes.AlreadyExists, "data source already exists")
+)
+
 // DataSourcesService is an interface that defines the methods for the data sources service.
 type DataSourcesService interface {
 	// GetByName returns a data source by name.
@@ -37,10 +42,26 @@ type DataSourcesService interface {
 	List(ctx context.Context, project uuid.UUID, opts *ReadOptions) ([]*minderv1.DataSource, error)
 
 	// Create creates a new data source.
-	Create(ctx context.Context, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error)
+	Create(
+		ctx context.Context,
+		projectID uuid.UUID,
+		subscriptionID uuid.UUID,
+		ds *minderv1.DataSource,
+		opts *Options,
+	) (*minderv1.DataSource, error)
 
 	// Update updates an existing data source.
-	Update(ctx context.Context, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error)
+	Update(
+		ctx context.Context,
+		projectID uuid.UUID,
+		subscriptionID uuid.UUID,
+		ds *minderv1.DataSource,
+		opts *Options,
+	) (*minderv1.DataSource, error)
+
+	// Upsert creates a new data source if it does not exist or updates it if it already exists.
+	// This is used in the subscription logic.
+	Upsert(ctx context.Context, projectID uuid.UUID, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) error
 
 	// Delete deletes a data source in the given project.
 	//
@@ -150,7 +171,12 @@ func (d *dataSourceService) List(
 // We first validate the data source name uniqueness, then create the data source record.
 // Finally, we create function records based on the driver type.
 func (d *dataSourceService) Create(
-	ctx context.Context, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) (*minderv1.DataSource, error) {
 	if err := ds.Validate(); err != nil {
 		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
@@ -173,11 +199,6 @@ func (d *dataSourceService) Create(
 
 	tx := stx.Q()
 
-	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
-	if err != nil {
-		return nil, fmt.Errorf("invalid project ID: %w", err)
-	}
-
 	// Check if such data source already exists in project hierarchy
 	projs, err := listRelevantProjects(ctx, tx, projectID, true)
 	if err != nil {
@@ -191,8 +212,7 @@ func (d *dataSourceService) Create(
 		return nil, fmt.Errorf("failed to check for existing data source: %w", err)
 	}
 	if existing.ID != uuid.Nil {
-		return nil, util.UserVisibleError(codes.AlreadyExists,
-			"data source with name %s already exists", ds.GetName())
+		return nil, ErrDataSourceAlreadyExists
 	}
 
 	// Create data source record
@@ -226,7 +246,12 @@ func (d *dataSourceService) Create(
 // because it's simpler and safer - it ensures consistency and avoids partial updates.
 // All functions must use the same driver type to maintain data source integrity.
 func (d *dataSourceService) Update(
-	ctx context.Context, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) (*minderv1.DataSource, error) {
 	if err := ds.Validate(); err != nil {
 		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
@@ -244,11 +269,6 @@ func (d *dataSourceService) Update(
 	}(stx)
 
 	tx := stx.Q()
-
-	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
-	if err != nil {
-		return nil, fmt.Errorf("invalid project ID: %w", err)
-	}
 
 	// Validate the subscription ID if present
 	existingDS, err := getDataSourceFromDb(ctx, projectID, ReadBuilder().WithTransaction(tx), tx,
@@ -299,6 +319,33 @@ func (d *dataSourceService) Update(
 	}
 
 	return ds, nil
+}
+
+// Upsert creates the data source if it does not already exist
+// or updates it if it already exists. This is used in the subscription
+// logic.
+func (d *dataSourceService) Upsert(
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) error {
+	// Simulate upsert semantics by trying to create, then trying to update.
+	_, err := d.Create(ctx, projectID, subscriptionID, ds, opts)
+	if err == nil {
+		// Rule successfully created, we can stop here.
+		return nil
+	} else if !errors.Is(err, ErrDataSourceAlreadyExists) {
+		return fmt.Errorf("error while creating data source: %w", err)
+	}
+
+	// If we get here: data source already exists. Let's update it.
+	_, err = d.Update(ctx, projectID, subscriptionID, ds, opts)
+	if err != nil {
+		return fmt.Errorf("error while updating data source: %w", err)
+	}
+	return nil
 }
 
 // Delete deletes a data source in the given project.

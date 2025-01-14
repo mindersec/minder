@@ -60,7 +60,7 @@ func (mr *MockGitHubProviderServiceMockRecorder) CreateGitHubAppProvider(ctx, to
 }
 
 // CreateGitHubAppWithoutInvitation mocks base method.
-func (m *MockGitHubProviderService) CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.Querier, userID, installationID int64) (*db.Project, error) {
+func (m *MockGitHubProviderService) CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID, installationID int64) (*db.Project, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGitHubAppWithoutInvitation", ctx, qtx, userID, installationID)
 	ret0, _ := ret[0].(*db.Project)

@@ -43,6 +43,7 @@ func TestReadSource(t *testing.T) {
 							Hashes: map[HashAlgorithm]string{SHA256: "3857bca2ccabdac3d136eb3df4549ddd87a00ddef9fdcf88d8f824e5e796d34c"},
 						},
 					},
+					DataSources: []*File{},
 				},
 				Source: nil,
 			},

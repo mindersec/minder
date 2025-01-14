@@ -308,7 +308,7 @@ func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
 			PrivateKey: pvtKeyFile.Name(),
 		},
 	}
-	factory := func(_ context.Context, qtx db.Querier, name string, _ int64) (*db.Project, error) {
+	factory := func(_ context.Context, qtx db.ExtendQuerier, name string, _ int64) (*db.Project, error) {
 		project, err := qtx.CreateProject(context.Background(), db.CreateProjectParams{
 			Name:     name,
 			Metadata: []byte(`{}`),
@@ -374,7 +374,7 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 		},
 	}
 
-	factory := func(context.Context, db.Querier, string, int64) (*db.Project, error) {
+	factory := func(context.Context, db.ExtendQuerier, string, int64) (*db.Project, error) {
 		return nil, errors.New("error getting user for GitHub ID: 404 not found")
 	}
 

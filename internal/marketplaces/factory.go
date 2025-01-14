@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	sub "github.com/mindersec/minder/internal/marketplaces/subscriptions"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/mindpak"
@@ -25,6 +26,7 @@ func NewMarketplaceFromServiceConfig(
 	config server.MarketplaceConfig,
 	profile profiles.ProfileService,
 	ruleType ruletypes.RuleTypeService,
+	dataSource datasourceservice.DataSourcesService,
 ) (Marketplace, error) {
 	if !config.Enabled {
 		return NewNoopMarketplace(), nil
@@ -54,7 +56,7 @@ func NewMarketplaceFromServiceConfig(
 		newSources[i] = source
 	}
 
-	subscription := sub.NewSubscriptionService(profile, ruleType)
+	subscription := sub.NewSubscriptionService(profile, ruleType, dataSource)
 	marketplace, err := NewMarketplace(newSources, subscription)
 	if err != nil {
 		return nil, fmt.Errorf("error while creating marketplace: %w", err)

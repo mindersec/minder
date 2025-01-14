@@ -13,6 +13,7 @@ import (
 	"github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -25,6 +26,14 @@ func (s *Server) CreateDataSource(ctx context.Context,
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
 	}
 
+	entityCtx := engcontext.EntityFromContext(ctx)
+	err := entityCtx.ValidateProject(ctx, s.store)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	projectID := entityCtx.Project.ID
+
 	// Get the data source from the request
 	dsReq := in.GetDataSource()
 	if dsReq == nil {
@@ -36,7 +45,7 @@ func (s *Server) CreateDataSource(ctx context.Context,
 	}
 
 	// Process the request
-	ret, err := s.dataSourcesService.Create(ctx, uuid.Nil, dsReq, nil)
+	ret, err := s.dataSourcesService.Create(ctx, projectID, uuid.Nil, dsReq, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -156,6 +165,14 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
 	}
 
+	entityCtx := engcontext.EntityFromContext(ctx)
+	err := entityCtx.ValidateProject(ctx, s.store)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
+	}
+
+	projectID := entityCtx.Project.ID
+
 	// Get the data source from the request
 	dsReq := in.GetDataSource()
 	if dsReq == nil {
@@ -167,7 +184,7 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 	}
 
 	// Process the request
-	ret, err := s.dataSourcesService.Update(ctx, uuid.Nil, dsReq, nil)
+	ret, err := s.dataSourcesService.Update(ctx, projectID, uuid.Nil, dsReq, nil)
 	if err != nil {
 		return nil, err
 	}

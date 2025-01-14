@@ -41,6 +41,20 @@ func (m *MockBundleReader) EXPECT() *MockBundleReaderMockRecorder {
 	return m.recorder
 }
 
+// ForEachDataSource mocks base method.
+func (m *MockBundleReader) ForEachDataSource(arg0 func(*v1.DataSource) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ForEachDataSource", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ForEachDataSource indicates an expected call of ForEachDataSource.
+func (mr *MockBundleReaderMockRecorder) ForEachDataSource(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForEachDataSource", reflect.TypeOf((*MockBundleReader)(nil).ForEachDataSource), arg0)
+}
+
 // ForEachRuleType mocks base method.
 func (m *MockBundleReader) ForEachRuleType(arg0 func(*v1.RuleType) error) error {
 	m.ctrl.T.Helper()
