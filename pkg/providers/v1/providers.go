@@ -225,6 +225,56 @@ type OCI interface {
 	GetAuthenticator() (authn.Authenticator, error)
 }
 
+// PullRequestCommentType is the type of the pull request comment
+type PullRequestCommentType string
+
+const (
+	// PullRequestCommentTypeApprove is the type for an approval
+	PullRequestCommentTypeApprove PullRequestCommentType = "approve"
+	// PullRequestCommentTypeRequestChanges is the type for a request for changes
+	PullRequestCommentTypeRequestChanges PullRequestCommentType = "request_changes"
+	// PullRequestCommentTypeComment is the type for a regular comment
+	PullRequestCommentTypeComment PullRequestCommentType = "comment"
+)
+
+// PullRequestCommentInfo is the information for a pull request comment to
+// be issued by the provider
+type PullRequestCommentInfo struct {
+	// The commit sha for the pull request
+	Commit string `json:"commit,omitempty"`
+	// An optional header for the comment. If aggregating multiple comments, this
+	// could be used as a header.
+	Header string `json:"header,omitempty"`
+	// The comment body
+	Body string `json:"body,omitempty"`
+	// The priority of the comment. This is used to determine the order of the comments
+	// when aggregating multiple comments. Lower values are higher priority.
+	Priority int `json:"priority,omitempty"`
+	// The type of the comment
+	Type PullRequestCommentType `json:"type,omitempty"`
+	//
+}
+
+// CommentResultMeta is the metadata for the comment result
+type CommentResultMeta struct {
+	ID          string    `json:"review_id,omitempty"`
+	SubmittedAt time.Time `json:"submitted_at,omitempty"`
+	URL         string    `json:"pull_request_url,omitempty"`
+}
+
+// PullRequestCommenter is the interface for commenting on pull requests
+// The provider must implement this interface if it supports commenting on pull requests.
+// Providers are assumed to support discovering the pull request by the properties
+// as well as discovering the *one* comment they're supposed to work on.
+// That is, the provider may issue one comment and aggregate multiple comments into one.
+type PullRequestCommenter interface {
+	Provider
+
+	// CommentOnPullRequest issues comments on a pull request
+	CommentOnPullRequest(
+		ctx context.Context, getByProps *properties.Properties, comment PullRequestCommentInfo) (*CommentResultMeta, error)
+}
+
 // ParseAndValidate parses the given provider configuration and validates it.
 func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	if err := json.Unmarshal(rawConfig, to); err != nil {
