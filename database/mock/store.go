@@ -2242,18 +2242,18 @@ func (mr *MockStoreMockRecorder) ListRuleTypesByProject(ctx, projectID any) *gom
 }
 
 // ListRuleTypesReferencesByDataSource mocks base method.
-func (m *MockStore) ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourcesID uuid.UUID) ([]db.RuleTypeDataSource, error) {
+func (m *MockStore) ListRuleTypesReferencesByDataSource(ctx context.Context, arg db.ListRuleTypesReferencesByDataSourceParams) ([]db.RuleTypeDataSource, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListRuleTypesReferencesByDataSource", ctx, dataSourcesID)
+	ret := m.ctrl.Call(m, "ListRuleTypesReferencesByDataSource", ctx, arg)
 	ret0, _ := ret[0].([]db.RuleTypeDataSource)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ListRuleTypesReferencesByDataSource indicates an expected call of ListRuleTypesReferencesByDataSource.
-func (mr *MockStoreMockRecorder) ListRuleTypesReferencesByDataSource(ctx, dataSourcesID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) ListRuleTypesReferencesByDataSource(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesReferencesByDataSource", reflect.TypeOf((*MockStore)(nil).ListRuleTypesReferencesByDataSource), ctx, dataSourcesID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRuleTypesReferencesByDataSource", reflect.TypeOf((*MockStore)(nil).ListRuleTypesReferencesByDataSource), ctx, arg)
 }
 
 // ListTokensToMigrate mocks base method.

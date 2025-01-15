@@ -369,13 +369,18 @@ func (q *Queries) ListDataSources(ctx context.Context, projects []uuid.UUID) ([]
 
 const listRuleTypesReferencesByDataSource = `-- name: ListRuleTypesReferencesByDataSource :many
 SELECT rule_type_id, data_sources_id, project_id FROM rule_type_data_sources
-WHERE data_sources_id = $1
+WHERE data_sources_id = $1 and project_id = $2
 `
+
+type ListRuleTypesReferencesByDataSourceParams struct {
+	DataSourcesID uuid.UUID `json:"data_sources_id"`
+	ProjectID     uuid.UUID `json:"project_id"`
+}
 
 // ListRuleTypesReferencesByDataSource retrieves all rule types
 // referencing a given data source in a given project.
-func (q *Queries) ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourcesID uuid.UUID) ([]RuleTypeDataSource, error) {
-	rows, err := q.db.QueryContext(ctx, listRuleTypesReferencesByDataSource, dataSourcesID)
+func (q *Queries) ListRuleTypesReferencesByDataSource(ctx context.Context, arg ListRuleTypesReferencesByDataSourceParams) ([]RuleTypeDataSource, error) {
+	rows, err := q.db.QueryContext(ctx, listRuleTypesReferencesByDataSource, arg.DataSourcesID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}
