@@ -522,7 +522,7 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("foo", nil)
+	fdsf.EXPECT().Call(gomock.Any(), gomock.Any(), gomock.Any()).Return("foo", nil)
 	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "foo",
@@ -531,7 +531,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	fdsf.EXPECT().Call(gomock.Any(), gomock.Any()).Return("bar", nil)
+	fdsf.EXPECT().Call(gomock.Any(), gomock.Any(), gomock.Any()).Return("bar", nil)
 	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: map[string]any{
 			"data": "bar",

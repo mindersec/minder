@@ -252,7 +252,7 @@ func Test_restHandler_Call(t *testing.T) {
 				headers:      tt.fields.headers,
 				parse:        tt.fields.parse,
 			}
-			got, err := h.Call(context.Background(), tt.args.args)
+			got, err := h.Call(context.Background(), nil, tt.args.args)
 			if tt.wantErr {
 				assert.Error(t, err)
 			} else {
@@ -367,7 +367,7 @@ func Test_restHandler_ValidateUpdate(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		updateSchema any
+		updateSchema *structpb.Struct
 	}
 	tests := []struct {
 		name        string
@@ -407,34 +407,6 @@ func Test_restHandler_ValidateUpdate(t *testing.T) {
 				},
 			},
 			wantErr: false,
-		},
-		{
-			name: "Valid map[string]any",
-			inputSchema: map[string]any{
-				"type":       "object",
-				"properties": map[string]any{"key": map[string]any{"type": "string"}},
-			},
-			args: args{
-				updateSchema: map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"key":     map[string]any{"type": "string"},
-						"new_key": map[string]any{"type": "number"},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
-			name: "Invalid type",
-			inputSchema: map[string]any{
-				"type":       "object",
-				"properties": map[string]any{"key": map[string]any{"type": "string"}},
-			},
-			args: args{
-				updateSchema: "invalid_type",
-			},
-			wantErr: true,
 		},
 		{
 			name: "nil update schema",

@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -36,14 +37,14 @@ type DataSourceFuncDef interface {
 	// ValidateUpdate validates the update to the data source.
 	// The data source implementation should respect the update and return an error
 	// if the update is invalid.
-	ValidateUpdate(obj any) error
+	ValidateUpdate(obj *structpb.Struct) error
 	// Call calls the function with the given arguments.
 	// It is the responsibility of the data source implementation to handle the call.
 	// It is also the responsibility of the caller to validate the arguments
 	// before calling the function.
-	Call(ctx context.Context, args any) (any, error)
+	Call(ctx context.Context, ingest *interfaces.Result, args any) (any, error)
 	// GetArgsSchema returns the schema of the arguments.
-	GetArgsSchema() any
+	GetArgsSchema() *structpb.Struct
 }
 
 // DataSource is the interface that a data source must implement.
