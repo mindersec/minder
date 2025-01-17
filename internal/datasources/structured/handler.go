@@ -15,9 +15,11 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 const (
@@ -148,21 +150,15 @@ func parseFile(f billy.File) (any, error) {
 }
 
 // Call parses the structured data from the billy filesystem in the context
-func (sh *structHandler) Call(ctx context.Context, _ any) (any, error) {
-	var ctxData v1datasources.Context
-	var ok bool
-	if ctxData, ok = ctx.Value(v1datasources.ContextKey{}).(v1datasources.Context); !ok {
-		return nil, fmt.Errorf("unable to read execution context")
-	}
-
-	if ctxData.Ingest == nil || ctxData.Ingest.Fs == nil {
+func (sh *structHandler) Call(_ context.Context, ingest *interfaces.Result, _ any) (any, error) {
+	if ingest == nil || ingest.Fs == nil {
 		return nil, fmt.Errorf("filesystem not found in execution context")
 	}
 
-	return parseFileAlternatives(ctxData.Ingest.Fs, sh.Path.GetFileName(), sh.Path.GetAlternatives())
+	return parseFileAlternatives(ingest.Fs, sh.Path.GetFileName(), sh.Path.GetAlternatives())
 }
 
-func (*structHandler) GetArgsSchema() any {
+func (*structHandler) GetArgsSchema() *structpb.Struct {
 	return nil
 }
 
@@ -172,6 +168,6 @@ func (_ *structHandler) ValidateArgs(any) error {
 }
 
 // ValidateUpdate
-func (_ *structHandler) ValidateUpdate(any) error {
+func (_ *structHandler) ValidateUpdate(*structpb.Struct) error {
 	return nil
 }

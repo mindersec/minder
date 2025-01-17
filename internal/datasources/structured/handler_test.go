@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -166,25 +165,19 @@ func TestNew(t *testing.T) {
 func TestCall(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
-		name         string
-		buildContext func(t *testing.T) context.Context
-		def          *minderv1.StructDataSource_Def
-		mustErr      bool
+		name    string
+		ingest  func(t *testing.T) *interfaces.Result
+		def     *minderv1.StructDataSource_Def
+		mustErr bool
 	}{
 		{
 			"success",
-			func(t *testing.T) context.Context {
+			func(t *testing.T) *interfaces.Result {
 				t.Helper()
 				fs := memfs.New()
 				writeFSFile(t, fs, "./test1.json", []byte("{ \"a\": \"b\"}"))
 
-				return context.WithValue(
-					context.Background(),
-					v1datasources.ContextKey{},
-					v1datasources.Context{
-						Ingest: &interfaces.Result{Fs: fs},
-					},
-				)
+				return &interfaces.Result{Fs: fs}
 			},
 			&minderv1.StructDataSource_Def{
 				Path: &minderv1.StructDataSource_Def_Path{
@@ -195,31 +188,27 @@ func TestCall(t *testing.T) {
 		},
 		{
 			"no-datasource-context",
-			func(t *testing.T) context.Context {
+			func(t *testing.T) *interfaces.Result {
 				t.Helper()
-				return context.Background()
+				return nil
 			},
 			&minderv1.StructDataSource_Def{},
 			true,
 		},
 		{"ctx-no-fs",
-			func(t *testing.T) context.Context {
+			func(t *testing.T) *interfaces.Result {
 				t.Helper()
-				return context.WithValue(
-					context.Background(),
-					v1datasources.ContextKey{},
-					v1datasources.Context{},
-				)
+				return &interfaces.Result{}
 			},
 			&minderv1.StructDataSource_Def{},
 			true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			ctx := tc.buildContext(t)
+			ingest := tc.ingest(t)
 			handler, err := newHandlerFromDef(tc.def)
 			require.NoError(t, err)
-			_, err = handler.Call(ctx, []string{})
+			_, err = handler.Call(context.Background(), ingest, []string{})
 			if tc.mustErr {
 				require.Error(t, err)
 				return

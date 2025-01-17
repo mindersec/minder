@@ -22,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 const (
@@ -69,7 +70,7 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 	}, nil
 }
 
-func (h *restHandler) GetArgsSchema() any {
+func (h *restHandler) GetArgsSchema() *structpb.Struct {
 	return h.rawInputSchema
 }
 
@@ -86,28 +87,18 @@ func (h *restHandler) ValidateArgs(args any) error {
 	return schemavalidate.ValidateAgainstSchema(h.inputSchema, mapobj)
 }
 
-func (h *restHandler) ValidateUpdate(obj any) error {
-	if obj == nil {
+func (h *restHandler) ValidateUpdate(argsSchema *structpb.Struct) error {
+	if argsSchema == nil {
 		return errors.New("update schema cannot be nil")
 	}
 
-	switch castedobj := obj.(type) {
-	case *structpb.Struct:
-		if _, err := schemavalidate.CompileSchemaFromPB(castedobj); err != nil {
-			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
-		}
-		return schemaupdate.ValidateSchemaUpdate(h.rawInputSchema, castedobj)
-	case map[string]any:
-		if _, err := schemavalidate.CompileSchemaFromMap(castedobj); err != nil {
-			return fmt.Errorf("update validation failed due to invalid schema: %w", err)
-		}
-		return schemaupdate.ValidateSchemaUpdateMap(h.rawInputSchema.AsMap(), castedobj)
-	default:
-		return errors.New("invalid type")
+	if _, err := schemavalidate.CompileSchemaFromPB(argsSchema); err != nil {
+		return fmt.Errorf("update validation failed due to invalid schema: %w", err)
 	}
+	return schemaupdate.ValidateSchemaUpdate(h.rawInputSchema, argsSchema)
 }
 
-func (h *restHandler) Call(ctx context.Context, args any) (any, error) {
+func (h *restHandler) Call(ctx context.Context, _ *interfaces.Result, args any) (any, error) {
 	argsMap, ok := args.(map[string]any)
 	if !ok {
 		return nil, errors.New("args is not a map")

@@ -4,7 +4,6 @@
 package rego
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -48,7 +47,7 @@ func buildFromDataSource(
 			Name: k,
 			Decl: types.NewFunction(types.Args(types.A), types.A),
 		},
-		func(_ rego.BuiltinContext, obj *ast.Term) (*ast.Term, error) {
+		func(bctx rego.BuiltinContext, obj *ast.Term) (*ast.Term, error) {
 			// Convert the AST value back to a Go interface{}
 			jsonObj, err := ast.JSON(obj.Value)
 			if err != nil {
@@ -59,15 +58,7 @@ func buildFromDataSource(
 				return nil, err
 			}
 
-			// Call the data source function
-			ctx := context.WithValue(
-				context.Background(),
-				v1datasources.ContextKey{},
-				v1datasources.Context{
-					Ingest: res,
-				},
-			)
-			ret, err := dsf.Call(ctx, jsonObj)
+			ret, err := dsf.Call(bctx.Context, res, jsonObj)
 			if err != nil {
 				return nil, err
 			}
