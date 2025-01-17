@@ -7,8 +7,9 @@ package v1
 import (
 	"context"
 
-	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
