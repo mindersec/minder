@@ -24,4 +24,6 @@ const (
 	// TarGzFunctions enables functions to produce tar.gz data in the rego
 	// evaluation environment.
 	TarGzFunctions Experiment = "tar_gz_functions"
+	// DependencyExtract enables functions to perform dependency extraction.
+	DependencyExtract Experiment = "dependency_extract"
 )
