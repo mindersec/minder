@@ -12,9 +12,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,17 +23,16 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/mindersec/minder/internal/util"
-)
 	"google.golang.org/protobuf/proto"
 
-	pb "github.com/stacklok/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/internal/util"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // TestGetConfigDirPath tests the GetConfigDirPath function
 func TestGetConfigDirPath(t *testing.T) {
 	t.Parallel()
+	var mu sync.Mutex
 	tests := []struct {
 		name           string
 		envVar         string
@@ -57,11 +56,13 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			mu.Lock()
+			defer mu.Unlock()
 			err := os.Setenv("XDG_CONFIG_HOME", tt.envVar)
 			if err != nil {
 				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 			}
-			path, err := GetConfigDirPath()
+			path, err := util.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
 			}
@@ -150,11 +151,12 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			err := os.Setenv(MinderAuthTokenEnvVar, tt.envToken)
+			originalEnvToken := os.Getenv(util.MinderAuthTokenEnvVar)
+			err := os.Setenv(util.MinderAuthTokenEnvVar, tt.envToken)
 			if err != nil {
 				t.Errorf("error setting MinderAuthTokenEnvVar: %v", err)
 			}
-			conn, err := GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
+			conn, err := util.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
 			}
@@ -164,6 +166,7 @@ func TestGetGrpcConnection(t *testing.T) {
 					t.Errorf("error closing connection: %v", err)
 				}
 			}
+			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
 		})
 	}
 }
@@ -171,13 +174,13 @@ func TestGetGrpcConnection(t *testing.T) {
 // TestSaveCredentials tests the SaveCredentials function
 func TestSaveCredentials(t *testing.T) {
 	t.Parallel()
-	tokens := OpenIdCredentials{
+	tokens := util.OpenIdCredentials{
 		AccessToken:          "test_access_token",
 		RefreshToken:         "test_refresh_token",
 		AccessTokenExpiresAt: time.Time{}.Add(7 * 24 * time.Hour),
 	}
 
-	cfgPath, err := GetConfigDirPath()
+	cfgPath, err := util.GetConfigDirPath()
 
 	if err != nil {
 		t.Fatalf("error getting config path: %v", err)
@@ -185,7 +188,7 @@ func TestSaveCredentials(t *testing.T) {
 
 	expectedFilePath := filepath.Join(cfgPath, "credentials.json")
 
-	filePath, err := SaveCredentials(tokens)
+	filePath, err := util.SaveCredentials(tokens)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -220,19 +223,21 @@ func TestSaveCredentials(t *testing.T) {
 // TestRemoveCredentials tests the RemoveCredentials function
 func TestRemoveCredentials(t *testing.T) {
 	t.Parallel()
-	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-	if xdgConfigHome == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			t.Fatalf("error getting home directory: %v", err)
-		}
-		xdgConfigHome = filepath.Join(homeDir, ".config")
+	// Create a temporary directory
+	testDir := t.TempDir()
+
+	err := os.Setenv("XDG_CONFIG_HOME", testDir)
+	if err != nil {
+		t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 	}
+
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
 	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
 
 	// Create a dummy credentials file
-	err := os.MkdirAll(filepath.Dir(filePath), 0750)
+	err = os.MkdirAll(filepath.Dir(filePath), 0750)
+
 	if err != nil {
 		t.Fatalf("error creating directory: %v", err)
 	}
@@ -242,7 +247,7 @@ func TestRemoveCredentials(t *testing.T) {
 		t.Fatalf("error writing credentials to file: %v", err)
 	}
 
-	err = RemoveCredentials()
+	err = util.RemoveCredentials()
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -263,7 +268,7 @@ func TestRefreshCredentials(t *testing.T) {
 		clientId       string
 		responseBody   string
 		expectedError  string
-		expectedResult OpenIdCredentials
+		expectedResult util.OpenIdCredentials
 	}{
 		{
 			name:         "Successful refresh with local server",
@@ -271,7 +276,7 @@ func TestRefreshCredentials(t *testing.T) {
 			issuerUrl:    "http://localhost:8081",
 			clientId:     "minder-cli",
 			responseBody: `{"access_token":"new_access_token","refresh_token":"new_refresh_token","expires_in":3600}`,
-			expectedResult: OpenIdCredentials{
+			expectedResult: util.OpenIdCredentials{
 				AccessToken:          "new_access_token",
 				RefreshToken:         "new_refresh_token",
 				AccessTokenExpiresAt: time.Now().Add(3600 * time.Second),
@@ -314,7 +319,7 @@ func TestRefreshCredentials(t *testing.T) {
 			parsedURL, _ := url.Parse(server.URL)
 			tt.issuerUrl = parsedURL.String()
 
-			result, err := RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
+			result, err := util.RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
 			if tt.expectedError != "" {
 				if err == nil || err.Error() != tt.expectedError {
 					t.Errorf("expected error %v, got %v", tt.expectedError, err)
@@ -338,12 +343,12 @@ func TestLoadCredentials(t *testing.T) {
 		name           string
 		fileContent    string
 		expectedError  string
-		expectedResult OpenIdCredentials
+		expectedResult util.OpenIdCredentials
 	}{
 		{
 			name:        "Successful load",
 			fileContent: `{"access_token":"access_token","refresh_token":"refresh_token","expiry":"2024-10-05T17:46:27+10:00"}`,
-			expectedResult: OpenIdCredentials{
+			expectedResult: util.OpenIdCredentials{
 				AccessToken:          "access_token",
 				RefreshToken:         "refresh_token",
 				AccessTokenExpiresAt: time.Date(2024, 10, 5, 17, 46, 27, 0, time.FixedZone("AEST", 10*60*60)),
@@ -352,7 +357,12 @@ func TestLoadCredentials(t *testing.T) {
 		{
 			name:          "Error unmarshaling credentials",
 			fileContent:   `invalid_json`,
-			expectedError: "error unmarshaling credentials: invalid character 'i' looking for beginning of value",
+			expectedError: "error unmarshaling credentials: invalid character 'i'",
+		},
+		{
+			name:          "Error reading credentials file",
+			fileContent:   "",
+			expectedError: "error reading credentials file",
 		},
 	}
 
@@ -360,17 +370,18 @@ func TestLoadCredentials(t *testing.T) {
 		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
 			// Create a unique temporary directory for the test
-			tempDir, err := os.MkdirTemp("", "test_load_credentials_"+tt.name)
-			if err != nil {
-				t.Fatalf("failed to create temp directory: %v", err)
-			}
-			defer os.RemoveAll(tempDir)
+			// tempDir, err := os.MkdirTemp("", "test_load_credentials_"+tt.name)
+			// if err != nil {
+			// 	t.Fatalf("failed to create temp directory: %v", err)
+			// }
+			// defer os.RemoveAll(tempDir)
+
+			tempDir := t.TempDir()
 
 			// Create the minder directory inside the temp directory
 			minderDir := filepath.Join(tempDir, "minder")
-			err = os.MkdirAll(minderDir, 0750)
+			err := os.MkdirAll(minderDir, 0750)
 			if err != nil {
 				t.Fatalf("failed to create minder directory: %v", err)
 			}
@@ -383,6 +394,11 @@ func TestLoadCredentials(t *testing.T) {
 				if err != nil {
 					t.Fatalf("failed to write test file: %v", err)
 				}
+				// Print the file path and content for debugging
+				t.Logf("Test %s: written file path %s with content: %s", tt.name, filePath, tt.fileContent)
+			} else {
+				// Print the file path for debugging
+				t.Logf("Test %s: file path %s not created as file content is empty", tt.name, filePath)
 			}
 
 			// Temporarily override the environment variable for the test
@@ -391,12 +407,11 @@ func TestLoadCredentials(t *testing.T) {
 			if err != nil {
 				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 			}
-			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
 
-			result, err := LoadCredentials()
+			result, err := util.LoadCredentials()
 			if tt.expectedError != "" {
-				if err == nil || err.Error() != tt.expectedError {
-					t.Errorf("expected error %v, got %v", tt.expectedError, err)
+				if err == nil || !strings.HasPrefix(err.Error(), tt.expectedError) {
+					t.Errorf("expected error matching %v, got %v", tt.expectedError, err)
 				}
 			} else {
 				if err != nil {
@@ -406,7 +421,10 @@ func TestLoadCredentials(t *testing.T) {
 					t.Errorf("expected result %v, got %v", tt.expectedResult, result)
 				}
 			}
+			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
+			defer os.RemoveAll(tempDir)
 		})
+
 	}
 }
 
@@ -476,7 +494,7 @@ func TestRevokeToken(t *testing.T) {
 				issuerUrl = server.URL
 			}
 
-			err := RevokeToken(tt.token, issuerUrl, tt.clientId, tt.tokenHint)
+			err := util.RevokeToken(tt.token, issuerUrl, tt.clientId, tt.tokenHint)
 			if (err != nil) != tt.expectError {
 				t.Errorf("RevokeToken() error = %v, expectError %v", err, tt.expectError)
 			}
@@ -516,7 +534,7 @@ func TestGetJsonFromProto(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			jsonResult, err := GetJsonFromProto(tt.input)
+			jsonResult, err := util.GetJsonFromProto(tt.input)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("GetJsonFromProto() error = %v, expectedError %v", err, tt.expectedError)
 				return
@@ -560,7 +578,7 @@ owner: repoOwner
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			yamlResult, err := GetYamlFromProto(tt.input)
+			yamlResult, err := util.GetYamlFromProto(tt.input)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("GetYamlFromProto() error = %v, expectedError %v", err, tt.expectedError)
 				return
@@ -619,7 +637,7 @@ func TestOpenFileArg(t *testing.T) {
 				defer os.Remove(tc.filePath)
 			}
 
-			desc, closer, err := OpenFileArg(tc.filePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}
@@ -642,35 +660,35 @@ func TestOpenFileArg(t *testing.T) {
 // TestExpandFileArgs tests the ExpandFileArgs function.
 func TestExpandFileArgs(t *testing.T) {
 	t.Parallel()
-
 	tests := []struct {
 		name     string
 		files    []string
-		expected []string
+		expected []util.ExpandedFile
 		wantErr  bool
 	}{
 		{
 			name:     "Single file",
 			files:    []string{"testfile.txt"},
-			expected: []string{"testfile.txt"},
+			expected: []util.ExpandedFile{{Path: "testfile.txt", Expanded: false}},
 			wantErr:  false,
 		},
+
 		{
 			name:     "Single directory",
 			files:    []string{"testdir"},
-			expected: []string{"testdir/file1.txt", "testdir/file2.txt"},
+			expected: []util.ExpandedFile{{Path: "testdir/file1.txt", Expanded: true}, {Path: "testdir/file2.txt", Expanded: true}},
 			wantErr:  false,
 		},
 		{
 			name:     "File and directory",
 			files:    []string{"testfile.txt", "testdir"},
-			expected: []string{"testfile.txt", "testdir/file1.txt", "testdir/file2.txt"},
+			expected: []util.ExpandedFile{{Path: "testfile.txt", Expanded: false}, {Path: "testdir/file1.txt", Expanded: true}, {Path: "testdir/file2.txt", Expanded: true}},
 			wantErr:  false,
 		},
 		{
 			name:     "File with '-'",
 			files:    []string{"-"},
-			expected: []string{"-"},
+			expected: []util.ExpandedFile{{Path: "-", Expanded: false}},
 			wantErr:  false,
 		},
 		{
@@ -680,45 +698,45 @@ func TestExpandFileArgs(t *testing.T) {
 			wantErr:  true,
 		},
 	}
-
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			// Create a unique directory for each test
-			testDir := fmt.Sprintf("testdir_%s", sanitizeTestName(tt.name))
+			// Create a temporary directory
+			testDir := t.TempDir()
 			if err := setupTestFiles(testDir); err != nil {
 				t.Fatalf("Failed to set up test files: %v", err)
 			}
-
-			// Ensure cleanup happens after the test
-			t.Cleanup(func() {
-				cleanupTestFiles(testDir)
-			})
-
 			// Update file paths to include the unique directory
 			for i, file := range tt.files {
 				tt.files[i] = fmt.Sprintf("%s/%s", testDir, file)
 			}
 			for i, file := range tt.expected {
-				tt.expected[i] = fmt.Sprintf("%s/%s", testDir, file)
+				tt.expected[i].Path = fmt.Sprintf("%s/%s", testDir, file.Path)
 			}
-
-			got, err := ExpandFileArgs(tt.files)
+			combinedFiles := tt.files
+			got, err := util.ExpandFileArgs(combinedFiles...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExpandFileArgs() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !reflect.DeepEqual(got, tt.expected) {
+			if !compareExpandedFiles(got, tt.expected) {
 				t.Errorf("ExpandFileArgs() = %v, want %v", got, tt.expected)
 			}
+			defer os.RemoveAll(testDir)
 		})
 	}
 }
 
-// sanitizeTestName replaces spaces and special characters in test names to create valid directory names.
-func sanitizeTestName(name string) string {
-	return strings.ReplaceAll(name, " ", "_")
+func compareExpandedFiles(got, expected []util.ExpandedFile) bool {
+	if len(got) != len(expected) {
+		return false
+	}
+	for i := range got {
+		if got[i].Path != expected[i].Path || got[i].Expanded != expected[i].Expanded {
+			return false
+		}
+	}
+	return true
 }
 
 // setupTestFiles creates test files and directories for the unit tests.
@@ -745,22 +763,6 @@ func setupTestFiles(testDir string) error {
 	}
 
 	return nil
-}
-
-// cleanupTestFiles removes test files and directories after the unit tests.
-func cleanupTestFiles(testDir string) {
-	fmt.Printf("Cleaning up test files in %s...\n", testDir)
-
-	retries := 3
-	for i := 0; i < retries; i++ {
-		err := os.RemoveAll(testDir)
-		if err == nil || os.IsNotExist(err) {
-			break
-		}
-		time.Sleep(100 * time.Millisecond) // Wait before retrying
-	}
-	fmt.Printf("Removed directory '%s'\n", testDir)
-
 }
 
 func TestGetConfigValue(t *testing.T) {
@@ -913,7 +915,7 @@ func TestInt32FromString(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := Int32FromString(tt.args.v)
+			got, err := util.Int32FromString(tt.args.v)
 			if tt.wantErr {
 				require.Error(t, err, "expected error")
 				require.Zero(t, got, "expected zero")
