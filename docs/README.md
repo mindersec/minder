@@ -3,8 +3,8 @@
 This directory contains the user documentation for Minder, hosted at
 <https://mindersec.github.io>.
 
-The docs are built with [Docusaurus](<[https://](https://docusaurus.io/)>), an
-open source static website generator optimized for documentation use cases.
+The docs are built with [Docusaurus](https://docusaurus.io/), an open source
+static website generator optimized for documentation use cases.
 
 ## Contributing to docs
 
@@ -24,7 +24,14 @@ CLI docs:
 make cli-docs
 ```
 
-Run a preview server:
+Change to the docs directory:
+
+```bash
+cd docs
+```
+
+Run a preview server (this will automatically refresh most changes as you make
+them):
 
 ```bash
 npm run start
@@ -32,20 +39,19 @@ npm run start
 
 Your browser should automatically open to <http://localhost:3000>
 
-Build the docs:
+Run a "production" build, this will also test for broken internal links:
 
 ```bash
-cd docs
 npm run build
 ```
 
-Serve the docs
+Serve the production build locally:
 
 ```bash
 npm run serve -- --port 3001
 ```
 
-Visit http://localhost:3001/ to view the docs.
+Visit http://localhost:3001/ to view the build.
 
 ## Formatting
 
