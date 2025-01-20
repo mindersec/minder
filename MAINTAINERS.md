@@ -71,6 +71,7 @@ The current list of maintainers is:
 - @lukehinds (Stacklok)
 - @blkt (Stacklok)
 - @puerco (Stacklok)
+- @teodor-yanev (Stacklok)
 - @Vyom-Yadav (Canonical)
 
 Assignment of permissions for these maintainers is currently privately managed
