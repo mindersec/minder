@@ -806,7 +806,7 @@ func BaseDependencyExtract(res *interfaces.Result) func(*rego.Rego) {
 	)
 }
 
-func fsExtractDeps(vfs billy.Filesystem) func (rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
+func fsExtractDeps(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
 	return func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
 		var path string
 		if err := ast.As(op1.Value, &path); err != nil {
