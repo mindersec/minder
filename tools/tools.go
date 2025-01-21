@@ -12,7 +12,6 @@ package tools
 //go:generate go install golang.org/x/tools/cmd/goimports
 //go:generate go install golang.org/x/lint/golint
 //go:generate go install github.com/go-critic/go-critic/cmd/gocritic
-//go:generate go install github.com/sqlc-dev/sqlc/cmd/sqlc
 //go:generate go install github.com/bufbuild/buf/cmd/buf
 //go:generate go install github.com/norwoodj/helm-docs/cmd/helm-docs
 //go:generate go install github.com/openfga/cli/cmd/fga
@@ -34,7 +33,6 @@ import (
 	_ "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
 	_ "github.com/openfga/cli/cmd/fga"
 	_ "github.com/pseudomuto/protoc-gen-doc/cmd/protoc-gen-doc"
-	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 	_ "go.uber.org/mock/mockgen"
 	_ "golang.org/x/lint/golint"
 	_ "golang.org/x/tools/cmd/goimports"

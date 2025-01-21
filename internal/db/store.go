@@ -9,7 +9,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	_ "github.com/sqlc-dev/sqlc/cmd/sqlc"
 )
+
+//go:generate go run github.com/sqlc-dev/sqlc/cmd/sqlc generate -f ../../sqlc.yaml
 
 // GetTypedEntitiesOptions provides options for GetTypedEntitiesByPropertyV1
 type GetTypedEntitiesOptions struct {

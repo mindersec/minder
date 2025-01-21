@@ -71,6 +71,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/sqlc-dev/pqtype v0.3.0
+	github.com/sqlc-dev/sqlc v1.28.0
 	github.com/stacklok/frizbee v0.1.6
 	github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1
@@ -150,6 +151,7 @@ require (
 	github.com/containerd/ttrpc v1.2.5 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
+	github.com/cubicdaiya/gonp v1.0.4 // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
@@ -164,6 +166,7 @@ require (
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/erikvarga/go-rpmdb v0.0.0-20240208180226-b97e041ef9af // indirect
 	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/structtag v1.2.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/chi/v5 v5.2.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
@@ -177,13 +180,13 @@ require (
 	github.com/groob/plist v0.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
-	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/in-toto/attestation v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.7.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jon-whit/go-grpc-prometheus v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
@@ -227,10 +230,16 @@ require (
 	github.com/openfga/api/proto v0.0.0-20250107154247-c22e6db5c4f5 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20241115164311-10e575c8e47c // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
+	github.com/pganalyze/pg_query_go/v5 v5.1.0 // indirect
+	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
+	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
+	github.com/pingcap/log v1.1.0 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20241203170126-9812d85d0d25 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pressly/goose/v3 v3.24.0 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/riza-io/grpc-go v0.2.0 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
@@ -244,7 +253,10 @@ require (
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
+	github.com/tetratelabs/wazero v1.8.2 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.2 // indirect
+	github.com/wasilibs/go-pgquery v0.0.0-20240606042535-c0843d6592cc // indirect
+	github.com/wasilibs/wazero-helpers v0.0.0-20240604052452-61d7981e9a38 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.4 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
@@ -261,15 +273,13 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	k8s.io/utils v0.0.0-20241104100929-3ea5e8cea738 // indirect
-	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
-	modernc.org/sqlite v1.34.4 // indirect
-	modernc.org/strutil v1.2.0 // indirect
-	modernc.org/token v1.1.0 // indirect
+	modernc.org/sqlite v1.34.5 // indirect
 )
 
 require (

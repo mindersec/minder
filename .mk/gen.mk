@@ -15,7 +15,7 @@ buf: ## generate protobuf files
 
 .PHONY: sqlc
 sqlc: ## generate sqlc files
-	sqlc generate
+	go generate ./internal/db
 
 .PHONY: oapi
 oapi: ## generate openapi files
