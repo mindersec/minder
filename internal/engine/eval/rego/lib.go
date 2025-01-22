@@ -18,16 +18,20 @@ import (
 	"time"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/helper/iofs"
+	"github.com/go-git/go-billy/v5/memfs"
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/internal/deps/scalibr"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -59,6 +63,10 @@ var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Resul
 		BaseFileRead,
 		BaseFileWalk,
 		BaseListGithubActions,
+	},
+	flags.DependencyExtract: {
+		DependencyExtract,
+		BaseDependencyExtract,
 	},
 }
 
@@ -762,4 +770,106 @@ func ParseToml(_ *interfaces.Result) func(*rego.Rego) {
 			return ast.NewTerm(value), nil
 		},
 	)
+}
+
+// DependencyExtract is a rego function that extracts dependencies from a file
+// or subtree of the filesystem being evaluated (which comes from the ingester).
+// It takes one arguments: the path to the file or subtree to be scanned.
+// It returns the extracted dependencies as an AST term in the form of a
+// protobom SBOM with the "nodes" fields but not "edges".
+// It's exposed as `file.deps`.
+func DependencyExtract(res *interfaces.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "file.deps",
+			// TODO: The return type is types.A, but it should be types.NewObject(...)
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		fsExtractDeps(res.Fs),
+	)
+}
+
+// BaseDependencyExtract is a rego function that extracts dependencies from a file
+// or subtree of the base filesystem in a pull_request or other diff context.
+// It takes two arguments: the path to the file or subtree to be scanned.
+// It returns the extracted dependencies as an AST term in the form of a
+// protobom SBOM with the "nodes" fields but not "edges".
+// It's exposed as `base_file.deps`.
+func BaseDependencyExtract(res *interfaces.Result) func(*rego.Rego) {
+	return rego.Function1(
+		&rego.Function{
+			Name: "base_file.deps",
+			// TODO: The return type is types.A, but it should be types.NewObject(...)
+			Decl: types.NewFunction(types.Args(types.S), types.A),
+		},
+		fsExtractDeps(res.BaseFs),
+	)
+}
+
+func fsExtractDeps(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
+	return func(bctx rego.BuiltinContext, op1 *ast.Term) (*ast.Term, error) {
+		var path string
+		if err := ast.As(op1.Value, &path); err != nil {
+			return nil, err
+		}
+
+		if vfs == nil {
+			return nil, fmt.Errorf("file system is not available")
+		}
+
+		// verify the file or path exists
+		target, err := vfs.Stat(path)
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				return nil, fmt.Errorf("file or path %q does not exist", path)
+			}
+			return nil, err
+		}
+
+		// vfs.Chroot() only works on directories, so if we have a file, copy
+		// it to a new vfs.
+		if !target.IsDir() {
+			sourceFile, err := vfs.Open(path)
+			if err != nil {
+				return nil, fmt.Errorf("failed to open file %q", path)
+			}
+			defer sourceFile.Close()
+
+			newVfs := memfs.New()
+			basename := filepath.Base(path)
+			file, err := newVfs.Create(basename)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create file %q", basename)
+			}
+			defer file.Close()
+			_, err = io.Copy(file, sourceFile)
+			if err != nil {
+				return nil, fmt.Errorf("failed to copy file %q", path)
+			}
+			vfs = newVfs
+			path = ""
+		}
+
+		// construct a scalibr extractor
+		extractor := scalibr.NewExtractor()
+
+		if path != "" {
+			vfs, err = vfs.Chroot(path)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		res, err := extractor.ScanFilesystem(bctx.Context, iofs.New(vfs))
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan filesystem: %v", err)
+		}
+		// put in an SBOM wrapper
+		sbom := &sbom.Document{
+			NodeList: res,
+		}
+		astValue, err := ast.InterfaceToValue(sbom)
+
+		return &ast.Term{Value: astValue}, err
+	}
 }

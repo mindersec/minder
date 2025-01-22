@@ -1197,3 +1197,109 @@ allow {
 		})
 	}
 }
+
+func TestExtractDeps(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name         string
+		path         string
+		expectedDeps []string
+		expectedErr  error
+	}{{
+		name: "parse all",
+		expectedDeps: []string{
+			"example.com/othermodule",
+			"example.com/thismodule",
+			"example.com/thatmodule",
+			"stdlib", // Always part of golang binaries.
+			"PyYAML",
+		},
+	}, {
+		name: "parse go.mod",
+		path: "foo",
+		expectedDeps: []string{
+			"example.com/othermodule",
+			"example.com/thismodule",
+			"example.com/thatmodule",
+			"stdlib", // Always part of golang binaries.
+		},
+	}, {
+		name: "parse file",
+		path: "requirements.txt",
+		expectedDeps: []string{
+			"PyYAML",
+		},
+	}, {
+		name:        "parse non-existent file",
+		path:        "missing",
+		expectedErr: engerrors.NewErrEvaluationFailed("denied"),
+	}}
+
+	fs := memfs.New()
+	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
+	// From https://go.dev/doc/modules/gomod-ref#example
+	goMod := `
+module example.com/mymodule
+
+go 1.14
+
+require (
+    example.com/othermodule v1.2.3
+    example.com/thismodule v1.2.3
+    example.com/thatmodule v1.2.3
+)
+`
+
+	require.NoError(t, billyutil.WriteFile(fs, "foo/go.mod", []byte(goMod), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "requirements.txt", []byte("PyYAML>=5.3.1"), 0644))
+
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"dependency_extract": true}
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			// TODO: update rego for different APIs
+			Def: `
+package minder
+import rego.v1
+
+deps := file.deps(input.profile.path)
+depsSet := { x |  x = deps.node_list.nodes[_].name }
+expected := { x | x = input.profile.expected[_] }
+
+default allow = false
+allow if {
+  count(depsSet) > 0
+  count(depsSet - expected) == 0
+  count(expected - depsSet) == 0
+}
+`,
+		},
+		featureClient,
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	for _, tc := range scenario {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			policy := map[string]any{
+				"path":     tc.path,
+				"expected": tc.expectedDeps,
+			}
+
+			result, err := e.Eval(context.Background(), policy, nil, &interfaces.Result{
+				Fs: fs,
+			})
+
+			if tc.expectedErr == nil {
+				t.Logf("Result: %+v", result)
+				require.NoError(t, err, "could not evaluate")
+			} else {
+				require.EqualError(t, err, tc.expectedErr.Error())
+			}
+			//t.Fail()
+		})
+	}
+}
