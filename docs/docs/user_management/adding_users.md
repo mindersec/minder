@@ -1,5 +1,5 @@
 ---
-title: Adding Users to your Project
+title: Adding users to your project
 sidebar_position: 100
 ---
 
@@ -24,7 +24,7 @@ appropriate role based on their responsibilities and required access levels.
 Roles are [documented here](user_roles.md). To view the available roles in your
 project, and their descriptions, run:
 
-```
+```bash
 minder project role list
 ```
 
@@ -56,10 +56,10 @@ To add a user to your project, follow these steps:
    used with
    [`minder auth invite accept`](../ref/cli/minder_auth_invite_accept.md).
 
-## Have the User Exercise the Invitation Code
+## Have the user exercise the invitation code
 
 Relay the invitation code to the user who you are inviting to join your project.
-They will need to install the `minder` CLI and run 
+They will need to install the `minder` CLI and run
 `minder auth invite accept <invitation code>` to accept the invitation.
 Invitations will expire when used, or after 7 days, though users who have not
 accepted an invitation can be invited again.
@@ -73,7 +73,7 @@ by executing:
 minder project role grant list
 ```
 
-## Working with Multiple Projects
+## Working with multiple projects
 
 When you have access to more than one project, you will need to qualify many
 `minder` commands with which project you want them to apply to. You can either
@@ -82,7 +82,7 @@ use the `--project` flag, set a default in your
 environment variable. To see all the projects that are available to you, use the
 [`minder project list`](../ref/cli/minder_project_list.md) command.
 
-```
+```plain
 +--------------------------------------+-------------------+
 |                  ID                  |        NAME       |
 +--------------------------------------+-------------------+
