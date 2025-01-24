@@ -47,7 +47,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mikefarah/yq/v4 v4.45.1
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
-	github.com/nats-io/nats-server/v2 v2.10.24
+	github.com/nats-io/nats-server/v2 v2.10.25
 	github.com/nats-io/nats.go v1.38.0
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/olekukonko/tablewriter v0.0.5
@@ -257,7 +257,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.33.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.33.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
-	golang.org/x/time v0.8.0 // indirect
+	golang.org/x/time v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.15.1 // indirect
 	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
