@@ -165,6 +165,9 @@ func TestGetGrpcConnection(t *testing.T) {
 			t.Parallel()
 			originalEnvToken := os.Getenv(util.MinderAuthTokenEnvVar)
 			err := os.Setenv(util.MinderAuthTokenEnvVar, tt.envToken)
+			if err != nil {
+				t.Errorf("error setting %v: %v", util.MinderAuthTokenEnvVar, err)
+			}
 			// reset this the environment variable when complete.
 			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
 
@@ -442,6 +445,7 @@ type TestCase struct {
 }
 
 func createTestServer(t *testing.T, tt TestCase) *httptest.Server {
+	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		err := r.ParseForm()
 		require.NoError(t, err, "error parsing form")
