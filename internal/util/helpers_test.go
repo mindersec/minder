@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,7 +33,7 @@ import (
 // TestGetConfigDirPath tests the GetConfigDirPath function
 func TestGetConfigDirPath(t *testing.T) {
 	t.Parallel()
-	var mu sync.Mutex
+	var envLock sync.Mutex
 	tests := []struct {
 		name           string
 		envVar         string
@@ -56,8 +57,8 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			mu.Lock()
-			defer mu.Unlock()
+			envLock.Lock()
+			defer envLock.Unlock()
 			err := os.Setenv("XDG_CONFIG_HOME", tt.envVar)
 			if err != nil {
 				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
@@ -153,6 +154,8 @@ func TestGetGrpcConnection(t *testing.T) {
 			t.Parallel()
 			originalEnvToken := os.Getenv(util.MinderAuthTokenEnvVar)
 			err := os.Setenv(util.MinderAuthTokenEnvVar, tt.envToken)
+			// reset this the environment variable when complete.
+			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
 			if err != nil {
 				t.Errorf("error setting MinderAuthTokenEnvVar: %v", err)
 			}
@@ -166,7 +169,7 @@ func TestGetGrpcConnection(t *testing.T) {
 					t.Errorf("error closing connection: %v", err)
 				}
 			}
-			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
+
 		})
 	}
 }
@@ -174,6 +177,9 @@ func TestGetGrpcConnection(t *testing.T) {
 // TestSaveCredentials tests the SaveCredentials function
 func TestSaveCredentials(t *testing.T) {
 	t.Parallel()
+	var envLock sync.Mutex
+	envLock.Lock()
+	defer envLock.Unlock()
 	tokens := util.OpenIdCredentials{
 		AccessToken:          "test_access_token",
 		RefreshToken:         "test_refresh_token",
@@ -226,10 +232,13 @@ func TestRemoveCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
+	originalEnv := os.Getenv("XDG_CONFIG_HOME")
 	err := os.Setenv("XDG_CONFIG_HOME", testDir)
 	if err != nil {
 		t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 	}
+	// reset this the environment variable when complete.
+	defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
 
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
@@ -367,18 +376,11 @@ func TestLoadCredentials(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// Create a unique temporary directory for the test
-			// tempDir, err := os.MkdirTemp("", "test_load_credentials_"+tt.name)
-			// if err != nil {
-			// 	t.Fatalf("failed to create temp directory: %v", err)
-			// }
-			// defer os.RemoveAll(tempDir)
-
 			tempDir := t.TempDir()
-
+			defer os.RemoveAll(tempDir)
 			// Create the minder directory inside the temp directory
 			minderDir := filepath.Join(tempDir, "minder")
 			err := os.MkdirAll(minderDir, 0750)
@@ -407,6 +409,8 @@ func TestLoadCredentials(t *testing.T) {
 			if err != nil {
 				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 			}
+			// reset this the environment variable when complete.
+			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
 
 			result, err := util.LoadCredentials()
 			if tt.expectedError != "" {
@@ -421,25 +425,38 @@ func TestLoadCredentials(t *testing.T) {
 					t.Errorf("expected result %v, got %v", tt.expectedResult, result)
 				}
 			}
-			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
-			defer os.RemoveAll(tempDir)
+
 		})
 
 	}
 }
 
+type TestCase struct {
+	name         string
+	token        string
+	issuerUrl    string
+	clientId     string
+	tokenHint    string
+	expectedPath string
+	expectError  bool
+	createServer func(t *testing.T, tt TestCase) *httptest.Server
+}
+
+func createTestServer(t *testing.T, tt TestCase) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		require.NoError(t, err, "error parsing form")
+
+		require.Equal(t, tt.clientId, r.Form.Get("client_id"))
+		require.Equal(t, tt.token, r.Form.Get("token"))
+		require.Equal(t, tt.tokenHint, r.Form.Get("token_type_hint"))
+	}))
+}
+
 // TestRevokeToken tests the RevokeToken function
 func TestRevokeToken(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
-		name         string
-		token        string
-		issuerUrl    string
-		clientId     string
-		tokenHint    string
-		expectedPath string
-		expectError  bool
-	}{
+	tests := []TestCase{
 		{
 			name:         "Valid token revocation",
 			token:        "test-token",
@@ -448,6 +465,7 @@ func TestRevokeToken(t *testing.T) {
 			tokenHint:    "refresh_token",
 			expectedPath: "/realms/stacklok/protocol/openid-connect/revoke",
 			expectError:  false,
+			createServer: createTestServer,
 		},
 		{
 			name:         "Invalid issuer URL",
@@ -457,49 +475,28 @@ func TestRevokeToken(t *testing.T) {
 			tokenHint:    "refresh_token",
 			expectedPath: "",
 			expectError:  true,
+			createServer: nil,
 		},
 	}
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var server *httptest.Server
-			if tt.name != "Invalid issuer URL" {
-				server = httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-					if r.URL.Path != tt.expectedPath {
-						t.Errorf("expected path %s, got %s", tt.expectedPath, r.URL.Path)
-					}
-
-					if err := r.ParseForm(); err != nil {
-						t.Fatalf("error parsing form: %v", err)
-					}
-
-					if r.Form.Get("client_id") != tt.clientId {
-						t.Errorf("expected client_id %s, got %s", tt.clientId, r.Form.Get("client_id"))
-					}
-
-					if r.Form.Get("token") != tt.token {
-						t.Errorf("expected token %s, got %s", tt.token, r.Form.Get("token"))
-					}
-
-					if r.Form.Get("token_type_hint") != tt.tokenHint {
-						t.Errorf("expected token_type_hint %s, got %s", tt.tokenHint, r.Form.Get("token_type_hint"))
-					}
-				}))
+			if tt.createServer != nil {
+				server = tt.createServer(t, tt)
 				defer server.Close()
+				tt.issuerUrl = server.URL
 			}
 
-			issuerUrl := tt.issuerUrl
-			if tt.name != "Invalid issuer URL" {
-				issuerUrl = server.URL
-			}
-
-			err := util.RevokeToken(tt.token, issuerUrl, tt.clientId, tt.tokenHint)
+			err := util.RevokeToken(tt.token, tt.issuerUrl, tt.clientId, tt.tokenHint)
 			if (err != nil) != tt.expectError {
 				t.Errorf("RevokeToken() error = %v, expectError %v", err, tt.expectError)
 			}
 		})
 	}
+
 }
 
 // TestGetJsonFromProto tests the GetJsonFromProto function
@@ -626,18 +623,22 @@ func TestOpenFileArg(t *testing.T) {
 
 	for _, tc := range testCases {
 		tc := tc
+		testDir := t.TempDir()
+		var tempFilePath string
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			// Create a temporary file for testing
 			if tc.filePath == "testfile.txt" {
-				err := os.WriteFile(tc.filePath, []byte(tc.expectedDesc), 0600)
+				tempFilePath = filepath.Join(testDir, tc.filePath)
+				err := os.WriteFile(tempFilePath, []byte(tc.expectedDesc), 0600)
 				assert.NoError(t, err)
-				defer os.Remove(tc.filePath)
+				defer os.Remove(tempFilePath)
+			} else {
+				// When handling the dash (-) as a file path, it should read from the provided io.Reader (tc.dashOpen) instead of trying to open a file
+				tempFilePath = tc.filePath
 			}
-
-			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArg(tempFilePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}
@@ -719,24 +720,14 @@ func TestExpandFileArgs(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExpandFileArgs() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if !compareExpandedFiles(got, tt.expected) {
+			if !slices.EqualFunc(got, tt.expected, func(a, b util.ExpandedFile) bool {
+				return a.Path == b.Path && a.Expanded == b.Expanded
+			}) {
 				t.Errorf("ExpandFileArgs() = %v, want %v", got, tt.expected)
 			}
 			defer os.RemoveAll(testDir)
 		})
 	}
-}
-
-func compareExpandedFiles(got, expected []util.ExpandedFile) bool {
-	if len(got) != len(expected) {
-		return false
-	}
-	for i := range got {
-		if got[i].Path != expected[i].Path || got[i].Expanded != expected[i].Expanded {
-			return false
-		}
-	}
-	return true
 }
 
 // setupTestFiles creates test files and directories for the unit tests.
