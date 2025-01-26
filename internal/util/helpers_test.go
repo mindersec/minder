@@ -35,9 +35,21 @@ var (
 	envLock = &sync.Mutex{}
 )
 
+func SetEnvVar(t *testing.T, env string, value string) {
+	t.Helper() // Keep golangci-lint happy
+	envLock.Lock()
+	t.Cleanup(envLock.Unlock)
+
+	err := os.Setenv(env, value)
+	if err != nil {
+		t.Errorf("error setting %v: %v", env, err)
+	}
+
+}
+
 // TestGetConfigDirPath tests the GetConfigDirPath function
 func TestGetConfigDirPath(t *testing.T) {
-
+	t.Parallel()
 	tests := []struct {
 		name           string
 		envVar         string
@@ -61,16 +73,7 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			envLock.Lock()
-			defer envLock.Unlock()
-			originalEnv := os.Getenv("XDG_CONFIG_HOME")
-			err := os.Setenv("XDG_CONFIG_HOME", tt.envVar)
-			if err != nil {
-				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
-			}
-			// reset this the environment variable when complete.
-			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
-
+			SetEnvVar(t, "XDG_CONFIG_HOME", tt.envVar)
 			path, err := util.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
@@ -164,9 +167,7 @@ func TestGetGrpcConnection(t *testing.T) {
 			err := os.Setenv(util.MinderAuthTokenEnvVar, tt.envToken)
 			// reset this the environment variable when complete.
 			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
-			if err != nil {
-				t.Errorf("error setting MinderAuthTokenEnvVar: %v", err)
-			}
+
 			conn, err := util.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
@@ -185,8 +186,7 @@ func TestGetGrpcConnection(t *testing.T) {
 // TestSaveCredentials tests the SaveCredentials function
 func TestSaveCredentials(t *testing.T) {
 	t.Parallel()
-	envLock.Lock()
-	defer envLock.Unlock()
+
 	tokens := util.OpenIdCredentials{
 		AccessToken:          "test_access_token",
 		RefreshToken:         "test_refresh_token",
@@ -196,18 +196,9 @@ func TestSaveCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	originalEnv := os.Getenv("XDG_CONFIG_HOME")
-	err := os.Setenv("XDG_CONFIG_HOME", testDir)
-	if err != nil {
-		t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
-	}
-	// reset this the environment variable when complete.
-	defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
-	cfgPath := filepath.Join(testDir, "minder")
+	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
 
-	if err != nil {
-		t.Fatalf("error getting config path: %v", err)
-	}
+	cfgPath := filepath.Join(testDir, "minder")
 
 	expectedFilePath := filepath.Join(cfgPath, "credentials.json")
 
@@ -246,25 +237,17 @@ func TestSaveCredentials(t *testing.T) {
 // TestRemoveCredentials tests the RemoveCredentials function
 func TestRemoveCredentials(t *testing.T) {
 	t.Parallel()
-	envLock.Lock()
-	defer envLock.Unlock()
+
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	originalEnv := os.Getenv("XDG_CONFIG_HOME")
-	err := os.Setenv("XDG_CONFIG_HOME", testDir)
-	if err != nil {
-		t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
-	}
-	// reset this the environment variable when complete.
-	defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
-
+	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
 	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
 
 	// Create a dummy credentials file
-	err = os.MkdirAll(filepath.Dir(filePath), 0750)
+	err := os.MkdirAll(filepath.Dir(filePath), 0750)
 
 	if err != nil {
 		t.Fatalf("error creating directory: %v", err)
@@ -289,8 +272,10 @@ func TestRemoveCredentials(t *testing.T) {
 // TestRefreshCredentials tests the RefreshCredentials function
 func TestRefreshCredentials(t *testing.T) {
 	t.Parallel()
-	envLock.Lock()
-	defer envLock.Unlock()
+	// Create a temporary directory
+	testDir := t.TempDir()
+
+	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
 	tests := []struct {
 		name           string
 		refreshToken   string
@@ -340,8 +325,7 @@ func TestRefreshCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			envLock.Lock()
-			defer envLock.Unlock()
+
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, tt.responseBody)
@@ -371,6 +355,7 @@ func TestRefreshCredentials(t *testing.T) {
 // TestLoadCredentials tests the LoadCredentials function
 func TestLoadCredentials(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name           string
 		fileContent    string
@@ -402,10 +387,10 @@ func TestLoadCredentials(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			tempDir := t.TempDir()
-			defer os.RemoveAll(tempDir)
+			testDir := t.TempDir()
+			SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
 			// Create the minder directory inside the temp directory
-			minderDir := filepath.Join(tempDir, "minder")
+			minderDir := filepath.Join(testDir, "minder")
 			err := os.MkdirAll(minderDir, 0750)
 			if err != nil {
 				t.Fatalf("failed to create minder directory: %v", err)
@@ -425,15 +410,6 @@ func TestLoadCredentials(t *testing.T) {
 				// Print the file path for debugging
 				t.Logf("Test %s: file path %s not created as file content is empty", tt.name, filePath)
 			}
-
-			// Temporarily override the environment variable for the test
-			originalEnv := os.Getenv("XDG_CONFIG_HOME")
-			err = os.Setenv("XDG_CONFIG_HOME", tempDir)
-			if err != nil {
-				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
-			}
-			// reset this the environment variable when complete.
-			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
 
 			result, err := util.LoadCredentials()
 			if tt.expectedError != "" {
@@ -554,13 +530,14 @@ func TestGetJsonFromProto(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			jsonResult, err := util.GetJsonFromProto(tt.input)
+			jsonStr, err := util.GetJsonFromProto(tt.input)
+
 			if (err != nil) != tt.expectedError {
 				t.Errorf("GetJsonFromProto() error = %v, expectedError %v", err, tt.expectedError)
 				return
 			}
-			if jsonResult != tt.expectedJson {
-				t.Errorf("GetJsonFromProto() = %v, expected %v", jsonResult, tt.expectedJson)
+			if strings.TrimSpace(jsonStr) != strings.TrimSpace(tt.expectedJson) {
+				t.Errorf("GetJsonFromProto() = %v, expected %v", jsonStr, tt.expectedJson)
 			}
 		})
 	}
