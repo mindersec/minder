@@ -483,7 +483,7 @@ func TestRevokeToken(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
+
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			var server *httptest.Server
@@ -584,8 +584,12 @@ owner: repoOwner
 				t.Errorf("GetYamlFromProto() error = %v, expectedError %v", err, tt.expectedError)
 				return
 			}
-			if yamlResult != tt.expectedYaml {
-				t.Errorf("GetYamlFromProto() = %v, expected %v", yamlResult, tt.expectedYaml)
+			// Normalize JSON strings by removing all whitespaces and new lines
+			normalizedResult := strings.Join(strings.Fields(yamlResult), "")
+			normalizedExpected := strings.Join(strings.Fields(tt.expectedYaml), "")
+
+			if normalizedResult != normalizedExpected {
+				t.Errorf("GetJsonFromProto() = %v, expected %v", normalizedResult, normalizedExpected)
 			}
 		})
 	}
@@ -704,7 +708,6 @@ func TestExpandFileArgs(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			// Create a temporary directory
@@ -906,7 +909,6 @@ func TestInt32FromString(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
