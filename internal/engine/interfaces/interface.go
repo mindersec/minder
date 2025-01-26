@@ -60,6 +60,7 @@ type EvalStatusParams struct {
 	EntityID         uuid.UUID
 	EvalStatusFromDb *db.ListRuleEvaluationsByProfileIdRow
 	evalErr          error
+	evalResult       *interfaces.EvaluationResult
 	actionsErr       evalerrors.ActionsError
 	ExecutionID      uuid.UUID
 }
@@ -76,6 +77,16 @@ func (e *EvalStatusParams) GetEvalErr() error {
 // SetEvalErr sets the evaluation error
 func (e *EvalStatusParams) SetEvalErr(err error) {
 	e.evalErr = err
+}
+
+// GetEvalResult returns the evaluation result
+func (e *EvalStatusParams) GetEvalResult() *interfaces.EvaluationResult {
+	return e.evalResult
+}
+
+// SetEvalResult sets the evaluation result for use later on in the actions
+func (e *EvalStatusParams) SetEvalResult(res *interfaces.EvaluationResult) {
+	e.evalResult = res
 }
 
 // SetActionsErr sets the actions' error
@@ -163,6 +174,7 @@ type ActionsParams interface {
 	interfaces.ResultSink
 	GetActionsErr() evalerrors.ActionsError
 	GetEvalErr() error
+	GetEvalResult() *interfaces.EvaluationResult
 	GetEvalStatusFromDb() *db.ListRuleEvaluationsByProfileIdRow
 	GetProfile() *models.ProfileAggregate
 }

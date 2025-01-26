@@ -25,6 +25,9 @@ const (
 
 	// ContentBytesLimit is the maximum number of bytes for the content
 	ContentBytesLimit = 5120
+
+	// PathBytesLimit is the maximum number of bytes for the path
+	PathBytesLimit = 200
 )
 
 var _ fsModifier = (*contentModification)(nil)
@@ -79,15 +82,20 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 			return nil, fmt.Errorf("cannot parse content template (index %d): %w", i, err)
 		}
 
+		pathTemplate, err := util.NewSafeTextTemplate(&cnt.Path, fmt.Sprintf("Path[%d]", i))
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse path template (index %d): %w", i, err)
+		}
+
 		mode := ghModeNonExecFile
 		if cnt.GetMode() != "" {
 			mode = *cnt.Mode
 		}
 
 		entries[i] = &fsEntry{
-			Path:            cnt.Path,
 			Mode:            mode,
 			contentTemplate: contentTemplate,
+			pathTemplate:    pathTemplate,
 		}
 	}
 
@@ -104,11 +112,18 @@ func (ca *contentModification) createFsModEntries(
 	}
 	for i, entry := range ca.entries {
 		content := new(bytes.Buffer)
+		path := new(bytes.Buffer)
 
 		if err := entry.contentTemplate.Execute(ctx, content, data, ContentBytesLimit); err != nil {
 			return fmt.Errorf("cannot execute content template (index %d): %w", i, err)
 		}
+
+		if err := entry.pathTemplate.Execute(ctx, path, data, PathBytesLimit); err != nil {
+			return fmt.Errorf("cannot execute path template (index %d): %w", i, err)
+		}
+
 		entry.Content = content.String()
+		entry.Path = path.String()
 	}
 
 	return nil

@@ -3,26 +3,33 @@ title: Get hacking
 sidebar_position: 1
 ---
 
-# Get Hacking
-
 ## Run Minder
-Follow the steps in the [Installing a Development version](./../run_minder_server/run_the_server.md) guide.
 
-The application will be available on `https://localhost:8080` and gRPC on `https://localhost:8090`.
+Follow the steps in the
+[Installing a Development version](./../run_minder_server/run_the_server.md)
+guide.
 
-When iterating, it can be helpful to only rebuild and reload the `minder` container.  You can do this with:
+The application will be available on `https://localhost:8080` and gRPC on
+`https://localhost:8090`.
+
+When iterating, it can be helpful to only rebuild and reload the `minder`
+container. You can do this with:
+
 ```bash
 make run-docker services=minder
 ```
 
 ## Run the tests
+
 ```bash
 make test
 ```
 
 ## CLI
 
-The CLI is available in the `cmd/cli` directory.  You can also use the pre-built `minder` CLI with your new application; you'll need to set the `--grpc-host localhost --grpc-port 8090` arguments in either case.
+The CLI is available in the `cmd/cli` directory. You can also use the pre-built
+`minder` CLI with your new application; you'll need to set the
+`--grpc-host localhost --grpc-port 8090` arguments in either case.
 
 ```bash
 go run cmd/cli/main.go --help
@@ -30,15 +37,19 @@ go run cmd/cli/main.go --help
 
 ## APIs
 
-The APIs are defined in protobuf [here](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
+The APIs are defined in protobuf
+[here](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto).
 
-An OpenAPI / swagger spec is generated to [here](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
+An OpenAPI / swagger spec is generated to
+[here](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/proto/minder/v1/minder.swagger.json)
 
-It can be accessed over gRPC or HTTP using [gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
+It can be accessed over gRPC or HTTP using
+[gprc-gateway](https://grpc-ecosystem.github.io/grpc-gateway/).
 
 ## How to generate protobuf stubs
 
-We use [buf](https://buf.build/docs/) to generate the gRPC / HTTP stubs (both protobuf and openAPI).
+We use [buf](https://buf.build/docs/) to generate the gRPC / HTTP stubs (both
+protobuf and openAPI).
 
 To build the stubs, run:
 
@@ -84,5 +95,6 @@ An example server configuration file is `config/server-config.yaml.example`.
 
 Most values should be quite self-explanatory.
 
-Before running the app, please copy the content of `config/config.yaml.example` into `$PWD/config.yaml` file,
-and `config/server-config.yaml.example` into `$PWD/server-config.yaml` file, and modify to use your own settings.
+Before running the app, please copy the content of `config/config.yaml.example`
+into `$PWD/config.yaml` file, and `config/server-config.yaml.example` into
+`$PWD/server-config.yaml` file, and modify to use your own settings.

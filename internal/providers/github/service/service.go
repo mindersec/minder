@@ -41,7 +41,7 @@ type GitHubProviderService interface {
 	// the installation in preparation for creating a new project when the authorizing user logs in.
 	//
 	// Note that this function may return nil, nil if the installation user is not known to Minder.
-	CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.Querier, userID int64,
+	CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID int64,
 		installationID int64) (*db.Project, error)
 	// ValidateGitHubInstallationId checks if the supplied GitHub token has access to the installation ID
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
@@ -67,7 +67,7 @@ var ErrInvalidTokenIdentity = errors.New("invalid token identity")
 // present in the system.  If a db.Project is returned, it should be used as the
 // location to create a Provider corresponding to the GitHub App installation.
 type ProjectFactory func(
-	ctx context.Context, qtx db.Querier, name string, user int64) (*db.Project, error)
+	ctx context.Context, qtx db.ExtendQuerier, name string, user int64) (*db.Project, error)
 
 type ghProviderService struct {
 	store           db.Store
@@ -167,7 +167,7 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 // Note that this function may return nil, nil if the installation user is not known to Minder.
 func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	ctx context.Context,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 	userID int64,
 	installationID int64,
 ) (*db.Project, error) {

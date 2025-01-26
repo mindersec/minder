@@ -14,7 +14,7 @@ First off, thank you for taking the time to contribute to Minder! :+1: :tada: Mi
   - [Commit Message Guidelines](#commit-message-guidelines)
 
 ## Code of Conduct
-This project adheres to the [Contributor Covenant](https://github.com/mindersec/minder/blob/main/CODE_OF_CONDUCT.md) code of conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to code-of-conduct@stacklok.dev.
+This project and all members must abide by the [OpenSSF Code of Conduct](https://openssf.org/community/code-of-conduct/).
 
 ## Reporting Security Vulnerabilities
 

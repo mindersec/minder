@@ -160,6 +160,9 @@ func HandleWebhookEvent(
 		case "pull_request":
 			wes.Accepted = true
 			res, processingErr = processPullRequestEvent(ctx, rawWBPayload)
+		case "release":
+			wes.Accepted = true
+			res, processingErr = processReleaseEvent(ctx, rawWBPayload)
 		case "ping":
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant

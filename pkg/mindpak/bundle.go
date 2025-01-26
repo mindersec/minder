@@ -109,14 +109,16 @@ func (b *Bundle) ReadSource() error {
 	b.Manifest = &Manifest{
 		Metadata: &Metadata{},
 		Files: &Files{
-			Profiles:  []*File{},
-			RuleTypes: []*File{},
+			Profiles:    []*File{},
+			RuleTypes:   []*File{},
+			DataSources: []*File{},
 		},
 	}
 
 	b.Files = &Files{
-		Profiles:  []*File{},
-		RuleTypes: []*File{},
+		Profiles:    []*File{},
+		RuleTypes:   []*File{},
+		DataSources: []*File{},
 	}
 
 	err := fs.WalkDir(b.Source, ".", func(path string, d fs.DirEntry, err error) error {
@@ -127,9 +129,7 @@ func (b *Bundle) ReadSource() error {
 			return nil
 		}
 
-		if !strings.HasPrefix(path, PathProfiles+"/") &&
-			!strings.HasPrefix(path, PathRuleTypes+"/") &&
-			!strings.HasPrefix(path, ManifestFileName) {
+		if !pathInKnownDirectory(path) {
 			return fmt.Errorf("found unexpected entry in mindpak source: %q", path)
 		}
 
@@ -165,15 +165,24 @@ func (b *Bundle) ReadSource() error {
 			b.Files.Profiles = append(b.Files.Profiles, &fentry)
 		case strings.HasPrefix(path, PathRuleTypes):
 			b.Files.RuleTypes = append(b.Files.RuleTypes, &fentry)
+		case strings.HasPrefix(path, PathDataSources):
+			b.Files.DataSources = append(b.Files.DataSources, &fentry)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("traversing bundle data source: %w", err)
+		return fmt.Errorf("traversing bundle: %w", err)
 	}
 	return nil
+}
+
+func pathInKnownDirectory(path string) bool {
+	return strings.HasPrefix(path, PathProfiles+"/") ||
+		strings.HasPrefix(path, PathRuleTypes+"/") ||
+		strings.HasPrefix(path, PathDataSources+"/") ||
+		strings.HasPrefix(path, ManifestFileName)
 }
 
 // Verify checks the contents of the bundle against its manifest
@@ -185,11 +194,16 @@ func (_ *Bundle) Verify() error {
 func copyTarIntoMemory(tarReader *tar.Reader) (fs.StatFS, error) {
 	// create the memfs instance, and create the directories we need
 	sourceFS := afero.NewIOFS(afero.NewMemMapFs())
-	if err := sourceFS.MkdirAll("/"+PathProfiles, 0700); err != nil {
-		return nil, fmt.Errorf("error creating directory in memfs: %w", err)
+	initialDirs := []string{
+		"/" + PathProfiles,
+		"/" + PathRuleTypes,
+		"/" + PathDataSources,
 	}
-	if err := sourceFS.MkdirAll("/"+PathRuleTypes, 0700); err != nil {
-		return nil, fmt.Errorf("error creating directory in memfs: %w", err)
+
+	for _, dir := range initialDirs {
+		if err := sourceFS.MkdirAll(dir, 0700); err != nil {
+			return nil, fmt.Errorf("error creating directory in memfs: %w", err)
+		}
 	}
 
 	var memFile afero.File
@@ -230,5 +244,34 @@ func copyTarIntoMemory(tarReader *tar.Reader) (fs.StatFS, error) {
 		}
 	}
 
+	// Remove the in-memory directories if they are empty
+	for _, dir := range initialDirs {
+		err := removeDirIfEmpty(sourceFS, dir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return sourceFS, nil
+}
+
+func removeDirIfEmpty(sourceFS afero.IOFS, dir string) error {
+	isEmpty, err := isDirEmpty(sourceFS, dir)
+	if err != nil {
+		return fmt.Errorf("error checking if directory is empty: %w", err)
+	}
+	if isEmpty {
+		if err := sourceFS.Remove(dir); err != nil {
+			return fmt.Errorf("error removing empty directory: %w", err)
+		}
+	}
+	return nil
+}
+
+func isDirEmpty(sourceFS afero.IOFS, path string) (bool, error) {
+	entries, err := sourceFS.ReadDir(path)
+	if err != nil {
+		return false, err
+	}
+	return len(entries) == 0, nil
 }

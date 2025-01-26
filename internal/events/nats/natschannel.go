@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package nats provides a nants+cloudevents implementation of the eventer interface
+// Package nats provides a nats+cloudevents implementation of the eventer interface
 package nats
 
 import (
@@ -17,6 +17,7 @@ import (
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/cloudevents/sdk-go/v2/client"
 	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/events/common"
@@ -114,25 +115,21 @@ func (c *cloudEventsNatsAdapter) ensureTopic(ctx context.Context, topic string, 
 	return &state, nil
 }
 
-func (c *cloudEventsNatsAdapter) ensureStream(_ context.Context) error {
+func (c *cloudEventsNatsAdapter) ensureStream(ctx context.Context) error {
 	conn, err := nats.Connect(c.cfg.URL)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-	js, err := conn.JetStream()
+	js, err := jetstream.New(conn)
 	if err != nil {
 		return err
 	}
-	si, err := js.StreamInfo(c.cfg.Prefix)
-	if si == nil || err != nil && err.Error() == "stream not found" {
-		_, err = js.AddStream(&nats.StreamConfig{
-			Name:     c.cfg.Prefix,
-			Subjects: []string{c.cfg.Prefix + ".>"},
-		})
-		return err
-	}
-	return nil
+	_, err = js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+		Name:     c.cfg.Prefix,
+		Subjects: []string{c.cfg.Prefix + ".>"},
+	})
+	return err
 }
 
 // Subscribe implements message.Subscriber.
@@ -191,13 +188,13 @@ func (c *cloudEventsNatsAdapter) Publish(topic string, messages ...*message.Mess
 
 	state, err := c.ensureTopic(ctx, subject, "sender")
 	if err != nil {
-		return fmt.Errorf("Error creating topic %q: %w", subject, err)
+		return fmt.Errorf("error creating topic %q: %w", subject, err)
 	}
 
 	for _, msg := range messages {
 		err := sendEvent(ctx, subject, state.ceClient, msg)
 		if err != nil {
-			return fmt.Errorf("Error sending event to %q: %w", subject, err)
+			return fmt.Errorf("error sending event to %q: %w", subject, err)
 		}
 	}
 	return nil
@@ -214,7 +211,7 @@ func sendEvent(
 	// All our current payloads are encoded JSON; we need to unmarshal
 	payload := map[string]any{}
 	if err := json.Unmarshal(msg.Payload, &payload); err != nil {
-		return fmt.Errorf("Error unmarshalling payload: %w", err)
+		return fmt.Errorf("error unmarshalling payload: %w", err)
 	}
 
 	err := event.SetData("application/json", payload)

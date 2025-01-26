@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
@@ -28,6 +29,8 @@ var (
 	ErrProfileSvcMissing = fmt.Errorf("profile service is missing")
 	// ErrRuleSvcMissing is returned when the rule service is not initialized
 	ErrRuleSvcMissing = fmt.Errorf("rule service is missing")
+	// ErrDataSourceSvcMissing is returned when the data source service is not initialized
+	ErrDataSourceSvcMissing = fmt.Errorf("data source service is missing")
 )
 
 // Store interface provides functions to execute db queries and transactions
@@ -48,17 +51,19 @@ type Querier interface {
 	RuleTypeHandlers
 	ProfileHandlers
 	BundleHandlers
+	DataSourceHandlers
 	Commit() error
 	Cancel() error
 }
 
 // querierType represents the database querier
 type querierType struct {
-	store      db.Store
-	tx         *sql.Tx
-	querier    db.ExtendQuerier
-	ruleSvc    ruletypes.RuleTypeService
-	profileSvc profiles.ProfileService
+	store         db.Store
+	tx            *sql.Tx
+	querier       db.ExtendQuerier
+	ruleSvc       ruletypes.RuleTypeService
+	profileSvc    profiles.ProfileService
+	dataSourceSvc datasourceservice.DataSourcesService
 }
 
 // Closer is a function that closes the database connection
@@ -95,11 +100,12 @@ func (q *querierType) BeginTx() (Querier, error) {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")
 	}
 	return &querierType{
-		store:      q.store,
-		querier:    q.store.GetQuerierWithTransaction(tx),
-		ruleSvc:    q.ruleSvc,
-		profileSvc: q.profileSvc,
-		tx:         tx,
+		store:         q.store,
+		querier:       q.store.GetQuerierWithTransaction(tx),
+		ruleSvc:       q.ruleSvc,
+		profileSvc:    q.profileSvc,
+		dataSourceSvc: q.dataSourceSvc,
+		tx:            tx,
 	}, nil
 }
 

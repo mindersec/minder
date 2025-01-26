@@ -16,7 +16,7 @@ import (
 
 func TestBundle_GetMetadata(t *testing.T) {
 	t.Parallel()
-	bundle := loadBundle(t)
+	bundle := loadBundle(t, testDataPath)
 	metadata := bundle.GetMetadata()
 	require.NotNil(t, metadata)
 	require.Equal(t, "t2", metadata.Name)
@@ -65,7 +65,7 @@ func TestBundle_GetProfile(t *testing.T) {
 	}
 
 	// immutable - can be shared across parallel runs
-	bundle := loadBundle(t)
+	bundle := loadBundle(t, testDataPath)
 	for i := range scenarios {
 		scenario := scenarios[i]
 		t.Run(scenario.Name, func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestBundle_GetProfile(t *testing.T) {
 func TestBundle_ForEachRuleType(t *testing.T) {
 	t.Parallel()
 	results := []string{}
-	bundle := loadBundle(t)
+	bundle := loadBundle(t, testDataPath)
 	err := bundle.ForEachRuleType(func(ruleType *minderv1.RuleType) error {
 		results = append(results, ruleType.Name)
 		return nil
@@ -98,18 +98,52 @@ func TestBundle_ForEachRuleType(t *testing.T) {
 func TestBundle_ForEachRuleTypeError(t *testing.T) {
 	t.Parallel()
 	errorMessage := "oh no"
-	bundle := loadBundle(t)
+	bundle := loadBundle(t, testDataPath)
 	err := bundle.ForEachRuleType(func(_ *minderv1.RuleType) error {
 		return errors.New(errorMessage)
 	})
 	require.ErrorContains(t, err, errorMessage)
 }
 
-func loadBundle(t *testing.T) reader.BundleReader {
+func TestBundle_ForEachDataSource(t *testing.T) {
+	t.Parallel()
+	results := []string{}
+	bundle := loadBundle(t, testDataPath)
+	err := bundle.ForEachDataSource(func(dataSource *minderv1.DataSource) error {
+		results = append(results, dataSource.Name)
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"osv"}, results)
+}
+
+func TestBundle_ForEachDataSource_NoDataSources(t *testing.T) {
+	t.Parallel()
+	results := []string{}
+	bundle := loadBundle(t, noDataSourcesPath)
+	err := bundle.ForEachDataSource(func(dataSource *minderv1.DataSource) error {
+		results = append(results, dataSource.Name)
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{}, results)
+}
+
+func TestBundle_ForEachDataSourceError(t *testing.T) {
+	t.Parallel()
+	errorMessage := "oh no"
+	bundle := loadBundle(t, testDataPath)
+	err := bundle.ForEachDataSource(func(_ *minderv1.DataSource) error {
+		return errors.New(errorMessage)
+	})
+	require.ErrorContains(t, err, errorMessage)
+}
+
+func loadBundle(t *testing.T, path string) reader.BundleReader {
 	t.Helper()
-	bundle, err := mindpak.NewBundleFromDirectory(testDataPath)
+	bundle, err := mindpak.NewBundleFromDirectory(path)
 	if err != nil {
-		t.Fatalf("Unable to load test data from %s: %v", testDataPath, err)
+		t.Fatalf("Unable to load test data from %s: %v", path, err)
 	}
 	return reader.NewBundleReader(bundle)
 }
@@ -117,4 +151,5 @@ func loadBundle(t *testing.T) reader.BundleReader {
 const (
 	testDataPath        = "../testdata/t2"
 	expectedProfileName = "branch-protection-github-profile"
+	noDataSourcesPath   = "../testdata/no-data-sources"
 )

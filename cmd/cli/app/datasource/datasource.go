@@ -21,4 +21,6 @@ var DataSourceCmd = &cobra.Command{
 
 func init() {
 	app.RootCmd.AddCommand(DataSourceCmd)
+	// Flags for all subcommands
+	DataSourceCmd.PersistentFlags().StringP("project", "j", "", "ID of the project")
 }

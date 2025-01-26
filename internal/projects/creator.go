@@ -29,7 +29,7 @@ type ProjectCreator interface {
 	// (project, marketplace subscriptions, etc.) but *does not* create a project.
 	ProvisionSelfEnrolledProject(
 		ctx context.Context,
-		qtx db.Querier,
+		qtx db.ExtendQuerier,
 		projectName string,
 		userSub string,
 	) (outproj *db.Project, projerr error)
@@ -63,7 +63,7 @@ var (
 
 func (p *projectCreator) ProvisionSelfEnrolledProject(
 	ctx context.Context,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 	projectName string,
 	userSub string,
 ) (outproj *db.Project, projerr error) {

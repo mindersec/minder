@@ -1,8 +1,8 @@
 -- CreateDataSource creates a new datasource in a given project.
 
 -- name: CreateDataSource :one
-INSERT INTO data_sources (project_id, name, display_name)
-VALUES ($1, $2, $3) RETURNING *;
+INSERT INTO data_sources (project_id, name, display_name, subscription_id)
+VALUES ($1, $2, $3, sqlc.narg(subscription_id)) RETURNING *;
 
 -- AddDataSourceFunction adds a function to a datasource.
 

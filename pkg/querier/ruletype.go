@@ -18,6 +18,7 @@ import (
 // RuleTypeHandlers interface provides functions to interact with ruletypes
 type RuleTypeHandlers interface {
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]*pb.RuleType, error)
+	ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourceID uuid.UUID) ([]uuid.UUID, error)
 	CreateRuleType(ctx context.Context, projectID uuid.UUID, subscriptionID uuid.UUID, ruleType *pb.RuleType) (*pb.RuleType, error)
 	UpdateRuleType(ctx context.Context, projectID uuid.UUID, subscriptionID uuid.UUID, ruleType *pb.RuleType) (*pb.RuleType, error)
 	DeleteRuleType(ctx context.Context, ruleTypeID uuid.UUID) error
@@ -97,4 +98,23 @@ func (q *querierType) CreateRuleType(
 		return nil, ErrRuleSvcMissing
 	}
 	return q.ruleSvc.CreateRuleType(ctx, projectID, subscriptionID, ruleType, q.querier)
+}
+
+// ListRuleTypesReferencesByDataSource returns a list of rule types using a data source
+func (q *querierType) ListRuleTypesReferencesByDataSource(ctx context.Context, dataSourceID uuid.UUID) ([]uuid.UUID, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	ruleTypes, err := q.querier.ListRuleTypesReferencesByDataSource(ctx, dataSourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert ruleTypes to a slice of strings
+	ruleTypeIds := make([]uuid.UUID, len(ruleTypes))
+	for i, r := range ruleTypes {
+		ruleTypeIds[i] = r.RuleTypeID
+	}
+
+	return ruleTypeIds, nil
 }

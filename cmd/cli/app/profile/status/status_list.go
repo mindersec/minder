@@ -6,6 +6,7 @@ package status
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -84,4 +85,11 @@ func init() {
 	listCmd.Flags().BoolP("detailed", "d", false, "List all profile violations")
 	listCmd.Flags().StringP("ruleType", "r", "", "Filter profile status list by rule type")
 	listCmd.Flags().String("ruleName", "", "Filter profile status list by rule name")
+
+	listCmd.Flags().StringP("name", "n", "", "Profile name to list status for")
+
+	if err := listCmd.MarkFlagRequired("name"); err != nil {
+		listCmd.Printf("Error marking flag required: %s", err)
+		os.Exit(1)
+	}
 }

@@ -17,12 +17,18 @@ import (
 
 	"github.com/mindersec/minder/internal/datasources"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/marketplaces/namespaces"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
+
+var (
+	// ErrDataSourceAlreadyExists is returned when a data source already exists
+	ErrDataSourceAlreadyExists = util.UserVisibleError(codes.AlreadyExists, "data source already exists")
+)
 
 // DataSourcesService is an interface that defines the methods for the data sources service.
 type DataSourcesService interface {
@@ -36,10 +42,26 @@ type DataSourcesService interface {
 	List(ctx context.Context, project uuid.UUID, opts *ReadOptions) ([]*minderv1.DataSource, error)
 
 	// Create creates a new data source.
-	Create(ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error)
+	Create(
+		ctx context.Context,
+		projectID uuid.UUID,
+		subscriptionID uuid.UUID,
+		ds *minderv1.DataSource,
+		opts *Options,
+	) (*minderv1.DataSource, error)
 
 	// Update updates an existing data source.
-	Update(ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error)
+	Update(
+		ctx context.Context,
+		projectID uuid.UUID,
+		subscriptionID uuid.UUID,
+		ds *minderv1.DataSource,
+		opts *Options,
+	) (*minderv1.DataSource, error)
+
+	// Upsert creates a new data source if it does not exist or updates it if it already exists.
+	// This is used in the subscription logic.
+	Upsert(ctx context.Context, projectID uuid.UUID, subscriptionID uuid.UUID, ds *minderv1.DataSource, opts *Options) error
 
 	// Delete deletes a data source in the given project.
 	//
@@ -82,19 +104,7 @@ func (d *dataSourceService) GetByName(
 	return d.getDataSourceSomehow(
 		ctx, project, opts, func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID,
 		) (db.DataSource, error) {
-			ds, err := tx.GetDataSourceByName(ctx, db.GetDataSourceByNameParams{
-				Name:     name,
-				Projects: projs,
-			})
-			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return db.DataSource{}, util.UserVisibleError(codes.NotFound,
-						"data source of name %s not found", name)
-				}
-				return db.DataSource{}, fmt.Errorf("failed to get data source by name: %w", err)
-			}
-
-			return ds, nil
+			return getByNameQuery(ctx, tx, projs, name)
 		})
 }
 
@@ -103,19 +113,7 @@ func (d *dataSourceService) GetByID(
 	return d.getDataSourceSomehow(
 		ctx, project, opts, func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID,
 		) (db.DataSource, error) {
-			ds, err := tx.GetDataSource(ctx, db.GetDataSourceParams{
-				ID:       id,
-				Projects: projs,
-			})
-			if errors.Is(err, sql.ErrNoRows) {
-				return db.DataSource{}, util.UserVisibleError(codes.NotFound,
-					"data source of id %s not found", id.String())
-			}
-			if err != nil {
-				return db.DataSource{}, fmt.Errorf("failed to get data source by name: %w", err)
-			}
-
-			return ds, nil
+			return getByIDQuery(ctx, tx, projs, id)
 		})
 }
 
@@ -173,8 +171,17 @@ func (d *dataSourceService) List(
 // We first validate the data source name uniqueness, then create the data source record.
 // Finally, we create function records based on the driver type.
 func (d *dataSourceService) Create(
-	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) (*minderv1.DataSource, error) {
 	if err := ds.Validate(); err != nil {
+		return nil, fmt.Errorf("data source validation failed: %w", err)
+	}
+
+	if err := namespaces.ValidateNamespacedNameRules(ds.GetName(), subscriptionID); err != nil {
 		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
 
@@ -192,11 +199,6 @@ func (d *dataSourceService) Create(
 
 	tx := stx.Q()
 
-	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
-	if err != nil {
-		return nil, fmt.Errorf("invalid project ID: %w", err)
-	}
-
 	// Check if such data source already exists in project hierarchy
 	projs, err := listRelevantProjects(ctx, tx, projectID, true)
 	if err != nil {
@@ -210,15 +212,15 @@ func (d *dataSourceService) Create(
 		return nil, fmt.Errorf("failed to check for existing data source: %w", err)
 	}
 	if existing.ID != uuid.Nil {
-		return nil, util.UserVisibleError(codes.AlreadyExists,
-			"data source with name %s already exists", ds.GetName())
+		return nil, ErrDataSourceAlreadyExists
 	}
 
 	// Create data source record
 	dsRecord, err := tx.CreateDataSource(ctx, db.CreateDataSourceParams{
-		ProjectID:   projectID,
-		Name:        ds.GetName(),
-		DisplayName: ds.GetName(),
+		ProjectID:      projectID,
+		Name:           ds.GetName(),
+		DisplayName:    ds.GetName(),
+		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data source: %w", err)
@@ -244,7 +246,12 @@ func (d *dataSourceService) Create(
 // because it's simpler and safer - it ensures consistency and avoids partial updates.
 // All functions must use the same driver type to maintain data source integrity.
 func (d *dataSourceService) Update(
-	ctx context.Context, ds *minderv1.DataSource, opts *Options) (*minderv1.DataSource, error) {
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) (*minderv1.DataSource, error) {
 	if err := ds.Validate(); err != nil {
 		return nil, fmt.Errorf("data source validation failed: %w", err)
 	}
@@ -263,29 +270,29 @@ func (d *dataSourceService) Update(
 
 	tx := stx.Q()
 
-	projectID, err := uuid.Parse(ds.GetContext().GetProjectId())
+	// Validate the subscription ID if present
+	existingDS, err := getDataSourceFromDb(ctx, projectID, ReadBuilder().WithTransaction(tx), tx,
+		func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID) (db.DataSource, error) {
+			return getByNameQuery(ctx, tx, projs, ds.GetName())
+		})
 	if err != nil {
-		return nil, fmt.Errorf("invalid project ID: %w", err)
+		return nil, fmt.Errorf("failed to get existing data source from DB: %w", err)
+	}
+	if err = namespaces.DoesSubscriptionIDMatch(subscriptionID, existingDS.SubscriptionID); err != nil {
+		return nil, fmt.Errorf("failed to update data source: %w", err)
 	}
 
-	// Build existing data source
-	existingDS, err := d.GetByName(ctx, ds.GetName(), projectID, ReadBuilder().WithTransaction(tx))
+	// Validate the data source functions update
+	existingFunctions, err := getDataSourceFunctions(ctx, tx, existingDS)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get existing data source: %w", err)
+		return nil, fmt.Errorf("failed to get existing data source functions: %w", err)
 	}
-
-	existingDSID, err := uuid.Parse(existingDS.Id)
-	if err != nil {
-		// This should not happen
-		return nil, fmt.Errorf("invalid data source ID: %w", err)
-	}
-
-	if err := validateDataSourceFunctionsUpdate(existingDS, ds); err != nil {
+	if err := validateDataSourceFunctionsUpdate(existingDS, existingFunctions, ds); err != nil {
 		return nil, err
 	}
 
 	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
-		ID:          existingDSID,
+		ID:          existingDS.ID,
 		ProjectID:   projectID,
 		DisplayName: ds.GetName(),
 	}); err != nil {
@@ -293,13 +300,13 @@ func (d *dataSourceService) Update(
 	}
 
 	if _, err := tx.DeleteDataSourceFunctions(ctx, db.DeleteDataSourceFunctionsParams{
-		DataSourceID: existingDSID,
+		DataSourceID: existingDS.ID,
 		ProjectID:    projectID,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to delete existing functions: %w", err)
 	}
 
-	if err := addDataSourceFunctions(ctx, tx, ds, existingDSID, projectID); err != nil {
+	if err := addDataSourceFunctions(ctx, tx, ds, existingDS.ID, projectID); err != nil {
 		return nil, fmt.Errorf("failed to create data source functions: %w", err)
 	}
 
@@ -308,10 +315,37 @@ func (d *dataSourceService) Update(
 	}
 
 	if ds.Id == "" {
-		ds.Id = existingDSID.String()
+		ds.Id = existingDS.ID.String()
 	}
 
 	return ds, nil
+}
+
+// Upsert creates the data source if it does not already exist
+// or updates it if it already exists. This is used in the subscription
+// logic.
+func (d *dataSourceService) Upsert(
+	ctx context.Context,
+	projectID uuid.UUID,
+	subscriptionID uuid.UUID,
+	ds *minderv1.DataSource,
+	opts *Options,
+) error {
+	// Simulate upsert semantics by trying to create, then trying to update.
+	_, err := d.Create(ctx, projectID, subscriptionID, ds, opts)
+	if err == nil {
+		// Rule successfully created, we can stop here.
+		return nil
+	} else if !errors.Is(err, ErrDataSourceAlreadyExists) {
+		return fmt.Errorf("error while creating data source: %w", err)
+	}
+
+	// If we get here: data source already exists. Let's update it.
+	_, err = d.Update(ctx, projectID, subscriptionID, ds, opts)
+	if err != nil {
+		return fmt.Errorf("error while updating data source: %w", err)
+	}
+	return nil
 }
 
 // Delete deletes a data source in the given project.
@@ -346,6 +380,19 @@ func (d *dataSourceService) Delete(
 		}
 		return util.UserVisibleError(codes.FailedPrecondition,
 			"data source %s is in use by the following rule types: %v", id, existingRefs)
+	}
+
+	// We don't support the deletion of bundle data sources
+	existingDS, err := getDataSourceFromDb(ctx, project, ReadBuilder().WithTransaction(tx), tx,
+		func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID) (db.DataSource, error) {
+			return getByIDQuery(ctx, tx, projs, id)
+		})
+	if err != nil {
+		return fmt.Errorf("failed to get data source with id %s: %w", id, err)
+	}
+	if existingDS.SubscriptionID.Valid {
+		return util.UserVisibleError(codes.FailedPrecondition,
+			"data source %s cannot be deleted as it is part of a bundle", id)
 	}
 
 	// Delete the data source record
@@ -414,12 +461,22 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 			return nil, fmt.Errorf("failed to build data source from protobuf: %w", err)
 		}
 
-		if err := reg.RegisterDataSource(inst.GetName(), impl); err != nil {
+		if err := reg.RegisterDataSource(getDataSourceReferenceAlias(ref), impl); err != nil {
 			return nil, fmt.Errorf("failed to register data source: %w", err)
 		}
 	}
 
 	return reg, nil
+}
+
+// getDataSourceReferenceKey gets the alias that the data source will be referred to by
+// in the registry.
+func getDataSourceReferenceAlias(dsr *minderv1.DataSourceReference) string {
+	key := dsr.GetAlias()
+	if key == "" {
+		return dsr.GetName()
+	}
+	return key
 }
 
 // addDataSourceFunctions adds functions to a data source based on its driver type.
@@ -431,6 +488,23 @@ func addDataSourceFunctions(
 	projectID uuid.UUID,
 ) error {
 	switch drv := ds.GetDriver().(type) {
+	case *minderv1.DataSource_Structured:
+		for name, def := range drv.Structured.GetDef() {
+			defBytes, err := protojson.Marshal(def)
+			if err != nil {
+				return fmt.Errorf("failed to marshal structured data definition: %w", err)
+			}
+
+			if _, err := tx.AddDataSourceFunction(ctx, db.AddDataSourceFunctionParams{
+				DataSourceID: dsID,
+				ProjectID:    projectID,
+				Name:         name,
+				Type:         v1datasources.DataSourceDriverStruct,
+				Definition:   defBytes,
+			}); err != nil {
+				return fmt.Errorf("failed to create data source function: %w", err)
+			}
+		}
 	case *minderv1.DataSource_Rest:
 		for name, def := range drv.Rest.GetDef() {
 			defBytes, err := protojson.Marshal(def)

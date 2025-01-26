@@ -14,7 +14,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/rs/zerolog"
-	gitlablib "github.com/xanzy/go-gitlab"
+	gitlablib "gitlab.com/gitlab-org/api/client-go"
 	"golang.org/x/mod/semver"
 
 	"github.com/mindersec/minder/internal/entities/properties"

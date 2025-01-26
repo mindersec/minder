@@ -1,0 +1,5 @@
+{
+  "gitignore": true,
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules/", ".docusaurus", "build/", "docs/ref/cli/"],
+}

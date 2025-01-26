@@ -197,7 +197,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 
 	// TODO: use cobra context here
 	ctx := context.Background()
-	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, options.WithDataSources(dsRegistry))
+	eng, err := rtengine.NewRuleTypeEngine(ctx, ruletype, prov, nil /*experiments*/, options.WithDataSources(dsRegistry))
 	if err != nil {
 		return fmt.Errorf("cannot create rule type engine: %w", err)
 	}
@@ -327,7 +327,7 @@ func selectAndEval(
 
 	var evalErr error
 	if selected {
-		evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
+		_, evalErr = eng.Eval(ctx, inf.Entity, evalStatus.GetRule().Def, evalStatus.GetRule().Params, evalStatus)
 	} else {
 		evalErr = errors.NewErrEvaluationSkipped("entity not selected by selector %s", matchedSelector)
 	}

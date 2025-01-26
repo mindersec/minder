@@ -1,6 +1,6 @@
 ---
-sidebar_position: 60
 title: Protocol documentation
+sidebar_position: 60
 toc_max_heading_level: 4
 ---
 
@@ -152,6 +152,7 @@ replies with OK
 | GetProfileById | [GetProfileByIdRequest](#minder-v1-GetProfileByIdRequest) | [GetProfileByIdResponse](#minder-v1-GetProfileByIdResponse) |  |
 | GetProfileByName | [GetProfileByNameRequest](#minder-v1-GetProfileByNameRequest) | [GetProfileByNameResponse](#minder-v1-GetProfileByNameResponse) |  |
 | GetProfileStatusByName | [GetProfileStatusByNameRequest](#minder-v1-GetProfileStatusByNameRequest) | [GetProfileStatusByNameResponse](#minder-v1-GetProfileStatusByNameResponse) |  |
+| GetProfileStatusById | [GetProfileStatusByIdRequest](#minder-v1-GetProfileStatusByIdRequest) | [GetProfileStatusByIdResponse](#minder-v1-GetProfileStatusByIdResponse) |  |
 | GetProfileStatusByProject | [GetProfileStatusByProjectRequest](#minder-v1-GetProfileStatusByProjectRequest) | [GetProfileStatusByProjectResponse](#minder-v1-GetProfileStatusByProjectResponse) |  |
 
 
@@ -599,6 +600,7 @@ create entities are called Providers.
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the data source is evaluated. Note that in this case we only need the project in the context, since data sources are not provider-specific. |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source. Note that this is unique within a project hierarchy. Names must be lowercase and can only contain letters, numbers, hyphens, and underscores. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the data source. |
+| structured | <TypeLink type="minder-v1-StructDataSource">StructDataSource</TypeLink> |  | structured is the structired data - data source. |
 | rest | <TypeLink type="minder-v1-RestDataSource">RestDataSource</TypeLink> |  | rest is the REST data source driver. |
 
 
@@ -612,7 +614,8 @@ be available in the same project hierarchy.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | <TypeLink type="string">string</TypeLink> |  | refer to a data source by name. |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the data source within the project hierarchy. |
+| alias | <TypeLink type="string">string</TypeLink> |  | alias is the alias used to refer to the data source in the rule definition. If left unset, it will default to the name of the data source. |
 
 
 
@@ -833,6 +836,18 @@ format for rule evaluation.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | repo | <TypeLink type="minder-v1-DepsType-RepoConfigs">DepsType.RepoConfigs</TypeLink> |  |  |
+| pr | <TypeLink type="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DepsType-PullRequestConfigs">DepsType.PullRequestConfigs</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filter | <TypeLink type="string">string</TypeLink> |  | filter is the filter to apply to the PRs. The default value is "NEW_AND_UPDATED". |
 
 
 
@@ -1246,6 +1261,34 @@ get profile by name
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | profile | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetProfileStatusByIdRequest">GetProfileStatusByIdRequest</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the rule type is evaluated. |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the id of the profile to get |
+| entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> |  |  |
+| all | <TypeLink type="bool">bool</TypeLink> |  |  |
+| rule_type | <TypeLink type="string">string</TypeLink> |  |  |
+| rule_name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-GetProfileStatusByIdResponse">GetProfileStatusByIdResponse</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| profile_status | <TypeLink type="minder-v1-ProfileStatus">ProfileStatus</TypeLink> |  | profile_status is the status of the profile |
+| rule_evaluation_status | <TypeLink type="minder-v1-RuleEvaluationStatus">RuleEvaluationStatus</TypeLink> | repeated | rule_evaluation_status is the status of the rules |
 
 
 
@@ -2119,7 +2162,7 @@ All fields are optional because we want to allow partial updates.
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the provider. |
 | class | <TypeLink type="string">string</TypeLink> |  | class is the name of the provider implementation, eg. 'github' or 'gh-app'. |
 | project | <TypeLink type="string">string</TypeLink> |  | project is the project where the provider is. This is ignored on input in favor of the context field in CreateProviderRequest. |
-| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. |
+| version | <TypeLink type="string">string</TypeLink> |  | version is the version of the provider. if unset, "v1" is assumed. |
 | implements | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | implements is the list of interfaces that the provider implements. |
 | config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is the configuration of the provider. |
 | auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | auth_flows is the list of authorization flows that the provider supports. |
@@ -2557,6 +2600,18 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ----- | ---- | ----- | ----------- |
 | type | <TypeLink type="string">string</TypeLink> |  |  |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
+| pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| review_message | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
@@ -2768,6 +2823,52 @@ Severity defines the severity of the rule.
 <Message id="minder-v1-StoreProviderTokenResponse">StoreProviderTokenResponse</Message>
 
 
+
+
+
+<Message id="minder-v1-StructDataSource">StructDataSource</Message>
+
+StructDataSource is the structured data source driver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| def | <TypeLink type="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</TypeLink> | repeated | defs is the list of definitions for the structured data API. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def">StructDataSource.Def</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | <TypeLink type="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</TypeLink> |  | Path is the path specification for the structured data source. |
+
+
+
+<Message id="minder-v1-StructDataSource-Def-Path">StructDataSource.Def.Path</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| file_name | <TypeLink type="string">string</TypeLink> |  |  |
+| alternatives | <TypeLink type="string">string</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-StructDataSource-DefEntry">StructDataSource.DefEntry</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | <TypeLink type="string">string</TypeLink> |  |  |
+| value | <TypeLink type="minder-v1-StructDataSource-Def">StructDataSource.Def</TypeLink> |  |  |
 
 
 

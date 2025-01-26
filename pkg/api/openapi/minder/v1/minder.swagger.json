@@ -1537,6 +1537,95 @@
         ]
       }
     },
+    "/api/v1/profile/{id}/status": {
+      "get": {
+        "operationId": "ProfileService_GetProfileStatusById",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetProfileStatusByIdResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "description": "id is the id of the profile to get",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context.provider",
+            "description": "name of the provider",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.project",
+            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "context.retiredOrganization",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "entity.type",
+            "description": "entity is the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ENTITY_UNSPECIFIED",
+              "ENTITY_REPOSITORIES",
+              "ENTITY_BUILD_ENVIRONMENTS",
+              "ENTITY_ARTIFACTS",
+              "ENTITY_PULL_REQUESTS",
+              "ENTITY_RELEASE",
+              "ENTITY_PIPELINE_RUN",
+              "ENTITY_TASK_RUN",
+              "ENTITY_BUILD"
+            ],
+            "default": "ENTITY_UNSPECIFIED"
+          },
+          {
+            "name": "entity.id",
+            "description": "id is the ID of the entity to get status for. Incompatible with `all`",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "ruleType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "ruleName",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ProfileService"
+        ]
+      }
+    },
     "/api/v1/profile_status": {
       "get": {
         "operationId": "ProfileService_GetProfileStatusByProject",
@@ -3085,11 +3174,36 @@
     }
   },
   "definitions": {
+    "AlertAlertTypePRComment": {
+      "type": "object",
+      "properties": {
+        "reviewMessage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewMessage"
+      ]
+    },
     "AlertAlertTypeSA": {
       "type": "object",
       "properties": {
         "severity": {
           "type": "string"
+        }
+      }
+    },
+    "DefPath": {
+      "type": "object",
+      "properties": {
+        "fileName": {
+          "type": "string"
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -3101,6 +3215,9 @@
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
+        },
+        "pullRequestComment": {
+          "$ref": "#/definitions/AlertAlertTypePRComment"
         }
       }
     },
@@ -3200,6 +3317,15 @@
         },
         "pullRequest": {
           "$ref": "#/definitions/RemediatePullRequestRemediation"
+        }
+      }
+    },
+    "DepsTypePullRequestConfigs": {
+      "type": "object",
+      "properties": {
+        "filter": {
+          "type": "string",
+          "description": "filter is the filter to apply to the PRs.  The default value is \"NEW_AND_UPDATED\"."
         }
       }
     },
@@ -3479,65 +3605,6 @@
           "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
         }
       }
-    },
-    "RestDataSourceDef": {
-      "type": "object",
-      "properties": {
-        "endpoint": {
-          "type": "string",
-          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
-        },
-        "method": {
-          "type": "string",
-          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
-        },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "headers is a map of headers to send with the request."
-        },
-        "bodyobj": {
-          "type": "object",
-          "description": "body is the body of the request."
-        },
-        "bodystr": {
-          "type": "string",
-          "description": "bodystr is the body of the request as a string."
-        },
-        "bodyFromField": {
-          "type": "string",
-          "description": "body_from_field is the field in the input to use as the body.\nIf the value is an string, it will be used as the body, as is.\nIf the value is an object, it will be serialized as JSON.\nIf the value is not found in the input, the request will fail."
-        },
-        "parse": {
-          "type": "string",
-          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
-        },
-        "fallback": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "$ref": "#/definitions/RestDataSourceDefFallback"
-          },
-          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
-        },
-        "expectedStatus": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
-        },
-        "inputSchema": {
-          "type": "object",
-          "description": "input_schema is the schema for the input to the REST API."
-        }
-      },
-      "required": [
-        "endpoint"
-      ]
     },
     "RestDataSourceDefFallback": {
       "type": "object",
@@ -4014,6 +4081,10 @@
           "description": "id is the unique identifier of the data source.",
           "readOnly": true
         },
+        "structured": {
+          "$ref": "#/definitions/v1StructDataSource",
+          "description": "structured is the structired data - data source."
+        },
         "rest": {
           "$ref": "#/definitions/v1RestDataSource",
           "description": "rest is the REST data source driver."
@@ -4030,7 +4101,11 @@
       "properties": {
         "name": {
           "type": "string",
-          "description": "refer to a data source by name."
+          "description": "name is the name of the data source within the project hierarchy."
+        },
+        "alias": {
+          "type": "string",
+          "description": "alias is the alias used to refer to the data source in the rule\ndefinition.\nIf left unset, it will default to the name of the data source."
         }
       },
       "description": "DataSourceReference is a reference to a data source.\nNote that for a resource to refer to a data source the data source must\nbe available in the same project hierarchy."
@@ -4124,6 +4199,9 @@
       "properties": {
         "repo": {
           "$ref": "#/definitions/DepsTypeRepoConfigs"
+        },
+        "pr": {
+          "$ref": "#/definitions/DepsTypePullRequestConfigs"
         }
       },
       "description": "DepsType defines the \"deps\" ingester which can extract depndencies in protobom\nformat for rule evaluation."
@@ -4473,6 +4551,26 @@
       },
       "required": [
         "profile"
+      ]
+    },
+    "v1GetProfileStatusByIdResponse": {
+      "type": "object",
+      "properties": {
+        "profileStatus": {
+          "$ref": "#/definitions/v1ProfileStatus",
+          "title": "profile_status is the status of the profile"
+        },
+        "ruleEvaluationStatus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1RuleEvaluationStatus"
+          },
+          "title": "rule_evaluation_status is the status of the rules"
+        }
+      },
+      "required": [
+        "profileStatus"
       ]
     },
     "v1GetProfileStatusByNameResponse": {
@@ -5203,7 +5301,7 @@
         },
         "version": {
           "type": "string",
-          "description": "version is the version of the provider."
+          "description": "version is the version of the provider.\nif unset, \"v1\" is assumed."
         },
         "implements": {
           "type": "array",
@@ -5473,12 +5571,71 @@
         "def": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/RestDataSourceDef"
+            "$ref": "#/definitions/v1RestDataSourceDef"
           },
           "description": "defs is the list of definitions for the REST API."
         }
       },
       "description": "RestDataSource is the REST data source driver."
+    },
+    "v1RestDataSourceDef": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
+        },
+        "method": {
+          "type": "string",
+          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "headers is a map of headers to send with the request."
+        },
+        "bodyobj": {
+          "type": "object",
+          "description": "body is the body of the request."
+        },
+        "bodystr": {
+          "type": "string",
+          "description": "bodystr is the body of the request as a string."
+        },
+        "bodyFromField": {
+          "type": "string",
+          "description": "body_from_field is the field in the input to use as the body.\nIf the value is an string, it will be used as the body, as is.\nIf the value is an object, it will be serialized as JSON.\nIf the value is not found in the input, the request will fail."
+        },
+        "parse": {
+          "type": "string",
+          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
+        },
+        "fallback": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/RestDataSourceDefFallback"
+          },
+          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
+        },
+        "expectedStatus": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
+        },
+        "inputSchema": {
+          "type": "object",
+          "description": "input_schema is the schema for the input to the REST API."
+        }
+      },
+      "required": [
+        "endpoint"
+      ]
     },
     "v1RestType": {
       "type": "object",
@@ -5809,6 +5966,31 @@
     },
     "v1StoreProviderTokenResponse": {
       "type": "object"
+    },
+    "v1StructDataSource": {
+      "type": "object",
+      "properties": {
+        "def": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/v1StructDataSourceDef"
+          },
+          "description": "defs is the list of definitions for the structured data API."
+        }
+      },
+      "description": "StructDataSource is the structured data source driver."
+    },
+    "v1StructDataSourceDef": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/definitions/DefPath",
+          "description": "Path is the path specification for the structured data source."
+        }
+      },
+      "required": [
+        "path"
+      ]
     },
     "v1UpdateDataSourceRequest": {
       "type": "object",

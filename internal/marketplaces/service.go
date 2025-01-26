@@ -28,7 +28,7 @@ type Marketplace interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		bundleID mindpak.BundleID,
-		qtx db.Querier,
+		qtx db.ExtendQuerier,
 	) error
 	// AddProfile adds the specified profile from the bundle to the project.
 	AddProfile(
@@ -53,7 +53,7 @@ func (s *marketplace) Subscribe(
 	ctx context.Context,
 	projectID uuid.UUID,
 	bundleID mindpak.BundleID,
-	qtx db.Querier,
+	qtx db.ExtendQuerier,
 ) error {
 	bundle, err := s.getBundle(bundleID)
 	if err != nil {
@@ -100,7 +100,7 @@ func (s *marketplace) getBundle(bundleID mindpak.BundleID) (reader.BundleReader,
 // This is used when the Marketplace functionality is disabled
 type noopMarketplace struct{}
 
-func (_ *noopMarketplace) Subscribe(_ context.Context, _ uuid.UUID, _ mindpak.BundleID, _ db.Querier) error {
+func (_ *noopMarketplace) Subscribe(_ context.Context, _ uuid.UUID, _ mindpak.BundleID, _ db.ExtendQuerier) error {
 	return nil
 }
 

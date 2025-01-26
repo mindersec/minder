@@ -60,18 +60,18 @@ func (mr *MockDataSourcesServiceMockRecorder) BuildDataSourceRegistry(ctx, rt, o
 }
 
 // Create mocks base method.
-func (m *MockDataSourcesService) Create(ctx context.Context, ds *v1.DataSource, opts *service.Options) (*v1.DataSource, error) {
+func (m *MockDataSourcesService) Create(ctx context.Context, projectID, subscriptionID uuid.UUID, ds *v1.DataSource, opts *service.Options) (*v1.DataSource, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, ds, opts)
+	ret := m.ctrl.Call(m, "Create", ctx, projectID, subscriptionID, ds, opts)
 	ret0, _ := ret[0].(*v1.DataSource)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockDataSourcesServiceMockRecorder) Create(ctx, ds, opts any) *gomock.Call {
+func (mr *MockDataSourcesServiceMockRecorder) Create(ctx, projectID, subscriptionID, ds, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDataSourcesService)(nil).Create), ctx, ds, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockDataSourcesService)(nil).Create), ctx, projectID, subscriptionID, ds, opts)
 }
 
 // Delete mocks base method.
@@ -134,16 +134,30 @@ func (mr *MockDataSourcesServiceMockRecorder) List(ctx, project, opts any) *gomo
 }
 
 // Update mocks base method.
-func (m *MockDataSourcesService) Update(ctx context.Context, ds *v1.DataSource, opts *service.Options) (*v1.DataSource, error) {
+func (m *MockDataSourcesService) Update(ctx context.Context, projectID, subscriptionID uuid.UUID, ds *v1.DataSource, opts *service.Options) (*v1.DataSource, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, ds, opts)
+	ret := m.ctrl.Call(m, "Update", ctx, projectID, subscriptionID, ds, opts)
 	ret0, _ := ret[0].(*v1.DataSource)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockDataSourcesServiceMockRecorder) Update(ctx, ds, opts any) *gomock.Call {
+func (mr *MockDataSourcesServiceMockRecorder) Update(ctx, projectID, subscriptionID, ds, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDataSourcesService)(nil).Update), ctx, ds, opts)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockDataSourcesService)(nil).Update), ctx, projectID, subscriptionID, ds, opts)
+}
+
+// Upsert mocks base method.
+func (m *MockDataSourcesService) Upsert(ctx context.Context, projectID, subscriptionID uuid.UUID, ds *v1.DataSource, opts *service.Options) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upsert", ctx, projectID, subscriptionID, ds, opts)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upsert indicates an expected call of Upsert.
+func (mr *MockDataSourcesServiceMockRecorder) Upsert(ctx, projectID, subscriptionID, ds, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upsert", reflect.TypeOf((*MockDataSourcesService)(nil).Upsert), ctx, projectID, subscriptionID, ds, opts)
 }

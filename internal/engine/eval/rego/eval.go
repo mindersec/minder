@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown/print"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/topdown/print"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -37,10 +40,11 @@ const (
 // It initializes the rego engine and evaluates the rules
 // The default rego package is "minder"
 type Evaluator struct {
-	cfg         *Config
-	regoOpts    []func(*rego.Rego)
-	reseval     resultEvaluator
-	datasources *v1datasources.DataSourceRegistry
+	cfg          *Config
+	featureFlags openfeature.IClient
+	regoOpts     []func(*rego.Rego)
+	reseval      resultEvaluator
+	datasources  *v1datasources.DataSourceRegistry
 }
 
 // Input is the input for the rego evaluator
@@ -49,6 +53,9 @@ type Input struct {
 	Profile map[string]any `json:"profile"`
 	// Ingested is the values set for the ingested data
 	Ingested any `json:"ingested"`
+	// Properties contains the entity's properties as defined by
+	// the provider
+	Properties map[string]any `json:"properties"`
 	// OutputFormat is the format to output violations in
 	OutputFormat ConstraintsViolationsFormat `json:"output_format"`
 }
@@ -66,6 +73,7 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
+	featureFlags openfeature.IClient,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
@@ -76,8 +84,9 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:     c,
-		reseval: re,
+		cfg:          c,
+		featureFlags: featureFlags,
+		reseval:      re,
 		regoOpts: []func(*rego.Rego){
 			re.getQuery(),
 			rego.Module(MinderRegoFile, c.Def),
@@ -109,17 +118,20 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(
 	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Result,
-) error {
+) (*interfaces.EvaluationResult, error) {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check
 	// this explicitly.
 	obj := res.Object
 
 	// Register options to expose functions
-	regoFuncOptions := []func(*rego.Rego){}
+	regoFuncOptions := []func(*rego.Rego){
+		// TODO: figure out a Rego V1 migration path (https://github.com/mindersec/minder/issues/5262)
+		rego.SetRegoVersion(ast.RegoV0),
+	}
 
 	// Initialize the built-in minder library rego functions
-	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
+	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(ctx, e.featureFlags, res)...)
 
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
@@ -131,17 +143,33 @@ func (e *Evaluator) Eval(
 
 	pq, err := r.PrepareForEval(ctx)
 	if err != nil {
-		return fmt.Errorf("could not prepare Rego: %w", err)
+		return nil, fmt.Errorf("could not prepare Rego: %w", err)
 	}
 
-	rs, err := pq.Eval(ctx, rego.EvalInput(&Input{
+	input := &Input{
 		Profile:      pol,
 		Ingested:     obj,
 		OutputFormat: e.cfg.ViolationFormat,
-	}))
+	}
+
+	enrichInputWithEntityProps(input, entity)
+	rs, err := pq.Eval(ctx, rego.EvalInput(input), rego.EvalHTTPRoundTripper(LimitedDialer))
 	if err != nil {
-		return fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
+		return nil, fmt.Errorf("error evaluating profile. Might be wrong input: %w", err)
 	}
 
 	return e.reseval.parseResult(rs, entity)
+}
+
+type propertiesFetcher interface {
+	GetProperties() *structpb.Struct
+}
+
+func enrichInputWithEntityProps(
+	input *Input,
+	entity protoreflect.ProtoMessage,
+) {
+	if inner, ok := entity.(propertiesFetcher); ok {
+		input.Properties = inner.GetProperties().AsMap()
+	}
 }

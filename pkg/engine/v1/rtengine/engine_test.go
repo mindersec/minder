@@ -92,13 +92,13 @@ allow {
 			}
 
 			tk := tkv1.NewTestKit(tkv1.WithGitDir(tdir))
-			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
+			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk, nil)
 			require.NoError(t, err, "NewRuleTypeEngine() failed")
 
 			// Override ingester. This is needed for the test.
 			rte.WithCustomIngester(tk)
 
-			err = rte.Eval(ctx, tt.ent, tt.ri.Def, tt.ri.Params, tkv1.NewVoidResultSink())
+			_, err = rte.Eval(ctx, tt.ent, tt.ri.Def, tt.ri.Params, tkv1.NewVoidResultSink())
 			if tt.wantErr {
 				assert.Error(t, err, "Eval() should have failed")
 			} else {

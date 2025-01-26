@@ -19,6 +19,8 @@ minder profile status get [flags]
   -e, --entity string        Entity ID to get profile status for
   -t, --entity-type string   the entity type to get profile status for (one of artifact, build, build_environment, pipeline_run, release, repository, task_run)
   -h, --help                 help for get
+  -i, --id string            ID to get profile status for
+  -n, --name string          Profile name to get profile status for
 ```
 
 ### Options inherited from parent commands
@@ -30,7 +32,6 @@ minder profile status get [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
-  -n, --name string              Profile name to get profile status for
   -o, --output string            Output format (one of json,yaml,table) (default "table")
   -j, --project string           ID of the project
   -v, --verbose                  Output additional messages to STDERR

@@ -3,11 +3,11 @@ title: Manage profiles and compliance
 sidebar_position: 20
 ---
 
-# Manage profiles
-
-In order to detect security deviations from repositories or other entities, Minder is relying on the concepts of **Profiles**.
-A profile is a definition of a verification we want to do on an entity in a pipeline.
-A **profile** is an instance of a profile type and applies to all repositories in a project, with the relevant settings filled in.
+In order to detect security deviations from repositories or other entities,
+Minder is relying on the concepts of **profiles**. A profile is a definition of
+a verification we want to do on an entity in a pipeline. A **profile** is an
+instance of a profile type and applies to all repositories in a project, with
+the relevant settings filled in.
 
 An example profile is the following:
 
@@ -29,16 +29,21 @@ repository:
       required_approving_review_count: 2
 ```
 
-The full example is available in the [examples directory](https://github.com/mindersec/minder-rules-and-profiles).
+The full example is available in the
+[examples directory](https://github.com/mindersec/minder-rules-and-profiles).
 
-This profile is checking that secret scanning is enabled for all repositories and that the `main` branch is protected, 
-requiring at least two approvals from code owners before landing a pull request.
+This profile is checking that secret scanning is enabled for all repositories
+and that the `main` branch is protected, requiring at least two approvals from
+code owners before landing a pull request.
 
-You'll notice that this profile calls two different rules: `secret_scanning` and `branch_protection_require_pull_request_approving_review_count`.
+You'll notice that this profile calls two different rules: `secret_scanning` and
+`branch_protection_require_pull_request_approving_review_count`.
 
-Rules can be instantiated from rule types, and they are the ones that are actually doing the verification.
+Rules can be instantiated from rule types, and they are the ones that are
+actually doing the verification.
 
-A rule type is a definition of a verification we want to do on an entity in a pipeline.
+A rule type is a definition of a verification we want to do on an entity in a
+pipeline.
 
 An example rule type is the following:
 
@@ -86,7 +91,7 @@ def:
       # for each repository in the organization, we use a template that
       # will be evaluated for each repository. The structure to use is the
       # protobuf structure for the entity that is being evaluated.
-      endpoint: "/repos/{{.Entity.Owner}}/{{.Entity.Name}}"
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}'
       # This is the method to use to retrieve the data. It should already default to JSON
       parse: json
   # Defines the configuration for evaluating data ingested against the given profile
@@ -116,20 +121,24 @@ def:
           input.profile.skip_private_repos == true
           input.ingested.private == true
         }
-
 ```
 
-The full example is available in the [examples directory](https://github.com/mindersec/minder-rules-and-profiles)
+The full example is available in the
+[examples directory](https://github.com/mindersec/minder-rules-and-profiles)
 
 This rule type is checking that secret scanning is enabled for all repositories.
 
-The rule type defines how the upstream GitHub API is to be queried, and how the data is to be evaluated.
-It also defines how instances of this rule will be validated against the rule schema.
+The rule type defines how the upstream GitHub API is to be queried, and how the
+data is to be evaluated. It also defines how instances of this rule will be
+validated against the rule schema.
 
-When a profile is created for an specific group, a continuous monitoring for the related objects start. An object can be a repository,
-a branch, a package... depending on the profile definition. When an specific object is not matching what's expected,
-a violation is presented via the profile's **status**. When a violation happens, the overall **Profile status** for this specific entity changes,
-becoming failed. There is also individual statuses for each rule evaluation. User can check the reason for this violation and take remediation
+When a profile is created for an specific group, a continuous monitoring for the
+related objects start. An object can be a repository, a branch, a package...
+depending on the profile definition. When an specific object is not matching
+what's expected, a violation is presented via the profile's **status**. When a
+violation happens, the overall **Profile status** for this specific entity
+changes, becoming failed. There is also individual statuses for each rule
+evaluation. User can check the reason for this violation and take remediation
 actions to comply with the profile.
 
 ## Prerequisites
@@ -141,7 +150,8 @@ actions to comply with the profile.
 
 Covered rule types are now:
 
-- branch_protection_require_pull_request_approving_review_count: controls the branch protection approving review count rule on a repo
+- branch_protection_require_pull_request_approving_review_count: controls the
+  branch protection approving review count rule on a repo
 - secret_scanning: enforces secret scanning for a repo
 
 You can list all profile types registered in Minder:
@@ -150,31 +160,35 @@ You can list all profile types registered in Minder:
 minder ruletype list
 ```
 
-By default, a rule type is providing some recommended default values, so users can create profiles
-by using those defaults without having to create a new profile from scratch.
+By default, a rule type is providing some recommended default values, so users
+can create profiles by using those defaults without having to create a new
+profile from scratch.
 
 ## Create a rule type
 
-Before creating a profile, we need to ensure that all rule types exist in Minder.
+Before creating a profile, we need to ensure that all rule types exist in
+Minder.
 
-A rule type can be created by pointing to a directory (or file) containing the rule type definition:
+A rule type can be created by pointing to a directory (or file) containing the
+rule type definition:
 
 ```bash
 minder ruletype create -f ./examples/rules-and-profiles/rule-types/github/secret_scanning.yaml
 ```
 
-Where the yaml files in the directory `rule-types` may look as the example above.
+Where the yaml files in the directory `rule-types` may look as the example
+above.
 
-Once all the relevant rule types are available for our group, we may take them into use
-by creating a profile.
+Once all the relevant rule types are available for our group, we may take them
+into use by creating a profile.
 
 ## Create a profile
 
-When there is a need to control the specific behaviours for a set of repositories, a profile can be
-created, based on the previous profile types.
+When there is a need to control the specific behaviors for a set of
+repositories, a profile can be created, based on the previous profile types.
 
-A profile needs to be associated with a provider, created within a certain project and it will be applied
-to all repositories belonging to that project.
+A profile needs to be associated with a provider, created within a certain
+project and it will be applied to all repositories belonging to that project.
 
 For example creating a profile happens by running:
 
@@ -184,19 +198,21 @@ minder profile create -f ./examples/rules-and-profiles/profiles/github/profile.y
 
 Where `profile.yaml` may look as the example above.
 
-When a specific setting is not provided, the value of this setting is not compared against the profile.
-This specific profile will monitor the `main` branch for all registered repositories, checking that pull
-request enforcement is on place, requiring at least 2 code owners approvals before landing.
-It will also require that force pushes and deletions are disabled for the `main` branch.
+When a specific setting is not provided, the value of this setting is not
+compared against the profile. This specific profile will monitor the `main`
+branch for all registered repositories, checking that pull request enforcement
+is on place, requiring at least 2 code owners approvals before landing. It will
+also require that force pushes and deletions are disabled for the `main` branch.
 
-When a profile is created, any repos registered for the same provider and project,
-are being reconciled. Each time that there is a change on the repo it causes the related profile status to be updated.
+When a profile is created, any repos registered for the same provider and
+project, are being reconciled. Each time that there is a change on the repo it
+causes the related profile status to be updated.
 
 ## List profile status
 
-When there is an event that causes a profile violation, the violation is stored in the database, and the
-overall status of the profile for this specific repository is changed.
-The `profile status` command will inform about:
+When there is an event that causes a profile violation, the violation is stored
+in the database, and the overall status of the profile for this specific
+repository is changed. The `profile status` command will inform about:
 
 - profile_type (secret_scanning...)
 - status: [success, failure]

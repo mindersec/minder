@@ -5,14 +5,19 @@
 package git
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-viper/mapstructure/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
@@ -59,41 +64,31 @@ func (gi *Git) GetConfig() protoreflect.ProtoMessage {
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo
 func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
+	switch entity := ent.(type) {
+	case *pb.Repository:
+		return gi.ingestRepository(ctx, entity, params)
+	case *pbinternal.PullRequest:
+		return gi.ingestPullRequest(ctx, entity, params)
+	default:
+		return nil, fmt.Errorf("git is only supported for repositories and pull requests")
+	}
+}
+
+func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
 	}
 
-	url := getCloneUrl(ent, userCfg)
+	url := cmp.Or(userCfg.CloneURL, repo.GetCloneUrl())
 	if url == "" {
 		return nil, fmt.Errorf("could not get clone url")
 	}
 
-	branch := gi.getBranch(ent, userCfg)
-
-	// We clone to the memfs go-billy filesystem driver, which doesn't
-	// allow for direct access to the underlying filesystem. This is
-	// because we want to be able to run this in a sandboxed environment
-	// where we don't have access to the underlying filesystem.
-	r, err := gi.gitprov.Clone(ctx, url, branch)
+	branch := cmp.Or(userCfg.Branch, gi.cfg.Branch, repo.GetDefaultBranch(), defaultBranch)
+	fs, storer, head, err := gi.fetchClone(ctx, url, branch)
 	if err != nil {
-		if errors.Is(err, provifv1.ErrProviderGitBranchNotFound) {
-			return nil, fmt.Errorf("%w: %s: branch %s", engerrors.ErrEvaluationFailed,
-				provifv1.ErrProviderGitBranchNotFound, branch)
-		} else if errors.Is(err, provifv1.ErrRepositoryEmpty) {
-			return nil, fmt.Errorf("%w: %s", engerrors.ErrEvaluationSkipped, provifv1.ErrRepositoryEmpty)
-		}
-		return nil, err
-	}
-
-	wt, err := r.Worktree()
-	if err != nil {
-		return nil, fmt.Errorf("could not get worktree: %w", err)
-	}
-
-	head, err := r.Head()
-	if err != nil {
-		return nil, fmt.Errorf("could not get head: %w", err)
+		return nil, fmt.Errorf("failed to clone %s from %s: %w", branch, url, err)
 	}
 
 	hsh := head.Hash()
@@ -104,47 +99,73 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 
 	return &interfaces.Result{
 		Object:     nil,
-		Fs:         wt.Filesystem,
-		Storer:     r.Storer,
+		Fs:         fs,
+		Storer:     storer,
 		Checkpoint: chkpoint,
 	}, nil
 }
 
-func (gi *Git) getBranch(ent protoreflect.ProtoMessage, userCfg *IngesterConfig) string {
-	// If the user has specified a branch, use that
-	if userCfg.Branch != "" {
-		return userCfg.Branch
+func (gi *Git) ingestPullRequest(
+	ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
+	// TODO: we don't actually have any configuration here.  Do we need to read the configuration?
+	userCfg := &IngesterConfig{}
+	if err := mapstructure.Decode(params, userCfg); err != nil {
+		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
 	}
 
-	// If the branch is provided in the rule-type
-	// configuration, use that
-	if gi.cfg.Branch != "" {
-		return gi.cfg.Branch
+	if ent.GetBaseCloneUrl() == "" || ent.GetBaseRef() == "" {
+		return nil, fmt.Errorf("could not get PR base branch %q from %q", ent.GetBaseRef(), ent.GetBaseCloneUrl())
+	}
+	if ent.GetTargetCloneUrl() == "" || ent.GetTargetRef() == "" {
+		return nil, fmt.Errorf("could not get PR target branch %q from %q", ent.GetTargetRef(), ent.GetTargetCloneUrl())
 	}
 
-	// If the entity is a repository get it from the entity
-	// else, use the default
-	if repo, ok := ent.(*pb.Repository); ok {
-		if repo.GetDefaultBranch() != "" {
-			return repo.GetDefaultBranch()
-		}
+	baseFs, _, _, err := gi.fetchClone(ctx, ent.GetBaseCloneUrl(), ent.GetBaseRef())
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone base branch %s from %s: %w", ent.GetBaseRef(), ent.GetBaseCloneUrl(), err)
+	}
+	targetFs, storer, head, err := gi.fetchClone(ctx, ent.GetTargetCloneUrl(), ent.GetTargetRef())
+	if err != nil {
+		return nil, fmt.Errorf("failed to clone target branch %s from %s: %w", ent.GetTargetRef(), ent.GetTargetCloneUrl(), err)
 	}
 
-	// If the branch is not provided in the rule-type
-	// configuration, use the default branch
-	return defaultBranch
+	checkpoint := checkpoints.NewCheckpointV1Now().WithBranch(ent.GetTargetRef()).WithCommitHash(head.Hash().String())
+
+	return &interfaces.Result{
+		Object:     nil,
+		Fs:         targetFs,
+		Storer:     storer,
+		BaseFs:     baseFs,
+		Checkpoint: checkpoint,
+	}, nil
 }
 
-func getCloneUrl(ent protoreflect.ProtoMessage, cfg *IngesterConfig) string {
-	if cfg.CloneURL != "" {
-		return cfg.CloneURL
+func (gi *Git) fetchClone(
+	ctx context.Context, url, branch string) (billy.Filesystem, storage.Storer, *plumbing.Reference, error) {
+	// We clone to the memfs go-billy filesystem driver, which doesn't
+	// allow for direct access to the underlying filesystem. This is
+	// because we want to be able to run this in a sandboxed environment
+	// where we don't have access to the underlying filesystem.
+	r, err := gi.gitprov.Clone(ctx, url, branch)
+	if err != nil {
+		if errors.Is(err, provifv1.ErrProviderGitBranchNotFound) {
+			return nil, nil, nil, fmt.Errorf("%w: %s: branch %s", engerrors.ErrEvaluationFailed,
+				provifv1.ErrProviderGitBranchNotFound, branch)
+		} else if errors.Is(err, provifv1.ErrRepositoryEmpty) {
+			return nil, nil, nil, fmt.Errorf("%w: %s", engerrors.ErrEvaluationSkipped, provifv1.ErrRepositoryEmpty)
+		}
+		return nil, nil, nil, err
 	}
 
-	// If the entity is a repository get it from the entity
-	// else, get it from the configuration
-	if repo, ok := ent.(*pb.Repository); ok {
-		return repo.GetCloneUrl()
+	wt, err := r.Worktree()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get worktree: %w", err)
 	}
 
-	return ""
+	head, err := r.Head()
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("could not get head: %w", err)
+	}
+
+	return wt.Filesystem, r.Storer, head, err
 }

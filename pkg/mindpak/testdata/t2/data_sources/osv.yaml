@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+---
+version: v1
+type: data-source
+name: osv
+context: {}
+rest:
+  def:
+    query:
+      endpoint: 'https://api.osv.dev/v1/query'
+      parse: json
+      method: POST
+      body_from_field: query
+      input_schema:
+        type: object
+        properties:
+          query:
+            type: object
+            properties:
+              version:
+                type: string
+              package:
+                type: object
+                properties:
+                  ecosystem:
+                    type: string
+                    description: The ecosystem the dependency belongs to
+                  name:
+                    type: string
+                    description: The name of the dependency
+        required:
+          - query

@@ -76,3 +76,19 @@ func WithFailedForEachRuleType(mock BundleMock) {
 		ForEachRuleType(gomock.Any()).
 		Return(errDefault)
 }
+
+func WithSuccessfulForEachDataSource(mock BundleMock) {
+	type argType = func(source *v1.DataSource) error
+	var argument argType
+	mock.EXPECT().
+		ForEachDataSource(gomock.AssignableToTypeOf(argument)).
+		DoAndReturn(func(fn argType) error {
+			return fn(&v1.DataSource{})
+		})
+}
+
+func WithFailedForEachDataSource(mock BundleMock) {
+	mock.EXPECT().
+		ForEachDataSource(gomock.Any()).
+		Return(errDefault)
+}

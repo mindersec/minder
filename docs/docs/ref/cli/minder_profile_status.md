@@ -17,7 +17,6 @@ minder profile status [flags]
 
 ```
   -h, --help            help for status
-  -n, --name string     Profile name to get profile status for
   -o, --output string   Output format (one of json,yaml,table) (default "table")
 ```
 

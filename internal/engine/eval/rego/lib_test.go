@@ -5,16 +5,19 @@ package rego_test
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	memfs "github.com/go-git/go-billy/v5/memfs"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -40,15 +43,50 @@ allow {
 	file.exists("foo")
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Matches
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileExistsInBase(t *testing.T) {
+	t.Parallel()
+	fs := memfs.New()
+
+	_, err := fs.Create("foo")
+	require.NoError(t, err, "could not create file")
+
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"git_pr_diffs": true}
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+    base_file.exists("foo")
+}`,
+		},
+		featureClient,
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	// Matches
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		BaseFs: fs,
 	})
 	require.NoError(t, err, "could not evaluate")
 }
@@ -70,12 +108,13 @@ allow {
 	file.exists("unexistent")
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -107,12 +146,13 @@ allow {
 	contents == "bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -144,12 +184,13 @@ allow {
 	contents == "bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -174,12 +215,13 @@ allow {
 	is_null(files)
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -206,12 +248,13 @@ allow {
 	count(files) == 0
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -243,12 +286,13 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -280,12 +324,13 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -320,12 +365,13 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -363,12 +409,13 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -401,12 +448,13 @@ allow {
 	count(files) == 1
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -498,12 +546,13 @@ allow {
 	actions == expected_set
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -534,12 +583,13 @@ allow {
 	actions == expected_set
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -569,12 +619,13 @@ allow {
 	count(files) == 1
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -615,12 +666,13 @@ allow {
 	count(files) == 3
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -651,12 +703,13 @@ allow {
 	htype == "text/plain; charset=utf-8"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -688,12 +741,13 @@ allow {
 	htype == "application/octet-stream"
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -738,12 +792,72 @@ allow {
 	count(files) == 7
 }`,
 		},
+		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		Object: nil,
+		Fs:     fs,
+	})
+	require.NoError(t, err, "could not evaluate")
+}
+
+func TestFileArchive(t *testing.T) {
+	t.Parallel()
+	fs := memfs.New()
+	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
+	require.NoError(t, fs.MkdirAll("bar", 0755), "could not create directory")
+
+	require.NoError(t, billyutil.WriteFile(fs, "foo/bar", []byte("bar"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "foo/baz", []byte("bar"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "file.txt", []byte("words"), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "README", []byte("docs"), 0644))
+
+	// N.B. This was constructed by examining the output of the tarball, and
+	// and verifying by untarring the data with `cat file | tar -tzvf -`
+	expectedTarball := []byte{
+		31, 139, 8, 0, 0, 0, 0, 0, 0, 255, 236, 147, 65, 10, 2, 49, 12, 69, 115,
+		148, 57, 129, 254, 98, 211, 158, 103, 68, 11, 130, 16, 232, 84, 20, 79,
+		47, 234, 202, 34, 10, 74, 170, 67, 243, 54, 153, 213, 252, 52, 159, 151,
+		68, 72, 27, 0, 136, 204, 183, 9, 160, 158, 79, 190, 99, 116, 142, 6, 86,
+		223, 140, 136, 14, 83, 25, 51, 1, 223, 254, 167, 126, 220, 76, 72, 34,
+		203, 245, 152, 85, 51, 174, 247, 8, 222, 191, 232, 127, 245, 216, 191,
+		131, 103, 208, 208, 228, 136, 157, 247, 175, 221, 189, 241, 223, 220,
+		253, 63, 171, 102, 124, 226, 127, 48, 255, 155, 96, 254, 247, 77, 218,
+		237, 183, 139, 114, 42, 154, 25, 239, 253, 231, 218, 255, 96, 254, 183,
+		225, 40, 121, 51, 253, 122, 9, 195, 48, 12, 163, 57, 151, 0, 0, 0, 255,
+		255, 203, 184, 208, 59, 0, 18, 0, 0,
+	}
+
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"tar_gz_functions": true}
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+import rego.v1
+
+tarball := file.archive(["foo", "file.txt"])
+encoded := base64.encode(tarball)
+expectedTar := base64.decode(input.profile.expected)
+violations contains {"msg": sprintf("Expected: %s", [input.profile.expected])} if tarball != expectedTar
+violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != expectedTar
+`,
+		},
+		featureClient,
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	policy := map[string]any{
+		// Encode to string in Go, to force checking that Go & Rego perform the same encoding
+		"expected": base64.StdEncoding.EncodeToString(expectedTarball),
+	}
+
+	_, err = e.Eval(context.Background(), policy, nil, &interfaces.Result{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -888,13 +1002,14 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
+				nil,
 			)
 			require.NoError(t, err, "could not create evaluator")
 
 			emptyPol := map[string]any{}
 
 			var evalErr *engerrors.EvaluationError
-			err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+			_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
 				Object: nil,
 				Fs:     fs,
 			})
@@ -993,16 +1108,198 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
+				nil,
 			)
 			require.NoError(t, err, "could not create evaluator")
 
-			err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
 
 			if s.wantErr {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestParseToml(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name    string
+		toml    string
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "simple key-value",
+			toml: "foo = \"bar\"",
+			want: `{"foo": "bar"}`,
+		},
+		{
+			name: "nested structure",
+			toml: `
+[foo.bar]
+baz = "qux"`,
+			want: `{"foo": {"bar": {"baz": "qux"}}}`,
+		},
+		{
+			name: "array values",
+			toml: `
+items = ["foo", "bar", "baz"]`,
+			want: `{"items": ["foo", "bar", "baz"]}`,
+		},
+		{
+			name: "parse array of tables",
+			toml: `
+[[items]]
+name = "foo"
+[[items]]
+name = "bar"`,
+			want: `{"items": [{"name": "foo"}, {"name": "bar"}]}`,
+		},
+	}
+
+	for _, s := range scenario {
+		t.Run(s.name, func(t *testing.T) {
+			t.Parallel()
+
+			regoCode := fmt.Sprintf(`
+package minder
+
+default allow = false
+
+allow {
+	parsed := parse_toml(%q)
+	print(parsed)
+	expected := json.unmarshal(%q)
+	parsed == expected
+}`, s.toml, s.want)
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  regoCode,
+				},
+				nil,
+			)
+
+			require.NoError(t, err, "could not create evaluator")
+
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+
+			if s.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestExtractDeps(t *testing.T) {
+	t.Parallel()
+
+	scenario := []struct {
+		name         string
+		path         string
+		expectedDeps []string
+		expectedErr  error
+	}{{
+		name: "parse all",
+		expectedDeps: []string{
+			"example.com/othermodule",
+			"example.com/thismodule",
+			"example.com/thatmodule",
+			"stdlib", // Always part of golang binaries.
+			"PyYAML",
+		},
+	}, {
+		name: "parse go.mod",
+		path: "foo",
+		expectedDeps: []string{
+			"example.com/othermodule",
+			"example.com/thismodule",
+			"example.com/thatmodule",
+			"stdlib", // Always part of golang binaries.
+		},
+	}, {
+		name: "parse file",
+		path: "requirements.txt",
+		expectedDeps: []string{
+			"PyYAML",
+		},
+	}, {
+		name:        "parse non-existent file",
+		path:        "missing",
+		expectedErr: engerrors.NewErrEvaluationFailed("denied"),
+	}}
+
+	fs := memfs.New()
+	require.NoError(t, fs.MkdirAll("foo", 0755), "could not create directory")
+	// From https://go.dev/doc/modules/gomod-ref#example
+	goMod := `
+module example.com/mymodule
+
+go 1.14
+
+require (
+    example.com/othermodule v1.2.3
+    example.com/thismodule v1.2.3
+    example.com/thatmodule v1.2.3
+)
+`
+
+	require.NoError(t, billyutil.WriteFile(fs, "foo/go.mod", []byte(goMod), 0644))
+	require.NoError(t, billyutil.WriteFile(fs, "requirements.txt", []byte("PyYAML>=5.3.1"), 0644))
+
+	featureClient := &flags.FakeClient{}
+	featureClient.Data = map[string]any{"dependency_extract": true}
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			// TODO: update rego for different APIs
+			Def: `
+package minder
+import rego.v1
+
+deps := file.deps(input.profile.path)
+depsSet := { x |  x = deps.node_list.nodes[_].name }
+expected := { x | x = input.profile.expected[_] }
+
+default allow = false
+allow if {
+  count(depsSet) > 0
+  count(depsSet - expected) == 0
+  count(expected - depsSet) == 0
+}
+`,
+		},
+		featureClient,
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	for _, tc := range scenario {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			policy := map[string]any{
+				"path":     tc.path,
+				"expected": tc.expectedDeps,
+			}
+
+			result, err := e.Eval(context.Background(), policy, nil, &interfaces.Result{
+				Fs: fs,
+			})
+
+			if tc.expectedErr == nil {
+				t.Logf("Result: %+v", result)
+				require.NoError(t, err, "could not evaluate")
+			} else {
+				require.EqualError(t, err, tc.expectedErr.Error())
+			}
+			//t.Fail()
 		})
 	}
 }

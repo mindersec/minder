@@ -8,13 +8,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // EvaluationType is the type of evaluation to perform
@@ -53,7 +54,7 @@ func (c ConstraintsViolationsFormat) String() string {
 
 type resultEvaluator interface {
 	getQuery() func(*rego.Rego)
-	parseResult(rego.ResultSet, protoreflect.ProtoMessage) error
+	parseResult(rego.ResultSet, protoreflect.ProtoMessage) (*interfaces.EvaluationResult, error)
 }
 
 type denyByDefaultEvaluator struct {
@@ -63,10 +64,11 @@ func (*denyByDefaultEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(RegoQueryPrefix)
 }
 
-func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage) error {
+func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage,
+) (*interfaces.EvaluationResult, error) {
 	// This usually happens when the provided Rego code is empty
 	if len(rs) == 0 {
-		return engerrors.NewDetailedErrEvaluationFailed(
+		return nil, engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
 				"message": "no results",
@@ -79,7 +81,7 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 
 	// This usually happens when the provided Rego code is empty
 	if len(res.Expressions) == 0 {
-		return engerrors.NewDetailedErrEvaluationFailed(
+		return nil, engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
 				"message": "no expressions",
@@ -93,7 +95,7 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 	exprVal := exprRaw.Value
 	expr, ok := exprVal.(map[string]any)
 	if !ok {
-		return engerrors.NewDetailedErrEvaluationFailed(
+		return nil, engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
 				"message": "unable to get result expression",
@@ -108,14 +110,14 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 		skippedBool, ok := skipped.(bool)
 		// if skipped is true, return skipped error
 		if ok && skippedBool {
-			return engerrors.NewErrEvaluationSkipped("rule not applicable")
+			return nil, engerrors.NewErrEvaluationSkipped("rule not applicable")
 		}
 	}
 
 	// check if allowed
 	allowed, ok := expr["allow"]
 	if !ok {
-		return engerrors.NewDetailedErrEvaluationFailed(
+		return nil, engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
 				"message": "unable to get allow result",
@@ -126,7 +128,7 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 
 	allowedBool, ok := allowed.(bool)
 	if !ok {
-		return engerrors.NewDetailedErrEvaluationFailed(
+		return nil, engerrors.NewDetailedErrEvaluationFailed(
 			templates.RegoDenyByDefaultTemplate,
 			map[string]any{
 				"message": "allow result is not a bool",
@@ -136,7 +138,7 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 	}
 
 	if allowedBool {
-		return nil
+		return &interfaces.EvaluationResult{}, nil
 	}
 
 	// check if custom message was provided
@@ -152,7 +154,7 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 	}
 
 	entityName := getEntityName(entity)
-	return engerrors.NewDetailedErrEvaluationFailed(
+	return nil, engerrors.NewDetailedErrEvaluationFailed(
 		templates.RegoDenyByDefaultTemplate,
 		map[string]any{
 			"message":    message,
@@ -170,26 +172,26 @@ func (*constraintsEvaluator) getQuery() func(r *rego.Rego) {
 	return rego.Query(fmt.Sprintf("%s.violations[details]", RegoQueryPrefix))
 }
 
-func (c *constraintsEvaluator) parseResult(rs rego.ResultSet, _ protoreflect.ProtoMessage) error {
+func (c *constraintsEvaluator) parseResult(rs rego.ResultSet, _ protoreflect.ProtoMessage) (*interfaces.EvaluationResult, error) {
 	if len(rs) == 0 {
 		// There were no violations
-		return nil
+		return &interfaces.EvaluationResult{}, nil
 	}
 
 	// Gather violations into one
 	resBuilder := c.resultsBuilder(rs)
 	if resBuilder == nil {
-		return fmt.Errorf("invalid format: %s", c.format)
+		return nil, fmt.Errorf("invalid format: %s", c.format)
 	}
 	for _, r := range rs {
 		v, err := resultToViolation(r)
 		if err != nil {
-			return fmt.Errorf("unexpected error in rego violation: %w", err)
+			return nil, fmt.Errorf("unexpected error in rego violation: %w", err)
 		}
 
 		err = resBuilder.addResult(v)
 		if err != nil {
-			return fmt.Errorf("cannot add result: %w", err)
+			return nil, fmt.Errorf("cannot add result: %w", err)
 		}
 	}
 
@@ -228,7 +230,7 @@ func resultToViolation(r rego.Result) (any, error) {
 
 type resultBuilder interface {
 	addResult(msg any) error
-	formatResults() error
+	formatResults() (*interfaces.EvaluationResult, error)
 }
 
 type stringResultBuilder struct {
@@ -250,15 +252,17 @@ func (srb *stringResultBuilder) addResult(msg any) error {
 	return nil
 }
 
-func (srb *stringResultBuilder) formatResults() error {
-	return engerrors.NewDetailedErrEvaluationFailed(
-		templates.RegoConstraints,
-		map[string]any{
-			"violations": srb.results,
-		},
-		"Evaluation failures: \n - %s",
-		strings.Join(srb.results, "\n - "),
-	)
+func (srb *stringResultBuilder) formatResults() (*interfaces.EvaluationResult, error) {
+	return &interfaces.EvaluationResult{
+			Output: srb.results,
+		}, engerrors.NewDetailedErrEvaluationFailed(
+			templates.RegoConstraints,
+			map[string]any{
+				"violations": srb.results,
+			},
+			"Evaluation failures: \n - %s",
+			strings.Join(srb.results, "\n - "),
+		)
 }
 
 type jsonResultBuilder struct {
@@ -291,13 +295,15 @@ func (jrb *jsonResultBuilder) addResult(msg any) error {
 	return nil
 }
 
-func (jrb *jsonResultBuilder) formatResults() error {
+func (jrb *jsonResultBuilder) formatResults() (*interfaces.EvaluationResult, error) {
 	jsonArray, err := json.Marshal(jrb.results)
 	if err != nil {
-		return fmt.Errorf("failed to marshal violations: %w", err)
+		return nil, fmt.Errorf("failed to marshal violations: %w", err)
 	}
 
-	return engerrors.NewErrEvaluationFailed("%s", string(jsonArray))
+	return &interfaces.EvaluationResult{
+		Output: jrb.results,
+	}, engerrors.NewErrEvaluationFailed("%s", string(jsonArray))
 }
 
 func getEntityName(entity protoreflect.ProtoMessage) string {

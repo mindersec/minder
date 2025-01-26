@@ -11,7 +11,8 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/itchyny/gojq"
-	"github.com/open-policy-agent/opa/ast"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/mindersec/minder/internal/util"
 )
@@ -29,6 +30,8 @@ var (
 	ErrBadDNSStyleName = errors.New(
 		"name may only contain letters, numbers, hyphens and underscores, and is limited to a maximum of 63 characters",
 	)
+
+	dataSourceAliasRegex = regexp.MustCompile(`^[a-z][-_[:word:]]*$`)
 )
 
 var (
@@ -211,6 +214,22 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 			}
 		}
 	}
+
+	if ev.GetDataSources() != nil {
+		aliases := sets.New[string]()
+
+		for i, ds := range ev.GetDataSources() {
+			if err := ds.Validate(); err != nil {
+				return fmt.Errorf("%w: data source reference %d is invalid: %s", ErrInvalidRuleTypeDefinition, i, err)
+			}
+
+			alias := ds.getAliasWithDefault()
+			if aliases.Has(alias) {
+				return fmt.Errorf("cannot have multiple data sources with the same alias: %s", alias)
+			}
+			aliases.Insert(alias)
+		}
+	}
 	return nil
 }
 
@@ -224,7 +243,9 @@ func (rego *RuleType_Definition_Eval_Rego) Validate() error {
 		return fmt.Errorf("%w: rego definition is empty", ErrInvalidRuleTypeDefinition)
 	}
 
-	_, err := ast.ParseModule("minder-ruletype-def.rego", rego.Def)
+	// TODO: figure out a Rego V1 migration path (https://github.com/mindersec/minder/issues/5262)
+	_, err := ast.ParseModuleWithOpts("minder-ruletype-def.rego", rego.Def,
+		ast.ParserOptions{RegoVersion: ast.RegoV0})
 	if err != nil {
 		return fmt.Errorf("%w: rego definition is invalid: %s", ErrInvalidRuleTypeDefinition, err)
 	}
@@ -278,6 +299,32 @@ func (op *RuleType_Definition_Eval_JQComparison_Operator) Validate() error {
 	return nil
 }
 
+// Validate validates a data source reference
+func (dsr *DataSourceReference) Validate() interface{} {
+	if dsr == nil {
+		return fmt.Errorf("%w: data source reference is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if dsr.GetName() == "" {
+		return fmt.Errorf("%w: data source reference name cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	alias := dsr.getAliasWithDefault()
+	if !dataSourceAliasRegex.MatchString(alias) {
+		return fmt.Errorf("%w: data source reference alias %q is invalid", ErrInvalidRuleTypeDefinition, alias)
+	}
+
+	return nil
+}
+
+func (dsr *DataSourceReference) getAliasWithDefault() string {
+	alias := dsr.GetAlias()
+	if alias == "" {
+		return dsr.GetName()
+	}
+	return alias
+}
+
 // Validate validates a rule type definition ingest
 func (ing *RuleType_Definition_Ingest) Validate() error {
 	if ing == nil {
@@ -310,6 +357,10 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
 			return err
 		}
+	} else if alert.Type == "pull_request_comment" {
+		if err := alert.GetPullRequestComment().Validate(); err != nil {
+			return err
+		}
 	} else {
 		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
@@ -320,6 +371,24 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 func (sa *RuleType_Definition_Alert_AlertTypeSA) Validate() error {
 	if sa == nil {
 		return fmt.Errorf("%w: security advisory is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	return nil
+}
+
+// Validate validates a rule type alert pull request comment
+func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
+	if comment == nil {
+		return fmt.Errorf("%w: pull request comment is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if comment.GetReviewMessage() == "" {
+		return fmt.Errorf("%w: pull request comment review message cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeHTMLTemplate(&comment.ReviewMessage, "message")
+	if err != nil {
+		return fmt.Errorf("%w: pull request comment message is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil
@@ -518,6 +587,9 @@ func (ds *DataSource) Validate() error {
 	if ds.GetName() == "" {
 		return fmt.Errorf("%w: data source name cannot be empty", ErrValidationFailed)
 	}
+	if err := validateNamespacedName(ds.GetName()); err != nil {
+		return fmt.Errorf("%w: %w", ErrValidationFailed, err)
+	}
 
 	if ds.GetDriver() == nil {
 		return fmt.Errorf("%w: data source driver cannot be nil", ErrValidationFailed)
@@ -530,6 +602,15 @@ func (ds *DataSource) Validate() error {
 	}
 
 	return val.Validate()
+}
+
+// Validate checks a structured data source to ensure it is valid
+func (dsStructuredDriver *DataSource_Structured) Validate() error {
+	if dsStructuredDriver == nil || dsStructuredDriver.Structured == nil {
+		return fmt.Errorf("%w: structured driver is nil", ErrValidationFailed)
+	}
+
+	return nil
 }
 
 // Validate is the entrypoint for the actual driver's validation

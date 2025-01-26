@@ -606,6 +606,17 @@ service ProfileService {
         };
     }
 
+    rpc GetProfileStatusById (GetProfileStatusByIdRequest) returns (GetProfileStatusByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/profile/{id}/status"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_PROFILE_STATUS_GET
+        };
+    }
+
     rpc GetProfileStatusByProject (GetProfileStatusByProjectRequest) returns (GetProfileStatusByProjectResponse) {
         option (google.api.http) = {
             get: "/api/v1/profile_status"
@@ -1177,7 +1188,7 @@ message StoreProviderTokenRequest {
     reserved 2; // deprecated project_id
 }
 
-message StoreProviderTokenResponse {    
+message StoreProviderTokenResponse {
 }
 
 // Project API Objects. This is only used in responses.
@@ -1721,7 +1732,7 @@ message ListProfilesRequest {
     // context is the context which contains the profiles
     Context context = 1;
     // Filter profiles to only those matching the specified labels.
-    // 
+    //
     // The default is to return all user-created profiles; the string "*" can
     // be used to select all profiles, including system profiles.  This syntax
     // may be expanded in the future.
@@ -1852,7 +1863,7 @@ message RuleEvaluationStatus {
     string rule_evaluation_id = 17;
     // remediation_url is a url to get more data about a remediation, for PRs is the link to the PR
     string remediation_url = 18;
-    // rule_display_name captures the display name of the rule 
+    // rule_display_name captures the display name of the rule
     string rule_display_name = 19;
     // release_phase is the phase of the release
     RuleTypeReleasePhase release_phase = 20 [
@@ -1920,13 +1931,51 @@ message GetProfileStatusByNameRequest {
 
 message GetProfileStatusByNameResponse {
     // profile_status is the status of the profile
-    ProfileStatus profile_status = 1 [
+    ProfileStatus profile_status = 1[
         (google.api.field_behavior) = REQUIRED
     ];
 
     // rule_evaluation_status is the status of the rules
     repeated RuleEvaluationStatus rule_evaluation_status = 2;
 }
+
+message GetProfileStatusByIdRequest {
+    // context is the context in which the rule type is evaluated.
+    Context context = 1;
+    // id is the id of the profile to get
+    string id = 2 [
+        (buf.validate.field).string = {uuid: true}
+    ];
+
+    EntityTypedId entity = 3;
+    bool all = 4;
+
+    string rule_type = 5 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$"
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+    string rule_name = 6 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/'()[:word:] :]*$",
+            max_len: 200,
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+    ];
+}
+
+message GetProfileStatusByIdResponse {
+    // profile_status is the status of the profile
+    ProfileStatus profile_status = 1[
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // rule_evaluation_status is the status of the rules
+    repeated RuleEvaluationStatus rule_evaluation_status = 2;
+}
+
 
 message GetProfileStatusByProjectRequest {
     // context is the context in which the rule type is evaluated.
@@ -2200,7 +2249,7 @@ message ListEvaluationResultsRequest {
             (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
         ];
         // Filter profiles to only those matching the specified labels.
-        // 
+        //
         // The default is to return all user-created profiles; the string "*" can
         // be used to select all profiles, including system profiles.  This syntax
         // may be expanded in the future.
@@ -2412,8 +2461,19 @@ message DepsType {
         ];
     }
 
+    message PullRequestConfigs {
+        // filter is the filter to apply to the PRs.  The default value is "NEW_AND_UPDATED".
+        string filter = 1 [
+            (buf.validate.field).string = {
+                in: ["NEW_AND_UPDATED", "NEW_ONLY"],
+            },
+            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        ];
+    }
+
     oneof entity_type {
         RepoConfigs repo = 1;
+        PullRequestConfigs pr = 2;
     }
 }
 
@@ -2719,7 +2779,6 @@ message RuleType {
                     // the file to patch
                     string path = 1 [
                         (buf.validate.field).string = {
-                            pattern: "^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$",
                             min_len: 1,
                             max_len: 200,
                         }
@@ -2810,7 +2869,7 @@ message RuleType {
         message Alert {
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["security_advisory"],
+                    in: ["security_advisory", "pull_request_comment"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
             ];
@@ -2824,6 +2883,16 @@ message RuleType {
                 ];
             }
             optional AlertTypeSA security_advisory = 2;
+
+            message AlertTypePRComment {
+                string review_message = 1 [
+                    (buf.validate.field).string = {
+                        max_len: 65536,
+                    },
+                    (google.api.field_behavior) = REQUIRED
+                ];
+            }
+            optional AlertTypePRComment pull_request_comment = 3;
         }
         Alert alert = 7;
     }
@@ -3647,10 +3716,12 @@ message Provider {
     // in favor of the context field in CreateProviderRequest.
     string project = 2;
     // version is the version of the provider.
+    // if unset, "v1" is assumed.
     string version = 3 [
         (buf.validate.field).string = {
             pattern: "v1",
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
     // implements is the list of interfaces that the provider implements.
@@ -4015,9 +4086,31 @@ message DataSource {
     ];
 
     oneof driver {
+        // structured is the structired data - data source.
+        StructDataSource structured = 8;
         // rest is the REST data source driver.
         RestDataSource rest = 6;
     }
+}
+
+// StructDataSource is the structured data source driver.
+message StructDataSource {
+    message Def {
+        // Path is the path specification for the structured data source.
+        Path path = 1 [
+              (google.api.field_behavior) = REQUIRED
+        ];
+
+        message Path {
+            string file_name = 1;
+            repeated string alternatives = 2 [
+                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            ];
+        }
+    }
+
+    // defs is the list of definitions for the structured data API.
+    map<string, Def> def = 1;
 }
 
 // RestDataSource is the REST data source driver.
@@ -4125,11 +4218,21 @@ message RestDataSource {
 // Note that for a resource to refer to a data source the data source must
 // be available in the same project hierarchy.
 message DataSourceReference {
-    // refer to a data source by name.
+    // name is the name of the data source within the project hierarchy.
     string name = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[a-z][-_/[:word:]]*$",
+            max_len: 200,
+        }
+    ];
+    // alias is the alias used to refer to the data source in the rule
+    // definition.
+    // If left unset, it will default to the name of the data source.
+    string alias = 2 [
         (buf.validate.field).string = {
             pattern: "^[a-z][-_[:word:]]*$",
             max_len: 200,
-        }
+        },
+        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 }
