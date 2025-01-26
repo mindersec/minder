@@ -30,10 +30,14 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+var (
+	// envLock is a mutex to ensure that all the tests that run os.SetEnv("XDG_CONFIG...") need to be prevented from running at the same time as each other.
+	envLock = &sync.Mutex{}
+)
+
 // TestGetConfigDirPath tests the GetConfigDirPath function
 func TestGetConfigDirPath(t *testing.T) {
-	t.Parallel()
-	var envLock sync.Mutex
+
 	tests := []struct {
 		name           string
 		envVar         string
@@ -59,10 +63,14 @@ func TestGetConfigDirPath(t *testing.T) {
 			t.Parallel()
 			envLock.Lock()
 			defer envLock.Unlock()
+			originalEnv := os.Getenv("XDG_CONFIG_HOME")
 			err := os.Setenv("XDG_CONFIG_HOME", tt.envVar)
 			if err != nil {
 				t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
 			}
+			// reset this the environment variable when complete.
+			defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
+
 			path, err := util.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
@@ -177,7 +185,6 @@ func TestGetGrpcConnection(t *testing.T) {
 // TestSaveCredentials tests the SaveCredentials function
 func TestSaveCredentials(t *testing.T) {
 	t.Parallel()
-	var envLock sync.Mutex
 	envLock.Lock()
 	defer envLock.Unlock()
 	tokens := util.OpenIdCredentials{
@@ -186,7 +193,17 @@ func TestSaveCredentials(t *testing.T) {
 		AccessTokenExpiresAt: time.Time{}.Add(7 * 24 * time.Hour),
 	}
 
-	cfgPath, err := util.GetConfigDirPath()
+	// Create a temporary directory
+	testDir := t.TempDir()
+
+	originalEnv := os.Getenv("XDG_CONFIG_HOME")
+	err := os.Setenv("XDG_CONFIG_HOME", testDir)
+	if err != nil {
+		t.Errorf("error setting XDG_CONFIG_HOME: %v", err)
+	}
+	// reset this the environment variable when complete.
+	defer os.Setenv("XDG_CONFIG_HOME", originalEnv)
+	cfgPath := filepath.Join(testDir, "minder")
 
 	if err != nil {
 		t.Fatalf("error getting config path: %v", err)
@@ -229,6 +246,8 @@ func TestSaveCredentials(t *testing.T) {
 // TestRemoveCredentials tests the RemoveCredentials function
 func TestRemoveCredentials(t *testing.T) {
 	t.Parallel()
+	envLock.Lock()
+	defer envLock.Unlock()
 	// Create a temporary directory
 	testDir := t.TempDir()
 
@@ -270,6 +289,8 @@ func TestRemoveCredentials(t *testing.T) {
 // TestRefreshCredentials tests the RefreshCredentials function
 func TestRefreshCredentials(t *testing.T) {
 	t.Parallel()
+	envLock.Lock()
+	defer envLock.Unlock()
 	tests := []struct {
 		name           string
 		refreshToken   string
@@ -319,6 +340,8 @@ func TestRefreshCredentials(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+			envLock.Lock()
+			defer envLock.Unlock()
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, tt.responseBody)
@@ -647,12 +670,12 @@ func TestOpenFileArg(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				if tc.filePath == "-" || tc.filePath != "-" {
-					buf := new(strings.Builder)
-					_, err := io.Copy(buf, desc)
-					assert.NoError(t, err)
-					assert.Equal(t, tc.expectedDesc, buf.String())
-				}
+
+				buf := new(strings.Builder)
+				_, err := io.Copy(buf, desc)
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedDesc, buf.String())
+
 			}
 		})
 	}
