@@ -599,6 +599,13 @@ owner: repoOwner
 func TestOpenFileArg(t *testing.T) {
 	t.Parallel()
 
+	testDir := t.TempDir()
+	tempFilePath := filepath.Join(testDir, "testfile.txt")
+	err := os.WriteFile(tempFilePath, []byte("test content"), 0600)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
 	testCases := []struct {
 		name         string
 		filePath     string
@@ -615,7 +622,7 @@ func TestOpenFileArg(t *testing.T) {
 		},
 		{
 			name:         "Valid file path",
-			filePath:     "testfile.txt",
+			filePath:     tempFilePath,
 			dashOpen:     nil,
 			expectedDesc: "test content",
 			expectError:  false,
@@ -630,23 +637,9 @@ func TestOpenFileArg(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
-		testDir := t.TempDir()
-		var tempFilePath string
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			// Create a temporary file for testing
-			if tc.filePath == "testfile.txt" {
-				tempFilePath = filepath.Join(testDir, tc.filePath)
-				err := os.WriteFile(tempFilePath, []byte(tc.expectedDesc), 0600)
-				assert.NoError(t, err)
-				defer os.Remove(tempFilePath)
-			} else {
-				// When handling the dash (-) as a file path, it should read from the provided io.Reader (tc.dashOpen) instead of trying to open a file
-				tempFilePath = tc.filePath
-			}
-			desc, closer, err := util.OpenFileArg(tempFilePath, tc.dashOpen)
+			desc, closer, err := util.OpenFileArg(tc.filePath, tc.dashOpen)
 			if closer != nil {
 				defer closer()
 			}
@@ -660,7 +653,6 @@ func TestOpenFileArg(t *testing.T) {
 				_, err := io.Copy(buf, desc)
 				assert.NoError(t, err)
 				assert.Equal(t, tc.expectedDesc, buf.String())
-
 			}
 		})
 	}
