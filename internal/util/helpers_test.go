@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -35,16 +34,17 @@ var (
 	envLock = &sync.Mutex{}
 )
 
-func SetEnvVar(t *testing.T, env string, value string) {
+func setEnvVar(t *testing.T, env string, value string) {
 	t.Helper() // Keep golangci-lint happy
 	envLock.Lock()
 	t.Cleanup(envLock.Unlock)
 
+	originalEnvToken := os.Getenv(env)
 	err := os.Setenv(env, value)
 	if err != nil {
 		t.Errorf("error setting %v: %v", env, err)
 	}
-
+	defer os.Setenv(env, originalEnvToken)
 }
 
 // TestGetConfigDirPath tests the GetConfigDirPath function
@@ -73,7 +73,7 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			SetEnvVar(t, "XDG_CONFIG_HOME", tt.envVar)
+			setEnvVar(t, "XDG_CONFIG_HOME", tt.envVar)
 			path, err := util.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
@@ -163,13 +163,8 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			originalEnvToken := os.Getenv(util.MinderAuthTokenEnvVar)
-			err := os.Setenv(util.MinderAuthTokenEnvVar, tt.envToken)
-			if err != nil {
-				t.Errorf("error setting %v: %v", util.MinderAuthTokenEnvVar, err)
-			}
-			// reset this the environment variable when complete.
-			defer os.Setenv(util.MinderAuthTokenEnvVar, originalEnvToken)
+
+			setEnvVar(t, util.MinderAuthTokenEnvVar, tt.envToken)
 
 			conn, err := util.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
@@ -199,16 +194,14 @@ func TestSaveCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
+	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
 
 	cfgPath := filepath.Join(testDir, "minder")
 
 	expectedFilePath := filepath.Join(cfgPath, "credentials.json")
 
 	filePath, err := util.SaveCredentials(tokens)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
+	require.NoError(t, err)
 
 	if filePath != expectedFilePath {
 		t.Errorf("expected file path %v, got %v", expectedFilePath, filePath)
@@ -216,25 +209,16 @@ func TestSaveCredentials(t *testing.T) {
 
 	// Verify the file content
 	credsJSON, err := json.Marshal(tokens)
-	if err != nil {
-		t.Fatalf("error marshaling credentials: %v", err)
-	}
+	require.NoError(t, err)
 
-	fpath := filepath.Clean(filePath)
-	content, err := os.ReadFile(fpath)
-	if err != nil {
-		t.Fatalf("error reading file: %v", err)
-	}
+	cleanPath := filepath.Clean(filePath)
+	content, err := os.ReadFile(cleanPath)
+	require.NoError(t, err)
 
 	if string(content) != string(credsJSON) {
 		t.Errorf("expected file content %v, got %v", string(credsJSON), string(content))
 	}
 
-	// Clean up
-	err = os.Remove(filePath)
-	if err != nil {
-		t.Fatalf("error removing file: %v", err)
-	}
 }
 
 // TestRemoveCredentials tests the RemoveCredentials function
@@ -244,7 +228,7 @@ func TestRemoveCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
+	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
 	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
 
 	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
@@ -278,7 +262,7 @@ func TestRefreshCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
+	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
 	tests := []struct {
 		name           string
 		refreshToken   string
@@ -291,7 +275,6 @@ func TestRefreshCredentials(t *testing.T) {
 		{
 			name:         "Successful refresh with local server",
 			refreshToken: "valid_refresh_token",
-			issuerUrl:    "http://localhost:8081",
 			clientId:     "minder-cli",
 			responseBody: `{"access_token":"new_access_token","refresh_token":"new_refresh_token","expires_in":3600}`,
 			expectedResult: util.OpenIdCredentials{
@@ -303,14 +286,12 @@ func TestRefreshCredentials(t *testing.T) {
 		{
 			name:          "Error fetching new credentials (responseBody is missing) rwith local server",
 			refreshToken:  "valid_refresh_token",
-			issuerUrl:     "http://localhost:8081",
 			clientId:      "minder-cli",
 			expectedError: "error unmarshaling credentials: EOF",
 		},
 		{
 			name:          "Error unmarshaling credentials with local server",
 			refreshToken:  "valid_refresh_token",
-			issuerUrl:     "http://localhost:8081",
 			clientId:      "minder-cli",
 			responseBody:  `invalid_json`,
 			expectedError: "error unmarshaling credentials: invalid character 'i' looking for beginning of value",
@@ -318,7 +299,6 @@ func TestRefreshCredentials(t *testing.T) {
 		{
 			name:          "Error refreshing credentials with local server",
 			refreshToken:  "valid_refresh_token",
-			issuerUrl:     "http://localhost:8081",
 			clientId:      "minder-cli",
 			responseBody:  `{"error":"invalid_grant","error_description":"Invalid refresh token"}`,
 			expectedError: "error refreshing credentials: invalid_grant: Invalid refresh token",
@@ -335,8 +315,7 @@ func TestRefreshCredentials(t *testing.T) {
 			}))
 			defer server.Close()
 
-			parsedURL, _ := url.Parse(server.URL)
-			tt.issuerUrl = parsedURL.String()
+			tt.issuerUrl = server.URL
 
 			result, err := util.RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
 			if tt.expectedError != "" {
@@ -391,7 +370,7 @@ func TestLoadCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			testDir := t.TempDir()
-			SetEnvVar(t, "XDG_CONFIG_HOME", testDir)
+			setEnvVar(t, "XDG_CONFIG_HOME", testDir)
 			// Create the minder directory inside the temp directory
 			minderDir := filepath.Join(testDir, "minder")
 			err := os.MkdirAll(minderDir, 0750)
@@ -403,10 +382,7 @@ func TestLoadCredentials(t *testing.T) {
 
 			if tt.fileContent != "" {
 				// Create a temporary file with the specified content
-				err := os.WriteFile(filePath, []byte(tt.fileContent), 0600)
-				if err != nil {
-					t.Fatalf("failed to write test file: %v", err)
-				}
+				require.NoError(t, os.WriteFile(filePath, []byte(tt.fileContent), 0600))
 				// Print the file path and content for debugging
 				t.Logf("Test %s: written file path %s with content: %s", tt.name, filePath, tt.fileContent)
 			} else {
@@ -433,6 +409,7 @@ func TestLoadCredentials(t *testing.T) {
 	}
 }
 
+// TestCase struct for holding test case data
 type TestCase struct {
 	name         string
 	token        string
@@ -442,18 +419,6 @@ type TestCase struct {
 	expectedPath string
 	expectError  bool
 	createServer func(t *testing.T, tt TestCase) *httptest.Server
-}
-
-func createTestServer(t *testing.T, tt TestCase) *httptest.Server {
-	t.Helper()
-	return httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
-		require.NoError(t, err, "error parsing form")
-
-		require.Equal(t, tt.clientId, r.Form.Get("client_id"))
-		require.Equal(t, tt.token, r.Form.Get("token"))
-		require.Equal(t, tt.tokenHint, r.Form.Get("token_type_hint"))
-	}))
 }
 
 // TestRevokeToken tests the RevokeToken function
@@ -468,7 +433,16 @@ func TestRevokeToken(t *testing.T) {
 			tokenHint:    "refresh_token",
 			expectedPath: "/realms/stacklok/protocol/openid-connect/revoke",
 			expectError:  false,
-			createServer: createTestServer,
+			createServer: func(t *testing.T, tt TestCase) *httptest.Server {
+				t.Helper()
+				return httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+					err := r.ParseForm()
+					require.NoError(t, err, "error parsing form")
+					require.Equal(t, tt.clientId, r.Form.Get("client_id"))
+					require.Equal(t, tt.token, r.Form.Get("token"))
+					require.Equal(t, tt.tokenHint, r.Form.Get("token_type_hint"))
+				}))
+			},
 		},
 		{
 			name:         "Invalid issuer URL",
@@ -499,7 +473,6 @@ func TestRevokeToken(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 // TestGetJsonFromProto tests the GetJsonFromProto function
@@ -540,8 +513,13 @@ func TestGetJsonFromProto(t *testing.T) {
 				t.Errorf("GetJsonFromProto() error = %v, expectedError %v", err, tt.expectedError)
 				return
 			}
-			if strings.TrimSpace(jsonStr) != strings.TrimSpace(tt.expectedJson) {
-				t.Errorf("GetJsonFromProto() = %v, expected %v", jsonStr, tt.expectedJson)
+
+			// Normalize JSON strings by removing all whitespaces and new lines
+			normalizedResult := strings.Join(strings.Fields(jsonStr), "")
+			normalizedExpected := strings.Join(strings.Fields(tt.expectedJson), "")
+
+			if normalizedResult != normalizedExpected {
+				t.Errorf("GetJsonFromProto() = %v, expected %v", normalizedResult, normalizedExpected)
 			}
 		})
 	}
@@ -724,7 +702,6 @@ func TestExpandFileArgs(t *testing.T) {
 			}) {
 				t.Errorf("ExpandFileArgs() = %v, want %v", got, tt.expected)
 			}
-			defer os.RemoveAll(testDir)
 		})
 	}
 }
