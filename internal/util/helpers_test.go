@@ -39,12 +39,14 @@ func setEnvVar(t *testing.T, env string, value string) {
 	envLock.Lock()
 	t.Cleanup(envLock.Unlock)
 
-	originalEnvToken := os.Getenv(env)
+	originalEnvVal := os.Getenv(env)
 	err := os.Setenv(env, value)
 	if err != nil {
 		t.Errorf("error setting %v: %v", env, err)
 	}
-	defer os.Setenv(env, originalEnvToken)
+
+	t.Cleanup(func() { _ = os.Setenv(env, originalEnvVal) })
+
 }
 
 // TestGetConfigDirPath tests the GetConfigDirPath function
@@ -163,9 +165,7 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
 			setEnvVar(t, util.MinderAuthTokenEnvVar, tt.envToken)
-
 			conn, err := util.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
