@@ -28,7 +28,7 @@ require (
 	github.com/go-git/go-git/v5 v5.13.2
 	github.com/go-playground/validator/v10 v10.24.0
 	github.com/go-viper/mapstructure/v2 v2.2.1
-	github.com/goccy/go-json v0.10.4
+	github.com/goccy/go-json v0.10.5
 	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/cel-go v0.23.0
