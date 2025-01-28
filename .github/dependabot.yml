@@ -6,7 +6,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     groups:
       otel:
         patterns:
@@ -16,15 +16,15 @@ updates:
   - package-ecosystem: "gomod"
     directory: "tools"
     schedule:
-      interval: "daily"
+      interval: "weekly"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
   - package-ecosystem: "npm"
     directory: "docs"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     groups:
       docusaurus:
         patterns:
@@ -43,4 +43,4 @@ updates:
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
