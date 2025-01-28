@@ -186,6 +186,7 @@ func TestFlushAll(t *testing.T) {
 	repoID := uuid.New()
 	artID := uuid.New()
 	prID := uuid.New()
+	releaseID := uuid.New()
 	projectID := uuid.New()
 	providerID := uuid.New()
 
@@ -326,6 +327,40 @@ func TestFlushAll(t *testing.T) {
 
 				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&pbinternal.PullRequest{}, nil)
+			},
+		},
+		{
+			name: "flushes one release",
+			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
+				mockStore.EXPECT().ListFlushCache(ctx).
+					Return([]db.FlushCache{
+						{
+							ID:               uuid.New(),
+							Entity:           db.EntitiesRelease,
+							ProjectID:        projectID,
+							EntityInstanceID: releaseID,
+							QueuedAt:         time.Now(),
+						},
+					}, nil)
+
+				// There should be one flush in the end
+				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
+			},
+			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(releaseID), gomock.Nil()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:             releaseID,
+							Type:           minderv1.Entity_ENTITY_RELEASE,
+							ProjectID:      projectID,
+							ProviderID:     providerID,
+							OriginatedFrom: repoID,
+						},
+						Properties: &properties.Properties{},
+					}, nil)
+
+				mockPropSvc.EXPECT().EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(&pbinternal.Release{}, nil)
 			},
 		},
 	}

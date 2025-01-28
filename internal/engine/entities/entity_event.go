@@ -58,6 +58,8 @@ const (
 	artifactIDEventKey = "artifact_id"
 	// pullRequestIDEventKey is the key for the pull request ID
 	pullRequestIDEventKey = "pull_request_id"
+	// releaseIDEventKey is the key for the pull request ID
+	releaseIDEventKey = "release_id"
 	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
 	ExecutionIDKey = "execution_id"
 )
@@ -105,6 +107,14 @@ func (eiw *EntityInfoWrapper) WithRepository(r *minderv1.Repository) *EntityInfo
 func (eiw *EntityInfoWrapper) WithPullRequest(p *pbinternal.PullRequest) *EntityInfoWrapper {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
 	eiw.Entity = p
+
+	return eiw
+}
+
+// WithRelease sets the entity to a release
+func (eiw *EntityInfoWrapper) WithRelease(r *pbinternal.Release) *EntityInfoWrapper {
+	eiw.Type = minderv1.Entity_ENTITY_RELEASE
+	eiw.Entity = r
 
 	return eiw
 }
@@ -158,6 +168,12 @@ func (eiw *EntityInfoWrapper) AsArtifact() *EntityInfoWrapper {
 func (eiw *EntityInfoWrapper) AsPullRequest() {
 	eiw.Type = minderv1.Entity_ENTITY_PULL_REQUESTS
 	eiw.Entity = &pbinternal.PullRequest{}
+}
+
+// AsRelease sets the entity type to a release
+func (eiw *EntityInfoWrapper) AsRelease() {
+	eiw.Type = minderv1.Entity_ENTITY_RELEASE
+	eiw.Entity = &pbinternal.Release{}
 }
 
 // AsEntityInstance sets the entity type to an entity instance
@@ -315,6 +331,10 @@ func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message)
 	return eiw.withIDFromMessage(msg, pullRequestIDEventKey)
 }
 
+func (eiw *EntityInfoWrapper) withReleaseIDFromMessage(msg *message.Message) error {
+	return eiw.withIDFromMessage(msg, releaseIDEventKey)
+}
+
 func (eiw *EntityInfoWrapper) withEntityInstanceIDFromMessage(msg *message.Message) error {
 	rawEntityID := msg.Metadata.Get(EntityIDEventKey)
 	if rawEntityID == "" {
@@ -371,6 +391,8 @@ func getEntityMetadataKey(t minderv1.Entity) (string, error) {
 		return artifactIDEventKey, nil
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return pullRequestIDEventKey, nil
+	case minderv1.Entity_ENTITY_RELEASE:
+		return releaseIDEventKey, nil
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		return "", fmt.Errorf("entity type unspecified")
 	default:
@@ -438,6 +460,16 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 		out.AsPullRequest()
 		if out.EntityID == uuid.Nil {
 			if err := out.withPullRequestIDFromMessage(msg); err != nil {
+				return nil, err
+			}
+			if err := out.withRepositoryIDFromMessage(msg); err != nil {
+				return nil, err
+			}
+		}
+	case minderv1.Entity_ENTITY_RELEASE:
+		out.AsRelease()
+		if out.EntityID == uuid.Nil {
+			if err := out.withReleaseIDFromMessage(msg); err != nil {
 				return nil, err
 			}
 			if err := out.withRepositoryIDFromMessage(msg); err != nil {

@@ -81,6 +81,16 @@ message PrContents {
   repeated File files = 2;
 }
 
+message Release {
+  string name = 1;
+  string owner = 2;
+  string repo = 3;
+  string upstream_id = 4;
+  
+  // properties is a map of properties of the entity.
+  google.protobuf.Struct properties = 5;
+}
+
 message SelectorProvider {
   // the name of the provider, e.g. github-app-jakubtestorg
   string name = 1;

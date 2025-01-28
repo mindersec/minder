@@ -24,6 +24,7 @@ func Test_parseEntityEvent(t *testing.T) {
 	providerID := uuid.New()
 	repoID := uuid.NewString()
 	prID := uuid.NewString()
+	releaseID := uuid.NewString()
 	artifactID := uuid.NewString()
 
 	type args struct {
@@ -220,6 +221,34 @@ func Test_parseEntityEvent(t *testing.T) {
 				ProviderID:    providerID,
 				Type:          pb.Entity_ENTITY_PULL_REQUESTS,
 				EntityID:      uuid.MustParse(prID),
+				OwnershipData: map[string]string{},
+			},
+		},
+		{
+			name: "release event with entity ID",
+			args: args{
+				ent: &pbinternal.Release{
+					Name:       "orgname/reponame/v1",
+					Owner:      "orgname",
+					Repo:       "reponame",
+					UpstreamId: "123456789",
+				},
+				entType:    pb.Entity_ENTITY_RELEASE.ToString(),
+				projectID:  projectID,
+				providerID: providerID,
+				entityID:   releaseID,
+			},
+			want: &EntityInfoWrapper{
+				ProjectID: projectID,
+				Entity: &pbinternal.Release{
+					Name:       "orgname/reponame/v1",
+					Owner:      "orgname",
+					Repo:       "reponame",
+					UpstreamId: "123456789",
+				},
+				ProviderID:    providerID,
+				Type:          pb.Entity_ENTITY_RELEASE,
+				EntityID:      uuid.MustParse(releaseID),
 				OwnershipData: map[string]string{},
 			},
 		},

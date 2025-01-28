@@ -255,8 +255,10 @@ func (e *EEA) buildEntityWrapper(
 		return e.buildArtifactInfoWrapper(ctx, entityID, projID)
 	case db.EntitiesPullRequest:
 		return e.buildPullRequestInfoWrapper(ctx, entityID, projID)
-	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
-		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
+	case db.EntitiesRelease:
+		return e.buildReleaseInfoWrapper(ctx, entityID, projID)
+	case db.EntitiesBuildEnvironment, db.EntitiesPipelineRun,
+		db.EntitiesTaskRun, db.EntitiesBuild:
 		return nil, fmt.Errorf("entity type %q not yet supported", entity)
 	default:
 		return nil, fmt.Errorf("unknown entity type: %q", entity)
@@ -354,5 +356,36 @@ func (e *EEA) buildPullRequestInfoWrapper(
 		WithProjectID(projID).
 		WithPullRequest(pr).
 		WithID(prID).
+		WithProviderID(ent.Entity.ProviderID), nil
+}
+
+func (e *EEA) buildReleaseInfoWrapper(
+	ctx context.Context,
+	releaseId uuid.UUID,
+	projID uuid.UUID,
+) (*entities.EntityInfoWrapper, error) {
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, releaseId, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching entity: %w", err)
+	}
+
+	if ent.Entity.ProjectID != projID {
+		return nil, fmt.Errorf("entity %s does not belong to project %s", releaseId, projID)
+	}
+
+	rawRelease, err := e.entityFetcher.EntityWithPropertiesAsProto(ctx, ent, e.provMan)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	r, ok := rawRelease.(*pbinternal.Release)
+	if !ok {
+		return nil, fmt.Errorf("error converting entity to release")
+	}
+
+	return entities.NewEntityInfoWrapper().
+		WithRelease(r).
+		WithID(releaseId).
+		WithProjectID(projID).
 		WithProviderID(ent.Entity.ProviderID), nil
 }

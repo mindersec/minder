@@ -11,7 +11,7 @@ import (
 	go_github "github.com/google/go-github/v63/github"
 
 	"github.com/mindersec/minder/internal/entities/properties"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -150,8 +150,8 @@ func getBranchAndCommit(
 }
 
 // EntityInstanceV1FromReleaseProperties creates a new EntityInstance from the given properties
-func EntityInstanceV1FromReleaseProperties(props *properties.Properties) (*minderv1.EntityInstance, error) {
-	_, err := props.GetProperty(properties.PropertyUpstreamID).AsString()
+func EntityInstanceV1FromReleaseProperties(props *properties.Properties) (*pbinternal.Release, error) {
+	upstreamId, err := props.GetProperty(properties.PropertyUpstreamID).AsString()
 	if err != nil {
 		return nil, fmt.Errorf("upstream ID not found or invalid: %w", err)
 	}
@@ -170,9 +170,11 @@ func EntityInstanceV1FromReleaseProperties(props *properties.Properties) (*minde
 
 	name := getReleaseNameFromParams(owner, repo, tag)
 
-	return &minderv1.EntityInstance{
-		Type:       minderv1.Entity_ENTITY_RELEASE,
+	return &pbinternal.Release{
 		Name:       name,
+		UpstreamId: upstreamId,
+		Repo:       repo,
+		Owner:      owner,
 		Properties: props.ToProtoStruct(),
 	}, nil
 }

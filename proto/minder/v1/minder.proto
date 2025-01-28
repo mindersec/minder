@@ -287,7 +287,6 @@ message GetArtifactByNameResponse {
 }
 
 // Stubs for the SDLC entities
-message Release {}
 message PipelineRun {}
 message TaskRun {}
 message Build {}
