@@ -36,9 +36,9 @@ var (
 
 	// envLockXdgConfig is a mutex to ensure that all the tests that run os.SetEnv("MINDER_AUTH_TOKEN") need to be prevented from running at the same time as each other.
 	envLockMinderAuthToken = &sync.Mutex{}
-
+	//nolint:gosec // This is not a hardcoded credential
 	XdgConfigHomeEnvVar = "XDG_CONFIG_HOME"
-
+	//nolint:gosec // This is not a hardcoded credential
 	MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
 )
 
