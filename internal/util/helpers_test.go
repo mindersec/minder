@@ -30,11 +30,20 @@ import (
 )
 
 var (
-	// envLock is a mutex to ensure that all the tests that run os.SetEnv("XDG_CONFIG...") need to be prevented from running at the same time as each other.
-	envLock = &sync.Mutex{}
+
+	// envLockXdgConfigHome is a mutex to ensure that all the tests that run os.SetEnv("XDG_CONFIG_HOME") need to be prevented from running at the same time as each other.
+	envLockXdgConfigHome = &sync.Mutex{}
+
+	// envLockXdgConfig is a mutex to ensure that all the tests that run os.SetEnv("MINDER_AUTH_TOKEN") need to be prevented from running at the same time as each other.
+	envLockMinderAuthToken = &sync.Mutex{}
+
+	XdgConfigHomeEnvVar = "XDG_CONFIG_HOME"
+
+	MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
 )
 
-func setEnvVar(t *testing.T, env string, value string) {
+// Based on tests, seemed to need one mutex per env var.
+func setEnvVar(t *testing.T, envLock *sync.Mutex, env string, value string) {
 	t.Helper() // Keep golangci-lint happy
 	envLock.Lock()
 	t.Cleanup(envLock.Unlock)
@@ -75,7 +84,7 @@ func TestGetConfigDirPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			setEnvVar(t, "XDG_CONFIG_HOME", tt.envVar)
+			setEnvVar(t, envLockXdgConfigHome, XdgConfigHomeEnvVar, tt.envVar)
 			path, err := util.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
 				t.Errorf("expected error: %v, got: %v", tt.expectingError, err)
@@ -165,7 +174,7 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			setEnvVar(t, util.MinderAuthTokenEnvVar, tt.envToken)
+			setEnvVar(t, envLockMinderAuthToken, MinderAuthTokenEnvVar, tt.envToken)
 			conn, err := util.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
@@ -194,7 +203,7 @@ func TestSaveCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
+	setEnvVar(t, envLockXdgConfigHome, XdgConfigHomeEnvVar, testDir)
 
 	cfgPath := filepath.Join(testDir, "minder")
 
@@ -227,9 +236,8 @@ func TestRemoveCredentials(t *testing.T) {
 
 	// Create a temporary directory
 	testDir := t.TempDir()
-
-	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
-	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+	setEnvVar(t, envLockXdgConfigHome, XdgConfigHomeEnvVar, testDir)
+	xdgConfigHome := os.Getenv(XdgConfigHomeEnvVar)
 
 	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
 
@@ -262,7 +270,7 @@ func TestRefreshCredentials(t *testing.T) {
 	// Create a temporary directory
 	testDir := t.TempDir()
 
-	setEnvVar(t, "XDG_CONFIG_HOME", testDir)
+	setEnvVar(t, envLockXdgConfigHome, XdgConfigHomeEnvVar, testDir)
 	tests := []struct {
 		name           string
 		refreshToken   string
@@ -370,7 +378,7 @@ func TestLoadCredentials(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			testDir := t.TempDir()
-			setEnvVar(t, "XDG_CONFIG_HOME", testDir)
+			setEnvVar(t, envLockXdgConfigHome, XdgConfigHomeEnvVar, testDir)
 			// Create the minder directory inside the temp directory
 			minderDir := filepath.Join(testDir, "minder")
 			err := os.MkdirAll(minderDir, 0750)
