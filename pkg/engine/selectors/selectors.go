@@ -355,11 +355,23 @@ func (e *Env) CheckSelector(sel *minderv1.Profile_Selector) error {
 func (e *Env) envForEntity(entity minderv1.Entity) (*cel.Env, error) {
 	cache, ok := e.entityEnvs[entity]
 	if !ok {
-		return nil, fmt.Errorf("no cache found for entity %v", entity)
+		// if the entity isn't in the env map, we use the generic environment
+		cache, ok = e.entityEnvs[minderv1.Entity_ENTITY_UNSPECIFIED]
+		if !ok {
+			return nil, fmt.Errorf("no cache found for entity %v", entity)
+		}
 	}
 
+	factory, ok := e.factories[entity]
+	if !ok {
+		// if the entity isn't in the factory map, we use the generic environment
+		factory, ok = e.factories[minderv1.Entity_ENTITY_UNSPECIFIED]
+		if !ok {
+			return nil, fmt.Errorf("no factory found for entity %v", entity)
+		}
+	}
 	cache.once.Do(func() {
-		cache.env, cache.err = e.factories[entity]()
+		cache.env, cache.err = factory()
 	})
 
 	return cache.env, cache.err
