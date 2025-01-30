@@ -20,14 +20,15 @@ import (
 )
 
 var applyCmd = &cobra.Command{
-	Use:   "apply",
+	Use:   "apply [files...]",
 	Short: "Apply a rule type",
 	Long:  `The ruletype apply subcommand lets you create or update rule types for a project within Minder.`,
 	RunE:  cli.GRPCClientWrapRunE(applyCommand),
+	Args:  cobra.ArbitraryArgs,
 }
 
 // applyCommand is the "rule type" apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRuleTypeServiceClient(conn)
 
 	project := viper.GetString("project")
@@ -37,11 +38,18 @@ func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError("Error parsing file flag", err)
 	}
 
-	if err = validateFilesArg(fileFlag); err != nil {
-		return cli.MessageAndError("Error validating file flag", err)
+	// Combine positional args with -f flag values
+	allFiles := append(fileFlag, args...)
+
+	if len(allFiles) == 0 {
+		return fmt.Errorf("no files specified: use positional arguments or the -f flag")
 	}
 
-	files, err := util.ExpandFileArgs(fileFlag...)
+	if err = validateFilesArg(fileFlag); err != nil {
+		return cli.MessageAndError("Error validating files", err)
+	}
+
+	files, err := util.ExpandFileArgs(allFiles...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}
@@ -107,9 +115,5 @@ func init() {
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
-	// Required
-	if err := applyCmd.MarkFlagRequired("file"); err != nil {
-		applyCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
+
 }

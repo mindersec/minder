@@ -6,7 +6,6 @@ package profile
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,18 +19,30 @@ import (
 
 // applyCmd represents the profile apply command
 var applyCmd = &cobra.Command{
-	Use:   "apply",
+	Use:   "apply [file]",
 	Short: "Create or update a profile",
 	Long:  `The profile apply subcommand lets you create or update new profiles for a project within Minder.`,
+	Args:  cobra.MaximumNArgs(1),
 	RunE:  cli.GRPCClientWrapRunE(applyCommand),
 }
 
 // applyCommand is the profile apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewProfileServiceClient(conn)
 
 	project := viper.GetString("project")
-	f := viper.GetString("file")
+
+	// Get file from positional arg if provided, otherwise from -f flag
+	var f string
+	if len(args) > 0 {
+		f = args[0]
+	} else {
+		f = viper.GetString("file")
+	}
+
+	if f == "" {
+		return fmt.Errorf("file is required - provide as argument or via --file flag")
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -92,9 +103,4 @@ func init() {
 	ProfileCmd.AddCommand(applyCmd)
 	// Flags
 	applyCmd.Flags().StringP("file", "f", "", "Path to the YAML defining the profile (or - for stdin)")
-	// Required
-	if err := applyCmd.MarkFlagRequired("file"); err != nil {
-		applyCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
 }
