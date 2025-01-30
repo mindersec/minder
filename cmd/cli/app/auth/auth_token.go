@@ -11,7 +11,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -43,10 +42,10 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 	// save credentials
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
-	creds, err := util.GetToken(issuerUrl, clientId)
+	creds, err := cli.GetToken(issuerUrl, clientId)
 	if err != nil {
 		cmd.Printf("Error getting token: %v\n", err)
-		if errors.Is(err, os.ErrNotExist) || errors.Is(err, util.ErrGettingRefreshToken) {
+		if errors.Is(err, os.ErrNotExist) || errors.Is(err, cli.ErrGettingRefreshToken) {
 			// wait for the token to be received
 			token, err := cli.Login(ctx, cmd, clientConfig, []string{}, skipBrowser)
 			if err != nil {

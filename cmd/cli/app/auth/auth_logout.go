@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -21,7 +20,7 @@ var logoutCmd = &cobra.Command{
 	Short: "Logout from minder control plane.",
 	Long:  `Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
-		if err := util.RemoveCredentials(); err != nil {
+		if err := cli.RemoveCredentials(); err != nil {
 			return cli.MessageAndError("Error removing credentials", err)
 		}
 
