@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
@@ -66,6 +67,13 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
 	}
 
+	id, err := server.idClient.Validate(ctx, parsedToken)
+	if err != nil {
+		return nil, status.Errorf(codes.Unauthenticated, "invalid auth token: %v", err)
+	}
+
+	ctx = auth.WithIdentityContext(ctx, id)
+	// TODO: remove and replace with identity
 	ctx = jwt.WithAuthTokenContext(ctx, parsedToken)
 
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)

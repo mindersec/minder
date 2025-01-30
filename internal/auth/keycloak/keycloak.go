@@ -41,9 +41,17 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 		return nil, err
 	}
 
+	issuerUrl, err := cfg.JwtUrl()
+	if err != nil {
+		return nil, err
+	}
+	if issuerUrl == nil {
+		return nil, errors.New("issuer URL is nil")
+	}
+
 	return &KeyCloak{
 		name:     name,
-		url:      cfg.Issuer(),
+		url:      *issuerUrl,
 		cfg:      cfg,
 		kcClient: kcClient,
 	}, nil

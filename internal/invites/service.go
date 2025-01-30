@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/auth"
-	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/email"
@@ -61,9 +60,9 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
 	// Get the sponsor's user information (current user)
-	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
+	identity := auth.IdentityFromContext(ctx)
+	if identity.String() == "" {
+		return nil, status.Errorf(codes.Internal, "failed to get user")
 	}
 
 	// Get all invitations for this email and project
@@ -104,13 +103,6 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClie
 	meta, err := projects.ParseMetadata(&prj)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
-	}
-
-	// Resolve the sponsor's identity and display name
-	identity, err := idClient.Resolve(ctx, currentUser.IdentitySubject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", currentUser.IdentitySubject)
 	}
 
 	inviteURL, err := getInviteUrl(emailConfig, userInvite)
@@ -236,8 +228,12 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
+	identity := auth.IdentityFromContext(ctx)
+	if identity.Provider.String() != "" {
+		return nil, util.UserVisibleError(codes.PermissionDenied, "only human users can create invites")
+	}
 	// Get the sponsor's user information (current user)
-	currentUser, err := qtx.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
+	currentUser, err := qtx.GetUserBySubject(ctx, identity.String())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get user: %s", err)
 	}
@@ -259,14 +255,6 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 	}
 
 	// If there are no invitations for this email, great, we should create one
-	// Resolve the sponsor's identity and display name
-	sponsorDisplay := currentUser.IdentitySubject
-	identity, err := idClient.Resolve(ctx, currentUser.IdentitySubject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-	} else {
-		sponsorDisplay = identity.Human()
-	}
 
 	// Resolve the target project's display name
 	prj, err := qtx.GetProjectByID(ctx, targetProject)
@@ -305,7 +293,7 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		emailConfig.MinderURLBase,
 		userInvite.Role,
 		meta.Public.DisplayName,
-		sponsorDisplay,
+		identity.Human(),
 	)
 	if err != nil {
 		if errors.Is(err, email.ErrValidationFailed) {
@@ -326,8 +314,8 @@ func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClie
 		ProjectDisplay: prj.Name,
 		Code:           userInvite.Code,
 		InviteUrl:      inviteURL,
-		Sponsor:        currentUser.IdentitySubject,
-		SponsorDisplay: sponsorDisplay,
+		Sponsor:        identity.String(),
+		SponsorDisplay: identity.Human(),
 		CreatedAt:      timestamppb.New(userInvite.CreatedAt),
 		ExpiresAt:      GetExpireIn7Days(userInvite.UpdatedAt),
 		Expired:        IsExpired(userInvite.UpdatedAt),

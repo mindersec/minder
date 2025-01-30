@@ -55,10 +55,9 @@ func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, 
 		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
 	}
 
-	// Verify if user exists.
-	// TODO: this assumes that we store all users in the database, and that we don't
-	// need to namespace identify providers.  We should revisit these assumptions.
-	//
+	// For users in the primary (human) identity store, verify if user exists in our database.
+	// TODO: this assumes that we store human users in the Minder database, in addition to the
+	// identity provider and the auth store.  We should revisit this assumption.
 	if identity.Provider.String() == "" {
 		if _, err := qtx.GetUserBySubject(ctx, identity.String()); err != nil {
 			if errors.Is(err, sql.ErrNoRows) {

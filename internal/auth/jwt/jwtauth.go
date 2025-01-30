@@ -7,7 +7,6 @@ package jwt
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -106,21 +105,6 @@ func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud str
 type userTokenContextKeyType struct{}
 
 var userTokenContextKey userTokenContextKeyType
-
-// GetUserSubjectFromContext returns the user subject from the context, or nil
-func GetUserSubjectFromContext(ctx context.Context) string {
-	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
-	if !ok {
-		return ""
-	}
-	// TODO: wire this in to IdentityProvider interface.  Alternatively, have a different version
-	// for authzClient.Check that is IdentityProvider aware
-
-	if token.Issuer() == "https://token.actions.githubusercontent.com" {
-		return fmt.Sprintf("githubactions/%s", strings.ReplaceAll(token.Subject(), ":", "+"))
-	}
-	return token.Subject()
-}
 
 // GetUserClaimFromContext returns the specified claim from the user subject in
 // the context if found and of the correct type

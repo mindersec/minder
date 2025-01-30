@@ -24,12 +24,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
+	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	stacklok_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
@@ -38,6 +43,10 @@ import (
 type openIdConfig struct {
 	JwksURI string `json:"jwks_uri"`
 }
+
+var cachedIssuers metric.Int64Counter
+var dynamicAuths metric.Int64Counter
+var metricsInit sync.Once
 
 // Validator dynamically validates JWTs by fetching the key from the well-known OIDC issuer URL.
 type Validator struct {
@@ -49,6 +58,24 @@ var _ stacklok_jwt.Validator = (*Validator)(nil)
 
 // NewDynamicValidator creates a new instance of the dynamic JWT validator
 func NewDynamicValidator(ctx context.Context, aud string) *Validator {
+	metricsInit.Do(func() {
+		meter := otel.Meter("minder")
+		var err error
+		cachedIssuers, err = meter.Int64Counter("dynamic_jwt.cached_issuers",
+			metric.WithDescription("Number of cached issuers for dynamic JWT validation"),
+			metric.WithUnit("count"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating gauge for cached issuers failed")
+		}
+		dynamicAuths, err = meter.Int64Counter("dynamic_jwt.auths",
+			metric.WithDescription("Number of dynamic JWT authentications"),
+			metric.WithUnit("count"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating gauge for dynamic JWT authentications failed")
+		}
+	})
 	return &Validator{
 		jwks: jwk.NewCache(ctx),
 		aud:  aud,
@@ -57,6 +84,9 @@ func NewDynamicValidator(ctx context.Context, aud string) *Validator {
 
 // ParseAndValidate implements jwt.Validator.
 func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
+	if dynamicAuths != nil {
+		dynamicAuths.Add(context.Background(), 1)
+	}
 	// This is based on https://github.com/lestrrat-go/jwx/blob/v2/examples/jwt_parse_with_key_provider_example_test.go
 
 	_, b64payload, _, err := jws.SplitCompact([]byte(tokenString))
@@ -69,7 +99,8 @@ func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
 		return nil, fmt.Errorf("failed to decode JWT payload: %w", err)
 	}
 
-	parsed, err := jwt.Parse(jwtPayload, jwt.WithVerify(false), jwt.WithToken(openid.New()))
+	parsed, err := jwt.Parse(jwtPayload,
+		jwt.WithVerify(false), jwt.WithToken(openid.New()), jwt.WithAudience(m.aud))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse JWT payload: %w", err)
 	}
@@ -95,11 +126,22 @@ func (m Validator) getKeySet(issuer string) (jwk.Set, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS URL from openid: %w", err)
 	}
-	if err := m.jwks.Register(jwksUrl, jwk.WithMinRefreshInterval(15*time.Minute)); err != nil {
-		return nil, fmt.Errorf("failed to register JWKS URL: %w", err)
+	ret, err := m.jwks.Get(context.Background(), jwksUrl)
+	if err == nil {
+		return ret, err
 	}
+	// There's no nice way to check this error, which contains dynamic content.  :-(
+	if strings.Contains(err.Error(), "is not registered") {
+		if cachedIssuers != nil {
+			cachedIssuers.Add(context.Background(), 1)
+		}
+		if err := m.jwks.Register(jwksUrl, jwk.WithMinRefreshInterval(15*time.Minute)); err != nil {
+			return nil, fmt.Errorf("failed to register JWKS URL: %w", err)
+		}
 
-	return m.jwks.Get(context.Background(), jwksUrl)
+		return m.jwks.Get(context.Background(), jwksUrl)
+	}
+	return nil, err
 }
 
 func getJWKSUrlForOpenId(issuer string) (string, error) {
@@ -117,7 +159,7 @@ func getJWKSUrlForOpenId(issuer string) (string, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read respons body: %w", err)
+		return "", fmt.Errorf("Failed to read response body: %w", err)
 	}
 
 	config := openIdConfig{}
