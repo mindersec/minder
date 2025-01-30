@@ -38,10 +38,9 @@ var (
 // It is used to provide a common interface for the client and a way to
 // refresh authentication to the authz provider when needed.
 type ClientWrapper struct {
-	cfg      *srvconfig.AuthzConfig
-	cli      *fgaclient.OpenFgaClient
-	resolver auth.Resolver
-	l        *zerolog.Logger
+	cfg *srvconfig.AuthzConfig
+	cli *fgaclient.OpenFgaClient
+	l   *zerolog.Logger
 }
 
 var _ Client = &ClientWrapper{}
@@ -53,8 +52,8 @@ func NewAuthzClient(cfg *srvconfig.AuthzConfig, l *zerolog.Logger) (Client, erro
 	}
 
 	cliWrap := &ClientWrapper{
-		cfg:      cfg,
-		l:        l,
+		cfg: cfg,
+		l:   l,
 	}
 
 	if err := cliWrap.initAuthzClient(); err != nil {

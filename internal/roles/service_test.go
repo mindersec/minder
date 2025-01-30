@@ -82,7 +82,7 @@ func TestCreateRoleAssignment(t *testing.T) {
 
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
+				UserID:   subject,
 				Provider: &keycloak.KeyCloak{},
 			}, nil)
 
@@ -153,7 +153,7 @@ func TestUpdateRoleAssignment(t *testing.T) {
 
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
+				UserID:   subject,
 				Provider: &keycloak.KeyCloak{},
 			}, nil)
 
@@ -232,7 +232,7 @@ func TestRemoveRole(t *testing.T) {
 
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
+				UserID:   subject,
 				Provider: &keycloak.KeyCloak{},
 			}, nil)
 

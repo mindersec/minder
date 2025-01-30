@@ -326,7 +326,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.CreateInvite(ctx, qtx, s.idClient, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+				return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
 			})
 			if err != nil {
 				return nil, err
@@ -433,7 +433,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			updatedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.UpdateInvite(ctx, qtx, s.idClient, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+				return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
 			})
 			if err != nil {
 				return nil, err

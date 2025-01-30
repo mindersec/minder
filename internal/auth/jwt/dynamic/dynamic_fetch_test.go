@@ -52,40 +52,40 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	require.NoError(t, err)
 
 	keySet := jwk.NewSet()
-	keySet.AddKey(pubKey)
+	require.NoError(t, keySet.AddKey(pubKey))
 	keySetJSON, err := json.Marshal(keySet)
 	require.NoError(t, err)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/certs", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/certs", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(keySetJSON)
+		_, _ = w.Write(keySetJSON)
 	})
 	server := httptest.NewServer(mux)
 	t.Cleanup(server.Close)
 
 	// We need to add this to the mux after server start, because it includes the server.URL
-	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprintf(`{
+		_, _ = w.Write([]byte(fmt.Sprintf(`{
 		"issuer":"%[1]s",
 		"jwks_uri":"%[1]s/certs",
 		"scopes_supported":["openid","email","profile"],
 		"claims_supported":["sub","email","iss","aud","iat","exp"]
 		}`, server.URL)))
 	})
-	mux.HandleFunc("/other/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/other/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprintf(`{
+		_, _ = w.Write([]byte(fmt.Sprintf(`{
 		"issuer":"%[1]s/other",
 		"jwks_uri":"%[1]s/certs",
 		"scopes_supported":["openid","email","profile"],
 		"claims_supported":["sub","email","iss","aud","iat","exp"]
 		}`, server.URL)))
 	})
-	mux.HandleFunc("/elsewhere/.well-known/openid-configuration", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/elsewhere/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(fmt.Sprintf(`{
+		_, _ = w.Write([]byte(fmt.Sprintf(`{
 		"issuer":"%[1]s/elsewhere",
 		"jwks_uri":"%[1]s/non-existent",
 		"scopes_supported":["openid","email","profile"],
@@ -100,6 +100,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	}{{
 		name: "valid token",
 		getToken: func(t *testing.T) (string, openid.Token) {
+			t.Helper()
 			token, err := openid.NewBuilder().
 				Issuer(server.URL).
 				Subject("test").
@@ -115,6 +116,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	}, {
 		name: "valid token, other issuer",
 		getToken: func(t *testing.T) (string, openid.Token) {
+			t.Helper()
 			token, err := openid.NewBuilder().
 				Issuer(server.URL + "/other").
 				Subject("test").
@@ -130,12 +132,14 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	}, {
 		name: "invalid signature",
 		getToken: func(_ *testing.T) (string, openid.Token) {
+			t.Helper()
 			return "invalid", nil
 		},
 		wantErr: `failed to split compact JWT: invalid number of segments`,
 	}, {
 		name: "expired jwt",
 		getToken: func(_ *testing.T) (string, openid.Token) {
+			t.Helper()
 			token, err := openid.NewBuilder().
 				Issuer(server.URL + "/elsewhere").
 				Subject("test").
@@ -152,6 +156,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	}, {
 		name: "bad well-known URL",
 		getToken: func(t *testing.T) (string, openid.Token) {
+			t.Helper()
 			token, err := openid.NewBuilder().
 				Issuer(server.URL + "/elsewhere").
 				Subject("test").
@@ -168,6 +173,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	}, {
 		name: "bad issuer",
 		getToken: func(t *testing.T) (string, openid.Token) {
+			t.Helper()
 			token, err := openid.NewBuilder().
 				Issuer(server.URL + "/nothing").
 				Subject("test").

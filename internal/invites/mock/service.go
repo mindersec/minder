@@ -48,18 +48,18 @@ func (m *MockInviteService) EXPECT() *MockInviteServiceMockRecorder {
 }
 
 // CreateInvite mocks base method.
-func (m *MockInviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
+func (m *MockInviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateInvite", ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+	ret := m.ctrl.Call(m, "CreateInvite", ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 	ret0, _ := ret[0].(*v1.Invitation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateInvite indicates an expected call of CreateInvite.
-func (mr *MockInviteServiceMockRecorder) CreateInvite(ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail any) *gomock.Call {
+func (mr *MockInviteServiceMockRecorder) CreateInvite(ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvite", reflect.TypeOf((*MockInviteService)(nil).CreateInvite), ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateInvite", reflect.TypeOf((*MockInviteService)(nil).CreateInvite), ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 }
 
 // RemoveInvite mocks base method.
@@ -78,16 +78,16 @@ func (mr *MockInviteServiceMockRecorder) RemoveInvite(ctx, qtx, idClient, target
 }
 
 // UpdateInvite mocks base method.
-func (m *MockInviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
+func (m *MockInviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher, emailConfig server.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string) (*v1.Invitation, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateInvite", ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+	ret := m.ctrl.Call(m, "UpdateInvite", ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 	ret0, _ := ret[0].(*v1.Invitation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpdateInvite indicates an expected call of UpdateInvite.
-func (mr *MockInviteServiceMockRecorder) UpdateInvite(ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail any) *gomock.Call {
+func (mr *MockInviteServiceMockRecorder) UpdateInvite(ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvite", reflect.TypeOf((*MockInviteService)(nil).UpdateInvite), ctx, qtx, idClient, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInvite", reflect.TypeOf((*MockInviteService)(nil).UpdateInvite), ctx, qtx, eventsPub, emailConfig, targetProject, authzRole, inviteeEmail)
 }

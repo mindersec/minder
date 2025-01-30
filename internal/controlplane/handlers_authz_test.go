@@ -601,7 +601,7 @@ func TestUpdateRole(t *testing.T) {
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
 			if tc.expectedInvitation {
-				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{}, nil)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
@@ -736,7 +736,7 @@ func TestAssignRole(t *testing.T) {
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
 			if tc.inviteByEmail {
-				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{
 					Role:    authzRole.String(),
 					Project: projectIdString,

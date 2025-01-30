@@ -32,12 +32,12 @@ import (
 // InviteService encapsulates the methods to manage user invites to a project
 type InviteService interface {
 	// CreateInvite creates a new user invite
-	CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
+	CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
 	// UpdateInvite updates the invite status
-	UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
+	UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 		emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 	) (*minder.Invitation, error)
 
@@ -55,7 +55,7 @@ func NewInviteService() InviteService {
 	return &inviteService{}
 }
 
-func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
+func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
@@ -225,11 +225,12 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 	}, nil
 }
 
-func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, eventsPub interfaces.Publisher,
+func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	identity := auth.IdentityFromContext(ctx)
-	if identity.Provider.String() != "" {
+	// Slight hack -- only the null/default provider has String == UserID
+	if identity == nil || identity.String() != identity.UserID {
 		return nil, util.UserVisibleError(codes.PermissionDenied, "only human users can create invites")
 	}
 	// Get the sponsor's user information (current user)
