@@ -173,7 +173,7 @@ func getDefaultProjectID(
 
 	// Not sure if we still need to do this at all, but we only create database users
 	// for users registered in the primary ("") provider.
-	if userId.Provider.String() == "" {
+	if userId != nil && userId.String() == userId.UserID {
 		_, err := store.GetUserBySubject(ctx, userId.String())
 		if err != nil {
 			// Note that we're revealing that the user is not registered in minder

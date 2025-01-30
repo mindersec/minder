@@ -495,7 +495,7 @@ func ensureUser(ctx context.Context, s *Server, store db.ExtendQuerier) (db.User
 	// Only allow invitation flow for users from the primary provider / who can accept
 	// things like terms & conditions.  Secondary providers are for machine identities,
 	// which cannot operate webpages, etc.
-	if id.Provider.String() != "" {
+	if id == nil || id.String() != id.UserID {
 		return db.User{}, util.UserVisibleError(codes.FailedPrecondition, "this type of user cannot accept invitations")
 	}
 	sub := id.String()

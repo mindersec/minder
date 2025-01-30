@@ -184,6 +184,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				tc.buildStubs(t, mockStore)
 			}
 			ctx := authjwt.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: userJWT.Subject(),
+			})
 
 			authzClient := &mock.SimpleClient{}
 
@@ -278,6 +281,10 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
 			ctx = authjwt.WithAuthTokenContext(ctx, userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID:    userJWT.Subject(),
+				HumanName: userJWT.Subject(),
+			})
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
 			}, unaryHandler)

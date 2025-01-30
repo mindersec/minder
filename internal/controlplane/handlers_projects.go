@@ -33,7 +33,7 @@ func (s *Server) ListProjects(
 
 	// Not sure if we still need to do this at all, but we only create database users
 	// for users registered in the primary ("") provider.
-	if id.Provider.String() == "" {
+	if id != nil && id.String() == id.UserID {
 		_, err := s.store.GetUserBySubject(ctx, id.String())
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
