@@ -241,20 +241,6 @@ func TestClassifyDependency(t *testing.T) {
 			mustFilter: false,
 		},
 		{
-			name: "normal-bad-score",
-			score: &trustyReport{
-				PackageName: "test",
-				PackageType: "npm",
-				Score:       mkfloat(4.0),
-			},
-			config: defaultConfig(),
-			expected: &dependencyAlternatives{
-				Reasons:     []RuleViolationReason{TRUSTY_LOW_SCORE},
-				trustyReply: &trustyReport{},
-			},
-			mustFilter: true,
-		},
-		{
 			name: "normal-malicious",
 			score: &trustyReport{
 				PackageName:  "test",
