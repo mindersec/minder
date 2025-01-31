@@ -1,20 +1,8 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package dynamic provides the logic for reading and validating JWT tokens
-// using a JWKS URL from the token's
+// using a JWKS URL from the token's `iss` claim.
 package dynamic
 
 import (
@@ -24,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -45,19 +34,21 @@ type openIdConfig struct {
 }
 
 var cachedIssuers metric.Int64Counter
+var deniedIssuers metric.Int64Counter
 var dynamicAuths metric.Int64Counter
 var metricsInit sync.Once
 
 // Validator dynamically validates JWTs by fetching the key from the well-known OIDC issuer URL.
 type Validator struct {
-	jwks *jwk.Cache
-	aud  string
+	jwks           *jwk.Cache
+	aud            string
+	allowedIssuers []string
 }
 
 var _ stacklok_jwt.Validator = (*Validator)(nil)
 
 // NewDynamicValidator creates a new instance of the dynamic JWT validator
-func NewDynamicValidator(ctx context.Context, aud string) *Validator {
+func NewDynamicValidator(ctx context.Context, aud string, issuers []string) *Validator {
 	metricsInit.Do(func() {
 		meter := otel.Meter("minder")
 		var err error
@@ -68,6 +59,13 @@ func NewDynamicValidator(ctx context.Context, aud string) *Validator {
 		if err != nil {
 			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating gauge for cached issuers failed")
 		}
+		deniedIssuers, err = meter.Int64Counter("dynamic_jwt.denied_issuers",
+			metric.WithDescription("Number of denied issuers for dynamic JWT validation"),
+			metric.WithUnit("count"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating gauge for denied issuers failed")
+		}
 		dynamicAuths, err = meter.Int64Counter("dynamic_jwt.auths",
 			metric.WithDescription("Number of dynamic JWT authentications"),
 			metric.WithUnit("count"),
@@ -77,8 +75,9 @@ func NewDynamicValidator(ctx context.Context, aud string) *Validator {
 		}
 	})
 	return &Validator{
-		jwks: jwk.NewCache(ctx),
-		aud:  aud,
+		jwks:           jwk.NewCache(ctx),
+		aud:            aud,
+		allowedIssuers: issuers,
 	}
 }
 
@@ -122,6 +121,12 @@ func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
 }
 
 func (m Validator) getKeySet(issuer string) (jwk.Set, error) {
+	if !slices.Contains(m.allowedIssuers, issuer) {
+		if deniedIssuers != nil {
+			deniedIssuers.Add(context.Background(), 1)
+		}
+		return nil, fmt.Errorf("issuer %s is not allowed", issuer)
+	}
 	jwksUrl, err := getJWKSUrlForOpenId(issuer)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch JWKS URL from openid: %w", err)

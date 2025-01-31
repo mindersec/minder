@@ -467,7 +467,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
 func isUserSelfUpdating(ctx context.Context, subject, inviteeEmail string) error {
 	if subject != "" {
-		if auth.IdentityFromContext(ctx).Human() == subject {
+		if auth.IdentityFromContext(ctx).String() == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}

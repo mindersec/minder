@@ -96,7 +96,9 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
-		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience)
+		allowedIssuers := []string{issUrl.String()}
+		allowedIssuers = append(allowedIssuers, cfg.Identity.AdditionalIssuers...)
+		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience, allowedIssuers)
 		jwt := merged.Validator{Validators: []jwt.Validator{staticJwt, dynamicJwt}}
 
 		authzc, err := authz.NewAuthzClient(&cfg.Authz, l)

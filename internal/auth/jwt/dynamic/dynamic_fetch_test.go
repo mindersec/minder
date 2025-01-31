@@ -1,20 +1,8 @@
-//
-// Copyright 2024 Stacklok, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
 
 // Package dynamic provides the logic for reading and validating JWT tokens
-// using a JWKS URL from the token's
+// using a JWKS URL from the token's `iss` claim.
 package dynamic
 
 import (
@@ -95,10 +83,12 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 
 	tests := []struct {
 		name     string
+		issuers  []string
 		getToken func(t *testing.T) (string, openid.Token)
 		wantErr  string
 	}{{
 		name: "valid token",
+		issuers: []string{server.URL},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
 			token, err := openid.NewBuilder().
@@ -115,6 +105,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 	}, {
 		name: "valid token, other issuer",
+		issuers: []string{server.URL + "/other"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
 			token, err := openid.NewBuilder().
@@ -131,6 +122,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 	}, {
 		name: "invalid signature",
+		issuers: []string{server.URL},
 		getToken: func(_ *testing.T) (string, openid.Token) {
 			t.Helper()
 			return "invalid", nil
@@ -138,10 +130,11 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		wantErr: `failed to split compact JWT: invalid number of segments`,
 	}, {
 		name: "expired jwt",
+		issuers: []string{server.URL},
 		getToken: func(_ *testing.T) (string, openid.Token) {
 			t.Helper()
 			token, err := openid.NewBuilder().
-				Issuer(server.URL + "/elsewhere").
+				Issuer(server.URL).
 				Subject("test").
 				Audience([]string{"minder"}).
 				Expiration(time.Now().Add(-1 * time.Minute)).
@@ -155,6 +148,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		wantErr: `failed to parse JWT payload: "exp" not satisfied`,
 	}, {
 		name: "bad well-known URL",
+		issuers: []string{server.URL, server.URL + "/elsewhere"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
 			token, err := openid.NewBuilder().
@@ -172,6 +166,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		wantErr: `non-200 response code "404 Not Found"`,
 	}, {
 		name: "bad issuer",
+		issuers: []string{server.URL, server.URL + "/nothing"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
 			token, err := openid.NewBuilder().
@@ -187,12 +182,30 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 			return string(signed), token
 		},
 		wantErr: `failed to fetch JWKS URL`,
+	}, {
+		name: "prohibited issuer",
+		issuers: []string{server.URL},
+		getToken: func(t *testing.T) (string, openid.Token) {
+			t.Helper()
+			token, err := openid.NewBuilder().
+				Issuer(server.URL + "/nothing").
+				Subject("test").
+				Audience([]string{"minder"}).
+				Expiration(time.Now().Add(time.Minute)).
+				IssuedAt(time.Now()).
+				Build()
+			require.NoError(t, err)
+			signed, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, jwkKey))
+			require.NoError(t, err)
+			return string(signed), token
+		},
+		wantErr: `is not allowed`,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			ctx := context.Background()
-			validator := NewDynamicValidator(ctx, "minder")
+			validator := NewDynamicValidator(ctx, "minder", tt.issuers)
 			token, want := tt.getToken(t)
 
 			got, err := validator.ParseAndValidate(string(token))

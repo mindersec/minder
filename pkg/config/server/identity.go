@@ -19,7 +19,8 @@ import (
 
 // IdentityConfigWrapper is the configuration for the identity provider
 type IdentityConfigWrapper struct {
-	Server IdentityConfig `mapstructure:"server"`
+	Server            IdentityConfig `mapstructure:"server"`
+	AdditionalIssuers []string       `mapstructure:"additional_issuers"`
 }
 
 // IdentityConfig is the configuration for the identity provider in minder server
