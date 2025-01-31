@@ -20,7 +20,7 @@ import (
 	"github.com/rs/zerolog"
 	"k8s.io/client-go/transport"
 
-	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	srvconfig "github.com/mindersec/minder/pkg/config/server"
 )
@@ -237,7 +237,12 @@ func (a *ClientWrapper) Check(ctx context.Context, action string, project uuid.U
 	// TODO: set ClientCheckOptions like in
 	// https://openfga.dev/docs/getting-started/perform-check#02-calling-check-api
 	options := fgaclient.ClientCheckOptions{}
-	userString := getUserForTuple(jwt.GetUserSubjectFromContext(ctx))
+	id := auth.IdentityFromContext(ctx)
+	if id.String() == "" {
+		return fmt.Errorf("no user token found in context")
+	}
+	userString := getUserForTuple(id.String())
+
 	body := fgaclient.ClientCheckRequest{
 		User:     userString,
 		Relation: action,

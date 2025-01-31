@@ -31,6 +31,7 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	authjwt "github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/auth/jwt/noop"
+	"github.com/mindersec/minder/internal/auth/keycloak"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -183,6 +184,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				tc.buildStubs(t, mockStore)
 			}
 			ctx := authjwt.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: userJWT.Subject(),
+			})
 
 			authzClient := &mock.SimpleClient{}
 
@@ -277,6 +281,10 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
 			ctx = authjwt.WithAuthTokenContext(ctx, userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID:    userJWT.Subject(),
+				HumanName: userJWT.Subject(),
+			})
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
 			}, unaryHandler)
@@ -485,9 +493,11 @@ func TestRoleManagement(t *testing.T) {
 					data: []auth.Identity{{
 						UserID:    user1.String(),
 						HumanName: "user1",
+						Provider:  &keycloak.KeyCloak{},
 					}, {
 						UserID:    user2.String(),
 						HumanName: "user2",
+						Provider:  &keycloak.KeyCloak{},
 					}},
 				},
 				jwt:   noop.NewJwtValidator("test"),
@@ -598,7 +608,7 @@ func TestUpdateRole(t *testing.T) {
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
 			if tc.expectedInvitation {
-				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{}, nil)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
@@ -733,7 +743,7 @@ func TestAssignRole(t *testing.T) {
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
 			if tc.inviteByEmail {
-				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{
 					Role:    authzRole.String(),
 					Project: projectIdString,

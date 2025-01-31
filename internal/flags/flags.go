@@ -13,7 +13,7 @@ import (
 	gofeature "github.com/thomaspoignant/go-feature-flag"
 	"github.com/thomaspoignant/go-feature-flag/retriever/fileretriever"
 
-	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	config "github.com/mindersec/minder/pkg/config/server"
 )
@@ -32,7 +32,7 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 			"project": ec.Project.ID.String(),
 			// TODO: is this useful, given how provider names are used?
 			"provider": ec.Provider.Name,
-			"user":     jwt.GetUserSubjectFromContext(ctx),
+			"user":     auth.IdentityFromContext(ctx).String(),
 		},
 	)
 }

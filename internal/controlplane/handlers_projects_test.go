@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	mockdb "github.com/mindersec/minder/database/mock"
-	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -23,8 +22,9 @@ import (
 func TestListProjects(t *testing.T) {
 	t.Parallel()
 
-	user := openid.New()
-	assert.NoError(t, user.Set("sub", "testuser"))
+	user := &auth.Identity{
+		UserID: "testuser",
+	}
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New()},
@@ -34,7 +34,7 @@ func TestListProjects(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user.Subject()).Return(db.User{ID: 1}, nil)
+	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user.String()).Return(db.User{ID: 1}, nil)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), authzClient.Allowed[0]).Return(
 		db.Project{ID: authzClient.Allowed[0]}, nil)
 
@@ -44,7 +44,7 @@ func TestListProjects(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = jwt.WithAuthTokenContext(ctx, user)
+	ctx = auth.WithIdentityContext(ctx, user)
 
 	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
 	assert.NoError(t, err)
@@ -56,8 +56,9 @@ func TestListProjects(t *testing.T) {
 func TestListProjectsWithOneDeletedWhileIterating(t *testing.T) {
 	t.Parallel()
 
-	user := openid.New()
-	assert.NoError(t, user.Set("sub", "testuser"))
+	user := &auth.Identity{
+		UserID: "testuser",
+	}
 
 	authzClient := &mock.SimpleClient{
 		Allowed: []uuid.UUID{uuid.New(), uuid.New(), uuid.New()},
@@ -67,7 +68,7 @@ func TestListProjectsWithOneDeletedWhileIterating(t *testing.T) {
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user.Subject()).Return(db.User{ID: 1}, nil)
+	mockStore.EXPECT().GetUserBySubject(gomock.Any(), user.String()).Return(db.User{ID: 1}, nil)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), authzClient.Allowed[0]).Return(
 		db.Project{ID: authzClient.Allowed[0]}, nil)
 	mockStore.EXPECT().GetProjectByID(gomock.Any(), authzClient.Allowed[1]).Return(
@@ -81,7 +82,7 @@ func TestListProjectsWithOneDeletedWhileIterating(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ctx = jwt.WithAuthTokenContext(ctx, user)
+	ctx = auth.WithIdentityContext(ctx, user)
 
 	resp, err := server.ListProjects(ctx, &minder.ListProjectsRequest{})
 	assert.NoError(t, err)

@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	fgasdk "github.com/openfga/go-sdk"
 	"github.com/openfga/openfga/cmd/run"
 	"github.com/openfga/openfga/pkg/logger"
@@ -20,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/authz"
 	srvconfig "github.com/mindersec/minder/pkg/config/server"
 )
@@ -91,9 +90,9 @@ func TestVerifyOneProject(t *testing.T) {
 	prj := uuid.New()
 	assert.NoError(t, c.Write(ctx, "user-1", authz.RoleAdmin, prj), "failed to write project")
 
-	userJWT := openid.New()
-	assert.NoError(t, userJWT.Set("sub", "user-1"))
-	userctx := jwt.WithAuthTokenContext(ctx, userJWT)
+	userctx := auth.WithIdentityContext(ctx, &auth.Identity{
+		UserID: "user-1",
+	})
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj), "failed to check project")
@@ -145,9 +144,9 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	prj1 := uuid.New()
 	assert.NoError(t, c.Write(ctx, "user-1", authz.RoleAdmin, prj1), "failed to write project")
 
-	user1JWT := openid.New()
-	assert.NoError(t, user1JWT.Set("sub", "user-1"))
-	userctx := jwt.WithAuthTokenContext(ctx, user1JWT)
+	userctx := auth.WithIdentityContext(ctx, &auth.Identity{
+		UserID: "user-1",
+	})
 
 	// verify the project
 	assert.NoError(t, c.Check(userctx, "get", prj1), "failed to check project")
@@ -164,9 +163,7 @@ func TestVerifyMultipleProjects(t *testing.T) {
 	assert.NoError(t, c.Write(ctx, "user-2", authz.RoleAdmin, prj3), "failed to write project")
 
 	// verify the project
-	user2JWT := openid.New()
-	assert.NoError(t, user2JWT.Set("sub", "user-2"))
-	assert.NoError(t, c.Check(jwt.WithAuthTokenContext(ctx, user2JWT), "get", prj3), "failed to check project")
+	assert.NoError(t, c.Check(auth.WithIdentityContext(ctx, &auth.Identity{UserID: "user-2"}), "get", prj3), "failed to check project")
 
 	// verify user-1 cannot operate on project 3
 	assert.Error(t, c.Check(userctx, "get", prj3), "expected user-1 to not be able to operate on project 3")

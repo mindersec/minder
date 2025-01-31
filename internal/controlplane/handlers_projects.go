@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/projects"
@@ -29,12 +29,18 @@ func (s *Server) ListProjects(
 	ctx context.Context,
 	_ *minderv1.ListProjectsRequest,
 ) (*minderv1.ListProjectsResponse, error) {
-	userInfo, err := s.store.GetUserBySubject(ctx, jwt.GetUserSubjectFromContext(ctx))
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+	id := auth.IdentityFromContext(ctx)
+
+	// Not sure if we still need to do this at all, but we only create database users
+	// for users registered in the primary ("") provider.
+	if id != nil && id.String() == id.UserID {
+		_, err := s.store.GetUserBySubject(ctx, id.String())
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error getting user: %v", err)
+		}
 	}
 
-	projs, err := s.authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
+	projs, err := s.authzClient.ProjectsForUser(ctx, id.String())
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting projects for user: %v", err)
 	}

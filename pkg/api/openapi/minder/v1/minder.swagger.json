@@ -1091,7 +1091,7 @@
           },
           {
             "name": "roleAssignment.subject",
-            "description": "subject is the subject to which the role is assigned.",
+            "description": "subject is the subject to which the role is assigned.\nCan be either a UUID or a providername/subject string.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -5721,7 +5721,7 @@
         },
         "subject": {
           "type": "string",
-          "description": "subject is the subject to which the role is assigned."
+          "description": "subject is the subject to which the role is assigned.\nCan be either a UUID or a providername/subject string."
         },
         "displayName": {
           "type": "string",
