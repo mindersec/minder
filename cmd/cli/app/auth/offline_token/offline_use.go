@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -59,13 +58,13 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 	clientID := clientConfig.Identity.CLI.ClientId
 
-	creds, err := util.RefreshCredentials(tok, issuerUrlStr, clientID)
+	creds, err := cli.RefreshCredentials(tok, issuerUrlStr, clientID)
 	if err != nil {
 		return fmt.Errorf("couldn't fetch credentials: %v", err)
 	}
 
 	// save credentials
-	filePath, err := util.SaveCredentials(util.OpenIdCredentials{
+	filePath, err := cli.SaveCredentials(cli.OpenIdCredentials{
 		AccessToken:          creds.AccessToken,
 		RefreshToken:         creds.RefreshToken,
 		AccessTokenExpiresAt: creds.AccessTokenExpiresAt,

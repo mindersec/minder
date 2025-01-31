@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	mcrypto "github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/useragent"
 	"github.com/mindersec/minder/internal/util/rand"
 	"github.com/mindersec/minder/pkg/config"
@@ -83,7 +82,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithUnaryInterceptor(requestIDInterceptor(cmd.PrintErrf)))
 	}
 
-	return util.GetGrpcConnection(
+	return GetGrpcConnection(
 		grpcHost,
 		grpcPort,
 		allowInsecure,
@@ -103,7 +102,7 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		return MessageAndError("Unable to read config", err)
 	}
 
-	_, err = util.GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
+	_, err = GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
 	if err != nil { // or token is expired?
 		tokenFile, err := LoginAndSaveCreds(ctx, cmd, clientConfig)
 		if err != nil {
@@ -130,7 +129,7 @@ func LoginAndSaveCreds(ctx context.Context, cmd *cobra.Command, clientConfig *cl
 	}
 
 	// save credentials
-	filePath, err := util.SaveCredentials(util.OpenIdCredentials{
+	filePath, err := SaveCredentials(OpenIdCredentials{
 		AccessToken:          token.AccessToken,
 		RefreshToken:         token.RefreshToken,
 		AccessTokenExpiresAt: token.Expiry,

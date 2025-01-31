@@ -14,7 +14,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -60,7 +59,7 @@ func offlineRevokeCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *
 	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 	clientID := clientConfig.Identity.CLI.ClientId
 
-	if err := util.RevokeOfflineToken(tok, issuerUrlStr, clientID); err != nil {
+	if err := cli.RevokeOfflineToken(tok, issuerUrlStr, clientID); err != nil {
 		return fmt.Errorf("couldn't revoke token: %v", err)
 	}
 
