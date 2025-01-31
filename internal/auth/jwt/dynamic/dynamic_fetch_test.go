@@ -87,7 +87,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		getToken func(t *testing.T) (string, openid.Token)
 		wantErr  string
 	}{{
-		name: "valid token",
+		name:    "valid token",
 		issuers: []string{server.URL},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -104,7 +104,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 			return string(signed), token
 		},
 	}, {
-		name: "valid token, other issuer",
+		name:    "valid token, other issuer",
 		issuers: []string{server.URL + "/other"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -121,7 +121,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 			return string(signed), token
 		},
 	}, {
-		name: "invalid signature",
+		name:    "invalid signature",
 		issuers: []string{server.URL},
 		getToken: func(_ *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -129,7 +129,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 		wantErr: `failed to split compact JWT: invalid number of segments`,
 	}, {
-		name: "expired jwt",
+		name:    "expired jwt",
 		issuers: []string{server.URL},
 		getToken: func(_ *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -147,7 +147,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 		wantErr: `failed to parse JWT payload: "exp" not satisfied`,
 	}, {
-		name: "bad well-known URL",
+		name:    "bad well-known URL",
 		issuers: []string{server.URL, server.URL + "/elsewhere"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -165,7 +165,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 		wantErr: `non-200 response code "404 Not Found"`,
 	}, {
-		name: "bad issuer",
+		name:    "bad issuer",
 		issuers: []string{server.URL, server.URL + "/nothing"},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
@@ -183,7 +183,7 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 		},
 		wantErr: `failed to fetch JWKS URL`,
 	}, {
-		name: "prohibited issuer",
+		name:    "prohibited issuer",
 		issuers: []string{server.URL},
 		getToken: func(t *testing.T) (string, openid.Token) {
 			t.Helper()
