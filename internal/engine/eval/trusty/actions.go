@@ -53,7 +53,6 @@ Archived packages are no longer updated or maintained. This can lead to security
 {{ if .Deprecated }}
 ⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
 {{ end }}
-#### Trusty Score: {{ .Score }}
 {{ if .ScoreComponents }}
 <details>
   <summary>Scoring details</summary>
@@ -98,10 +97,10 @@ Archived packages are no longer updated or maintained. This can lead to security
 <details>
   <summary>Alternatives</summary>
 
-  | Package             | Score | Description |
-  | ------------------- | ----: | ----------- |
+  | Package             | Description |
+  | ------------------- | ----------- |
 {{ range .Alternatives -}}
-  | [{{ .PackageName }}]({{ .TrustyURL }})  | {{ .Score }} | {{ .Summary }} |
+  | [{{ .PackageName }}]({{ .TrustyURL }})  | {{ .Summary }} |
 {{ end }}
 </details>
 {{- end -}}

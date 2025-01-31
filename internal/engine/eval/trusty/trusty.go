@@ -586,10 +586,6 @@ func classifyDependency(
 		packageScore = *resp.Score
 	}
 
-	if ecoConfig.Score > packageScore {
-		reasons = append(reasons, TRUSTY_LOW_SCORE)
-	}
-
 	if ecoConfig.Provenance > resp.ProvenanceScore && resp.ProvenanceScore > 0 {
 		reasons = append(reasons, TRUSTY_LOW_PROVENANCE)
 	}
