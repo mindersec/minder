@@ -76,7 +76,7 @@ require (
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1
 	github.com/stretchr/testify v1.10.0
 	github.com/styrainc/regal v0.30.2
-	github.com/thomaspoignant/go-feature-flag v1.40.0
+	github.com/thomaspoignant/go-feature-flag v1.41.0
 	github.com/yuin/goldmark v1.7.8
 	gitlab.com/gitlab-org/api/client-go v0.120.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0
@@ -152,6 +152,7 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.3.0 // indirect
+	github.com/diegoholiveira/jsonlogic/v3 v3.7.1 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
@@ -382,7 +383,7 @@ require (
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/yashtewari/glob-intersection v0.2.0 // indirect
 	github.com/zitadel/oidc/v3 v3.34.1
-	go.mongodb.org/mongo-driver v1.17.1 // indirect
+	go.mongodb.org/mongo-driver v1.17.2 // indirect
 	go.opentelemetry.io/otel/metric v1.34.0
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
