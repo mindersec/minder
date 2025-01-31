@@ -204,11 +204,29 @@ func ConcatenateAndWrap(input string, maxLen int) string {
 	return result
 }
 
+// GetConfigDirPath returns the path to the config directory
+func GetConfigDirPath() (string, error) {
+	// Get the XDG_CONFIG_HOME environment variable
+	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
+
+	// If XDG_CONFIG_HOME is not set or empty, use $HOME/.config as the base directory
+	if xdgConfigHome == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("error getting home directory: %v", err)
+		}
+		xdgConfigHome = filepath.Join(homeDir, ".config")
+	}
+
+	filePath := filepath.Join(xdgConfigHome, "minder")
+	return filePath, nil
+}
+
 // GetDefaultCLIConfigPath returns the default path for the CLI config file
 // Returns an empty string if the path cannot be determined
 func GetDefaultCLIConfigPath() string {
 	//nolint:errcheck // ignore error as we are just checking if the file exists
-	cfgDirPath, _ := util.GetConfigDirPath()
+	cfgDirPath, _ := GetConfigDirPath()
 
 	var xdgConfigPath string
 	if cfgDirPath != "" {

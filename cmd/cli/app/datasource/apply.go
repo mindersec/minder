@@ -22,10 +22,11 @@ import (
 
 // applyCmd represents the datasource apply command
 var applyCmd = &cobra.Command{
-	Use:   "apply",
+	Use:   "apply [files...]",
 	Short: "Apply a data source",
 	Long:  `The datasource apply subcommand lets you create or update data sources for a project within Minder.`,
 	RunE:  cli.GRPCClientWrapRunE(applyCommand),
+	Args:  cobra.ArbitraryArgs,
 }
 
 func init() {
@@ -33,15 +34,10 @@ func init() {
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the data source (or - for stdin). Can be specified multiple times. Can be a directory.")
-	// Required
-	if err := applyCmd.MarkFlagRequired("file"); err != nil {
-		applyCmd.Printf("Error marking flag required: %s", err)
-		os.Exit(1)
-	}
 }
 
 // applyCommand is the datasource apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewDataSourceServiceClient(conn)
 
 	project := viper.GetString("project")
@@ -51,11 +47,18 @@ func applyCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError("Error parsing file flag", err)
 	}
 
+	// Combine positional args with -f flag values
+	allFiles := append(fileFlag, args...)
+
+	if len(allFiles) == 0 {
+		return fmt.Errorf("no files specified: use positional arguments or the -f flag")
+	}
+
 	if err = validateFilesArg(fileFlag); err != nil {
 		return cli.MessageAndError("Error validating file flag", err)
 	}
 
-	files, err := util.ExpandFileArgs(fileFlag...)
+	files, err := util.ExpandFileArgs(allFiles...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}

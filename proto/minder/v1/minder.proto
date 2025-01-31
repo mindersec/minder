@@ -2907,7 +2907,7 @@ message RuleType {
     string description = 5 [
         (buf.validate.field).string = {
             min_len: 1,
-            max_len: 1000,
+            max_len: 1500,
         },
         (google.api.field_behavior) = REQUIRED
     ];
