@@ -10,7 +10,7 @@ Create or update a profile
 The profile apply subcommand lets you create or update new profiles for a project within Minder.
 
 ```
-minder profile apply [flags]
+minder profile apply [file] [flags]
 ```
 
 ### Options

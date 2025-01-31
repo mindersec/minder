@@ -10,7 +10,7 @@ Apply a rule type
 The ruletype apply subcommand lets you create or update rule types for a project within Minder.
 
 ```
-minder ruletype apply [flags]
+minder ruletype apply [files...] [flags]
 ```
 
 ### Options
