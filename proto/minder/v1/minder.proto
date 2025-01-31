@@ -3366,7 +3366,7 @@ message RoleAssignment {
         (google.api.field_behavior) = REQUIRED
     ];
     // subject is the subject to which the role is assigned.
-    // Can be either a UUID or a <providername>/<subject> string.
+    // Can be either a UUID or a providername/subject string.
     string subject = 2 [
         (buf.validate.field).string.pattern =
             // Can be either a UUID or a providername/<subject> string

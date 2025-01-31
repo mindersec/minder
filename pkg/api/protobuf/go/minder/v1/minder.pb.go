@@ -9541,7 +9541,7 @@ type RoleAssignment struct {
 	// role is the role that is assigned.
 	Role string `protobuf:"bytes,1,opt,name=role,proto3" json:"role,omitempty"`
 	// subject is the subject to which the role is assigned.
-	// Can be either a UUID or a <providername>/<subject> string.
+	// Can be either a UUID or a providername/subject string.
 	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
 	// display_name is the display name of the subject.
 	DisplayName string `protobuf:"bytes,5,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
