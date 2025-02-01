@@ -246,11 +246,12 @@ func Test_restHandler_Call(t *testing.T) {
 			tt.fields.endpointTmpl = server.URL + tt.fields.endpointTmpl
 
 			h := &restHandler{
-				endpointTmpl: tt.fields.endpointTmpl,
-				method:       tt.fields.method,
-				body:         tt.fields.body,
-				headers:      tt.fields.headers,
-				parse:        tt.fields.parse,
+				endpointTmpl:      tt.fields.endpointTmpl,
+				method:            tt.fields.method,
+				body:              tt.fields.body,
+				headers:           tt.fields.headers,
+				parse:             tt.fields.parse,
+				testOnlyTransport: http.DefaultTransport,
 			}
 			got, err := h.Call(context.Background(), nil, tt.args.args)
 			if tt.wantErr {
