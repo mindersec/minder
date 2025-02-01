@@ -18,6 +18,7 @@ import (
 	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	"github.com/mindersec/minder/internal/util/schemavalidate"
@@ -36,6 +37,8 @@ type restHandler struct {
 	inputSchema    *jsonschema.Schema
 	endpointTmpl   string
 	method         string
+	// used only to allow requests to localhost during tests
+	testOnlyTransport http.RoundTripper
 	// contains the request body or the key
 	body          string
 	bodyFromInput bool
@@ -109,10 +112,17 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Result, args any) 
 		return nil, err
 	}
 
+	transport := h.testOnlyTransport
+	if transport == nil {
+		transport = rego.LimitedDialer(nil)
+	}
+	fmt.Printf("transport: %p, tot: %p\n", transport, h.testOnlyTransport)
 	// TODO: Add option to use custom client
 	cli := &http.Client{
 		// TODO: Make timeout configurable
 		Timeout: 5 * time.Second,
+		// Don't allow calling non-public addresses.
+		Transport: transport,
 	}
 
 	b, err := h.getBody(argsMap)
