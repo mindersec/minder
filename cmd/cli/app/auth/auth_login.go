@@ -5,8 +5,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,23 +27,13 @@ $XDG_CONFIG_HOME/minder/credentials.json`,
 
 // LoginCommand is the login subcommand
 func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
-	v := viper.GetViper()
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
-
-	// If config file is specified but doesn't exist, that's an error
-	if configFile := v.GetString("config"); configFile != "" {
-		if _, err := os.Stat(configFile); os.IsNotExist(err) {
-			return cli.MessageAndError("Config file does not exist", fmt.Errorf("file %s not found", configFile))
-		}
-	}
-
-	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
+	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
 	}
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
 	filePath, err := cli.LoginAndSaveCreds(ctx, cmd, clientConfig)
 	if err != nil {
