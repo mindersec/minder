@@ -12,8 +12,9 @@ import (
 )
 
 // TestGetConfigDirPath tests the GetConfigDirPath function
+//
+//nolint:paralleltest
 func TestGetConfigDirPath(t *testing.T) {
-	t.Parallel()
 	tests := []struct {
 		name           string
 		envVar         string
@@ -35,8 +36,8 @@ func TestGetConfigDirPath(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		//nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			setEnvVar(t, XdgConfigHomeEnvVar, tt.envVar)
 			path, err := cli.GetConfigDirPath()
 			if (err != nil) != tt.expectingError {
