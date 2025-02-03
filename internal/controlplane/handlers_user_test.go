@@ -750,6 +750,9 @@ func TestResolveInvitation(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = jwt.WithAuthTokenContext(ctx, user)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: userSubject,
+			})
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			if tc.setup != nil {

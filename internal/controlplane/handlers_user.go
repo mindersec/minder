@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
@@ -450,8 +451,9 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 		return status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
 	// Loop through all role assignments for the project and check if this user already has a role
+	currentUser := auth.IdentityFromContext(ctx).String()
 	for _, existing := range as {
-		if existing.Subject == jwt.GetUserSubjectFromContext(ctx) {
+		if existing.Subject == currentUser {
 			// User already has the same role in the project
 			if existing.Role == userInvite.Role {
 				return util.UserVisibleError(codes.AlreadyExists, "user already has the same role in the project")
@@ -459,14 +461,18 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 			// Revoke the existing role assignments for the user in the project
 			existingRole, err := authz.ParseRole(existing.Role)
 			if err != nil {
-				return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
+				return status.Errorf(codes.Internal, "failed to parse existing role: %s", err)
+			}
+			existingProject, err := uuid.Parse(*existing.Project)
+			if err != nil {
+				return status.Errorf(codes.Internal, "failed to parse existing project: %s", err)
 			}
 			// Delete the role assignment
 			if err := s.authzClient.Delete(
 				ctx,
-				jwt.GetUserSubjectFromContext(ctx),
+				currentUser,
 				existingRole,
-				uuid.MustParse(*existing.Project),
+				existingProject,
 			); err != nil {
 				return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 			}
@@ -478,14 +484,21 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 		return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
 	}
 	// Add the user to the project
-	if err := s.authzClient.Write(ctx, jwt.GetUserSubjectFromContext(ctx), authzRole, userInvite.Project); err != nil {
+	if err := s.authzClient.Write(ctx, currentUser, authzRole, userInvite.Project); err != nil {
 		return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 	return nil
 }
 
 func ensureUser(ctx context.Context, s *Server, store db.ExtendQuerier) (db.User, error) {
-	sub := jwt.GetUserSubjectFromContext(ctx)
+	id := auth.IdentityFromContext(ctx)
+	// Only allow invitation flow for users from the primary provider / who can accept
+	// things like terms & conditions.  Secondary providers are for machine identities,
+	// which cannot operate webpages, etc.
+	if id == nil || id.String() != id.UserID {
+		return db.User{}, util.UserVisibleError(codes.FailedPrecondition, "this type of user cannot accept invitations")
+	}
+	sub := id.String()
 	if sub == "" {
 		return db.User{}, status.Error(codes.Internal, "failed to get user subject")
 	}

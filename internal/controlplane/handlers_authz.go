@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
@@ -96,7 +97,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 		zerolog.Ctx(ctx).Error().Err(err).Msg("authorization check failed")
 		return nil, util.UserVisibleError(
 			codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
-			jwt.GetUserSubjectFromContext(ctx), entityCtx.Project.ID)
+			auth.IdentityFromContext(ctx).Human(), entityCtx.Project.ID)
 	}
 
 	return handler(ctx, req)
@@ -168,16 +169,20 @@ func getDefaultProjectID(
 	store db.Store,
 	authzClient authz.Client,
 ) (uuid.UUID, error) {
-	subject := jwt.GetUserSubjectFromContext(ctx)
+	userId := auth.IdentityFromContext(ctx)
 
-	userInfo, err := store.GetUserBySubject(ctx, subject)
-	if err != nil {
-		// Note that we're revealing that the user is not registered in minder
-		// since the caller has a valid token (this is checked in earlier middleware).
-		// Therefore, we assume it's safe output that the user is not found.
-		return uuid.UUID{}, util.UserVisibleError(codes.NotFound, "user not found")
+	// Not sure if we still need to do this at all, but we only create database users
+	// for users registered in the primary ("") provider.
+	if userId != nil && userId.String() == userId.UserID {
+		_, err := store.GetUserBySubject(ctx, userId.String())
+		if err != nil {
+			// Note that we're revealing that the user is not registered in minder
+			// since the caller has a valid token (this is checked in earlier middleware).
+			// Therefore, we assume it's safe output that the user is not found.
+			return uuid.UUID{}, util.UserVisibleError(codes.NotFound, "user not found")
+		}
 	}
-	prjs, err := authzClient.ProjectsForUser(ctx, userInfo.IdentitySubject)
+	prjs, err := authzClient.ProjectsForUser(ctx, userId.String())
 	if err != nil {
 		return uuid.UUID{}, status.Errorf(codes.Internal, "cannot find projects for user: %v", err)
 	}
@@ -321,7 +326,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.CreateInvite(ctx, qtx, s.idClient, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+				return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
 			})
 			if err != nil {
 				return nil, err
@@ -335,8 +340,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// Enable one or the other.
-		// This is temporary until we deprecate it completely in favor of email-based role assignments
-		if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if flags.Bool(ctx, s.featureFlags, flags.MachineAccounts) || !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
 				return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, s.idClient, targetProject, sub, authzRole)
 			})
@@ -429,7 +433,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			updatedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.UpdateInvite(ctx, qtx, s.idClient, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+				return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
 			})
 			if err != nil {
 				return nil, err
@@ -463,7 +467,7 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 // isUserSelfUpdating is used to prevent if the user is trying to update their own role
 func isUserSelfUpdating(ctx context.Context, subject, inviteeEmail string) error {
 	if subject != "" {
-		if jwt.GetUserSubjectFromContext(ctx) == subject {
+		if auth.IdentityFromContext(ctx).String() == subject {
 			return util.UserVisibleError(codes.InvalidArgument, "cannot update your own role")
 		}
 	}
