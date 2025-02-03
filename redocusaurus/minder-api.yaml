@@ -822,7 +822,9 @@ paths:
           required: true
           type: string
         - name: roleAssignment.subject
-          description: subject is the subject to which the role is assigned.
+          description: |-
+            subject is the subject to which the role is assigned.
+            Can be either a UUID or a providername/subject string.
           in: query
           required: false
           type: string
@@ -4587,7 +4589,9 @@ definitions:
         description: role is the role that is assigned.
       subject:
         type: string
-        description: subject is the subject to which the role is assigned.
+        description: |-
+          subject is the subject to which the role is assigned.
+          Can be either a UUID or a providername/subject string.
       displayName:
         type: string
         description: display_name is the display name of the subject.
