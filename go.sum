@@ -978,8 +978,8 @@ github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1
 github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.24.0/go.mod h1:7NCWFjdKEHGt2lZxHDXNu7mwxGb5dnNujrQcEUNTeyU=
 github.com/signalfx/splunk-otel-go/instrumentation/internal v1.24.0 h1:diG5bn5JIx4b+cUU1+zFJ1CyRhTao+IHzphtsIIh7mI=
 github.com/signalfx/splunk-otel-go/instrumentation/internal v1.24.0/go.mod h1:kOxSM4ARbA4OwgV7uVNd+DZxv7YH6KVSYbioTTiOaI8=
-github.com/sigstore/protobuf-specs v0.3.3 h1:RMZQgXTD/pF7KW6b5NaRLYxFYZ/wzx44PQFXN2PEo5g=
-github.com/sigstore/protobuf-specs v0.3.3/go.mod h1:vIhZ6Uor1a38+wvRrKcqL2PtYNlgoIW9lhzYzkyy4EU=
+github.com/sigstore/protobuf-specs v0.4.0 h1:yoZbdh0kZYKOSiVbYyA8J3f2wLh5aUk2SQB7LgAfIdU=
+github.com/sigstore/protobuf-specs v0.4.0/go.mod h1:FKW5NYhnnFQ/Vb9RKtQk91iYd0MKJ9AxyqInEwU6+OI=
 github.com/sigstore/rekor v1.3.8 h1:B8kJI8mpSIXova4Jxa6vXdJyysRxFGsEsLKBDl0rRjA=
 github.com/sigstore/rekor v1.3.8/go.mod h1:/dHFYKSuxEygfDRnEwyJ+ZD6qoVYNXQdi1mJrKvKWsI=
 github.com/sigstore/sigstore v1.8.12 h1:S8xMVZbE2z9ZBuQUEG737pxdLjnbOIcFi5v9UFfkJFc=
