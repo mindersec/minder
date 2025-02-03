@@ -116,7 +116,6 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Result, args any) 
 	if transport == nil {
 		transport = rego.LimitedDialer(nil)
 	}
-	fmt.Printf("transport: %p, tot: %p\n", transport, h.testOnlyTransport)
 	// TODO: Add option to use custom client
 	cli := &http.Client{
 		// TODO: Make timeout configurable
