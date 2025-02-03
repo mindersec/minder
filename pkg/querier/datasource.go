@@ -15,6 +15,10 @@ import (
 
 // DataSourceHandlers interface provides functions to interact with data sources
 type DataSourceHandlers interface {
+	ListDataSourcesByProject(
+		ctx context.Context,
+		projectID uuid.UUID,
+	) ([]*pb.DataSource, error)
 	CreateDataSource(
 		ctx context.Context,
 		projectID uuid.UUID,
@@ -37,6 +41,17 @@ type DataSourceHandlers interface {
 		projectID uuid.UUID,
 		dataSourceID uuid.UUID,
 	) error
+}
+
+// ListDataSourcesByProject returns a list of data sources by project ID
+func (q *querierType) ListDataSourcesByProject(ctx context.Context, projectID uuid.UUID) ([]*pb.DataSource, error) {
+	if q.querier == nil {
+		return nil, ErrQuerierMissing
+	}
+	if q.dataSourceSvc == nil {
+		return nil, ErrDataSourceSvcMissing
+	}
+	return q.dataSourceSvc.List(ctx, projectID, dsservice.ReadBuilder().WithTransaction(q.querier))
 }
 
 // CreateDataSource creates a data source
