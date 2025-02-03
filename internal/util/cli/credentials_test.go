@@ -44,8 +44,9 @@ func setEnvVar(t *testing.T, env string, value string) {
 }
 
 // TestGetGrpcConnection tests the GetGrpcConnection function
+//
+//nolint:paralleltest
 func TestGetGrpcConnection(t *testing.T) {
-	t.Parallel()
 	// authTokenMutex := &sync.Mutex{}
 	tests := []struct {
 		name          string
@@ -91,7 +92,6 @@ func TestGetGrpcConnection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
 			conn, err := cli.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
 			if (err != nil) != tt.expectedError {
@@ -148,9 +148,9 @@ func TestSaveCredentials(t *testing.T) {
 }
 
 // TestRemoveCredentials tests the RemoveCredentials function
+//
+//nolint:paralleltest
 func TestRemoveCredentials(t *testing.T) {
-	t.Parallel()
-
 	// Create a temporary directory
 	testDir := t.TempDir()
 	setEnvVar(t, XdgConfigHomeEnvVar, testDir)
@@ -182,8 +182,9 @@ func TestRemoveCredentials(t *testing.T) {
 }
 
 // TestRefreshCredentials tests the RefreshCredentials function
+//
+//nolint:paralleltest
 func TestRefreshCredentials(t *testing.T) {
-	t.Parallel()
 	// Create a temporary directory
 	testDir := t.TempDir()
 
@@ -232,8 +233,6 @@ func TestRefreshCredentials(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				fmt.Fprintln(w, tt.responseBody)
@@ -260,9 +259,9 @@ func TestRefreshCredentials(t *testing.T) {
 }
 
 // TestLoadCredentials tests the LoadCredentials function
+//
+//nolint:paralleltest
 func TestLoadCredentials(t *testing.T) {
-	t.Parallel()
-
 	tests := []struct {
 		name           string
 		fileContent    string
@@ -293,7 +292,6 @@ func TestLoadCredentials(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
 			testDir := t.TempDir()
 			setEnvVar(t, XdgConfigHomeEnvVar, testDir)
 			// Create the minder directory inside the temp directory
