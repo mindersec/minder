@@ -28,7 +28,7 @@ const (
 	commentTemplate = `{{- if .Malicious -}}
 ### ⚠️ MALICIOUS PACKAGES ⚠️
 
-Minder has detected that this pull request is introducing malicious software dependencies using data from [Trusty](https://www.trustypkg.dev/):
+Minder has detected that this pull request is introducing malicious software dependencies using data from [Stacklok Insight](https://www.trustypkg.dev/):
 
 | Package | Summary | Details |
 | --- | --- | --- |
