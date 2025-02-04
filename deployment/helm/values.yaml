@@ -54,6 +54,17 @@ serviceAccounts:
 ingress:
   # -- (object, optional) annotations to use for the ingress
   annotations: {}
+  # -- (bool) Whether to create Ingress objects or not
+  enabled: true
+
+# Gateway API (HTTPRoute) settings
+routes:
+  # -- (bool) Whether to create HTTPRoute or not
+  enabled: true
+  # -- (string) The name of the HTTPRoute to create
+  name: minder
+  # -- (object, required) parentRefs to use for the routes
+  parentRefs: []
 
 hpaSettings:
   # -- (int) Minimum number of replicas for the HPA
