@@ -39,7 +39,6 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/entities/properties"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	gf "github.com/mindersec/minder/internal/providers/github/mock/fixtures"
@@ -49,6 +48,7 @@ import (
 	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )

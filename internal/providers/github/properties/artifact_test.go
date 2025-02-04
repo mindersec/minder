@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 func TestNewArtifactFetcher(t *testing.T) {

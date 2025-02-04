@@ -17,11 +17,11 @@ import (
 	entStrategies "github.com/mindersec/minder/internal/entities/handlers/strategies/entity"
 	msgStrategies "github.com/mindersec/minder/internal/entities/handlers/strategies/message"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/properties"
 	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )

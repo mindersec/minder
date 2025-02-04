@@ -11,9 +11,9 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/entities/properties"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 

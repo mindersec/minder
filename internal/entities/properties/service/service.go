@@ -17,9 +17,9 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

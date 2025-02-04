@@ -21,8 +21,8 @@ import (
 	"github.com/google/go-github/v63/github"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 // V1 is the version of the providers interface

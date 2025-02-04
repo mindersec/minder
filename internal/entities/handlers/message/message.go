@@ -11,8 +11,8 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 // TypedProps is a struct that contains the type of entity and its properties.

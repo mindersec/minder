@@ -13,9 +13,9 @@ import (
 	gitlablib "gitlab.com/gitlab-org/api/client-go"
 
 	entmsg "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/gitlab"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 

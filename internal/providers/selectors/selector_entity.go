@@ -13,10 +13,10 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/properties"
 	internalpb "github.com/mindersec/minder/internal/proto"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 func buildBaseSelectorEntity(

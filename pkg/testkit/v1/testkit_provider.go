@@ -10,8 +10,8 @@ import (
 	"github.com/go-git/go-git/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	provv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

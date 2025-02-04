@@ -21,7 +21,6 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers"
 	ghprovider "github.com/mindersec/minder/internal/providers/github/clients"
 	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
@@ -34,6 +33,7 @@ import (
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
