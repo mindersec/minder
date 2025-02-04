@@ -15,10 +15,10 @@ import (
 
 	uuid "github.com/google/uuid"
 	models "github.com/mindersec/minder/internal/entities/models"
-	properties "github.com/mindersec/minder/pkg/entities/properties"
 	service "github.com/mindersec/minder/internal/entities/properties/service"
 	manager "github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	properties "github.com/mindersec/minder/pkg/entities/properties"
 	v10 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
