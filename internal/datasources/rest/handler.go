@@ -187,7 +187,6 @@ func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error
 	start := time.Now()
 	resp, err := retriableDo(cli, req)
 	if err != nil {
-		zerolog.Ctx(req.Context()).Warn().Err(err).Msg("request failed")
 		return nil, err
 	}
 	defer resp.Body.Close()
