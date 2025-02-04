@@ -61,22 +61,24 @@ type restHandler struct {
 }
 
 func initMetrics() {
-	meter := otel.Meter("minder")
-	var err error
-	dataSourceRequestCounter, err = meter.Int64Counter(
-		"datasource.rest.request",
-		metric.WithDescription("Total number of data source requests issued"),
-	)
-	if err != nil {
-		zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating counter for data source requests failed")
-	}
-	dataSourceLatencyHistogram, err = meter.Int64Histogram(
-		"datasource.rest.latency",
-		metric.WithDescription("Latency of data source requests in milliseconds"),
-	)
-	if err != nil {
-		zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating histogram for data source requests failed")
-	}
+	metricsInit.Do(func() {
+		meter := otel.Meter("minder")
+		var err error
+		dataSourceRequestCounter, err = meter.Int64Counter(
+			"datasource.rest.request",
+			metric.WithDescription("Total number of data source requests issued"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating counter for data source requests failed")
+		}
+		dataSourceLatencyHistogram, err = meter.Int64Histogram(
+			"datasource.rest.latency",
+			metric.WithDescription("Latency of data source requests in milliseconds"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating histogram for data source requests failed")
+		}
+	})
 }
 
 func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
@@ -92,7 +94,7 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 
 	bodyFromInput, body := parseRequestBodyConfig(def)
 
-	metricsInit.Do(initMetrics)
+	initMetrics()
 
 	return &restHandler{
 		rawInputSchema: def.GetInputSchema(),

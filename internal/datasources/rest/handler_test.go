@@ -253,7 +253,7 @@ func Test_restHandler_Call(t *testing.T) {
 				parse:             tt.fields.parse,
 				testOnlyTransport: http.DefaultTransport,
 			}
-			metricsInit.Do(initMetrics)
+			initMetrics()
 
 			got, err := h.Call(context.Background(), nil, tt.args.args)
 			if tt.wantErr {
