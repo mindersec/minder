@@ -12,10 +12,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 // handleEntityAddEvent handles the entity add event.

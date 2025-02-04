@@ -13,8 +13,8 @@ import (
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

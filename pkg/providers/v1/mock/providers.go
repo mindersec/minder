@@ -19,7 +19,7 @@ import (
 	authn "github.com/google/go-containerregistry/pkg/authn"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	github "github.com/google/go-github/v63/github"
-	properties "github.com/mindersec/minder/internal/entities/properties"
+	properties "github.com/mindersec/minder/pkg/entities/properties"
 	v10 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v11 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"

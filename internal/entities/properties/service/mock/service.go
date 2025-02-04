@@ -15,7 +15,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	models "github.com/mindersec/minder/internal/entities/models"
-	properties "github.com/mindersec/minder/internal/entities/properties"
+	properties "github.com/mindersec/minder/pkg/entities/properties"
 	service "github.com/mindersec/minder/internal/entities/properties/service"
 	manager "github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
