@@ -3370,7 +3370,7 @@ message RoleAssignment {
     string subject = 2 [
         (buf.validate.field).string.pattern =
             // Can be either a UUID or a providername/<subject> string
-            "^(0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([a-z]+/[-/[:word:]:]+)$",
+            "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([a-z]+/[-/[:word:]:]+)$",
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
     // display_name is the display name of the subject.
