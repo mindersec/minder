@@ -235,6 +235,8 @@ func (d *dataSourceService) Create(
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	ds.Id = dsRecord.ID.String()
+
 	return ds, nil
 }
 
