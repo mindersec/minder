@@ -11,11 +11,16 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/rs/zerolog"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/engine/eval/rego"
@@ -30,6 +35,12 @@ const (
 	// MaxBytesLimit is the maximum number of bytes to read from the response body
 	// We limit to 1MB to prevent abuse
 	MaxBytesLimit int64 = 1 << 20
+)
+
+var (
+	metricsInit sync.Once
+
+	dataSourceLatencyHistogram metric.Int64Histogram
 )
 
 type restHandler struct {
@@ -48,6 +59,21 @@ type restHandler struct {
 	// TODO implement auth
 }
 
+func initMetrics() {
+	metricsInit.Do(func() {
+		meter := otel.Meter("minder")
+		var err error
+		dataSourceLatencyHistogram, err = meter.Int64Histogram(
+			"datasource.rest.latency",
+			metric.WithDescription("Latency of data source requests in milliseconds"),
+			metric.WithUnit("ms"),
+		)
+		if err != nil {
+			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating histogram for data source requests failed")
+		}
+	})
+}
+
 func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 	if def == nil {
 		return nil, errors.New("rest data source handler definition is nil")
@@ -60,6 +86,8 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 	}
 
 	bodyFromInput, body := parseRequestBodyConfig(def)
+
+	initMetrics()
 
 	return &restHandler{
 		rawInputSchema: def.GetInputSchema(),
@@ -141,13 +169,25 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Result, args any) 
 	return h.doRequest(cli, req)
 }
 
+func recordMetrics(ctx context.Context, resp *http.Response, start time.Time) {
+	attrs := []attribute.KeyValue{
+		attribute.String("method", resp.Request.Method),
+		attribute.String("endpoint", resp.Request.URL.String()),
+		attribute.String("status_code", fmt.Sprintf("%d", resp.StatusCode)),
+	}
+
+	dataSourceLatencyHistogram.Record(ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...))
+}
+
 func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error) {
+	start := time.Now()
 	resp, err := retriableDo(cli, req)
 	if err != nil {
 		return nil, err
 	}
-
 	defer resp.Body.Close()
+
+	recordMetrics(req.Context(), resp, start)
 
 	bout, err := h.parseResponseBody(resp.Body)
 	if err != nil {
@@ -257,14 +297,25 @@ func buildRestOutput(statusCode int, body any) any {
 
 func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
 	var resp *http.Response
+	retryCount := 0
+
 	err := backoff.Retry(func() error {
 		var err error
 		resp, err = cli.Do(req)
 		if err != nil {
+			zerolog.Ctx(req.Context()).Debug().
+				Err(err).
+				Int("retry", retryCount).
+				Msg("HTTP request failed, retrying")
+			retryCount++
 			return err
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
+			zerolog.Ctx(req.Context()).Debug().
+				Int("retry", retryCount).
+				Msg("rate limited, retrying")
+			retryCount++
 			return errors.New("rate limited")
 		}
 
@@ -272,6 +323,10 @@ func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
 	}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 5))
 
 	if err != nil {
+		zerolog.Ctx(req.Context()).Warn().
+			Err(err).
+			Int("retries", retryCount).
+			Msg("HTTP request failed after retries")
 		return nil, err
 	}
 
