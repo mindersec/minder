@@ -521,7 +521,7 @@ func makeTrustyURL(packageName string, ecosystem string) string {
 		constants.TrustyHttpURL,
 		"report",
 		strings.ToLower(ecosystem),
-		url.PathEscape(packageName))
+		url.PathEscape(packageName) + "?utm_source=minder")
 	return trustyURL
 }
 

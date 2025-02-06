@@ -280,7 +280,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				constants.TrustyHttpURL,
 				"report",
 				strings.ToLower(alternative.Dependency.Ecosystem.AsString()),
-				url.PathEscape(alternative.Dependency.Name))
+				url.PathEscape(alternative.Dependency.Name) + "?utm_source=minder")
 			if err != nil {
 				// This is unlikely to happen, but if it does, we skip the package
 				continue
