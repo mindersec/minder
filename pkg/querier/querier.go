@@ -86,10 +86,11 @@ func New(ctx context.Context, config *server.Config) (Store, Closer, error) {
 	}
 	// Return the new Type
 	return &querierType{
-		store:      store,
-		querier:    store, // use store by default
-		ruleSvc:    ruletypes.NewRuleTypeService(),
-		profileSvc: profiles.NewProfileService(evt, selectors.NewEnv()),
+		store:         store,
+		querier:       store, // use store by default
+		ruleSvc:       ruletypes.NewRuleTypeService(),
+		profileSvc:    profiles.NewProfileService(evt, selectors.NewEnv()),
+		dataSourceSvc: datasourceservice.NewDataSourceService(store),
 	}, dbCloser, nil
 }
 
