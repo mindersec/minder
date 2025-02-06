@@ -40,7 +40,6 @@ const (
 var (
 	metricsInit sync.Once
 
-	dataSourceRequestCounter   metric.Int64Counter
 	dataSourceLatencyHistogram metric.Int64Histogram
 )
 
@@ -64,16 +63,10 @@ func initMetrics() {
 	metricsInit.Do(func() {
 		meter := otel.Meter("minder")
 		var err error
-		dataSourceRequestCounter, err = meter.Int64Counter(
-			"datasource.rest.request",
-			metric.WithDescription("Total number of data source requests issued"),
-		)
-		if err != nil {
-			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating counter for data source requests failed")
-		}
 		dataSourceLatencyHistogram, err = meter.Int64Histogram(
 			"datasource.rest.latency",
 			metric.WithDescription("Latency of data source requests in milliseconds"),
+			metric.WithUnit("ms"),
 		)
 		if err != nil {
 			zerolog.Ctx(context.Background()).Warn().Err(err).Msg("Creating histogram for data source requests failed")
@@ -184,7 +177,6 @@ func recordMetrics(ctx context.Context, resp *http.Response, start time.Time) {
 	}
 
 	dataSourceLatencyHistogram.Record(ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...))
-	dataSourceRequestCounter.Add(ctx, 1, metric.WithAttributes(attrs...))
 }
 
 func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error) {
