@@ -339,20 +339,27 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		}
 		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
-		// Enable one or the other.
-		if flags.Bool(ctx, s.featureFlags, flags.MachineAccounts) || !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
-				return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, s.idClient, targetProject, sub, authzRole)
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			return &minder.AssignRoleResponse{
-				RoleAssignment: assignment,
-			}, nil
+		identity, err := s.idClient.Resolve(ctx, sub)
+		if err != nil || identity == nil {
+			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
 		}
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is enabled, use invites instead")
+		isMachine := identity.Provider.String() != ""
+		if !isMachine && flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+			return nil, util.UserVisibleError(codes.Unimplemented, "human users may only be added by invitation")
+		}
+		if isMachine && !flags.Bool(ctx, s.featureFlags, flags.MachineAccounts) {
+			return nil, util.UserVisibleError(codes.Unimplemented, "machine accounts are not enabled")
+		}
+		assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
+			return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, targetProject, *identity, authzRole)
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return &minder.AssignRoleResponse{
+			RoleAssignment: assignment,
+		}, nil
 	}
 	return nil, util.UserVisibleError(codes.InvalidArgument, "one of subject or email must be specified")
 }

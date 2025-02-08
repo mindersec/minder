@@ -46,18 +46,18 @@ func (m *MockRoleService) EXPECT() *MockRoleServiceMockRecorder {
 }
 
 // CreateRoleAssignment mocks base method.
-func (m *MockRoleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver, targetProject uuid.UUID, subject string, authzRole authz.Role) (*v1.RoleAssignment, error) {
+func (m *MockRoleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, targetProject uuid.UUID, subject auth.Identity, authzRole authz.Role) (*v1.RoleAssignment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRoleAssignment", ctx, qtx, authzClient, idClient, targetProject, subject, authzRole)
+	ret := m.ctrl.Call(m, "CreateRoleAssignment", ctx, qtx, authzClient, targetProject, subject, authzRole)
 	ret0, _ := ret[0].(*v1.RoleAssignment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CreateRoleAssignment indicates an expected call of CreateRoleAssignment.
-func (mr *MockRoleServiceMockRecorder) CreateRoleAssignment(ctx, qtx, authzClient, idClient, targetProject, subject, authzRole any) *gomock.Call {
+func (mr *MockRoleServiceMockRecorder) CreateRoleAssignment(ctx, qtx, authzClient, targetProject, subject, authzRole any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRoleAssignment", reflect.TypeOf((*MockRoleService)(nil).CreateRoleAssignment), ctx, qtx, authzClient, idClient, targetProject, subject, authzRole)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRoleAssignment", reflect.TypeOf((*MockRoleService)(nil).CreateRoleAssignment), ctx, qtx, authzClient, targetProject, subject, authzRole)
 }
 
 // RemoveRoleAssignment mocks base method.
