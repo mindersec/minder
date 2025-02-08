@@ -2000,6 +2000,7 @@ enum Entity {
     ENTITY_PIPELINE_RUN = 6;
     ENTITY_TASK_RUN = 7;
     ENTITY_BUILD = 8;
+    ENTITY_ORGANIZATION = 9;
 }
 
 message EntityAutoRegistrationConfig {

@@ -19,6 +19,7 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/engine/entities"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
@@ -722,26 +723,7 @@ func buildEvalResultAlertFromLRERow(
 }
 
 func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
-	switch dbEnt {
-	case db.EntitiesPullRequest:
-		return minderv1.Entity_ENTITY_PULL_REQUESTS
-	case db.EntitiesArtifact:
-		return minderv1.Entity_ENTITY_ARTIFACTS
-	case db.EntitiesRepository:
-		return minderv1.Entity_ENTITY_REPOSITORIES
-	case db.EntitiesBuildEnvironment:
-		return minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS
-	case db.EntitiesRelease:
-		return minderv1.Entity_ENTITY_RELEASE
-	case db.EntitiesPipelineRun:
-		return minderv1.Entity_ENTITY_PIPELINE_RUN
-	case db.EntitiesTaskRun:
-		return minderv1.Entity_ENTITY_TASK_RUN
-	case db.EntitiesBuild:
-		return minderv1.Entity_ENTITY_BUILD
-	default:
-		return minderv1.Entity_ENTITY_UNSPECIFIED
-	}
+	return entities.EntityTypeFromDB(dbEnt)
 }
 
 func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {

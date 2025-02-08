@@ -52,6 +52,8 @@ func EntityTypeFromDB(entity db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_TASK_RUN
 	case db.EntitiesBuild:
 		return minderv1.Entity_ENTITY_BUILD
+	case db.EntitiesOrganization:
+		return minderv1.Entity_ENTITY_ORGANIZATION
 	default:
 		return minderv1.Entity_ENTITY_UNSPECIFIED
 	}

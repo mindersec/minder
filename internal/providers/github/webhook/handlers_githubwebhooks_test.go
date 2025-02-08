@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
-	"github.com/cenkalti/backoff/v4"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
@@ -157,8 +156,9 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	// the ping event has an empty body ({}), the value below is a SHA256 hmac of the empty body with the shared key "test"
 	req.Header.Add("X-Hub-Signature-256", "sha256=5f5863b9805ad4e66e954a260f9cab3f2e95718798dec0bb48a655195893d10e")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+	resp, err := httpDoWithRetry(http.DefaultClient, req)
 	require.NoError(t, err, "failed to make request")
+	t.Cleanup(func() { _ = resp.Body.Close() })
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 	assert.Len(t, queued, 0, "unexpected number of queued events")
 }
@@ -215,8 +215,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	req.Header.Add("X-GitHub-Event", "meta")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+	resp, err := httpDoWithRetry(http.DefaultClient, req)
 	require.NoError(t, err, "failed to make request")
+	t.Cleanup(func() { _ = resp.Body.Close() })
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 	assert.Len(t, queued, 0)
@@ -376,8 +377,9 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	req.Header.Add("X-GitHub-Event", "package")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+	resp, err := httpDoWithRetry(http.DefaultClient, req)
 	require.NoError(t, err, "failed to make request")
+	t.Cleanup(func() { _ = resp.Body.Close() })
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 	assert.Len(t, queued, 0)
@@ -419,9 +421,10 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	req.Header.Add("X-GitHub-Event", "marketplace_purchase")
 	req.Header.Add("X-GitHub-Delivery", "12345")
 	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+	resp, err := httpDoWithRetry(http.DefaultClient, req)
 
 	require.NoError(t, err, "failed to make request")
+	t.Cleanup(func() { _ = resp.Body.Close() })
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 }
 
@@ -2700,7 +2703,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 
 			expectedMAC := sign(packageJson, "test")
 
-			client := &http.Client{}
 			req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
 			require.NoError(t, err, "failed to create request")
 
@@ -2708,8 +2710,9 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			req.Header.Add("X-GitHub-Delivery", "12345")
 			req.Header.Add("Content-Type", "application/json")
 			req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
-			resp, err := httpDoWithRetry(client, req)
+			resp, err := httpDoWithRetry(http.DefaultClient, req)
 			require.NoError(t, err, "failed to make request")
+			t.Cleanup(func() { _ = resp.Body.Close() })
 			// We expect OK since we don't want to leak information about registered repositories
 			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
 
@@ -3312,7 +3315,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			}
 
 			expectedMAC := sign(packageJson, "test")
-			client := &http.Client{}
 			req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
 			require.NoError(t, err, "failed to create request")
 
@@ -3320,8 +3322,9 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 			req.Header.Add("X-GitHub-Delivery", "12345")
 			req.Header.Add("Content-Type", "application/json")
 			req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
-			resp, err := httpDoWithRetry(client, req)
+			resp, err := httpDoWithRetry(http.DefaultClient, req)
 			require.NoError(t, err, "failed to make request")
+			t.Cleanup(func() { _ = resp.Body.Close() })
 			// We expect OK since we don't want to leak information about registered repositories
 			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
 
@@ -3404,14 +3407,16 @@ func sign(payload []byte, key string) string {
 }
 
 func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
-	var resp *http.Response
-	err := backoff.Retry(func() error {
-		var err error
-		resp, err = client.Do(req)
-		return err
-	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
+	/*	var resp *http.Response
+		err := backoff.Retry(func() error {
+			var err error
+			resp, err = client.Do(req)
+			return err
+		}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
 
-	return resp, err
+		return resp, err
+	*/
+	return client.Do(req)
 }
 
 type garbage struct {

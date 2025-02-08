@@ -57,6 +57,7 @@ type installationRepositoriesEvent struct {
 	RepositorySelection *string       `json:"repository_selection,omitempty"`
 	Sender              *user         `json:"sender,omitempty"`
 	Installation        *installation `json:"installation,omitempty"`
+	Organization        *organization `json:"organization,omitempty"`
 }
 
 func (i *installationRepositoriesEvent) GetAction() string {
@@ -340,6 +341,7 @@ func processInstallationRepositoriesAppEvent(
 		// repository, which might be inefficient at scale.
 		res, err := repositoryRemoved(
 			repo,
+			event.Organization,
 		)
 		if errors.Is(err, errRepoNotFound) {
 			continue
@@ -356,8 +358,9 @@ func processInstallationRepositoriesAppEvent(
 
 func repositoryRemoved(
 	repo *repo,
+	org *organization,
 ) (*processingResult, error) {
-	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
+	return sendEvaluateRepoMessage(repo, org, constants.TopicQueueGetEntityAndDelete)
 }
 
 func repositoryAdded(

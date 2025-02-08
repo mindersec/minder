@@ -82,7 +82,8 @@ func newTelemetryStoreFromEntity(inf *entities.EntityInfoWrapper) (*TelemetrySto
 		ts.PullRequest = ent
 	case minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		minderv1.Entity_ENTITY_RELEASE, minderv1.Entity_ENTITY_PIPELINE_RUN,
-		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD:
+		minderv1.Entity_ENTITY_TASK_RUN, minderv1.Entity_ENTITY_BUILD,
+		minderv1.Entity_ENTITY_ORGANIZATION:
 		// Noop, see https://github.com/mindersec/minder/issues/3838
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		// Do nothing

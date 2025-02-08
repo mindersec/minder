@@ -163,6 +163,9 @@ func HandleWebhookEvent(
 		case "release":
 			wes.Accepted = true
 			res, processingErr = processReleaseEvent(ctx, rawWBPayload)
+		case "organization", "installation", "installation_target", "github_app_authorization":
+			wes.Accepted = true
+			res, processingErr = processOrganizationEvent(ctx, rawWBPayload)
 		case "ping":
 			// For ping events, we do not set wes.Accepted
 			// to true because they're not relevant

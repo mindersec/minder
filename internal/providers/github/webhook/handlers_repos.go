@@ -22,9 +22,10 @@ import (
 
 // repoEvent represents any event related to a repository.
 type repoEvent struct {
-	Action *string `json:"action,omitempty"`
-	Repo   *repo   `json:"repository,omitempty"`
-	HookID *int64  `json:"hook_id,omitempty"`
+	Action       *string       `json:"action,omitempty"`
+	Repo         *repo         `json:"repository,omitempty"`
+	HookID       *int64        `json:"hook_id,omitempty"`
+	Organization *organization `json:"organization,omitempty"`
 }
 
 func (r *repoEvent) GetAction() string {
@@ -43,6 +44,10 @@ func (r *repoEvent) GetHookID() int64 {
 		return *r.HookID
 	}
 	return 0
+}
+
+func (r *repoEvent) GetOrganization() *organization {
+	return r.Organization
 }
 
 type repo struct {
@@ -99,6 +104,18 @@ func (r *repo) GetOwner() string {
 	return ""
 }
 
+type repoOrg struct {
+	ID    *int64  `json:"id,omitempty"`
+	Login *string `json:"login,omitempty"`
+}
+
+func (r *repoOrg) GetID() int64 {
+	if r != nil && r.ID != nil {
+		return *r.ID
+	}
+	return 0
+}
+
 func processRepositoryEvent(
 	ctx context.Context,
 	payload []byte,
@@ -125,11 +142,12 @@ func processRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate)
+	return sendEvaluateRepoMessage(event.GetRepo(), event.GetOrganization(), constants.TopicQueueRefreshEntityAndEvaluate)
 }
 
 func sendEvaluateRepoMessage(
 	repo *repo,
+	org *organization,
 	handler string,
 ) (*processingResult, error) {
 	lookByProps, err := properties.NewProperties(map[string]any{
@@ -140,9 +158,14 @@ func sendEvaluateRepoMessage(
 		return nil, fmt.Errorf("error creating repository properties: %w", err)
 	}
 
+	originatorProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(org.GetID()),
+	})
+
 	entRefresh := entityMessage.NewEntityRefreshAndDoMessage().
 		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
-		WithProviderImplementsHint(string(db.ProviderTypeGithub))
+		WithProviderImplementsHint(string(db.ProviderTypeGithub)).
+		WithOriginator(pb.Entity_ENTITY_ORGANIZATION, originatorProps)
 
 	return &processingResult{
 			topic:   handler,
@@ -183,9 +206,17 @@ func processRelevantRepositoryEvent(
 		return nil, fmt.Errorf("error creating repository lookup properties: %w", err)
 	}
 
+	orgProps, err := properties.NewProperties(map[string]any{
+		properties.PropertyUpstreamID: event.GetRepo().GetOwner(),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create organization properties: %w", err)
+	}
+
 	msg := entityMessage.NewEntityRefreshAndDoMessage().
 		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
-		WithProviderImplementsHint(string(db.ProviderTypeGithub))
+		WithProviderImplementsHint(string(db.ProviderTypeGithub)).
+		WithOriginator(pb.Entity_ENTITY_ORGANIZATION, orgProps)
 
 	// This only makes sense for "meta" event type
 	if event.GetHookID() != 0 {
