@@ -291,6 +291,8 @@ func (s *Server) ListRoleAssignments(
 
 // AssignRole assigns a role to a user on a project.
 // Note that this assumes that the request has already been authorized.
+//
+//nolint:gocyclo  // There's a lot of trivial error handling here
 func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) (*minder.AssignRoleResponse, error) {
 	role := req.GetRoleAssignment().GetRole()
 	sub := req.GetRoleAssignment().GetSubject()
