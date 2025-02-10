@@ -26,8 +26,8 @@ import (
 // RoleService encapsulates the methods to manage user role assignments
 type RoleService interface {
 	// CreateRoleAssignment assigns a user a role on a project
-	CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
-		targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error)
+	CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+		targetProject uuid.UUID, subject auth.Identity, authzRole authz.Role) (*pb.RoleAssignment, error)
 
 	// UpdateRoleAssignment updates the users role on a project
 	UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client, idClient auth.Resolver,
@@ -47,13 +47,7 @@ func NewRoleService() RoleService {
 }
 
 func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
-	idClient auth.Resolver, targetProject uuid.UUID, subject string, authzRole authz.Role) (*pb.RoleAssignment, error) {
-	// Resolve the subject to an identity
-	identity, err := idClient.Resolve(ctx, subject)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-		return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", subject)
-	}
+	targetProject uuid.UUID, identity auth.Identity, authzRole authz.Role) (*pb.RoleAssignment, error) {
 
 	// For users in the primary (human) identity store, verify if user exists in our database.
 	// TODO: this assumes that we store human users in the Minder database, in addition to the
