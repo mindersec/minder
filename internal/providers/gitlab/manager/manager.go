@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"slices"
 	"time"
 
@@ -49,21 +48,19 @@ type providerClassManager struct {
 
 // NewGitLabProviderClassManager creates a new provider class manager for the dockerhub provider
 func NewGitLabProviderClassManager(
-	ctx context.Context, crypteng crypto.Engine, store db.Store, pub interfaces.Publisher,
-	cfg *server.GitLabConfig, wgCfg server.WebhookConfig,
+	ctx context.Context,
+	crypteng crypto.Engine,
+	store db.Store,
+	pub interfaces.Publisher,
+	cfg *server.GitLabConfig,
 ) (*providerClassManager, error) {
-	webhookURLBase := wgCfg.ExternalWebhookURL
-	if webhookURLBase == "" {
-		return nil, errors.New("webhook URL is required")
-	}
-
 	if cfg == nil {
 		return nil, errors.New("gitlab config is required")
 	}
 
-	webhookURL, err := url.JoinPath(webhookURLBase, url.PathEscape(string(db.ProviderClassGitlab)))
-	if err != nil {
-		return nil, fmt.Errorf("error joining webhook URL: %w", err)
+	webhookURL := cfg.ExternalWebhookURL
+	if webhookURL == "" {
+		return nil, errors.New("webhook URL is required")
 	}
 
 	whSecret, err := cfg.GetWebhookSecret()
