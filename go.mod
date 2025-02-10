@@ -73,7 +73,7 @@ require (
 	github.com/sqlc-dev/pqtype v0.3.0
 	github.com/stacklok/frizbee v0.1.6
 	github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687
-	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1
+	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3
 	github.com/stretchr/testify v1.10.0
 	github.com/styrainc/regal v0.30.2
 	github.com/thomaspoignant/go-feature-flag v1.40.0
