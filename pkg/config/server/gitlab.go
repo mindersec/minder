@@ -13,9 +13,6 @@ type GitLabConfig struct {
 	// events to.
 	WebhookSecrets `mapstructure:",squash"`
 
-	// ExternalWebhookURL is the URL that we will send our webhook to
-	ExternalWebhookURL string `mapstructure:"external_webhook_url"`
-
 	// Scopes is the list of scopes to request from the GitLab OAuth provider
 	Scopes []string `mapstructure:"scopes"`
 }
