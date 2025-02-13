@@ -170,7 +170,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 		return newMeta, nil
 	// Dismiss the review
 	case interfaces.ActionCmdOff:
-		if params.Metadata == nil {
+		if params.Metadata == nil || params.Metadata.ReviewID == "" {
 			// We cannot do anything without the PR review ID, so we assume that turning the alert off is a success
 			return nil, fmt.Errorf("no PR comment ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
@@ -215,11 +215,11 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 			params.Number, params.Owner, params.Repo, *body)
 		return nil, nil
 	case interfaces.ActionCmdOff:
-		if params.Metadata == nil {
+		if params.Metadata == nil || params.Metadata.ReviewID == "" {
 			// We cannot do anything without the PR review ID, so we assume that turning the alert off is a success
 			return nil, fmt.Errorf("no PR comment ID provided: %w", enginerr.ErrActionTurnedOff)
 		}
-		logger.Info().Msgf("dry run: dismiss PR comment %s on PR PR %d in repo %s/%s", params.Metadata.ReviewID,
+		logger.Info().Msgf("dry run: dismiss PR comment %s on PR %d in repo %s/%s", params.Metadata.ReviewID,
 			params.Number, params.Owner, params.Repo)
 	case interfaces.ActionCmdDoNothing:
 		// Return the previous alert status.

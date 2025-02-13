@@ -158,8 +158,14 @@ registered for our rule type.
 
 ### Alerting
 
-We'll now describe how you may get a notification if your repository doesn't
-adhere to the rule. This is as simple as adding the following to the manifest:
+We'll now describe how you may get a notification if your entity doesn't
+adhere to the rule. 
+
+#### Security Advisory
+When a repository is not adhering to the rule, you may want to create a security
+advisory in the repository.
+
+This is as simple as adding the following to the manifest:
 
 ```yaml
 ---
@@ -173,6 +179,40 @@ def:
 This will create a security advisory in your GitHub repository that you'll be
 able to browse for information. Minder knows already what information to fill-in
 to make the alert relevant.
+
+#### Pull Request Comment
+When a pull request is not adhering to the rule, you may want to add a comment to
+the pull request.
+
+This is as simple as adding the following to the manifest:
+
+```yaml
+---
+def:
+  alert:
+    type: pull_request_comment
+    pull_request_comment:
+      review_message: "This is a message from the PR review alert type"
+```
+
+This will create a comment on your GitHub pull request using the provided review message.
+
+You can also use the output of the evaluation to create a custom message. For
+example, you can use the following:
+
+```yaml
+def:
+  alert:
+    type: pull_request_comment
+    pull_request_comment:
+      review_message: |
+        {{- range .EvalResultOutput }}  
+        - {{ .msg }}
+        {{- end }}
+```
+
+This will create a comment on your GitHub pull request listing each of the evaluation 
+failure messages.
 
 ### Remediation
 
