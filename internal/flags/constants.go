@@ -19,8 +19,6 @@ const (
 	AlternateMessageDriver Experiment = "alternate_message_driver"
 	// DataSources enables data sources management.
 	DataSources Experiment = "data_sources"
-	// PRCommentAlert enables the pull request comment alert engine.
-	PRCommentAlert Experiment = "pr_comment_alert"
 	// GitPRDiffs enables the git ingester for pull requests.
 	GitPRDiffs Experiment = "git_pr_diffs"
 	// TarGzFunctions enables functions to produce tar.gz data in the rego
