@@ -81,15 +81,14 @@ following custom functions:
   object, returning `true` if the query result is a true boolean value, andh
   `false` otherwise.
 
-- **file.archive(paths)**: _(experimental)_ Builds a `.tar.gz` format archive
-  containing all files under the given paths. Returns the archive contents as a
-  (binary) string.
+- **file.archive(paths)**: Builds a `.tar.gz` format archive containing all
+  files under the given paths. Returns the archive contents as a (binary)
+  string.
 
-_(experimental)_ In addition, when operating in a pull request context,
-`base_file` versions of the `file` operations are available for accessing the
-files in the base branch of the pull request. The `file` versions of the
-operations operate on the head (proposed changes) versions of the files in a
-pull request context.
+In addition, when operating in a pull request context, `base_file` versions of 
+the `file` operations are available for accessing the files in the base branch 
+of the pull request. The `file` versions of the operations operate on the head 
+(proposed changes) versions of the files in a pull request context.
 
 In addition, most of the
 [standard OPA functions are available in the Minder runtime](https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions).

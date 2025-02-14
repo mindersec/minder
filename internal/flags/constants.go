@@ -21,9 +21,6 @@ const (
 	DataSources Experiment = "data_sources"
 	// GitPRDiffs enables the git ingester for pull requests.
 	GitPRDiffs Experiment = "git_pr_diffs"
-	// TarGzFunctions enables functions to produce tar.gz data in the rego
-	// evaluation environment.
-	TarGzFunctions Experiment = "tar_gz_functions"
 	// DependencyExtract enables functions to perform dependency extraction.
 	DependencyExtract Experiment = "dependency_extract"
 )
