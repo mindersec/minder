@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Writing rules using Rego | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://minder-docs.stacklok.dev/how-to/writing-rules-in-rego"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Writing rules using Rego | Minder docs"><meta data-rh="true" name="description" content="Minder&#x27;s policy engine is able to use pluggable drivers for evaluating rules."><meta data-rh="true" property="og:description" content="Minder&#x27;s policy engine is able to use pluggable drivers for evaluating rules."><link data-rh="true" rel="icon" href="/img/stacklok-favicon.png"><link data-rh="true" rel="canonical" href="https://minder-docs.stacklok.dev/how-to/writing-rules-in-rego"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/how-to/writing-rules-in-rego" hreflang="en"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/how-to/writing-rules-in-rego" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.b25191af.css">
-<script src="/assets/js/runtime~main.2e81cc12.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.21d23e87.js" defer="defer"></script>
 <script src="/assets/js/main.7301508f.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -98,16 +98,15 @@ object, returning <code>true</code> if the query result is a true boolean value,
 <code>false</code> otherwise.</p>
 </li>
 <li>
-<p><strong>file.archive(paths)</strong>: <em>(experimental)</em> Builds a <code>.tar.gz</code> format archive
-containing all files under the given paths. Returns the archive contents as a
-(binary) string.</p>
+<p><strong>file.archive(paths)</strong>: Builds a <code>.tar.gz</code> format archive containing all
+files under the given paths. Returns the archive contents as a (binary)
+string.</p>
 </li>
 </ul>
-<p><em>(experimental)</em> In addition, when operating in a pull request context,
-<code>base_file</code> versions of the <code>file</code> operations are available for accessing the
-files in the base branch of the pull request. The <code>file</code> versions of the
-operations operate on the head (proposed changes) versions of the files in a
-pull request context.</p>
+<p>In addition, when operating in a pull request context, <code>base_file</code> versions of
+the <code>file</code> operations are available for accessing the files in the base branch
+of the pull request. The <code>file</code> versions of the operations operate on the head
+(proposed changes) versions of the files in a pull request context.</p>
 <p>In addition, most of the
 <a href="https://www.openpolicyagent.org/docs/latest/policy-reference/#built-in-functions" target="_blank" rel="noopener noreferrer">standard OPA functions are available in the Minder runtime</a>.</p>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="example-codeql-enabled-check">Example: CodeQL-enabled check<a href="#example-codeql-enabled-check" class="hash-link" aria-label="Direct link to Example: CodeQL-enabled check" title="Direct link to Example: CodeQL-enabled check">​</a></h2>
