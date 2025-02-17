@@ -208,11 +208,6 @@ func checkRuleDefinitionFlags(
 		return util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
 	}
 
-	prCommentAlert := ruleDef.GetAlert().GetPullRequestComment()
-	if prCommentAlert != nil && !flags.Bool(ctx, featureFlags, flags.PRCommentAlert) {
-		return util.UserVisibleError(codes.InvalidArgument, "Pull request comment alert type is disabled")
-	}
-
 	usesGitPR := ruleDef.GetIngest().GetType() == git.GitRuleDataIngestType &&
 		ruleDef.GetInEntity() == minderv1.PullRequestEntity.String()
 	if usesGitPR && !flags.Bool(ctx, featureFlags, flags.GitPRDiffs) {

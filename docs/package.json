@@ -32,19 +32,19 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "redocusaurus": "^2.2.1",
-    "styled-components": "^6.1.14"
+    "styled-components": "^6.1.15"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.7.0",
-    "@eslint/js": "^9.19.0",
-    "eslint": "^9.19.0",
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.1",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-mdx": "^3.1.5",
     "eslint-plugin-react": "^7.37.4",
-    "globals": "^15.14.0",
+    "globals": "^15.15.0",
     "markdownlint-cli2": "0.17.2",
-    "prettier": "3.4.2",
-    "typescript-eslint": "^8.22.0"
+    "prettier": "3.5.1",
+    "typescript-eslint": "^8.24.0"
   },
   "browserslist": {
     "production": [

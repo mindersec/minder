@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 # SPDX-License-Identifier: Apache-2.0
-
+{{ if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -118,3 +118,4 @@ spec:
             name: minder-http
             port:
               name: http
+{{ end }}

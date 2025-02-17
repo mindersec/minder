@@ -80,14 +80,13 @@ func TestCreateRoleAssignment(t *testing.T) {
 				},
 			}
 
-			idClient := mockauth.NewMockResolver(ctrl)
-			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
+			identitySub := auth.Identity{
 				UserID:   subject,
 				Provider: &keycloak.KeyCloak{},
-			}, nil)
+			}
 
 			service := NewRoleService()
-			_, err := service.CreateRoleAssignment(ctx, store, authzClient, idClient, project, subject, userRole)
+			_, err := service.CreateRoleAssignment(ctx, store, authzClient, project, identitySub, userRole)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
