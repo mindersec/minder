@@ -19,8 +19,6 @@ linters-settings:
     # see https://github.com/mgechev/revive#available-rules for details.
     ignore-generated-header: true
     severity: warning
-    errorCode: 0
-    warningCode: 0
     rules:
       - name: blank-imports
         severity: warning
