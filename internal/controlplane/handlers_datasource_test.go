@@ -17,7 +17,6 @@ import (
 	mock_service "github.com/mindersec/minder/internal/datasources/service/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -27,14 +26,14 @@ func TestCreateDataSource(t *testing.T) {
 	projectID := uuid.New()
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient)
+		setupMocks        func(*mock_service.MockDataSourcesService)
 		request           *minderv1.CreateDataSourceRequest
 		expectedResponse  *minderv1.CreateDataSourceResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService) {
 				dsService.EXPECT().
 					Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Name: "test-ds"}, nil)
@@ -48,10 +47,7 @@ func TestCreateDataSource(t *testing.T) {
 			expectedErrorCode: codes.OK,
 		},
 		{
-			name: "missing data source",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
-				// No need to set up dsService expectations here
-			},
+			name:              "missing data source",
 			request:           &minderv1.CreateDataSourceRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
@@ -72,15 +68,13 @@ func TestCreateDataSource(t *testing.T) {
 			}, nil).AnyTimes()
 
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient)
+				tt.setupMocks(mockDataSourceService)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -111,14 +105,14 @@ func TestGetDataSourceById(t *testing.T) {
 	dsIDStr := dsID.String()
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		request           *minderv1.GetDataSourceByIdRequest
 		expectedResponse  *minderv1.GetDataSourceByIdResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -136,7 +130,7 @@ func TestGetDataSourceById(t *testing.T) {
 		},
 		{
 			name: "missing data source ID",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(_ *mock_service.MockDataSourcesService, _ *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request:           &minderv1.GetDataSourceByIdRequest{},
@@ -145,7 +139,7 @@ func TestGetDataSourceById(t *testing.T) {
 		},
 		{
 			name: "invalid data source ID format",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(_ *mock_service.MockDataSourcesService, _ *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request: &minderv1.GetDataSourceByIdRequest{
@@ -165,15 +159,13 @@ func TestGetDataSourceById(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -203,14 +195,14 @@ func TestGetDataSourceByName(t *testing.T) {
 	dsName := "test-ds"
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		request           *minderv1.GetDataSourceByNameRequest
 		expectedResponse  *minderv1.GetDataSourceByNameResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -228,7 +220,7 @@ func TestGetDataSourceByName(t *testing.T) {
 		},
 		{
 			name: "missing data source name",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(_ *mock_service.MockDataSourcesService, _ *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request:           &minderv1.GetDataSourceByNameRequest{},
@@ -246,15 +238,13 @@ func TestGetDataSourceByName(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -287,13 +277,13 @@ func TestListDataSources(t *testing.T) {
 	}
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		expectedResponse  *minderv1.ListDataSourcesResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -317,15 +307,13 @@ func TestListDataSources(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -356,14 +344,14 @@ func TestUpdateDataSource(t *testing.T) {
 	dsIDStr := dsID.String()
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		request           *minderv1.UpdateDataSourceRequest
 		expectedResponse  *minderv1.UpdateDataSourceResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, _ *mockdb.MockStore) {
 				dsService.EXPECT().
 					Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Id: dsIDStr, Name: "updated-ds"}, nil)
@@ -377,10 +365,7 @@ func TestUpdateDataSource(t *testing.T) {
 			expectedErrorCode: codes.OK,
 		},
 		{
-			name: "missing data source",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				// No need to set up dsService expectations here
-			},
+			name:              "missing data source",
 			request:           &minderv1.UpdateDataSourceRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
@@ -401,15 +386,13 @@ func TestUpdateDataSource(t *testing.T) {
 			}, nil).AnyTimes()
 
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -440,14 +423,14 @@ func TestDeleteDataSourceById(t *testing.T) {
 	dsIDStr := dsID.String()
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		request           *minderv1.DeleteDataSourceByIdRequest
 		expectedResponse  *minderv1.DeleteDataSourceByIdResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -464,19 +447,13 @@ func TestDeleteDataSourceById(t *testing.T) {
 			expectedErrorCode: codes.OK,
 		},
 		{
-			name: "missing data source ID",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				// No need to set up dsService expectations here
-			},
+			name:              "missing data source ID",
 			request:           &minderv1.DeleteDataSourceByIdRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
 		},
 		{
 			name: "invalid data source ID format",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				// No need to set up dsService expectations here
-			},
 			request: &minderv1.DeleteDataSourceByIdRequest{
 				Id: "invalid-uuid",
 			},
@@ -494,15 +471,13 @@ func TestDeleteDataSourceById(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -534,14 +509,14 @@ func TestDeleteDataSourceByName(t *testing.T) {
 	dsIDStr := dsID.String()
 	tests := []struct {
 		name              string
-		setupMocks        func(*mock_service.MockDataSourcesService, *flags.FakeClient, *mockdb.MockStore)
+		setupMocks        func(*mock_service.MockDataSourcesService, *mockdb.MockStore)
 		request           *minderv1.DeleteDataSourceByNameRequest
 		expectedResponse  *minderv1.DeleteDataSourceByNameResponse
 		expectedErrorCode codes.Code
 	}{
 		{
 			name: "happy path",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -561,17 +536,14 @@ func TestDeleteDataSourceByName(t *testing.T) {
 			expectedErrorCode: codes.OK,
 		},
 		{
-			name: "missing data source name",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				// No need to set up dsService expectations here
-			},
+			name:              "missing data source name",
 			request:           &minderv1.DeleteDataSourceByNameRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
 		},
 		{
 			name: "invalid data source ID format",
-			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -596,15 +568,13 @@ func TestDeleteDataSourceByName(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockDataSourceService := mock_service.NewMockDataSourcesService(ctrl)
-			featureClient := &flags.FakeClient{}
 
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockDataSourceService, featureClient, mockStore)
+				tt.setupMocks(mockDataSourceService, mockStore)
 			}
 
 			srv := newDefaultServer(t, mockStore, nil, nil, nil)
 			srv.dataSourcesService = mockDataSourceService
-			srv.featureFlags = featureClient
 
 			ctx := context.Background()
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
