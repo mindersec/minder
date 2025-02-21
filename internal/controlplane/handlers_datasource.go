@@ -12,7 +12,6 @@ import (
 
 	"github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -20,11 +19,6 @@ import (
 // CreateDataSource creates a data source
 func (s *Server) CreateDataSource(ctx context.Context,
 	in *minderv1.CreateDataSourceRequest) (*minderv1.CreateDataSourceResponse, error) {
-
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
 
 	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.ValidateProject(ctx, s.store)
@@ -57,11 +51,6 @@ func (s *Server) CreateDataSource(ctx context.Context,
 // GetDataSourceById retrieves a data source by ID
 func (s *Server) GetDataSourceById(ctx context.Context,
 	in *minderv1.GetDataSourceByIdRequest) (*minderv1.GetDataSourceByIdResponse, error) {
-
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
 
 	// Get the data source ID from the request
 	dsIDstr := in.GetId()
@@ -98,11 +87,6 @@ func (s *Server) GetDataSourceById(ctx context.Context,
 func (s *Server) GetDataSourceByName(ctx context.Context,
 	in *minderv1.GetDataSourceByNameRequest) (*minderv1.GetDataSourceByNameResponse, error) {
 
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
-
 	// Get the data source name from the request
 	dsName := in.GetName()
 	if dsName == "" {
@@ -132,11 +116,6 @@ func (s *Server) GetDataSourceByName(ctx context.Context,
 func (s *Server) ListDataSources(ctx context.Context,
 	_ *minderv1.ListDataSourcesRequest) (*minderv1.ListDataSourcesResponse, error) {
 
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
-
 	// Get the project ID from the request context
 	entityCtx := engcontext.EntityFromContext(ctx)
 
@@ -159,11 +138,6 @@ func (s *Server) ListDataSources(ctx context.Context,
 // UpdateDataSource updates a data source
 func (s *Server) UpdateDataSource(ctx context.Context,
 	in *minderv1.UpdateDataSourceRequest) (*minderv1.UpdateDataSourceResponse, error) {
-
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
 
 	entityCtx := engcontext.EntityFromContext(ctx)
 	err := entityCtx.ValidateProject(ctx, s.store)
@@ -196,11 +170,6 @@ func (s *Server) UpdateDataSource(ctx context.Context,
 // DeleteDataSourceById deletes a data source by ID
 func (s *Server) DeleteDataSourceById(ctx context.Context,
 	in *minderv1.DeleteDataSourceByIdRequest) (*minderv1.DeleteDataSourceByIdResponse, error) {
-
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
 
 	// Get the data source ID from the request
 	dsIDstr := in.GetId()
@@ -236,11 +205,6 @@ func (s *Server) DeleteDataSourceById(ctx context.Context,
 // DeleteDataSourceByName deletes a data source by name
 func (s *Server) DeleteDataSourceByName(ctx context.Context,
 	in *minderv1.DeleteDataSourceByNameRequest) (*minderv1.DeleteDataSourceByNameResponse, error) {
-
-	// Check if the DataSources feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.DataSources) {
-		return nil, status.Errorf(codes.Unavailable, "DataSources feature is disabled")
-	}
 
 	// Get the data source name from the request
 	dsName := in.GetName()
