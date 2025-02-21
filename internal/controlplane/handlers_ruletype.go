@@ -203,11 +203,6 @@ func (s *Server) CreateRuleType(
 
 func checkRuleDefinitionFlags(
 	ctx context.Context, featureFlags openfeature.IClient, ruleDef *minderv1.RuleType_Definition) *util.NiceStatus {
-	ruleDS := ruleDef.GetEval().GetDataSources()
-	if len(ruleDS) > 0 && !flags.Bool(ctx, featureFlags, flags.DataSources) {
-		return util.UserVisibleError(codes.InvalidArgument, "DataSources feature is disabled")
-	}
-
 	usesGitPR := ruleDef.GetIngest().GetType() == git.GitRuleDataIngestType &&
 		ruleDef.GetInEntity() == minderv1.PullRequestEntity.String()
 	if usesGitPR && !flags.Bool(ctx, featureFlags, flags.GitPRDiffs) {

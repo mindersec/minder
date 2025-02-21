@@ -14,8 +14,6 @@ const (
 	MachineAccounts Experiment = "machine_accounts"
 	// AlternateMessageDriver enables an an alternate message driver.
 	AlternateMessageDriver Experiment = "alternate_message_driver"
-	// DataSources enables data sources management.
-	DataSources Experiment = "data_sources"
 	// GitPRDiffs enables the git ingester for pull requests.
 	GitPRDiffs Experiment = "git_pr_diffs"
 	// DependencyExtract enables functions to perform dependency extraction.

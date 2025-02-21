@@ -35,7 +35,6 @@ func TestCreateDataSource(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				dsService.EXPECT().
 					Create(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Name: "test-ds"}, nil)
@@ -50,23 +49,12 @@ func TestCreateDataSource(t *testing.T) {
 		},
 		{
 			name: "missing data source",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
+				// No need to set up dsService expectations here
 			},
 			request:           &minderv1.CreateDataSourceRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-			},
-			request: &minderv1.CreateDataSourceRequest{
-				DataSource: &minderv1.DataSource{Name: "test-ds"},
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -131,7 +119,6 @@ func TestGetDataSourceById(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -149,8 +136,7 @@ func TestGetDataSourceById(t *testing.T) {
 		},
 		{
 			name: "missing data source ID",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request:           &minderv1.GetDataSourceByIdRequest{},
@@ -159,8 +145,7 @@ func TestGetDataSourceById(t *testing.T) {
 		},
 		{
 			name: "invalid data source ID format",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request: &minderv1.GetDataSourceByIdRequest{
@@ -168,18 +153,6 @@ func TestGetDataSourceById(t *testing.T) {
 			},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up mockStore expectations here
-			},
-			request: &minderv1.GetDataSourceByIdRequest{
-				Id: dsIDStr,
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -238,7 +211,6 @@ func TestGetDataSourceByName(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -256,25 +228,12 @@ func TestGetDataSourceByName(t *testing.T) {
 		},
 		{
 			name: "missing data source name",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up mockStore expectations here
 			},
 			request:           &minderv1.GetDataSourceByNameRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up mockStore expectations here
-			},
-			request: &minderv1.GetDataSourceByNameRequest{
-				Name: dsName,
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -335,7 +294,6 @@ func TestListDataSources(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -347,15 +305,6 @@ func TestListDataSources(t *testing.T) {
 				DataSources: dsList,
 			},
 			expectedErrorCode: codes.OK,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up mockStore expectations here
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -415,7 +364,6 @@ func TestUpdateDataSource(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				dsService.EXPECT().
 					Update(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(&minderv1.DataSource{Id: dsIDStr, Name: "updated-ds"}, nil)
@@ -430,25 +378,12 @@ func TestUpdateDataSource(t *testing.T) {
 		},
 		{
 			name: "missing data source",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
 				// No need to set up dsService expectations here
 			},
 			request:           &minderv1.UpdateDataSourceRequest{},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up dsService expectations here
-			},
-			request: &minderv1.UpdateDataSourceRequest{
-				DataSource: &minderv1.DataSource{Id: dsIDStr, Name: "updated-ds"},
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -513,7 +448,6 @@ func TestDeleteDataSourceById(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -531,8 +465,7 @@ func TestDeleteDataSourceById(t *testing.T) {
 		},
 		{
 			name: "missing data source ID",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up dsService expectations here
 			},
 			request:           &minderv1.DeleteDataSourceByIdRequest{},
@@ -541,8 +474,7 @@ func TestDeleteDataSourceById(t *testing.T) {
 		},
 		{
 			name: "invalid data source ID format",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up dsService expectations here
 			},
 			request: &minderv1.DeleteDataSourceByIdRequest{
@@ -550,18 +482,6 @@ func TestDeleteDataSourceById(t *testing.T) {
 			},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up dsService expectations here
-			},
-			request: &minderv1.DeleteDataSourceByIdRequest{
-				Id: dsIDStr,
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
@@ -622,7 +542,6 @@ func TestDeleteDataSourceByName(t *testing.T) {
 		{
 			name: "happy path",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -643,8 +562,7 @@ func TestDeleteDataSourceByName(t *testing.T) {
 		},
 		{
 			name: "missing data source name",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
+			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
 				// No need to set up dsService expectations here
 			},
 			request:           &minderv1.DeleteDataSourceByNameRequest{},
@@ -654,7 +572,6 @@ func TestDeleteDataSourceByName(t *testing.T) {
 		{
 			name: "invalid data source ID format",
 			setupMocks: func(dsService *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, mockStore *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": true}
 				mockStore.EXPECT().
 					GetProjectByID(gomock.Any(), projectID).
 					Return(db.Project{}, nil)
@@ -667,18 +584,6 @@ func TestDeleteDataSourceByName(t *testing.T) {
 			},
 			expectedResponse:  nil,
 			expectedErrorCode: codes.InvalidArgument,
-		},
-		{
-			name: "feature disabled",
-			setupMocks: func(_ *mock_service.MockDataSourcesService, featureClient *flags.FakeClient, _ *mockdb.MockStore) {
-				featureClient.Data = map[string]interface{}{"data_sources": false}
-				// No need to set up dsService expectations here
-			},
-			request: &minderv1.DeleteDataSourceByNameRequest{
-				Name: dsName,
-			},
-			expectedResponse:  nil,
-			expectedErrorCode: codes.Unavailable,
 		},
 	}
 
