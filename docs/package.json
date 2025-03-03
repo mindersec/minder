@@ -43,7 +43,7 @@
     "eslint-plugin-react": "^7.37.4",
     "globals": "^16.0.0",
     "markdownlint-cli2": "0.17.2",
-    "prettier": "3.5.2",
+    "prettier": "3.5.3",
     "typescript-eslint": "^8.24.1"
   },
   "browserslist": {
