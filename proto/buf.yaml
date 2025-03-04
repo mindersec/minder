@@ -11,7 +11,7 @@ breaking:
     - WIRE_JSON
 lint:
   use:
-    - DEFAULT
+    - STANDARD
   allow_comment_ignores: true
   except:
   - RPC_REQUEST_RESPONSE_UNIQUE
