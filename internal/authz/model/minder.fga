@@ -56,6 +56,11 @@ type project
 
     define entity_reconcile: editor
 
+    define entity_get: viewer
+    define entity_create: editor
+    define entity_update: editor
+    define entity_delete: editor
+
     define artifact_get: viewer
     define artifact_create: editor
     define artifact_update: editor

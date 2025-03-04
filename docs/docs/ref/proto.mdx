@@ -78,6 +78,20 @@ export const TypeLink = ({ children, type }) => {
 
 
 
+<Service id="minder-v1-EntityInstanceService">EntityInstanceService</Service>
+
+EntityInstanceService provides API endpoints for managing entity instances
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ListEntities | [ListEntitiesRequest](#minder-v1-ListEntitiesRequest) | [ListEntitiesResponse](#minder-v1-ListEntitiesResponse) | ListEntities returns a list of entity instances for a given project and provider |
+| GetEntityById | [GetEntityByIdRequest](#minder-v1-GetEntityByIdRequest) | [GetEntityByIdResponse](#minder-v1-GetEntityByIdResponse) | GetEntityById returns an entity instance for a given entity ID |
+| GetEntityByName | [GetEntityByNameRequest](#minder-v1-GetEntityByNameRequest) | [GetEntityByNameResponse](#minder-v1-GetEntityByNameResponse) | GetEntityByName returns an entity instance for a given entity name |
+| DeleteEntityById | [DeleteEntityByIdRequest](#minder-v1-DeleteEntityByIdRequest) | [DeleteEntityByIdResponse](#minder-v1-DeleteEntityByIdResponse) | DeleteEntityById deletes an entity instance for a given entity ID |
+| CreateEntity | [CreateEntityRequest](#minder-v1-CreateEntityRequest) | [CreateEntityResponse](#minder-v1-CreateEntityResponse) | CreateEntity creates a new entity instance |
+
+
+
 <Service id="minder-v1-EvalResultsService">EvalResultsService</Service>
 
 
@@ -440,6 +454,31 @@ DataSource service
 
 
 
+<Message id="minder-v1-CreateEntityRequest">CreateEntityRequest</Message>
+
+CreateEntityRequest is the request message for the CreateEntity method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is created |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to create |
+| entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity |
+
+
+
+<Message id="minder-v1-CreateEntityResponse">CreateEntityResponse</Message>
+
+CreateEntityResponse is the response message for the CreateEntity method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity that was created |
+
+
+
 <Message id="minder-v1-CreateProfileRequest">CreateProfileRequest</Message>
 
 Profile service
@@ -662,6 +701,29 @@ be available in the same project hierarchy.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | name | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-DeleteEntityByIdRequest">DeleteEntityByIdRequest</Message>
+
+DeleteEntityByIdRequest is the request message for the DeleteEntityById method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to delete |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
+
+
+
+<Message id="minder-v1-DeleteEntityByIdResponse">DeleteEntityByIdResponse</Message>
+
+DeleteEntityByIdResponse is the response message for the DeleteEntityById method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity that was deleted |
 
 
 
@@ -1169,6 +1231,53 @@ GetDataSourceByNameRequest is the request message for the GetDataSourceByName RP
 
 
 
+<Message id="minder-v1-GetEntityByIdRequest">GetEntityByIdRequest</Message>
+
+GetEntityByIdRequest is the request message for the GetEntityById method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to get |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
+
+
+
+<Message id="minder-v1-GetEntityByIdResponse">GetEntityByIdResponse</Message>
+
+GetEntityByIdResponse is the response message for the GetEntityById method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity that was retrieved |
+
+
+
+<Message id="minder-v1-GetEntityByNameRequest">GetEntityByNameRequest</Message>
+
+GetEntityByNameRequest is the request message for the GetEntityByName method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to get |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
+| entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to get |
+
+
+
+<Message id="minder-v1-GetEntityByNameResponse">GetEntityByNameResponse</Message>
+
+GetEntityByNameResponse is the response message for the GetEntityByName method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity that was retrieved |
+
+
+
 <Message id="minder-v1-GetEvaluationHistoryRequest">GetEvaluationHistoryRequest</Message>
 
 GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
@@ -1635,6 +1744,31 @@ Invitation is an invitation to join a project. This is only used in responses.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | data_sources | <TypeLink type="minder-v1-DataSource">DataSource</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-ListEntitiesRequest">ListEntitiesRequest</Message>
+
+ListEntitiesRequest is the request message for the ListEntities method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entities are listed |
+| entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to list |
+| cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | cursor is the pagination cursor |
+
+
+
+<Message id="minder-v1-ListEntitiesResponse">ListEntitiesResponse</Message>
+
+ListEntitiesResponse is the response message for the ListEntities method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| results | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> | repeated | results is the list of entities |
+| page | <TypeLink type="minder-v1-CursorPage">CursorPage</TypeLink> |  | page is the pagination information |
 
 
 
@@ -3230,6 +3364,10 @@ ProviderTrait is the type of the provider.
 | RELATION_DATA_SOURCE_CREATE | 39 |  |
 | RELATION_DATA_SOURCE_UPDATE | 40 |  |
 | RELATION_DATA_SOURCE_DELETE | 41 |  |
+| RELATION_ENTITY_GET | 42 |  |
+| RELATION_ENTITY_CREATE | 43 |  |
+| RELATION_ENTITY_UPDATE | 44 |  |
+| RELATION_ENTITY_DELETE | 45 |  |
 
 
 
