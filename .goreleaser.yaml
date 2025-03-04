@@ -62,8 +62,8 @@ winget:
       - golang
       - cli
     commit_author:
-      name: stacklokbot
-      email: info@stacklok.com
+      name: openssf-robot
+      email: openssf-robot@openssf.org
     goamd64: v1
     repository:
       owner: mindersec
