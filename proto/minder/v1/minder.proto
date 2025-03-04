@@ -64,6 +64,10 @@ enum Relation {
     RELATION_DATA_SOURCE_CREATE = 39 [(name) = "data_source_create"];
     RELATION_DATA_SOURCE_UPDATE = 40 [(name) = "data_source_update"];
     RELATION_DATA_SOURCE_DELETE = 41 [(name) = "data_source_delete"];
+    RELATION_ENTITY_GET = 42 [(name) = "entity_get"];
+    RELATION_ENTITY_CREATE = 43 [(name) = "entity_create"];
+    RELATION_ENTITY_UPDATE = 44 [(name) = "entity_update"];
+    RELATION_ENTITY_DELETE = 45 [(name) = "entity_delete"];
 }
 
 extend google.protobuf.EnumValueOptions {
@@ -4022,6 +4026,194 @@ message EntityInstance {
 
     // properties is a map of properties of the entity.
     google.protobuf.Struct properties = 5;
+}
+
+// EntityInstanceService provides API endpoints for managing entity instances
+service EntityInstanceService {
+    // ListEntities returns a list of entity instances for a given project and provider
+    rpc ListEntities (ListEntitiesRequest) returns (ListEntitiesResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/entities"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_GET
+        };
+    }
+
+    // GetEntityById returns an entity instance for a given entity ID
+    rpc GetEntityById (GetEntityByIdRequest) returns (GetEntityByIdResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/entity/id/{id}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_GET
+        };
+    }
+
+    // GetEntityByName returns an entity instance for a given entity name
+    rpc GetEntityByName (GetEntityByNameRequest) returns (GetEntityByNameResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/entity/name/{name=**}"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_GET
+        };
+    }
+
+    // DeleteEntityById deletes an entity instance for a given entity ID
+    rpc DeleteEntityById (DeleteEntityByIdRequest) returns (DeleteEntityByIdResponse) {
+        option (google.api.http) = {
+            delete: "/api/v1/entity/id/{id}"
+        };
+
+        option (minder.v1.rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_DELETE
+        };
+    }
+
+    // CreateEntity creates a new entity instance
+    rpc CreateEntity (CreateEntityRequest) returns (CreateEntityResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/entity"
+            body: "*"
+        };
+
+        option (rpc_options) = {
+            target_resource: TARGET_RESOURCE_PROJECT
+            relation: RELATION_ENTITY_CREATE
+        };
+    }
+}
+
+// ListEntitiesRequest is the request message for the ListEntities method
+message ListEntitiesRequest {
+    // context is the context in which the entities are listed
+    Context context = 1;
+
+    // entity_type is the type of entity to list
+    Entity entity_type = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // cursor is the pagination cursor
+    Cursor cursor = 3;
+}
+
+// ListEntitiesResponse is the response message for the ListEntities method
+message ListEntitiesResponse {
+    // results is the list of entities
+    repeated EntityInstance results = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // page is the pagination information
+    CursorPage page = 2;
+}
+
+// GetEntityByIdRequest is the request message for the GetEntityById method
+message GetEntityByIdRequest {
+    // id is the ID of the entity to get
+    string id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // context is the context in which the entity is evaluated
+    Context context = 2;
+}
+
+// GetEntityByIdResponse is the response message for the GetEntityById method
+message GetEntityByIdResponse {
+    // entity is the entity that was retrieved
+    EntityInstance entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// GetEntityByNameRequest is the request message for the GetEntityByName method
+message GetEntityByNameRequest {
+    // name is the name of the entity to get
+    string name = 1 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // context is the context in which the entity is evaluated
+    Context context = 2;
+
+    // entity_type is the type of entity to get
+    Entity entity_type = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// GetEntityByNameResponse is the response message for the GetEntityByName method
+message GetEntityByNameResponse {
+    // entity is the entity that was retrieved
+    EntityInstance entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// DeleteEntityByIdRequest is the request message for the DeleteEntityById method
+message DeleteEntityByIdRequest {
+    // id is the ID of the entity to delete
+    string id = 1 [
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // context is the context in which the entity is evaluated
+    Context context = 2;
+}
+
+// DeleteEntityByIdResponse is the response message for the DeleteEntityById method
+message DeleteEntityByIdResponse {
+    // id is the ID of the entity that was deleted
+    string id = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+}
+
+// CreateEntityRequest is the request message for the CreateEntity method
+message CreateEntityRequest {
+    // context is the context in which the entity is created
+    Context context = 1;
+
+    // name is the name of the entity to create
+    string name = 2 [
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z][-/[:word:]]*$",
+            max_len: 200,
+        },
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // entity_type is the type of entity to create
+    Entity entity_type = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // properties is a map of properties of the entity
+    google.protobuf.Struct properties = 4;
+}
+
+// CreateEntityResponse is the response message for the CreateEntity method
+message CreateEntityResponse {
+    // entity is the entity that was created
+    EntityInstance entity = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // UpstreamEntityRef providers enough information for the
