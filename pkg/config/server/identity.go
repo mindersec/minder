@@ -29,6 +29,8 @@ type IdentityConfig struct {
 	// ised for direct communication with the identity server, and is not the URL that
 	// is included in the JWT tokens.  It is named 'issuer_url' for historical compatibility.
 	IssuerUrl string `mapstructure:"issuer_url" default:"http://localhost:8081"`
+	// Realm is the realm used by the identity server at IssuerUrl
+	Realm string `mapstructure:"realm" default:"stacklok"`
 	// IssuerClaim is the claim in the JWT token that identifies the issuer
 	IssuerClaim string `mapstructure:"issuer_claim" default:"http://localhost:8081/realms/stacklok"`
 	// ClientId is the client ID that identifies the minder server
@@ -62,16 +64,20 @@ func (sic *IdentityConfig) JwtUrl(elem ...string) (*url.URL, error) {
 }
 
 // Path returns a URL for the given path on the identity server
-func (sic *IdentityConfig) Path(path string) (*url.URL, error) {
+func (sic *IdentityConfig) Path(path ...string) (*url.URL, error) {
 	parsedUrl, err := url.Parse(sic.IssuerUrl)
 	if err != nil {
 		return nil, err
 	}
-	return parsedUrl.JoinPath(path), nil
+	return parsedUrl.JoinPath(path...), nil
+}
+
+func (sic *IdentityConfig) GetRealmPath(path string) (*url.URL, error) {
+	return sic.Path("realms", sic.Realm, path)
 }
 
 func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) {
-	tokenUrl, err := sic.Path("realms/stacklok/protocol/openid-connect/token")
+	tokenUrl, err := sic.GetRealmPath("protocol/openid-connect/token")
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +101,10 @@ func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) 
 	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)), nil
 }
 
-// Do sends an HTTP request to the identity server, using the configured client credentials.
-func (sic *IdentityConfig) Do(
+// AdminDo sends an HTTP request to the identity server, using the configured client credentials.
+func (sic *IdentityConfig) AdminDo(
 	ctx context.Context, method string, path string, query url.Values, body io.Reader) (*http.Response, error) {
-	parsedUrl, err := sic.Path(path)
+	parsedUrl, err := sic.Path("admin/realms", sic.Realm, path)
 	if err != nil {
 		return nil, err
 	}

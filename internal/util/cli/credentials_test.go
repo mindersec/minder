@@ -93,7 +93,7 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
-			conn, err := cli.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, tt.clientId)
+			conn, err := cli.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, "stacklok", tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
 			}
@@ -241,7 +241,7 @@ func TestRefreshCredentials(t *testing.T) {
 
 			tt.issuerUrl = server.URL
 
-			result, err := cli.RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
+			result, err := cli.RefreshCredentials(tt.refreshToken, tt.issuerUrl, "stacklok", tt.clientId)
 			if tt.expectedError != "" {
 				if err == nil || err.Error() != tt.expectedError {
 					t.Errorf("expected error %v, got %v", tt.expectedError, err)
@@ -390,7 +390,7 @@ func TestRevokeToken(t *testing.T) {
 				tt.issuerUrl = server.URL
 			}
 
-			err := cli.RevokeToken(tt.token, tt.issuerUrl, tt.clientId, tt.tokenHint)
+			err := cli.RevokeToken(tt.token, tt.issuerUrl, "stacklok", tt.clientId, tt.tokenHint)
 			if (err != nil) != tt.expectError {
 				t.Errorf("RevokeToken() error = %v, expectError %v", err, tt.expectError)
 			}

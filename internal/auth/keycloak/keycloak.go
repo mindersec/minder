@@ -22,9 +22,10 @@ import (
 
 // KeyCloak is an implementation of the auth.IdentityProvider interface.
 type KeyCloak struct {
-	name string
-	url  url.URL
-	cfg  serverconfig.IdentityConfig
+	name  string
+	url   url.URL
+	realm string
+	cfg   serverconfig.IdentityConfig
 
 	kcClient client.ClientWithResponsesInterface
 }
@@ -52,6 +53,7 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 	return &KeyCloak{
 		name:     name,
 		url:      *issuerUrl,
+		realm:    cfg.Realm,
 		cfg:      cfg,
 		kcClient: kcClient,
 	}, nil
@@ -105,7 +107,7 @@ func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity,
 
 func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, error) {
 	// First, look up by user ID
-	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, "stacklok", id, nil)
+	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
 	if err == nil && resp.StatusCode() == http.StatusOK {
 		id := k.userToIdentity(*resp.JSON200)
 		if id != nil {
@@ -114,7 +116,7 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 	}
 
 	// next, try lookup by GitHub login
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
 		Exact:    ptr.Ptr(true),
 		Username: &id,
 	})
@@ -126,7 +128,7 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 	}
 
 	// last, try lookup by GitHub numeric ID
-	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, "stacklok", &client.GetAdminRealmsRealmUsersParams{
+	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
 		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
 	})
 	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
@@ -159,7 +161,7 @@ func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity
 }
 
 func newAuthorizedClient(kcUrl url.URL, cfg serverconfig.IdentityConfig) (*http.Client, error) {
-	tokenUrl := kcUrl.JoinPath("realms/stacklok/protocol/openid-connect/token")
+	tokenUrl := kcUrl.JoinPath("realms", cfg.Realm, "/protocol/openid-connect/token")
 	clientSecret, err := cfg.GetClientSecret()
 	if err != nil {
 		return nil, err

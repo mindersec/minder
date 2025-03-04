@@ -26,7 +26,7 @@ func GetUserForGitHubId(ctx context.Context, sic server.IdentityConfigWrapper, g
 		"q": {fmt.Sprintf("gh_id:%d", ghUser)},
 		// TODO: add idpAlias and configuration for same
 	}
-	resp, err := sic.Server.Do(ctx, "GET", "admin/realms/stacklok/users", q, nil)
+	resp, err := sic.Server.AdminDo(ctx, "GET", "users", q, nil)
 	if err != nil {
 		return "", err
 	}

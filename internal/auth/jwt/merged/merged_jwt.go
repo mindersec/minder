@@ -9,15 +9,15 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 
-	stacklok_jwt "github.com/mindersec/minder/internal/auth/jwt"
+	minder_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
 
 // Validator is a struct that combines multiple JWT validators.
 type Validator struct {
-	Validators []stacklok_jwt.Validator
+	Validators []minder_jwt.Validator
 }
 
-var _ stacklok_jwt.Validator = (*Validator)(nil)
+var _ minder_jwt.Validator = (*Validator)(nil)
 
 // ParseAndValidate implements jwt.Validator.
 func (m Validator) ParseAndValidate(tokenString string) (openid.Token, error) {
