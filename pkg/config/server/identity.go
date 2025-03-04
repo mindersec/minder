@@ -72,6 +72,7 @@ func (sic *IdentityConfig) Path(path ...string) (*url.URL, error) {
 	return parsedUrl.JoinPath(path...), nil
 }
 
+// GetRealmPath returns a URL for the given path on the realm
 func (sic *IdentityConfig) GetRealmPath(path string) (*url.URL, error) {
 	return sic.Path("realms", sic.Realm, path)
 }
