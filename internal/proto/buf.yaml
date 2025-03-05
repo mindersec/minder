@@ -7,7 +7,7 @@ breaking:
     - WIRE_JSON
 lint:
   use:
-    - DEFAULT
+    - STANDARD
   except:
     - PACKAGE_DIRECTORY_MATCH
   allow_comment_ignores: true

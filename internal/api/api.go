@@ -21,7 +21,7 @@ import (
 )
 
 // ProtoValidationInterceptor is a gRPC interceptor that validates incoming requests.
-func ProtoValidationInterceptor(validator *protovalidate.Validator) grpc.UnaryServerInterceptor {
+func ProtoValidationInterceptor(validator protovalidate.Validator) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// Assert that req implements proto.Message
 		msg, ok := req.(proto.Message)
@@ -48,12 +48,9 @@ func ProtoValidationInterceptor(validator *protovalidate.Validator) grpc.UnarySe
 }
 
 // NewValidator creates a new validator.
-func NewValidator() (*protovalidate.Validator, error) {
-	options := []protovalidate.ValidatorOption{
-		protovalidate.WithUTC(true),
-		// TODO: add protovalidate.WithDescriptors() in the future
-	}
-	return protovalidate.New(options...)
+func NewValidator() (protovalidate.Validator, error) {
+	// TODO: add protovalidate.WithDescriptors() in the future
+	return protovalidate.New()
 }
 
 // formatViolations is a helper function to format violations
