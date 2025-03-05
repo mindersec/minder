@@ -39,7 +39,8 @@ var logoutCmd = &cobra.Command{
 		// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 		cmd.SilenceUsage = true
 
-		logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/logout")
+		// TODO: we should probably get this from the server in a header in the future.
+		logoutUrl := parsedURL.JoinPath("realms", clientConfig.Identity.CLI.Realm, "/protocol/openid-connect/logout")
 		cmd.Println(cli.SuccessBanner.Render("You have successfully logged out of the CLI."))
 		cmd.Printf("If you would like to log out of the browser, you can visit %s\n", logoutUrl.String())
 		return nil

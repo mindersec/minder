@@ -57,8 +57,9 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 
 	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 	clientID := clientConfig.Identity.CLI.ClientId
+	realm := clientConfig.Identity.CLI.Realm
 
-	creds, err := cli.RefreshCredentials(tok, issuerUrlStr, clientID)
+	creds, err := cli.RefreshCredentials(tok, issuerUrlStr, realm, clientID)
 	if err != nil {
 		return fmt.Errorf("couldn't fetch credentials: %v", err)
 	}

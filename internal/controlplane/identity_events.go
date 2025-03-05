@@ -68,7 +68,7 @@ func HandleEvents(
 	ctx, cancel := context.WithDeadline(ctx, d)
 	defer cancel()
 
-	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/events", nil, nil)
+	resp, err := cfg.Identity.Server.AdminDo(ctx, "GET", "events", nil, nil)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Msgf("events chron: error getting events: %v", err)
 		return
@@ -142,7 +142,7 @@ func HandleAdminEvents(
 		"operationTypes": []string{"DELETE"},
 		"resourceTypes":  []string{"USER"},
 	}
-	resp, err := cfg.Identity.Server.Do(ctx, "GET", "admin/realms/stacklok/admin-events", query, nil)
+	resp, err := cfg.Identity.Server.AdminDo(ctx, "GET", "admin-events", query, nil)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Msgf("events cron: error getting admin events: %v", err)
 		return

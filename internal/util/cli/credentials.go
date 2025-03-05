@@ -67,7 +67,7 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 func GetGrpcConnection(
 	grpc_host string, grpc_port int,
 	allowInsecure bool,
-	issuerUrl string, clientId string,
+	issuerUrl string, realm string, clientId string,
 	opts ...grpc.DialOption) (
 	*grpc.ClientConn, error) {
 	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
@@ -77,7 +77,7 @@ func GetGrpcConnection(
 	if os.Getenv(MinderAuthTokenEnvVar) != "" {
 		token = os.Getenv(MinderAuthTokenEnvVar)
 	} else {
-		t, err := GetToken(issuerUrl, clientId)
+		t, err := GetToken(issuerUrl, realm, clientId)
 		if err == nil {
 			token = t
 		}
@@ -155,7 +155,7 @@ func RemoveCredentials() error {
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
-func GetToken(issuerUrl string, clientId string) (string, error) {
+func GetToken(issuerUrl string, realm string, clientId string) (string, error) {
 	refreshLimit := 10
 	creds, err := LoadCredentials()
 	if err != nil {
@@ -164,7 +164,7 @@ func GetToken(issuerUrl string, clientId string) (string, error) {
 	needsRefresh := time.Now().Add(time.Duration(refreshLimit) * time.Second).After(creds.AccessTokenExpiresAt)
 
 	if needsRefresh {
-		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, clientId)
+		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, realm, clientId)
 		if err != nil {
 			return "", fmt.Errorf("%w: %v", ErrGettingRefreshToken, err)
 		}
@@ -184,13 +184,13 @@ type refreshTokenResponse struct {
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
-func RefreshCredentials(refreshToken string, issuerUrl string, clientId string) (OpenIdCredentials, error) {
+func RefreshCredentials(refreshToken string, issuerUrl string, realm string, clientId string) (OpenIdCredentials, error) {
 
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	tokenUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/token")
+	tokenUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token")
 
 	data := url.Values{}
 	data.Set("client_id", clientId)
@@ -256,20 +256,20 @@ func LoadCredentials() (OpenIdCredentials, error) {
 
 // RevokeOfflineToken revokes the given offline token using OAuth2.0's Token Revocation endpoint
 // from RFC 7009.
-func RevokeOfflineToken(token string, issuerUrl string, clientId string) error {
-	return RevokeToken(token, issuerUrl, clientId, "refresh_token")
+func RevokeOfflineToken(token string, issuerUrl string, realm string, clientId string) error {
+	return RevokeToken(token, issuerUrl, realm, clientId, "refresh_token")
 }
 
 // RevokeToken revokes the given token using OAuth2.0's Token Revocation endpoint
 // from RFC 7009. The tokenHint is the type of token being revoked, such as
 // "access_token" or "refresh_token". In the case of an offline token, the
 // tokenHint should be "refresh_token".
-func RevokeToken(token string, issuerUrl string, clientId string, tokenHint string) error {
+func RevokeToken(token string, issuerUrl string, realm string, clientId string, tokenHint string) error {
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
 		return fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	logoutUrl := parsedURL.JoinPath("realms/stacklok/protocol/openid-connect/revoke")
+	logoutUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/revoke")
 
 	data := url.Values{}
 	data.Set("client_id", clientId)

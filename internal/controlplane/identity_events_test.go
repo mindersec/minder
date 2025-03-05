@@ -76,6 +76,7 @@ func TestHandleEvents(t *testing.T) {
 		Identity: serverconfig.IdentityConfigWrapper{
 			Server: serverconfig.IdentityConfig{
 				IssuerUrl:    server.URL,
+				Realm:        "stacklok",
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},
@@ -134,6 +135,7 @@ func TestHandleAdminEvents(t *testing.T) {
 		Identity: serverconfig.IdentityConfigWrapper{
 			Server: serverconfig.IdentityConfig{
 				IssuerUrl:    server.URL,
+				Realm:        "stacklok",
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},

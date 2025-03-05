@@ -74,6 +74,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
+	realm := clientConfig.Identity.CLI.Realm
 
 	opts := []grpc.DialOption{}
 	opts = append(opts, grpc.WithUserAgent(useragent.GetUserAgent()))
@@ -87,6 +88,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 		grpcPort,
 		allowInsecure,
 		issuerUrl,
+		realm,
 		clientId,
 		opts...,
 	)
@@ -102,7 +104,9 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		return MessageAndError("Unable to read config", err)
 	}
 
-	_, err = GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
+	_, err = GetToken(clientConfig.Identity.CLI.IssuerUrl,
+		clientConfig.Identity.CLI.Realm,
+		clientConfig.Identity.CLI.ClientId)
 	if err != nil { // or token is expired?
 		tokenFile, err := LoginAndSaveCreds(ctx, cmd, clientConfig)
 		if err != nil {
@@ -185,13 +189,14 @@ func Login(
 ) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
 	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
 	clientID := cfg.Identity.CLI.ClientId
+	realm := cfg.Identity.CLI.Realm
 
 	parsedURL, err := url.Parse(issuerUrlStr)
 	if err != nil {
 		return nil, MessageAndError("Error parsing issuer URL", err)
 	}
 
-	issuerUrl := parsedURL.JoinPath("realms/stacklok")
+	issuerUrl := parsedURL.JoinPath("realms", realm)
 	scopes := []string{"openid", "minder-audience"}
 
 	if len(extraScopes) > 0 {

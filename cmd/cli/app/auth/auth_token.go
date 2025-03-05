@@ -42,7 +42,8 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 	// save credentials
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
-	creds, err := cli.GetToken(issuerUrl, clientId)
+	realm := clientConfig.Identity.CLI.Realm
+	creds, err := cli.GetToken(issuerUrl, realm, clientId)
 	if err != nil {
 		cmd.Printf("Error getting token: %v\n", err)
 		if errors.Is(err, os.ErrNotExist) || errors.Is(err, cli.ErrGettingRefreshToken) {

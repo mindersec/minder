@@ -67,6 +67,7 @@ func TestKeyCloak_Resolve(t *testing.T) {
 
 	kc, err := NewKeyCloak("", serverconfig.IdentityConfig{
 		IssuerUrl: fakeServ.URL,
+		Realm:     "stacklok",
 	})
 	if err != nil {
 		t.Fatalf("failed to create keycloak: %v", err)

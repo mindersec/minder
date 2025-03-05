@@ -344,6 +344,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 			Identity: serverconfig.IdentityConfigWrapper{
 				Server: serverconfig.IdentityConfig{
 					IssuerUrl:    testServer.URL,
+					Realm:        "stacklok",
 					ClientId:     "client-id",
 					ClientSecret: "client-secret",
 				},
@@ -461,6 +462,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					Identity: serverconfig.IdentityConfigWrapper{
 						Server: serverconfig.IdentityConfig{
 							IssuerUrl:    testServer.URL,
+							Realm:        "stacklok",
 							ClientId:     "client-id",
 							ClientSecret: "client-secret",
 						},
