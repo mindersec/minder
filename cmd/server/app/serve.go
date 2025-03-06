@@ -84,7 +84,7 @@ var serveCmd = &cobra.Command{
 		// .../.well-known/jwks.json or .../.well-known/openid-configuration endpoint.  Right
 		// now it's just a hostname.  When we have this, we can consolidate the jwksUrl and issUrl,
 		// and remove the Keycloak-specific paths.
-		jwksUrl, err := cfg.Identity.Server.Path("/realms/stacklok/protocol/openid-connect/certs")
+		jwksUrl, err := cfg.Identity.Server.GetRealmPath("protocol/openid-connect/certs")
 		if err != nil {
 			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
 		}

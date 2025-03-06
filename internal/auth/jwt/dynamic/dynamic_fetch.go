@@ -25,7 +25,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 
-	stacklok_jwt "github.com/mindersec/minder/internal/auth/jwt"
+	minder_jwt "github.com/mindersec/minder/internal/auth/jwt"
 )
 
 // a subset of the openID well-known configuration for JSON parsing
@@ -45,7 +45,7 @@ type Validator struct {
 	allowedIssuers []string
 }
 
-var _ stacklok_jwt.Validator = (*Validator)(nil)
+var _ minder_jwt.Validator = (*Validator)(nil)
 
 // NewDynamicValidator creates a new instance of the dynamic JWT validator
 func NewDynamicValidator(ctx context.Context, aud string, issuers []string) *Validator {

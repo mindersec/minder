@@ -170,7 +170,7 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
-	resp, err := s.cfg.Identity.Server.Do(ctx, "DELETE", path.Join("admin/realms/stacklok/users", subject), nil, nil)
+	resp, err := s.cfg.Identity.Server.AdminDo(ctx, "DELETE", path.Join("users", subject), nil, nil)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
 	}
