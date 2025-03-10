@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/topdown/print"
@@ -20,6 +19,7 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 const (
@@ -41,7 +41,7 @@ const (
 // The default rego package is "minder"
 type Evaluator struct {
 	cfg          *Config
-	featureFlags openfeature.IClient
+	featureFlags flags.Interface
 	regoOpts     []func(*rego.Rego)
 	reseval      resultEvaluator
 	datasources  *v1datasources.DataSourceRegistry
@@ -73,7 +73,7 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
-	featureFlags openfeature.IClient,
+	featureFlags flags.Interface,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)

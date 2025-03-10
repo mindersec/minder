@@ -39,7 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	mockinvites "github.com/mindersec/minder/internal/invites/mock"
 	"github.com/mindersec/minder/internal/roles"
 	mockroles "github.com/mindersec/minder/internal/roles/mock"

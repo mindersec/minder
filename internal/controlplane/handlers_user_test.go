@@ -29,7 +29,7 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"

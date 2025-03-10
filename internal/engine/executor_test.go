@@ -30,7 +30,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/models"
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"

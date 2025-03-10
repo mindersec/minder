@@ -17,7 +17,7 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/events/common"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 

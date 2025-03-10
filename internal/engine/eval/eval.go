@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/application"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
@@ -20,6 +18,7 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -28,7 +27,7 @@ func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
-	featureFlags openfeature.IClient,
+	featureFlags flags.Interface,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()

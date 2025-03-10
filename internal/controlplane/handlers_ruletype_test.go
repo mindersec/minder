@@ -18,7 +18,7 @@ import (
 	dsf "github.com/mindersec/minder/internal/datasources/service/mock/fixtures"
 	db "github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	sf "github.com/mindersec/minder/pkg/ruletypes/mock/fixtures"
 )

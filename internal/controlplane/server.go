@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -65,6 +64,7 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
@@ -90,7 +90,7 @@ type Server struct {
 	authzClient  authz.Client
 	idClient     auth.Resolver
 	cryptoEngine crypto.Engine
-	featureFlags openfeature.IClient
+	featureFlags flags.Interface
 	// We may want to start breaking up the server struct if we use it to
 	// inject more entity-specific interfaces. For example, we may want to
 	// consider having a struct per grpc service
@@ -152,7 +152,7 @@ func NewServer(
 	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
-	featureFlagClient *openfeature.Client,
+	featureFlagClient flags.Interface,
 ) *Server {
 	return &Server{
 		store:               store,

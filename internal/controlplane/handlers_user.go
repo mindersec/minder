@@ -24,7 +24,7 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/flags"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
