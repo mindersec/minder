@@ -26,7 +26,6 @@ import (
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/marketplaces"
@@ -52,6 +51,7 @@ import (
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )

@@ -17,8 +17,8 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/events/common"
-	"github.com/mindersec/minder/pkg/flags"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 type flaggedDriver struct {

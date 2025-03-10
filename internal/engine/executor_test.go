@@ -30,7 +30,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/models"
 	mockprops "github.com/mindersec/minder/internal/entities/properties/service/mock"
-	"github.com/mindersec/minder/pkg/flags"
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/metrics/meters"
@@ -45,6 +44,7 @@ import (
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	mock_selectors "github.com/mindersec/minder/pkg/engine/selectors/mock"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
