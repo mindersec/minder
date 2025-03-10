@@ -21,8 +21,11 @@ spec:
       name: minder-grpc
       port: !!int "{{ .Values.service.grpcPort }}"
       weight: 1
-    # If no matches are specified, the implementation MUST match every gRPC request.
-    matches: []
+    # Envoy-Gateway requires that the matches be non-empty to match GRPC, but allows for regex matches.
+    matches:
+    - method:
+        type: RegularExpression
+        service: ".*"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
