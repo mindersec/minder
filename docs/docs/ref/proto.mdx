@@ -686,8 +686,8 @@ DeleteEntityByIdRequest is the request message for the DeleteEntityById method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is evaluated |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to delete |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
 
 
 
@@ -1213,8 +1213,8 @@ GetEntityByIdRequest is the request message for the GetEntityById method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is evaluated |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to get |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
 
 
 
@@ -1236,8 +1236,8 @@ GetEntityByNameRequest is the request message for the GetEntityByName method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is evaluated |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to get |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is evaluated |
 | entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to get |
 
 
@@ -1729,7 +1729,7 @@ ListEntitiesRequest is the request message for the ListEntities method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entities are listed |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entities are listed |
 | entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to list |
 | cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | cursor is the pagination cursor |
 
@@ -2339,7 +2339,7 @@ RegisterEntityRequest is the request message for the RegisterEntity method
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is created |
+| context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is created |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to create |
 | entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
 | identifying_properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | identifying_properties is a map of the minimal set of properties the provider needs in order to uniquely identify an entity. In most cases, upstream_id will suffice, but this is really provider-dependent. |

@@ -772,21 +772,15 @@
         },
         "parameters": [
           {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
+            "description": "name of the provider. Set to empty string when not applicable.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -879,21 +873,15 @@
             "type": "string"
           },
           {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
+            "description": "name of the provider. Set to empty string when not applicable.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -923,21 +911,15 @@
             "type": "string"
           },
           {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
+            "description": "name of the provider. Set to empty string when not applicable.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -970,21 +952,15 @@
             "pattern": ".+"
           },
           {
+            "name": "context.projectId",
+            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "context.provider",
-            "description": "name of the provider",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "context.retiredOrganization",
+            "description": "name of the provider. Set to empty string when not applicable.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -5725,7 +5701,7 @@
       "type": "object",
       "properties": {
         "context": {
-          "$ref": "#/definitions/v1Context",
+          "$ref": "#/definitions/v1ContextV2",
           "title": "context is the context in which the entity is created"
         },
         "name": {

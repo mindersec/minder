@@ -4095,7 +4095,7 @@ service EntityInstanceService {
 // ListEntitiesRequest is the request message for the ListEntities method
 message ListEntitiesRequest {
     // context is the context in which the entities are listed
-    Context context = 1;
+    ContextV2 context = 1;
 
     // entity_type is the type of entity to list
     Entity entity_type = 2 [
@@ -4119,14 +4119,14 @@ message ListEntitiesResponse {
 
 // GetEntityByIdRequest is the request message for the GetEntityById method
 message GetEntityByIdRequest {
+    // context is the context in which the entity is evaluated
+    ContextV2 context = 1;
+
     // id is the ID of the entity to get
-    string id = 1 [
+    string id = 2 [
         (buf.validate.field).string = {uuid: true},
         (google.api.field_behavior) = REQUIRED
     ];
-
-    // context is the context in which the entity is evaluated
-    Context context = 2;
 }
 
 // GetEntityByIdResponse is the response message for the GetEntityById method
@@ -4139,17 +4139,17 @@ message GetEntityByIdResponse {
 
 // GetEntityByNameRequest is the request message for the GetEntityByName method
 message GetEntityByNameRequest {
+    // context is the context in which the entity is evaluated
+    ContextV2 context = 1;
+
     // name is the name of the entity to get
-    string name = 1 [
+    string name = 2 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
         (google.api.field_behavior) = REQUIRED
     ];
-
-    // context is the context in which the entity is evaluated
-    Context context = 2;
 
     // entity_type is the type of entity to get
     Entity entity_type = 3 [
@@ -4167,14 +4167,14 @@ message GetEntityByNameResponse {
 
 // DeleteEntityByIdRequest is the request message for the DeleteEntityById method
 message DeleteEntityByIdRequest {
+    // context is the context in which the entity is evaluated
+    ContextV2 context = 1;
+
     // id is the ID of the entity to delete
-    string id = 1 [
+    string id = 2 [
         (buf.validate.field).string = {uuid: true},
         (google.api.field_behavior) = REQUIRED
     ];
-
-    // context is the context in which the entity is evaluated
-    Context context = 2;
 }
 
 // DeleteEntityByIdResponse is the response message for the DeleteEntityById method
@@ -4188,7 +4188,7 @@ message DeleteEntityByIdResponse {
 // RegisterEntityRequest is the request message for the RegisterEntity method
 message RegisterEntityRequest {
     // context is the context in which the entity is created
-    Context context = 1;
+    ContextV2 context = 1;
 
     // name is the name of the entity to create
     string name = 2 [
