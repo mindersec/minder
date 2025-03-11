@@ -2342,7 +2342,7 @@ RegisterEntityRequest is the request message for the RegisterEntity method
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is created |
 | name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to create |
 | entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
-| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity |
+| identifying_properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | identifying_properties is a map of the minimal set of properties the provider needs in order to uniquely identify an entity. In most cases, upstream_id will suffice, but this is really provider-dependent. |
 
 
 

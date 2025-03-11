@@ -4204,8 +4204,11 @@ message RegisterEntityRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // properties is a map of properties of the entity
-    google.protobuf.Struct properties = 4;
+    // identifying_properties is a map of the minimal set of properties
+    // the provider needs in order to uniquely identify an entity.
+    // In most cases, upstream_id will suffice, but this is really
+    // provider-dependent.
+    google.protobuf.Struct identifying_properties = 4;
 }
 
 // RegisterEntityResponse is the response message for the RegisterEntity method
