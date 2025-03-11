@@ -88,7 +88,7 @@ EntityInstanceService provides API endpoints for managing entity instances
 | GetEntityById | [GetEntityByIdRequest](#minder-v1-GetEntityByIdRequest) | [GetEntityByIdResponse](#minder-v1-GetEntityByIdResponse) | GetEntityById returns an entity instance for a given entity ID |
 | GetEntityByName | [GetEntityByNameRequest](#minder-v1-GetEntityByNameRequest) | [GetEntityByNameResponse](#minder-v1-GetEntityByNameResponse) | GetEntityByName returns an entity instance for a given entity name |
 | DeleteEntityById | [DeleteEntityByIdRequest](#minder-v1-DeleteEntityByIdRequest) | [DeleteEntityByIdResponse](#minder-v1-DeleteEntityByIdResponse) | DeleteEntityById deletes an entity instance for a given entity ID |
-| CreateEntity | [CreateEntityRequest](#minder-v1-CreateEntityRequest) | [CreateEntityResponse](#minder-v1-CreateEntityResponse) | CreateEntity creates a new entity instance |
+| RegisterEntity | [RegisterEntityRequest](#minder-v1-RegisterEntityRequest) | [RegisterEntityResponse](#minder-v1-RegisterEntityResponse) | RegisterEntity creates a new entity instance |
 
 
 
@@ -451,31 +451,6 @@ DataSource service
 <Message id="minder-v1-CreateEntityReconciliationTaskResponse">CreateEntityReconciliationTaskResponse</Message>
 
 
-
-
-
-<Message id="minder-v1-CreateEntityRequest">CreateEntityRequest</Message>
-
-CreateEntityRequest is the request message for the CreateEntity method
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is created |
-| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to create |
-| entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
-| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity |
-
-
-
-<Message id="minder-v1-CreateEntityResponse">CreateEntityResponse</Message>
-
-CreateEntityResponse is the response message for the CreateEntity method
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity that was created |
 
 
 
@@ -2357,6 +2332,31 @@ RESTProviderConfig contains the configuration for the REST provider.
 
 
 
+<Message id="minder-v1-RegisterEntityRequest">RegisterEntityRequest</Message>
+
+RegisterEntityRequest is the request message for the RegisterEntity method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the entity is created |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity to create |
+| entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
+| properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | properties is a map of properties of the entity |
+
+
+
+<Message id="minder-v1-RegisterEntityResponse">RegisterEntityResponse</Message>
+
+RegisterEntityResponse is the response message for the RegisterEntity method
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| entity | <TypeLink type="minder-v1-EntityInstance">EntityInstance</TypeLink> |  | entity is the entity that was created |
+
+
+
 <Message id="minder-v1-RegisterRepoResult">RegisterRepoResult</Message>
 
 
@@ -3365,7 +3365,7 @@ ProviderTrait is the type of the provider.
 | RELATION_DATA_SOURCE_UPDATE | 40 |  |
 | RELATION_DATA_SOURCE_DELETE | 41 |  |
 | RELATION_ENTITY_GET | 42 |  |
-| RELATION_ENTITY_CREATE | 43 |  |
+| RELATION_ENTITY_REGISTER | 43 |  |
 | RELATION_ENTITY_UPDATE | 44 |  |
 | RELATION_ENTITY_DELETE | 45 |  |
 

@@ -57,7 +57,7 @@ type project
     define entity_reconcile: editor
 
     define entity_get: viewer
-    define entity_create: editor
+    define entity_register: editor
     define entity_update: editor
     define entity_delete: editor
 

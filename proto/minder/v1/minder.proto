@@ -65,7 +65,7 @@ enum Relation {
     RELATION_DATA_SOURCE_UPDATE = 40 [(name) = "data_source_update"];
     RELATION_DATA_SOURCE_DELETE = 41 [(name) = "data_source_delete"];
     RELATION_ENTITY_GET = 42 [(name) = "entity_get"];
-    RELATION_ENTITY_CREATE = 43 [(name) = "entity_create"];
+    RELATION_ENTITY_REGISTER = 43 [(name) = "entity_register"];
     RELATION_ENTITY_UPDATE = 44 [(name) = "entity_update"];
     RELATION_ENTITY_DELETE = 45 [(name) = "entity_delete"];
 }
@@ -4078,8 +4078,8 @@ service EntityInstanceService {
         };
     }
 
-    // CreateEntity creates a new entity instance
-    rpc CreateEntity (CreateEntityRequest) returns (CreateEntityResponse) {
+    // RegisterEntity creates a new entity instance
+    rpc RegisterEntity (RegisterEntityRequest) returns (RegisterEntityResponse) {
         option (google.api.http) = {
             post: "/api/v1/entity"
             body: "*"
@@ -4087,7 +4087,7 @@ service EntityInstanceService {
 
         option (rpc_options) = {
             target_resource: TARGET_RESOURCE_PROJECT
-            relation: RELATION_ENTITY_CREATE
+            relation: RELATION_ENTITY_REGISTER
         };
     }
 }
@@ -4185,8 +4185,8 @@ message DeleteEntityByIdResponse {
     ];
 }
 
-// CreateEntityRequest is the request message for the CreateEntity method
-message CreateEntityRequest {
+// RegisterEntityRequest is the request message for the RegisterEntity method
+message RegisterEntityRequest {
     // context is the context in which the entity is created
     Context context = 1;
 
@@ -4208,8 +4208,8 @@ message CreateEntityRequest {
     google.protobuf.Struct properties = 4;
 }
 
-// CreateEntityResponse is the response message for the CreateEntity method
-message CreateEntityResponse {
+// RegisterEntityResponse is the response message for the RegisterEntity method
+message RegisterEntityResponse {
     // entity is the entity that was created
     EntityInstance entity = 1 [
         (google.api.field_behavior) = REQUIRED

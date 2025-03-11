@@ -833,13 +833,13 @@
     },
     "/api/v1/entity": {
       "post": {
-        "summary": "CreateEntity creates a new entity instance",
-        "operationId": "EntityInstanceService_CreateEntity",
+        "summary": "RegisterEntity creates a new entity instance",
+        "operationId": "EntityInstanceService_RegisterEntity",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1CreateEntityResponse"
+              "$ref": "#/definitions/v1RegisterEntityResponse"
             }
           }
         },
@@ -849,7 +849,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/v1CreateEntityRequest"
+              "$ref": "#/definitions/v1RegisterEntityRequest"
             }
           }
         ],
@@ -4128,45 +4128,6 @@
     "v1CreateEntityReconciliationTaskResponse": {
       "type": "object"
     },
-    "v1CreateEntityRequest": {
-      "type": "object",
-      "properties": {
-        "context": {
-          "$ref": "#/definitions/v1Context",
-          "title": "context is the context in which the entity is created"
-        },
-        "name": {
-          "type": "string",
-          "title": "name is the name of the entity to create"
-        },
-        "entityType": {
-          "$ref": "#/definitions/v1Entity",
-          "title": "entity_type is the type of entity to create"
-        },
-        "properties": {
-          "type": "object",
-          "title": "properties is a map of properties of the entity"
-        }
-      },
-      "title": "CreateEntityRequest is the request message for the CreateEntity method",
-      "required": [
-        "name",
-        "entityType"
-      ]
-    },
-    "v1CreateEntityResponse": {
-      "type": "object",
-      "properties": {
-        "entity": {
-          "$ref": "#/definitions/v1EntityInstance",
-          "title": "entity is the entity that was created"
-        }
-      },
-      "title": "CreateEntityResponse is the response message for the CreateEntity method",
-      "required": [
-        "entity"
-      ]
-    },
     "v1CreateProfileRequest": {
       "type": "object",
       "properties": {
@@ -5759,6 +5720,45 @@
     },
     "v1ReconcileEntityRegistrationResponse": {
       "type": "object"
+    },
+    "v1RegisterEntityRequest": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "$ref": "#/definitions/v1Context",
+          "title": "context is the context in which the entity is created"
+        },
+        "name": {
+          "type": "string",
+          "title": "name is the name of the entity to create"
+        },
+        "entityType": {
+          "$ref": "#/definitions/v1Entity",
+          "title": "entity_type is the type of entity to create"
+        },
+        "properties": {
+          "type": "object",
+          "title": "properties is a map of properties of the entity"
+        }
+      },
+      "title": "RegisterEntityRequest is the request message for the RegisterEntity method",
+      "required": [
+        "name",
+        "entityType"
+      ]
+    },
+    "v1RegisterEntityResponse": {
+      "type": "object",
+      "properties": {
+        "entity": {
+          "$ref": "#/definitions/v1EntityInstance",
+          "title": "entity is the entity that was created"
+        }
+      },
+      "title": "RegisterEntityResponse is the response message for the RegisterEntity method",
+      "required": [
+        "entity"
+      ]
     },
     "v1RegisterRepoResult": {
       "type": "object",

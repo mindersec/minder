@@ -3455,7 +3455,7 @@ const (
 	EntityInstanceService_GetEntityById_FullMethodName    = "/minder.v1.EntityInstanceService/GetEntityById"
 	EntityInstanceService_GetEntityByName_FullMethodName  = "/minder.v1.EntityInstanceService/GetEntityByName"
 	EntityInstanceService_DeleteEntityById_FullMethodName = "/minder.v1.EntityInstanceService/DeleteEntityById"
-	EntityInstanceService_CreateEntity_FullMethodName     = "/minder.v1.EntityInstanceService/CreateEntity"
+	EntityInstanceService_RegisterEntity_FullMethodName   = "/minder.v1.EntityInstanceService/RegisterEntity"
 )
 
 // EntityInstanceServiceClient is the client API for EntityInstanceService service.
@@ -3472,8 +3472,8 @@ type EntityInstanceServiceClient interface {
 	GetEntityByName(ctx context.Context, in *GetEntityByNameRequest, opts ...grpc.CallOption) (*GetEntityByNameResponse, error)
 	// DeleteEntityById deletes an entity instance for a given entity ID
 	DeleteEntityById(ctx context.Context, in *DeleteEntityByIdRequest, opts ...grpc.CallOption) (*DeleteEntityByIdResponse, error)
-	// CreateEntity creates a new entity instance
-	CreateEntity(ctx context.Context, in *CreateEntityRequest, opts ...grpc.CallOption) (*CreateEntityResponse, error)
+	// RegisterEntity creates a new entity instance
+	RegisterEntity(ctx context.Context, in *RegisterEntityRequest, opts ...grpc.CallOption) (*RegisterEntityResponse, error)
 }
 
 type entityInstanceServiceClient struct {
@@ -3524,10 +3524,10 @@ func (c *entityInstanceServiceClient) DeleteEntityById(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *entityInstanceServiceClient) CreateEntity(ctx context.Context, in *CreateEntityRequest, opts ...grpc.CallOption) (*CreateEntityResponse, error) {
+func (c *entityInstanceServiceClient) RegisterEntity(ctx context.Context, in *RegisterEntityRequest, opts ...grpc.CallOption) (*RegisterEntityResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateEntityResponse)
-	err := c.cc.Invoke(ctx, EntityInstanceService_CreateEntity_FullMethodName, in, out, cOpts...)
+	out := new(RegisterEntityResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_RegisterEntity_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3548,8 +3548,8 @@ type EntityInstanceServiceServer interface {
 	GetEntityByName(context.Context, *GetEntityByNameRequest) (*GetEntityByNameResponse, error)
 	// DeleteEntityById deletes an entity instance for a given entity ID
 	DeleteEntityById(context.Context, *DeleteEntityByIdRequest) (*DeleteEntityByIdResponse, error)
-	// CreateEntity creates a new entity instance
-	CreateEntity(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error)
+	// RegisterEntity creates a new entity instance
+	RegisterEntity(context.Context, *RegisterEntityRequest) (*RegisterEntityResponse, error)
 	mustEmbedUnimplementedEntityInstanceServiceServer()
 }
 
@@ -3572,8 +3572,8 @@ func (UnimplementedEntityInstanceServiceServer) GetEntityByName(context.Context,
 func (UnimplementedEntityInstanceServiceServer) DeleteEntityById(context.Context, *DeleteEntityByIdRequest) (*DeleteEntityByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEntityById not implemented")
 }
-func (UnimplementedEntityInstanceServiceServer) CreateEntity(context.Context, *CreateEntityRequest) (*CreateEntityResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateEntity not implemented")
+func (UnimplementedEntityInstanceServiceServer) RegisterEntity(context.Context, *RegisterEntityRequest) (*RegisterEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterEntity not implemented")
 }
 func (UnimplementedEntityInstanceServiceServer) mustEmbedUnimplementedEntityInstanceServiceServer() {}
 func (UnimplementedEntityInstanceServiceServer) testEmbeddedByValue()                               {}
@@ -3668,20 +3668,20 @@ func _EntityInstanceService_DeleteEntityById_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _EntityInstanceService_CreateEntity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateEntityRequest)
+func _EntityInstanceService_RegisterEntity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterEntityRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(EntityInstanceServiceServer).CreateEntity(ctx, in)
+		return srv.(EntityInstanceServiceServer).RegisterEntity(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: EntityInstanceService_CreateEntity_FullMethodName,
+		FullMethod: EntityInstanceService_RegisterEntity_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EntityInstanceServiceServer).CreateEntity(ctx, req.(*CreateEntityRequest))
+		return srv.(EntityInstanceServiceServer).RegisterEntity(ctx, req.(*RegisterEntityRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3710,8 +3710,8 @@ var EntityInstanceService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _EntityInstanceService_DeleteEntityById_Handler,
 		},
 		{
-			MethodName: "CreateEntity",
-			Handler:    _EntityInstanceService_CreateEntity_Handler,
+			MethodName: "RegisterEntity",
+			Handler:    _EntityInstanceService_RegisterEntity_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
