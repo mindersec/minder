@@ -4057,7 +4057,7 @@ service EntityInstanceService {
     // GetEntityByName returns an entity instance for a given entity name
     rpc GetEntityByName (GetEntityByNameRequest) returns (GetEntityByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/entity/name/{name=**}"
+            get: "/api/v1/entity/{type}/{name=**}"
         };
 
         option (rpc_options) = {
