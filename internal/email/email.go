@@ -10,8 +10,11 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
@@ -41,6 +44,37 @@ const (
 	// MaxFieldLength is the maximum length of a string field
 	MaxFieldLength = 200
 )
+
+var (
+	bodyText     *util.SafeTemplate
+	textErr      error
+	bodyHTML     *util.SafeTemplate
+	htmlErr      error
+	templateOnce sync.Once
+)
+
+func templateInit() {
+	templateOnce.Do(func() {
+		bodyTextContent, err := os.ReadFile(filepath.Join(os.Getenv("KO_DATA_PATH"), "templates", "invite-email.txt.tmpl"))
+		if err == nil {
+			contentString := string(bodyTextContent)
+			bodyText, err = util.NewSafeTextTemplate(&contentString, "body-invite-text")
+		}
+		if err != nil {
+			bodyText = nil
+			textErr = err
+		}
+		htmlTextContent, err := os.ReadFile(filepath.Join(os.Getenv("KO_DATA_PATH"), "templates", "invite-email.html.tmpl"))
+		if err == nil {
+			contentString := string(htmlTextContent)
+			bodyHTML, err = util.NewSafeHTMLTemplate(&contentString, "body-invite-html")
+		}
+		if err != nil {
+			bodyHTML = nil
+			htmlErr = err
+		}
+	})
+}
 
 // MailEventPayload is the event payload for sending an invitation email
 type MailEventPayload struct {
@@ -123,13 +157,12 @@ func NewMessage(
 // If there is an error creating the HTML body, it will try to return the text body instead
 func (b *bodyData) GetEmailBodyHTML(ctx context.Context) (string, error) {
 	var builder strings.Builder
-	bHTML := bodyHTML
+	templateInit()
 
-	bodyHTMLTmpl, err := util.NewSafeHTMLTemplate(&bHTML, "body-invite-html")
-	if err != nil {
-		return "", err
+	if htmlErr != nil {
+		return "", htmlErr
 	}
-	err = bodyHTMLTmpl.Execute(ctx, &builder, b, BodyMaxLength)
+	err := bodyHTML.Execute(ctx, &builder, b, BodyMaxLength)
 	if err != nil {
 		return "", err
 	}
@@ -139,13 +172,12 @@ func (b *bodyData) GetEmailBodyHTML(ctx context.Context) (string, error) {
 // GetEmailBodyText returns the text body for the email based on the message payload
 func (b *bodyData) GetEmailBodyText(ctx context.Context) (string, error) {
 	var builder strings.Builder
-	bText := bodyText
+	templateInit()
 
-	bodyTextTmpl, err := util.NewSafeHTMLTemplate(&bText, "body-invite-text")
-	if err != nil {
-		return "", err
+	if textErr != nil {
+		return "", textErr
 	}
-	err = bodyTextTmpl.Execute(ctx, &builder, b, BodyMaxLength)
+	err := bodyText.Execute(ctx, &builder, b, BodyMaxLength)
 	if err != nil {
 		return "", err
 	}
