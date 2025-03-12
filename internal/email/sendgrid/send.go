@@ -39,14 +39,14 @@ func New(cfg config.SendGrid) (*SendGrid, error) {
 	}
 	sender, err := mail.ParseEmail(cfg.Sender)
 	if err != nil {
-		return nil, fmt.Errorf("Incorrect sender email format: %s", err)
+		return nil, fmt.Errorf("incorrect sender email format: %s", err)
 	}
 	if cfg.ApiKeyFile == "" {
 		return nil, fmt.Errorf("SendGrid API key cannot be empty")
 	}
 	apiKey, err := os.ReadFile(cfg.ApiKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to read ApiKeyFile %s: %s", cfg.ApiKeyFile, err)
+		return nil, fmt.Errorf("unable to read ApiKeyFile %s: %s", cfg.ApiKeyFile, err)
 	}
 
 	// Create a SendGrid client
