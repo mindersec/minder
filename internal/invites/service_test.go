@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -163,6 +164,8 @@ func TestUpdateInvite(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
+			// Needed for loading email templates
+			assert.NoError(t, os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata"))
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -240,6 +243,8 @@ func TestRemoveInvite(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
+			// Needed for loading email templates
+			assert.NoError(t, os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata"))
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
