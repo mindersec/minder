@@ -181,12 +181,3 @@ func (s *Server) DeleteEntityById(
 		Id: in.GetId(),
 	}, nil
 }
-
-// RegisterEntity creates a new entity instance
-func (_ *Server) RegisterEntity(
-	_ context.Context,
-	_ *pb.RegisterEntityRequest,
-) (*pb.RegisterEntityResponse, error) {
-	// TODO: Implement
-	return nil, errors.New("unimplemented")
-}
