@@ -3033,15 +3033,25 @@ func local_request_EntityInstanceService_GetEntityById_0(ctx context.Context, ma
 	return msg, metadata, err
 }
 
-var filter_EntityInstanceService_GetEntityByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"name": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+var filter_EntityInstanceService_GetEntityByName_0 = &utilities.DoubleArray{Encoding: map[string]int{"entity_type": 0, "name": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
 
 func request_EntityInstanceService_GetEntityByName_0(ctx context.Context, marshaler runtime.Marshaler, client EntityInstanceServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq GetEntityByNameRequest
 		metadata runtime.ServerMetadata
+		e        int32
 		err      error
 	)
-	val, ok := pathParams["name"]
+	val, ok := pathParams["entity_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_type")
+	}
+	e, err = runtime.Enum(val, Entity_value)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_type", err)
+	}
+	protoReq.EntityType = Entity(e)
+	val, ok = pathParams["name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
@@ -3063,9 +3073,19 @@ func local_request_EntityInstanceService_GetEntityByName_0(ctx context.Context, 
 	var (
 		protoReq GetEntityByNameRequest
 		metadata runtime.ServerMetadata
+		e        int32
 		err      error
 	)
-	val, ok := pathParams["name"]
+	val, ok := pathParams["entity_type"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "entity_type")
+	}
+	e, err = runtime.Enum(val, Entity_value)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "entity_type", err)
+	}
+	protoReq.EntityType = Entity(e)
+	val, ok = pathParams["name"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "name")
 	}
@@ -4839,7 +4859,7 @@ func RegisterEntityInstanceServiceHandlerServer(ctx context.Context, mux *runtim
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.EntityInstanceService/GetEntityByName", runtime.WithHTTPPathPattern("/api/v1/entity/name/{name=**}"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/minder.v1.EntityInstanceService/GetEntityByName", runtime.WithHTTPPathPattern("/api/v1/entity/{entity_type}/{name=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -6981,7 +7001,7 @@ func RegisterEntityInstanceServiceHandlerClient(ctx context.Context, mux *runtim
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/minder.v1.EntityInstanceService/GetEntityByName", runtime.WithHTTPPathPattern("/api/v1/entity/name/{name=**}"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/minder.v1.EntityInstanceService/GetEntityByName", runtime.WithHTTPPathPattern("/api/v1/entity/{entity_type}/{name=**}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -7034,7 +7054,7 @@ func RegisterEntityInstanceServiceHandlerClient(ctx context.Context, mux *runtim
 var (
 	pattern_EntityInstanceService_ListEntities_0     = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "entities"}, ""))
 	pattern_EntityInstanceService_GetEntityById_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "entity", "id"}, ""))
-	pattern_EntityInstanceService_GetEntityByName_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 3, 0, 4, 1, 5, 3}, []string{"api", "v1", "entity", "name"}, ""))
+	pattern_EntityInstanceService_GetEntityByName_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 3, 0, 4, 1, 5, 4}, []string{"api", "v1", "entity", "entity_type", "name"}, ""))
 	pattern_EntityInstanceService_DeleteEntityById_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "entity", "id"}, ""))
 	pattern_EntityInstanceService_RegisterEntity_0   = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "entity"}, ""))
 )

@@ -4057,7 +4057,7 @@ service EntityInstanceService {
     // GetEntityByName returns an entity instance for a given entity name
     rpc GetEntityByName (GetEntityByNameRequest) returns (GetEntityByNameResponse) {
         option (google.api.http) = {
-            get: "/api/v1/entity/{type}/{name=**}"
+            get: "/api/v1/entity/{entity_type}/{name=**}"
         };
 
         option (rpc_options) = {
@@ -4190,17 +4190,8 @@ message RegisterEntityRequest {
     // context is the context in which the entity is created
     ContextV2 context = 1;
 
-    // name is the name of the entity to create
-    string name = 2 [
-        (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-/[:word:]]*$",
-            max_len: 200,
-        },
-        (google.api.field_behavior) = REQUIRED
-    ];
-
     // entity_type is the type of entity to create
-    Entity entity_type = 3 [
+    Entity entity_type = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -4208,7 +4199,7 @@ message RegisterEntityRequest {
     // the provider needs in order to uniquely identify an entity.
     // In most cases, upstream_id will suffice, but this is really
     // provider-dependent.
-    google.protobuf.Struct identifying_properties = 4;
+    google.protobuf.Struct identifying_properties = 3;
 }
 
 // RegisterEntityResponse is the response message for the RegisterEntity method

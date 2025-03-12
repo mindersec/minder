@@ -930,7 +930,7 @@
         ]
       }
     },
-    "/api/v1/entity/name/{name}": {
+    "/api/v1/entity/{entityType}/{name}": {
       "get": {
         "summary": "GetEntityByName returns an entity instance for a given entity name",
         "operationId": "EntityInstanceService_GetEntityByName",
@@ -943,6 +943,24 @@
           }
         },
         "parameters": [
+          {
+            "name": "entityType",
+            "description": "entity_type is the type of entity to get",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "enum": [
+              "ENTITY_UNSPECIFIED",
+              "ENTITY_REPOSITORIES",
+              "ENTITY_BUILD_ENVIRONMENTS",
+              "ENTITY_ARTIFACTS",
+              "ENTITY_PULL_REQUESTS",
+              "ENTITY_RELEASE",
+              "ENTITY_PIPELINE_RUN",
+              "ENTITY_TASK_RUN",
+              "ENTITY_BUILD"
+            ]
+          },
           {
             "name": "name",
             "description": "name is the name of the entity to get",
@@ -964,25 +982,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "entityType",
-            "description": "entity_type is the type of entity to get",
-            "in": "query",
-            "required": true,
-            "type": "string",
-            "enum": [
-              "ENTITY_UNSPECIFIED",
-              "ENTITY_REPOSITORIES",
-              "ENTITY_BUILD_ENVIRONMENTS",
-              "ENTITY_ARTIFACTS",
-              "ENTITY_PULL_REQUESTS",
-              "ENTITY_RELEASE",
-              "ENTITY_PIPELINE_RUN",
-              "ENTITY_TASK_RUN",
-              "ENTITY_BUILD"
-            ],
-            "default": "ENTITY_UNSPECIFIED"
           }
         ],
         "tags": [
@@ -5704,10 +5703,6 @@
           "$ref": "#/definitions/v1ContextV2",
           "title": "context is the context in which the entity is created"
         },
-        "name": {
-          "type": "string",
-          "title": "name is the name of the entity to create"
-        },
         "entityType": {
           "$ref": "#/definitions/v1Entity",
           "title": "entity_type is the type of entity to create"
@@ -5719,7 +5714,6 @@
       },
       "title": "RegisterEntityRequest is the request message for the RegisterEntity method",
       "required": [
-        "name",
         "entityType"
       ]
     },
