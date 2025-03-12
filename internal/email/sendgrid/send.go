@@ -85,10 +85,10 @@ func (s *SendGrid) sendEmail(ctx context.Context, to, subject, bodyHTML, bodyTex
 
 	// TODO: figure out if we can get a friendly name as well as email address.
 	toEmail := mail.NewEmail("", to)
-	message := mail.NewSingleEmail(&s.sender, subject, toEmail, bodyText, bodyHTML)
+	emailMsg := mail.NewSingleEmail(&s.sender, subject, toEmail, bodyText, bodyHTML)
 
 	// Send the email
-	response, err := s.client.SendWithContext(ctx, message)
+	response, err := s.client.SendWithContext(ctx, emailMsg)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error sending email")
 		return err

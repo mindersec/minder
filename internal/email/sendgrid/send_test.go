@@ -10,10 +10,11 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/sendgrid/rest"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"github.com/stretchr/testify/require"
+
+	"github.com/mindersec/minder/pkg/config/server"
 )
 
 // TODO: add a test which uses New, replace client, then Register and sends events
@@ -77,6 +78,7 @@ func TestSendEmail(t *testing.T) {
 				Sender:     "friendly <hello@example.com>",
 				ApiKeyFile: keyFilePath,
 			})
+			require.NoError(t, err)
 			sender.client = mockClient
 
 			ctx := context.Background()
@@ -98,7 +100,7 @@ type fakeSendGrid struct {
 	stored []mail.SGMailV3
 }
 
-func (f *fakeSendGrid) SendWithContext(ctx context.Context, msg *mail.SGMailV3) (*rest.Response, error) {
+func (f *fakeSendGrid) SendWithContext(_ context.Context, msg *mail.SGMailV3) (*rest.Response, error) {
 	f.stored = append(f.stored, *msg)
 	// TODO: add failure cases
 	return &rest.Response{
