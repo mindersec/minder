@@ -9,6 +9,8 @@ type EmailConfig struct {
 	MinderURLBase string `mapstructure:"minder_url_base"`
 	// AWSSES is the AWS SES configuration
 	AWSSES AWSSES `mapstructure:"aws_ses"`
+	// SendGrid is configuration for sending mail with Twilio's SendGrid, which has a free tier
+	SendGrid SendGrid `mapstructure:"sendgrid"`
 }
 
 // AWSSES is the AWS SES configuration
@@ -17,4 +19,12 @@ type AWSSES struct {
 	Sender string `mapstructure:"sender"`
 	// Region is the AWS region to use for AWS SES
 	Region string `mapstructure:"region"`
+}
+
+// SendGrid is the configuration for Twilio SendGrid
+type SendGrid struct {
+	// Sender is the email address of the sender
+	Sender string `mapstructure:"sender"`
+	// ApiKeyFile is a file containing the Twilio API key
+	ApiKeyFile string `mapstructure:"api_key_file"`
 }

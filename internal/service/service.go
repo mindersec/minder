@@ -23,6 +23,7 @@ import (
 	"github.com/mindersec/minder/internal/eea"
 	"github.com/mindersec/minder/internal/email/awsses"
 	"github.com/mindersec/minder/internal/email/noop"
+	"github.com/mindersec/minder/internal/email/sendgrid"
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
@@ -281,8 +282,12 @@ func AllInOneServerService(
 		if err != nil {
 			return fmt.Errorf("unable to create aws ses email client: %w", err)
 		}
+	} else if cfg.Email.SendGrid.Sender != "" && cfg.Email.SendGrid.ApiKeyFile != "" {
+		mailClient, err = sendgrid.New(cfg.Email.SendGrid)
+		if err != nil {
+			return fmt.Errorf("unable to create SendGrid email client: %w", err)
+		}
 	} else {
-		// Otherwise, use a no-op email client
 		mailClient = noop.New()
 	}
 	evt.ConsumeEvents(mailClient)
