@@ -175,9 +175,10 @@ func (s *entityService) ListEntities(
 		results = append(results, pbEntity)
 	}
 
-	// Commit transaction
-	if err := tx.Commit(); err != nil {
-		return nil, "", fmt.Errorf("error committing transaction: %w", err)
+	// Rollback transaction
+	if err := tx.Rollback(); err != nil {
+		// This is not fatal, but we should log it
+		l.Error().Err(err).Msg("error rolling back transaction")
 	}
 
 	return results, nextCursor, nil
