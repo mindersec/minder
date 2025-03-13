@@ -16,6 +16,7 @@ tags:
   - name: ProjectsService
   - name: ProvidersService
   - name: InviteService
+  - name: EntityInstanceService
 consumes:
   - application/json
 produces:
@@ -560,6 +561,192 @@ paths:
           type: string
       tags:
         - DataSourceService
+  /api/v1/entities:
+    get:
+      summary: >-
+        ListEntities returns a list of entity instances for a given project and
+        provider
+      operationId: EntityInstanceService_ListEntities
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1ListEntitiesResponse'
+      parameters:
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+        - name: entityType
+          description: entity_type is the type of entity to list
+          in: query
+          required: true
+          type: string
+          enum:
+            - ENTITY_UNSPECIFIED
+            - ENTITY_REPOSITORIES
+            - ENTITY_BUILD_ENVIRONMENTS
+            - ENTITY_ARTIFACTS
+            - ENTITY_PULL_REQUESTS
+            - ENTITY_RELEASE
+            - ENTITY_PIPELINE_RUN
+            - ENTITY_TASK_RUN
+            - ENTITY_BUILD
+          default: ENTITY_UNSPECIFIED
+        - name: cursor.cursor
+          description: |-
+            cursor is the index to start from within the collection being
+            retrieved. It's an opaque payload specified and interpreted on
+            an per-rpc basis. An empty string is used to indicate the first
+            item in the collection.
+          in: query
+          required: false
+          type: string
+        - name: cursor.size
+          description: |-
+            size is the number of items to retrieve from the collection.
+            0 uses a server-defined default.
+          in: query
+          required: true
+          type: integer
+          format: int64
+      tags:
+        - EntityInstanceService
+  /api/v1/entity:
+    post:
+      summary: RegisterEntity creates a new entity instance
+      operationId: EntityInstanceService_RegisterEntity
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1RegisterEntityResponse'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/v1RegisterEntityRequest'
+      tags:
+        - EntityInstanceService
+  /api/v1/entity/id/{id}:
+    get:
+      summary: GetEntityById returns an entity instance for a given entity ID
+      operationId: EntityInstanceService_GetEntityById
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetEntityByIdResponse'
+      parameters:
+        - name: id
+          description: id is the ID of the entity to get
+          in: path
+          required: true
+          type: string
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+      tags:
+        - EntityInstanceService
+    delete:
+      summary: DeleteEntityById deletes an entity instance for a given entity ID
+      operationId: EntityInstanceService_DeleteEntityById
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1DeleteEntityByIdResponse'
+      parameters:
+        - name: id
+          description: id is the ID of the entity to delete
+          in: path
+          required: true
+          type: string
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+      tags:
+        - EntityInstanceService
+  /api/v1/entity/{entityType}/{name}:
+    get:
+      summary: GetEntityByName returns an entity instance for a given entity name
+      operationId: EntityInstanceService_GetEntityByName
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/v1GetEntityByNameResponse'
+      parameters:
+        - name: entityType
+          description: entity_type is the type of entity to get
+          in: path
+          required: true
+          type: string
+          enum:
+            - ENTITY_UNSPECIFIED
+            - ENTITY_REPOSITORIES
+            - ENTITY_BUILD_ENVIRONMENTS
+            - ENTITY_ARTIFACTS
+            - ENTITY_PULL_REQUESTS
+            - ENTITY_RELEASE
+            - ENTITY_PIPELINE_RUN
+            - ENTITY_TASK_RUN
+            - ENTITY_BUILD
+        - name: name
+          description: name is the name of the entity to get
+          in: path
+          required: true
+          type: string
+          pattern: .+
+        - name: context.projectId
+          description: >-
+            project is the project ID.  If empty or unset, will select the
+            user's default project
+
+            if they only have one project.
+          in: query
+          required: false
+          type: string
+        - name: context.provider
+          description: name of the provider. Set to empty string when not applicable.
+          in: query
+          required: false
+          type: string
+      tags:
+        - EntityInstanceService
   /api/v1/health:
     get:
       operationId: HealthService_CheckHealth
@@ -3267,6 +3454,17 @@ definitions:
     properties:
       name:
         type: string
+  v1DeleteEntityByIdResponse:
+    type: object
+    properties:
+      id:
+        type: string
+        title: id is the ID of the entity that was deleted
+    title: >-
+      DeleteEntityByIdResponse is the response message for the DeleteEntityById
+      method
+    required:
+      - id
   v1DeleteProfileResponse:
     type: object
   v1DeleteProjectResponse:
@@ -3356,6 +3554,28 @@ definitions:
       - ENTITY_BUILD
     default: ENTITY_UNSPECIFIED
     description: Entity defines the entity that is supported by the provider.
+  v1EntityInstance:
+    type: object
+    properties:
+      id:
+        type: string
+        description: id is the unique identifier of the entity.
+      context:
+        $ref: '#/definitions/v1ContextV2'
+        description: context is the context in which the entity is evaluated.
+      name:
+        type: string
+        description: name is the name of the entity.
+      type:
+        $ref: '#/definitions/v1Entity'
+        description: |-
+          type is the type of the entity.
+          DISCUSSION: If we're aiming for a BYO entity type, we should probably
+          have this be a string, and have the user provide the type.
+      properties:
+        type: object
+        description: properties is a map of properties of the entity.
+    title: used for parsing resources in ruletypes
   v1EntityTypedId:
     type: object
     properties:
@@ -3564,6 +3784,26 @@ definitions:
     properties:
       dataSource:
         $ref: '#/definitions/v1DataSource'
+  v1GetEntityByIdResponse:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EntityInstance'
+        title: entity is the entity that was retrieved
+    title: GetEntityByIdResponse is the response message for the GetEntityById method
+    required:
+      - entity
+  v1GetEntityByNameResponse:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EntityInstance'
+        title: entity is the entity that was retrieved
+    title: >-
+      GetEntityByNameResponse is the response message for the GetEntityByName
+      method
+    required:
+      - entity
   v1GetEvaluationHistoryResponse:
     type: object
     properties:
@@ -3836,6 +4076,21 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/v1DataSource'
+  v1ListEntitiesResponse:
+    type: object
+    properties:
+      results:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1EntityInstance'
+        title: results is the list of entities
+      page:
+        $ref: '#/definitions/v1CursorPage'
+        title: page is the pagination information
+    title: ListEntitiesResponse is the response message for the ListEntities method
+    required:
+      - results
   v1ListEvaluationHistoryResponse:
     type: object
     properties:
@@ -4302,6 +4557,34 @@ definitions:
       - entity
   v1ReconcileEntityRegistrationResponse:
     type: object
+  v1RegisterEntityRequest:
+    type: object
+    properties:
+      context:
+        $ref: '#/definitions/v1ContextV2'
+        title: context is the context in which the entity is created
+      entityType:
+        $ref: '#/definitions/v1Entity'
+        title: entity_type is the type of entity to create
+      identifierProperty:
+        type: string
+        description: |-
+          identifier_property is a blob that uniquely identifies the entity.
+          This is meant to be interpreted by the provider.
+    title: RegisterEntityRequest is the request message for the RegisterEntity method
+    required:
+      - entityType
+  v1RegisterEntityResponse:
+    type: object
+    properties:
+      entity:
+        $ref: '#/definitions/v1EntityInstance'
+        title: entity is the entity that was created
+    title: >-
+      RegisterEntityResponse is the response message for the RegisterEntity
+      method
+    required:
+      - entity
   v1RegisterRepoResult:
     type: object
     properties:
