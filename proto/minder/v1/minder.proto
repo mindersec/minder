@@ -4195,11 +4195,9 @@ message RegisterEntityRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // identifying_properties is a map of the minimal set of properties
-    // the provider needs in order to uniquely identify an entity.
-    // In most cases, upstream_id will suffice, but this is really
-    // provider-dependent.
-    google.protobuf.Struct identifying_properties = 3;
+    // identifier_property is a blob that uniquely identifies the entity.
+    // This is meant to be interpreted by the provider.
+    string identifier_property = 3;
 }
 
 // RegisterEntityResponse is the response message for the RegisterEntity method
