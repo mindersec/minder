@@ -63,7 +63,7 @@ func requestIDInterceptor(printer func(string, ...interface{})) grpc.UnaryClient
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
-	if err != nil {
+	if err != nil || clientConfig == nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}
 
@@ -93,7 +93,7 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
-	if err != nil {
+	if err != nil || clientConfig == nil {
 		return MessageAndError("Unable to read config", err)
 	}
 
@@ -182,6 +182,9 @@ func Login(
 	extraScopes []string,
 	skipBroswer bool,
 ) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
+	if cfg == nil {
+		return nil, errors.New("client config is nil")
+	}
 	grpcCfg := cfg.GRPCClientConfig
 	opts := []grpc.DialOption{grpcCfg.TransportCredentialsOption()}
 	issuerUrlStr := cfg.Identity.CLI.IssuerUrl

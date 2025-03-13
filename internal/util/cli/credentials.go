@@ -184,11 +184,16 @@ type refreshTokenResponse struct {
 	ErrorDescription string `json:"error_description"`
 }
 
+// GetRealmUrl determines the authentication realm URL, preferring to fetch it from
+// the server headers using the minder.v1.UserService.GetUser method (and extracting
+// the realm from the "WWW-Authenticate" header), but falling back to static
+// configuration if that fails.
 func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
 	// Try making an unauthenticated call to get the "WWW-Authenticate" header
 	conn, err := grpc.NewClient(serverAddress, opts...)
 	if err == nil {
-		defer conn.Close()
+		// Not much we can do about the error, and we'll exit soon anyway, since this is client code.
+		defer func() { _ = conn.Close() }()
 		client := minderv1.NewUserServiceClient(conn)
 		var headers metadata.MD
 		_, err := client.GetUser(context.Background(), &minderv1.GetUserRequest{}, grpc.Header(&headers))

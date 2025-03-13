@@ -95,8 +95,8 @@ func TestGetGrpcConnection(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
 			grpcCfg := client.GRPCClientConfig{
-				Host: 		 tt.grpcHost,
-				Port: 		 tt.grpcPort,
+				Host:     tt.grpcHost,
+				Port:     tt.grpcPort,
 				Insecure: tt.allowInsecure,
 			}
 			conn, err := cli.GetGrpcConnection(grpcCfg, tt.issuerUrl, "stacklok", tt.clientId)
