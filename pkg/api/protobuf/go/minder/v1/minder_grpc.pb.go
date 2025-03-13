@@ -3449,3 +3449,271 @@ var InviteService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "minder/v1/minder.proto",
 }
+
+const (
+	EntityInstanceService_ListEntities_FullMethodName     = "/minder.v1.EntityInstanceService/ListEntities"
+	EntityInstanceService_GetEntityById_FullMethodName    = "/minder.v1.EntityInstanceService/GetEntityById"
+	EntityInstanceService_GetEntityByName_FullMethodName  = "/minder.v1.EntityInstanceService/GetEntityByName"
+	EntityInstanceService_DeleteEntityById_FullMethodName = "/minder.v1.EntityInstanceService/DeleteEntityById"
+	EntityInstanceService_RegisterEntity_FullMethodName   = "/minder.v1.EntityInstanceService/RegisterEntity"
+)
+
+// EntityInstanceServiceClient is the client API for EntityInstanceService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// EntityInstanceService provides API endpoints for managing entity instances
+type EntityInstanceServiceClient interface {
+	// ListEntities returns a list of entity instances for a given project and provider
+	ListEntities(ctx context.Context, in *ListEntitiesRequest, opts ...grpc.CallOption) (*ListEntitiesResponse, error)
+	// GetEntityById returns an entity instance for a given entity ID
+	GetEntityById(ctx context.Context, in *GetEntityByIdRequest, opts ...grpc.CallOption) (*GetEntityByIdResponse, error)
+	// GetEntityByName returns an entity instance for a given entity name
+	GetEntityByName(ctx context.Context, in *GetEntityByNameRequest, opts ...grpc.CallOption) (*GetEntityByNameResponse, error)
+	// DeleteEntityById deletes an entity instance for a given entity ID
+	DeleteEntityById(ctx context.Context, in *DeleteEntityByIdRequest, opts ...grpc.CallOption) (*DeleteEntityByIdResponse, error)
+	// RegisterEntity creates a new entity instance
+	RegisterEntity(ctx context.Context, in *RegisterEntityRequest, opts ...grpc.CallOption) (*RegisterEntityResponse, error)
+}
+
+type entityInstanceServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewEntityInstanceServiceClient(cc grpc.ClientConnInterface) EntityInstanceServiceClient {
+	return &entityInstanceServiceClient{cc}
+}
+
+func (c *entityInstanceServiceClient) ListEntities(ctx context.Context, in *ListEntitiesRequest, opts ...grpc.CallOption) (*ListEntitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListEntitiesResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_ListEntities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *entityInstanceServiceClient) GetEntityById(ctx context.Context, in *GetEntityByIdRequest, opts ...grpc.CallOption) (*GetEntityByIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEntityByIdResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_GetEntityById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *entityInstanceServiceClient) GetEntityByName(ctx context.Context, in *GetEntityByNameRequest, opts ...grpc.CallOption) (*GetEntityByNameResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetEntityByNameResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_GetEntityByName_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *entityInstanceServiceClient) DeleteEntityById(ctx context.Context, in *DeleteEntityByIdRequest, opts ...grpc.CallOption) (*DeleteEntityByIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteEntityByIdResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_DeleteEntityById_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *entityInstanceServiceClient) RegisterEntity(ctx context.Context, in *RegisterEntityRequest, opts ...grpc.CallOption) (*RegisterEntityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterEntityResponse)
+	err := c.cc.Invoke(ctx, EntityInstanceService_RegisterEntity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// EntityInstanceServiceServer is the server API for EntityInstanceService service.
+// All implementations must embed UnimplementedEntityInstanceServiceServer
+// for forward compatibility.
+//
+// EntityInstanceService provides API endpoints for managing entity instances
+type EntityInstanceServiceServer interface {
+	// ListEntities returns a list of entity instances for a given project and provider
+	ListEntities(context.Context, *ListEntitiesRequest) (*ListEntitiesResponse, error)
+	// GetEntityById returns an entity instance for a given entity ID
+	GetEntityById(context.Context, *GetEntityByIdRequest) (*GetEntityByIdResponse, error)
+	// GetEntityByName returns an entity instance for a given entity name
+	GetEntityByName(context.Context, *GetEntityByNameRequest) (*GetEntityByNameResponse, error)
+	// DeleteEntityById deletes an entity instance for a given entity ID
+	DeleteEntityById(context.Context, *DeleteEntityByIdRequest) (*DeleteEntityByIdResponse, error)
+	// RegisterEntity creates a new entity instance
+	RegisterEntity(context.Context, *RegisterEntityRequest) (*RegisterEntityResponse, error)
+	mustEmbedUnimplementedEntityInstanceServiceServer()
+}
+
+// UnimplementedEntityInstanceServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedEntityInstanceServiceServer struct{}
+
+func (UnimplementedEntityInstanceServiceServer) ListEntities(context.Context, *ListEntitiesRequest) (*ListEntitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEntities not implemented")
+}
+func (UnimplementedEntityInstanceServiceServer) GetEntityById(context.Context, *GetEntityByIdRequest) (*GetEntityByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEntityById not implemented")
+}
+func (UnimplementedEntityInstanceServiceServer) GetEntityByName(context.Context, *GetEntityByNameRequest) (*GetEntityByNameResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEntityByName not implemented")
+}
+func (UnimplementedEntityInstanceServiceServer) DeleteEntityById(context.Context, *DeleteEntityByIdRequest) (*DeleteEntityByIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteEntityById not implemented")
+}
+func (UnimplementedEntityInstanceServiceServer) RegisterEntity(context.Context, *RegisterEntityRequest) (*RegisterEntityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterEntity not implemented")
+}
+func (UnimplementedEntityInstanceServiceServer) mustEmbedUnimplementedEntityInstanceServiceServer() {}
+func (UnimplementedEntityInstanceServiceServer) testEmbeddedByValue()                               {}
+
+// UnsafeEntityInstanceServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to EntityInstanceServiceServer will
+// result in compilation errors.
+type UnsafeEntityInstanceServiceServer interface {
+	mustEmbedUnimplementedEntityInstanceServiceServer()
+}
+
+func RegisterEntityInstanceServiceServer(s grpc.ServiceRegistrar, srv EntityInstanceServiceServer) {
+	// If the following call pancis, it indicates UnimplementedEntityInstanceServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&EntityInstanceService_ServiceDesc, srv)
+}
+
+func _EntityInstanceService_ListEntities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEntitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityInstanceServiceServer).ListEntities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityInstanceService_ListEntities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityInstanceServiceServer).ListEntities(ctx, req.(*ListEntitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EntityInstanceService_GetEntityById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEntityByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityInstanceServiceServer).GetEntityById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityInstanceService_GetEntityById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityInstanceServiceServer).GetEntityById(ctx, req.(*GetEntityByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EntityInstanceService_GetEntityByName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetEntityByNameRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityInstanceServiceServer).GetEntityByName(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityInstanceService_GetEntityByName_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityInstanceServiceServer).GetEntityByName(ctx, req.(*GetEntityByNameRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EntityInstanceService_DeleteEntityById_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteEntityByIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityInstanceServiceServer).DeleteEntityById(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityInstanceService_DeleteEntityById_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityInstanceServiceServer).DeleteEntityById(ctx, req.(*DeleteEntityByIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _EntityInstanceService_RegisterEntity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterEntityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EntityInstanceServiceServer).RegisterEntity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EntityInstanceService_RegisterEntity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EntityInstanceServiceServer).RegisterEntity(ctx, req.(*RegisterEntityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// EntityInstanceService_ServiceDesc is the grpc.ServiceDesc for EntityInstanceService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var EntityInstanceService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "minder.v1.EntityInstanceService",
+	HandlerType: (*EntityInstanceServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ListEntities",
+			Handler:    _EntityInstanceService_ListEntities_Handler,
+		},
+		{
+			MethodName: "GetEntityById",
+			Handler:    _EntityInstanceService_GetEntityById_Handler,
+		},
+		{
+			MethodName: "GetEntityByName",
+			Handler:    _EntityInstanceService_GetEntityByName_Handler,
+		},
+		{
+			MethodName: "DeleteEntityById",
+			Handler:    _EntityInstanceService_DeleteEntityById_Handler,
+		},
+		{
+			MethodName: "RegisterEntity",
+			Handler:    _EntityInstanceService_RegisterEntity_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "minder/v1/minder.proto",
+}

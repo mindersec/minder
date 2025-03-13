@@ -27,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
+	entityService "github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
@@ -173,6 +174,7 @@ func AllInOneServerService(
 	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
+	entSvc := entityService.NewEntityService(store, propSvc, providerManager)
 
 	s := controlplane.NewServer(
 		store,
@@ -198,6 +200,7 @@ func AllInOneServerService(
 		sessionsService,
 		projectDeleter,
 		projectCreator,
+		entSvc,
 		featureFlagClient,
 	)
 
