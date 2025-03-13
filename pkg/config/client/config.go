@@ -77,10 +77,13 @@ func RegisterGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		"Allow establishing insecure connections", flags.Bool)
 }
 
+// GetGRPCAddress returns the formatted GRPC address of the server.
 func (c GRPCClientConfig) GetGRPCAddress() string {
 	return fmt.Sprintf("%s: %d", c.Host, c.Port)
 }
 
+// TransportCredentialsOption returns a gRPC dial option appropriate to the
+// configuration (either TLS with correct hostname, or without verification).
 func (c GRPCClientConfig) TransportCredentialsOption() grpc.DialOption {
 	insecureDefault := c.Host == "localhost" || c.Host == "127.0.0.1" || c.Host == "::1"
 	allowInsecure := c.Insecure || insecureDefault

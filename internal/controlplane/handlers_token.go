@@ -48,7 +48,7 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 
 	token, err := gauth.AuthFromMD(ctx, "bearer")
 	if err != nil {
-		if statusErr, ok := status.FromError(err); ok {
+		if statusErr, ok := status.FromError(err); ok && statusErr.Code() != codes.Unauthenticated {
 			return nil, util.FromRpcError(statusErr)
 		}
 		realmUrl := s.cfg.Identity.Server.GetRealmURL()
@@ -57,7 +57,12 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 			authenticateHeader := fmt.Sprintf(`Bearer realm=%q, scope=%q`,
 				realmUrl.String(), s.cfg.Identity.Server.Scope)
 			authHeader := metadata.New(map[string]string{"WWW-Authenticate": authenticateHeader})
-			grpc.SendHeader(ctx, authHeader)
+			err := grpc.SendHeader(ctx, authHeader)
+			if err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Could not send WWW-Authenticate header")
+			}
+		} else {
+			zerolog.Ctx(ctx).Debug().Msg("Could not send WWW-Authenticate header, missing realm URL or scope")
 		}
 		return nil, status.Errorf(codes.Unauthenticated, "no auth token: %v", err)
 	}

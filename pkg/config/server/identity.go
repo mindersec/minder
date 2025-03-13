@@ -79,12 +79,15 @@ func (sic *IdentityConfig) GetRealmPath(path string) (*url.URL, error) {
 	return sic.Path("realms", sic.Realm, path)
 }
 
+// GetRealmURL returns the URL for the WWW-Authenticate realm (used for OIDC discovery)
+// Clients should append "/.well-known/openid-configuration" to this URL, and use the
+// token_endpoint to get a token.
 func (sic *IdentityConfig) GetRealmURL() url.URL {
 	baseUrl, err := url.Parse(sic.IssuerClaim)
 	if err != nil {
 		return url.URL{}
 	}
-	return *baseUrl.JoinPath("protocol/openid-connect/token")
+	return *baseUrl
 }
 
 func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) {

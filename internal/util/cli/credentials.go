@@ -69,8 +69,6 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 // GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(
 	cfg clientconfig.GRPCClientConfig,
-	/* grpc_host string, grpc_port int,
-	allowInsecure bool, */
 	issuerUrl string, realm string, clientId string,
 	opts ...grpc.DialOption) (
 	*grpc.ClientConn, error) {
@@ -161,7 +159,13 @@ func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, re
 		if err != nil {
 			return "", fmt.Errorf("error building realm URL: %v", err)
 		}
-		updatedCreds, err := RefreshCredentials(creds.RefreshToken, realmUrl, clientId)
+		// TODO: this should probably use rp.NewRelyingPartyOIDC from zitadel, rather than making its own URL
+		parsedUrl, err := url.Parse(realmUrl)
+		if err != nil {
+			return "", fmt.Errorf("error parsing realm URL: %v", err)
+		}
+		parsedUrl = parsedUrl.JoinPath("protocol/openid-connect/token")
+		updatedCreds, err := RefreshCredentials(creds.RefreshToken, parsedUrl.String(), clientId)
 		if err != nil {
 			return "", fmt.Errorf("%w: %v", ErrGettingRefreshToken, err)
 		}
@@ -191,7 +195,10 @@ func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string,
 		if err != nil && status.Code(err) == codes.Unauthenticated {
 			wwwAuthenticate := headers.Get("www-authenticate")
 			if len(wwwAuthenticate) > 0 && wwwAuthenticate[0] != "" {
-				return wwwAuthenticate[0], nil
+				authRealm := extractWWWAuthenticateRealm(wwwAuthenticate[0])
+				if authRealm != "" {
+					return authRealm, nil
+				}
 			}
 		}
 		// Unable to get the header, fall back to static configuration
@@ -201,7 +208,28 @@ func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string,
 	if err != nil {
 		return "", fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	return parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token").String(), nil
+	return parsedURL.JoinPath("realms", realm).String(), nil
+}
+
+// Parser for https://httpwg.org/specs/rfc9110.html#auth.params
+func extractWWWAuthenticateRealm(header string) string {
+	if !strings.HasPrefix(header, "Bearer ") {
+		return ""
+	}
+	header = strings.TrimPrefix(header, "Bearer ")
+	// Extract the realm from the "WWW-Authenticate" header
+	for _, part := range strings.Split(header, ",") {
+		parts := strings.SplitN(part, "=", 2)
+		key := strings.TrimSpace(parts[0])
+		if key == "realm" && len(parts) == 2 {
+			realm := strings.TrimSpace(parts[1])
+			if strings.HasPrefix(realm, `"`) && strings.HasSuffix(realm, `"`) {
+				realm = realm[1 : len(realm)-1]
+			}
+			return realm
+		}
+	}
+	return ""
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
