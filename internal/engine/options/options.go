@@ -6,16 +6,15 @@
 package options
 
 import (
-	"github.com/open-feature/go-sdk/openfeature"
-
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 // SupportsFlags interface advertises the fact that the implementer
 // can use an `openfeature` client to check for flags being set.
 type SupportsFlags interface {
-	SetFlagsClient(client openfeature.IClient) error
+	SetFlagsClient(client flags.Interface) error
 }
 
 // Option is a function that takes an evaluator and does some
@@ -25,7 +24,7 @@ type Option func(interfaces.Evaluator) error
 // WithFlagsClient provides the evaluation engine with an
 // `openfeature` client. In case the given evaluator dows not support
 // feature flags, WithFlagsClient silently ignores the error.
-func WithFlagsClient(client openfeature.IClient) Option {
+func WithFlagsClient(client flags.Interface) Option {
 	return func(e interfaces.Evaluator) error {
 		inner, ok := e.(SupportsFlags)
 		if !ok {

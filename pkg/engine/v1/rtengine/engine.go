@@ -10,7 +10,6 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -21,6 +20,7 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -68,7 +68,7 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
-	experiments openfeature.IClient,
+	experiments flags.Interface,
 	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
 	rval, err := profiles.NewRuleValidator(ruletype)

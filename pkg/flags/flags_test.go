@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
@@ -75,6 +76,9 @@ test_flag:
 
 			ctx := context.Background()
 			OpenFeatureProviderFromFlags(ctx, tt.cfg)
+			// GoFeatureFlag reads flags in the background; evaluating before the flag read
+			// is complete produces false / empty results.
+			time.Sleep(1 * time.Millisecond)
 
 			client := openfeature.NewClient("test")
 			userJWT := openid.New()

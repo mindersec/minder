@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -25,10 +24,10 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/ingester/git"
-	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -202,7 +201,7 @@ func (s *Server) CreateRuleType(
 }
 
 func checkRuleDefinitionFlags(
-	ctx context.Context, featureFlags openfeature.IClient, ruleDef *minderv1.RuleType_Definition) *util.NiceStatus {
+	ctx context.Context, featureFlags flags.Interface, ruleDef *minderv1.RuleType_Definition) *util.NiceStatus {
 	usesGitPR := ruleDef.GetIngest().GetType() == git.GitRuleDataIngestType &&
 		ruleDef.GetInEntity() == minderv1.PullRequestEntity.String()
 	if usesGitPR && !flags.Bool(ctx, featureFlags, flags.GitPRDiffs) {

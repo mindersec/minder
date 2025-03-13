@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-version"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
@@ -20,6 +19,7 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -31,14 +31,14 @@ const (
 // Evaluator is the vulncheck evaluator
 type Evaluator struct {
 	cli          provifv1.GitHub
-	featureFlags openfeature.IClient
+	featureFlags flags.Interface
 }
 
 var _ eoptions.SupportsFlags = (*Evaluator)(nil)
 
 // SetFlagsClient sets the `openfeature` client in the underlying
 // `Evaluator` struct.
-func (e *Evaluator) SetFlagsClient(client openfeature.IClient) error {
+func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
 	e.featureFlags = client
 	return nil
 }

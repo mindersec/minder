@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/rs/zerolog"
 
 	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
@@ -31,6 +30,7 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -48,7 +48,7 @@ type executor struct {
 	providerManager manager.ProviderManager
 	metrics         *ExecutorMetrics
 	historyService  history.EvaluationHistoryService
-	featureFlags    openfeature.IClient
+	featureFlags    flags.Interface
 	profileStore    profiles.ProfileStore
 	selBuilder      selectors.SelectionBuilder
 	propService     service.PropertiesService
@@ -60,7 +60,7 @@ func NewExecutor(
 	providerManager manager.ProviderManager,
 	metrics *ExecutorMetrics,
 	historyService history.EvaluationHistoryService,
-	featureFlags openfeature.IClient,
+	featureFlags flags.Interface,
 	profileStore profiles.ProfileStore,
 	selBuilder selectors.SelectionBuilder,
 	propService service.PropertiesService,

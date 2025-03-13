@@ -10,13 +10,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/open-feature/go-sdk/openfeature"
 
 	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/flags"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
@@ -32,7 +32,7 @@ type cacheType = map[uuid.UUID]*rtengine2.RuleTypeEngine
 type ruleEngineCache struct {
 	store        db.Store
 	provider     provinfv1.Provider
-	featureFlags openfeature.IClient
+	featureFlags flags.Interface
 	ingestCache  ingestcache.Cache
 	engines      cacheType
 	dssvc        datasourceservice.DataSourcesService
@@ -48,7 +48,7 @@ func NewRuleEngineCache(
 	entityType db.Entities,
 	projectID uuid.UUID,
 	provider provinfv1.Provider,
-	featureFlags openfeature.IClient,
+	featureFlags flags.Interface,
 	ingestCache ingestcache.Cache,
 	dssvc datasourceservice.DataSourcesService,
 	opts ...eoptions.Option,
@@ -128,7 +128,7 @@ func cacheRuleEngine(
 	ctx context.Context,
 	ruleType *db.RuleType,
 	provider provinfv1.Provider,
-	featureFlags openfeature.IClient,
+	featureFlags flags.Interface,
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
 	dssvc datasourceservice.DataSourcesService,
