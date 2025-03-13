@@ -239,11 +239,11 @@ func Login(
 		return nil, MessageAndError("Error getting random port", err)
 	}
 
-	parsedURL, err := url.Parse(fmt.Sprintf("http://localhost:%v", port))
-	if err != nil {
-		return nil, MessageAndError("Error parsing callback URL", err)
+	redirectURI := &url.URL{
+		Scheme: "http",
+		Host:   fmt.Sprintf("localhost:%v", port),
 	}
-	redirectURI := parsedURL.JoinPath(callbackPath)
+	redirectURI = redirectURI.JoinPath(callbackPath)
 
 	provider, err := rp.NewRelyingPartyOIDC(ctx, realmUrl, clientID, "", redirectURI.String(), scopes, options...)
 	if err != nil {
