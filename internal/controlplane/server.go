@@ -259,7 +259,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		// response.
 		logger.RequestIDInterceptor("request-id"),
 		logger.Interceptor(s.cfg.LoggingConfig),
-		TokenValidationInterceptor,
+		s.TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,
 		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(recoveryHandler)),

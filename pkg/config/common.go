@@ -16,8 +16,6 @@ import (
 	"github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/mindersec/minder/internal/constants"
 )
 
 // DatabaseConfig is the configuration for the database
@@ -107,36 +105,6 @@ func RegisterDatabaseFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 	return BindConfigFlagWithShort(
 		v, flags, "database.sslmode", "db-sslmode", "s", "disable", "Database sslmode", flags.StringP)
-}
-
-// GRPCClientConfig is the configuration for a service to connect to minder gRPC server
-type GRPCClientConfig struct {
-	// Host is the host to connect to
-	Host string `mapstructure:"host" yaml:"host" json:"host" default:"api.stacklok.com"`
-
-	// Port is the port to connect to
-	Port int `mapstructure:"port" yaml:"port" json:"port" default:"443"`
-
-	// Insecure is whether to allow establishing insecure connections
-	Insecure bool `mapstructure:"insecure" yaml:"insecure" json:"insecure" default:"false"`
-}
-
-// RegisterGRPCClientConfigFlags registers the flags for the gRPC client
-func RegisterGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
-	err := BindConfigFlag(v, flags, "grpc_server.host", "grpc-host", constants.MinderGRPCHost,
-		"Server host", flags.String)
-	if err != nil {
-		return err
-	}
-
-	err = BindConfigFlag(v, flags, "grpc_server.port", "grpc-port", 443,
-		"Server port", flags.Int)
-	if err != nil {
-		return err
-	}
-
-	return BindConfigFlag(v, flags, "grpc_server.insecure", "grpc-insecure", false,
-		"Allow establishing insecure connections", flags.Bool)
 }
 
 // ReadKey reads a key from a file
