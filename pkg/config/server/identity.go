@@ -41,6 +41,8 @@ type IdentityConfig struct {
 	ClientSecretFile string `mapstructure:"client_secret_file"`
 	// Audience is the expected audience for JWT tokens (see OpenID spec)
 	Audience string `mapstructure:"audience" default:"minder"`
+	// Scope is the OAuth scope to request from the identity server to get the specified audience
+	Scope string `mapstructure:"scope" default:"minder-audience"`
 }
 
 // GetClientSecret returns the minder-server client secret
@@ -75,6 +77,14 @@ func (sic *IdentityConfig) Path(path ...string) (*url.URL, error) {
 // GetRealmPath returns a URL for the given path on the realm
 func (sic *IdentityConfig) GetRealmPath(path string) (*url.URL, error) {
 	return sic.Path("realms", sic.Realm, path)
+}
+
+func (sic *IdentityConfig) GetRealmURL() url.URL {
+	baseUrl, err := url.Parse(sic.IssuerClaim)
+	if err != nil {
+		return url.URL{}
+	}
+	return *baseUrl.JoinPath("protocol/openid-connect/token")
 }
 
 func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) {

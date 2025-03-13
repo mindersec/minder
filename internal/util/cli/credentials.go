@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,8 +16,12 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	clientconfig "github.com/mindersec/minder/pkg/config/client"
 )
 
 // MinderAuthTokenEnvVar is the environment variable for the minder auth token
@@ -65,40 +68,30 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(
-	grpc_host string, grpc_port int,
-	allowInsecure bool,
+	cfg clientconfig.GRPCClientConfig,
+	/* grpc_host string, grpc_port int,
+	allowInsecure bool, */
 	issuerUrl string, realm string, clientId string,
 	opts ...grpc.DialOption) (
 	*grpc.ClientConn, error) {
-	address := fmt.Sprintf("%s:%d", grpc_host, grpc_port)
+
+	opts = append(opts, cfg.TransportCredentialsOption())
 
 	// read credentials
 	token := ""
 	if os.Getenv(MinderAuthTokenEnvVar) != "" {
 		token = os.Getenv(MinderAuthTokenEnvVar)
 	} else {
-		t, err := GetToken(issuerUrl, realm, clientId)
+		t, err := GetToken(cfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 		if err == nil {
 			token = t
 		}
 	}
 
-	credentialOpts := credentials.NewTLS(&tls.Config{
-		MinVersion: tls.VersionTLS13,
-		ServerName: grpc_host,
-	})
-	if allowInsecure {
-		credentialOpts = insecure.NewCredentials()
-	}
-
-	dialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentialOpts),
-		grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}),
-	}
-	dialOpts = append(dialOpts, opts...)
+	opts = append(opts, grpc.WithPerRPCCredentials(JWTTokenCredentials{accessToken: token}))
 
 	// generate credentials
-	conn, err := grpc.NewClient(address, dialOpts...)
+	conn, err := grpc.NewClient(cfg.GetGRPCAddress(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to gRPC server: %v", err)
 	}
@@ -155,16 +148,20 @@ func RemoveCredentials() error {
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
-func GetToken(issuerUrl string, realm string, clientId string) (string, error) {
-	refreshLimit := 10
+func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string, clientId string) (string, error) {
+	refreshLimit := 10 * time.Second
 	creds, err := LoadCredentials()
 	if err != nil {
 		return "", fmt.Errorf("error loading credentials: %v", err)
 	}
-	needsRefresh := time.Now().Add(time.Duration(refreshLimit) * time.Second).After(creds.AccessTokenExpiresAt)
+	needsRefresh := time.Now().Add(refreshLimit).After(creds.AccessTokenExpiresAt)
 
 	if needsRefresh {
-		updatedCreds, err := RefreshCredentials(creds.RefreshToken, issuerUrl, realm, clientId)
+		realmUrl, err := GetRealmUrl(serverAddress, opts, issuerUrl, realm)
+		if err != nil {
+			return "", fmt.Errorf("error building realm URL: %v", err)
+		}
+		updatedCreds, err := RefreshCredentials(creds.RefreshToken, realmUrl, clientId)
 		if err != nil {
 			return "", fmt.Errorf("%w: %v", ErrGettingRefreshToken, err)
 		}
@@ -183,21 +180,39 @@ type refreshTokenResponse struct {
 	ErrorDescription string `json:"error_description"`
 }
 
-// RefreshCredentials uses a refresh token to get and save a new set of credentials
-func RefreshCredentials(refreshToken string, issuerUrl string, realm string, clientId string) (OpenIdCredentials, error) {
+func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
+	// Try making an unauthenticated call to get the "WWW-Authenticate" header
+	conn, err := grpc.NewClient(serverAddress, opts...)
+	if err == nil {
+		defer conn.Close()
+		client := minderv1.NewUserServiceClient(conn)
+		var headers metadata.MD
+		_, err := client.GetUser(context.Background(), &minderv1.GetUserRequest{}, grpc.Header(&headers))
+		if err != nil && status.Code(err) == codes.Unauthenticated {
+			wwwAuthenticate := headers.Get("www-authenticate")
+			if len(wwwAuthenticate) > 0 && wwwAuthenticate[0] != "" {
+				return wwwAuthenticate[0], nil
+			}
+		}
+		// Unable to get the header, fall back to static configuration
+	}
 
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
-		return OpenIdCredentials{}, fmt.Errorf("error parsing issuer URL: %v", err)
+		return "", fmt.Errorf("error parsing issuer URL: %v", err)
 	}
-	tokenUrl := parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token")
+	return parsedURL.JoinPath("realms", realm, "protocol/openid-connect/token").String(), nil
+}
+
+// RefreshCredentials uses a refresh token to get and save a new set of credentials
+func RefreshCredentials(refreshToken string, realmUrl string, clientId string) (OpenIdCredentials, error) {
 
 	data := url.Values{}
 	data.Set("client_id", clientId)
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)
 
-	req, err := http.NewRequest("POST", tokenUrl.String(), strings.NewReader(data.Encode()))
+	req, err := http.NewRequest("POST", realmUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error creating: %v", err)
 	}

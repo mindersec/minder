@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -27,7 +28,7 @@ import (
 )
 
 // TokenValidationInterceptor is a server interceptor that validates the bearer token
-func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler) (any, error) {
 
 	opts, err := optionsForMethod(info)
@@ -49,6 +50,14 @@ func TokenValidationInterceptor(ctx context.Context, req interface{}, info *grpc
 	if err != nil {
 		if statusErr, ok := status.FromError(err); ok {
 			return nil, util.FromRpcError(statusErr)
+		}
+		realmUrl := s.cfg.Identity.Server.GetRealmURL()
+		// Provide a WWW-Authenticate header hint for authentication if configured.
+		if realmUrl.Host != "" && s.cfg.Identity.Server.Scope != "" {
+			authenticateHeader := fmt.Sprintf(`Bearer realm=%q, scope=%q`,
+				realmUrl.String(), s.cfg.Identity.Server.Scope)
+			authHeader := metadata.New(map[string]string{"WWW-Authenticate": authenticateHeader})
+			grpc.SendHeader(ctx, authHeader)
 		}
 		return nil, status.Errorf(codes.Unauthenticated, "no auth token: %v", err)
 	}

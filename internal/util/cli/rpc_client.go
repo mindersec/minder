@@ -67,10 +67,10 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}
 
-	grpcHost := clientConfig.GRPCClientConfig.Host
-	grpcPort := clientConfig.GRPCClientConfig.Port
-	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
-	allowInsecure := clientConfig.GRPCClientConfig.Insecure || insecureDefault
+	// grpcHost := clientConfig.GRPCClientConfig.Host
+	// grpcPort := clientConfig.GRPCClientConfig.Port
+	// insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
+	// allowInsecure := clientConfig.GRPCClientConfig.Insecure || insecureDefault
 
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
@@ -84,9 +84,10 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 	}
 
 	return GetGrpcConnection(
-		grpcHost,
-		grpcPort,
-		allowInsecure,
+		clientConfig.GRPCClientConfig,
+		// grpcHost,
+		// grpcPort,
+		// allowInsecure,
 		issuerUrl,
 		realm,
 		clientId,
@@ -104,7 +105,9 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		return MessageAndError("Unable to read config", err)
 	}
 
-	_, err = GetToken(clientConfig.Identity.CLI.IssuerUrl,
+	_, err = GetToken(clientConfig.GRPCClientConfig.GetGRPCAddress(),
+		[]grpc.DialOption{clientConfig.GRPCClientConfig.TransportCredentialsOption()},
+		clientConfig.Identity.CLI.IssuerUrl,
 		clientConfig.Identity.CLI.Realm,
 		clientConfig.Identity.CLI.ClientId)
 	if err != nil { // or token is expired?
