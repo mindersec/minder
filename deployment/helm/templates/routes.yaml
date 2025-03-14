@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 # SPDX-License-Identifier: Apache-2.0
 {{ if .Values.routes.enabled }}
-// You would think we would want a GRPCRoute object to route gRPC traffic.
-// However, GRPC is a special dialect of HTTP/2, and Gateway-API does not
-// support mixing GRPC routes and HTTP routes on the same hostname (see
-// https://gateway-api.sigs.k8s.io/api-types/grpcroute/#cross-serving and
-// https://github.com/mindersec/minder/issues/5503).
+# You would think we would want a GRPCRoute object to route gRPC traffic.
+# However, GRPC is a special dialect of HTTP/2, and Gateway-API does not
+# support mixing GRPC routes and HTTP routes on the same hostname (see
+# https://gateway-api.sigs.k8s.io/api-types/grpcroute/#cross-serving and
+# https://github.com/mindersec/minder/issues/5503).
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
