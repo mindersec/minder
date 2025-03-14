@@ -26,6 +26,16 @@ spec:
     - method:
         type: RegularExpression
         service: ".*"
+      # Only match binary GRPC requests; without this, you will run into HTTP 415 errors
+      # when the route tries to match Swagger API requests to e.g. /api/v1/user or other
+      # endpoints.  See also the warnings in the Gateway API documentation, despite the
+      # fact that GRPC requests _are_ valid HTTP/2 requests, we get 404 error when only
+      # using the HTTPRoute rule.
+      # https://gateway-api.sigs.k8s.io/api-types/grpcroute/#cross-serving
+      headers:
+      - name: content-type
+        type: RegularExpression
+        value: "^application/grpc.*"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
