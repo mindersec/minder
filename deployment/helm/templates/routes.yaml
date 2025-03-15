@@ -1,11 +1,41 @@
 # SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 # SPDX-License-Identifier: Apache-2.0
 {{ if .Values.routes.enabled }}
-# You would think we would want a GRPCRoute object to route gRPC traffic.
-# However, GRPC is a special dialect of HTTP/2, and Gateway-API does not
-# support mixing GRPC routes and HTTP routes on the same hostname (see
-# https://gateway-api.sigs.k8s.io/api-types/grpcroute/#cross-serving and
-# https://github.com/mindersec/minder/issues/5503).
+apiVersion: gateway.networking.k8s.io/v1
+kind: GRPCRoute
+metadata:
+  name: "{{- .Values.routes.name }}"
+  labels:
+    {{ include "common.labels.standard" (dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+spec:
+  parentRefs:
+    {{- if .Values.routes.parentRefs }}
+    {{- toYaml .Values.routes.parentRefs | nindent 4 }}
+    {{- end }}
+  hostnames:
+    - "{{ .Values.hostname }}"
+  rules:
+  - backendRefs:
+    - group: ""
+      kind: Service
+      name: minder-grpc
+      port: !!int "{{ .Values.service.grpcPort }}"
+      weight: 1
+    # Envoy-Gateway requires that the matches be non-empty to match GRPC, but allows for regex matches.
+    matches:
+    - method:
+        type: RegularExpression
+        service: ".*"
+      # Only match binary GRPC requests; without this, you will run into HTTP 415 errors
+      # when the route tries to match Swagger API requests to e.g. /api/v1/user or other
+      # endpoints.  See also the warnings in the Gateway API documentation, despite the
+      # fact that GRPC requests _are_ valid HTTP/2 requests, we get 404 error when only
+      # using the HTTPRoute rule.
+      # https://gateway-api.sigs.k8s.io/api-types/grpcroute/#cross-serving
+      headers:
+      - name: content-type
+        type: RegularExpression
+        value: "^application/grpc.*"
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
