@@ -113,7 +113,7 @@ func gitlabMergeRequestToProperties(
 
 	projName := proj.Name
 
-	outProps, err := properties.NewProperties(map[string]any{
+	outProps := properties.NewProperties(map[string]any{
 		// Unique upstream ID for the merge request
 		properties.PropertyUpstreamID:           FormatPullRequestUpstreamID(mr.ID),
 		properties.PropertyName:                 formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),

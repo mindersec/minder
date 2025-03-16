@@ -100,13 +100,10 @@ func (s *Server) repoCreateInfoFromUpstreamRepositoryRef(
 		return nil, nil, util.UserVisibleError(codes.InvalidArgument, "missing repository name")
 	}
 
-	fetchByProps, err := properties.NewProperties(map[string]any{
+	fetchByProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: fmt.Sprintf("%d", rep.GetRepoId()),
 		properties.PropertyName:       fmt.Sprintf("%s/%s", rep.GetOwner(), rep.GetName()),
 	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating properties: %w", err)
-	}
 
 	provider, err := s.inferProviderByOwner(ctx, rep.GetOwner(), projectID, providerName)
 	if err != nil {
@@ -127,10 +124,7 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 	entity *pb.UpstreamEntityRef,
 ) (*properties.Properties, *db.Provider, error) {
 	inPropsMap := entity.GetProperties().AsMap()
-	fetchByProps, err := properties.NewProperties(inPropsMap)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating properties: %w", err)
-	}
+	fetchByProps := properties.NewProperties(inPropsMap)
 
 	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
 	if err != nil {

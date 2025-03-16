@@ -369,13 +369,10 @@ func repositoryAdded(
 		return nil, errors.New("invalid repository name")
 	}
 
-	addRepoProps, err := properties.NewProperties(map[string]any{
+	addRepoProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 		properties.PropertyName:       repo.GetFullName(),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository properties: %w", err)
-	}
 
 	event := messages.NewMinderEvent().
 		WithProjectID(installation.ProjectID.UUID).

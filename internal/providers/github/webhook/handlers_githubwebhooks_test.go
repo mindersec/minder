@@ -937,7 +937,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
 				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
 				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
-				matchProps, err := properties.NewProperties(evt.MatchProps)
+				matchProps := properties.NewProperties(evt.MatchProps)
 				require.NoError(t, err)
 				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
 
@@ -973,7 +973,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
 				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
 				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
-				matchProps, err := properties.NewProperties(evt.MatchProps)
+				matchProps := properties.NewProperties(evt.MatchProps)
 				require.NoError(t, err)
 				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
 
@@ -1012,7 +1012,7 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 				require.Equal(t, v1.Entity_ENTITY_REPOSITORIES, evt.Entity.Type)
 				require.Equal(t, "12345", evt.Entity.GetByProps[properties.PropertyUpstreamID])
 				require.Equal(t, "github", evt.Hint.ProviderImplementsHint)
-				matchProps, err := properties.NewProperties(evt.MatchProps)
+				matchProps := properties.NewProperties(evt.MatchProps)
 				require.NoError(t, err)
 				require.Equal(t, int64(54321), matchProps.GetProperty(ghprop.RepoPropertyHookId).GetInt64())
 

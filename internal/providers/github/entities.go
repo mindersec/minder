@@ -101,7 +101,7 @@ func (c *GitHub) RegisterEntity(
 		return nil, fmt.Errorf("error creating hook: %w", err)
 	}
 
-	whprops, err := properties.NewProperties(map[string]any{
+	whprops := properties.NewProperties(map[string]any{
 		ghprop.RepoPropertyHookUiid: hookUUID,
 		ghprop.RepoPropertyHookId:   webhook.GetID(),
 		ghprop.RepoPropertyHookUrl:  webhook.GetURL(),

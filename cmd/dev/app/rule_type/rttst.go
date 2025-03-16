@@ -371,7 +371,7 @@ func readEntityWithPropertiesFromFile(
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
-	props, err := entProps.NewProperties(propertiesMap)
+	props := entProps.NewProperties(propertiesMap)
 	if err != nil {
 		return nil, fmt.Errorf("error creating properties: %w", err)
 	}

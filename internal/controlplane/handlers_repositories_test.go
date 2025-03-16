@@ -443,7 +443,7 @@ func mustNewPBStruct(m map[string]any) *structpb.Struct {
 
 func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
 	//nolint:errcheck // this shouldn't fail
-	props, _ := properties.NewProperties(map[string]any{
+	props := properties.NewProperties(map[string]any{
 		"repo_id":                     id,
 		properties.PropertyUpstreamID: fmt.Sprintf("%d", id),
 	})
@@ -454,15 +454,12 @@ func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
 }
 
 func simpleUpstreamRepositoryRef(name string, id int64, registered bool) *UpstreamRepoAndEntityRef {
-	props, err := properties.NewProperties(map[string]any{
+	props := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: fmt.Sprintf("%d", id),
 		ghprops.RepoPropertyId:        id,
 		ghprops.RepoPropertyName:      name,
 		ghprops.RepoPropertyOwner:     repoOwner,
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	return &UpstreamRepoAndEntityRef{
 		Repo: &pb.UpstreamRepositoryRef{

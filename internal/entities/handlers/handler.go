@@ -159,10 +159,7 @@ func (*handleEntityAndDoBase) matchPropertiesCheck(
 		return nil
 	}
 
-	matchProps, err := properties.NewProperties(entMsg.MatchProps)
-	if err != nil {
-		return err
-	}
+	matchProps := properties.NewProperties(entMsg.MatchProps)
 
 	for propName, prop := range matchProps.Iterate() {
 		entProp := ewp.Properties.GetProperty(propName)
