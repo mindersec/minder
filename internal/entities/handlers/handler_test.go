@@ -97,12 +97,7 @@ type (
 )
 
 func getPullRequestProperties() *properties.Properties {
-	props, err := properties.NewProperties(pullRequestPropMap)
-	if err != nil {
-		panic(err)
-	}
-
-	return props
+	return properties.NewProperties(pullRequestPropMap)
 }
 
 func newProviderMock(opts ...func(providerMock)) providerMockBuilder {
@@ -142,9 +137,7 @@ func WithSuccessfulPropertiesToProtoMessage(proto protoreflect.ProtoMessage) fun
 func buildEwp(t *testing.T, ewp models.EntityWithProperties, propMap map[string]any) *models.EntityWithProperties {
 	t.Helper()
 
-	entProps, err := properties.NewProperties(propMap)
-	require.NoError(t, err)
-	ewp.Properties = entProps
+	ewp.Properties = properties.NewProperties(propMap)
 
 	return &ewp
 }
@@ -298,7 +291,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: successful refresh and publish of a repo",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -328,11 +321,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: if match_props match, publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
-				matchProps, _ := properties.NewProperties(map[string]any{
+				matchProps := properties.NewProperties(map[string]any{
 					ghprops.RepoPropertyHookId: repoPropHookID,
 				})
 
@@ -363,11 +356,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: if match_props don't match, don't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
-				matchProps, _ := properties.NewProperties(map[string]any{
+				matchProps := properties.NewProperties(map[string]any{
 					ghprops.RepoPropertyHookId: repoPropHookID + 1,
 				})
 
@@ -393,7 +386,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: private repo publishes if feature enabled",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -427,7 +420,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: private repo does not publish if feature disabled",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -456,7 +449,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: archived repo does not publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -484,7 +477,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to get an entity doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -506,7 +499,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to retrieve all properties doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -529,7 +522,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRefreshEntityAndEvaluateHandler: Failure to convert entity to proto doesn't publish",
 			handlerBuilderFn: refreshEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -553,11 +546,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewAddOriginatingEntityHandler: Adding a pull request originating entity publishes",
 			handlerBuilderFn: addOriginatingEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				prProps, _ := properties.NewProperties(map[string]any{
+				prProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "789",
 					ghprops.PullPropertyNumber:    int64(789),
 				})
-				originatorProps, _ := properties.NewProperties(map[string]any{
+				originatorProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -627,11 +620,11 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewRemoveOriginatingEntityHandler: Happy path does not publish",
 			handlerBuilderFn: removeOriginatingEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				prProps, _ := properties.NewProperties(map[string]any{
+				prProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "789",
 					ghprops.PullPropertyNumber:    int64(789),
 				})
-				originatorProps, _ := properties.NewProperties(map[string]any{
+				originatorProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -663,7 +656,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewGetEntityAndDeleteHandler: happy path publishes",
 			handlerBuilderFn: getAndDeleteEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 
@@ -691,7 +684,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			name:             "NewGetEntityAndDeleteHandler: failure to get entity does not publish",
 			handlerBuilderFn: getAndDeleteEntityHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				getByProps, _ := properties.NewProperties(map[string]any{
+				getByProps := properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "123",
 				})
 

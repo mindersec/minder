@@ -43,10 +43,7 @@ func withGetProviderByID(result db.Provider, err error) func(dbf.DBMock) {
 }
 
 func buildEntityWithProperties(entityType minderv1.Entity, name string, propMap map[string]any) *models.EntityWithProperties {
-	props, err := properties.NewProperties(propMap)
-	if err != nil {
-		panic(err)
-	}
+	props := properties.NewProperties(propMap)
 	entity := &models.EntityWithProperties{
 		Entity: models.EntityInstance{
 			Type: entityType,

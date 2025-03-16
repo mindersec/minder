@@ -129,8 +129,7 @@ func TestGetName(t *testing.T) {
 		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			props, err := properties.NewProperties(tt.props)
-			assert.NoError(t, err)
+			props := properties.NewProperties(tt.props)
 
 			result, err := fetcher.GetName(props)
 			if tt.expectedErrMsg != "" {
@@ -219,8 +218,7 @@ func TestGetArtifactWrapperAttrsFromProps(t *testing.T) {
 		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			props, err := properties.NewProperties(tt.props)
-			assert.NoError(t, err)
+			props := properties.NewProperties(tt.props)
 
 			owner, name, pkgType, err := getArtifactWrapperAttrsFromProps(context.Background(), props)
 			if tt.expectedErrMsg != "" {

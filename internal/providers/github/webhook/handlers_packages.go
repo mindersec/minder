@@ -107,13 +107,10 @@ func processPackageEvent(
 		return nil, errors.New("invalid package: owner is nil")
 	}
 
-	repoProps, err := properties.NewProperties(map[string]any{
+	repoProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.Repo.GetID()),
 		properties.PropertyName:       event.Repo.GetName(),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository properties: %w", err)
-	}
 	pkgLookupProps, err := packageEventToProperties(event)
 	if err != nil {
 		return nil, fmt.Errorf("error converting package event to properties: %w", err)
@@ -154,5 +151,5 @@ func packageEventToProperties(
 		ghprop.ArtifactPropertyOwner: owner,
 		ghprop.ArtifactPropertyName:  *event.Package.Name,
 		ghprop.ArtifactPropertyType:  strings.ToLower(*event.Package.PackageType),
-	})
+	}), nil
 }

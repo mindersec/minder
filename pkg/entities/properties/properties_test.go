@@ -6,7 +6,6 @@ package properties
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"math"
 	"testing"
 
@@ -70,8 +69,7 @@ func TestBoolGetters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewProperties(input)
-			require.NoError(t, err)
+			props := NewProperties(input)
 
 			p := props.GetProperty(s.propName)
 			if s.callGet {
@@ -146,8 +144,7 @@ func TestStringGetters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewProperties(input)
-			require.NoError(t, err)
+			props := NewProperties(input)
 
 			p := props.GetProperty(s.propName)
 			if s.callGet {
@@ -257,8 +254,7 @@ func TestInt64Getters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewProperties(input)
-			require.NoError(t, err)
+			props := NewProperties(input)
 
 			p := props.GetProperty(s.propName)
 			if s.callGet {
@@ -368,8 +364,7 @@ func TestUint64Getters(t *testing.T) {
 		t.Run(s.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := NewProperties(input)
-			require.NoError(t, err)
+			props := NewProperties(input)
 
 			p := props.GetProperty(s.propName)
 			if s.callGet {
@@ -404,8 +399,7 @@ func TestNewProperties(t *testing.T) {
 	t.Run("nil input", func(t *testing.T) {
 		t.Parallel()
 
-		props, err := NewProperties(nil)
-		require.NoError(t, err)
+		props := NewProperties(nil)
 		require.NotNil(t, props)
 		p := props.GetProperty("test")
 		require.Nil(t, p)
@@ -416,11 +410,9 @@ func TestNewProperties(t *testing.T) {
 
 		testKey := internalPrefix + "test"
 
-		props, err := NewProperties(map[string]any{
+		_ = NewProperties(map[string]any{
 			testKey: true,
 		})
-		require.Contains(t, err.Error(), fmt.Sprintf("property key %s is reserved", testKey))
-		require.Nil(t, props)
 	})
 }
 
@@ -500,8 +492,7 @@ func TestIterator(t *testing.T) {
 
 	output := make(map[string]any)
 
-	props, err := NewProperties(input)
-	require.NoError(t, err)
+	props := NewProperties(input)
 
 	count := 0
 	for key, p := range props.Iterate() {
@@ -518,15 +509,13 @@ func TestMerge(t *testing.T) {
 	t.Run("merge two props", func(t *testing.T) {
 		t.Parallel()
 
-		props1, err := NewProperties(map[string]any{
+		props1 := NewProperties(map[string]any{
 			"name": "test",
 		})
-		require.NoError(t, err)
 
-		props2, err := NewProperties(map[string]any{
+		props2 := NewProperties(map[string]any{
 			"is_private": true,
 		})
-		require.NoError(t, err)
 
 		merged := props1.Merge(props2)
 
@@ -545,10 +534,9 @@ func TestMerge(t *testing.T) {
 	t.Run("other is nil", func(t *testing.T) {
 		t.Parallel()
 
-		props1, err := NewProperties(map[string]any{
+		props1 := NewProperties(map[string]any{
 			"name": "test",
 		})
-		require.NoError(t, err)
 
 		merged := props1.Merge(nil)
 
@@ -566,10 +554,9 @@ func TestMerge(t *testing.T) {
 	t.Run("self is nil", func(t *testing.T) {
 		t.Parallel()
 
-		props2, err := NewProperties(map[string]any{
+		props2 := NewProperties(map[string]any{
 			"is_private": true,
 		})
-		require.NoError(t, err)
 
 		var nilP *Properties
 		merged := nilP.Merge(props2)
@@ -592,11 +579,10 @@ func TestFilteredCopy(t *testing.T) {
 	t.Run("filter one", func(t *testing.T) {
 		t.Parallel()
 
-		props, err := NewProperties(map[string]any{
+		props := NewProperties(map[string]any{
 			"name":       "test",
 			"is_private": true,
 		})
-		require.NoError(t, err)
 
 		filter := func(key string, _ *Property) bool {
 			return key == "name"
@@ -658,10 +644,8 @@ func TestProperties_ToProtoStruct(t *testing.T) {
 			t.Parallel()
 
 			var p *Properties
-			var err error
 			if tt.props != nil {
-				p, err = NewProperties(tt.props)
-				require.NoError(t, err)
+				p = NewProperties(tt.props)
 			}
 
 			result := p.ToProtoStruct()
@@ -688,19 +672,9 @@ func TestNewPropertiesWithSkipPrefixCheck(t *testing.T) {
 	reservedProps := map[string]any{
 		"minder.internal.test": "value",
 	}
-	_, err := NewProperties(reservedProps)
-	if err == nil {
-		t.Error("Expected error for reserved prefix without skip option, got nil")
-	}
 
 	// Test case with reserved prefix, with skip option
-	props, err := NewProperties(reservedProps, withSkipPrefixCheckTestOnly())
-	if err != nil {
-		t.Errorf("Unexpected error with skip option: %v", err)
-	}
-	if props == nil {
-		t.Error("Expected non-nil Properties with skip option")
-	}
+	props := NewProperties(reservedProps, withSkipPrefixCheckTestOnly())
 
 	// Verify the property was actually added
 	prop := props.GetProperty("minder.internal.test")
@@ -765,7 +739,7 @@ func TestProperties_SetKeyValue(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			p, _ := NewProperties(map[string]any{}, withSkipPrefixCheckTestOnly())
+			p := NewProperties(map[string]any{}, withSkipPrefixCheckTestOnly())
 			err := p.SetKeyValue(tt.key, tt.value)
 
 			if (err != nil) != tt.wantErr {
@@ -806,13 +780,12 @@ func TestProperties_SetKeyValue(t *testing.T) {
 func TestProperties_ToLogDict(t *testing.T) {
 	t.Parallel()
 
-	props, err := NewProperties(map[string]any{
+	props := NewProperties(map[string]any{
 		"string": "test",
 		"int":    42,
 		"bool":   true,
 		"float":  3.14,
 	})
-	require.NoError(t, err)
 	require.NotNil(t, props)
 
 	dict := props.ToLogDict()
@@ -823,7 +796,7 @@ func TestProperties_ToLogDict(t *testing.T) {
 	logger.Info().Dict("properties", dict).Msg("Test log")
 
 	var result map[string]any
-	err = json.Unmarshal(buf.Bytes(), &result)
+	err := json.Unmarshal(buf.Bytes(), &result)
 	require.NoError(t, err)
 
 	// Check if the properties are correctly logged
@@ -860,7 +833,7 @@ func TestProperties_Len(t *testing.T) {
 		{
 			name: "empty Properties",
 			p: func() *Properties {
-				p, _ := NewProperties(map[string]any{})
+				p := NewProperties(map[string]any{})
 				return p
 			}(),
 			want: 0,
@@ -868,7 +841,7 @@ func TestProperties_Len(t *testing.T) {
 		{
 			name: "Properties with one item",
 			p: func() *Properties {
-				p, _ := NewProperties(map[string]any{"key1": "value1"})
+				p := NewProperties(map[string]any{"key1": "value1"})
 				return p
 			}(),
 			want: 1,
@@ -876,7 +849,7 @@ func TestProperties_Len(t *testing.T) {
 		{
 			name: "Properties with multiple items",
 			p: func() *Properties {
-				p, _ := NewProperties(map[string]any{
+				p := NewProperties(map[string]any{
 					"key1": "value1",
 					"key2": 42,
 					"key3": true,

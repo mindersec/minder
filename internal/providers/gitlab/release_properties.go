@@ -225,7 +225,7 @@ func gitlabReleaseToProperties(
 		ReleasePropertyBranch:         branch,
 		RepoPropertyNamespace:         ns,
 		RepoPropertyProjectName:       projName,
-	})
+	}), nil
 }
 
 func guessBranchFromCommitRefs(refs []*gitlablib.CommitRef, tagName string) string {
