@@ -79,7 +79,7 @@ func RegisterGRPCClientConfigFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 
 // GetGRPCAddress returns the formatted GRPC address of the server.
 func (c GRPCClientConfig) GetGRPCAddress() string {
-	return fmt.Sprintf("%s: %d", c.Host, c.Port)
+	return fmt.Sprintf("%s:%d", c.Host, c.Port)
 }
 
 // TransportCredentialsOption returns a gRPC dial option appropriate to the
