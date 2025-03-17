@@ -7,6 +7,7 @@ package offline_token
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -65,6 +66,14 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 	if err != nil {
 		return fmt.Errorf("couldn't get realm URL: %v", err)
 	}
+
+	// TODO: use the proper well-known discovery via "./.well-known/openid-configuration"
+	// possibly with the rp.NewRelyingPartyOIDC from zitadel
+	parsedUrl, err := url.Parse(realmUrl)
+	if err != nil {
+		return fmt.Errorf("couldn't parse realm URL %s: %v", realmUrl, err)
+	}
+	realmUrl = parsedUrl.JoinPath("protocol/openid-connect/token").String()
 
 	creds, err := cli.RefreshCredentials(tok, realmUrl, clientID)
 	if err != nil {
