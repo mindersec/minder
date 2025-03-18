@@ -1,6 +1,7 @@
 module github.com/mindersec/minder
 
 go 1.23.4
+toolchain go1.24.1
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.5-20250219170025-d39267d9df8f.1
@@ -53,7 +54,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.13.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
-	github.com/open-policy-agent/opa v1.0.0
+	github.com/open-policy-agent/opa v1.1.0
 	github.com/openfga/go-sdk v0.6.3
 	github.com/openfga/openfga v1.8.5
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -77,7 +78,7 @@ require (
 	github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3
 	github.com/stretchr/testify v1.10.0
-	github.com/styrainc/regal v0.30.2
+	github.com/styrainc/regal v0.31.1
 	github.com/thomaspoignant/go-feature-flag v1.40.0
 	github.com/yuin/goldmark v1.7.8
 	gitlab.com/gitlab-org/api/client-go v0.120.0
@@ -121,7 +122,6 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/alecthomas/participle/v2 v2.1.1 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20240925125616-a0883641c664 // indirect
-	github.com/anderseknert/roast v0.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -251,6 +251,7 @@ require (
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
+	github.com/styrainc/roast v0.8.1 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
@@ -384,7 +385,7 @@ require (
 	github.com/spf13/cast v1.7.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tchap/go-patricia/v2 v2.3.1 // indirect
+	github.com/tchap/go-patricia/v2 v2.3.2 // indirect
 	github.com/theupdateframework/go-tuf v0.7.0 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
