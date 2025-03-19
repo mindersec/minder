@@ -101,21 +101,15 @@ func sendReleaseEvent(
 	_ context.Context,
 	event *releaseEvent,
 ) (*processingResult, error) {
-	lookByProps, err := properties.NewProperties(map[string]any{
+	lookByProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRelease().GetID()),
 		ghprop.ReleasePropertyOwner:   event.GetRepo().GetOwner(),
 		ghprop.ReleasePropertyRepo:    event.GetRepo().GetName(),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating release properties: %w", err)
-	}
 
-	originatorProps, err := properties.NewProperties(map[string]any{
+	originatorProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRepo().GetID()),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository properties for release origination: %w", err)
-	}
 
 	switch event.GetAction() {
 	case "published":

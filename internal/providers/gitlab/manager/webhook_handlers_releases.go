@@ -65,21 +65,15 @@ func (m *providerClassManager) publishReleaseMessage(
 	mrProjectID := gitlab.FormatRepositoryUpstreamID(rawProjectID)
 
 	// Form identifying properties
-	identifyingProps, err := properties.NewProperties(map[string]any{
+	identifyingProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: mrUpstreamID,
 		gitlab.ReleasePropertyTag:     tag,
 		gitlab.PullRequestProjectID:   mrProjectID,
 	})
-	if err != nil {
-		return fmt.Errorf("error creating identifying properties: %w", err)
-	}
 
-	repoIdentifyingProps, err := properties.NewProperties(map[string]any{
+	repoIdentifyingProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: mrProjectID,
 	})
-	if err != nil {
-		return fmt.Errorf("error creating repo identifying properties: %w", err)
-	}
 
 	// Form message to publish
 	outm := entmsg.NewEntityRefreshAndDoMessage()

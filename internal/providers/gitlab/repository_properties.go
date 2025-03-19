@@ -95,7 +95,7 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 		license = proj.License.Name
 	}
 
-	outProps, err := properties.NewProperties(map[string]any{
+	outProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID:     FormatRepositoryUpstreamID(proj.ID),
 		properties.PropertyName:           formatRepoName(owner, proj.Name),
 		properties.RepoPropertyIsPrivate:  proj.Visibility == gitlab.PrivateVisibility,

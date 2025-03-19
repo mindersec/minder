@@ -390,11 +390,7 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 
 // MustNewProperties creates Properties from a map or panics
 func MustNewProperties(props map[string]any) *properties.Properties {
-	p, err := properties.NewProperties(props)
-	if err != nil {
-		panic(err)
-	}
-	return p
+	return properties.NewProperties(props)
 }
 
 func newTestGitlabProvider(endpoint string) *gitlabClient {
