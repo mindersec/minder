@@ -30,6 +30,22 @@ import (
 	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
 
+func TestMain(m *testing.M) {
+	// Needed for loading email templates
+	err := os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata")
+	if err != nil {
+		fmt.Printf("error setting KO_DATA_PATH: %v\n", err)
+		os.Exit(1)
+	}
+	_, err = email.NewMessage(context.Background(), "j@example.com", "http://example.com/invite", "http://api.example.com/", "admin", "Example", "Joe")
+	if err != nil {
+		fmt.Printf("error creating message: %v\n", err)
+		os.Exit(1)
+	}
+
+	m.Run()
+}
+
 func TestCreateInvite(t *testing.T) {
 	t.Parallel()
 
@@ -164,8 +180,6 @@ func TestUpdateInvite(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
-			// Needed for loading email templates
-			assert.NoError(t, os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata"))
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
@@ -243,8 +257,6 @@ func TestRemoveInvite(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
-			// Needed for loading email templates
-			assert.NoError(t, os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata"))
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
