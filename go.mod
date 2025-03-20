@@ -123,10 +123,8 @@ require (
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/alecthomas/participle/v2 v2.1.1 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20240925125616-a0883641c664 // indirect
-	github.com/anderseknert/roast v0.6.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/arl/statsviz v0.6.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/avast/retry-go/v4 v4.6.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.55 // indirect
@@ -171,11 +169,8 @@ require (
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/erikvarga/go-rpmdb v0.0.0-20240208180226-b97e041ef9af // indirect
 	github.com/fatih/color v1.18.0 // indirect
-	github.com/felixge/fgprof v0.9.5 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/gdamore/tcell v1.4.0 // indirect
 	github.com/go-chi/chi/v5 v5.2.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
@@ -184,13 +179,11 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
-	github.com/google/go-dap v0.12.0 // indirect
 	github.com/google/go-github/v66 v66.0.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/osv-scanner v1.9.0 // indirect
 	github.com/google/pprof v0.0.0-20250317173921-a4b03ec1a45e // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/groob/plist v0.1.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.5 // indirect
@@ -202,7 +195,6 @@ require (
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/jon-whit/go-grpc-prometheus v1.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/jstemmer/go-junit-report/v2 v2.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -243,10 +235,7 @@ require (
 	github.com/opencontainers/selinux v1.11.1 // indirect
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250121233318-0eae96a39570 // indirect
-	github.com/owenrumney/go-sarif/v2 v2.3.3 // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
-	github.com/pdevine/go-asciisprite v0.1.6 // indirect
-	github.com/pkg/profile v1.7.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pressly/goose/v3 v3.24.1 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
@@ -261,7 +250,6 @@ require (
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.24.0 // indirect
 	github.com/sigstore/sigstore v1.8.12 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
-	github.com/sourcegraph/jsonrpc2 v0.2.0 // indirect
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
 	github.com/spdx/tools-golang v0.5.5 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
@@ -302,7 +290,6 @@ require (
 require (
 	dario.cat/mergo v1.0.1
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
