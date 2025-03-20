@@ -124,8 +124,15 @@ func (d *dataSourceService) List(
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
 	}
 
-	//nolint:gosec // we'll log this error later.
-	defer stx.Rollback()
+	defer func() {
+		if stx == nil {
+			// already committed
+			return
+		}
+		if err := stx.Rollback(); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
+		}
+	}()
 
 	tx := stx.Q()
 
@@ -161,6 +168,7 @@ func (d *dataSourceService) List(
 	if err := stx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	stx = nil // Don't try to rollback
 
 	return outDS, nil
 }
@@ -190,12 +198,15 @@ func (d *dataSourceService) Create(
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
 	}
 
-	defer func(stx serviceTX) {
-		err := stx.Rollback()
-		if err != nil {
+	defer func() {
+		if stx == nil {
+			// already committed
+			return
+		}
+		if err := stx.Rollback(); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
-	}(stx)
+	}()
 
 	tx := stx.Q()
 
@@ -234,6 +245,7 @@ func (d *dataSourceService) Create(
 	if err := stx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	stx = nil // Don't try to rollback
 
 	ds.Id = dsRecord.ID.String()
 
@@ -263,12 +275,15 @@ func (d *dataSourceService) Update(
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
 	}
 
-	defer func(stx serviceTX) {
-		err := stx.Rollback()
-		if err != nil {
+	defer func() {
+		if stx == nil {
+			// already committed
+			return
+		}
+		if err := stx.Rollback(); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
-	}(stx)
+	}()
 
 	tx := stx.Q()
 
@@ -315,6 +330,7 @@ func (d *dataSourceService) Update(
 	if err := stx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	stx = nil // Don't try to rollback
 
 	if ds.Id == "" {
 		ds.Id = existingDS.ID.String()
@@ -357,12 +373,15 @@ func (d *dataSourceService) Delete(
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
-	defer func(stx serviceTX) {
-		err := stx.Rollback()
-		if err != nil {
+	defer func() {
+		if stx == nil {
+			// already committed
+			return
+		}
+		if err := stx.Rollback(); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to rollback transaction")
 		}
-	}(stx)
+	}()
 
 	// Get the transaction querier
 	tx := stx.Q()
@@ -414,6 +433,7 @@ func (d *dataSourceService) Delete(
 	if err := stx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
+	stx = nil // Don't try to rollback
 	return nil
 }
 
