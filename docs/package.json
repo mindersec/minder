@@ -44,7 +44,7 @@
     "globals": "^16.0.0",
     "markdownlint-cli2": "0.17.2",
     "prettier": "3.5.3",
-    "typescript-eslint": "^8.26.0"
+    "typescript-eslint": "^8.26.1"
   },
   "browserslist": {
     "production": [
