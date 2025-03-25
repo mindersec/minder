@@ -65,8 +65,8 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.24.0
-	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.24.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.25.0
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.25.0
 	github.com/sigstore/protobuf-specs v0.4.0
 	github.com/sigstore/sigstore-go v0.7.0
 	github.com/spf13/cobra v1.9.1
@@ -81,13 +81,13 @@ require (
 	github.com/thomaspoignant/go-feature-flag v1.40.0
 	github.com/yuin/goldmark v1.7.8
 	gitlab.com/gitlab-org/api/client-go v0.120.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.59.0
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
 	go.opentelemetry.io/otel v1.35.0
-	go.opentelemetry.io/otel/exporters/prometheus v0.56.0
-	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.34.0
+	go.opentelemetry.io/otel/exporters/prometheus v0.57.0
+	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.35.0
 	go.opentelemetry.io/otel/sdk v1.35.0
-	go.opentelemetry.io/otel/sdk/metric v1.34.0
+	go.opentelemetry.io/otel/sdk/metric v1.35.0
 	go.opentelemetry.io/otel/trace v1.35.0
 	go.uber.org/mock v0.5.0
 	golang.org/x/crypto v0.36.0
@@ -96,7 +96,7 @@ require (
 	golang.org/x/sync v0.12.0
 	golang.org/x/term v0.30.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250303144028-a0af3efb3deb
-	google.golang.org/grpc v1.70.0
+	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v2 v2.4.0
@@ -245,7 +245,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.24.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.25.0 // indirect
 	github.com/sigstore/sigstore v1.8.12 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
