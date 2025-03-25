@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.7.0">
 <title data-rh="true">Using feature flags | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://minder-docs.stacklok.dev/developer_guide/feature_flags"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Using feature flags | Minder docs"><meta data-rh="true" name="description" content="Minder is using OpenFeature for feature flags. For"><meta data-rh="true" property="og:description" content="Minder is using OpenFeature for feature flags. For"><link data-rh="true" rel="icon" href="/img/stacklok-favicon.png"><link data-rh="true" rel="canonical" href="https://minder-docs.stacklok.dev/developer_guide/feature_flags"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/developer_guide/feature_flags" hreflang="en"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/developer_guide/feature_flags" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.b25191af.css">
-<script src="/assets/js/runtime~main.a2ac168f.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.54be0e21.js" defer="defer"></script>
 <script src="/assets/js/main.88aa0164.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -69,7 +69,7 @@ for an example. The process is basically:</p>
 <ol>
 <li>
 <p>Add a feature flag declaration to
-<a href="https://github.com/mindersec/minder/blob/main/internal/flags/constants.go" target="_blank" rel="noopener noreferrer"><code>internal/flags/constants.go</code></a></p>
+<a href="https://github.com/mindersec/minder/blob/main/pkg/flags/constants.go" target="_blank" rel="noopener noreferrer"><code>pkg/flags/constants.go</code></a></p>
 </li>
 <li>
 <p>At the call site(s), put the new functionality behind
@@ -77,7 +77,7 @@ for an example. The process is basically:</p>
 </li>
 <li>
 <p>You can use the
-<a href="https://github.com/mindersec/minder/blob/main/internal/flags/test_client.go" target="_blank" rel="noopener noreferrer"><code>flags.FakeClient</code></a>
+<a href="https://github.com/mindersec/minder/blob/main/pkg/flags/test_client.go" target="_blank" rel="noopener noreferrer"><code>flags.FakeClient</code></a>
 in tests to test the new code path as well as the old one.</p>
 </li>
 </ol>
