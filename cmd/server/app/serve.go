@@ -16,7 +16,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/githubactions"
 	"github.com/mindersec/minder/internal/auth/jwt"
+	"github.com/mindersec/minder/internal/auth/jwt/dynamic"
+	"github.com/mindersec/minder/internal/auth/jwt/merged"
 	"github.com/mindersec/minder/internal/auth/keycloak"
 	"github.com/mindersec/minder/internal/authz"
 	cpmetrics "github.com/mindersec/minder/internal/controlplane/metrics"
@@ -81,7 +84,7 @@ var serveCmd = &cobra.Command{
 		// .../.well-known/jwks.json or .../.well-known/openid-configuration endpoint.  Right
 		// now it's just a hostname.  When we have this, we can consolidate the jwksUrl and issUrl,
 		// and remove the Keycloak-specific paths.
-		jwksUrl, err := cfg.Identity.Server.Path("/realms/stacklok/protocol/openid-connect/certs")
+		jwksUrl, err := cfg.Identity.Server.GetRealmPath("protocol/openid-connect/certs")
 		if err != nil {
 			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
 		}
@@ -89,10 +92,14 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create issuer URL: %w\n", err)
 		}
-		jwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
+		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
 		}
+		allowedIssuers := []string{issUrl.String()}
+		allowedIssuers = append(allowedIssuers, cfg.Identity.AdditionalIssuers...)
+		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience, allowedIssuers)
+		jwt := merged.Validator{Validators: []jwt.Validator{staticJwt, dynamicJwt}}
 
 		authzc, err := authz.NewAuthzClient(&cfg.Authz, l)
 		if err != nil {
@@ -107,7 +114,7 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("unable to create keycloak identity provider: %w", err)
 		}
-		idClient, err := auth.NewIdentityClient(kc)
+		idClient, err := auth.NewIdentityClient(kc, &githubactions.GitHubActions{})
 		if err != nil {
 			return fmt.Errorf("unable to create identity client: %w", err)
 		}

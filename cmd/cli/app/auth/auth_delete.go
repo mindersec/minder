@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -38,7 +37,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// We read name and email from the JWT.  We don't need to validate it here.
-	creds, err := util.LoadCredentials()
+	creds, err := cli.LoadCredentials()
 	if err != nil {
 		return cli.MessageAndError("Error loading credentials from file", err)
 	}
@@ -78,7 +77,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
 	// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
-	err = util.RemoveCredentials()
+	err = cli.RemoveCredentials()
 	if err != nil {
 		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 	}

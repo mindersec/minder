@@ -18,7 +18,6 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
-	"github.com/mindersec/minder/internal/flags"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -79,16 +78,9 @@ func (e *Evaluator) Eval(
 	}
 
 	if len(vulnerablePackages) > 0 {
-		if e.featureFlags != nil && flags.Bool(ctx, e.featureFlags, flags.VulnCheckErrorTemplate) {
-			return nil, evalerrors.NewDetailedErrEvaluationFailed(
-				templates.VulncheckTemplate,
-				map[string]any{"packages": vulnerablePackages},
-				"vulnerable packages: %s",
-				strings.Join(vulnerablePackages, ","),
-			)
-		}
-
-		return nil, evalerrors.NewErrEvaluationFailed(
+		return nil, evalerrors.NewDetailedErrEvaluationFailed(
+			templates.VulncheckTemplate,
+			map[string]any{"packages": vulnerablePackages},
 			"vulnerable packages: %s",
 			strings.Join(vulnerablePackages, ","),
 		)

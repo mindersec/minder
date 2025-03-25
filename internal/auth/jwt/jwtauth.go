@@ -106,15 +106,6 @@ type userTokenContextKeyType struct{}
 
 var userTokenContextKey userTokenContextKeyType
 
-// GetUserSubjectFromContext returns the user subject from the context, or nil
-func GetUserSubjectFromContext(ctx context.Context) string {
-	token, ok := ctx.Value(userTokenContextKey).(openid.Token)
-	if !ok {
-		return ""
-	}
-	return token.Subject()
-}
-
 // GetUserClaimFromContext returns the specified claim from the user subject in
 // the context if found and of the correct type
 func GetUserClaimFromContext[T any](ctx context.Context, claim string) (T, bool) {

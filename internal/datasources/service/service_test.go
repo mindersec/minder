@@ -563,6 +563,7 @@ func TestCreate(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.want.Name, got.Name)
+			assert.NotEmpty(t, got.Id)
 		})
 	}
 }

@@ -10,7 +10,7 @@ Apply a data source
 The datasource apply subcommand lets you create or update data sources for a project within Minder.
 
 ```
-minder datasource apply [flags]
+minder datasource apply [files...] [flags]
 ```
 
 ### Options

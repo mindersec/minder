@@ -39,7 +39,6 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	entMsg "github.com/mindersec/minder/internal/entities/handlers/message"
-	"github.com/mindersec/minder/internal/entities/properties"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/providers/github/installations"
 	gf "github.com/mindersec/minder/internal/providers/github/mock/fixtures"
@@ -49,6 +48,7 @@ import (
 	"github.com/mindersec/minder/internal/util/testqueue"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
@@ -2674,7 +2674,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			defer evt.Close()
 
 			pq := testqueue.NewPassthroughQueue(t)
-			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)
@@ -2682,13 +2681,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			go func() {
 				err := evt.Run(context.Background())
 				require.NoError(t, err, "failed to run eventer")
+				require.NoError(t, pq.Close(), "failed to close queue")
+
 			}()
 
 			<-evt.Running()
 
 			handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
 			ts := httptest.NewServer(handler)
-			defer ts.Close()
+			t.Cleanup(ts.Close)
 
 			var packageJson []byte
 			if tt.payload != nil {

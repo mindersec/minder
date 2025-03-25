@@ -28,7 +28,7 @@ const (
 	commentTemplate = `{{- if .Malicious -}}
 ### ⚠️ MALICIOUS PACKAGES ⚠️
 
-Minder has detected that this pull request is introducing malicious software dependencies using data from [Trusty](https://www.trustypkg.dev/):
+Minder has detected that this pull request is introducing malicious software dependencies using data from [Stacklok Insight](https://www.trustypkg.dev/):
 
 | Package | Summary | Details |
 | --- | --- | --- |
@@ -53,7 +53,6 @@ Archived packages are no longer updated or maintained. This can lead to security
 {{ if .Deprecated }}
 ⚠️ __Deprecated Package:__ This package is marked as archived. Proceed with caution!
 {{ end }}
-#### Trusty Score: {{ .Score }}
 {{ if .ScoreComponents }}
 <details>
   <summary>Scoring details</summary>
@@ -98,10 +97,10 @@ Archived packages are no longer updated or maintained. This can lead to security
 <details>
   <summary>Alternatives</summary>
 
-  | Package             | Score | Description |
-  | ------------------- | ----: | ----------- |
+  | Package             | Description |
+  | ------------------- | ----------- |
 {{ range .Alternatives -}}
-  | [{{ .PackageName }}]({{ .TrustyURL }})  | {{ .Score }} | {{ .Summary }} |
+  | [{{ .PackageName }}]({{ .TrustyURL }})  | {{ .Summary }} |
 {{ end }}
 </details>
 {{- end -}}

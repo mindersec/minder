@@ -49,6 +49,7 @@ import (
 	datasourcessvc "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
+	entitySvc "github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
@@ -99,6 +100,7 @@ type Server struct {
 	ruleTypes           ruletypes.RuleTypeService
 	dataSourcesService  datasourcessvc.DataSourcesService
 	repos               reposvc.RepositoryService
+	entityService       entitySvc.EntityService
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
@@ -125,6 +127,7 @@ type Server struct {
 	pb.UnimplementedEvalResultsServiceServer
 	pb.UnimplementedInviteServiceServer
 	pb.UnimplementedDataSourceServiceServer
+	pb.UnimplementedEntityInstanceServiceServer
 }
 
 // NewServer creates a new server instance
@@ -152,6 +155,7 @@ func NewServer(
 	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
+	entityService entitySvc.EntityService,
 	featureFlagClient *openfeature.Client,
 ) *Server {
 	return &Server{
@@ -173,6 +177,7 @@ func NewServer(
 		sessionService:      sessionService,
 		invites:             inviteService,
 		repos:               repoService,
+		entityService:       entityService,
 		props:               propertyService,
 		roles:               roleService,
 		ghProviders:         ghProviders,
@@ -254,7 +259,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		// response.
 		logger.RequestIDInterceptor("request-id"),
 		logger.Interceptor(s.cfg.LoggingConfig),
-		TokenValidationInterceptor,
+		s.TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,
 		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(recoveryHandler)),

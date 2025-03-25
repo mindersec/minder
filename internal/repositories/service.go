@@ -16,7 +16,6 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects/features"
@@ -24,6 +23,7 @@ import (
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"

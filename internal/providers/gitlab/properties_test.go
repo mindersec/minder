@@ -14,9 +14,9 @@ import (
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 func Test_gitlabClient_GetEntityName(t *testing.T) {

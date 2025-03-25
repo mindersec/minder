@@ -153,6 +153,11 @@ const config = {
         copyright: `Copyright © ${new Date().getFullYear()} Minder a Series of LF Projects, LLC
 For web site terms of use, trademark policy and other project policies please see https://lfprojects.org.`,
       },
+      algolia: {
+        appId: 'F7OP01WFHV',
+        apiKey: 'e1b6d8a6ff08e56121d1363c6e58513b',
+        indexName: 'mindersec',
+      },
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,

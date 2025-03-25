@@ -14,10 +14,10 @@ import (
 	"sync"
 
 	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/checker/decls"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 	"github.com/google/cel-go/interpreter"
+	"google.golang.org/protobuf/proto"
 
 	internalpb "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -189,19 +189,13 @@ func pullRequestEnvFactory() (*cel.Env, error) {
 // newEnvForEntity creates a new CEL environment for an entity. All environments are allowed to
 // use the generic "entity" variable plus the specific entity type is also declared as variable
 // with the appropriate type.
-func newEnvForEntity(varName string, typ any, typName string) (*cel.Env, error) {
+func newEnvForEntity(varName string, typ proto.Message, typName string) (*cel.Env, error) {
 	entityPtr := &internalpb.SelectorEntity{}
 
 	env, err := cel.NewEnv(
 		cel.Types(typ), cel.Types(&internalpb.SelectorEntity{}),
-		cel.Declarations(
-			decls.NewVar("entity",
-				decls.NewObjectType(string(entityPtr.ProtoReflect().Descriptor().FullName())),
-			),
-			decls.NewVar(varName,
-				decls.NewObjectType(typName),
-			),
-		),
+		cel.Variable("entity", types.NewObjectType(string(entityPtr.ProtoReflect().Descriptor().FullName()))),
+		cel.Variable(varName, types.NewObjectType(typName)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CEL environment for %s: %v", varName, err)
@@ -355,11 +349,23 @@ func (e *Env) CheckSelector(sel *minderv1.Profile_Selector) error {
 func (e *Env) envForEntity(entity minderv1.Entity) (*cel.Env, error) {
 	cache, ok := e.entityEnvs[entity]
 	if !ok {
-		return nil, fmt.Errorf("no cache found for entity %v", entity)
+		// if the entity isn't in the env map, we use the generic environment
+		cache, ok = e.entityEnvs[minderv1.Entity_ENTITY_UNSPECIFIED]
+		if !ok {
+			return nil, fmt.Errorf("no cache found for entity %v", entity)
+		}
 	}
 
+	factory, ok := e.factories[entity]
+	if !ok {
+		// if the entity isn't in the factory map, we use the generic environment
+		factory, ok = e.factories[minderv1.Entity_ENTITY_UNSPECIFIED]
+		if !ok {
+			return nil, fmt.Errorf("no factory found for entity %v", entity)
+		}
+	}
 	cache.once.Do(func() {
-		cache.env, cache.err = e.factories[entity]()
+		cache.env, cache.err = factory()
 	})
 
 	return cache.env, cache.err

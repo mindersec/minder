@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version-file: "go.mod"
       - name: install helm-docs
@@ -42,7 +42,7 @@ jobs:
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_author=$COMMIT_AUTHOR" >> $GITHUB_OUTPUT
       - name: Commit and push changes
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7.0.6
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
           commit-message: Update helm documentation
           committer: GitHub <noreply@github.com>

@@ -83,6 +83,7 @@ installed in the namespace specified by your current Kubernetes context.
 | hpaSettings.metrics | object | `{"cpu":{"targetAverageUtilization":60}}` | Metrics to use for the HPA |
 | hpaSettings.minReplicas | int | `1` | Minimum number of replicas for the HPA |
 | ingress.annotations | object, optional | `{}` | annotations to use for the ingress |
+| ingress.enabled | bool | `true` | Whether to create Ingress objects or not |
 | migrationSettings.extraVolumeMounts | array, optional | `nil` | Additional volume mounts |
 | migrationSettings.extraVolumes | array, optional | `nil` | Additional volumes to mount |
 | migrationSettings.image | string | `"ko://github.com/mindersec/minder/cmd/server"` | Image to use for the migration job |
@@ -98,6 +99,9 @@ installed in the namespace specified by your current Kubernetes context.
 | rotateProviderTokensJobSettings.restartPolicy | string | `"OnFailure"` |  |
 | rotateProviderTokensJobSettings.schedule | string | `"0 2 * * *"` |  |
 | rotateProviderTokensJobSettings.sidecarContainers | list | `[]` |  |
+| routes.enabled | bool | `true` | Whether to create HTTPRoute or not |
+| routes.name | string | `"minder"` | The name of the HTTPRoute to create |
+| routes.parentRefs | object, required | `[]` | parentRefs to use for the routes |
 | service.grpcPort | int | `8090` | Port for the gRPC API |
 | service.httpPort | int | `8080` | Port for the HTTP API |
 | service.metricPort | int | `9090` | Port for the metrics endpoint |

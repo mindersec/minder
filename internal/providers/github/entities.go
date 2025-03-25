@@ -8,17 +8,17 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/google/go-github/v63/github"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/mindersec/minder/internal/entities/properties"
+	"github.com/mindersec/minder/internal/db"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 var (
@@ -55,21 +55,20 @@ func (c *GitHub) RegisterEntity(
 		return props, nil
 	}
 
-	// generate unique URL for this webhook
-	// TODO: we should change this to use a per-provider configuration.
-	ewurl := c.webhookConfig.ExternalWebhookURL
-	parsedBaseURL, err := url.Parse(ewurl)
+	webhookURLProvider, err := url.JoinPath(
+		c.webhookConfig.ExternalWebhookURL,
+		url.PathEscape(string(db.ProviderTypeGithub)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error joining webhook URL: %w", err)
+	}
+	parsedBaseURL, err := url.Parse(webhookURLProvider)
 	if err != nil {
 		return nil, errors.New("error parsing webhook base URL. Please check the configuration")
 	}
 
-	baseURL, err := ensureGitHubPathInWebhook(parsedBaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("error ensuring github path in webhook URL: %w", err)
-	}
-
 	hookUUID := uuid.New().String()
-	webhookURL := baseURL.JoinPath(hookUUID)
+	webhookURL := parsedBaseURL.JoinPath(hookUUID)
 
 	repoNameP := props.GetProperty(ghprop.RepoPropertyName)
 	if repoNameP == nil {
@@ -252,25 +251,6 @@ func (c *GitHub) PropertiesToProtoMessage(
 	}
 
 	return nil, fmt.Errorf("conversion of entity type %s is not handled by the github provider", entType)
-}
-
-// While we migrate to per-provider webhook URLs, we need to ensure that this webhook URL
-// has `github` at the end of the path. This logic will later be removed in favor of
-// per-provider webhook URL configuration.
-// Note that this also needs to handle the case where `github` is already in the path.
-func ensureGitHubPathInWebhook(u *url.URL) (*url.URL, error) {
-	if u == nil {
-		return nil, errors.New("url is nil")
-	}
-
-	path := u.Path
-
-	// If the path already contains `github`, we don't need to do anything
-	if path == "github" || strings.HasSuffix(path, "/github") || strings.HasSuffix(path, "/github/") {
-		return u, nil
-	}
-
-	return u.JoinPath("github"), nil
 }
 
 func getGitHubWebhook(webhookURL, pingURL, secret string) *github.Hook {

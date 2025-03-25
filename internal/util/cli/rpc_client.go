@@ -25,7 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	mcrypto "github.com/mindersec/minder/internal/crypto"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/useragent"
 	"github.com/mindersec/minder/internal/util/rand"
 	"github.com/mindersec/minder/pkg/config"
@@ -64,17 +63,13 @@ func requestIDInterceptor(printer func(string, ...interface{})) grpc.UnaryClient
 // GrpcForCommand is a helper for getting a testing connection from cobra flags
 func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error) {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](v)
-	if err != nil {
+	if err != nil || clientConfig == nil {
 		return nil, fmt.Errorf("unable to read config: %w", err)
 	}
 
-	grpcHost := clientConfig.GRPCClientConfig.Host
-	grpcPort := clientConfig.GRPCClientConfig.Port
-	insecureDefault := grpcHost == "localhost" || grpcHost == "127.0.0.1" || grpcHost == "::1"
-	allowInsecure := clientConfig.GRPCClientConfig.Insecure || insecureDefault
-
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
+	realm := clientConfig.Identity.CLI.Realm
 
 	opts := []grpc.DialOption{}
 	opts = append(opts, grpc.WithUserAgent(useragent.GetUserAgent()))
@@ -83,11 +78,10 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithUnaryInterceptor(requestIDInterceptor(cmd.PrintErrf)))
 	}
 
-	return util.GetGrpcConnection(
-		grpcHost,
-		grpcPort,
-		allowInsecure,
+	return GetGrpcConnection(
+		clientConfig.GRPCClientConfig,
 		issuerUrl,
+		realm,
 		clientId,
 		opts...,
 	)
@@ -99,11 +93,15 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 	ctx := context.Background()
 
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
-	if err != nil {
+	if err != nil || clientConfig == nil {
 		return MessageAndError("Unable to read config", err)
 	}
 
-	_, err = util.GetToken(clientConfig.Identity.CLI.IssuerUrl, clientConfig.Identity.CLI.ClientId)
+	_, err = GetToken(clientConfig.GRPCClientConfig.GetGRPCAddress(),
+		[]grpc.DialOption{clientConfig.GRPCClientConfig.TransportCredentialsOption()},
+		clientConfig.Identity.CLI.IssuerUrl,
+		clientConfig.Identity.CLI.Realm,
+		clientConfig.Identity.CLI.ClientId)
 	if err != nil { // or token is expired?
 		tokenFile, err := LoginAndSaveCreds(ctx, cmd, clientConfig)
 		if err != nil {
@@ -130,7 +128,7 @@ func LoginAndSaveCreds(ctx context.Context, cmd *cobra.Command, clientConfig *cl
 	}
 
 	// save credentials
-	filePath, err := util.SaveCredentials(util.OpenIdCredentials{
+	filePath, err := SaveCredentials(OpenIdCredentials{
 		AccessToken:          token.AccessToken,
 		RefreshToken:         token.RefreshToken,
 		AccessTokenExpiresAt: token.Expiry,
@@ -184,15 +182,21 @@ func Login(
 	extraScopes []string,
 	skipBroswer bool,
 ) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
+	if cfg == nil {
+		return nil, errors.New("client config is nil")
+	}
+	grpcCfg := cfg.GRPCClientConfig
+	opts := []grpc.DialOption{grpcCfg.TransportCredentialsOption()}
 	issuerUrlStr := cfg.Identity.CLI.IssuerUrl
 	clientID := cfg.Identity.CLI.ClientId
+	realm := cfg.Identity.CLI.Realm
 
-	parsedURL, err := url.Parse(issuerUrlStr)
+	realmUrl, err := GetRealmUrl(grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
 	if err != nil {
-		return nil, MessageAndError("Error parsing issuer URL", err)
+		return nil, MessageAndError("Error building realm URL", err)
 	}
 
-	issuerUrl := parsedURL.JoinPath("realms/stacklok")
+	// TODO: get these from WWW-Authenticate, rather than hard-coding
 	scopes := []string{"openid", "minder-audience"}
 
 	if len(extraScopes) > 0 {
@@ -235,13 +239,13 @@ func Login(
 		return nil, MessageAndError("Error getting random port", err)
 	}
 
-	parsedURL, err = url.Parse(fmt.Sprintf("http://localhost:%v", port))
-	if err != nil {
-		return nil, MessageAndError("Error parsing callback URL", err)
+	redirectURI := &url.URL{
+		Scheme: "http",
+		Host:   fmt.Sprintf("localhost:%v", port),
 	}
-	redirectURI := parsedURL.JoinPath(callbackPath)
+	redirectURI = redirectURI.JoinPath(callbackPath)
 
-	provider, err := rp.NewRelyingPartyOIDC(ctx, issuerUrl.String(), clientID, "", redirectURI.String(), scopes, options...)
+	provider, err := rp.NewRelyingPartyOIDC(ctx, realmUrl, clientID, "", redirectURI.String(), scopes, options...)
 	if err != nil {
 		return nil, MessageAndError("Error creating relying party", err)
 	}

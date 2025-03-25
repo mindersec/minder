@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -28,6 +29,22 @@ import (
 	"github.com/mindersec/minder/pkg/config/server"
 	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
+
+func TestMain(m *testing.M) {
+	// Needed for loading email templates
+	err := os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata")
+	if err != nil {
+		fmt.Printf("error setting KO_DATA_PATH: %v\n", err)
+		os.Exit(1)
+	}
+	_, err = email.NewMessage(context.Background(), "j@example.com", "http://example.com/invite", "http://api.example.com/", "admin", "Example", "Joe")
+	if err != nil {
+		fmt.Printf("error creating message: %v\n", err)
+		os.Exit(1)
+	}
+
+	m.Run()
+}
 
 func TestCreateInvite(t *testing.T) {
 	t.Parallel()
@@ -76,12 +93,9 @@ func TestCreateInvite(t *testing.T) {
 			assert.NoError(t, user.Set("sub", userEmail))
 
 			ctx := context.Background()
-			ctx = authjwt.WithAuthTokenContext(ctx, user)
-
-			idClient := mockauth.NewMockResolver(ctrl)
-			idClient.EXPECT().Resolve(ctx, userSubject).Return(&auth.Identity{
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
 				UserID: userSubject,
-			}, nil).AnyTimes()
+			})
 
 			publisher := mockevents.NewMockPublisher(ctrl)
 			if scenario.publisherSetup != nil {
@@ -93,7 +107,7 @@ func TestCreateInvite(t *testing.T) {
 			}
 
 			service := NewInviteService()
-			invite, err := service.CreateInvite(ctx, scenario.dBSetup(ctrl), idClient, publisher, emailConfig, projectId, userRole, userEmail)
+			invite, err := service.CreateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -122,7 +136,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "error when no existing invites",
 			dBSetup: dbf.NewDBMock(
-				withGetUserBySubject(validUser),
+				// withGetUserBySubject(validUser),
 				withExistingInvites(noInvites),
 			),
 			expectedError: "no invitations found for this email and project",
@@ -130,7 +144,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "error when multiple existing invites",
 			dBSetup: dbf.NewDBMock(
-				withGetUserBySubject(validUser),
+				// withGetUserBySubject(validUser),
 				withExistingInvites(multipleInvites),
 			),
 			expectedError: "multiple invitations found for this email and project",
@@ -138,7 +152,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "no message sent when role is the same",
 			dBSetup: dbf.NewDBMock(
-				withGetUserBySubject(validUser),
+				// withGetUserBySubject(validUser),
 				withExistingInvites(singleInviteWithSameRole),
 				withInviteRoleUpdate(userInvite, nil),
 				withProject(),
@@ -147,7 +161,7 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "invite updated and message sent successfully",
 			dBSetup: dbf.NewDBMock(
-				withGetUserBySubject(validUser),
+				// withGetUserBySubject(validUser),
 				withExistingInvites(singleInviteWithDifferentRole),
 				withInviteRoleUpdate(userInvite, nil),
 				withProject(),
@@ -174,12 +188,10 @@ func TestUpdateInvite(t *testing.T) {
 			assert.NoError(t, user.Set("sub", userEmail))
 
 			ctx := context.Background()
-			ctx = authjwt.WithAuthTokenContext(ctx, user)
-
-			idClient := mockauth.NewMockResolver(ctrl)
-			idClient.EXPECT().Resolve(ctx, userSubject).Return(&auth.Identity{
+			// ctx = authjwt.WithAuthTokenContext(ctx, user)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
 				UserID: userSubject,
-			}, nil).AnyTimes()
+			})
 
 			publisher := mockevents.NewMockPublisher(ctrl)
 			if scenario.publisherSetup != nil {
@@ -191,7 +203,7 @@ func TestUpdateInvite(t *testing.T) {
 			}
 
 			service := NewInviteService()
-			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), idClient, publisher, emailConfig, projectId, userRole, userEmail)
+			invite, err := service.UpdateInvite(ctx, scenario.dBSetup(ctrl), publisher, emailConfig, projectId, userRole, userEmail)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -280,7 +292,7 @@ func TestRemoveInvite(t *testing.T) {
 var (
 	projectId   = uuid.New()
 	userEmail   = "test@example.com"
-	userSubject = "subject"
+	userSubject = uuid.New().String()
 	userRole    = authz.RoleAdmin
 	inviteCode  = "code"
 	baseUrl     = "https://minder.example.com"

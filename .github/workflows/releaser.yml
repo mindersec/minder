@@ -50,17 +50,17 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           go-version-file: 'go.mod'
           cache: true
       - name: Install Syft
-        uses: anchore/sbom-action/download-syft@df80a981bc6edbc4e220a492d3cbe9f5547a6e75 # v0.17.9
+        uses: anchore/sbom-action/download-syft@f325610c9f50a54015d37c8d16cb3b0e2c8f4de0 # v0.18.0
       - name: Install Cosign
-        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
+        uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
       - name: Run GoReleaser
         id: run-goreleaser
-        uses: goreleaser/goreleaser-action@9ed2f89a662bf1735a48bc8557fd212fa902bebf # v6.1.0
+        uses: goreleaser/goreleaser-action@90a3faa9d0182683851fbfa97ca1a2cb983bfca3 # v6.2.1
         with:
           distribution: goreleaser
           version: "~> v2"
@@ -92,7 +92,7 @@ jobs:
       actions: read # To read the workflow path.
       id-token: write # To sign the provenance.
       contents: write # To add assets to a release.
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
       base64-subjects: "${{ needs.release.outputs.hashes }}"
       upload-assets: true # upload to a new release
@@ -105,7 +105,7 @@ jobs:
     permissions: read-all
     steps:
       - name: Install the SLSA verifier
-        uses: slsa-framework/slsa-verifier/actions/installer@3714a2a4684014deb874a0e737dffa0ee02dd647 # v2.6.0
+        uses: slsa-framework/slsa-verifier/actions/installer@6657aada084353c65e5dde35394b1a010289fab0 # v2.7.0
       - name: Download assets
         env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

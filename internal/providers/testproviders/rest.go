@@ -6,11 +6,11 @@ package testproviders
 import (
 	"context"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/providers/http"
 	"github.com/mindersec/minder/internal/providers/noop"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

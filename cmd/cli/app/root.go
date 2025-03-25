@@ -103,12 +103,50 @@ func init() {
 func initConfig() {
 	viper.SetEnvPrefix("minder")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	config.SetViperStructDefaults(viper.GetViper(), "", clientconfig.Config{})
 
-	cfgFilePath := cli.GetRelevantCLIConfigPath(viper.GetViper())
-	if cfgFilePath != "" {
-		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
+	// Get the config flag value directly to ensure we catch explicitly specified configs
+	configFlag := viper.GetString("config")
+	if configFlag != "" {
+		// User explicitly specified a config file via --config flag
+		if _, err := os.Stat(configFlag); err != nil {
+			RootCmd.PrintErrln(fmt.Sprintf("Cannot find specified config file: %s", configFlag))
+			os.Exit(1)
+		}
+		viper.SetConfigFile(configFlag)
+	} else {
+		// No config file specified, use defaults
+		viper.SetConfigName("config")
+		viper.AddConfigPath(".")
+		if cfgDirPath := cli.GetDefaultCLIConfigPath(); cfgDirPath != "" {
+			viper.AddConfigPath(cfgDirPath)
+		}
+	}
+
+	viper.SetConfigType("yaml")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		if configFlag != "" {
+			// If there's any error, we should fail
+			RootCmd.PrintErrln(fmt.Sprintf("Error reading config file %s: %v", configFlag, err))
+			os.Exit(1)
+		}
+
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Only allow "config not found" when no config was explicitly specified
+			RootCmd.PrintErrln("No config file present, using default values.")
+		} else {
+			RootCmd.PrintErrln(fmt.Sprintf("Error reading config file: %s", err))
+			os.Exit(1)
+		}
+	}
+
+	// If we successfully read a config file, check for null values
+	if configFlag != "" {
+		cfgFileData, err := config.GetConfigFileData(configFlag)
 		if err != nil {
-			RootCmd.PrintErrln(err)
+			RootCmd.PrintErrln(fmt.Sprintf("Error reading config file data: %v", err))
 			os.Exit(1)
 		}
 
@@ -119,27 +157,6 @@ func initConfig() {
 				RootCmd.PrintErrln("Null Value at: " + key)
 			}
 			os.Exit(1)
-		}
-
-		viper.SetConfigFile(cfgFilePath)
-	} else {
-		// use defaults
-		viper.SetConfigName("config")
-		viper.AddConfigPath(".")
-		if cfgDirPath := cli.GetDefaultCLIConfigPath(); cfgDirPath != "" {
-			viper.AddConfigPath(cfgDirPath)
-		}
-	}
-	viper.SetConfigType("yaml")
-	viper.AutomaticEnv()
-
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			// Config file not found; use default values
-			RootCmd.PrintErrln("No config file present, using default values.")
-		} else {
-			// Some other error occurred
-			RootCmd.Printf("Error reading config file: %s", err)
 		}
 	}
 }

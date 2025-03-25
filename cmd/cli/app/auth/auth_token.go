@@ -10,8 +10,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -40,13 +40,16 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	grpcCfg := clientConfig.GRPCClientConfig
+	opts := []grpc.DialOption{grpcCfg.TransportCredentialsOption()}
 	// save credentials
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
-	creds, err := util.GetToken(issuerUrl, clientId)
+	realm := clientConfig.Identity.CLI.Realm
+	creds, err := cli.GetToken(grpcCfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 	if err != nil {
 		cmd.Printf("Error getting token: %v\n", err)
-		if errors.Is(err, os.ErrNotExist) || errors.Is(err, util.ErrGettingRefreshToken) {
+		if errors.Is(err, os.ErrNotExist) || errors.Is(err, cli.ErrGettingRefreshToken) {
 			// wait for the token to be received
 			token, err := cli.Login(ctx, cmd, clientConfig, []string{}, skipBrowser)
 			if err != nil {

@@ -95,6 +95,9 @@ type TelemetryStore struct {
 	// PullRequest is the pull request ID that the request was associated with.
 	PullRequest uuid.UUID `json:"pr"`
 
+	// Entity is the entity ID that the request was associated with.
+	Entity uuid.UUID `json:"entity"`
+
 	// Profile is the profile that the request was associated with.
 	Profile Profile `json:"profile"`
 
@@ -200,6 +203,9 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	if ts.PullRequest != uuid.Nil {
 		e.Str("pr", ts.PullRequest.String())
+	}
+	if ts.Entity != uuid.Nil {
+		e.Str("entity", ts.Entity.String())
 	}
 	if ts.Profile != (Profile{}) {
 		e.Any("profile", ts.Profile)

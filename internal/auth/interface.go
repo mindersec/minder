@@ -12,6 +12,7 @@ import (
 
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/puzpuzpuz/xsync/v3"
+	"github.com/rs/zerolog"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -119,6 +120,7 @@ func NewIdentityClient(providers ...IdentityProvider) (*IdentityClient, error) {
 	}
 	for _, p := range providers {
 		u := p.URL() // URL's String has a pointer receiver
+		zerolog.Ctx(context.Background()).Debug().Str("provider", p.String()).Str("url", u.String()).Msg("Registering provider")
 
 		prev, ok := c.providers.LoadOrStore(p.String(), p)
 		if ok { // We had an existing value, this is a configuration error.

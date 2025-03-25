@@ -74,11 +74,6 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("unable to list providers: %w", err)
 	}
 
-	webhookUrl, err := url.Parse(cfg.WebhookConfig.ExternalWebhookURL)
-	if err != nil {
-		return fmt.Errorf("unable to parse webhook url: %w", err)
-	}
-
 	whSecret, err := getWebhookSecret(cfg)
 	if err != nil {
 		return err
@@ -127,7 +122,15 @@ func runCmdWebhookUpdate(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		updateErr := updateGithubWebhooks(ctx, ghCli, store, provider, webhookUrl.Host, whSecret)
+		webhookURL, err := url.JoinPath(
+			cfg.WebhookConfig.ExternalWebhookURL,
+			url.PathEscape(string(db.ProviderTypeGithub)),
+		)
+		if err != nil {
+			zerolog.Ctx(ctx).Err(err).Msg("error joining webhook URL")
+			continue
+		}
+		updateErr := updateGithubWebhooks(ctx, ghCli, store, provider, webhookURL, whSecret)
 		if updateErr != nil {
 			zerolog.Ctx(ctx).Err(updateErr).Msg("unable to update webhooks")
 		}

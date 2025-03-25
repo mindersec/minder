@@ -45,6 +45,8 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 	FileHTTPType,
 	FileRead,
 	FileWalk,
+	FileArchive,
+	BaseFileArchive,
 	ListGithubActions,
 	ParseYaml,
 	ParseToml,
@@ -54,7 +56,6 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 // MinderRegoLibExperiments contains Minder-specific functions which
 // should only be exposed when the given experiment is enabled.
 var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Result) func(*rego.Rego){
-	flags.TarGzFunctions: {FileArchive, BaseFileArchive},
 	flags.GitPRDiffs: {
 		BaseFileExists,
 		BaseFileLs,
@@ -85,29 +86,31 @@ func instantiateRegoLib(ctx context.Context, featureFlags openfeature.IClient, r
 	return lib
 }
 
-// FileExists is a rego function that checks if a file exists
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the file to check.
-// It's exposed as `file.exists`.
+// FileExists adds the `file.exists` function to the Rego engine.
 func FileExists(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.exists",
+			Description: `file.exists checks if a file exists
+			in the filesystem being evaluated (which comes from the ingester).
+			It takes one argument, the path to the file to check, and returns
+			a boolean.`,
 			Decl: types.NewFunction(types.Args(types.S), types.B),
 		},
 		fsExists(res.Fs),
 	)
 }
 
-// BaseFileExists is a rego function that checks if a file exists
-// in the base filesystem from the ingester.  Base filesystems are
-// typically associated with pull requests.
-// It takes one argument, the path to the file to check.
-// It's exposed as `base_file.exists`.
+// BaseFileExists adds the `base_file.exists` function to the Rego engine.
 func BaseFileExists(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.exists",
+			Description: `base_file.exists checks if a file exists
+			in the pre-change filesystem being evaluated (in a pull_request or
+			other diff context).
+			It takes one argument, the path to the file to check, and returns
+			a boolean.`,
 			Decl: types.NewFunction(types.Args(types.S), types.B),
 		},
 		fsExists(res.BaseFs),
@@ -138,27 +141,30 @@ func fsExists(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.T
 	}
 }
 
-// FileRead is a rego function that reads a file from the filesystem
-// being evaluated (which comes from the ingester). It takes one argument,
-// the path to the file to read. It's exposed as `file.read`.
+// FileRead adds the `file.read` function to the Rego engine.
 func FileRead(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.read",
+			Description: `file.read reads a file from the filesystem
+			being evaluated (which comes from the ingester).
+			It takes one argument, the path to the file to read, and returns
+			the file contents as a string.`,
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
 		fsRead(res.Fs),
 	)
 }
 
-// BaseFileRead is a rego function that reads a file from the
-// base filesystem in a pull_request or other diff context.
-// It takes one argument, the path to the file to read.
-// It's exposed as `base_file.read`.
+// BaseFileRead adds the `base_file.read` function to the Rego engine.
 func BaseFileRead(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.read",
+			Description: `base_file.read reads a file from the pre-change
+			filesystem in a pull_request or other diff context.
+			It takes one argument, the path to the file to read, and returns
+			the file contents as a string.`,
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
 		fsRead(res.BaseFs),
@@ -194,18 +200,19 @@ func fsRead(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Ter
 	}
 }
 
-// FileLs is a rego function that lists the files in a directory
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the directory to list. It's exposed
-// as `file.ls`.
-// If the file is a file, it returns the file itself.
-// If the file is a directory, it returns the files in the directory.
-// If the file is a symlink, it follows the symlink and returns the files
-// in the target.
+// FileLs adds the `file.ls` function to the Rego engine.
 func FileLs(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.ls",
+			Description: `file.ls lists the files in a directory in the
+			filesystem being evaluated (which comes from the ingester).
+		    It takes one argument, the path to the directory to list, and
+			returns a list of strings.
+			If the file is a file, it returns a one-element list with the filename.
+			If the file is a directory, it returns the files in the directory.
+			If the file is a symlink, it follows the symlink and returns the files
+			in the target.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsLs(res.Fs),
@@ -224,6 +231,14 @@ func BaseFileLs(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.ls",
+			Description: `base_file.ls lists the files in a directory in the
+			pre-change filesystem being evaluated (in a pull_request or other diff context).
+			It takes one argument, the path to the directory to list, and
+			returns a list of strings.
+			If the file is a file, it returns a one-element list with the filename.
+			If the file is a directory, it returns the files in the directory.
+			If the file is a symlink, it follows the symlink and returns the files
+			in the target.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsLs(res.BaseFs),
@@ -288,29 +303,31 @@ func fsLs(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term,
 	}
 }
 
-// FileLsGlob is a rego function that lists the files matching a glob in a directory
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the pattern to match. It's exposed
-// as `file.ls_glob`.
+// FileLsGlob adds the `file.ls_glob` function to the Rego engine.
 func FileLsGlob(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.ls_glob",
+			Description: `file.ls_glob lists the files matching a glob in a
+			directory in the filesystem being evaluated (which comes from the ingester).
+			It takes one argument, the path to the pattern to match, and
+			returns a list of strings for each file that matches the glob.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsLsGlob(res.Fs),
 	)
 }
 
-// BaseFileLsGlob is a rego function that lists the files matching a glob
-// in a directory in the base filesystem being evaluated (in a pull_request
-// or other diff context).
-// It takes one argument, the path to the pattern to match. It's exposed
-// as `base_file.ls_glob`.
+// BaseFileLsGlob adds the `base_file.ls_glob` function to the Rego engine.
 func BaseFileLsGlob(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.ls_glob",
+			Description: `file.ls_glob lists the files matching a glob in a
+			directory in the pre-change filesystem being evaluated (in a pull_request
+			or other diff context).
+			It takes one argument, the path to the pattern to match, and
+			returns a list of strings for each file that matches the glob.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsLsGlob(res.BaseFs),
@@ -344,29 +361,31 @@ func fsLsGlob(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.T
 	}
 }
 
-// FileWalk is a rego function that walks the files in a directory
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the directory to walk. It's exposed
-// as `file.walk`.
+// FileWalk adds the `file.walk` function to the Rego engine.
 func FileWalk(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.walk",
+			Description: `file.walk lists the files underneath a directory in
+			the filesystem being evaluated (which comes from the ingester).
+			It takes one argument, the base directory to walk, and returns
+			a list of filenames as strings for each file that is found.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsWalk(res.Fs),
 	)
 }
 
-// BaseFileWalk is a rego function that walks the files in a directory
-// in the base filesystem being evaluated (in a pull_request or other
-// diff context).
-// It takes one argument, the path to the directory to walk. It's exposed
-// as `base_file.walk`.
+// BaseFileWalk adds the `base_file.walk` function to the Rego engine.
 func BaseFileWalk(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.walk",
+			Description: `base_file.walk lists the files underneath a directory
+			in the pre-change filesystem being evaluated (in a pull_request or other
+			diff context).
+			It takes one argument, the base directory to walk, and returns
+			a list of filenames as strings for each file that is found.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
 		fsWalk(res.BaseFs),
@@ -453,29 +472,31 @@ func fileLsHandleDir(path string, bfs billy.Filesystem) (*ast.Term, error) {
 		ast.NewArray(files...)), nil
 }
 
-// FileArchive packages a set of files form the the specified directory into
-// a tarball.  It takes one argument: a list of file or directory paths to
-// include, and outputs the tarball as a string.
-// It's exposed as 'file.archive`.
+// FileArchive adds the 'file.archive` function to the Rego engine.
 func FileArchive(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.archive",
+			Description: `file.archive packages a set of files and directories
+			from the filesystem being evaluated into a .tar.gz archive.
+			It takes one argument: a list of file or directory paths to include,
+			and returns the archive as a binary string.`,
 			Decl: types.NewFunction(types.Args(types.NewArray(nil, types.S)), types.S),
 		},
 		fsArchive(res.Fs),
 	)
 }
 
-// BaseFileArchive packages a set of files form the the specified directory
-// in the base filesystem (from a pull_request or other diff context) into
-// a tarball.  It takes one argument: a list of file or directory paths to
-// include, and outputs the tarball as a string.
-// It's exposed as 'base_file.archive`.
+// BaseFileArchive adds the 'base_file.archive` function to the Rego engine.
 func BaseFileArchive(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.archive",
+			Description: `base_file.archive packages a set of files and directories
+			from the pre-change filesystem being evaluated (in a pull_request or
+			other diff context) into a .tar.gz archive.
+			It takes one argument: a list of file or directory paths to include,
+			and outputs the archive as a binary string.`,
 			Decl: types.NewFunction(types.Args(types.NewArray(nil, types.S)), types.S),
 		},
 		fsArchive(res.BaseFs),
@@ -544,32 +565,34 @@ func fsArchive(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.
 	}
 }
 
-// ListGithubActions is a rego function that lists the actions in a directory
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the directory to list. It's exposed
-// as `github_workflow.ls_actions`.
-// The function returns a set of strings, each string being the name of an action.
+// ListGithubActions adds the `github_workflow.ls_actions` function to the Rego engine.
 // The frizbee library guarantees that the actions are unique.
 func ListGithubActions(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "github_workflow.ls_actions",
+			Description: `github_workflow.ls_actions lists the GitHub Actions
+			references in all files within a directory in the filesystem being
+			evaluated (which comes from the ingester).
+			It takes a single argument, the path to the directory to list, and
+			returns a set of strings, each string being the name of an action.`,
 			Decl: types.NewFunction(types.Args(types.S), types.NewSet(types.S)),
 		},
 		fsListGithubActions(res.Fs),
 	)
 }
 
-// BaseListGithubActions is a rego function that lists the actions in a directory
-// in the base filesystem being evaluated (in a pull_request or diff context).
-// It takes one argument, the path to the directory to list. It's exposed
-// as `github_workflow.base_ls_actions`.
-// The function returns a set of strings, each string being the name of an action.
+// BaseListGithubActions adds the `github_workflow.base_ls_actions` function to the Rego engine.
 // The frizbee library guarantees that the actions are unique.
 func BaseListGithubActions(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "github_workflow.base_ls_actions",
+			Description: `github_workflow.base_ls_actions lists the GitHub Actions
+			references in all files within a directory in the pre-change filesystem being
+			evaluated (in a pull_request or other diff context).
+			It takes a single argument, the path to the directory to list, and
+			returns a set of strings, each string being the name of an action.`,
 			Decl: types.NewFunction(types.Args(types.S), types.NewSet(types.S)),
 		},
 		fsListGithubActions(res.BaseFs),
@@ -605,28 +628,32 @@ func fsListGithubActions(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Te
 	}
 }
 
-// FileHTTPType is a rego function that returns the HTTP type of a file
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the file to check. It's exposed
-// as `file.http_type`.
+// FileHTTPType adds the `file.http_type` function to the Rego engine.
 func FileHTTPType(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.http_type",
+			Description: `file.http_type determines the HTTP (MIME) type of
+			a file in the filesystem being evaluated (which comes from the ingester).
+			It takes one argument, the path to the file to check, and returns
+			the MIME type as a string, defaulting to "application/octet-stream" if the
+			type cannot be determined.`,
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
 		fsHTTPType(res.Fs),
 	)
 }
 
-// BaseFileHTTPType is a rego function that returns the HTTP type of a file
-// in the filesystem being evaluated (which comes from the ingester).
-// It takes one argument, the path to the file to check. It's exposed
-// as `base_file.http_type`.
+// BaseFileHTTPType adds the `base_file.http_type` function to the Rego engine.
 func BaseFileHTTPType(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.http_type",
+			Description: `base_file.http_type determines the HTTP (MIME) type of
+			a file in the filesystem being evaluated (in a pull_request or other diff context).
+			It takes one argument, the path to the file to check, and returns
+			the MIME type as a string, defaulting to "application/octet-stream" if the
+			type cannot be determined.`,
 			Decl: types.NewFunction(types.Args(types.S), types.S),
 		},
 		fsHTTPType(res.BaseFs),
@@ -664,124 +691,128 @@ func fsHTTPType(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast
 	}
 }
 
-// JQIsTrue is a rego function that accepts parsed YAML data and runs a jq query on it.
-// The query is a string in jq format that returns a boolean.
-// It returns a boolean indicating whether the jq query matches the parsed YAML data.
-// It takes two arguments: the parsed YAML data as an AST term, and the jq query as a string.
-// It's exposed as `jq.is_true`.
+// JQIsTrue adds the `jq.is_true` function to the Rego engine.
 func JQIsTrue(_ *interfaces.Result) func(*rego.Rego) {
 	return rego.Function2(
 		&rego.Function{
 			Name: "jq.is_true",
-			// The function takes two arguments: parsed YAML data and the jq query string
+			Description: `jq.is_true runs a boolean jq query against supplied object data.
+			It takes two arguments: the object data (such as parsed YAML), and
+			the jq query as a string, and it returns a boolean indicating whether
+			the query matches the object data.`,
 			Decl: types.NewFunction(types.Args(types.A, types.S), types.B),
 		},
-		func(_ rego.BuiltinContext, parsedYaml *ast.Term, query *ast.Term) (*ast.Term, error) {
-			var jqQuery string
-			if err := ast.As(query.Value, &jqQuery); err != nil {
-				return nil, err
-			}
-
-			// Convert the AST value back to a Go interface{}
-			jsonObj, err := ast.JSON(parsedYaml.Value)
-			if err != nil {
-				return nil, fmt.Errorf("error converting AST to JSON: %w", err)
-			}
-
-			doesMatch, err := util.JQEvalBoolExpression(context.TODO(), jqQuery, jsonObj)
-			if err != nil {
-				return nil, fmt.Errorf("error running jq query: %w", err)
-			}
-
-			return ast.BooleanTerm(doesMatch), nil
-		},
+		jqIsTrue,
 	)
 }
 
-// ParseYaml is a rego function that parses a YAML string into a structured data format.
-// It takes one argument: the YAML content as a string.
-// It returns the parsed YAML data as an AST term.
-// It's exposed as `parse_yaml`.
+func jqIsTrue(_ rego.BuiltinContext, parsedYaml *ast.Term, query *ast.Term) (*ast.Term, error) {
+	var jqQuery string
+	if err := ast.As(query.Value, &jqQuery); err != nil {
+		return nil, err
+	}
+
+	// Convert the AST value back to a Go interface{}
+	jsonObj, err := ast.JSON(parsedYaml.Value)
+	if err != nil {
+		return nil, fmt.Errorf("error converting AST to JSON: %w", err)
+	}
+
+	doesMatch, err := util.JQEvalBoolExpression(context.TODO(), jqQuery, jsonObj)
+	if err != nil {
+		return nil, fmt.Errorf("error running jq query: %w", err)
+	}
+
+	return ast.BooleanTerm(doesMatch), nil
+}
+
+// ParseYaml adds the `parse_yaml` function to the Rego engine.
 func ParseYaml(_ *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "parse_yaml",
-			// Takes one string argument (the YAML content) and returns any type
+			Description: `parse_yaml parses a YAML string into object data.
+			It takes one argument: the YAML content as a string, and returns the
+			parsed YAML data as an object.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
-		func(_ rego.BuiltinContext, yamlContent *ast.Term) (*ast.Term, error) {
-			var yamlStr string
-
-			// Convert the YAML input from the term into a string
-			if err := ast.As(yamlContent.Value, &yamlStr); err != nil {
-				return nil, err
-			}
-
-			// Convert the YAML string into a Go map
-			var jsonObj any
-			err := yaml.Unmarshal([]byte(yamlStr), &jsonObj)
-			if err != nil {
-				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
-			}
-
-			// Convert the Go value to an ast.Value
-			value, err := ast.InterfaceToValue(jsonObj)
-			if err != nil {
-				return nil, fmt.Errorf("error converting to AST value: %w", err)
-			}
-
-			return ast.NewTerm(value), nil
-		},
+		parseYaml,
 	)
 }
 
-// ParseToml is a rego function that parses a TOML configuration string into a structured data format.
-// It takes one argument: the TOML content as a string.
-// It returns the parsed TOML data as an AST term.
-// It's exposed as `parse_toml`.
+func parseYaml(_ rego.BuiltinContext, yamlContent *ast.Term) (*ast.Term, error) {
+	var yamlStr string
+
+	// Convert the YAML input from the term into a string
+	if err := ast.As(yamlContent.Value, &yamlStr); err != nil {
+		return nil, err
+	}
+
+	// Convert the YAML string into a Go interface
+	var jsonObj any
+	err := yaml.Unmarshal([]byte(yamlStr), &jsonObj)
+	if err != nil {
+		return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
+	}
+
+	// Convert the Go value to an ast.Value
+	value, err := ast.InterfaceToValue(jsonObj)
+	if err != nil {
+		return nil, fmt.Errorf("error converting to AST value: %w", err)
+	}
+
+	return ast.NewTerm(value), nil
+}
+
+// ParseToml adds the `parse_toml` function to the Rego engine.
 func ParseToml(_ *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "parse_toml",
-			// Takes one string argument (the YAML content) and returns any type
+			Description: `parse_toml parses a TOML string into object data.
+			It takes one argument: the TOML content as a string, and returns the
+			parsed TOML data as an object.`,
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
-		func(_ rego.BuiltinContext, content *ast.Term) (*ast.Term, error) {
-			var tomlStr string
-
-			// Convert the YAML input from the term into a string
-			if err := ast.As(content.Value, &tomlStr); err != nil {
-				return nil, err
-			}
-
-			// Convert the YAML string into a Go map
-			var jsonObj any
-			err := toml.Unmarshal([]byte(tomlStr), &jsonObj)
-			if err != nil {
-				return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
-			}
-
-			// Convert the Go value to an ast.Value
-			value, err := ast.InterfaceToValue(jsonObj)
-			if err != nil {
-				return nil, fmt.Errorf("error converting to AST value: %w", err)
-			}
-
-			return ast.NewTerm(value), nil
-		},
+		parseToml,
 	)
 }
 
-// DependencyExtract is a rego function that extracts dependencies from a file
-// or subtree of the filesystem being evaluated (which comes from the ingester).
-// It takes one arguments: the path to the file or subtree to be scanned.
-// It returns the extracted dependencies as an AST term in the form of a
-// protobom SBOM with the "nodes" fields but not "edges".
-// It's exposed as `file.deps`.
+func parseToml(_ rego.BuiltinContext, content *ast.Term) (*ast.Term, error) {
+	var tomlStr string
+
+	// Convert the TOML input from the term into a string
+	if err := ast.As(content.Value, &tomlStr); err != nil {
+		return nil, err
+	}
+
+	// Convert the TOML string into a Go interface
+	var jsonObj any
+	err := toml.Unmarshal([]byte(tomlStr), &jsonObj)
+	if err != nil {
+		return nil, fmt.Errorf("error converting YAML to JSON: %w", err)
+	}
+
+	// Convert the Go value to an ast.Value
+	value, err := ast.InterfaceToValue(jsonObj)
+	if err != nil {
+		return nil, fmt.Errorf("error converting to AST value: %w", err)
+	}
+
+	return ast.NewTerm(value), nil
+}
+
+// DependencyExtract adds the `file.deps` function to the Rego engine.
 func DependencyExtract(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.deps",
+			Description: `file.deps extracts dependencies from a file or subtree
+			of the filesystem being evaluated (which comes from the ingester).
+			It takes one argument: the path to the file or subtree to be scanned,
+			and returns the extracted dependencies in the form of a protobom SBOM
+			with "nodes", but not "edges".  In particular, the SBOM Nodes will be
+			stored as an array of objects in ".node_list.nodes" within the returned object.`,
 			// TODO: The return type is types.A, but it should be types.NewObject(...)
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},
@@ -789,16 +820,17 @@ func DependencyExtract(res *interfaces.Result) func(*rego.Rego) {
 	)
 }
 
-// BaseDependencyExtract is a rego function that extracts dependencies from a file
-// or subtree of the base filesystem in a pull_request or other diff context.
-// It takes two arguments: the path to the file or subtree to be scanned.
-// It returns the extracted dependencies as an AST term in the form of a
-// protobom SBOM with the "nodes" fields but not "edges".
-// It's exposed as `base_file.deps`.
+// BaseDependencyExtract adds the `base_file.deps` function to the Rego engine.
 func BaseDependencyExtract(res *interfaces.Result) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.deps",
+			Description: `base_file.deps extracts dependencies from a file or subtree
+			of the filesystem being evaluated (in a pull_request or other diff context).
+			It takes one argument: the path to the file or subtree to be scanned,
+			and returns the extracted dependencies in the form of a protobom SBOM
+			with "nodes", but not "edges".  In particular, the SBOM Nodes will be
+			stored as an array of objects in ".node_list.nodes" within the returned object.`,
 			// TODO: The return type is types.A, but it should be types.NewObject(...)
 			Decl: types.NewFunction(types.Args(types.S), types.A),
 		},

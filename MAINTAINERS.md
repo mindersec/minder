@@ -10,7 +10,7 @@ currently has a two-tier contributor structure:
 
 ## Contributors
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for a desrciption of how to get started
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for a description of how to get started
 contributing to Minder.
 
 ## Requirements for Becoming a Maintainer
@@ -59,23 +59,4 @@ As a maintainer, you will have the following responsibilities:
 
 ## Maintainers List
 
-The current list of maintainers is:
-
-- @JAORMX (Stacklok)
-- @jhrozek (Stacklok)
-- @rdimitrov (Stacklok)
-- @dmjb (Stacklok)
-- @evankanderson (Stacklok)
-- @eleftherias (Stacklok)
-- @yrobla (Stacklok)
-- @lukehinds (Stacklok)
-- @blkt (Stacklok)
-- @puerco (Stacklok)
-- @teodor-yanev (Stacklok)
-- @Vyom-Yadav (Canonical)
-
-Assignment of permissions for these maintainers is currently privately managed
-by Stacklok as a matter of circumstance; changes to this list will need a
-Stacker to apply some private automation to grant the privileges, until we find
-a different approach (for example, donation to a foundation, which would have
-their own automation).
+See https://github.com/mindersec/community/tree/main/MAINTAINERS.md for the current list of maintainers.

@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/keycloak"
 	mockauth "github.com/mindersec/minder/internal/auth/mock"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
@@ -79,13 +80,13 @@ func TestCreateRoleAssignment(t *testing.T) {
 				},
 			}
 
-			idClient := mockauth.NewMockResolver(ctrl)
-			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
-			}, nil)
+			identitySub := auth.Identity{
+				UserID:   subject,
+				Provider: &keycloak.KeyCloak{},
+			}
 
 			service := NewRoleService()
-			_, err := service.CreateRoleAssignment(ctx, store, authzClient, idClient, project, subject, userRole)
+			_, err := service.CreateRoleAssignment(ctx, store, authzClient, project, identitySub, userRole)
 
 			if scenario.expectedError != "" {
 				require.ErrorContains(t, err, scenario.expectedError)
@@ -151,7 +152,8 @@ func TestUpdateRoleAssignment(t *testing.T) {
 
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
+				UserID:   subject,
+				Provider: &keycloak.KeyCloak{},
 			}, nil)
 
 			service := NewRoleService()
@@ -229,7 +231,8 @@ func TestRemoveRole(t *testing.T) {
 
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(ctx, subject).Return(&auth.Identity{
-				UserID: subject,
+				UserID:   subject,
+				Provider: &keycloak.KeyCloak{},
 			}, nil)
 
 			authzClient := &mock.SimpleClient{

@@ -10,8 +10,8 @@ package fixtures
 
 import (
 	"github.com/google/uuid"
-	"github.com/mindersec/minder/internal/entities/properties"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/reflect/protoreflect"
 

@@ -16,9 +16,9 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/mindersec/minder/internal/entities/properties"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

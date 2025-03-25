@@ -4,6 +4,7 @@
 package controlplane
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -29,8 +30,11 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth"
+	"github.com/mindersec/minder/internal/auth/githubactions"
 	authjwt "github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/auth/jwt/noop"
+	"github.com/mindersec/minder/internal/auth/keycloak"
+	mockauth "github.com/mindersec/minder/internal/auth/mock"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -183,6 +187,9 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 				tc.buildStubs(t, mockStore)
 			}
 			ctx := authjwt.WithAuthTokenContext(withRpcOptions(context.Background(), rpcOptions), userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: userJWT.Subject(),
+			})
 
 			authzClient := &mock.SimpleClient{}
 
@@ -277,6 +284,10 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
 			ctx = authjwt.WithAuthTokenContext(ctx, userJWT)
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID:    userJWT.Subject(),
+				HumanName: userJWT.Subject(),
+			})
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,
 			}, unaryHandler)
@@ -485,9 +496,11 @@ func TestRoleManagement(t *testing.T) {
 					data: []auth.Identity{{
 						UserID:    user1.String(),
 						HumanName: "user1",
+						Provider:  &keycloak.KeyCloak{},
 					}, {
 						UserID:    user2.String(),
 						HumanName: "user2",
+						Provider:  &keycloak.KeyCloak{},
 					}},
 				},
 				jwt:   noop.NewJwtValidator("test"),
@@ -598,7 +611,7 @@ func TestUpdateRole(t *testing.T) {
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
 			if tc.expectedInvitation {
-				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{}, nil)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
@@ -648,61 +661,62 @@ func TestAssignRole(t *testing.T) {
 	userEmail := "user@test.com"
 	authzRole := authz.RoleAdmin
 	projectId := uuid.New()
-	projectIdString := projectId.String()
+	otherProject := uuid.New()
 
 	tests := []struct {
-		name           string
-		inviteeEmail   string
-		subject        string
-		buildStubs     func(t *testing.T, store *mockdb.MockStore)
-		expectedError  string
-		inviteByEmail  bool
-		inviteByUserId bool
+		name          string
+		project       uuid.UUID
+		inviteeEmail  string
+		subject       string
+		buildStubs    func(t *testing.T, store *mockdb.MockStore)
+		expectedError string
+		userIdentity  *auth.Identity
+		flagData      map[string]any
 	}{
+		{
+			name:          "error with no subject or email",
+			expectedError: "one of subject or email must be specified",
+		},
 		{
 			name:          "error when self enroll",
 			inviteeEmail:  userEmail,
 			expectedError: "cannot update your own role",
 		},
 		{
-			name: "error when project ID is not found",
-			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
-				t.Helper()
-				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(db.Project{}, sql.ErrNoRows)
-			},
-			expectedError: fmt.Sprintf("target project with ID %s not found", projectIdString),
-		},
-		{
-			name: "error with no subject or email",
-			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
-				t.Helper()
-				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(db.Project{
-					ID: projectId,
-				}, nil)
-			},
-			expectedError: "one of subject or email must be specified",
+			name:          "error when project ID is not found",
+			project:       otherProject,
+			subject:       "user",
+			expectedError: fmt.Sprintf("target project with ID %s not found", otherProject.String()),
 		},
 		{
 			name:         "request with email creates invite",
 			inviteeEmail: "other@example.com",
-			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
-				t.Helper()
-				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(db.Project{
-					ID: projectId,
-				}, nil)
-			},
-			inviteByEmail: true,
+			flagData:     map[string]any{"user_management": true},
 		},
 		{
 			name:    "request with subject creates role assignment",
 			subject: "user",
-			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
-				t.Helper()
-				store.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(db.Project{
-					ID: projectId,
-				}, nil)
+			userIdentity: &auth.Identity{
+				UserID:   "user",
+				Provider: &keycloak.KeyCloak{},
 			},
-			inviteByUserId: true,
+		}, {
+			name:    "machine accounts disabled",
+			subject: "githubactions/repo:mindersec/community:ref:refs/heads/main",
+			userIdentity: &auth.Identity{
+				UserID:   "repo:mindersec/community:ref:refs/heads/main",
+				Provider: &githubactions.GitHubActions{},
+			},
+			expectedError: "Description: Unimplemented\nDetails: machine accounts are not enabled",
+		},
+		{
+			name:    "grant permission to GitHub Action",
+			subject: "githubactions/repo:mindersec/community:ref:refs/heads/main",
+			userIdentity: &auth.Identity{
+				UserID:   "repo:mindersec/community:ref:refs/heads/main",
+				Provider: &githubactions.GitHubActions{},
+			},
+			flagData: map[string]any{"machine_accounts": true},
 		},
 	}
 
@@ -713,41 +727,46 @@ func TestAssignRole(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
+			projectIdString := cmp.Or(tc.project, projectId).String()
 			user := openid.New()
 			assert.NoError(t, user.Set("email", userEmail))
 
 			ctx := context.Background()
 			ctx = authjwt.WithAuthTokenContext(ctx, user)
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
-				Project: engcontext.Project{ID: projectId},
+				Project: engcontext.Project{ID: cmp.Or(tc.project, projectId)},
 			})
 
-			featureClient := &flags.FakeClient{}
-
-			// Enable user management feature flag if inviting by email
-			if tc.inviteByEmail {
-				featureClient.Data = map[string]any{
-					"user_management": true,
-				}
+			featureClient := &flags.FakeClient{
+				Data: tc.flagData,
 			}
+			idClient := mockauth.NewMockResolver(ctrl)
+			idClient.EXPECT().Resolve(gomock.Any(), tc.subject).Return(tc.userIdentity, nil).MaxTimes(1)
 
 			mockInviteService := mockinvites.NewMockInviteService(ctrl)
-			if tc.inviteByEmail {
-				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+			mockRoleService := mockroles.NewMockRoleService(ctrl)
+			if tc.expectedError == "" && tc.userIdentity != nil {
+				mockRoleService.EXPECT().CreateRoleAssignment(gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), *tc.userIdentity, authzRole).Return(&minder.RoleAssignment{
+					Role:    authzRole.String(),
+					Project: &projectIdString,
+				}, nil)
+			} else if tc.expectedError == "" {
+				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{
 					Role:    authzRole.String(),
 					Project: projectIdString,
 				}, nil)
 			}
-			mockRoleService := mockroles.NewMockRoleService(ctrl)
-			if tc.inviteByUserId {
-				mockRoleService.EXPECT().CreateRoleAssignment(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-					gomock.Any(), tc.subject, authzRole).Return(&minder.RoleAssignment{
-					Role:    authzRole.String(),
-					Project: &projectIdString,
-				}, nil)
-			}
+
 			mockStore := mockdb.NewMockStore(ctrl)
+			// Most tests will call GetProjectByID with the correct ID, but some will
+			// deliberately choose a different ID; return an error for those.
+			mockStore.EXPECT().GetProjectByID(gomock.Any(), projectId).Return(db.Project{
+				ID: projectId,
+			}, nil).MaxTimes(1)
+			mockStore.EXPECT().GetProjectByID(gomock.Any(), gomock.Not(gomock.Eq(projectId))).
+				Return(db.Project{}, sql.ErrNoRows).MaxTimes(1)
 			mockStore.EXPECT().BeginTransaction().AnyTimes()
 			mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).AnyTimes()
 			mockStore.EXPECT().Commit(gomock.Any()).AnyTimes()
@@ -761,6 +780,7 @@ func TestAssignRole(t *testing.T) {
 				invites:      mockInviteService,
 				roles:        mockRoleService,
 				store:        mockStore,
+				idClient:     idClient,
 				cfg:          &serverconfig.Config{Email: serverconfig.EmailConfig{}},
 			}
 
@@ -782,12 +802,11 @@ func TestAssignRole(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			if tc.inviteByEmail {
+			if tc.userIdentity != nil {
+				require.Equal(t, authzRole.String(), response.RoleAssignment.Role)
+			} else {
 				require.Equal(t, authzRole.String(), response.Invitation.Role)
 				require.Equal(t, projectIdString, response.Invitation.Project)
-			}
-			if tc.inviteByUserId {
-				require.Equal(t, authzRole.String(), response.RoleAssignment.Role)
 			}
 		})
 	}

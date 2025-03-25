@@ -241,30 +241,6 @@ func TestCreateProfile(t *testing.T) {
 			wantErr: `unsupported entity type: invalid entity type no_such_entity: unsupported entity type`,
 		},
 		{
-			name: "Selector with valid but unsupported entity",
-			profile: &minderv1.CreateProfileRequest{
-				Profile: &minderv1.Profile{
-					Name:      "test_selectors_bad_entity",
-					Alert:     proto.String("off"),
-					Remediate: proto.String("off"),
-					Repository: []*minderv1.Profile_Rule{{
-						Type: "rule_type_1",
-						Def:  &structpb.Struct{},
-					}},
-					Selection: []*minderv1.Profile_Selector{
-						{
-							// this entity is valid in the sense that it converts to an entity type but
-							// the current selelectors implementation does not support it
-							Entity:      "build_environment",
-							Selector:    "repository.name != 'stacklok/demo-repo-go'",
-							Description: "Exclude stacklok/demo-repo-go",
-						},
-					},
-				},
-			},
-			wantErr: `unsupported entity type: no environment for entity ENTITY_BUILD_ENVIRONMENTS: unsupported entity type`,
-		},
-		{
 			name: "Selector does not parse",
 			profile: &minderv1.CreateProfileRequest{
 				Profile: &minderv1.Profile{
