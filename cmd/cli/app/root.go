@@ -110,7 +110,11 @@ func initConfig() {
 	if configFlag != "" {
 		// User explicitly specified a config file via --config flag
 		if _, err := os.Stat(configFlag); err != nil {
-			RootCmd.PrintErrln(fmt.Sprintf("Cannot find specified config file: %s", configFlag))
+			cwd, err := os.Getwd()
+			if err != nil {
+				cwd = err.Error()
+			}
+			RootCmd.PrintErrln(fmt.Sprintf("Cannot find specified config file: %s (%s)", configFlag, cwd))
 			os.Exit(1)
 		}
 		viper.SetConfigFile(configFlag)

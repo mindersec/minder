@@ -22,6 +22,14 @@ import (
 // are registered in constants.go, not littered all over the codebase.
 type Experiment string
 
+// Interface is a limited slice of openfeature.IClient, using only the methods we need.
+// This prevents breakage when the openfeature.IClient interface changes.
+type Interface interface {
+	Boolean(ctx context.Context, key string, defaultValue bool, ec openfeature.EvaluationContext, options ...openfeature.Option) bool
+}
+
+var _ Interface = (*openfeature.Client)(nil)
+
 // fromContext extracts the targeting flags from the current context.
 func fromContext(ctx context.Context) openfeature.EvaluationContext {
 	// Note: engine.EntityFromContext is best-effort, so these values may be zero.
@@ -38,7 +46,7 @@ func fromContext(ctx context.Context) openfeature.EvaluationContext {
 }
 
 // Bool provides a simple wrapper around client.Boolean to normalize usage for Minder.
-func Bool(ctx context.Context, client openfeature.IClient, feature Experiment) bool {
+func Bool(ctx context.Context, client Interface, feature Experiment) bool {
 	if client == nil {
 		zerolog.Ctx(ctx).Debug().Str("flag", string(feature)).Msg("Bool called with <nil> client, returning false")
 		return false
@@ -76,6 +84,10 @@ func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 			zerolog.Ctx(ctx).Info().Msg("Feature flag provider installed")
 		}
 	} else {
-		zerolog.Ctx(ctx).Warn().Msg("No feature flag provider installed")
+		if err := openfeature.SetProvider(openfeature.NoopProvider{}); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to clear flag provider")
+		} else {
+			zerolog.Ctx(ctx).Warn().Msg("No feature flag provider installed")
+		}
 	}
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	"github.com/go-git/go-billy/v5/memfs"
 	billyutil "github.com/go-git/go-billy/v5/util"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/open-policy-agent/opa/v1/rego"
 	"github.com/open-policy-agent/opa/v1/types"
@@ -32,9 +31,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/internal/deps/scalibr"
-	"github.com/mindersec/minder/internal/flags"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego
@@ -71,7 +70,7 @@ var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Resul
 	},
 }
 
-func instantiateRegoLib(ctx context.Context, featureFlags openfeature.IClient, res *interfaces.Result) []func(*rego.Rego) {
+func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Result) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))

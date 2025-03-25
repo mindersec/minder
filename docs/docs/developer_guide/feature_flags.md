@@ -61,13 +61,13 @@ check out
 for an example. The process is basically:
 
 1. Add a feature flag declaration to
-   [`internal/flags/constants.go`](https://github.com/mindersec/minder/blob/main/internal/flags/constants.go)
+   [`pkg/flags/constants.go`](https://github.com/mindersec/minder/blob/main/pkg/flags/constants.go)
 
 1. At the call site(s), put the new functionality behind
    `if flags.Bool(ctx, s.featureFlags, flags.MyFlagName) {...`
 
 1. You can use the
-   [`flags.FakeClient`](https://github.com/mindersec/minder/blob/main/internal/flags/test_client.go)
+   [`flags.FakeClient`](https://github.com/mindersec/minder/blob/main/pkg/flags/test_client.go)
    in tests to test the new code path as well as the old one.
 
 Using `flags.Bool` from our own repo will enable a couple bits of default

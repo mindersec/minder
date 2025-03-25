@@ -34,9 +34,7 @@ func TestCobraMain(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			viper.SetConfigName("config")
-			viper.AddConfigPath("../../../..")
-			viper.SetConfigType("yaml")
+			viper.Set("config", "../../../../config/cli-local.yaml")
 			viper.AutomaticEnv()
 
 			tw := &util.TestWriter{}
