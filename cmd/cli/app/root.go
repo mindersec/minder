@@ -103,6 +103,7 @@ func init() {
 func initConfig() {
 	viper.SetEnvPrefix("minder")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	config.SetViperStructDefaults(viper.GetViper(), "", clientconfig.Config{})
 
 	// Get the config flag value directly to ensure we catch explicitly specified configs
 	configFlag := viper.GetString("config")

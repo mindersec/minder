@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/mindersec/minder/internal/util/cli"
+	"github.com/mindersec/minder/pkg/config/client"
 )
 
 var (
@@ -93,7 +94,12 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
-			conn, err := cli.GetGrpcConnection(tt.grpcHost, tt.grpcPort, tt.allowInsecure, tt.issuerUrl, "stacklok", tt.clientId)
+			grpcCfg := client.GRPCClientConfig{
+				Host:     tt.grpcHost,
+				Port:     tt.grpcPort,
+				Insecure: tt.allowInsecure,
+			}
+			conn, err := cli.GetGrpcConnection(grpcCfg, tt.issuerUrl, "stacklok", tt.clientId)
 			if (err != nil) != tt.expectedError {
 				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
 			}
@@ -241,7 +247,7 @@ func TestRefreshCredentials(t *testing.T) {
 
 			tt.issuerUrl = server.URL
 
-			result, err := cli.RefreshCredentials(tt.refreshToken, tt.issuerUrl, "stacklok", tt.clientId)
+			result, err := cli.RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
 			if tt.expectedError != "" {
 				if err == nil || err.Error() != tt.expectedError {
 					t.Errorf("expected error %v, got %v", tt.expectedError, err)

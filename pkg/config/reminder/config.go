@@ -18,10 +18,12 @@ import (
 
 // Config contains the configuration for the reminder service
 type Config struct {
-	Database         config.DatabaseConfig    `mapstructure:"database"`
-	RecurrenceConfig RecurrenceConfig         `mapstructure:"recurrence"`
-	EventConfig      serverconfig.EventConfig `mapstructure:"events"`
-	LoggingConfig    LoggingConfig            `mapstructure:"logging"`
+	Database         config.DatabaseConfig           `mapstructure:"database"`
+	RecurrenceConfig RecurrenceConfig                `mapstructure:"recurrence"`
+	EventConfig      serverconfig.EventConfig        `mapstructure:"events"`
+	LoggingConfig    LoggingConfig                   `mapstructure:"logging"`
+	MetricsConfig    serverconfig.MetricsConfig      `mapstructure:"metrics"`
+	MetricServer     serverconfig.MetricServerConfig `mapstructure:"metric_server" default:"{\"port\":\"9091\"}"`
 }
 
 // Validate validates the configuration

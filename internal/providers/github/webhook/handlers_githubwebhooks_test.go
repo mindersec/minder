@@ -2674,7 +2674,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			defer evt.Close()
 
 			pq := testqueue.NewPassthroughQueue(t)
-			defer pq.Close()
 			queued := pq.GetQueue()
 
 			evt.Register(tt.topic, pq.Pass)
@@ -2682,13 +2681,15 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			go func() {
 				err := evt.Run(context.Background())
 				require.NoError(t, err, "failed to run eventer")
+				require.NoError(t, pq.Close(), "failed to close queue")
+
 			}()
 
 			<-evt.Running()
 
 			handler := HandleWebhookEvent(metrics.NewNoopMetrics(), evt, cfg)
 			ts := httptest.NewServer(handler)
-			defer ts.Close()
+			t.Cleanup(ts.Close)
 
 			var packageJson []byte
 			if tt.payload != nil {

@@ -14,9 +14,11 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"go.opentelemetry.io/otel"
 
 	"github.com/mindersec/minder/internal/db"
 	remindermessages "github.com/mindersec/minder/internal/reminder/messages"
+	"github.com/mindersec/minder/internal/reminder/metrics"
 	reminderconfig "github.com/mindersec/minder/pkg/config/reminder"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
@@ -42,14 +44,18 @@ type reminder struct {
 	ticker *time.Ticker
 
 	eventPublisher message.Publisher
+
+	metrics           *metrics.Metrics
+	metricsServerDone chan struct{}
 }
 
 // NewReminder creates a new reminder instance
 func NewReminder(ctx context.Context, store db.Store, config *reminderconfig.Config) (Interface, error) {
 	r := &reminder{
-		store: store,
-		cfg:   config,
-		stop:  make(chan struct{}),
+		store:             store,
+		cfg:               config,
+		stop:              make(chan struct{}),
+		metricsServerDone: make(chan struct{}),
 	}
 
 	// Set to a random UUID to start
@@ -74,21 +80,40 @@ func (r *reminder) Start(ctx context.Context) error {
 		return errors.New("reminder stopped, cannot start again")
 	default:
 	}
+	// Reminder only stops in case of error or context cancellation (or when Stop() is called)
+	// An errored out reminder cannot be started again, so it is stopped here
+	// This also prevents resource leaks if user doesn't explicitly stop the reminder
+	defer r.Stop()
 
 	interval := r.cfg.RecurrenceConfig.Interval
 	if interval <= 0 {
 		return fmt.Errorf("invalid interval: %s", r.cfg.RecurrenceConfig.Interval)
 	}
 
+	if r.cfg.MetricsConfig.Enabled {
+		if err := r.startMetricServer(ctx); err != nil {
+			logger.Err(err).Msg("failed to start metrics server")
+		}
+
+		var err error
+		r.metrics, err = metrics.NewMetrics(otel.Meter("reminder"))
+		if err != nil {
+			return err
+		}
+	} else {
+		close(r.metricsServerDone)
+	}
+
 	r.ticker = time.NewTicker(interval)
-	defer r.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
+			<-r.metricsServerDone
 			logger.Info().Msg("reminder stopped")
 			return nil
 		case <-r.stop:
+			<-r.metricsServerDone
 			logger.Info().Msg("reminder stopped")
 			return nil
 		case <-r.ticker.C:
@@ -120,13 +145,15 @@ func (r *reminder) Stop() {
 			zerolog.Ctx(context.Background()).Error().Err(err).Msg("error closing event publisher")
 		}
 	})
+	// Wait for the metrics server to stop
+	<-r.metricsServerDone
 }
 
 func (r *reminder) sendReminders(ctx context.Context) error {
 	logger := zerolog.Ctx(ctx)
 
 	// Fetch a batch of repositories
-	repos, err := r.getRepositoryBatch(ctx)
+	repos, repoToLastUpdated, err := r.getRepositoryBatch(ctx)
 	if err != nil {
 		return fmt.Errorf("error fetching repository batch: %w", err)
 	}
@@ -143,6 +170,10 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error creating reminder messages: %w", err)
 	}
 
+	if r.metrics != nil {
+		r.metrics.BatchSize.Record(ctx, int64(len(repos)))
+	}
+
 	err = r.eventPublisher.Publish(constants.TopicQueueRepoReminder, messages...)
 	if err != nil {
 		return fmt.Errorf("error publishing messages: %w", err)
@@ -151,13 +182,16 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 	repoIds := make([]uuid.UUID, len(repos))
 	for _, repo := range repos {
 		repoIds = append(repoIds, repo.ID)
-	}
+		if r.metrics != nil {
+			sendDelay := time.Since(repoToLastUpdated[repo.ID]) - r.cfg.RecurrenceConfig.MinElapsed
 
-	// TODO: Collect Metrics
-	// Potential metrics:
-	// - Gauge: Number of reminders in the current batch
-	// - UpDownCounter: Average reminders sent per batch
-	// - Histogram: reminder_last_sent time distribution
+			recorder := r.metrics.SendDelay
+			if !repo.ReminderLastSent.Valid {
+				recorder = r.metrics.NewSendDelay
+			}
+			recorder.Record(ctx, sendDelay.Seconds())
+		}
+	}
 
 	err = r.store.UpdateReminderLastSentForRepositories(ctx, repoIds)
 	if err != nil {
@@ -167,7 +201,7 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 	return nil
 }
 
-func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, error) {
+func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, map[uuid.UUID]time.Time, error) {
 	logger := zerolog.Ctx(ctx)
 
 	logger.Debug().Msgf("fetching repositories after cursor: %s", r.repositoryCursor)
@@ -176,21 +210,23 @@ func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, err
 		Limit: int64(r.cfg.RecurrenceConfig.BatchSize),
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	eligibleRepos, err := r.getEligibleRepositories(ctx, repos)
+	eligibleRepos, eligibleReposLastUpdated, err := r.getEligibleRepositories(ctx, repos)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	logger.Debug().Msgf("%d/%d repositories are eligible for reminders", len(eligibleRepos), len(repos))
 
 	r.updateRepositoryCursor(ctx, repos)
 
-	return eligibleRepos, nil
+	return eligibleRepos, eligibleReposLastUpdated, nil
 }
 
-func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repository) ([]db.Repository, error) {
+func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repository) (
+	[]db.Repository, map[uuid.UUID]time.Time, error,
+) {
 	eligibleRepos := make([]db.Repository, 0, len(repos))
 
 	// We have a slice of repositories, but the sqlc-generated code wants a slice of UUIDs,
@@ -202,11 +238,11 @@ func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repos
 	}
 	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByRepositoryId(ctx, repoIds)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	idToLastUpdate := make(map[uuid.UUID]time.Time, len(oldestRuleEvals))
-	for _, times := range oldestRuleEvals {
-		idToLastUpdate[times.RepositoryID] = times.OldestLastUpdated
+	for _, ruleEval := range oldestRuleEvals {
+		idToLastUpdate[ruleEval.RepositoryID] = ruleEval.OldestLastUpdated
 	}
 
 	cutoff := time.Now().Add(-1 * r.cfg.RecurrenceConfig.MinElapsed)
@@ -216,7 +252,7 @@ func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repos
 		}
 	}
 
-	return eligibleRepos, nil
+	return eligibleRepos, idToLastUpdate, nil
 }
 
 func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.Repository) {

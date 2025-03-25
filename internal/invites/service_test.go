@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -28,6 +29,22 @@ import (
 	"github.com/mindersec/minder/pkg/config/server"
 	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
 )
+
+func TestMain(m *testing.M) {
+	// Needed for loading email templates
+	err := os.Setenv("KO_DATA_PATH", "../../cmd/server/kodata")
+	if err != nil {
+		fmt.Printf("error setting KO_DATA_PATH: %v\n", err)
+		os.Exit(1)
+	}
+	_, err = email.NewMessage(context.Background(), "j@example.com", "http://example.com/invite", "http://api.example.com/", "admin", "Example", "Joe")
+	if err != nil {
+		fmt.Printf("error creating message: %v\n", err)
+		os.Exit(1)
+	}
+
+	m.Run()
+}
 
 func TestCreateInvite(t *testing.T) {
 	t.Parallel()

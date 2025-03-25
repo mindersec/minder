@@ -7,6 +7,7 @@ package offline_token
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 
@@ -55,11 +56,26 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	grpcCfg := clientConfig.GRPCClientConfig
+	opts := []grpc.DialOption{grpcCfg.TransportCredentialsOption()}
 	issuerUrlStr := clientConfig.Identity.CLI.IssuerUrl
 	clientID := clientConfig.Identity.CLI.ClientId
 	realm := clientConfig.Identity.CLI.Realm
 
-	creds, err := cli.RefreshCredentials(tok, issuerUrlStr, realm, clientID)
+	realmUrl, err := cli.GetRealmUrl(grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
+	if err != nil {
+		return fmt.Errorf("couldn't get realm URL: %v", err)
+	}
+
+	// TODO: use the proper well-known discovery via "./.well-known/openid-configuration"
+	// possibly with the rp.NewRelyingPartyOIDC from zitadel
+	parsedUrl, err := url.Parse(realmUrl)
+	if err != nil {
+		return fmt.Errorf("couldn't parse realm URL %s: %v", realmUrl, err)
+	}
+	realmUrl = parsedUrl.JoinPath("protocol/openid-connect/token").String()
+
+	creds, err := cli.RefreshCredentials(tok, realmUrl, clientID)
 	if err != nil {
 		return fmt.Errorf("couldn't fetch credentials: %v", err)
 	}
