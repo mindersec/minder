@@ -17,5 +17,5 @@ jobs:
       - name: Check license headers
         run: |
           set -e
-          addlicense -l apache -c 'Stacklok, Inc' -v -ignore "pkg/generated/*" -ignore "**/database/query/**" -ignore "internal/db/*" -ignore "docs/docs/**" -ignore "docs/src/**" -ignore "docs/static/**" -ignore "pkg/controlplane/policy_types/**" -ignore "docs/build/**" -ignore "examples/**" -ignore "internal/auth/keycloak/client/keycloak-api.yaml" *
+          addlicense -l apache -s=only -c 'The Minder Authors' -v -ignore "pkg/generated/*" -ignore "**/database/query/**" -ignore "internal/db/*" -ignore "docs/docs/**" -ignore "docs/src/**" -ignore "docs/static/**" -ignore "pkg/controlplane/policy_types/**" -ignore "docs/build/**" -ignore "examples/**" -ignore "internal/auth/keycloak/client/keycloak-api.yaml" -ignore "**/testdata/**" *
           git diff --exit-code
