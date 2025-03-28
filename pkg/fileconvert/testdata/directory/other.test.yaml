@@ -1,0 +1,13 @@
+# This is valid yaml for a test, but isn't a valid resource.
+tests:
+  - name: "Should pass"
+    def: {}
+    params: {}
+    expect: "pass"
+    entity: test-repo
+      type: repository
+      entity:
+        owner: "coolhead"
+        name: "haze-wave"
+    git:
+      repo_base: action_enabled

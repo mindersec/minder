@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -21,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 var nonAlphanumericRegex = regexp.MustCompile(`[^a-zA-Z0-9\s]`)
@@ -48,16 +47,17 @@ func (e *RuleValidationError) Error() string {
 }
 
 // ParseYAML parses a YAML pipeline profile and validates it
+// TODO: replace uses of this with fileconvert.ReadResourceTyped
 func ParseYAML(r io.Reader) (*pb.Profile, error) {
 	w := &bytes.Buffer{}
 	if err := jsonyaml.TranscodeYAMLToJSON(r, w); err != nil {
 		return nil, fmt.Errorf("error converting yaml to json: %w", err)
 	}
-	return ParseJSON(w)
+	return parseJSON(w)
 }
 
 // ParseJSON parses a JSON pipeline profile and validates it
-func ParseJSON(r io.Reader) (*pb.Profile, error) {
+func parseJSON(r io.Reader) (*pb.Profile, error) {
 	var out pb.Profile
 
 	dec := json.NewDecoder(r)
@@ -74,25 +74,12 @@ func ParseJSON(r io.Reader) (*pb.Profile, error) {
 
 // ReadProfileFromFile reads a pipeline profile from a file and returns it as a protobuf
 func ReadProfileFromFile(fpath string) (*pb.Profile, error) {
-	f, err := os.Open(filepath.Clean(fpath))
-	if err != nil {
-		return nil, fmt.Errorf("error opening file: %w", err)
+	decoder, closer := fileconvert.DecoderForFile(fpath)
+	if decoder == nil {
+		return nil, fmt.Errorf("error opening file")
 	}
-
-	defer f.Close()
-	var out *pb.Profile
-
-	if filepath.Ext(fpath) == ".json" {
-		out, err = ParseJSON(f)
-	} else {
-		// parse yaml by default
-		out, err = ParseYAML(f)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error parsing profile: %w", err)
-	}
-
-	return out, nil
+	defer closer.Close()
+	return fileconvert.ReadResourceTyped[*pb.Profile](decoder)
 }
 
 // GetRulesForEntity returns the rules for the given entity

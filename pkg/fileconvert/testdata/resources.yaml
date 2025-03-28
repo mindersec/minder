@@ -1,0 +1,76 @@
+name: test-data
+rest:
+  def:
+    lookup:
+      endpoint: https://www.bestpractices.dev/projects/{id}.json
+      input_schema:
+        properties:
+          id:
+            description: The project ID to lookup
+            type: string
+        required:
+          - id
+      parse: json
+type: data-source
+version: v1
+---
+alert: "off"
+context:
+  provider: github
+display_name: Repository Security
+name: repo-security
+remediate: "off"
+repository:
+  - def: {}
+    type: secret_scanning
+  - def:
+      languages:
+        - go
+        - javascript
+        - typescript
+      schedule_interval: 30 4 * * 0
+    type: codeql_enabled
+type: profile
+version: v1
+---
+context:
+  provider: github
+def:
+  eval:
+    data_sources:
+      - name: ghapi
+    rego:
+      def: |
+        package minder
+
+        import rego.v1
+
+        default allow := false
+
+        allow if {
+          # This rule checks whether the repository is private using
+          # info tied to the entity itself.
+          not input.properties["is_private"]
+        }
+      type: deny-by-default
+    type: rego
+  in_entity: repository
+  ingest:
+    type: git
+  rule_schema: {}
+description: |
+  Enable users to access and review the project’s source code and
+  history, promoting transparency and collaboration within the project
+  community.
+display_name: The project's source code is publicly readable
+guidance: |
+  Change repository visibility via the
+  [Settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/managing-repository-settings/setting-repository-visibility#changing-a-repositorys-visibility)
+  page on GitHub.
+name: source_code_is_public
+release_phase: alpha
+severity:
+  value: info
+short_failure_message: The project's source code is not publicly readable.
+type: rule-type
+version: v1
