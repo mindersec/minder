@@ -245,7 +245,7 @@ func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMes
 	return nil, err
 }
 
-// getParamsForSecurityAdvisory extracts the details from the entity
+// getParamsForPRComment extracts the details from the entity
 func (alert *Alert) getParamsForPRComment(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
