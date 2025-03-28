@@ -1,0 +1,18 @@
+# This profile is valid YAML, but since it doesn't have the correct extension,
+# it is ignored.
+---
+type: profile
+version: v1
+name: repo-security
+display_name: Repository Security
+context:
+  provider: github
+alert: "off"
+remediate: "off"
+repository:
+  - type: secret_scanning
+    def: {}
+  - type: codeql_enabled
+    def:
+      languages: [go, javascript, typescript]
+      schedule_interval: '30 4 * * 0'

@@ -1,0 +1,16 @@
+---
+version: v1
+type: data-source
+name: test-data
+rest:
+  def:
+    lookup:
+      endpoint: 'https://www.bestpractices.dev/projects/{id}.json'
+      parse: json
+      input_schema:
+        required:
+          - id
+        properties:
+          id:
+            type: string
+            description: The project ID to lookup
