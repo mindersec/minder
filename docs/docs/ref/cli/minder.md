@@ -25,6 +25,7 @@ https://docs.stacklok.com/minder
 
 ### SEE ALSO
 
+* [minder apply](minder_apply.md)	 - Apply multiple minder resources
 * [minder artifact](minder_artifact.md)	 - Manage artifacts within a minder control plane
 * [minder auth](minder_auth.md)	 - Authorize and manage accounts within a minder control plane
 * [minder completion](minder_completion.md)	 - Generate the autocompletion script for the specified shell

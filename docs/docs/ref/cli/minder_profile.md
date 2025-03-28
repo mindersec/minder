@@ -38,6 +38,7 @@ minder profile [flags]
 * [minder profile apply](minder_profile_apply.md)	 - Create or update a profile
 * [minder profile create](minder_profile_create.md)	 - Create a profile
 * [minder profile delete](minder_profile_delete.md)	 - Delete a profile
+* [minder profile export](minder_profile_export.md)	 - Export profile and associated resources
 * [minder profile get](minder_profile_get.md)	 - Get details for a profile
 * [minder profile list](minder_profile_list.md)	 - List profiles
 * [minder profile status](minder_profile_status.md)	 - Manage profile status
