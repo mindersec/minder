@@ -37,10 +37,7 @@ func getEntityInner(
 		}
 	}
 
-	lookupProperties, err := properties.NewProperties(entPropMap)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
+	lookupProperties := properties.NewProperties(entPropMap)
 
 	ewp, err := propSvc.EntityWithPropertiesByUpstreamHint(
 		ctx,

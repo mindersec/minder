@@ -84,7 +84,7 @@ func DbPropsToModel(dbProps []db.Property) (*properties.Properties, error) {
 		propMap[prop.Key] = anyVal
 	}
 
-	return properties.NewProperties(propMap)
+	return properties.NewProperties(propMap), nil
 }
 
 // DbPropToModel converts a single db.Property to a properties.Property instance.

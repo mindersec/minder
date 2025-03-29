@@ -51,10 +51,7 @@ func (r *Reconciler) handleEntityAddEvent(msg *message.Message) error {
 		return nil
 	}
 
-	fetchByProps, err := properties.NewProperties(event.Properties)
-	if err != nil {
-		return fmt.Errorf("error creating properties: %w", err)
-	}
+	fetchByProps := properties.NewProperties(event.Properties)
 
 	l = zerolog.Ctx(ctx).With().
 		Str("provider_id", event.ProviderID.String()).

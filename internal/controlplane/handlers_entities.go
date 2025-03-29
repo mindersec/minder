@@ -112,10 +112,7 @@ func createEntityMessage(
 	msg := message.NewMessage(uuid.New().String(), nil)
 	msg.SetContext(ctx)
 
-	repoProps, err := properties.NewProperties(props.AsMap())
-	if err != nil {
-		return nil, err
-	}
+	repoProps := properties.NewProperties(props.AsMap())
 
 	event := messages.NewMinderEvent().
 		WithProjectID(projectID).
@@ -123,8 +120,7 @@ func createEntityMessage(
 		WithEntityType(pb.Entity_ENTITY_REPOSITORIES).
 		WithProperties(repoProps)
 
-	err = event.ToMessage(msg)
-	if err != nil {
+	if err := event.ToMessage(msg); err != nil {
 		l.Error().Err(err).Msg("error marshalling register entities message")
 		return nil, err
 	}

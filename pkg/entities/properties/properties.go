@@ -236,8 +236,11 @@ type newPropertiesConfig struct {
 	skipPrefixCheck bool
 }
 
-// NewProperties creates Properties from a map
-func NewProperties(props map[string]any, opts ...newPropertiesOption) (*Properties, error) {
+// NewProperties creates Properties from a map.
+// Important: Internal properties (those with the internalPrefix) are ignored.
+// If you want to include them, use the skipPrefixCheck option.
+// Property creation errors are ignored in favor of returning a valid Properties object.
+func NewProperties(props map[string]any, opts ...newPropertiesOption) *Properties {
 	config := &newPropertiesConfig{}
 	for _, opt := range opts {
 		opt(config)
@@ -247,18 +250,19 @@ func NewProperties(props map[string]any, opts ...newPropertiesOption) (*Properti
 
 	for key, value := range props {
 		if !config.skipPrefixCheck && strings.HasPrefix(key, internalPrefix) {
-			return nil, fmt.Errorf("property key %s is reserved", key)
+			// We ignore internal properties
+			continue
 		}
 
 		propVal, err := NewProperty(value)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create property for key %s: %w", key, err)
+			continue
 		}
 		propsMap.Store(key, *propVal)
 	}
 	return &Properties{
 		props: propsMap,
-	}, nil
+	}
 }
 
 // GetProperty returns the Property for a given key or an empty one as a fallback
