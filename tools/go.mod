@@ -1,10 +1,11 @@
 module github.com/mindersec/minder/tools
 
 go 1.23.7
+toolchain go1.24.1
 
 require (
 	github.com/bufbuild/buf v1.50.1
-	github.com/daixiang0/gci v0.13.5
+	github.com/daixiang0/gci v0.13.6
 	github.com/go-critic/go-critic v0.13.0
 	github.com/golangci/golangci-lint v1.64.8
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
