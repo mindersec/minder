@@ -167,7 +167,7 @@ func TestDecryptBadEncoding(t *testing.T) {
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	encryptedToken := EncryptedData{
-		Algorithm:   algorithms.Aes256Cfb,
+		Algorithm:   algorithms.Aes256Gcm,
 		EncodedData: "abc",
 		KeyVersion:  "test_encryption_key",
 	}
@@ -183,7 +183,7 @@ func TestDecryptNoVersionNoFallback(t *testing.T) {
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	encryptedToken := EncryptedData{
-		Algorithm: algorithms.Aes256Cfb,
+		Algorithm: algorithms.Aes256Gcm,
 		// Unicode snowman is _not_ a valid base64 character
 		EncodedData: "☃☃☃☃☃☃☃☃☃☃☃☃☃☃☃",
 		KeyVersion:  "",
@@ -200,7 +200,7 @@ func TestDecryptFailedDecryption(t *testing.T) {
 	engine, err := NewEngineFromConfig(config)
 	require.NoError(t, err)
 	encryptedToken := EncryptedData{
-		Algorithm: algorithms.Aes256Cfb,
+		Algorithm: algorithms.Aes256Gcm,
 		// too small of a value - will trigger the ciphertext length check
 		EncodedData: "abcdef0123456789",
 		KeyVersion:  "test_encryption_key",

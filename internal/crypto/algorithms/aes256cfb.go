@@ -37,6 +37,7 @@ func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 		return nil, fmt.Errorf("failed to read random bytes: %w", err)
 	}
 
+	//nolint:staticcheck // SA1019 This only used for legacy compatibility
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
@@ -58,6 +59,7 @@ func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, err
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 
+	//nolint:staticcheck // SA1019 This only used for legacy compatibility
 	stream := cipher.NewCFBDecrypter(block, iv)
 	stream.XORKeyStream(ciphertext, ciphertext)
 
