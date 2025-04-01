@@ -65,7 +65,7 @@ func createSecret(t *testing.T, encryptedData string) crypto.EncryptedData {
 	t.Helper()
 
 	return crypto.EncryptedData{
-		Algorithm:   algorithms.Aes256Cfb,
+		Algorithm:   algorithms.Aes256Gcm,
 		EncodedData: encryptedData,
 		KeyVersion:  "12345",
 	}

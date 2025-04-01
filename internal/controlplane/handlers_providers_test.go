@@ -747,7 +747,7 @@ func generateSecret(t *testing.T) pqtype.NullRawMessage {
 	t.Helper()
 
 	data := crypto.EncryptedData{
-		Algorithm: algorithms.Aes256Cfb,
+		Algorithm: algorithms.Aes256Gcm,
 		// randomly generated
 		EncodedData: "dnS6VFiMYrfnbeP6eixmBw==",
 		KeyVersion:  "",
