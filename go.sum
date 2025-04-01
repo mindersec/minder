@@ -251,8 +251,8 @@ github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.15.2 h1:J84sc4/c
 github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.15.2/go.mod h1:KR1lgiXZYOh6vVqHy12jbj3QSCIYFi2TICtKiNlDLs0=
 github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.15.2 h1:XsT8ZjPRk80F81yjG/ndSNISvYjzp4GRZj9+UC09HDQ=
 github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.15.2/go.mod h1:ANzjGHwaQIn+u6uQ7ExVbnmQsNpKcath/uXL5q6hXts=
-github.com/cloudevents/sdk-go/v2 v2.15.2 h1:54+I5xQEnI73RBhWHxbI1XJcqOFOVJN85vb41+8mHUc=
-github.com/cloudevents/sdk-go/v2 v2.15.2/go.mod h1:lL7kSWAE/V8VI4Wh0jbL2v/jvqsm6tjmaQBSvxcv4uE=
+github.com/cloudevents/sdk-go/v2 v2.16.0 h1:wnunjgiLQCfYlyo+E4+mFlZtAh7pKn7vT8MMD3lSwCg=
+github.com/cloudevents/sdk-go/v2 v2.16.0/go.mod h1:5YWqklyhDSmGzBK/JENKKXdulbPq0JFf3c/KEnMLqgg=
 github.com/cloudflare/circl v1.6.0 h1:cr5JKic4HI+LkINy2lg3W2jF8sHCVTBncJr5gIIq7qk=
 github.com/cloudflare/circl v1.6.0/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
