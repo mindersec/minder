@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	pbinternal "github.com/mindersec/minder/internal/proto"
 	htmltemplate "html/template"
 	"strings"
 
@@ -23,6 +22,7 @@ import (
 
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package v1 contains helper methods when working with the Minder v1 API.
 package v1
 
 import (

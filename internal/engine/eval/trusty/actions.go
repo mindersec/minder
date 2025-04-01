@@ -230,7 +230,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context, ruleConfig *config) err
 
 	// Check all the tracked dependencies. If any of them call for the PR
 	// to be blocked, set the review action to REQUEST_CHANGES
-	var reviewAction string = "COMMENT"
+	var reviewAction = "COMMENT"
 	for _, d := range sph.trackedAlternatives {
 		if d.BlockPR {
 			reviewAction = "REQUEST_CHANGES"
@@ -335,7 +335,7 @@ func (sph *summaryPrHandler) generateSummary() (string, error) {
 				},
 			}
 			if altData.Score != nil {
-				altPackageData.templatePackageData.Score = *altData.Score
+				altPackageData.Score = *altData.Score
 			}
 
 			dep := lowScorePackages[alternative.Dependency.Name]
