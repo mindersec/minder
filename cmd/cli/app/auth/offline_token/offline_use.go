@@ -75,13 +75,13 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 	}
 	realmUrl = parsedUrl.JoinPath("protocol/openid-connect/token").String()
 
-	creds, err := cli.RefreshCredentials(tok, realmUrl, clientID)
+	creds, err := cli.RefreshCredentials(grpcCfg.GetGRPCAddress(), tok, realmUrl, clientID)
 	if err != nil {
 		return fmt.Errorf("couldn't fetch credentials: %v", err)
 	}
 
 	// save credentials
-	filePath, err := cli.SaveCredentials(cli.OpenIdCredentials{
+	filePath, err := cli.SaveCredentials(grpcCfg.GetGRPCAddress(), cli.OpenIdCredentials{
 		AccessToken:          creds.AccessToken,
 		RefreshToken:         creds.RefreshToken,
 		AccessTokenExpiresAt: creds.AccessTokenExpiresAt,

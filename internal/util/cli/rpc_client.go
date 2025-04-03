@@ -128,11 +128,12 @@ func LoginAndSaveCreds(ctx context.Context, cmd *cobra.Command, clientConfig *cl
 	}
 
 	// save credentials
-	filePath, err := SaveCredentials(OpenIdCredentials{
-		AccessToken:          token.AccessToken,
-		RefreshToken:         token.RefreshToken,
-		AccessTokenExpiresAt: token.Expiry,
-	})
+	filePath, err := SaveCredentials(clientConfig.GRPCClientConfig.GetGRPCAddress(),
+		OpenIdCredentials{
+			AccessToken:          token.AccessToken,
+			RefreshToken:         token.RefreshToken,
+			AccessTokenExpiresAt: token.Expiry,
+		})
 	if err != nil {
 		cmd.PrintErrf("couldn't save credentials: %s\n", err)
 		return "", err
