@@ -29,6 +29,8 @@ var (
 	XdgConfigHomeEnvVar = "XDG_CONFIG_HOME"
 )
 
+const serverAddress = "localhost:8081"
+
 // Enforce that only one test setting environment variables runs at a time
 func setEnvVar(t *testing.T, env string, value string) {
 	t.Helper() // Keep golangci-lint happy
@@ -130,8 +132,6 @@ func TestSaveCredentials(t *testing.T) {
 
 	cfgPath := filepath.Join(testDir, "minder")
 
-	serverAddress := "localhost:8081"
-
 	expectedFilePath := filepath.Join(cfgPath, "localhost_8081.json")
 
 	filePath, err := cli.SaveCredentials(serverAddress, tokens)
@@ -163,8 +163,6 @@ func TestRemoveCredentials(t *testing.T) {
 	testDir := t.TempDir()
 	setEnvVar(t, XdgConfigHomeEnvVar, testDir)
 	xdgConfigHome := os.Getenv(XdgConfigHomeEnvVar)
-
-	serverAddress := "localhost:8081"
 
 	filePath := filepath.Join(xdgConfigHome, "minder", "localhost_8081.json")
 
@@ -322,7 +320,6 @@ func TestLoadCredentials(t *testing.T) {
 				t.Fatalf("failed to create minder directory: %v", err)
 			}
 
-			serverAddress := "localhost:8081"
 			filePath := filepath.Join(minderDir, "localhost_8081.json")
 			if tt.filePath != "" {
 				filePath = filepath.Join(testDir, tt.filePath)

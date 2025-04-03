@@ -136,18 +136,6 @@ func SaveCredentials(serverAddress string, tokens OpenIdCredentials) (string, er
 
 // RemoveCredentials removes the local credentials file
 func RemoveCredentials(serverAddress string) error {
-	// remove credentials file
-	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-
-	// just delete token from credentials file
-	if xdgConfigHome == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("error getting home directory: %v", err)
-		}
-		xdgConfigHome = filepath.Join(homeDir, ".config")
-	}
-
 	filePath, err := getCredentialsPath(serverAddress, false)
 	if err != nil {
 		return fmt.Errorf("error getting credentials path: %v", err)
