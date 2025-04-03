@@ -603,10 +603,7 @@ func newWebhookProperties(hookID int64, hookUUID string) *properties.Properties 
 		ghprop.RepoPropertyHookUiid: hookUUID,
 	}
 
-	props, err := properties.NewProperties(webhookProps)
-	if err != nil {
-		panic(err)
-	}
+	props := properties.NewProperties(webhookProps)
 	return props
 }
 
@@ -617,10 +614,7 @@ func newFetchByGithubRepoProperties() *properties.Properties {
 		ghprop.RepoPropertyOwner: repoOwner,
 	}
 
-	props, err := properties.NewProperties(fetchByProps)
-	if err != nil {
-		panic(err)
-	}
+	props := properties.NewProperties(fetchByProps)
 	return props
 }
 
@@ -639,10 +633,7 @@ func newGithubRepoProperties(isPrivate bool) *properties.Properties {
 		ghprop.RepoPropertyDefaultBranch:  "main",
 	}
 
-	props, err := properties.NewProperties(repoProps)
-	if err != nil {
-		panic(err)
-	}
+	props := properties.NewProperties(repoProps)
 	return props
 }
 

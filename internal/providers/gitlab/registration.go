@@ -147,7 +147,7 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 		return nil, fmt.Errorf("failed to create webhook: %w", err)
 	}
 
-	outProps, err := properties.NewProperties(map[string]interface{}{
+	outProps := properties.NewProperties(map[string]interface{}{
 		// we store as string to avoid any type issues. Note that we
 		// need to retrieve it as a string as well.
 		RepoPropertyHookID:  fmt.Sprintf("%d", hook.ID),

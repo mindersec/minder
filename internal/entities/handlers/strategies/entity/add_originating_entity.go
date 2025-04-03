@@ -44,10 +44,7 @@ func NewAddOriginatingEntityStrategy(
 func (a *addOriginatingEntityStrategy) GetEntity(
 	ctx context.Context, entMsg *message.HandleEntityAndDoMessage,
 ) (*models.EntityWithProperties, error) {
-	childProps, err := properties.NewProperties(entMsg.Entity.GetByProps)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
+	childProps := properties.NewProperties(entMsg.Entity.GetByProps)
 
 	// store the originating entity
 	childEwp, err := db.WithTransaction(a.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {

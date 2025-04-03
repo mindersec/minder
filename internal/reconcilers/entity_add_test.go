@@ -25,7 +25,7 @@ var (
 )
 
 func repoProperties() *properties.Properties {
-	props, _ := properties.NewProperties(map[string]any{
+	props := properties.NewProperties(map[string]any{
 		properties.PropertyName: repoFullName,
 	})
 	return props

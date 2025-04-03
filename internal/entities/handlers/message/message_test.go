@@ -84,8 +84,7 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 		t.Run(sc.name, func(t *testing.T) {
 			t.Parallel()
 
-			props, err := properties.NewProperties(sc.props)
-			require.NoError(t, err)
+			props := properties.NewProperties(sc.props)
 
 			original := NewEntityRefreshAndDoMessage().
 				WithEntity(sc.entType, props).
@@ -93,23 +92,21 @@ func TestEntityRefreshAndDoMessageRoundTrip(t *testing.T) {
 				WithProviderClassHint(sc.providerClass)
 
 			if sc.ownerProps != nil {
-				ownerProps, err := properties.NewProperties(sc.ownerProps)
-				require.NoError(t, err)
+				ownerProps := properties.NewProperties(sc.ownerProps)
 				original.WithOriginator(sc.ownerType, ownerProps)
 			}
 
 			if sc.matchProps != nil {
-				matchProps, err := properties.NewProperties(sc.matchProps)
-				require.NoError(t, err)
+				matchProps := properties.NewProperties(sc.matchProps)
 				original.WithMatchProps(matchProps)
 			}
 
 			handlerMsg := message.NewMessage(uuid.New().String(), nil)
-			err = original.ToMessage(handlerMsg)
+			err := original.ToMessage(handlerMsg)
 			require.NoError(t, err)
 
 			roundTrip, err := ToEntityRefreshAndDo(handlerMsg)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.Equal(t, original.Entity.GetByProps, roundTrip.Entity.GetByProps)
 			assert.Equal(t, original.Entity.Type, roundTrip.Entity.Type)
 			assert.Equal(t, original.Hint.ProviderImplementsHint, roundTrip.Hint.ProviderImplementsHint)
