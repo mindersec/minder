@@ -62,7 +62,7 @@ var eventTypes = [23]string{
 //
 // The fuzzer does not validate return values of the parsers. It tests if any
 // input can cause code-level issues.
-func FuzzGitHubEventParsers(f *testing.F) {
+func FuzzGithubEventParsers(f *testing.F) {
 	f.Fuzz(func(t *testing.T, rawWHPayload []byte, target, eventEnum uint) {
 		mac := hmac.New(sha256.New, []byte("test"))
 		mac.Write(rawWHPayload)
