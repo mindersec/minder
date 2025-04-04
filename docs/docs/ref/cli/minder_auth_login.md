@@ -8,7 +8,7 @@ Login to Minder
 ### Synopsis
 
 The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
-$XDG_CONFIG_HOME/minder/credentials.json
+$XDG_CONFIG_HOME/minder/ based on the hostname and port of the server.
 
 ```
 minder auth login [flags]
