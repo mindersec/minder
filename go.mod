@@ -1,7 +1,6 @@
 module github.com/mindersec/minder
 
 go 1.24.1
-
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.5-20250219170025-d39267d9df8f.1
 	buf.build/go/protoyaml v0.3.1
@@ -80,7 +79,7 @@ require (
 	github.com/styrainc/regal v0.31.1
 	github.com/thomaspoignant/go-feature-flag v1.42.0
 	github.com/yuin/goldmark v1.7.8
-	gitlab.com/gitlab-org/api/client-go v0.120.0
+	gitlab.com/gitlab-org/api/client-go v0.126.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
 	go.opentelemetry.io/otel v1.35.0
