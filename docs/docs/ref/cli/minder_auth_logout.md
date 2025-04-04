@@ -7,7 +7,7 @@ Logout from minder control plane.
 
 ### Synopsis
 
-Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/credentials.json
+Logout from minder control plane. Credentials will be removed from $XDG_CONFIG_HOME/minder/
 
 ```
 minder auth logout [flags]
