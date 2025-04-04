@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package db contains domain-level methods for db structs.
 package db
 
 import (

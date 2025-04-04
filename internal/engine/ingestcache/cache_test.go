@@ -56,7 +56,7 @@ func TestCache(t *testing.T) {
 		{
 			name: "Builtin",
 			args: args{
-				in0: &builtin.BuiltinRuleDataIngest{},
+				in0: &builtin.RuleDataIngest{},
 				in1: &minderv1.BuiltinType{
 					Method: "foo",
 				},

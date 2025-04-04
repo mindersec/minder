@@ -72,7 +72,7 @@ func (_ *Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
 		opts.Metadata = &mindpak.Metadata{}
 	}
 
-	if opts.Metadata.Name == "" {
+	if opts.Name == "" {
 		return nil, fmt.Errorf("unable to initialize new bundle, no name defined")
 	}
 

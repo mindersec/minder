@@ -315,7 +315,8 @@ func TestRuleTypeService(t *testing.T) {
 			var err error
 			var res *pb.RuleType
 			svc := ruletypes.NewRuleTypeService()
-			if scenario.TestMethod == create {
+			switch scenario.TestMethod {
+			case create:
 				res, err = svc.CreateRuleType(
 					ctx,
 					projectID,
@@ -323,7 +324,7 @@ func TestRuleTypeService(t *testing.T) {
 					scenario.RuleType,
 					store,
 				)
-			} else if scenario.TestMethod == update {
+			case update:
 				res, err = svc.UpdateRuleType(
 					ctx,
 					projectID,
@@ -331,7 +332,7 @@ func TestRuleTypeService(t *testing.T) {
 					scenario.RuleType,
 					store,
 				)
-			} else if scenario.TestMethod == upsert {
+			case upsert:
 				err = svc.UpsertRuleType(
 					ctx,
 					projectID,
@@ -339,7 +340,7 @@ func TestRuleTypeService(t *testing.T) {
 					scenario.RuleType,
 					store,
 				)
-			} else {
+			default:
 				t.Fatal("unexpected method value")
 			}
 

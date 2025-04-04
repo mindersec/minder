@@ -67,6 +67,6 @@ func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, err
 }
 
 // Function to derive a key from a passphrase using Argon2
-func (_ *AES256CFBAlgorithm) deriveKey(key []byte) []byte {
+func (*AES256CFBAlgorithm) deriveKey(key []byte) []byte {
 	return argon2.IDKey(key, legacySalt, 1, 64*1024, 4, 32)
 }

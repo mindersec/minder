@@ -75,7 +75,7 @@ func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context
 }
 
 func (ftr *frizbeeTagResolveModification) modifyFs() ([]*fsEntry, error) {
-	err := ftr.fsChangeSet.writeEntries()
+	err := ftr.writeEntries()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}
@@ -117,7 +117,7 @@ func parseExcludesFromRepoConfig(fs billy.Filesystem) []string {
 			continue
 		}
 
-		return cfg.GHActions.Filter.Exclude
+		return cfg.GHActions.Exclude
 	}
 	return nil
 }

@@ -31,7 +31,7 @@ type AES256GCMAlgorithm struct{}
 // Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Output takes the
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func (_ *AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
+func (*AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	if len(plaintext) > maxPlaintextSize {
 		return nil, ErrExceedsMaxSize
 	}
@@ -63,7 +63,7 @@ func (_ *AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 // Decrypt decrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Expects input
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func (_ *AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+func (*AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	decodedKey, err := decodeKey(key)
 	if err != nil {
 		return nil, err

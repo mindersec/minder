@@ -45,13 +45,13 @@ var DocsCmd = &cobra.Command{
 		// GenMarkdownTreeCustom doesn't include additional help commands, so write it manually.
 		configHelpFile, err := os.Create("./docs/docs/ref/cli/minder_config.md")
 		if err != nil {
-			return fmt.Errorf("Unable to open file for config docs: %w", err)
+			return fmt.Errorf("unable to open file for config docs: %w", err)
 		}
 		if _, err := configHelpFile.WriteString("---\ntitle: minder config\n---\n"); err != nil {
-			return fmt.Errorf("Unable to write docs header: %w", err)
+			return fmt.Errorf("unable to write docs header: %w", err)
 		}
 		if err := doc.GenMarkdown(app.ConfigHelpCmd, configHelpFile); err != nil {
-			return fmt.Errorf("Unable to write markdown for config help: %w", err)
+			return fmt.Errorf("unable to write markdown for config help: %w", err)
 		}
 		return doc.GenMarkdownTreeCustom(app.RootCmd, "./docs/docs/ref/cli", prefix, identity)
 	},

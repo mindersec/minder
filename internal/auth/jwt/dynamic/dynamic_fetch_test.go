@@ -55,30 +55,30 @@ func TestValidator_ParseAndValidate(t *testing.T) {
 	// We need to add this to the mux after server start, because it includes the server.URL
 	mux.HandleFunc("/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 		"issuer":"%[1]s",
 		"jwks_uri":"%[1]s/certs",
 		"scopes_supported":["openid","email","profile"],
 		"claims_supported":["sub","email","iss","aud","iat","exp"]
-		}`, server.URL)))
+		}`, server.URL)
 	})
 	mux.HandleFunc("/other/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 		"issuer":"%[1]s/other",
 		"jwks_uri":"%[1]s/certs",
 		"scopes_supported":["openid","email","profile"],
 		"claims_supported":["sub","email","iss","aud","iat","exp"]
-		}`, server.URL)))
+		}`, server.URL)
 	})
 	mux.HandleFunc("/elsewhere/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 		"issuer":"%[1]s/elsewhere",
 		"jwks_uri":"%[1]s/non-existent",
 		"scopes_supported":["openid","email","profile"],
 		"claims_supported":["sub","email","iss","aud","iat","exp"]
-		}`, server.URL)))
+		}`, server.URL)
 	})
 
 	tests := []struct {

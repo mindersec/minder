@@ -302,9 +302,10 @@ func getRuleEvalEntityInfo(
 	entityInfo["entity_id"] = rs.EntityID.String()
 
 	// temporary: These will be replaced by entity_id
-	if rs.EntityType == db.EntitiesRepository {
+	switch rs.EntityType {
+	case db.EntitiesRepository:
 		entityInfo["repository_id"] = efp.Entity.ID.String()
-	} else if rs.EntityType == db.EntitiesArtifact {
+	case db.EntitiesArtifact:
 		entityInfo["artifact_id"] = efp.Entity.ID.String()
 	}
 
@@ -431,20 +432,23 @@ func (s *Server) getRuleEvalStatus(
 		// TODO: Change all this logic to store the alert URL in the alert metadata
 		// This logic should not be in the presentation layer of Minder.
 		var repoPath string
-		if dbRuleEvalStat.EntityType == db.EntitiesRepository {
+		switch dbRuleEvalStat.EntityType {
+		case db.EntitiesRepository:
 			repoPath = fmt.Sprintf("%s/%s", st.EntityInfo["repo_owner"], st.EntityInfo["repo_name"])
-		} else if dbRuleEvalStat.EntityType == db.EntitiesArtifact {
+		case db.EntitiesArtifact:
 			artRepoOwner := efp.Properties.GetProperty(ghprop.ArtifactPropertyRepoOwner).GetString()
 			artRepoName := efp.Properties.GetProperty(ghprop.ArtifactPropertyRepoName).GetString()
 			if artRepoOwner != "" && artRepoName != "" {
 				repoPath = fmt.Sprintf("%s/%s", artRepoOwner, artRepoName)
 			}
-		} else if dbRuleEvalStat.EntityType == db.EntitiesPullRequest {
+		case db.EntitiesPullRequest:
 			prRepoOwner := efp.Properties.GetProperty(ghprop.PullPropertyRepoOwner).GetString()
 			prRepoName := efp.Properties.GetProperty(ghprop.PullPropertyRepoName).GetString()
 			if prRepoOwner != "" && prRepoName != "" {
 				repoPath = fmt.Sprintf("%s/%s", prRepoOwner, prRepoName)
 			}
+		default:
+			zerolog.Ctx(ctx).Error().Msgf("unknown entity type: %v", dbRuleEvalStat.EntityType)
 		}
 		alertURL, err := getAlertURLFromMetadata(
 			dbRuleEvalStat.AlertMetadata,

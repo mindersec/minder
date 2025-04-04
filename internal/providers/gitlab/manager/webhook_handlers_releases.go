@@ -44,14 +44,14 @@ func (m *providerClassManager) handleRelease(l zerolog.Logger, r *http.Request) 
 
 	// TODO: Should we explicitly handle upcoming/historical releases?
 
-	switch {
-	case releaseEvent.Action == "create":
+	switch releaseEvent.Action {
+	case "create":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
 			constants.TopicQueueOriginatingEntityAdd)
-	case releaseEvent.Action == "update":
+	case "update":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
 			constants.TopicQueueRefreshEntityAndEvaluate)
-	case releaseEvent.Action == "delete":
+	case "delete":
 		return m.publishReleaseMessage(releaseID, tag, rawProjectID,
 			constants.TopicQueueOriginatingEntityDelete)
 	default:

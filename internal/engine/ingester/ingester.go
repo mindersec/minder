@@ -23,7 +23,7 @@ import (
 // test that the ingester implementations implements the interface
 // this would be probably nicer in the implementation file, but that would cause an import loop
 var _ interfaces.Ingester = (*artifact.Ingest)(nil)
-var _ interfaces.Ingester = (*builtin.BuiltinRuleDataIngest)(nil)
+var _ interfaces.Ingester = (*builtin.RuleDataIngest)(nil)
 var _ interfaces.Ingester = (*rest.Ingestor)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
@@ -46,7 +46,7 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces
 		if rt.Def.Ingest.GetBuiltin() == nil {
 			return nil, fmt.Errorf("rule type engine missing internal configuration")
 		}
-		return builtin.NewBuiltinRuleDataIngest(ing.GetBuiltin())
+		return builtin.NewRuleDataIngest(ing.GetBuiltin())
 
 	case artifact.ArtifactRuleDataIngestType:
 		if rt.Def.Ingest.GetArtifact() == nil {

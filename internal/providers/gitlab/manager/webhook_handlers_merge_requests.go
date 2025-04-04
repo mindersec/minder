@@ -43,15 +43,14 @@ func (m *providerClassManager) handleMergeRequest(l zerolog.Logger, r *http.Requ
 		return fmt.Errorf("merge request event missing project ID")
 	}
 
-	switch {
-	case mergeRequestEvent.ObjectAttributes.Action == "open",
-		mergeRequestEvent.ObjectAttributes.Action == "reopen":
+	switch mergeRequestEvent.ObjectAttributes.Action {
+	case "open", "reopen":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			constants.TopicQueueOriginatingEntityAdd)
-	case mergeRequestEvent.ObjectAttributes.Action == "close":
+	case "close":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			constants.TopicQueueOriginatingEntityDelete)
-	case mergeRequestEvent.ObjectAttributes.Action == "update":
+	case "update":
 		return m.publishMergeRequestMessage(mrID, mrIID, rawProjectID,
 			constants.TopicQueueRefreshEntityAndEvaluate)
 	default:

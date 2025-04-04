@@ -116,7 +116,7 @@ func (yq *yqExecute) createFsModEntries(ctx context.Context, _ interfaces.Action
 }
 
 func (yq *yqExecute) modifyFs() ([]*fsEntry, error) {
-	err := yq.fsChangeSet.writeEntries()
+	err := yq.writeEntries()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}

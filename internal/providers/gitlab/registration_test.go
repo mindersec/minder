@@ -48,14 +48,15 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.Header().Set("Content-Type", "application/json")
 
 							w.WriteHeader(http.StatusOK)
 							_, err := w.Write([]byte("[]"))
 							assert.NoError(t, err)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.Header().Set("Content-Type", "application/json")
 
@@ -85,10 +86,11 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.WriteHeader(http.StatusInternalServerError)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.Header().Set("Content-Type", "application/json")
 
@@ -119,14 +121,15 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.Header().Set("Content-Type", "application/json")
 
 							w.WriteHeader(http.StatusOK)
 							_, err := w.Write([]byte("[]"))
 							assert.NoError(t, err)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.WriteHeader(http.StatusInternalServerError)
 							return
