@@ -29,6 +29,8 @@ var (
 	XdgConfigHomeEnvVar = "XDG_CONFIG_HOME"
 )
 
+const serverAddress = "localhost:8081"
+
 // Enforce that only one test setting environment variables runs at a time
 func setEnvVar(t *testing.T, env string, value string) {
 	t.Helper() // Keep golangci-lint happy
@@ -130,9 +132,9 @@ func TestSaveCredentials(t *testing.T) {
 
 	cfgPath := filepath.Join(testDir, "minder")
 
-	expectedFilePath := filepath.Join(cfgPath, "credentials.json")
+	expectedFilePath := filepath.Join(cfgPath, "localhost_8081.json")
 
-	filePath, err := cli.SaveCredentials(tokens)
+	filePath, err := cli.SaveCredentials(serverAddress, tokens)
 	require.NoError(t, err)
 
 	if filePath != expectedFilePath {
@@ -162,7 +164,7 @@ func TestRemoveCredentials(t *testing.T) {
 	setEnvVar(t, XdgConfigHomeEnvVar, testDir)
 	xdgConfigHome := os.Getenv(XdgConfigHomeEnvVar)
 
-	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
+	filePath := filepath.Join(xdgConfigHome, "minder", "localhost_8081.json")
 
 	// Create a dummy credentials file
 	err := os.MkdirAll(filepath.Dir(filePath), 0750)
@@ -176,7 +178,7 @@ func TestRemoveCredentials(t *testing.T) {
 		t.Fatalf("error writing credentials to file: %v", err)
 	}
 
-	err = cli.RemoveCredentials()
+	err = cli.RemoveCredentials(serverAddress)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -247,7 +249,7 @@ func TestRefreshCredentials(t *testing.T) {
 
 			tt.issuerUrl = server.URL
 
-			result, err := cli.RefreshCredentials(tt.refreshToken, tt.issuerUrl, tt.clientId)
+			result, err := cli.RefreshCredentials("localhost:8081", tt.refreshToken, tt.issuerUrl, tt.clientId)
 			if tt.expectedError != "" {
 				if err == nil || err.Error() != tt.expectedError {
 					t.Errorf("expected error %v, got %v", tt.expectedError, err)
@@ -270,12 +272,23 @@ func TestRefreshCredentials(t *testing.T) {
 func TestLoadCredentials(t *testing.T) {
 	tests := []struct {
 		name           string
+		filePath       string
 		fileContent    string
 		expectedError  string
 		expectedResult cli.OpenIdCredentials
 	}{
 		{
 			name:        "Successful load",
+			fileContent: `{"access_token":"access_token","refresh_token":"refresh_token","expiry":"2024-10-05T17:46:27+10:00"}`,
+			expectedResult: cli.OpenIdCredentials{
+				AccessToken:          "access_token",
+				RefreshToken:         "refresh_token",
+				AccessTokenExpiresAt: time.Date(2024, 10, 5, 17, 46, 27, 0, time.FixedZone("AEST", 10*60*60)),
+			},
+		},
+		{
+			name:        "Load from default",
+			filePath:    "minder/credentials.json",
 			fileContent: `{"access_token":"access_token","refresh_token":"refresh_token","expiry":"2024-10-05T17:46:27+10:00"}`,
 			expectedResult: cli.OpenIdCredentials{
 				AccessToken:          "access_token",
@@ -307,7 +320,10 @@ func TestLoadCredentials(t *testing.T) {
 				t.Fatalf("failed to create minder directory: %v", err)
 			}
 
-			filePath := filepath.Join(minderDir, "credentials.json")
+			filePath := filepath.Join(minderDir, "localhost_8081.json")
+			if tt.filePath != "" {
+				filePath = filepath.Join(testDir, tt.filePath)
+			}
 
 			if tt.fileContent != "" {
 				// Create a temporary file with the specified content
@@ -319,7 +335,7 @@ func TestLoadCredentials(t *testing.T) {
 				t.Logf("Test %s: file path %s not created as file content is empty", tt.name, filePath)
 			}
 
-			result, err := cli.LoadCredentials()
+			result, err := cli.LoadCredentials(serverAddress)
 			if tt.expectedError != "" {
 				if err == nil || !strings.HasPrefix(err.Error(), tt.expectedError) {
 					t.Errorf("expected error matching %v, got %v", tt.expectedError, err)

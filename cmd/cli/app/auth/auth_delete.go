@@ -37,7 +37,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// We read name and email from the JWT.  We don't need to validate it here.
-	creds, err := cli.LoadCredentials()
+	creds, err := cli.LoadCredentials(conn.CanonicalTarget())
 	if err != nil {
 		return cli.MessageAndError("Error loading credentials from file", err)
 	}
@@ -77,7 +77,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// This step is added to avoid confusing the users by seeing their credentials locally, however it is not
 	// directly related to user deletion because the token will expire after 5 minutes and cannot be refreshed
-	err = cli.RemoveCredentials()
+	err = cli.RemoveCredentials(conn.CanonicalTarget())
 	if err != nil {
 		cmd.Println(cli.WarningBanner.Render("Failed to remove locally stored credentials."))
 	}
