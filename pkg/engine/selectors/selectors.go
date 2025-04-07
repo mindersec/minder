@@ -100,7 +100,7 @@ func (pe *ParseError) Error() string {
 }
 
 // Is checks if the target error is a ParseError
-func (_ *ParseError) Is(target error) bool {
+func (*ParseError) Is(target error) bool {
 	var t *ParseError
 	return errors.As(target, &t)
 }
@@ -122,7 +122,7 @@ func (ce *CheckError) Error() string {
 }
 
 // Is checks if the target error is a CheckError
-func (_ *CheckError) Is(target error) bool {
+func (*CheckError) Is(target error) bool {
 	var t *CheckError
 	return errors.As(target, &t)
 }
@@ -463,7 +463,7 @@ func unknownAttributesFromOpts(unknownPaths []string) []*interpreter.AttributePa
 	return unknowns
 }
 
-func (_ *EntitySelection) evalWithOpts(
+func (*EntitySelection) evalWithOpts(
 	opts *selectionOptions, sel *compiledSelector, entityMap map[string]any,
 ) (ref.Val, *cel.EvalDetails, error) {
 	unknowns := unknownAttributesFromOpts(opts.unknownPaths)

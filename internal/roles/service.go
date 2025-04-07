@@ -46,7 +46,7 @@ func NewRoleService() RoleService {
 	return &roleService{}
 }
 
-func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+func (*roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
 	targetProject uuid.UUID, identity auth.Identity, authzRole authz.Role) (*pb.RoleAssignment, error) {
 
 	// For users in the primary (human) identity store, verify if user exists in our database.
@@ -86,7 +86,7 @@ func (_ *roleService) CreateRoleAssignment(ctx context.Context, qtx db.Querier, 
 	}, nil
 }
 
-func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+func (*roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
 	idClient auth.Resolver, targetProject uuid.UUID, sub string, authzRole authz.Role) (*pb.RoleAssignment, error) {
 	// Resolve the subject to an identity
 	identity, err := idClient.Resolve(ctx, sub)
@@ -136,7 +136,7 @@ func (_ *roleService) UpdateRoleAssignment(ctx context.Context, qtx db.Querier, 
 	}, nil
 }
 
-func (_ *roleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
+func (*roleService) RemoveRoleAssignment(ctx context.Context, qtx db.Querier, authzClient authz.Client,
 	idClient auth.Resolver, targetProject uuid.UUID, subject string, roleToRemove authz.Role) (*pb.RoleAssignment, error) {
 
 	// Resolve the subject to an identity

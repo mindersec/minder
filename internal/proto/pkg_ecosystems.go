@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package proto contains internal protocol buffer API definitions and helpers.
 package proto
 
 // AsString returns the string representation of the DepEcosystem

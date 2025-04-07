@@ -77,7 +77,7 @@ func NewArtifactFetcher() *ArtifactFetcher {
 }
 
 // GetName returns the name of the artifact
-func (_ *ArtifactFetcher) GetName(props *properties.Properties) (string, error) {
+func (*ArtifactFetcher) GetName(props *properties.Properties) (string, error) {
 	// it seems like the previous code handles the case where owner is not set,
 	// although it's not clear why it's necessary. Let's keep it for now, sigh.
 	owner := props.GetProperty(ArtifactPropertyOwner).GetString()

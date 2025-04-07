@@ -43,7 +43,7 @@ func NewPropertyFetcherFactory() GhPropertyFetcherFactory {
 }
 
 // EntityPropertyFetcher returns a GhPropertyFetcher for the given entity type
-func (_ ghEntityFetcher) EntityPropertyFetcher(entType minderv1.Entity) GhPropertyFetcher {
+func (ghEntityFetcher) EntityPropertyFetcher(entType minderv1.Entity) GhPropertyFetcher {
 	// nolint:exhaustive
 	switch entType {
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:

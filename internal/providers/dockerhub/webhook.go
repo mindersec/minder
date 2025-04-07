@@ -8,6 +8,6 @@ import "net/http"
 // GetWebhookHandler implements the ProviderManager interface
 // Note that this is where the whole webhook handler is defined and
 // will live.
-func (_ *providerClassManager) GetWebhookHandler() http.Handler {
+func (*providerClassManager) GetWebhookHandler() http.Handler {
 	return nil
 }

@@ -33,12 +33,12 @@ func (r *Remediator) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the remediation engine
-func (_ *Remediator) Type() string {
+func (*Remediator) Type() string {
 	return "noop"
 }
 
 // GetOnOffState returns the off state of the noop engine
-func (_ *Remediator) GetOnOffState() models.ActionOpt {
+func (*Remediator) GetOnOffState() models.ActionOpt {
 	return models.ActionOptOff
 }
 

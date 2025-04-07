@@ -59,7 +59,7 @@ func ParseV1Config(rawCfg json.RawMessage) (*minderv1.GHCRProviderConfig, error)
 }
 
 // CanImplement returns true/false depending on whether the GHCR client can implement the specified trait
-func (_ *ImageLister) CanImplement(trait minderv1.ProviderType) bool {
+func (*ImageLister) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER
 }
 
@@ -129,7 +129,7 @@ func (g *ImageLister) ListImages(ctx context.Context) ([]string, error) {
 
 // FetchAllProperties implements the provider interface
 // TODO: Implement this
-func (_ *ImageLister) FetchAllProperties(
+func (*ImageLister) FetchAllProperties(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	return nil, nil
@@ -137,25 +137,25 @@ func (_ *ImageLister) FetchAllProperties(
 
 // FetchProperty implements the provider interface
 // TODO: Implement this
-func (_ *ImageLister) FetchProperty(
+func (*ImageLister) FetchProperty(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
 
 // GetEntityName implements the provider interface
 // TODO: Implement this
-func (_ *ImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+func (*ImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
 
 // SupportsEntity implements the Provider interface
-func (_ *ImageLister) SupportsEntity(_ minderv1.Entity) bool {
+func (*ImageLister) SupportsEntity(_ minderv1.Entity) bool {
 	// TODO: implement
 	return false
 }
 
 // RegisterEntity implements the Provider interface
-func (_ *ImageLister) RegisterEntity(
+func (*ImageLister) RegisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	// TODO: implement
@@ -163,20 +163,20 @@ func (_ *ImageLister) RegisterEntity(
 }
 
 // DeregisterEntity implements the Provider interface
-func (_ *ImageLister) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+func (*ImageLister) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	// TODO: implement
 	return nil
 }
 
 // ReregisterEntity implements the Provider interface
-func (_ *ImageLister) ReregisterEntity(
+func (*ImageLister) ReregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	return nil
 }
 
 // PropertiesToProtoMessage implements the Provider interface
-func (_ *ImageLister) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
+func (*ImageLister) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
 	// TODO: Implement
 	return nil, nil
 }

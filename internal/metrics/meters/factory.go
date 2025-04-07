@@ -22,7 +22,7 @@ type MeterFactory interface {
 type ExportingMeterFactory struct{}
 
 // Build creates a meter with the specified name.
-func (_ *ExportingMeterFactory) Build(name string) metric.Meter {
+func (*ExportingMeterFactory) Build(name string) metric.Meter {
 	return otel.Meter(name)
 }
 
@@ -30,6 +30,6 @@ func (_ *ExportingMeterFactory) Build(name string) metric.Meter {
 type NoopMeterFactory struct{}
 
 // Build returns a noop meter implementation.
-func (_ *NoopMeterFactory) Build(_ string) metric.Meter {
+func (*NoopMeterFactory) Build(_ string) metric.Meter {
 	return noop.Meter{}
 }

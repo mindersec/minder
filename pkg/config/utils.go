@@ -270,7 +270,7 @@ func getDefaultValueForInt64(value string) (any, error) {
 func getDefaultValue(field reflect.StructField, value string, valueName string) any {
 	defaultValue := reflect.Zero(field.Type).Interface()
 	var err error // We handle errors at the end of the switch
-	//nolint:golint,exhaustive
+	//nolint:exhaustive
 	switch field.Type.Kind() {
 	case reflect.String:
 		defaultValue = value

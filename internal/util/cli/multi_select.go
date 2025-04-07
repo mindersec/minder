@@ -71,16 +71,16 @@ type item struct {
 }
 
 func (i item) Title() string       { return i.title }
-func (_ item) Description() string { return "" }
+func (item) Description() string   { return "" }
 func (i item) FilterValue() string { return i.title }
 
 // itemDelegate packs all the logic related to rendering items in TUI
 type itemDelegate struct{}
 
-func (_ itemDelegate) Height() int                             { return 1 }
-func (_ itemDelegate) Spacing() int                            { return 0 }
-func (_ itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (_ itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
+func (itemDelegate) Height() int                             { return 1 }
+func (itemDelegate) Spacing() int                            { return 0 }
+func (itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
+func (itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	i, ok := listItem.(item)
 	if !ok {
 		return
@@ -108,7 +108,7 @@ type model struct {
 	height int
 }
 
-func (_ model) Init() tea.Cmd {
+func (model) Init() tea.Cmd {
 	return nil
 }
 

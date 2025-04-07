@@ -18,6 +18,6 @@ func NewNoopMetrics() *noop {
 	return &noop{}
 }
 
-func (_ *noop) NewDurationRoundTripper(wrapped http.RoundTripper, _ db.ProviderType) (http.RoundTripper, error) {
+func (*noop) NewDurationRoundTripper(wrapped http.RoundTripper, _ db.ProviderType) (http.RoundTripper, error) {
 	return wrapped, nil
 }

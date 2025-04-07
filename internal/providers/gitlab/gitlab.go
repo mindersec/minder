@@ -119,7 +119,7 @@ func MarshalV1Config(rawCfg json.RawMessage) (json.RawMessage, error) {
 }
 
 // CanImplement returns true if the provider can implement the given trait
-func (_ *gitlabClient) CanImplement(trait minderv1.ProviderType) bool {
+func (*gitlabClient) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT ||
 		trait == minderv1.ProviderType_PROVIDER_TYPE_REST
 }
@@ -129,7 +129,7 @@ func (c *gitlabClient) GetCredential() provifv1.GitLabCredential {
 }
 
 // SupportsEntity implements the Provider interface
-func (_ *gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
+func (*gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
 	return entType == minderv1.Entity_ENTITY_REPOSITORIES ||
 		entType == minderv1.Entity_ENTITY_PULL_REQUESTS ||
 		entType == minderv1.Entity_ENTITY_RELEASE

@@ -118,7 +118,7 @@ func (d *dockerHubImageLister) GetNamespaceURL() string {
 }
 
 // CanImplement returns true if the provider can implement the specified trait
-func (_ *dockerHubImageLister) CanImplement(trait minderv1.ProviderType) bool {
+func (*dockerHubImageLister) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER ||
 		trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
@@ -168,7 +168,7 @@ func (d *dockerHubImageLister) ListImages(ctx context.Context) ([]string, error)
 
 // FetchAllProperties implements the provider interface
 // TODO: Implement this
-func (_ *dockerHubImageLister) FetchAllProperties(
+func (*dockerHubImageLister) FetchAllProperties(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	return nil, nil
@@ -176,25 +176,25 @@ func (_ *dockerHubImageLister) FetchAllProperties(
 
 // FetchProperty implements the provider interface
 // TODO: Implement this
-func (_ *dockerHubImageLister) FetchProperty(
+func (*dockerHubImageLister) FetchProperty(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
 
 // GetEntityName implements the provider interface
 // TODO: Implement this
-func (_ *dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+func (*dockerHubImageLister) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
 
 // SupportsEntity implements the Provider interface
-func (_ *dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
+func (*dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
 	// TODO: implement
 	return false
 }
 
 // RegisterEntity implements the Provider interface
-func (_ *dockerHubImageLister) RegisterEntity(
+func (*dockerHubImageLister) RegisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	// TODO: implement
@@ -202,7 +202,7 @@ func (_ *dockerHubImageLister) RegisterEntity(
 }
 
 // DeregisterEntity implements the Provider interface
-func (_ *dockerHubImageLister) DeregisterEntity(
+func (*dockerHubImageLister) DeregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	// TODO: implement
@@ -210,7 +210,7 @@ func (_ *dockerHubImageLister) DeregisterEntity(
 }
 
 // ReregisterEntity implements the Provider interface
-func (_ *dockerHubImageLister) ReregisterEntity(
+func (*dockerHubImageLister) ReregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	// TODO: implement
@@ -218,7 +218,7 @@ func (_ *dockerHubImageLister) ReregisterEntity(
 }
 
 // PropertiesToProtoMessage implements the Provider interface
-func (_ *dockerHubImageLister) PropertiesToProtoMessage(
+func (*dockerHubImageLister) PropertiesToProtoMessage(
 	_ minderv1.Entity, _ *properties.Properties) (protoreflect.ProtoMessage, error) {
 	// TODO: Implement
 	return nil, nil

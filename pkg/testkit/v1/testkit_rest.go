@@ -14,12 +14,12 @@ import (
 )
 
 // GetBaseURL implements the REST interface.
-func (_ *TestKit) GetBaseURL() string {
+func (*TestKit) GetBaseURL() string {
 	return ""
 }
 
 // NewRequest implements the REST interface.
-func (_ *TestKit) NewRequest(method, url string, body any) (*http.Request, error) {
+func (*TestKit) NewRequest(method, url string, body any) (*http.Request, error) {
 	var r io.Reader
 	if body != nil {
 		r = bytes.NewReader(body.([]byte))

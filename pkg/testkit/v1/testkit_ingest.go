@@ -38,12 +38,12 @@ func (tk *TestKit) ShouldOverrideIngest() bool {
 }
 
 // GetType returns the type of the ingester
-func (_ *TestKit) GetType() string {
+func (*TestKit) GetType() string {
 	return "testkit"
 }
 
 // GetConfig returns the config for the ingester
-func (_ *TestKit) GetConfig() protoreflect.ProtoMessage {
+func (*TestKit) GetConfig() protoreflect.ProtoMessage {
 	return nil
 }
 

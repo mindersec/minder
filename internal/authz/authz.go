@@ -28,7 +28,7 @@ import (
 var (
 	// ErrStoreNotFound denotes the error where the store wasn't found via the
 	// given configuration.
-	ErrStoreNotFound = errors.New("Store not found")
+	ErrStoreNotFound = errors.New("store not found")
 
 	//go:embed model/minder.generated.json
 	authzModel string

@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	pbinternal "github.com/mindersec/minder/internal/proto"
 	htmltemplate "html/template"
 	"strings"
 
@@ -19,12 +18,12 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/pkg/profiles/models"
-
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -173,7 +172,7 @@ func (alert *Alert) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the remediation engine
-func (_ *Alert) Type() string {
+func (*Alert) Type() string {
 	return AlertType
 }
 
@@ -397,7 +396,7 @@ func (alert *Alert) getSeverityString() string {
 }
 
 // runDoNothing returns the previous alert status
-func (_ *Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMessage, error) {
+func (*Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", params.Repo).Logger()
 
 	logger.Debug().Msg("Running do nothing")

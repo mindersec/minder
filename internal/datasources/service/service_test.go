@@ -884,7 +884,7 @@ func (f *fakeTxBuilder) Commit() error {
 	return nil
 }
 
-func (_ *fakeTxBuilder) Rollback() error {
+func (*fakeTxBuilder) Rollback() error {
 	return nil
 }
 

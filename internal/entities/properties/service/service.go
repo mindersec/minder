@@ -327,7 +327,7 @@ func (ps *propertiesService) EntityWithPropertiesByUpstreamHint(
 }
 
 // EntityWithPropertiesAsProto converts the entity with properties to a protobuf message
-func (_ *propertiesService) EntityWithPropertiesAsProto(
+func (*propertiesService) EntityWithPropertiesAsProto(
 	ctx context.Context, ewp *models.EntityWithProperties, provMgr manager.ProviderManager,
 ) (protoreflect.ProtoMessage, error) {
 	prov, err := provMgr.InstantiateFromID(ctx, ewp.Entity.ProviderID)

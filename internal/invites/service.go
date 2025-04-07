@@ -55,7 +55,7 @@ func NewInviteService() InviteService {
 	return &inviteService{}
 }
 
-func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
+func (*inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	var userInvite db.UserInvite
@@ -156,7 +156,7 @@ func (_ *inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, events
 
 }
 
-func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID,
+func (*inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClient auth.Resolver, targetProject uuid.UUID,
 	authzRole authz.Role, inviteeEmail string) (*minder.Invitation, error) {
 	// Get all invitations for this email and project
 	invitesToRemove, err := qtx.GetInvitationsByEmailAndProject(ctx, db.GetInvitationsByEmailAndProjectParams{
@@ -225,7 +225,7 @@ func (_ *inviteService) RemoveInvite(ctx context.Context, qtx db.Querier, idClie
 	}, nil
 }
 
-func (_ *inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
+func (*inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPub interfaces.Publisher,
 	emailConfig serverconfig.EmailConfig, targetProject uuid.UUID, authzRole authz.Role, inviteeEmail string,
 ) (*minder.Invitation, error) {
 	identity := auth.IdentityFromContext(ctx)

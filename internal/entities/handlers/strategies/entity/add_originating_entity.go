@@ -130,11 +130,11 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 }
 
 // GetName returns the name of the strategy. Used for debugging
-func (_ *addOriginatingEntityStrategy) GetName() string {
+func (*addOriginatingEntityStrategy) GetName() string {
 	return "addOriginatingEntityStrategy"
 }
 
-func (_ *addOriginatingEntityStrategy) upsertLegacyEntity(
+func (*addOriginatingEntityStrategy) upsertLegacyEntity(
 	ctx context.Context,
 	entType minderv1.Entity,
 	parentEwp *models.EntityWithProperties, pbEnt protoreflect.ProtoMessage,

@@ -186,7 +186,7 @@ func pathInKnownDirectory(path string) bool {
 }
 
 // Verify checks the contents of the bundle against its manifest
-func (_ *Bundle) Verify() error {
+func (*Bundle) Verify() error {
 	// FIXME(puerco): Implement
 	return nil
 }

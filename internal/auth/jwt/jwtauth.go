@@ -87,7 +87,7 @@ func NewJwtValidator(ctx context.Context, jwksUrl string, issUrl string, aud str
 	// Refresh the JWKS once before starting
 	_, err = jwks.Refresh(ctx, jwksUrl)
 	if err != nil {
-		return nil, fmt.Errorf("failed to refresh identity provider JWKS: %s\n", err)
+		return nil, fmt.Errorf("failed to refresh identity provider JWKS: %s", err)
 	}
 
 	keySetCache := KeySetCache{

@@ -34,5 +34,5 @@ func (f *FakeClient) BooleanValue(_ context.Context, flag string, defaultValue b
 	if v, ok := f.Data[flag]; ok {
 		return v.(bool), nil
 	}
-	return defaultValue, errors.New("Not found")
+	return defaultValue, errors.New("not found")
 }

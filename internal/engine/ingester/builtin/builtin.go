@@ -28,16 +28,16 @@ const (
 	BuiltinRuleDataIngestType = "builtin"
 )
 
-// BuiltinRuleDataIngest is the engine for a rule type that uses builtin methods
-type BuiltinRuleDataIngest struct {
+// RuleDataIngest is the engine for a rule type that uses builtin methods
+type RuleDataIngest struct {
 	builtinCfg  *pb.BuiltinType
 	ruleMethods rule_methods.Methods
 	method      string
 }
 
-// NewBuiltinRuleDataIngest creates a new builtin rule data ingest engine
-func NewBuiltinRuleDataIngest(builtinCfg *pb.BuiltinType) (*BuiltinRuleDataIngest, error) {
-	return &BuiltinRuleDataIngest{
+// NewRuleDataIngest creates a new builtin rule data ingest engine
+func NewRuleDataIngest(builtinCfg *pb.BuiltinType) (*RuleDataIngest, error) {
+	return &RuleDataIngest{
 		builtinCfg:  builtinCfg,
 		method:      builtinCfg.GetMethod(),
 		ruleMethods: &rule_methods.RuleMethods{},
@@ -46,22 +46,23 @@ func NewBuiltinRuleDataIngest(builtinCfg *pb.BuiltinType) (*BuiltinRuleDataInges
 
 // FileContext returns a file context that an evaluator can use to do rule evaluation.
 // the builtin engine does not support file context.
-func (*BuiltinRuleDataIngest) FileContext() billy.Filesystem {
+func (*RuleDataIngest) FileContext() billy.Filesystem {
 	return nil
 }
 
 // GetType returns the type of the builtin rule data ingest engine
-func (*BuiltinRuleDataIngest) GetType() string {
+func (*RuleDataIngest) GetType() string {
 	return BuiltinRuleDataIngestType
 }
 
 // GetConfig returns the config for the builtin rule data ingest engine
-func (idi *BuiltinRuleDataIngest) GetConfig() protoreflect.ProtoMessage {
+func (idi *RuleDataIngest) GetConfig() protoreflect.ProtoMessage {
 	return idi.builtinCfg
 }
 
 // Ingest calls the builtin method and populates the data to be returned
-func (idi *BuiltinRuleDataIngest) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
+func (idi *RuleDataIngest) Ingest(
+	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
 	method, err := idi.ruleMethods.GetMethod(idi.method)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get method: %w", err)

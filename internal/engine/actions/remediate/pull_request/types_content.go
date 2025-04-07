@@ -131,7 +131,7 @@ func (ca *contentModification) createFsModEntries(
 }
 
 func (ca *contentModification) modifyFs() ([]*fsEntry, error) {
-	err := ca.fsChangeSet.writeEntries()
+	err := ca.writeEntries()
 	if err != nil {
 		return nil, fmt.Errorf("cannot write entries: %w", err)
 	}

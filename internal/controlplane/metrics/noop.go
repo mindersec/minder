@@ -18,12 +18,12 @@ func NewNoopMetrics() Metrics {
 }
 
 // Init implements Metrics.Init
-func (_ *noopMetrics) Init(_ db.Store) error {
+func (*noopMetrics) Init(_ db.Store) error {
 	return nil
 }
 
 // AddWebhookEventTypeCount implements Metrics.AddWebhookEventTypeCount
-func (_ *noopMetrics) AddWebhookEventTypeCount(_ context.Context, _ *WebhookEventState) {}
+func (*noopMetrics) AddWebhookEventTypeCount(_ context.Context, _ *WebhookEventState) {}
 
 // AddTokenOpCount implements Metrics.AddTokenOpCount
-func (_ *noopMetrics) AddTokenOpCount(_ context.Context, _ string, _ bool) {}
+func (*noopMetrics) AddTokenOpCount(_ context.Context, _ string, _ bool) {}

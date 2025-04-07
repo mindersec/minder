@@ -86,15 +86,15 @@ var serveCmd = &cobra.Command{
 		// and remove the Keycloak-specific paths.
 		jwksUrl, err := cfg.Identity.Server.GetRealmPath("protocol/openid-connect/certs")
 		if err != nil {
-			return fmt.Errorf("failed to create JWKS URL: %w\n", err)
+			return fmt.Errorf("failed to create JWKS URL: %w", err)
 		}
 		issUrl, err := cfg.Identity.Server.JwtUrl()
 		if err != nil {
-			return fmt.Errorf("failed to create issuer URL: %w\n", err)
+			return fmt.Errorf("failed to create issuer URL: %w", err)
 		}
 		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
 		if err != nil {
-			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w\n", err)
+			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w", err)
 		}
 		allowedIssuers := []string{issUrl.String()}
 		allowedIssuers = append(allowedIssuers, cfg.Identity.AdditionalIssuers...)

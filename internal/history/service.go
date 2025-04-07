@@ -125,7 +125,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	return evaluationID, nil
 }
 
-func (_ *evaluationHistoryService) createNewStatus(
+func (*evaluationHistoryService) createNewStatus(
 	ctx context.Context,
 	qtx db.Querier,
 	ruleEntityID uuid.UUID,

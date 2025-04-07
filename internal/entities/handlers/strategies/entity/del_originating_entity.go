@@ -87,6 +87,6 @@ func (d *delOriginatingEntityStrategy) GetEntity(
 }
 
 // GetName returns the name of the strategy. Used for debugging
-func (_ *delOriginatingEntityStrategy) GetName() string {
+func (*delOriginatingEntityStrategy) GetName() string {
 	return "delOriginatingEntityStrategy"
 }

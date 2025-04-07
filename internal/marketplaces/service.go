@@ -100,11 +100,11 @@ func (s *marketplace) getBundle(bundleID mindpak.BundleID) (reader.BundleReader,
 // This is used when the Marketplace functionality is disabled
 type noopMarketplace struct{}
 
-func (_ *noopMarketplace) Subscribe(_ context.Context, _ uuid.UUID, _ mindpak.BundleID, _ db.ExtendQuerier) error {
+func (*noopMarketplace) Subscribe(_ context.Context, _ uuid.UUID, _ mindpak.BundleID, _ db.ExtendQuerier) error {
 	return nil
 }
 
-func (_ *noopMarketplace) AddProfile(
+func (*noopMarketplace) AddProfile(
 	_ context.Context,
 	_ uuid.UUID,
 	_ mindpak.BundleID,

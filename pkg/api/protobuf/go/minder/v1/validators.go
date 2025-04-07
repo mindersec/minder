@@ -72,7 +72,7 @@ func (a *AutoRegistration) Validate() error {
 var _ Validator = (*GitHubProviderConfig)(nil)
 
 // Validate is a utility function which allows for the validation of a struct.
-func (_ *GitHubProviderConfig) Validate() error {
+func (*GitHubProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
 	return nil
@@ -82,7 +82,7 @@ func (_ *GitHubProviderConfig) Validate() error {
 var _ Validator = (*GitHubAppProviderConfig)(nil)
 
 // Validate is a utility function which allows for the validation of a struct.
-func (_ *GitHubAppProviderConfig) Validate() error {
+func (*GitHubAppProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
 	return nil
@@ -199,11 +199,12 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 	}
 
 	// Not using import to avoid circular dependency
-	if ev.Type == "rego" {
+	switch ev.Type {
+	case "rego":
 		if err := ev.GetRego().Validate(); err != nil {
 			return err
 		}
-	} else if ev.Type == "jq" {
+	case "jq":
 		if len(ev.GetJq()) == 0 {
 			return fmt.Errorf("%w: jq definition is empty", ErrInvalidRuleTypeDefinition)
 		}
@@ -213,6 +214,7 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
 			}
 		}
+		// TODO: we don't have a default case here, and a bunch of tests don't set type
 	}
 
 	if ev.GetDataSources() != nil {
@@ -331,16 +333,18 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		return fmt.Errorf("%w: ingest is nil", ErrInvalidRuleTypeDefinition)
 	}
 
-	if ing.Type == IngestTypeDiff {
+	switch ing.Type {
+	case IngestTypeDiff:
 		if ing.GetDiff() == nil {
 			return fmt.Errorf("%w: diff ingest is nil", ErrInvalidRuleTypeDefinition)
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
-	} else if ing.Type == "rest" {
+	case "rest":
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}
+		// TODO: we don't have a default here, and a bunch of tests don't set type
 	}
 
 	return nil
@@ -353,15 +357,16 @@ func (alert *RuleType_Definition_Alert) Validate() error {
 	}
 
 	// Not using import to avoid circular dependency
-	if alert.Type == "security_advisory" {
+	switch alert.Type {
+	case "security_advisory":
 		if err := alert.GetSecurityAdvisory().Validate(); err != nil {
 			return err
 		}
-	} else if alert.Type == "pull_request_comment" {
+	case "pull_request_comment":
 		if err := alert.GetPullRequestComment().Validate(); err != nil {
 			return err
 		}
-	} else {
+	default:
 		return fmt.Errorf("%w: alert type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
 	return nil
@@ -401,19 +406,20 @@ func (rem *RuleType_Definition_Remediate) Validate() error {
 	}
 
 	// Not using import to avoid circular dependency
-	if rem.Type == "rest" {
+	switch rem.Type {
+	case "rest":
 		if err := rem.GetRest().Validate(); err != nil {
 			return err
 		}
-	} else if rem.Type == "pull_request" {
+	case "pull_request":
 		if err := rem.GetPullRequest().Validate(); err != nil {
 			return err
 		}
-	} else if rem.Type == "gh_branch_protection" {
+	case "gh_branch_protection":
 		if err := rem.GetGhBranchProtection().Validate(); err != nil {
 			return err
 		}
-	} else {
+	default:
 		return fmt.Errorf("%w: remediate type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
 	return nil

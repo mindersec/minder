@@ -138,7 +138,7 @@ func (r *Remediator) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the remediation engine
-func (_ *Remediator) Type() string {
+func (*Remediator) Type() string {
 	return RemediateType
 }
 
@@ -566,7 +566,7 @@ func checkoutToOriginallyFetchedBranch(
 }
 
 // runDoNothing returns the previous remediation status
-func (_ *Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessage, error) {
+func (*Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", p.repo.String()).Logger()
 
 	logger.Debug().Msg("Running do nothing")

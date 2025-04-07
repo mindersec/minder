@@ -33,46 +33,46 @@ func (n *NoopClient) Check(ctx context.Context, action string, project uuid.UUID
 }
 
 // Write_ implements authz.Client
-func (_ *NoopClient) Write(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
+func (*NoopClient) Write(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
 	return nil
 }
 
 // Delete implements authz.Client
-func (_ *NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
+func (*NoopClient) Delete(_ context.Context, _ string, _ authz.Role, _ uuid.UUID) error {
 	return nil
 }
 
 // DeleteUser implements authz.Client
-func (_ *NoopClient) DeleteUser(_ context.Context, _ string) error {
+func (*NoopClient) DeleteUser(_ context.Context, _ string) error {
 	return nil
 }
 
 // AssignmentsToProject implements authz.Client
-func (_ *NoopClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
+func (*NoopClient) AssignmentsToProject(_ context.Context, _ uuid.UUID) ([]*minderv1.RoleAssignment, error) {
 	return nil, nil
 }
 
 // ProjectsForUser implements authz.Client
-func (_ *NoopClient) ProjectsForUser(_ context.Context, _ string) ([]uuid.UUID, error) {
+func (*NoopClient) ProjectsForUser(_ context.Context, _ string) ([]uuid.UUID, error) {
 	return nil, nil
 }
 
 // PrepareForRun implements authz.Client
-func (_ *NoopClient) PrepareForRun(_ context.Context) error {
+func (*NoopClient) PrepareForRun(_ context.Context) error {
 	return nil
 }
 
 // MigrateUp implements authz.Client
-func (_ *NoopClient) MigrateUp(_ context.Context) error {
+func (*NoopClient) MigrateUp(_ context.Context) error {
 	return nil
 }
 
 // Adopt implements authz.Client
-func (_ *NoopClient) Adopt(_ context.Context, _, _ uuid.UUID) error {
+func (*NoopClient) Adopt(_ context.Context, _, _ uuid.UUID) error {
 	return nil
 }
 
 // Orphan implements authz.Client
-func (_ *NoopClient) Orphan(_ context.Context, _, _ uuid.UUID) error {
+func (*NoopClient) Orphan(_ context.Context, _, _ uuid.UUID) error {
 	return nil
 }

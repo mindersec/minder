@@ -204,11 +204,11 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 
 	baseInventory, err := di.scalibrInventory(ctx, pr.BaseCloneUrl, pr.BaseRef)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to clone base from %s at %q: %w", pr.BaseCloneUrl, pr.BaseRef, err)
+		return nil, fmt.Errorf("failed to clone base from %s at %q: %w", pr.BaseCloneUrl, pr.BaseRef, err)
 	}
 	newInventory, err := di.scalibrInventory(ctx, pr.TargetCloneUrl, pr.TargetRef)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to clone fork from %s at %q: %w", pr.TargetCloneUrl, pr.TargetRef, err)
+		return nil, fmt.Errorf("failed to clone fork from %s at %q: %w", pr.TargetCloneUrl, pr.TargetRef, err)
 	}
 
 	newDeps := setDifference(baseInventory, newInventory, inventorySorter)

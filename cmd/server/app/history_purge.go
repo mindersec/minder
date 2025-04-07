@@ -138,11 +138,7 @@ func deleteEvaluationHistory(
 	batchSize uint,
 ) (int, error) {
 	deleted := 0
-	for {
-		if len(records) == 0 {
-			break
-		}
-
+	for len(records) > 0 {
 		// This only happens at the last iteration if the
 		// number of records to delete is not a multiple of
 		// the batch size.

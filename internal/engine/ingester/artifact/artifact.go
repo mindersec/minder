@@ -350,21 +350,21 @@ func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	}
 
 	// Any signer identity not issued by github actions is returned verbatim
-	if c.Extensions.Issuer != githubTokenIssuer {
+	if c.Issuer != githubTokenIssuer {
 		return builderURL, nil
 	}
 
 	// When handling a cert issued through GitHub actions tokens, break the identity
 	// into its components. The verifier captures the git reference and the
 	// the repository URI.
-	if c.Extensions.SourceRepositoryURI == "" {
+	if c.SourceRepositoryURI == "" {
 		return "", fmt.Errorf(
 			"certificate extension dont have a SourceRepositoryURI set (oid 1.3.6.1.4.1.57264.1.5)",
 		)
 	}
 
 	builderURL, _, _ = strings.Cut(builderURL, "@")
-	builderURL = strings.TrimPrefix(builderURL, c.Extensions.SourceRepositoryURI)
+	builderURL = strings.TrimPrefix(builderURL, c.SourceRepositoryURI)
 
 	return builderURL, nil
 }

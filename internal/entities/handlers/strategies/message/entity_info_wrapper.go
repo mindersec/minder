@@ -66,6 +66,6 @@ func (c *toEntityInfoWrapper) CreateMessage(
 	return m, nil
 }
 
-func (_ *toEntityInfoWrapper) GetName() string {
+func (*toEntityInfoWrapper) GetName() string {
 	return "toEntityInfoWrapper"
 }

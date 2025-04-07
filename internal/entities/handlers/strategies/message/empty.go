@@ -20,10 +20,10 @@ func NewCreateEmpty() strategies.MessageCreateStrategy {
 	return &createEmpty{}
 }
 
-func (_ *createEmpty) CreateMessage(_ context.Context, _ *models.EntityWithProperties) (*message.Message, error) {
+func (*createEmpty) CreateMessage(_ context.Context, _ *models.EntityWithProperties) (*message.Message, error) {
 	return nil, nil
 }
 
-func (_ *createEmpty) GetName() string {
+func (*createEmpty) GetName() string {
 	return "empty"
 }

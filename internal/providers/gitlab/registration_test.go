@@ -48,14 +48,15 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.Header().Set("Content-Type", "application/json")
 
 							w.WriteHeader(http.StatusOK)
 							_, err := w.Write([]byte("[]"))
 							assert.NoError(t, err)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.Header().Set("Content-Type", "application/json")
 
@@ -85,10 +86,11 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.WriteHeader(http.StatusInternalServerError)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.Header().Set("Content-Type", "application/json")
 
@@ -119,14 +121,15 @@ func TestRegisterEntity(t *testing.T) {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks", upstreamID) {
 						// handle cleanUpStaleWebhooks
-						if r.Method == http.MethodGet {
+						switch r.Method {
+						case http.MethodGet:
 							w.Header().Set("Content-Type", "application/json")
 
 							w.WriteHeader(http.StatusOK)
 							_, err := w.Write([]byte("[]"))
 							assert.NoError(t, err)
 							return
-						} else if r.Method == http.MethodPost {
+						case http.MethodPost:
 							// handle createWebhook
 							w.WriteHeader(http.StatusInternalServerError)
 							return
@@ -476,15 +479,15 @@ type mockCredentials struct{}
 // ensure that mockCredentials implements the GitLabCredential interface
 var _ provifv1.GitLabCredential = (*mockCredentials)(nil)
 
-func (_ *mockCredentials) SetAuthorizationHeader(_ *http.Request) {
+func (*mockCredentials) SetAuthorizationHeader(_ *http.Request) {
 }
 
-func (_ *mockCredentials) AddToPushOptions(_ *git.PushOptions, _ string) {
+func (*mockCredentials) AddToPushOptions(_ *git.PushOptions, _ string) {
 }
 
-func (_ *mockCredentials) AddToCloneOptions(_ *git.CloneOptions) {
+func (*mockCredentials) AddToCloneOptions(_ *git.CloneOptions) {
 }
 
-func (_ *mockCredentials) GetAsOAuth2TokenSource() oauth2.TokenSource {
+func (*mockCredentials) GetAsOAuth2TokenSource() oauth2.TokenSource {
 	return nil
 }

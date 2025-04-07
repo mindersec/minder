@@ -97,7 +97,7 @@ func (r *Remediator) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the remediation engine
-func (_ *Remediator) Type() string {
+func (*Remediator) Type() string {
 	return RemediateType
 }
 

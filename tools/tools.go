@@ -5,7 +5,7 @@
 
 package tools
 
-//go:generate go install github.com/golangci/golangci-lint/cmd/golangci-lint
+//go:generate go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 //go:generate go install mvdan.cc/gofumpt
 //go:generate go install github.com/daixiang0/gci
 //go:generate go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt
@@ -25,7 +25,7 @@ import (
 	_ "github.com/bufbuild/buf/cmd/buf"
 	_ "github.com/daixiang0/gci"
 	_ "github.com/go-critic/go-critic/cmd/gocritic"
-	_ "github.com/golangci/golangci-lint/cmd/golangci-lint"
+	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
 	_ "github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"

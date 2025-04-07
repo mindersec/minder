@@ -40,36 +40,36 @@ func NewRESTProvider(
 var _ provifv1.Provider = (*RESTProvider)(nil)
 
 // CanImplement implements the Provider interface
-func (_ *RESTProvider) CanImplement(trait minderv1.ProviderType) bool {
+func (*RESTProvider) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_REST
 }
 
 // FetchAllProperties implements the Provider interface
-func (_ *RESTProvider) FetchAllProperties(
+func (*RESTProvider) FetchAllProperties(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	return nil, nil
 }
 
 // FetchProperty implements the Provider interface
-func (_ *RESTProvider) FetchProperty(
+func (*RESTProvider) FetchProperty(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }
 
 // GetEntityName implements the Provider interface
-func (_ *RESTProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
+func (*RESTProvider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (string, error) {
 	return "", nil
 }
 
 // SupportsEntity implements the Provider interface
-func (_ *RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
+func (*RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
 	// TODO: implement
 	return false
 }
 
 // RegisterEntity implements the Provider interface
-func (_ *RESTProvider) RegisterEntity(
+func (*RESTProvider) RegisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) (*properties.Properties, error) {
 	// TODO: implement
@@ -77,13 +77,13 @@ func (_ *RESTProvider) RegisterEntity(
 }
 
 // DeregisterEntity implements the Provider interface
-func (_ *RESTProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
+func (*RESTProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	// TODO: implement
 	return nil
 }
 
 // ReregisterEntity implements the Provider interface
-func (_ *RESTProvider) ReregisterEntity(
+func (*RESTProvider) ReregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	// TODO: implement

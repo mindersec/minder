@@ -53,7 +53,7 @@ func NewReleaseFetcher() *ReleaseFetcher {
 }
 
 // GetName returns the name of the release
-func (_ *ReleaseFetcher) GetName(props *properties.Properties) (string, error) {
+func (*ReleaseFetcher) GetName(props *properties.Properties) (string, error) {
 	owner := props.GetProperty(ReleasePropertyOwner).GetString()
 	repo, err := props.GetProperty(ReleasePropertyRepo).AsString()
 	if err != nil {

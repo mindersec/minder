@@ -145,7 +145,7 @@ func (s *subscriptionService) CreateProfile(
 	return nil
 }
 
-func (_ *subscriptionService) findSubscription(
+func (*subscriptionService) findSubscription(
 	ctx context.Context,
 	qtx db.Querier,
 	projectID uuid.UUID,

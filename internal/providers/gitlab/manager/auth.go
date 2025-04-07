@@ -43,7 +43,7 @@ func (g *providerClassManager) NewOAuthConfig(_ db.ProviderClass, cli bool) (*oa
 }
 
 // ValidateCredentials implements the providerClassOAuthManager interface
-func (_ *providerClassManager) ValidateCredentials(
+func (*providerClassManager) ValidateCredentials(
 	_ context.Context, cred provv1.Credential, _ *m.CredentialVerifyParams,
 ) error {
 	tokenCred, ok := cred.(provv1.OAuth2TokenCredential)

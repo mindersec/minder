@@ -85,7 +85,7 @@ func (v *Validator) ValidateAndExtractRules(
 	return rulesInProf, nil
 }
 
-func (_ *Validator) validateRuleParams(
+func (*Validator) validateRuleParams(
 	ctx context.Context,
 	qtx db.Querier,
 	prof *minderv1.Profile,

@@ -86,7 +86,7 @@ var (
 	ErrRuleTypeInvalid = errors.New("rule type validation failed")
 )
 
-func (_ *ruleTypeService) CreateRuleType(
+func (*ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
@@ -173,7 +173,7 @@ func (_ *ruleTypeService) CreateRuleType(
 	return rt, nil
 }
 
-func (_ *ruleTypeService) UpdateRuleType(
+func (*ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,

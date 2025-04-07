@@ -24,7 +24,7 @@ func New() *noop {
 }
 
 // Register implements the Consumer interface.
-func (_ *noop) Register(reg interfaces.Registrar) {
+func (*noop) Register(reg interfaces.Registrar) {
 	reg.Register(email.TopicQueueInviteEmail, func(msg *message.Message) error {
 		var e email.MailEventPayload
 

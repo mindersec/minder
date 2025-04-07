@@ -37,7 +37,7 @@ var ErrTooManyFiles = fmt.Errorf("too many files")
 var _ billy.Filesystem = (*LimitedFs)(nil)
 
 // Chroot implements billy.Filesystem.
-func (_ *LimitedFs) Chroot(_ string) (billy.Filesystem, error) {
+func (*LimitedFs) Chroot(_ string) (billy.Filesystem, error) {
 	return nil, ErrNotImplemented
 }
 

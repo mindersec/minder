@@ -28,6 +28,6 @@ func NewGitProvider(credential provifv1.GitCredential, opts ...git.Options) *Git
 var _ provifv1.Provider = (*GitProvider)(nil)
 
 // CanImplement implements the Provider interface
-func (_ *GitProvider) CanImplement(trait minderv1.ProviderType) bool {
+func (*GitProvider) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_GIT
 }

@@ -186,7 +186,7 @@ func ParseAndMergeV1AppConfig(rawCfg json.RawMessage) (
 	}
 
 	if mergedConfig.ProviderConfig != nil {
-		if err := mergedConfig.ProviderConfig.Validate(); err != nil {
+		if err := mergedConfig.Validate(); err != nil {
 			return nil, nil, fmt.Errorf("error validating provider config: %w", err)
 		}
 	}
@@ -242,7 +242,7 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 }
 
 // GetOwner returns the owner filter
-func (_ *GitHubAppDelegate) GetOwner() string {
+func (*GitHubAppDelegate) GetOwner() string {
 	return ""
 }
 
