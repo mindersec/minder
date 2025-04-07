@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/pkg/config"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
@@ -30,7 +29,7 @@ https://docs.stacklok.com/minder`,
 			// Print a warning if the build is not pointing to the production environment
 			cfg, _ := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 
-			if cfg == nil || cfg.GRPCClientConfig.Host != constants.MinderGRPCHost {
+			if cfg == nil || cfg.GRPCClientConfig.Host == "localhost" {
 				fmt.Fprintf(
 					cmd.ErrOrStderr(),
 					"WARNING: Running against a test environment (%s) and may not be stable\n",

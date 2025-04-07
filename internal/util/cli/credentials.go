@@ -39,12 +39,23 @@ type OpenIdCredentials struct {
 	AccessTokenExpiresAt time.Time `json:"expiry"`
 }
 
-func getCredentialsPath() (string, error) {
+func getCredentialsPath(serverAddress string, create bool) (string, error) {
 	cfgPath, err := GetConfigDirPath()
 	if err != nil {
 		return "", fmt.Errorf("error getting config path: %v", err)
 	}
 
+	// Prefer the server address if presentAn
+	preferredFile := filepath.Join(cfgPath, strings.ReplaceAll(serverAddress, ":", "_")+".json")
+	if create {
+		return preferredFile, nil
+	}
+	fi, err := os.Stat(preferredFile)
+	if err == nil && fi.Mode().IsRegular() {
+		return preferredFile, nil
+	}
+
+	// Legacy path -- read non-server-specific credentials if no server-specific file exists
 	filePath := filepath.Join(cfgPath, "credentials.json")
 	return filePath, nil
 }
@@ -98,14 +109,14 @@ func GetGrpcConnection(
 }
 
 // SaveCredentials saves the credentials to a file
-func SaveCredentials(tokens OpenIdCredentials) (string, error) {
+func SaveCredentials(serverAddress string, tokens OpenIdCredentials) (string, error) {
 	// marshal the credentials to json
 	credsJSON, err := json.Marshal(tokens)
 	if err != nil {
 		return "", fmt.Errorf("error marshaling credentials: %v", err)
 	}
 
-	filePath, err := getCredentialsPath()
+	filePath, err := getCredentialsPath(serverAddress, true)
 	if err != nil {
 		return "", fmt.Errorf("error getting credentials path: %v", err)
 	}
@@ -124,21 +135,13 @@ func SaveCredentials(tokens OpenIdCredentials) (string, error) {
 }
 
 // RemoveCredentials removes the local credentials file
-func RemoveCredentials() error {
-	// remove credentials file
-	xdgConfigHome := os.Getenv("XDG_CONFIG_HOME")
-
-	// just delete token from credentials file
-	if xdgConfigHome == "" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return fmt.Errorf("error getting home directory: %v", err)
-		}
-		xdgConfigHome = filepath.Join(homeDir, ".config")
+func RemoveCredentials(serverAddress string) error {
+	filePath, err := getCredentialsPath(serverAddress, false)
+	if err != nil {
+		return fmt.Errorf("error getting credentials path: %v", err)
 	}
 
-	filePath := filepath.Join(xdgConfigHome, "minder", "credentials.json")
-	err := os.Remove(filePath)
+	err = os.Remove(filePath)
 	if err != nil {
 		return fmt.Errorf("error removing credentials file: %v", err)
 	}
@@ -148,7 +151,7 @@ func RemoveCredentials() error {
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
 func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string, clientId string) (string, error) {
 	refreshLimit := 10 * time.Second
-	creds, err := LoadCredentials()
+	creds, err := LoadCredentials(serverAddress)
 	if err != nil {
 		return "", fmt.Errorf("error loading credentials: %v", err)
 	}
@@ -165,7 +168,7 @@ func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, re
 			return "", fmt.Errorf("error parsing realm URL: %v", err)
 		}
 		parsedUrl = parsedUrl.JoinPath("protocol/openid-connect/token")
-		updatedCreds, err := RefreshCredentials(creds.RefreshToken, parsedUrl.String(), clientId)
+		updatedCreds, err := RefreshCredentials(serverAddress, creds.RefreshToken, parsedUrl.String(), clientId)
 		if err != nil {
 			return "", fmt.Errorf("%w: %v", ErrGettingRefreshToken, err)
 		}
@@ -238,7 +241,7 @@ func extractWWWAuthenticateRealm(header string) string {
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
-func RefreshCredentials(refreshToken string, realmUrl string, clientId string) (OpenIdCredentials, error) {
+func RefreshCredentials(serverAddress string, refreshToken string, realmUrl string, clientId string) (OpenIdCredentials, error) {
 
 	data := url.Values{}
 	data.Set("client_id", clientId)
@@ -273,7 +276,7 @@ func RefreshCredentials(refreshToken string, realmUrl string, clientId string) (
 		RefreshToken:         tokens.RefreshToken,
 		AccessTokenExpiresAt: time.Now().Add(time.Duration(tokens.AccessTokenExpiresIn) * time.Second),
 	}
-	_, err = SaveCredentials(updatedCredentials)
+	_, err = SaveCredentials(serverAddress, updatedCredentials)
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error saving credentials: %v", err)
 	}
@@ -282,8 +285,8 @@ func RefreshCredentials(refreshToken string, realmUrl string, clientId string) (
 }
 
 // LoadCredentials loads the credentials from a file
-func LoadCredentials() (OpenIdCredentials, error) {
-	filePath, err := getCredentialsPath()
+func LoadCredentials(serverAddress string) (OpenIdCredentials, error) {
+	filePath, err := getCredentialsPath(serverAddress, false)
 	if err != nil {
 		return OpenIdCredentials{}, fmt.Errorf("error getting credentials path: %v", err)
 	}
