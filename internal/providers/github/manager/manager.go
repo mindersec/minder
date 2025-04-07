@@ -85,7 +85,7 @@ var (
 	}
 )
 
-func (_ *githubProviderManager) GetSupportedClasses() []db.ProviderClass {
+func (*githubProviderManager) GetSupportedClasses() []db.ProviderClass {
 	return supportedClasses
 }
 

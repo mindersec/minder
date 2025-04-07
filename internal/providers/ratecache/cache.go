@@ -56,7 +56,7 @@ func (r *restClientCache) Set(owner, token string, provider db.ProviderType, res
 	r.ExpiringCache.Set(key, rest)
 }
 
-func (_ *restClientCache) getKey(owner, token string, provider db.ProviderType) string {
+func (*restClientCache) getKey(owner, token string, provider db.ProviderType) string {
 	return owner + token + string(provider)
 }
 
@@ -64,16 +64,16 @@ func (_ *restClientCache) getKey(owner, token string, provider db.ProviderType) 
 type NoopRestClientCache struct{}
 
 // Get always returns nil, false
-func (_ *NoopRestClientCache) Get(_, _ string, _ db.ProviderType) (provinfv1.REST, bool) {
+func (*NoopRestClientCache) Get(_, _ string, _ db.ProviderType) (provinfv1.REST, bool) {
 	return nil, false
 }
 
 // Set does nothing
-func (_ *NoopRestClientCache) Set(_, _ string, _ db.ProviderType, _ provinfv1.REST) {
+func (*NoopRestClientCache) Set(_, _ string, _ db.ProviderType, _ provinfv1.REST) {
 	// no-op
 }
 
 // Close does nothing
-func (_ *NoopRestClientCache) Close() {
+func (*NoopRestClientCache) Close() {
 	// no-op
 }

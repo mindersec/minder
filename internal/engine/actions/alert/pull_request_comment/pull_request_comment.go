@@ -94,7 +94,7 @@ func (alert *Alert) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the PR comment alert engine
-func (_ *Alert) Type() string {
+func (*Alert) Type() string {
 	return AlertType
 }
 
@@ -230,7 +230,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 }
 
 // runDoNothing returns the previous alert status
-func (_ *Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
+func (*Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().Str("repo", params.Repo).Logger()
 
 	logger.Debug().Msg("Running do nothing")

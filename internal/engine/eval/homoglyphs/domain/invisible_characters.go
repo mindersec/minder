@@ -29,12 +29,12 @@ func (ice *InvisibleCharactersProcessor) FindViolations(line string) []*Violatio
 }
 
 // GetSubCommentText returns the sub comment text for invisible characters
-func (_ *InvisibleCharactersProcessor) GetSubCommentText() string {
+func (*InvisibleCharactersProcessor) GetSubCommentText() string {
 	return "**Invisible Characters Found:**\n\n"
 }
 
 // GetLineCommentText returns the line comment text for invisible characters
-func (_ *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) string {
+func (*InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) string {
 	if violation == nil {
 		return ""
 	}
@@ -43,12 +43,12 @@ func (_ *InvisibleCharactersProcessor) GetLineCommentText(violation *Violation) 
 }
 
 // GetFailedReviewText returns the failed review text for invisible characters
-func (_ *InvisibleCharactersProcessor) GetFailedReviewText() string {
+func (*InvisibleCharactersProcessor) GetFailedReviewText() string {
 	return util.InvisibleCharsFoundText
 }
 
 // GetPassedReviewText returns the passed review text for invisible characters
-func (_ *InvisibleCharactersProcessor) GetPassedReviewText() string {
+func (*InvisibleCharactersProcessor) GetPassedReviewText() string {
 	return util.NoInvisibleCharsFoundText
 }
 

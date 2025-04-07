@@ -85,7 +85,7 @@ func (r *GhBranchProtectRemediator) Class() interfaces.ActionType {
 }
 
 // Type returns the action subtype of the remediation engine
-func (_ *GhBranchProtectRemediator) Type() string {
+func (*GhBranchProtectRemediator) Type() string {
 	return RemediateType
 }
 

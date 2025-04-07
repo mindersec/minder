@@ -354,7 +354,7 @@ func getDependencyScore(
 	for i := 0; i < 4; i++ {
 		err := <-errors
 		if err != nil {
-			return nil, fmt.Errorf("Trusty call failed: %w", err)
+			return nil, fmt.Errorf("trusty call failed: %w", err)
 		}
 	}
 	respSummary := <-summary

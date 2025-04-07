@@ -28,12 +28,12 @@ var ghIssuerUrl = url.URL{
 }
 
 // String implements auth.IdentityProvider.
-func (_ *GitHubActions) String() string {
+func (*GitHubActions) String() string {
 	return "githubactions"
 }
 
 // URL implements auth.IdentityProvider.
-func (_ *GitHubActions) URL() url.URL {
+func (*GitHubActions) URL() url.URL {
 	return ghIssuerUrl
 }
 

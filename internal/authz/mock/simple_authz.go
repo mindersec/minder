@@ -101,12 +101,12 @@ func (n *SimpleClient) ProjectsForUser(_ context.Context, _ string) ([]uuid.UUID
 }
 
 // PrepareForRun implements authz.Client
-func (_ *SimpleClient) PrepareForRun(_ context.Context) error {
+func (*SimpleClient) PrepareForRun(_ context.Context) error {
 	return nil
 }
 
 // MigrateUp implements authz.Client
-func (_ *SimpleClient) MigrateUp(_ context.Context) error {
+func (*SimpleClient) MigrateUp(_ context.Context) error {
 	return nil
 }
 

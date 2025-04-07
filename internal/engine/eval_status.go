@@ -27,7 +27,7 @@ func (e *executor) createEvalStatusParams(
 ) (*engif.EvalStatusParams, error) {
 	eID, err := inf.GetID()
 	if err != nil {
-		return nil, fmt.Errorf("Error getting ID from entity info wrapper")
+		return nil, fmt.Errorf("error getting ID from entity info wrapper")
 	}
 
 	params := &engif.EvalStatusParams{

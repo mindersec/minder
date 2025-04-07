@@ -479,15 +479,15 @@ type mockCredentials struct{}
 // ensure that mockCredentials implements the GitLabCredential interface
 var _ provifv1.GitLabCredential = (*mockCredentials)(nil)
 
-func (_ *mockCredentials) SetAuthorizationHeader(_ *http.Request) {
+func (*mockCredentials) SetAuthorizationHeader(_ *http.Request) {
 }
 
-func (_ *mockCredentials) AddToPushOptions(_ *git.PushOptions, _ string) {
+func (*mockCredentials) AddToPushOptions(_ *git.PushOptions, _ string) {
 }
 
-func (_ *mockCredentials) AddToCloneOptions(_ *git.CloneOptions) {
+func (*mockCredentials) AddToCloneOptions(_ *git.CloneOptions) {
 }
 
-func (_ *mockCredentials) GetAsOAuth2TokenSource() oauth2.TokenSource {
+func (*mockCredentials) GetAsOAuth2TokenSource() oauth2.TokenSource {
 	return nil
 }

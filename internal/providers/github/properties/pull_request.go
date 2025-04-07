@@ -96,7 +96,7 @@ func NewPullRequestFetcher() *PullRequestFetcher {
 }
 
 // GetName returns the name of the pull request
-func (_ *PullRequestFetcher) GetName(props *properties.Properties) (string, error) {
+func (*PullRequestFetcher) GetName(props *properties.Properties) (string, error) {
 	prOwner, err := props.GetProperty(PullPropertyRepoOwner).AsString()
 	if err != nil {
 		return "", fmt.Errorf("error fetching pr owner property: %w", err)

@@ -58,11 +58,11 @@ func (e *externalTX) Q() db.ExtendQuerier {
 	return e.q
 }
 
-func (_ *externalTX) Commit() error {
+func (*externalTX) Commit() error {
 	return nil
 }
 
-func (_ *externalTX) Rollback() error {
+func (*externalTX) Rollback() error {
 	return nil
 }
 

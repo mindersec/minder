@@ -63,6 +63,6 @@ func (r *refreshEntityByUpstreamIDStrategy) GetEntity(
 }
 
 // GetName returns the name of the strategy. Used for debugging
-func (_ *refreshEntityByUpstreamIDStrategy) GetName() string {
+func (*refreshEntityByUpstreamIDStrategy) GetName() string {
 	return "refreshEntityByUpstreamIDStrategy"
 }

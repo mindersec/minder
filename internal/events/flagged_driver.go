@@ -64,11 +64,11 @@ func (f *flaggedDriver) Subscribe(ctx context.Context, topic string) (<-chan *me
 	out := make(chan *message.Message)
 	base, err := f.baseSub.Subscribe(ctx, topic)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to subscribe to base: %w", err)
+		return nil, fmt.Errorf("failed to subscribe to base: %w", err)
 	}
 	experiment, err := f.experimentSub.Subscribe(ctx, topic)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to subscribe to experiment: %w", err)
+		return nil, fmt.Errorf("failed to subscribe to experiment: %w", err)
 	}
 	go func() {
 		defer close(out)
@@ -101,10 +101,10 @@ func (f *flaggedDriver) Subscribe(ctx context.Context, topic string) (<-chan *me
 // the drivers managed by the flagged publisher.
 func (f *flaggedDriver) Close() error {
 	if err := f.basePub.Close(); err != nil {
-		return fmt.Errorf("Failed to close base publisher: %w", err)
+		return fmt.Errorf("failed to close base publisher: %w", err)
 	}
 	if err := f.experimentPub.Close(); err != nil {
-		return fmt.Errorf("Failed to close experiment publisher: %w", err)
+		return fmt.Errorf("failed to close experiment publisher: %w", err)
 	}
 	return nil
 }
@@ -114,21 +114,21 @@ func makeFlaggedDriver(ctx context.Context, cfg *serverconfig.EventConfig, flagC
 	meter := otel.Meter(metricsSubsystem)
 	publishedMessages, err := meter.Int64Counter("events_published")
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Failed to create published messages counter: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create published messages counter: %w", err)
 	}
 	readMessages, err := meter.Int64Counter("events_read")
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Failed to create read messages counter: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to create read messages counter: %w", err)
 	}
 
 	basePub, baseSub, baseCloser, err := instantiateDriver(ctx, cfg.Flags.MainDriver, cfg, flagClient)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("Failed to instantiate base: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to instantiate base: %w", err)
 	}
 	experimentPub, experimentSub, experimentCloser, err := instantiateDriver(ctx, cfg.Flags.AlternateDriver, cfg, flagClient)
 	if err != nil {
 		baseCloser()
-		return nil, nil, nil, fmt.Errorf("Failed to instantiate experiment: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to instantiate experiment: %w", err)
 	}
 
 	ret := &flaggedDriver{

@@ -121,6 +121,7 @@ func LoginAndSaveCreds(ctx context.Context, cmd *cobra.Command, clientConfig *cl
 	var loginErr loginError
 	token, err := Login(ctx, cmd, clientConfig, nil, skipBrowser)
 	if errors.As(err, &loginErr) && loginErr.isAccessDenied() {
+		//nolint:staticcheck  // This is human-facing, and we want it capitalized to align with the second sentence.
 		return "", errors.New("Access denied. Please run the command again and accept the terms and conditions.")
 	}
 	if err != nil {

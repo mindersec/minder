@@ -116,7 +116,7 @@ func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
 	return httptest.NewServer(mux)
 }
 
-func (_ *fakeKeycloak) GetToken(w http.ResponseWriter, _ *http.Request) {
+func (*fakeKeycloak) GetToken(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write([]byte(`{"access_token":"1234","expires_in":300,"token_type":"Bearer"}`)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

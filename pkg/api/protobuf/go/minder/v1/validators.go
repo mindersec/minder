@@ -72,7 +72,7 @@ func (a *AutoRegistration) Validate() error {
 var _ Validator = (*GitHubProviderConfig)(nil)
 
 // Validate is a utility function which allows for the validation of a struct.
-func (_ *GitHubProviderConfig) Validate() error {
+func (*GitHubProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
 	return nil
@@ -82,7 +82,7 @@ func (_ *GitHubProviderConfig) Validate() error {
 var _ Validator = (*GitHubAppProviderConfig)(nil)
 
 // Validate is a utility function which allows for the validation of a struct.
-func (_ *GitHubAppProviderConfig) Validate() error {
+func (*GitHubAppProviderConfig) Validate() error {
 	// Unfortunately, we don't currently have a way to add custom tags to
 	// protobuf-generated structs, so we have to do this manually.
 	return nil
@@ -214,7 +214,7 @@ func (ev *RuleType_Definition_Eval) Validate() error {
 				return fmt.Errorf("jq rule %d is invalid: %w", i, err)
 			}
 		}
-	// TODO: we don't have a default case here, and a bunch of tests don't set type
+		// TODO: we don't have a default case here, and a bunch of tests don't set type
 	}
 
 	if ev.GetDataSources() != nil {
@@ -344,7 +344,7 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}
-	// TODO: we don't have a default here, and a bunch of tests don't set type
+		// TODO: we don't have a default here, and a bunch of tests don't set type
 	}
 
 	return nil

@@ -36,6 +36,6 @@ func (g *getEntityByUpstreamIDStrategy) GetEntity(
 }
 
 // GetName returns the name of the strategy. Used for debugging
-func (_ *getEntityByUpstreamIDStrategy) GetName() string {
+func (*getEntityByUpstreamIDStrategy) GetName() string {
 	return "getEntityByUpstreamID"
 }

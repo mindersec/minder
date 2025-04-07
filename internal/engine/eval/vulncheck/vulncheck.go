@@ -166,7 +166,7 @@ func getPatchedVersion(vulns []Vulnerability) (fixedVersion string, latest bool,
 	return patches[len(patches)-1].String(), false, false
 }
 
-func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error) {
+func (*Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error) {
 	switch dbType {
 	case vulnDbTypeOsv:
 		return newOsvDb(endpoint), nil
@@ -175,7 +175,7 @@ func (_ *Evaluator) getVulnDb(dbType vulnDbType, endpoint string) (vulnDb, error
 	}
 }
 
-func (_ *Evaluator) queryVulnDb(
+func (*Evaluator) queryVulnDb(
 	ctx context.Context,
 	db vulnDb,
 	dep *pbinternal.Dependency,

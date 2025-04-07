@@ -164,7 +164,7 @@ func getJWKSUrlForOpenId(issuer string) (string, error) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	config := openIdConfig{}

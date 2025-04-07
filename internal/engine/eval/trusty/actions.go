@@ -398,8 +398,6 @@ func buildProvenanceStruct(r *trustyReport) *templateProvenance {
 
 // buildScoreMatrix builds the score components matrix that populates
 // the score table in the PR comment template
-//
-//nolint:gosimple // This code is legacy and should be removed
 func buildScoreMatrix(components []scoreComponent) []templateScoreComponent {
 	scoreComp := []templateScoreComponent{}
 	for _, component := range components {

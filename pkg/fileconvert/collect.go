@@ -24,7 +24,7 @@ type Printer func(string, ...any)
 func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
 	files, err := util.ExpandFileArgs(paths...)
 	if err != nil {
-		return nil, fmt.Errorf("Error expanding args: %w", err)
+		return nil, fmt.Errorf("error expanding args: %w", err)
 	}
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))

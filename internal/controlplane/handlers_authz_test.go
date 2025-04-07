@@ -962,7 +962,7 @@ func (s *SimpleResolver) Resolve(_ context.Context, id string) (*auth.Identity, 
 }
 
 // Validate implements auth.Resolver.
-func (_ *SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity, error) {
+func (*SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity, error) {
 	panic("unimplemented")
 }
 

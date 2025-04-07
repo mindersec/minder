@@ -193,7 +193,7 @@ func (o *osvdb) NewQuery(ctx context.Context, dep *pbinternal.Dependency, eco pb
 	return req, nil
 }
 
-func (_ *osvdb) SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error) {
+func (*osvdb) SendRecvRequest(r *http.Request, dep *pbinternal.Dependency) (*VulnerabilityResponse, error) {
 	client := &http.Client{}
 	resp, err := client.Do(r)
 	if err != nil {

@@ -162,7 +162,7 @@ func NewRepositoryFetcher() *RepositoryFetcher {
 }
 
 // GetName returns the name of the repository
-func (_ *RepositoryFetcher) GetName(props *properties.Properties) (string, error) {
+func (*RepositoryFetcher) GetName(props *properties.Properties) (string, error) {
 	repoNameP := props.GetProperty(RepoPropertyName)
 	repoOwnerP := props.GetProperty(RepoPropertyOwner)
 

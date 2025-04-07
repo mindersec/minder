@@ -242,7 +242,7 @@ func (g *GitHubAppDelegate) GetCredential() provifv1.GitHubCredential {
 }
 
 // GetOwner returns the owner filter
-func (_ *GitHubAppDelegate) GetOwner() string {
+func (*GitHubAppDelegate) GetOwner() string {
 	return ""
 }
 

@@ -23,7 +23,7 @@ func NewToMinderEntity() strategies.MessageCreateStrategy {
 	return &toMinderEntityStrategy{}
 }
 
-func (_ *toMinderEntityStrategy) CreateMessage(_ context.Context, ewp *models.EntityWithProperties) (*watermill.Message, error) {
+func (*toMinderEntityStrategy) CreateMessage(_ context.Context, ewp *models.EntityWithProperties) (*watermill.Message, error) {
 	if ewp == nil {
 		return nil, fmt.Errorf("entity with properties is nil")
 	}
@@ -44,6 +44,6 @@ func (_ *toMinderEntityStrategy) CreateMessage(_ context.Context, ewp *models.En
 	return m, nil
 }
 
-func (_ *toMinderEntityStrategy) GetName() string {
+func (*toMinderEntityStrategy) GetName() string {
 	return "toMinderv1Entity"
 }

@@ -229,7 +229,7 @@ func (p *pypiRepository) SendRecvRequest(ctx context.Context, dep *pbinternal.De
 	return &pkgJson, nil
 }
 
-func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
+func (*pypiRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &PyPiReply{
 		Info: struct {
 			Name    string `json:"name"`
@@ -238,7 +238,7 @@ func (_ *pypiRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) p
 	}
 }
 
-func (_ *pypiRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
+func (*pypiRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &PyPiReply{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,
@@ -346,14 +346,14 @@ func (n *npmRepository) SendRecvRequest(ctx context.Context, dep *pbinternal.Dep
 	return &pkgJson, nil
 }
 
-func (_ *npmRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
+func (*npmRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &packageJson{
 		Name:    dep.Name,
 		Version: "",
 	}
 }
 
-func (_ *npmRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
+func (*npmRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &packageJson{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,
@@ -554,14 +554,14 @@ func (r *goProxyRepository) SendRecvRequest(ctx context.Context, dep *pbinternal
 	return goPackage, nil
 }
 
-func (_ *goProxyRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
+func (*goProxyRepository) NoPatchAvailableFormatter(dep *pbinternal.Dependency) patchLocatorFormatter {
 	return &goModPackage{
 		Name:       dep.Name,
 		oldVersion: dep.Version,
 	}
 }
 
-func (_ *goProxyRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
+func (*goProxyRepository) PkgRegistryErrorFormatter(dep *pbinternal.Dependency, registryErr error) patchLocatorFormatter {
 	return &goModPackage{
 		formatterMeta: formatterMeta{
 			pkgRegistryLookupError: registryErr,

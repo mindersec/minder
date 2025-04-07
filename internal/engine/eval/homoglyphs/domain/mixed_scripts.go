@@ -30,12 +30,12 @@ func (mse *MixedScriptsProcessor) FindViolations(line string) []*Violation {
 }
 
 // GetSubCommentText returns the sub comment text for mixed scripts
-func (_ *MixedScriptsProcessor) GetSubCommentText() string {
+func (*MixedScriptsProcessor) GetSubCommentText() string {
 	return "**Mixed Scripts Found:**\n\n"
 }
 
 // GetLineCommentText returns the line comment text for mixed scripts
-func (_ *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string {
+func (*MixedScriptsProcessor) GetLineCommentText(violation *Violation) string {
 	if violation == nil {
 		return ""
 	}
@@ -44,12 +44,12 @@ func (_ *MixedScriptsProcessor) GetLineCommentText(violation *Violation) string 
 }
 
 // GetPassedReviewText returns the passed review text for mixed scripts
-func (_ *MixedScriptsProcessor) GetPassedReviewText() string {
+func (*MixedScriptsProcessor) GetPassedReviewText() string {
 	return util.NoMixedScriptsFoundText
 }
 
 // GetFailedReviewText returns the failed review text for mixed scripts
-func (_ *MixedScriptsProcessor) GetFailedReviewText() string {
+func (*MixedScriptsProcessor) GetFailedReviewText() string {
 	return util.MixedScriptsFoundText
 }
 

@@ -163,11 +163,11 @@ func (*structHandler) GetArgsSchema() *structpb.Struct {
 }
 
 // ValidateArgs is just a stub as the structured data source does not have arguments
-func (_ *structHandler) ValidateArgs(any) error {
+func (*structHandler) ValidateArgs(any) error {
 	return nil
 }
 
 // ValidateUpdate
-func (_ *structHandler) ValidateUpdate(*structpb.Struct) error {
+func (*structHandler) ValidateUpdate(*structpb.Struct) error {
 	return nil
 }

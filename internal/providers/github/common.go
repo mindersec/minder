@@ -180,7 +180,7 @@ func NewGitHub(
 
 // CanImplement returns true/false depending on whether the Provider
 // can implement the specified trait
-func (_ *GitHub) CanImplement(trait minderv1.ProviderType) bool {
+func (*GitHub) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_GITHUB ||
 		trait == minderv1.ProviderType_PROVIDER_TYPE_GIT ||
 		trait == minderv1.ProviderType_PROVIDER_TYPE_REST ||

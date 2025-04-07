@@ -63,7 +63,7 @@ func (opts *InitOptions) Validate() error {
 
 // InitBundle creates a new bundle manifest in a directory with minder data in the
 // expected structure.
-func (_ *Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
+func (*Packer) InitBundle(opts *InitOptions) (*mindpak.Bundle, error) {
 	if opts == nil {
 		return nil, fmt.Errorf("invalid init options")
 	}
@@ -117,7 +117,7 @@ func (p *Packer) WriteToFile(bundle *mindpak.Bundle, path string) error {
 }
 
 // Write writes a bundle archive to writer w
-func (_ *Packer) Write(bundle *mindpak.Bundle, w io.Writer) error {
+func (*Packer) Write(bundle *mindpak.Bundle, w io.Writer) error {
 	gzWriter := gzip.NewWriter(w)
 	defer gzWriter.Close()
 	tarWriter := tar.NewWriter(gzWriter)

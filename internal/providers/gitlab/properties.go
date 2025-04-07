@@ -76,7 +76,7 @@ func (c *gitlabClient) FetchAllProperties(
 
 // FetchProperty implements the provider interface
 // TODO: Implement this
-func (_ *gitlabClient) FetchProperty(
+func (*gitlabClient) FetchProperty(
 	_ context.Context, _ *properties.Properties, _ minderv1.Entity, _ string) (*properties.Property, error) {
 	return nil, nil
 }

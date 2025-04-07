@@ -31,7 +31,7 @@ func NewDockerHubProviderClassManager(crypteng crypto.Engine, store db.Store) *p
 }
 
 // GetSupportedClasses implements the ProviderClassManager interface
-func (_ *providerClassManager) GetSupportedClasses() []db.ProviderClass {
+func (*providerClassManager) GetSupportedClasses() []db.ProviderClass {
 	return []db.ProviderClass{db.ProviderClassDockerhub}
 }
 
@@ -69,7 +69,7 @@ func (g *providerClassManager) Build(ctx context.Context, config *db.Provider) (
 
 // Delete implements the ProviderClassManager interface
 // TODO: Implement this
-func (_ *providerClassManager) Delete(_ context.Context, _ *db.Provider) error {
+func (*providerClassManager) Delete(_ context.Context, _ *db.Provider) error {
 	return nil
 }
 

@@ -89,7 +89,7 @@ func (m *providerClassManager) getWebhookEventDispatcher(
 }
 
 // handleNoop is a no-op handler for unhandled webhook events
-func (_ *providerClassManager) handleNoop(l zerolog.Logger, _ *http.Request) error {
+func (*providerClassManager) handleNoop(l zerolog.Logger, _ *http.Request) error {
 	l.Debug().Msg("unhandled webhook event")
 	return nil
 }

@@ -109,7 +109,7 @@ func (fcs *fsChangeSet) writeSummary(out io.Writer) error {
 	if err != nil {
 		return fmt.Errorf("cannot marshal entries: %w", err)
 	}
-	out.Write(b)
+	_, err = out.Write(b)
 
-	return nil
+	return err
 }

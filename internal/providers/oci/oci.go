@@ -41,7 +41,7 @@ func New(cred provifv1.Credential, registry, baseURL string) *OCI {
 }
 
 // CanImplement returns true/false depending on whether the OCI client can implement the specified trait
-func (_ *OCI) CanImplement(trait minderv1.ProviderType) bool {
+func (*OCI) CanImplement(trait minderv1.ProviderType) bool {
 	return trait == minderv1.ProviderType_PROVIDER_TYPE_OCI
 }
 

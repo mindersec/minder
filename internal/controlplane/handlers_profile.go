@@ -302,11 +302,14 @@ func getRuleEvalEntityInfo(
 	entityInfo["entity_id"] = rs.EntityID.String()
 
 	// temporary: These will be replaced by entity_id
+	//nolint:exhaustive
 	switch rs.EntityType {
 	case db.EntitiesRepository:
 		entityInfo["repository_id"] = efp.Entity.ID.String()
 	case db.EntitiesArtifact:
 		entityInfo["artifact_id"] = efp.Entity.ID.String()
+	default:
+		// We only need to handle the above two types specially for historical compatibility.
 	}
 
 	return entityInfo
@@ -447,6 +450,9 @@ func (s *Server) getRuleEvalStatus(
 			if prRepoOwner != "" && prRepoName != "" {
 				repoPath = fmt.Sprintf("%s/%s", prRepoOwner, prRepoName)
 			}
+		case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
+			db.EntitiesTaskRun, db.EntitiesBuild:
+			zerolog.Ctx(ctx).Warn().Msgf("attempting to set alerts for unsupported entity type: %v", dbRuleEvalStat.EntityType)
 		default:
 			zerolog.Ctx(ctx).Error().Msgf("unknown entity type: %v", dbRuleEvalStat.EntityType)
 		}

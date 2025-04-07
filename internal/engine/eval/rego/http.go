@@ -60,7 +60,7 @@ func publicOnlyDialer(baseDialer dialContextFunc) dialContextFunc {
 		}
 		remote, ok := conn.RemoteAddr().(*net.TCPAddr)
 		if !ok {
-			return nil, fmt.Errorf("Remote address is not a TCP address")
+			return nil, fmt.Errorf("remote address is not a TCP address")
 		}
 		if !remote.IP.IsGlobalUnicast() || remote.IP.IsLoopback() || remote.IP.IsPrivate() {
 			// We do not need to lock because blockedRequests is initialized in a sync.Once
