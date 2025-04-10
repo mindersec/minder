@@ -60,13 +60,9 @@ func (m *providerClassManager) publishRefreshAndEvalForGitlabProject(
 	upstreamID := gitlab.FormatRepositoryUpstreamID(rawProjectID)
 
 	// Form identifying properties
-	identifyingProps, err := properties.NewProperties(map[string]any{
+	identifyingProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: upstreamID,
 	})
-	if err != nil {
-		l.Error().Err(err).Msg("error creating identifying properties")
-		return fmt.Errorf("error creating identifying properties: %w", err)
-	}
 
 	// Form message to publish
 	outm := entmsg.NewEntityRefreshAndDoMessage()

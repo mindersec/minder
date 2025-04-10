@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/rs/zerolog"
@@ -125,29 +124,25 @@ func processRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate)
+	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate), nil
 }
 
 func sendEvaluateRepoMessage(
 	repo *repo,
 	handler string,
-) (*processingResult, error) {
-	lookByProps, err := properties.NewProperties(map[string]any{
+) *processingResult {
+	lookByProps := properties.NewProperties(map[string]any{
 		// the PropertyUpstreamID is always a string
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository properties: %w", err)
-	}
 
 	entRefresh := entityMessage.NewEntityRefreshAndDoMessage().
 		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
 	return &processingResult{
-			topic:   handler,
-			wrapper: entRefresh},
-		nil
+		topic:   handler,
+		wrapper: entRefresh}
 }
 
 func processRelevantRepositoryEvent(
@@ -176,12 +171,9 @@ func processRelevantRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	lookByProps, err := properties.NewProperties(map[string]any{
+	lookByProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRepo().GetID()),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository lookup properties: %w", err)
-	}
 
 	msg := entityMessage.NewEntityRefreshAndDoMessage().
 		WithEntity(pb.Entity_ENTITY_REPOSITORIES, lookByProps).
@@ -194,12 +186,9 @@ func processRelevantRepositoryEvent(
 		// If not, this means we got a deleted event for a
 		// webhook ID that doesn't correspond to the
 		// one we have stored in the DB.
-		matchHookProps, err := properties.NewProperties(map[string]any{
+		matchHookProps := properties.NewProperties(map[string]any{
 			ghprop.RepoPropertyHookId: event.GetHookID(),
 		})
-		if err != nil {
-			return nil, fmt.Errorf("error creating hook match properties: %w", err)
-		}
 		msg = msg.WithMatchProps(matchHookProps)
 	}
 

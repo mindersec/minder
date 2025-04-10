@@ -94,10 +94,7 @@ func (c *gitlabClient) getPropertiesForRelease(
 	// try to guess the branch from the commit refs
 	branch := guessBranchFromCommitRefs(refs, release.TagName)
 
-	outProps, err := gitlabReleaseToProperties(uid, releaseTagName, proj, branch)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert release to properties: %w", err)
-	}
+	outProps := gitlabReleaseToProperties(uid, releaseTagName, proj, branch)
 
 	return outProps, nil
 }
@@ -210,10 +207,11 @@ func getReleaseNameFromProperties(props *properties.Properties) (string, error) 
 
 func gitlabReleaseToProperties(
 	releaseID string, releaseTag string, proj *gitlablib.Project, branch string,
-) (*properties.Properties, error) {
+) *properties.Properties {
 	ns, err := getGitlabProjectNamespace(proj)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get namespace: %w", err)
+		zerolog.Ctx(context.Background()).Error().Err(err).Msg("failed to get namespace")
+		return properties.NewProperties(map[string]interface{}{})
 	}
 
 	projName := proj.Name

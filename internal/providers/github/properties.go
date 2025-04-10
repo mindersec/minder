@@ -71,10 +71,7 @@ func (c *GitHub) FetchAllProperties(
 		}
 	}
 
-	upstreamProps, err := properties.NewProperties(result)
-	if err != nil {
-		return nil, err
-	}
+	upstreamProps := properties.NewProperties(result)
 
 	operational := filterOperational(cachedProps, fetcher)
 	return upstreamProps.Merge(operational), nil

@@ -113,7 +113,7 @@ func gitlabMergeRequestToProperties(
 
 	projName := proj.Name
 
-	outProps, err := properties.NewProperties(map[string]any{
+	outProps := properties.NewProperties(map[string]any{
 		// Unique upstream ID for the merge request
 		properties.PropertyUpstreamID:           FormatPullRequestUpstreamID(mr.ID),
 		properties.PropertyName:                 formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
@@ -130,9 +130,6 @@ func gitlabMergeRequestToProperties(
 		PullRequestProjectID: FormatRepositoryUpstreamID(proj.ID),
 		PullRequestAuthor:    int64(mr.Author.ID),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create properties: %w", err)
-	}
 
 	return outProps, nil
 }

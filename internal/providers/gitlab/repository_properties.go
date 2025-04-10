@@ -95,7 +95,7 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 		license = proj.License.Name
 	}
 
-	outProps, err := properties.NewProperties(map[string]any{
+	outProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID:     FormatRepositoryUpstreamID(proj.ID),
 		properties.PropertyName:           formatRepoName(owner, proj.Name),
 		properties.RepoPropertyIsPrivate:  proj.Visibility == gitlab.PrivateVisibility,
@@ -107,9 +107,6 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 		RepoPropertyLicense:               license,
 		RepoPropertyCloneURL:              proj.HTTPURLToRepo,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create properties: %w", err)
-	}
 
 	return outProps, nil
 }

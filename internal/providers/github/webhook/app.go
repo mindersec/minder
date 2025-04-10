@@ -336,27 +336,14 @@ func processInstallationRepositoriesAppEvent(
 	// be deleted by means of "meta" and "repository" events as
 	// well.
 	for _, repo := range event.GetRepositoriesRemoved() {
-		// caveat: we're accessing the database once for every
-		// repository, which might be inefficient at scale.
-		res, err := repositoryRemoved(
-			repo,
-		)
-		if errors.Is(err, errRepoNotFound) {
-			continue
-		}
-		if err != nil {
-			return nil, err
-		}
-
+		res := repositoryRemoved(repo)
 		results = append(results, res)
 	}
 
 	return results, nil
 }
 
-func repositoryRemoved(
-	repo *repo,
-) (*processingResult, error) {
+func repositoryRemoved(repo *repo) *processingResult {
 	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
 }
 
@@ -369,13 +356,10 @@ func repositoryAdded(
 		return nil, errors.New("invalid repository name")
 	}
 
-	addRepoProps, err := properties.NewProperties(map[string]any{
+	addRepoProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
 		properties.PropertyName:       repo.GetFullName(),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating repository properties: %w", err)
-	}
 
 	event := messages.NewMinderEvent().
 		WithProjectID(installation.ProjectID.UUID).

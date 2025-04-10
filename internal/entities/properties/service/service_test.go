@@ -41,10 +41,7 @@ func newGithubMock(opts ...func(mock *mock_github.MockGitHub)) githubMockBuilder
 
 func withUpstreamRepoProperties(repoProperties map[string]any, entType minderv1.Entity) func(mock *mock_github.MockGitHub) {
 	return func(mock *mock_github.MockGitHub) {
-		props, err := properties.NewProperties(repoProperties)
-		if err != nil {
-			panic(err)
-		}
+		props := properties.NewProperties(repoProperties)
 		mock.EXPECT().
 			FetchAllProperties(gomock.Any(), gomock.Any(), entType, gomock.Any()).
 			Return(props, nil)
@@ -382,8 +379,7 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			require.NoError(t, err)
 			propSvc := NewPropertiesService(tctx.testQueries)
 
-			props, err := properties.NewProperties(tt.props)
-			require.NoError(t, err)
+			props := properties.NewProperties(tt.props)
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
 				return propSvc.ReplaceAllProperties(ctx, ent.ID, props,
@@ -620,8 +616,7 @@ func TestPropertiesService_EntityWithPropertiesByUpstreamHint(t *testing.T) {
 
 			propSvc := NewPropertiesService(tctx.testQueries)
 
-			byProps, err := properties.NewProperties(tt.byPropMap)
-			require.NoError(t, err)
+			byProps := properties.NewProperties(tt.byPropMap)
 
 			result, err := propSvc.EntityWithPropertiesByUpstreamHint(ctx, tt.entType, byProps, tt.hint, nil)
 
@@ -747,8 +742,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 					properties.RepoPropertyIsPrivate: true,
 					ghprop.RepoPropertyId:            int64(123),
 				}
-				props, err := properties.NewProperties(propMap)
-				require.NoError(t, err)
+				props := properties.NewProperties(propMap)
 				insertProperties(context.TODO(), t, store, ent.ID, props)
 			},
 			githubSetup: func(t *testing.T, _ fetchParams) githubMockBuilder {
@@ -788,8 +782,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 					properties.RepoPropertyIsPrivate: true,
 					ghprop.RepoPropertyId:            int64(456),
 				}
-				props, err := properties.NewProperties(propMap)
-				require.NoError(t, err)
+				props := properties.NewProperties(propMap)
 				insertProperties(context.TODO(), t, store, ent.ID, props)
 			},
 			githubSetup: func(t *testing.T, _ fetchParams) githubMockBuilder {
@@ -836,8 +829,7 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 
 			propSvc := NewPropertiesService(tctx.testQueries, tt.opts...)
 
-			getByProps, err := properties.NewProperties(tt.lookupProps)
-			require.NoError(t, err)
+			getByProps := properties.NewProperties(tt.lookupProps)
 
 			gotProps, err := propSvc.RetrieveAllProperties(
 				ctx, githubMock, tctx.dbProj.ID, tctx.ghAppProvider.ID, getByProps, tt.params.entType,

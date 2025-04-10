@@ -371,10 +371,7 @@ func readEntityWithPropertiesFromFile(
 		return nil, fmt.Errorf("error decoding json: %w", err)
 	}
 
-	props, err := entProps.NewProperties(propertiesMap)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
+	props := entProps.NewProperties(propertiesMap)
 
 	return &entModels.EntityWithProperties{
 		Entity: entModels.EntityInstance{

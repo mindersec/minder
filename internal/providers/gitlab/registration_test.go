@@ -40,7 +40,7 @@ func TestRegisterEntity(t *testing.T) {
 		{
 			name:       "test register entity",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -78,7 +78,7 @@ func TestRegisterEntity(t *testing.T) {
 		{
 			name:       "test register entity with error cleaning up stale webhooks still succeeds",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -113,7 +113,7 @@ func TestRegisterEntity(t *testing.T) {
 		{
 			name:       "test register entity with error creating webhook",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -143,7 +143,7 @@ func TestRegisterEntity(t *testing.T) {
 		{
 			name:       "test register entity with missing upstream ID",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props:      MustNewProperties(map[string]any{}),
+			props:      properties.NewProperties(map[string]any{}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
 				t.Helper()
 				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -155,7 +155,7 @@ func TestRegisterEntity(t *testing.T) {
 		{
 			name:       "test register entity with unsupported entity type",
 			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -217,7 +217,7 @@ func TestDeregisterEntity(t *testing.T) {
 		{
 			name:       "test deregister entity",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 			}),
@@ -237,7 +237,7 @@ func TestDeregisterEntity(t *testing.T) {
 		{
 			name:       "test deregister entity with error",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 			}),
@@ -252,7 +252,7 @@ func TestDeregisterEntity(t *testing.T) {
 		{
 			name:       "test deregister entity with missing upstream ID",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				RepoPropertyHookID: "test-hook-id",
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -266,7 +266,7 @@ func TestDeregisterEntity(t *testing.T) {
 		{
 			name:       "test deregister entity with missing hook ID",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 			}),
 			mockHandler: func(t *testing.T) http.HandlerFunc {
@@ -280,7 +280,7 @@ func TestDeregisterEntity(t *testing.T) {
 		{
 			name:       "test deregister entity with unsupported entity type",
 			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 			}),
@@ -342,7 +342,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 				RepoPropertyHookURL:           fmt.Sprintf("http://test-hook-url/%s", uuid.New().String()),
@@ -363,7 +363,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity with error",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 				RepoPropertyHookURL:           "http://test-hook-url",
@@ -379,7 +379,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity with missing upstream ID",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				RepoPropertyHookID:  "test-hook-id",
 				RepoPropertyHookURL: "http://test-hook-url",
 			}),
@@ -394,7 +394,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity with missing hook ID",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookURL:           "http://test-hook-url",
 			}),
@@ -409,7 +409,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity with missing hook URL",
 			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 			}),
@@ -424,7 +424,7 @@ func TestReregisterEntity(t *testing.T) {
 		{
 			name:       "test reregister entity with unsupported entity type",
 			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
-			props: MustNewProperties(map[string]any{
+			props: properties.NewProperties(map[string]any{
 				properties.PropertyUpstreamID: upstreamID,
 				RepoPropertyHookID:            "test-hook-id",
 				RepoPropertyHookURL:           "http://test-hook-url",
