@@ -124,13 +124,13 @@ func processRepositoryEvent(
 
 	l.Info().Msg("handling event for repository")
 
-	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate)
+	return sendEvaluateRepoMessage(event.GetRepo(), constants.TopicQueueRefreshEntityAndEvaluate), nil
 }
 
 func sendEvaluateRepoMessage(
 	repo *repo,
 	handler string,
-) (*processingResult, error) {
+) *processingResult {
 	lookByProps := properties.NewProperties(map[string]any{
 		// the PropertyUpstreamID is always a string
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(repo.GetID()),
@@ -141,9 +141,8 @@ func sendEvaluateRepoMessage(
 		WithProviderImplementsHint(string(db.ProviderTypeGithub))
 
 	return &processingResult{
-			topic:   handler,
-			wrapper: entRefresh},
-		nil
+		topic:   handler,
+		wrapper: entRefresh}
 }
 
 func processRelevantRepositoryEvent(
