@@ -130,9 +130,6 @@ func gitlabMergeRequestToProperties(
 		PullRequestProjectID: FormatRepositoryUpstreamID(proj.ID),
 		PullRequestAuthor:    int64(mr.Author.ID),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create properties: %w", err)
-	}
 
 	return outProps, nil
 }

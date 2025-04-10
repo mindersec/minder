@@ -45,7 +45,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			name: "valid properties for repository succeeds",
 			args: args{
 				entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-				props: MustNewProperties(map[string]any{
+				props: properties.NewProperties(map[string]any{
 					RepoPropertyNamespace:   "group",
 					RepoPropertyProjectName: "project",
 				}),
@@ -57,7 +57,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			name: "insufficient properties for repository fails (lacks project)",
 			args: args{
 				entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-				props: MustNewProperties(map[string]any{
+				props: properties.NewProperties(map[string]any{
 					RepoPropertyNamespace: "group",
 				}),
 			},
@@ -68,7 +68,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			name: "insufficient properties for repository fails (lacks group)",
 			args: args{
 				entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-				props: MustNewProperties(map[string]any{
+				props: properties.NewProperties(map[string]any{
 					RepoPropertyProjectName: "project",
 				}),
 			},
@@ -79,7 +79,7 @@ func Test_gitlabClient_GetEntityName(t *testing.T) {
 			name: "unsupported entity type fails",
 			args: args{
 				entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
-				props:      MustNewProperties(map[string]any{}),
+				props:      properties.NewProperties(map[string]any{}),
 			},
 			want:    "",
 			wantErr: true,
@@ -134,12 +134,12 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			name: "repository succeeds",
 			args: args{
 				ctx: context.TODO(),
-				getByProps: MustNewProperties(map[string]any{
+				getByProps: properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "1",
 				}),
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
 			},
-			want: MustNewProperties(map[string]any{
+			want: properties.NewProperties(map[string]any{
 				properties.RepoPropertyIsPrivate:  true,
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsFork:     false,
@@ -168,7 +168,7 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			name: "repository not found",
 			args: args{
 				ctx: context.TODO(),
-				getByProps: MustNewProperties(map[string]any{
+				getByProps: properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "1",
 				}),
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
@@ -184,7 +184,7 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			name: "repository fails",
 			args: args{
 				ctx: context.TODO(),
-				getByProps: MustNewProperties(map[string]any{
+				getByProps: properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "1",
 				}),
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
@@ -200,7 +200,7 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			name: "repository fails to decode",
 			args: args{
 				ctx: context.TODO(),
-				getByProps: MustNewProperties(map[string]any{
+				getByProps: properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID: "1",
 				}),
 				entType: minderv1.Entity_ENTITY_REPOSITORIES,
@@ -341,7 +341,7 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 				Owner:     "group",
 				IsPrivate: true,
 				IsFork:    true,
-				Properties: MustNewProperties(map[string]any{
+				Properties: properties.NewProperties(map[string]any{
 					properties.PropertyUpstreamID:     "1",
 					properties.PropertyName:           "group/project",
 					RepoPropertyProjectName:           "project",
@@ -373,7 +373,7 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			props := MustNewProperties(tt.props)
+			props := properties.NewProperties(tt.props)
 
 			g := &gitlabClient{}
 			result, err := g.PropertiesToProtoMessage(tt.entityType, props)
@@ -386,11 +386,6 @@ func TestPropertiesToProtoMessage(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-// MustNewProperties creates Properties from a map or panics
-func MustNewProperties(props map[string]any) *properties.Properties {
-	return properties.NewProperties(props)
 }
 
 func newTestGitlabProvider(endpoint string) *gitlabClient {

@@ -153,9 +153,6 @@ func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*p
 		RepoPropertyHookID:  fmt.Sprintf("%d", hook.ID),
 		RepoPropertyHookURL: hook.URL,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create properties: %w", err)
-	}
 
 	return outProps, nil
 }

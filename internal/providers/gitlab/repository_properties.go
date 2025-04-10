@@ -107,9 +107,6 @@ func gitlabProjectToProperties(proj *gitlab.Project) (*properties.Properties, er
 		RepoPropertyLicense:               license,
 		RepoPropertyCloneURL:              proj.HTTPURLToRepo,
 	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create properties: %w", err)
-	}
 
 	return outProps, nil
 }

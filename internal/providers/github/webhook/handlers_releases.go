@@ -94,13 +94,13 @@ func processReleaseEvent(
 		return nil, errors.New("release event target not found")
 	}
 
-	return sendReleaseEvent(ctx, event)
+	return sendReleaseEvent(ctx, event), nil
 }
 
 func sendReleaseEvent(
 	_ context.Context,
 	event *releaseEvent,
-) (*processingResult, error) {
+) *processingResult {
 	lookByProps := properties.NewProperties(map[string]any{
 		properties.PropertyUpstreamID: properties.NumericalValueToUpstreamID(event.GetRelease().GetID()),
 		ghprop.ReleasePropertyOwner:   event.GetRepo().GetOwner(),
@@ -119,7 +119,7 @@ func sendReleaseEvent(
 				WithEntity(pb.Entity_ENTITY_RELEASE, lookByProps).
 				WithProviderImplementsHint(string(db.ProviderTypeGithub)).
 				WithOriginator(pb.Entity_ENTITY_REPOSITORIES, originatorProps),
-		}, nil
+		}
 	case "unpublished", "deleted":
 		return &processingResult{
 			topic: constants.TopicQueueOriginatingEntityDelete,
@@ -127,7 +127,7 @@ func sendReleaseEvent(
 				WithEntity(pb.Entity_ENTITY_RELEASE, lookByProps).
 				WithProviderImplementsHint(string(db.ProviderTypeGithub)).
 				WithOriginator(pb.Entity_ENTITY_REPOSITORIES, originatorProps),
-		}, nil
+		}
 	case "edited":
 		return &processingResult{
 			topic: constants.TopicQueueRefreshEntityAndEvaluate,
@@ -135,7 +135,7 @@ func sendReleaseEvent(
 				WithEntity(pb.Entity_ENTITY_RELEASE, lookByProps).
 				WithProviderImplementsHint(string(db.ProviderTypeGithub)).
 				WithOriginator(pb.Entity_ENTITY_REPOSITORIES, originatorProps),
-		}, nil
+		}
 	}
-	return nil, nil
+	return nil
 }

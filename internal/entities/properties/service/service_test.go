@@ -783,7 +783,6 @@ func TestPropertiesService_RetrieveAllProperties(t *testing.T) {
 					ghprop.RepoPropertyId:            int64(456),
 				}
 				props := properties.NewProperties(propMap)
-				require.NoError(t, err)
 				insertProperties(context.TODO(), t, store, ent.ID, props)
 			},
 			githubSetup: func(t *testing.T, _ fetchParams) githubMockBuilder {

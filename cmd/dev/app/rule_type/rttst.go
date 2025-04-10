@@ -372,9 +372,6 @@ func readEntityWithPropertiesFromFile(
 	}
 
 	props := entProps.NewProperties(propertiesMap)
-	if err != nil {
-		return nil, fmt.Errorf("error creating properties: %w", err)
-	}
 
 	return &entModels.EntityWithProperties{
 		Entity: entModels.EntityInstance{
