@@ -121,7 +121,7 @@ type reviewPrHandler struct {
 
 type reviewPrHandlerOption func(*reviewPrHandler)
 
-// WithSetReviewStatus is an option to set the vulnsFoundReviewStatus field of reviewPrHandler.
+// withVulnsFoundReviewStatus is an option to set the vulnsFoundReviewStatus field of reviewPrHandler.
 func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
 	return func(r *reviewPrHandler) {
 		r.failStatus = status

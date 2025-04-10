@@ -491,7 +491,7 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 	return reg, nil
 }
 
-// getDataSourceReferenceKey gets the alias that the data source will be referred to by
+// getDataSourceReferenceAlias gets the alias that the data source will be referred to by
 // in the registry.
 func getDataSourceReferenceAlias(dsr *minderv1.DataSourceReference) string {
 	key := dsr.GetAlias()
