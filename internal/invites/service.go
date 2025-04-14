@@ -118,9 +118,11 @@ func (*inviteService) UpdateInvite(ctx context.Context, qtx db.Querier, eventsPu
 		msg, err := email.NewMessage(
 			ctx,
 			userInvite.Email,
+			userInvite.Code,
 			inviteURL,
 			emailConfig.MinderURLBase,
 			userInvite.Role,
+			prj.ID,
 			meta.Public.DisplayName,
 			identity.Human(),
 		)
@@ -290,9 +292,11 @@ func (*inviteService) CreateInvite(ctx context.Context, qtx db.Querier, eventsPu
 	msg, err := email.NewMessage(
 		ctx,
 		userInvite.Email,
+		userInvite.Code,
 		inviteURL,
 		emailConfig.MinderURLBase,
 		userInvite.Role,
+		prj.ID,
 		meta.Public.DisplayName,
 		identity.Human(),
 	)

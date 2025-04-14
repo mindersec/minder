@@ -2,7 +2,11 @@
 
 View Invitation: {{.InvitationURL}}
 
-Once you accept, you’ll be able to {{.RoleVerb}} the {{.OrganizationName}} organization in Minder by Stacklok.
+Once you accept, you’ll be able to {{.RoleVerb}} the {{.OrganizationName}} organization in Minder by Stacklok.  If you have the Minder CLI installed, you can accept the invite with:
+
+minder auth invite accept {{ .InvitationCode }}
+
+If you are a member of multiple organizations, you can use the --project {{ .OrganizationId }} flag to specify which organization you want the Minder CLI to operate on.
 
 This invitation was sent to {{.RecipientEmail}}. If you were not expecting it, you can ignore this email.
 

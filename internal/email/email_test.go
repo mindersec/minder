@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func TestIsValidField(t *testing.T) {
@@ -56,6 +58,8 @@ func TestIsValidField(t *testing.T) {
 func TestValidateDataSourceTemplate(t *testing.T) {
 	t.Parallel()
 
+	projectId := uuid.New()
+
 	tests := []struct {
 		input          bodyData
 		expectedErrMsg string
@@ -64,7 +68,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		{
 			bodyData{
 				AdminName:        "John Doe",
+				OrganizationId:   projectId,
 				OrganizationName: "Acme Corp",
+				InvitationCode:   "ABC123",
 				InvitationURL:    "https://invitation.com",
 				RecipientEmail:   "john.doe@example.com",
 				MinderURL:        "https://minder.com",
@@ -81,7 +87,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		{
 			bodyData{
 				AdminName:        "John <b>Doe</b>",
+				OrganizationId:   projectId,
 				OrganizationName: "Acme Corp",
+				InvitationCode:   "ABC123",
 				InvitationURL:    "https://invitation.com",
 				RecipientEmail:   "john.doe@example.com",
 				MinderURL:        "https://minder.com",
@@ -98,7 +106,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		{
 			bodyData{
 				AdminName:        "John Doe",
+				OrganizationId:   projectId,
 				OrganizationName: "<script>alert('Hack');</script>",
+				InvitationCode:   "ABC123",
 				InvitationURL:    "https://invitation.com",
 				RecipientEmail:   "john.doe@example.com",
 				MinderURL:        "https://minder.com",
@@ -115,7 +125,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		{
 			bodyData{
 				AdminName:        "onload=alert('test')",
+				OrganizationId:   projectId,
 				OrganizationName: "Acme Corp",
+				InvitationCode:   "ABC123",
 				InvitationURL:    "https://invitation.com",
 				RecipientEmail:   "john.doe@example.com",
 				MinderURL:        "https://minder.com",
@@ -132,7 +144,9 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		{
 			bodyData{
 				AdminName:        "Plain Text User",
+				OrganizationId:   projectId,
 				OrganizationName: "No HTML Corp",
+				InvitationCode:   "ABC123",
 				InvitationURL:    "https://example.com",
 				RecipientEmail:   "user@example.com",
 				MinderURL:        "https://example.com/minder",
@@ -151,7 +165,7 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 		t.Run(tt.input.AdminName, func(t *testing.T) {
 			t.Parallel()
 			err := tt.input.Validate()
-			if err != nil && err.Error() != tt.expectedErrMsg {
+			if err != nil && !strings.Contains(err.Error(), tt.expectedErrMsg) {
 				t.Errorf("validateDataSourceTemplate(%+v) got error message: %v, expected message: %v", tt.input, err.Error(), tt.expectedErrMsg)
 			}
 		})

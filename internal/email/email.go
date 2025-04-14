@@ -27,9 +27,8 @@ import (
 var ErrValidationFailed = errors.New("validation failed")
 
 // NewErrValidationFailed creates a new error for failed validation
-func NewErrValidationFailed(fieldName, fieldValue string) error {
-	msg := fmt.Sprintf("field %s failed validation %s", fieldName, fieldValue)
-	return fmt.Errorf("%w: %s", ErrValidationFailed, msg)
+func NewErrValidationFailed(fieldName, fieldValue string, err error) error {
+	return fmt.Errorf("%w: field %s failed validation %s: %w", ErrValidationFailed, fieldName, fieldValue, err)
 }
 
 const (
@@ -87,6 +86,8 @@ type MailEventPayload struct {
 type bodyData struct {
 	AdminName        string
 	OrganizationName string
+	OrganizationId   uuid.UUID
+	InvitationCode   string
 	InvitationURL    string
 	RecipientEmail   string
 	MinderURL        string
@@ -100,7 +101,8 @@ type bodyData struct {
 // NewMessage creates a new message for sending an invitation email
 func NewMessage(
 	ctx context.Context,
-	inviteeEmail, inviteURL, minderURLBase, role, projectDisplay, sponsorDisplay string,
+	inviteeEmail, inviteCode, inviteURL, minderURLBase, role string,
+	projectId uuid.UUID, projectDisplay, sponsorDisplay string,
 ) (*message.Message, error) {
 	// Generate a new message UUID
 	id, err := uuid.NewUUID()
@@ -111,7 +113,9 @@ func NewMessage(
 	// Populate the template data source
 	data := bodyData{
 		AdminName:        sponsorDisplay,
+		OrganizationId:   projectId,
 		OrganizationName: projectDisplay,
+		InvitationCode:   inviteCode,
 		InvitationURL:    inviteURL,
 		RecipientEmail:   inviteeEmail,
 		MinderURL:        minderURLBase,
@@ -221,13 +225,17 @@ func (b *bodyData) Validate() error {
 	// Iterate over the fields of the struct
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
+		// UUIDs always generate safe strings.
+		if field.Type() == reflect.TypeOf(uuid.UUID{}) {
+			continue
+		}
 		// Check if the field is settable and of kind and type string
 		if !field.CanSet() || field.Kind() != reflect.String || field.Type() != reflect.TypeOf("") {
-			return NewErrValidationFailed(v.Type().Field(i).Name, field.String())
+			return NewErrValidationFailed(v.Type().Field(i).Name, field.String(), errors.New("field is not a string"))
 		}
 		err := isValidField(field.String())
 		if err != nil {
-			return NewErrValidationFailed(v.Type().Field(i).Name, field.String())
+			return NewErrValidationFailed(v.Type().Field(i).Name, field.String(), err)
 		}
 	}
 	return nil
