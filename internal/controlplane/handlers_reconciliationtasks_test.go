@@ -20,10 +20,11 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+const ghProvider = "github"
+
 func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 	t.Parallel()
 
-	ghProvider := "github"
 	repoUuid := uuid.New()
 	tests := []struct {
 		name          string

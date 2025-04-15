@@ -80,13 +80,8 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 
 	relation := opts.GetRelation()
 
-	relationValue := relation.Descriptor().Values().ByNumber(relation.Number())
-	if relationValue == nil {
-		return nil, status.Errorf(codes.Internal, "error reading relation value %v", relation)
-	}
-	extension := proto.GetExtension(relationValue.Options(), minder.E_Name)
-	relationName, ok := extension.(string)
-	if !ok {
+	relationName := relationAsName(relation)
+	if relationName == "" {
 		return nil, status.Errorf(codes.Internal, "error getting name for requested relation %v", relation)
 	}
 
@@ -103,6 +98,21 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 	return handler(ctx, req)
 }
 
+// relationAsName returns the OpenFGA relation name for the given relation enum.
+// It returns an empty string in the case of error.
+func relationAsName(relation minder.Relation) string {
+	relationValue := relation.Descriptor().Values().ByNumber(relation.Number())
+	if relationValue == nil {
+		return ""
+	}
+	extension := proto.GetExtension(relationValue.Options(), minder.E_Name)
+	relationName, ok := extension.(string)
+	if !ok {
+		return ""
+	}
+	return relationName
+}
+
 // populateEntityContext populates the project in the entity context, by looking at the proto context or
 // fetching the default project
 func populateEntityContext(
@@ -111,7 +121,7 @@ func populateEntityContext(
 	authzClient authz.Client,
 	req any,
 ) (context.Context, error) {
-	projectID, err := getProjectIDFromContext(req)
+	projectID, err := getProjectIDFromRequest(req)
 	if err != nil {
 		if errors.Is(err, ErrNoProjectInContext) {
 			projectID, err = getDefaultProjectID(ctx, store, authzClient)
@@ -128,14 +138,14 @@ func populateEntityContext(
 			ID: projectID,
 		},
 		Provider: engcontext.Provider{
-			Name: getProviderFromContext(req),
+			Name: getProviderFromRequest(req),
 		},
 	}
 
 	return engcontext.WithEntityContext(ctx, entityCtx), nil
 }
 
-func getProjectIDFromContext(req any) (uuid.UUID, error) {
+func getProjectIDFromRequest(req any) (uuid.UUID, error) {
 	switch req := req.(type) {
 	case HasProtoContextV2Compat:
 		return getProjectFromContextV2Compat(req)
@@ -148,7 +158,7 @@ func getProjectIDFromContext(req any) (uuid.UUID, error) {
 	}
 }
 
-func getProviderFromContext(req any) string {
+func getProviderFromRequest(req any) string {
 	switch req := req.(type) {
 	case HasProtoContextV2Compat:
 		if req.GetContextV2().GetProvider() != "" {
@@ -188,7 +198,8 @@ func getDefaultProjectID(
 	}
 
 	if len(prjs) == 0 {
-		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "User has no role grants in projects")
+		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied,
+			"user has no permissions in any projects.  Consider using CreateProject to create one.")
 	}
 
 	if len(prjs) != 1 {
