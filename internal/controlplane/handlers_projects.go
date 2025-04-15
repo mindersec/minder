@@ -174,7 +174,11 @@ func (s *Server) CreateProject(
 	if parentProjectID != uuid.Nil {
 		// Verify permissions if we have a parent
 		relationName := relationAsName(minderv1.Relation_RELATION_CREATE)
-		s.authzClient.Check(ctx, relationName, parentProjectID)
+		if err := s.authzClient.Check(ctx, relationName, parentProjectID); err != nil {
+			return nil, util.UserVisibleError(
+				codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
+				auth.IdentityFromContext(ctx).Human(), parentProjectID)
+		}
 
 		if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, parentProjectID) {
 			return nil, util.UserVisibleError(codes.PermissionDenied,
@@ -239,7 +243,7 @@ func (s *Server) CreateProject(
 	}, nil
 }
 
-// DeleteProject deletes a subproject
+// DeleteProject deletes a project or subproject.
 func (s *Server) DeleteProject(
 	ctx context.Context,
 	_ *minderv1.DeleteProjectRequest,
@@ -263,7 +267,7 @@ func (s *Server) DeleteProject(
 		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 	}
 
-	if !subProject.ParentID.Valid {
+	if !subProject.ParentID.Valid && !flags.Bool(ctx, s.featureFlags, flags.ProjectCreateDelete) {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot delete a top-level project")
 	}
 
