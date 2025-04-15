@@ -15903,7 +15903,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"RemoveRole\x12\x1c.minder.v1.RemoveRoleRequest\x1a\x1d.minder.v1.RemoveRoleResponse\"*\xaa\xf8\x18\x040\x038\b\x82\xd3\xe4\x93\x02\x1c*\x1a/api/v1/permissions/remove2\xc5\a\n" +
 	"\x0fProjectsService\x12q\n" +
 	"\fListProjects\x12\x1e.minder.v1.ListProjectsRequest\x1a\x1f.minder.v1.ListProjectsResponse\" \xaa\xf8\x18\x040\x028\x02\x82\xd3\xe4\x93\x02\x12\x12\x10/api/v1/projects\x12w\n" +
-	"\rCreateProject\x12\x1f.minder.v1.CreateProjectRequest\x1a .minder.v1.CreateProjectResponse\"#\xaa\xf8\x18\x040\x038\x01\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/api/v1/projects\x12\x9e\x01\n" +
+	"\rCreateProject\x12\x1f.minder.v1.CreateProjectRequest\x1a .minder.v1.CreateProjectResponse\"#\xaa\xf8\x18\x040\x028\x01\x82\xd3\xe4\x93\x02\x15:\x01*\"\x10/api/v1/projects\x12\x9e\x01\n" +
 	"\x11ListChildProjects\x12#.minder.v1.ListChildProjectsRequest\x1a$.minder.v1.ListChildProjectsResponse\">\xaa\xf8\x18\x040\x038\x02\x82\xd3\xe4\x93\x020\x12./api/v1/projects/{context.project_id}/children\x12t\n" +
 	"\rDeleteProject\x12\x1f.minder.v1.DeleteProjectRequest\x1a .minder.v1.DeleteProjectResponse\" \xaa\xf8\x18\x040\x038\x04\x82\xd3\xe4\x93\x02\x12*\x10/api/v1/projects\x12w\n" +
 	"\rUpdateProject\x12\x1f.minder.v1.UpdateProjectRequest\x1a .minder.v1.UpdateProjectResponse\"#\xaa\xf8\x18\x040\x038\x03\x82\xd3\xe4\x93\x02\x15:\x01*\x1a\x10/api/v1/projects\x12x\n" +

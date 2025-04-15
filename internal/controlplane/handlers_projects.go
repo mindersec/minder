@@ -6,7 +6,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 
 	"github.com/google/uuid"
@@ -22,6 +21,7 @@ import (
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 // ListProjects returns the list of projects for the current user
@@ -154,83 +154,87 @@ func (s *Server) getImmediateChildrenProjects(ctx context.Context, projectID uui
 	return out, nil
 }
 
-// CreateProject creates a new subproject
+// CreateProject either create a new top-level Project (if req.Context.Project is nil/empty),
+// or creates a sub-project if permitted (if req.Context.Project is set).
+// The project name must be unique within the parent project, or across all projects if
+// creating a top-level project.
+//
+// Because this may be called in a non-project context (to create a top-level project),
+// we need to _explicitly_ perform project authorization checks if project is non-nil/empty.
 func (s *Server) CreateProject(
 	ctx context.Context,
 	req *minderv1.CreateProjectRequest,
 ) (*minderv1.CreateProjectResponse, error) {
-	entityCtx := engcontext.EntityFromContext(ctx)
-	projectID := entityCtx.Project.ID
-
-	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, projectID) {
-		return nil, util.UserVisibleError(codes.PermissionDenied,
-			"project does not allow project hierarchy operations")
+	parentProjectID, err := getProjectIDFromRequest(req)
+	if err != nil && !errors.Is(err, ErrNoProjectInContext) {
+		return nil, err
 	}
 
-	tx, err := s.store.BeginTransaction()
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-	}
-	defer s.store.Rollback(tx)
+	var project *db.Project
+	if parentProjectID != uuid.Nil {
+		// Verify permissions if we have a parent
+		relationName := relationAsName(minderv1.Relation_RELATION_CREATE)
+		s.authzClient.Check(ctx, relationName, parentProjectID)
 
-	qtx := s.store.GetQuerierWithTransaction(tx)
-
-	parent, err := qtx.GetProjectByID(ctx, projectID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "project not found")
+		if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, parentProjectID) {
+			return nil, util.UserVisibleError(codes.PermissionDenied,
+				"project does not allow project hierarchy operations")
 		}
-		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
-	}
-
-	// TODO: Remove this once we handle a full hierarchy
-	if parent.ParentID.Valid {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot create subproject of a subproject")
-	}
-
-	if err := projects.ValidateName(req.Name); err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project name: %v", err)
-	}
-
-	subProject, err := qtx.CreateProject(ctx, db.CreateProjectParams{
-		Name: req.Name,
-		ParentID: uuid.NullUUID{
-			UUID:  parent.ID,
-			Valid: true,
-		},
-		Metadata: json.RawMessage(`{}`),
-	})
-	if err != nil {
-		if db.ErrIsUniqueViolation(err) {
-			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", req.Name)
+		tx, err := s.store.BeginTransaction()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
+		defer s.store.Rollback(tx)
+		qtx := s.store.GetQuerierWithTransaction(tx)
+
+		project, err = s.projectCreator.ProvisionChildProject(ctx, qtx, parentProjectID, req.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := s.store.Commit(tx); err != nil {
+			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+		}
+
+	} else {
+		// This is a top-level project creation request.
+		// We need to check if the user has the right to create projects in the system.
+		if !flags.Bool(ctx, s.featureFlags, flags.ProjectCreateDelete) {
+			return nil, util.UserVisibleError(codes.Unimplemented, "cannot create a new top-level project")
+		}
+
+		id := auth.IdentityFromContext(ctx)
+		if id.String() == "" {
+			return nil, util.UserVisibleError(codes.Unauthenticated, "cannot determine user ID")
+		}
+
+		tx, err := s.store.BeginTransaction()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+		}
+		defer s.store.Rollback(tx)
+		qtx := s.store.GetQuerierWithTransaction(tx)
+		project, err = s.projectCreator.ProvisionSelfEnrolledProject(ctx, qtx, req.Name, id.String())
+		if err != nil {
+			return nil, err
+		}
+
+		if err := s.store.Commit(tx); err != nil {
+			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+		}
 	}
 
-	// Retrieve the membership-to-feature mapping from the configuration
-	projectFeatures := s.cfg.Features.GetFeaturesForMemberships(ctx)
-	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
-		Features:  projectFeatures,
-		ProjectID: subProject.ID,
-	}); err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
-	}
-
-	if err := s.authzClient.Adopt(ctx, parent.ID, subProject.ID); err != nil {
-		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
-	}
-
-	if err := s.store.Commit(tx); err != nil {
-		return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+	if project == nil {
+		return nil, status.Errorf(codes.Internal, "project is nil after creation")
 	}
 
 	return &minderv1.CreateProjectResponse{
 		Project: &minderv1.Project{
-			ProjectId:   subProject.ID.String(),
-			Name:        subProject.Name,
+			ProjectId:   project.ID.String(),
+			Name:        project.Name,
 			Description: "",
-			CreatedAt:   timestamppb.New(subProject.CreatedAt),
-			UpdatedAt:   timestamppb.New(subProject.UpdatedAt),
+			CreatedAt:   timestamppb.New(project.CreatedAt),
+			UpdatedAt:   timestamppb.New(project.UpdatedAt),
 		},
 	}, nil
 }

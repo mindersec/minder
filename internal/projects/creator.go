@@ -5,16 +5,20 @@ package projects
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/mindpak"
 )
@@ -26,12 +30,22 @@ import (
 type ProjectCreator interface {
 
 	// ProvisionSelfEnrolledProject creates the core default components of the project
-	// (project, marketplace subscriptions, etc.) but *does not* create a project.
+	// (project, marketplace subscriptions, etc.).
 	ProvisionSelfEnrolledProject(
 		ctx context.Context,
 		qtx db.ExtendQuerier,
 		projectName string,
 		userSub string,
+	) (outproj *db.Project, projerr error)
+
+	// ProvisionChildProject creates the components of a child project which is nested
+	// under a parent in the project hierarchy.  The parent project is checked for
+	// existence before creating the child project.
+	ProvisionChildProject(
+		ctx context.Context,
+		qtx db.ExtendQuerier,
+		parentProjectID uuid.UUID,
+		projectName string,
 	) (outproj *db.Project, projerr error)
 }
 
@@ -131,4 +145,62 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	}
 
 	return &project, nil
+}
+
+func (p *projectCreator) ProvisionChildProject(
+	ctx context.Context,
+	qtx db.ExtendQuerier,
+	parentProjectID uuid.UUID,
+	projectName string,
+) (outproj *db.Project, projerr error) {
+	parent, err := qtx.GetProjectByID(ctx, parentProjectID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "project not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
+	}
+
+	// Currently we only support one level of hierarchy, because the full hierarchy
+	// has a bunch of complexities.
+	// TODO: Remove this once we handle a full hierarchy
+	if parent.ParentID.Valid {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot create subproject of a subproject")
+	}
+
+	if err := ValidateName(projectName); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid project name: %v", err)
+	}
+
+	subProject, err := qtx.CreateProject(ctx, db.CreateProjectParams{
+		Name: projectName,
+		ParentID: uuid.NullUUID{
+			UUID:  parentProjectID,
+			Valid: true,
+		},
+		Metadata: json.RawMessage(`{}`),
+	})
+	if err != nil {
+		if db.ErrIsUniqueViolation(err) {
+			return nil, util.UserVisibleError(codes.AlreadyExists, "project named %s already exists", projectName)
+		}
+		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
+	}
+
+	// Retrieve the membership-to-feature mapping from the configuration
+	projectFeatures := p.featuresCfg.GetFeaturesForMemberships(ctx)
+	if err := qtx.CreateEntitlements(ctx, db.CreateEntitlementsParams{
+		Features:  projectFeatures,
+		ProjectID: subProject.ID,
+	}); err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating entitlements: %v", err)
+	}
+
+	// We call "adopt" last here, because orchestrating the rollback of the Adopt is harder,
+	// and we'd rather reduce the chances of leaking an adoption of a random UUID.
+	if err := p.authzClient.Adopt(ctx, parent.ID, subProject.ID); err != nil {
+		return nil, status.Errorf(codes.Internal, "error creating subproject: %v", err)
+	}
+
+	return &subProject, nil
 }

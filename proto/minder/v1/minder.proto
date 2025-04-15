@@ -903,7 +903,10 @@ service ProjectsService {
         };
 
         option (rpc_options) = {
-            target_resource: TARGET_RESOURCE_PROJECT
+            // We use TARGET_RESOURCE_USER (no specific resource is checked for authz)
+            // here when creating top-level projects, and specifically check the
+            // RELATION_CREATE permission when creating sub-projects under a parent.
+            target_resource: TARGET_RESOURCE_USER
             relation: RELATION_CREATE
         };
     }

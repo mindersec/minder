@@ -129,6 +129,108 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 
 }
 
+func TestProvisionChildProject(t *testing.T) {
+	t.Parallel()
+	parentProject := uuid.New()
+	childProj := uuid.New()
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
+		Return(db.Project{ID: parentProject}, nil)
+	mockStore.EXPECT().CreateProject(gomock.Any(), gomock.Any()).
+		Return(db.Project{
+			ID: childProj,
+		}, nil)
+	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
+		Return(nil)
+
+	ctx := prepareTestToken(context.Background(), t, []any{})
+
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{
+		MembershipFeatureMapping: map[string]string{
+			"teamA": "featureA",
+			"teamB": "featureB",
+		},
+	})
+
+	_, err := creator.ProvisionChildProject(
+		ctx,
+		mockStore,
+		parentProject,
+		"test-child-proj",
+	)
+	assert.NoError(t, err)
+
+	t.Log("ensure project permission was written")
+	assert.Len(t, authzClient.Adoptions, 1)
+	assert.Equal(t, authzClient.Adoptions[childProj], parentProject)
+}
+
+func TestProvisionChildProjectFailsNoParent(t *testing.T) {
+	t.Parallel()
+	parentProject := uuid.New()
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
+		Return(db.Project{}, fmt.Errorf("parent not found"))
+
+	ctx := context.Background()
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	_, err := creator.ProvisionChildProject(
+		ctx,
+		mockStore,
+		parentProject,
+		"test-child-proj",
+	)
+	assert.Error(t, err)
+
+	t.Log("ensure project permission was cleaned up")
+	assert.Len(t, authzClient.Adoptions, 0)
+}
+
+func TestProvisionChildProjectFailsTooManyParents(t *testing.T) {
+	t.Parallel()
+	parentProject := uuid.New()
+
+	authzClient := &mock.SimpleClient{}
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockStore := mockdb.NewMockStore(ctrl)
+	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
+		Return(db.Project{
+			ID: parentProject,
+			ParentID: uuid.NullUUID{
+				UUID:  uuid.New(),
+				Valid: true,
+			},
+		}, nil)
+
+	ctx := context.Background()
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	_, err := creator.ProvisionChildProject(
+		ctx,
+		mockStore,
+		parentProject,
+		"test-child-proj",
+	)
+	assert.Error(t, err)
+
+	t.Log("ensure project permission was cleaned up")
+	assert.Len(t, authzClient.Adoptions, 0)
+}
+
 // prepareTestToken creates a JWT token with the specified roles and returns the context with the token.
 func prepareTestToken(ctx context.Context, t *testing.T, roles []any) context.Context {
 	t.Helper()
