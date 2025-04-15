@@ -37,7 +37,8 @@ func TestMain(m *testing.M) {
 		fmt.Printf("error setting KO_DATA_PATH: %v\n", err)
 		os.Exit(1)
 	}
-	_, err = email.NewMessage(context.Background(), "j@example.com", "http://example.com/invite", "http://api.example.com/", "admin", "Example", "Joe")
+	projectId := uuid.New()
+	_, err = email.NewMessage(context.Background(), "j@example.com", "ABC123", "http://example.com/invite", "http://api.example.com/", "admin", projectId, "Example", "Joe")
 	if err != nil {
 		fmt.Printf("error creating message: %v\n", err)
 		os.Exit(1)
