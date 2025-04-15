@@ -271,6 +271,7 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 
 			rpcOptions := &minder.RpcOptions{
 				TargetResource: tc.resource,
+				Relation:       minder.Relation_RELATION_PROFILE_CREATE,
 			}
 
 			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
