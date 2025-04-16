@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -89,6 +90,15 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 	server := info.Server.(*Server)
 
 	if err := server.authzClient.Check(ctx, relationName, entityCtx.Project.ID); err != nil {
+		if errors.Is(err, authz.ErrNotAuthorized) && server.allowedAdminDelete(ctx, relation) {
+			// Special case: permit deletions by admin users, but use the warning
+			// log as an audit log.  (TODO: link this up with better audit logging
+			// when that facility exists)
+			zerolog.Ctx(ctx).Warn().Msgf("Permitting %s in %s by admin %s",
+				relationName, entityCtx.Project.ID, auth.IdentityFromContext(ctx).String())
+			return handler(ctx, req)
+		}
+
 		zerolog.Ctx(ctx).Error().Err(err).Msg("authorization check failed")
 		return nil, util.UserVisibleError(
 			codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
@@ -208,6 +218,25 @@ func getDefaultProjectID(
 	}
 
 	return prjs[0], nil
+}
+
+func (s *Server) allowedAdminDelete(ctx context.Context, relation minder.Relation) bool {
+	userId := auth.IdentityFromContext(ctx).String()
+
+	adminIds := s.cfg.Authz.AdminDeleters
+	deleteOps := []minder.Relation{
+		minder.Relation_RELATION_DELETE,
+		minder.Relation_RELATION_ROLE_ASSIGNMENT_REMOVE,
+		minder.Relation_RELATION_REPO_DELETE,
+		minder.Relation_RELATION_ARTIFACT_DELETE,
+		minder.Relation_RELATION_PR_DELETE,
+		minder.Relation_RELATION_PROVIDER_DELETE,
+		minder.Relation_RELATION_RULE_TYPE_DELETE,
+		minder.Relation_RELATION_PROFILE_DELETE,
+		minder.Relation_RELATION_DATA_SOURCE_DELETE,
+		minder.Relation_RELATION_ENTITY_DELETE,
+	}
+	return slices.Contains(adminIds, userId) && slices.Contains(deleteOps, relation)
 }
 
 // Permissions API

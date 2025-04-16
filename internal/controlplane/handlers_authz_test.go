@@ -223,11 +223,15 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 	defaultProjectID := uuid.New()
 	userJWT := openid.New()
 	assert.NoError(t, userJWT.Set("sub", "subject1"))
+	adminJWT := openid.New()
+	assert.NoError(t, adminJWT.Set("sub", "admin"))
 
 	assert.NotEqual(t, projectID, defaultProjectID)
 
 	testCases := []struct {
 		name      string
+		jwt       *openid.Token
+		relation  minder.Relation
 		entityCtx *engcontext.EntityContext
 		resource  minder.TargetResource
 		rpcErr    error
@@ -263,15 +267,44 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:     "admin create",
+			jwt:      &adminJWT,
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			entityCtx: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: projectID,
+				},
+			},
+			rpcErr: util.UserVisibleError(
+				codes.PermissionDenied,
+				"user %q is not authorized to perform this operation on project %q", "admin", projectID),
+		},
+		{
+			name:     "admin delete",
+			jwt:      &adminJWT,
+			relation: minder.Relation_RELATION_PROFILE_DELETE,
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			entityCtx: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: projectID,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			relation := minder.Relation_RELATION_PROFILE_CREATE
+			if tc.relation != minder.Relation_RELATION_UNSPECIFIED {
+				relation = tc.relation
+			}
+
 			rpcOptions := &minder.RpcOptions{
 				TargetResource: tc.resource,
-				Relation:       minder.Relation_RELATION_PROFILE_CREATE,
+				Relation:       relation,
 			}
 
 			unaryHandler := func(ctx context.Context, _ interface{}) (any, error) {
@@ -281,13 +314,22 @@ func TestProjectAuthorizationInterceptor(t *testing.T) {
 				authzClient: &mock.SimpleClient{
 					Allowed: []uuid.UUID{defaultProjectID},
 				},
+				cfg: &serverconfig.Config{
+					Authz: serverconfig.AuthzConfig{
+						AdminDeleters: []string{"admin"},
+					},
+				},
+			}
+			jwt := userJWT
+			if tc.jwt != nil {
+				jwt = *tc.jwt
 			}
 			ctx := withRpcOptions(context.Background(), rpcOptions)
 			ctx = engcontext.WithEntityContext(ctx, tc.entityCtx)
-			ctx = authjwt.WithAuthTokenContext(ctx, userJWT)
+			ctx = authjwt.WithAuthTokenContext(ctx, jwt)
 			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
-				UserID:    userJWT.Subject(),
-				HumanName: userJWT.Subject(),
+				UserID:    jwt.Subject(),
+				HumanName: jwt.Subject(),
 			})
 			_, err := ProjectAuthorizationInterceptor(ctx, request{}, &grpc.UnaryServerInfo{
 				Server: &server,

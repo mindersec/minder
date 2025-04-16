@@ -21,6 +21,10 @@ type AuthzConfig struct {
 	ModelID string `mapstructure:"model_id" default:""`
 	// Auth is the authentication configuration for the authorization server
 	Auth OpenFGAAuth `mapstructure:"auth" validate:"required"`
+
+	// AdminDeleters are a list of user IDs in the authz system which are
+	// permitted to delete resources from the system.
+	AdminDeleters []string `mapstructure:"admin_deleters" default:""`
 }
 
 // Validate validates the Authz configuration
