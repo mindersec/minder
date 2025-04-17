@@ -267,14 +267,16 @@ func (s *Server) DeleteProject(
 		return nil, status.Errorf(codes.Internal, "error getting project: %v", err)
 	}
 
-	if !subProject.ParentID.Valid && !flags.Bool(ctx, s.featureFlags, flags.ProjectCreateDelete) {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "cannot delete a top-level project")
-	}
-
-	// The parent is supposed to have the feature flag, not the subproject
-	if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, subProject.ParentID.UUID) {
-		return nil, util.UserVisibleError(codes.PermissionDenied,
-			"project does not allow project hierarchy operations")
+	if subProject.ParentID.Valid {
+		// The parent is supposed to have the feature flag, not the subproject
+		if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, subProject.ParentID.UUID) {
+			return nil, util.UserVisibleError(codes.PermissionDenied,
+				"project does not allow project hierarchy operations")
+		}
+	} else {
+		if !flags.Bool(ctx, s.featureFlags, flags.ProjectCreateDelete) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "cannot delete a top-level project")
+		}
 	}
 
 	if err := s.projectDeleter.DeleteProject(ctx, projectID, qtx); err != nil {
