@@ -18,7 +18,6 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	"github.com/mindersec/minder/pkg/flags"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -27,7 +26,6 @@ func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
-	featureFlags flags.Interface,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
@@ -43,7 +41,7 @@ func NewRuleEvaluator(
 		}
 		return jq.NewJQEvaluator(e.GetJq(), opts...)
 	case rego.RegoEvalType:
-		return rego.NewRegoEvaluator(e.GetRego(), featureFlags, opts...)
+		return rego.NewRegoEvaluator(e.GetRego(), opts...)
 	case vulncheck.VulncheckEvalType:
 		client, err := provinfv1.As[provinfv1.GitHub](provider)
 		if err != nil {

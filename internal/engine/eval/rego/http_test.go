@@ -61,13 +61,12 @@ func TestLimitedDialer(t *testing.T) {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  fmt.Sprintf(ruleDef, tt.url),
 				},
-				nil,
 			)
 			require.NoError(t, err, "could not create evaluator")
 
 			emptyPol := map[string]any{}
 
-			res, err := eval.Eval(context.Background(), emptyPol, nil, &interfaces.Result{})
+			res, err := eval.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{})
 
 			if tt.wantErr == "" {
 				require.NoError(t, err, "expected no error")

@@ -25,7 +25,7 @@ var _ interfaces.Ingester = &TestKit{}
 // Ingest is a stub implementation of the ingester
 func (tk *TestKit) Ingest(
 	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any,
-) (*interfaces.Result, error) {
+) (*interfaces.Ingested, error) {
 	if tk.ingestType == git.GitRuleDataIngestType {
 		return tk.fakeGit(ctx, ent, params)
 	}
@@ -49,9 +49,9 @@ func (*TestKit) GetConfig() protoreflect.ProtoMessage {
 
 func (tk *TestKit) fakeGit(
 	_ context.Context, _ protoreflect.ProtoMessage, _ map[string]any,
-) (*interfaces.Result, error) {
+) (*interfaces.Ingested, error) {
 	fs := osfs.New(tk.gitDir)
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Fs: fs,
 	}, nil
 }

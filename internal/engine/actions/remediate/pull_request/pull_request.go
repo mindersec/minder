@@ -76,7 +76,7 @@ type Remediator struct {
 }
 
 type paramsPR struct {
-	ingested   *engifv1.Result
+	ingested   *engifv1.Ingested
 	repo       *pb.Repository
 	title      string
 	modifier   fsModifier

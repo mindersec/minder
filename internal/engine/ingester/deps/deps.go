@@ -90,7 +90,7 @@ func (gi *Deps) GetConfig() protoreflect.ProtoMessage {
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo,
 // and scanning it for dependencies with a dependency extractor
-func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
+func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Ingested, error) {
 	switch entity := ent.(type) {
 	case *pb.Repository:
 		return gi.ingestRepository(ctx, entity, params)
@@ -101,7 +101,7 @@ func (gi *Deps) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, param
 	}
 }
 
-func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
+func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Ingested, error) {
 	var logger = zerolog.Ctx(ctx)
 	// the branch is left unset since we want to auto-discover it
 	// in case it's not explicitly set
@@ -130,7 +130,7 @@ func (gi *Deps) ingestRepository(ctx context.Context, repo *pb.Repository, param
 		WithBranch(branch).
 		WithCommitHash(hsh.String())
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object: map[string]any{
 			"node_list": deps,
 		},
@@ -232,7 +232,7 @@ func filterNodes(base []*sbom.Node, updated []*sbom.Node, compare func(*sbom.Nod
 }
 
 func (gi *Deps) ingestPullRequest(
-	ctx context.Context, pr *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
+	ctx context.Context, pr *pbinternal.PullRequest, params map[string]any) (*interfaces.Ingested, error) {
 	userCfg := &PullRequestConfig{
 		// We default to new_and_updated for user convenience.
 		Filter: PullRequestIngestTypeNewAndUpdated,
@@ -274,7 +274,7 @@ func (gi *Deps) ingestPullRequest(
 		WithBranch(pr.GetTargetRef()).
 		WithCommitHash(ref.Hash().String())
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object: map[string]any{
 			"node_list": targetDeps,
 		},

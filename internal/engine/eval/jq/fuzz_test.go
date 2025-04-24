@@ -38,6 +38,6 @@ func FuzzJqEval(f *testing.F) {
 		}
 
 		//nolint:gosec // Do not validate the return values so ignore them
-		jqe.Eval(context.Background(), pol, nil, &interfaces.Result{Object: obj})
+		jqe.Eval(context.Background(), pol, nil, &interfaces.Ingested{Object: obj})
 	})
 }

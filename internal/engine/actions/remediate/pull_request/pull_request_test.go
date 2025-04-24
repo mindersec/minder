@@ -681,7 +681,7 @@ func TestPullRequestRemediate(t *testing.T) {
 			require.NoError(t, err, "unexpected error creating test worktree")
 
 			evalParams.SetIngestResult(
-				&interfaces2.Result{
+				&interfaces2.Ingested{
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})

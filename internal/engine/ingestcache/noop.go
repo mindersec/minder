@@ -23,7 +23,7 @@ func (*NoopCache) Get(
 	_ interfaces.Ingester,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
-) (*interfaces.Result, bool) {
+) (*interfaces.Ingested, bool) {
 	return nil, false
 }
 
@@ -32,6 +32,6 @@ func (*NoopCache) Set(
 	_ interfaces.Ingester,
 	_ protoreflect.ProtoMessage,
 	_ map[string]any,
-	_ *interfaces.Result,
+	_ *interfaces.Ingested,
 ) {
 }

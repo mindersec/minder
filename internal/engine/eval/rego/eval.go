@@ -73,7 +73,6 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
-	featureFlags flags.Interface,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
@@ -84,9 +83,8 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:          c,
-		featureFlags: featureFlags,
-		reseval:      re,
+		cfg:     c,
+		reseval: re,
 		regoOpts: []func(*rego.Rego){
 			re.getQuery(),
 			rego.Module(MinderRegoFile, c.Def),
@@ -111,13 +109,20 @@ func NewRegoEvaluator(
 	return eval, nil
 }
 
+var _ eoptions.SupportsFlags = (*Evaluator)(nil)
+
 func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 	return rego.New(append(e.regoOpts, opts...)...)
 }
 
+func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
+	e.featureFlags = client
+	return nil
+}
+
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(
-	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Result,
+	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	// The rego engine is actually able to handle nil
 	// objects quite gracefully, so we don't need to check

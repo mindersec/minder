@@ -150,7 +150,7 @@ func parseFile(f billy.File) (any, error) {
 }
 
 // Call parses the structured data from the billy filesystem in the context
-func (sh *structHandler) Call(_ context.Context, ingest *interfaces.Result, _ any) (any, error) {
+func (sh *structHandler) Call(_ context.Context, ingest *interfaces.Ingested, _ any) (any, error) {
 	if ingest == nil || ingest.Fs == nil {
 		return nil, fmt.Errorf("filesystem not found in execution context")
 	}

@@ -60,7 +60,7 @@ func (jqe *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *interfaces.Result,
+	res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	if res.Object == nil {
 		return nil, fmt.Errorf("missing object")

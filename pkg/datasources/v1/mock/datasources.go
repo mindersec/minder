@@ -44,7 +44,7 @@ func (m *MockDataSourceFuncDef) EXPECT() *MockDataSourceFuncDefMockRecorder {
 }
 
 // Call mocks base method.
-func (m *MockDataSourceFuncDef) Call(ctx context.Context, ingest *interfaces.Result, args any) (any, error) {
+func (m *MockDataSourceFuncDef) Call(ctx context.Context, ingest *interfaces.Ingested, args any) (any, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Call", ctx, ingest, args)
 	ret0, _ := ret[0].(any)

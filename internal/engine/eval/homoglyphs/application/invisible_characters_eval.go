@@ -48,7 +48,7 @@ func (ice *InvisibleCharactersEvaluator) Eval(
 	ctx context.Context,
 	_ map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *interfaces.Result,
+	res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	violations, err := evaluateHomoglyphs(ctx, ice.processor, res, ice.reviewHandler)
 	if err != nil {

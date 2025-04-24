@@ -83,7 +83,7 @@ func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	_ map[string]any,
-) (*interfaces.Result, error) {
+) (*interfaces.Ingested, error) {
 	pr, ok := ent.(*pbinternal.PullRequest)
 	if !ok {
 		return nil, fmt.Errorf("entity is not a pull request")
@@ -111,7 +111,7 @@ func (di *Diff) Ingest(
 	}
 }
 
-func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Ingested, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 	page := 0
 
@@ -136,10 +136,10 @@ func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal
 		page = resp.NextPage
 	}
 
-	return &interfaces.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Ingested{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
-func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Ingested, error) {
 	diff := &pbinternal.PrContents{Pr: pr}
 	page := 0
 
@@ -164,7 +164,7 @@ func (di *Diff) getFullTypeDiff(ctx context.Context, prNumber int, pr *pbinterna
 		page = resp.NextPage
 	}
 
-	return &interfaces.Result{Object: diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Ingested{Object: diff, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func (di *Diff) ingestFileForDepDiff(
@@ -196,7 +196,7 @@ func (di *Diff) ingestFileForDepDiff(
 	return batchCtxDeps, nil
 }
 
-func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.PullRequest) (*interfaces.Result, error) {
+func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.PullRequest) (*interfaces.Ingested, error) {
 	deps := pbinternal.PrDependencies{Pr: pr}
 
 	// TODO: we should be able to just fetch the additional commits between base and target.
@@ -230,7 +230,7 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 		}
 	}
 
-	return &interfaces.Result{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
+	return &interfaces.Ingested{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
 func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {

@@ -20,7 +20,6 @@ func FuzzRegoEval(f *testing.F) {
 				Type: ConstraintsEvaluationType.String(),
 				Def:  policy,
 			},
-			nil,
 		)
 		if err != nil {
 			return
@@ -32,7 +31,7 @@ func FuzzRegoEval(f *testing.F) {
 		// The fuzzer tests for unexpected behavior, so it is not
 		// important what e.Eval() returns.
 		//nolint:gosec // Ignore the return values from e.Eval()
-		e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+		e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 			Object: map[string]any{
 				"data": data,
 			},
