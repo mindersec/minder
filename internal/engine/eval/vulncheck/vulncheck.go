@@ -92,7 +92,8 @@ func (e *Evaluator) Eval(
 // getVulnerableDependencies returns a slice containing vulnerable dependencies.
 // TODO: it would be nice if we could express this in rego over
 // `input.ingested.deps[_].dep`, rather than building this in to core.
-func (e *Evaluator) getVulnerableDependencies(ctx context.Context, pol map[string]any, res *interfaces.Ingested) ([]string, error) {
+func (e *Evaluator) getVulnerableDependencies(
+	ctx context.Context, pol map[string]any, res *interfaces.Ingested) ([]string, error) {
 	var vulnerablePackages []string
 
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)

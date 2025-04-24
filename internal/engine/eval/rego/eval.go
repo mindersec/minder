@@ -115,6 +115,7 @@ func (e *Evaluator) newRegoFromOptions(opts ...func(*rego.Rego)) *rego.Rego {
 	return rego.New(append(e.regoOpts, opts...)...)
 }
 
+// SetFlagsClient implements the SupportsFlags interface.
 func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
 	e.featureFlags = client
 	return nil
