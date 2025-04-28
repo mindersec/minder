@@ -22,13 +22,13 @@ var ErrBuildingCacheKey = errors.New("error building cache key")
 
 type cache struct {
 	// cache is the actual cache
-	cache *xsync.MapOf[string, *interfaces.Result]
+	cache *xsync.MapOf[string, *interfaces.Ingested]
 }
 
 // NewCache returns a new cache
 func NewCache() Cache {
 	return &cache{
-		cache: xsync.NewMapOf[string, *interfaces.Result](),
+		cache: xsync.NewMapOf[string, *interfaces.Ingested](),
 	}
 }
 
@@ -37,7 +37,7 @@ func (c *cache) Get(
 	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-) (*interfaces.Result, bool) {
+) (*interfaces.Ingested, bool) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {
 		// TODO we might want to log this
@@ -53,7 +53,7 @@ func (c *cache) Set(
 	ingester interfaces.Ingester,
 	entity protoreflect.ProtoMessage,
 	params map[string]any,
-	result *interfaces.Result,
+	result *interfaces.Ingested,
 ) {
 	key, err := buildCacheKey(ingester, entity, params)
 	if err != nil {

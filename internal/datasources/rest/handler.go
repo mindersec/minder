@@ -129,7 +129,7 @@ func (h *restHandler) ValidateUpdate(argsSchema *structpb.Struct) error {
 	return schemaupdate.ValidateSchemaUpdate(h.rawInputSchema, argsSchema)
 }
 
-func (h *restHandler) Call(ctx context.Context, _ *interfaces.Result, args any) (any, error) {
+func (h *restHandler) Call(ctx context.Context, _ *interfaces.Ingested, args any) (any, error) {
 	argsMap, ok := args.(map[string]any)
 	if !ok {
 		return nil, errors.New("args is not a map")

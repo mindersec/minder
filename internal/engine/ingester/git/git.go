@@ -63,7 +63,7 @@ func (gi *Git) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest does the actual data ingestion for a rule type by cloning a git repo
-func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
+func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Ingested, error) {
 	switch entity := ent.(type) {
 	case *pb.Repository:
 		return gi.ingestRepository(ctx, entity, params)
@@ -74,7 +74,7 @@ func (gi *Git) Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params
 	}
 }
 
-func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Result, error) {
+func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params map[string]any) (*interfaces.Ingested, error) {
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
 		return nil, fmt.Errorf("failed to read git ingester configuration from params: %w", err)
@@ -97,7 +97,7 @@ func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params
 		WithBranch(branch).
 		WithCommitHash(hsh.String())
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object:     nil,
 		Fs:         fs,
 		Storer:     storer,
@@ -106,7 +106,7 @@ func (gi *Git) ingestRepository(ctx context.Context, repo *pb.Repository, params
 }
 
 func (gi *Git) ingestPullRequest(
-	ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Result, error) {
+	ctx context.Context, ent *pbinternal.PullRequest, params map[string]any) (*interfaces.Ingested, error) {
 	// TODO: we don't actually have any configuration here.  Do we need to read the configuration?
 	userCfg := &IngesterConfig{}
 	if err := mapstructure.Decode(params, userCfg); err != nil {
@@ -131,7 +131,7 @@ func (gi *Git) ingestPullRequest(
 
 	checkpoint := checkpoints.NewCheckpointV1Now().WithBranch(ent.GetTargetRef()).WithCommitHash(head.Hash().String())
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object:     nil,
 		Fs:         targetFs,
 		Storer:     storer,

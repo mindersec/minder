@@ -37,7 +37,7 @@ import (
 )
 
 // MinderRegoLib contains the minder-specific functions for rego
-var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
+var MinderRegoLib = []func(res *interfaces.Ingested) func(*rego.Rego){
 	FileExists,
 	FileLs,
 	FileLsGlob,
@@ -54,7 +54,7 @@ var MinderRegoLib = []func(res *interfaces.Result) func(*rego.Rego){
 
 // MinderRegoLibExperiments contains Minder-specific functions which
 // should only be exposed when the given experiment is enabled.
-var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Result) func(*rego.Rego){
+var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Ingested) func(*rego.Rego){
 	flags.GitPRDiffs: {
 		BaseFileExists,
 		BaseFileLs,
@@ -70,7 +70,7 @@ var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Resul
 	},
 }
 
-func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Result) []func(*rego.Rego) {
+func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Ingested) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
@@ -86,7 +86,7 @@ func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *
 }
 
 // FileExists adds the `file.exists` function to the Rego engine.
-func FileExists(res *interfaces.Result) func(*rego.Rego) {
+func FileExists(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.exists",
@@ -101,7 +101,7 @@ func FileExists(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileExists adds the `base_file.exists` function to the Rego engine.
-func BaseFileExists(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileExists(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.exists",
@@ -141,7 +141,7 @@ func fsExists(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.T
 }
 
 // FileRead adds the `file.read` function to the Rego engine.
-func FileRead(res *interfaces.Result) func(*rego.Rego) {
+func FileRead(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.read",
@@ -156,7 +156,7 @@ func FileRead(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileRead adds the `base_file.read` function to the Rego engine.
-func BaseFileRead(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileRead(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.read",
@@ -200,7 +200,7 @@ func fsRead(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Ter
 }
 
 // FileLs adds the `file.ls` function to the Rego engine.
-func FileLs(res *interfaces.Result) func(*rego.Rego) {
+func FileLs(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.ls",
@@ -226,7 +226,7 @@ func FileLs(res *interfaces.Result) func(*rego.Rego) {
 // If the file is a directory, it returns the files in the directory.
 // If the file is a symlink, it follows the symlink and returns the files
 // in the target.
-func BaseFileLs(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileLs(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.ls",
@@ -303,7 +303,7 @@ func fsLs(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.Term,
 }
 
 // FileLsGlob adds the `file.ls_glob` function to the Rego engine.
-func FileLsGlob(res *interfaces.Result) func(*rego.Rego) {
+func FileLsGlob(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.ls_glob",
@@ -318,7 +318,7 @@ func FileLsGlob(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileLsGlob adds the `base_file.ls_glob` function to the Rego engine.
-func BaseFileLsGlob(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileLsGlob(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.ls_glob",
@@ -361,7 +361,7 @@ func fsLsGlob(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.T
 }
 
 // FileWalk adds the `file.walk` function to the Rego engine.
-func FileWalk(res *interfaces.Result) func(*rego.Rego) {
+func FileWalk(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.walk",
@@ -376,7 +376,7 @@ func FileWalk(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileWalk adds the `base_file.walk` function to the Rego engine.
-func BaseFileWalk(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileWalk(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.walk",
@@ -472,7 +472,7 @@ func fileLsHandleDir(path string, bfs billy.Filesystem) (*ast.Term, error) {
 }
 
 // FileArchive adds the 'file.archive` function to the Rego engine.
-func FileArchive(res *interfaces.Result) func(*rego.Rego) {
+func FileArchive(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.archive",
@@ -487,7 +487,7 @@ func FileArchive(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileArchive adds the 'base_file.archive` function to the Rego engine.
-func BaseFileArchive(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileArchive(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.archive",
@@ -566,7 +566,7 @@ func fsArchive(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast.
 
 // ListGithubActions adds the `github_workflow.ls_actions` function to the Rego engine.
 // The frizbee library guarantees that the actions are unique.
-func ListGithubActions(res *interfaces.Result) func(*rego.Rego) {
+func ListGithubActions(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "github_workflow.ls_actions",
@@ -583,7 +583,7 @@ func ListGithubActions(res *interfaces.Result) func(*rego.Rego) {
 
 // BaseListGithubActions adds the `github_workflow.base_ls_actions` function to the Rego engine.
 // The frizbee library guarantees that the actions are unique.
-func BaseListGithubActions(res *interfaces.Result) func(*rego.Rego) {
+func BaseListGithubActions(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "github_workflow.base_ls_actions",
@@ -628,7 +628,7 @@ func fsListGithubActions(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Te
 }
 
 // FileHTTPType adds the `file.http_type` function to the Rego engine.
-func FileHTTPType(res *interfaces.Result) func(*rego.Rego) {
+func FileHTTPType(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.http_type",
@@ -644,7 +644,7 @@ func FileHTTPType(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseFileHTTPType adds the `base_file.http_type` function to the Rego engine.
-func BaseFileHTTPType(res *interfaces.Result) func(*rego.Rego) {
+func BaseFileHTTPType(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.http_type",
@@ -691,7 +691,7 @@ func fsHTTPType(vfs billy.Filesystem) func(rego.BuiltinContext, *ast.Term) (*ast
 }
 
 // JQIsTrue adds the `jq.is_true` function to the Rego engine.
-func JQIsTrue(_ *interfaces.Result) func(*rego.Rego) {
+func JQIsTrue(_ *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function2(
 		&rego.Function{
 			Name: "jq.is_true",
@@ -726,7 +726,7 @@ func jqIsTrue(_ rego.BuiltinContext, parsedYaml *ast.Term, query *ast.Term) (*as
 }
 
 // ParseYaml adds the `parse_yaml` function to the Rego engine.
-func ParseYaml(_ *interfaces.Result) func(*rego.Rego) {
+func ParseYaml(_ *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "parse_yaml",
@@ -764,7 +764,7 @@ func parseYaml(_ rego.BuiltinContext, yamlContent *ast.Term) (*ast.Term, error) 
 }
 
 // ParseToml adds the `parse_toml` function to the Rego engine.
-func ParseToml(_ *interfaces.Result) func(*rego.Rego) {
+func ParseToml(_ *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "parse_toml",
@@ -802,7 +802,7 @@ func parseToml(_ rego.BuiltinContext, content *ast.Term) (*ast.Term, error) {
 }
 
 // DependencyExtract adds the `file.deps` function to the Rego engine.
-func DependencyExtract(res *interfaces.Result) func(*rego.Rego) {
+func DependencyExtract(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "file.deps",
@@ -820,7 +820,7 @@ func DependencyExtract(res *interfaces.Result) func(*rego.Rego) {
 }
 
 // BaseDependencyExtract adds the `base_file.deps` function to the Rego engine.
-func BaseDependencyExtract(res *interfaces.Result) func(*rego.Rego) {
+func BaseDependencyExtract(res *interfaces.Ingested) func(*rego.Rego) {
 	return rego.Function1(
 		&rego.Function{
 			Name: "base_file.deps",

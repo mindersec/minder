@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"runtime/debug"
-	"strings"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -20,7 +19,6 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/profiles"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -30,18 +28,13 @@ import (
 type RuleMeta struct {
 	// Name is the name of the rule
 	Name string
-	// Organization is the ID of the organization that this rule is for
-	Organization *string
 	// Project is the ID of the project that this rule is for
-	Project *string
+	Project string
 }
 
 // String returns a string representation of the rule meta
 func (r *RuleMeta) String() string {
-	if r.Project != nil {
-		return fmt.Sprintf("group/%s/%s", *r.Project, r.Name)
-	}
-	return fmt.Sprintf("org/%s/%s", *r.Organization, r.Name)
+	return fmt.Sprintf("group/%s/%s", r.Project, r.Name)
 }
 
 // RuleTypeEngine is the engine for a rule type. It builds the multiple
@@ -68,9 +61,12 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
-	experiments flags.Interface,
 	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
+	if ruletype.Context.GetProject() == "" {
+		return nil, fmt.Errorf("rule type context must have a project")
+	}
+
 	rval, err := profiles.NewRuleValidator(ruletype)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule validator: %w", err)
@@ -81,27 +77,21 @@ func NewRuleTypeEngine(
 		return nil, fmt.Errorf("cannot create rule data ingest: %w", err)
 	}
 
-	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider, experiments, opts...)
+	evaluator, err := eval.NewRuleEvaluator(ctx, ruletype, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule evaluator: %w", err)
 	}
 
 	rte := &RuleTypeEngine{
 		Meta: RuleMeta{
-			Name: ruletype.Name,
+			Name:    ruletype.Name,
+			Project: ruletype.GetContext().GetProject(),
 		},
 		ruleValidator: rval,
 		ingester:      ingest,
 		ruleEvaluator: evaluator,
 		ruletype:      ruletype,
 		ingestCache:   ingestcache.NewNoopCache(),
-	}
-
-	if ruletype.Context.Project != nil && *ruletype.Context.Project != "" {
-		prj := strings.Clone(*ruletype.Context.Project)
-		rte.Meta.Project = &prj
-	} else {
-		return nil, fmt.Errorf("rule type context must have a project")
 	}
 
 	return rte, nil
@@ -139,6 +129,7 @@ func (r *RuleTypeEngine) Eval(
 	params interfaces.ResultSink,
 ) (res *interfaces.EvaluationResult, finalErr error) {
 	logger := zerolog.Ctx(ctx)
+	// Eval should never exit the entire process, so recover any panics within the rule evaluation engine.
 	defer func() {
 		if r := recover(); r != nil {
 			logger.Error().Interface("recovered", r).
@@ -166,26 +157,26 @@ func (r *RuleTypeEngine) Eval(
 
 	logger.Info().Msg("entity evaluation - ingest started")
 	// Try looking at the ingesting cache first
-	result, ok := r.ingestCache.Get(r.ingester, entity, ruleParams)
+	ingestData, ok := r.ingestCache.Get(r.ingester, entity, ruleParams)
 	if !ok {
 		var err error
 		// Ingest the data needed for the rule evaluation
-		result, err = r.ingester.Ingest(ctx, entity, ruleParams)
+		ingestData, err = r.ingester.Ingest(ctx, entity, ruleParams)
 		if err != nil {
 			// Ingesting failed, so we can't evaluate the rule.
 			// Note that for some types of ingesting the evalErr can already be set from the ingester.
 			return nil, fmt.Errorf("error ingesting data: %w", err)
 		}
-		r.ingestCache.Set(r.ingester, entity, ruleParams, result)
+		r.ingestCache.Set(r.ingester, entity, ruleParams, ingestData)
 	} else {
 		logger.Info().Str("id", r.GetID()).Msg("entity evaluation - ingest using cache")
 	}
 	logger.Info().Msg("entity evaluation - ingest completed")
-	params.SetIngestResult(result)
+	params.SetIngestResult(ingestData)
 
 	// Process evaluation
 	logger.Info().Msg("entity evaluation - evaluation started")
-	res, err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, result)
+	res, err := r.ruleEvaluator.Eval(ctx, ruleDef, entity, ingestData)
 	logger.Info().Msg("entity evaluation - evaluation completed")
 	return res, err
 }

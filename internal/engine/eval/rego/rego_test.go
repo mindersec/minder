@@ -41,14 +41,13 @@ allow {
 	input.ingested.data == "foo"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Matches
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -56,7 +55,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -84,14 +83,13 @@ skip {
 }
 `,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -113,14 +111,13 @@ violations[{"msg": msg}] {
 	msg := "data did not contain foo"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Matches
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -128,7 +125,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -157,13 +154,12 @@ violations[{"msg": msg}] {
 }
 `,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
@@ -194,7 +190,6 @@ allow {
 	input.profile.data == input.ingested.data
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -203,7 +198,7 @@ allow {
 	}
 
 	// Matches
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -211,7 +206,7 @@ allow {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -233,7 +228,6 @@ violations[{"msg": msg}] {
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -242,7 +236,7 @@ violations[{"msg": msg}] {
 	}
 
 	// Matches
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -250,7 +244,7 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -298,7 +292,6 @@ func TestConstraintsJSONOutput(t *testing.T) {
 			ViolationFormat: &violationFormat,
 			Def:             jsonPolicyDef,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -306,7 +299,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 		"data": []string{"foo", "bar"},
 	}
 
-	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": []string{"foo", "bar", "baz"},
 		},
@@ -349,7 +342,6 @@ violations[{"msg": msg}] {
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -357,7 +349,7 @@ violations[{"msg": msg}] {
 		"data": "foo",
 	}
 
-	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	evalResult, err := e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
@@ -385,7 +377,6 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 			Type: rego.ConstraintsEvaluationType.String(),
 			Def:  jsonPolicyDef,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -393,7 +384,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
@@ -412,14 +403,14 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 	t.Run("nil", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := rego.NewRegoEvaluator(nil, nil)
+		_, err := rego.NewRegoEvaluator(nil)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := rego.NewRegoEvaluator(&minderv1.RuleType_Definition_Eval_Rego{}, nil)
+		_, err := rego.NewRegoEvaluator(&minderv1.RuleType_Definition_Eval_Rego{})
 		require.Error(t, err, "should have failed to create evaluator")
 	})
 
@@ -430,7 +421,6 @@ func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
 			&minderv1.RuleType_Definition_Eval_Rego{
 				Type: "invalid",
 			},
-			nil,
 		)
 		require.Error(t, err, "should have failed to create evaluator")
 	})
@@ -449,12 +439,11 @@ package minder
 
 violations[{"msg": msg}] {`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	_, err = e.Eval(context.Background(), map[string]any{}, nil,
-		&interfaces.Result{Object: map[string]any{}})
+		&interfaces.Ingested{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
 
@@ -474,12 +463,11 @@ violations[{"msg": msg}] {
 	msg := "data did not contain foo"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	_, err = e.Eval(context.Background(), map[string]any{}, nil,
-		&interfaces.Result{Object: map[string]any{}})
+		&interfaces.Ingested{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
 }
 
@@ -514,7 +502,6 @@ allow {
 	minder.datasource.fake.source({"datasourcetest": input.ingested.data}) == "foo"
 }`,
 		},
-		nil,
 		options.WithDataSources(fdsr),
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -523,7 +510,7 @@ allow {
 
 	// Matches
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any(), gomock.Any()).Return("foo", nil)
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
@@ -532,7 +519,7 @@ allow {
 
 	// Doesn't match
 	fdsf.EXPECT().Call(gomock.Any(), gomock.Any(), gomock.Any()).Return("bar", nil)
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},

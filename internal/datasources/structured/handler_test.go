@@ -166,18 +166,18 @@ func TestCall(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name    string
-		ingest  func(t *testing.T) *interfaces.Result
+		ingest  func(t *testing.T) *interfaces.Ingested
 		def     *minderv1.StructDataSource_Def
 		mustErr bool
 	}{
 		{
 			"success",
-			func(t *testing.T) *interfaces.Result {
+			func(t *testing.T) *interfaces.Ingested {
 				t.Helper()
 				fs := memfs.New()
 				writeFSFile(t, fs, "./test1.json", []byte("{ \"a\": \"b\"}"))
 
-				return &interfaces.Result{Fs: fs}
+				return &interfaces.Ingested{Fs: fs}
 			},
 			&minderv1.StructDataSource_Def{
 				Path: &minderv1.StructDataSource_Def_Path{
@@ -188,7 +188,7 @@ func TestCall(t *testing.T) {
 		},
 		{
 			"no-datasource-context",
-			func(t *testing.T) *interfaces.Result {
+			func(t *testing.T) *interfaces.Ingested {
 				t.Helper()
 				return nil
 			},
@@ -196,9 +196,9 @@ func TestCall(t *testing.T) {
 			true,
 		},
 		{"ctx-no-fs",
-			func(t *testing.T) *interfaces.Result {
+			func(t *testing.T) *interfaces.Ingested {
 				t.Helper()
-				return &interfaces.Result{}
+				return &interfaces.Ingested{}
 			},
 			&minderv1.StructDataSource_Def{},
 			true},

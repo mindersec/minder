@@ -22,7 +22,7 @@ func (e *Evaluator) RegisterDataSources(dsr *v1datasources.DataSourceRegistry) {
 
 // buildDataSourceOptions creates an options set from the functions available in
 // a data source registry.
-func buildDataSourceOptions(res *interfaces.Result, dsr *v1datasources.DataSourceRegistry) []func(*rego.Rego) {
+func buildDataSourceOptions(res *interfaces.Ingested, dsr *v1datasources.DataSourceRegistry) []func(*rego.Rego) {
 	opts := []func(*rego.Rego){}
 	if dsr == nil {
 		return opts
@@ -39,7 +39,7 @@ func buildDataSourceOptions(res *interfaces.Result, dsr *v1datasources.DataSourc
 // It takes a DataSourceFuncDef and returns a function that can be used to
 // register the function with the rego engine.
 func buildFromDataSource(
-	res *interfaces.Result, key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef,
+	res *interfaces.Ingested, key v1datasources.DataSourceFuncKey, dsf v1datasources.DataSourceFuncDef,
 ) func(*rego.Rego) {
 	k := normalizeKey(key)
 	return rego.Function1(

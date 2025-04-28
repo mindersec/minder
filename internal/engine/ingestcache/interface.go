@@ -13,6 +13,6 @@ import (
 
 // Cache is the interface for the ingest cache.
 type Cache interface {
-	Get(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, bool)
-	Set(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any, result *interfaces.Result)
+	Get(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any) (*interfaces.Ingested, bool)
+	Set(ingester interfaces.Ingester, entity protoreflect.ProtoMessage, params map[string]any, result *interfaces.Ingested)
 }

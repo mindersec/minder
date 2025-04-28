@@ -153,10 +153,10 @@ func cacheRuleEngine(
 		return nil, fmt.Errorf("error building data source registry: %w", err)
 	}
 
-	opts = append(opts, eoptions.WithDataSources(dsreg))
+	opts = append(opts, eoptions.WithDataSources(dsreg), eoptions.WithFlagsClient(featureFlags))
 
 	// Create the rule type engine
-	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, featureFlags, opts...)
+	ruleEngine, err := rtengine2.NewRuleTypeEngine(ctx, pbRuleType, provider, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error creating rule type engine: %w", err)
 	}

@@ -162,11 +162,11 @@ func TestReadPullRequestDependencies(t *testing.T) {
 	t.Parallel()
 	for _, tc := range []struct {
 		name    string
-		sut     *interfaces.Result
+		sut     *interfaces.Ingested
 		mustErr bool
 	}{
-		{name: "normal", sut: &interfaces.Result{Object: &pbinternal.PrDependencies{}}, mustErr: false},
-		{name: "invalid-object", sut: &interfaces.Result{Object: context.Background()}, mustErr: true},
+		{name: "normal", sut: &interfaces.Ingested{Object: &pbinternal.PrDependencies{}}, mustErr: false},
+		{name: "invalid-object", sut: &interfaces.Ingested{Object: context.Background()}, mustErr: true},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

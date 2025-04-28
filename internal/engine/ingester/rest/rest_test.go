@@ -176,7 +176,7 @@ func TestRestIngest(t *testing.T) {
 		newIngArgs  newRestIngestArgs
 		ingArgs     ingestArgs
 		testHandler http.HandlerFunc
-		ingResultFn func() *interfaces.Result
+		ingResultFn func() *interfaces.Ingested
 		wantErr     bool
 	}{
 		{
@@ -205,13 +205,13 @@ func TestRestIngest(t *testing.T) {
 				assert.NoError(t, err, "unexpected error writing response")
 				writer.WriteHeader(http.StatusOK)
 			},
-			ingResultFn: func() *interfaces.Result {
+			ingResultFn: func() *interfaces.Ingested {
 				var jReply any
 				if err := json.NewDecoder(strings.NewReader(validProtectionReply)).Decode(&jReply); err != nil {
 					return nil
 				}
 
-				return &interfaces.Result{
+				return &interfaces.Ingested{
 					Object: jReply,
 				}
 			},
@@ -247,13 +247,13 @@ func TestRestIngest(t *testing.T) {
 
 				writer.WriteHeader(http.StatusNotFound)
 			},
-			ingResultFn: func() *interfaces.Result {
+			ingResultFn: func() *interfaces.Ingested {
 				var jReply any
 				if err := json.NewDecoder(strings.NewReader(notFoundReply)).Decode(&jReply); err != nil {
 					return nil
 				}
 
-				return &interfaces.Result{
+				return &interfaces.Ingested{
 					Object: jReply,
 				}
 			},

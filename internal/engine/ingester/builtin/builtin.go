@@ -62,7 +62,7 @@ func (idi *RuleDataIngest) GetConfig() protoreflect.ProtoMessage {
 
 // Ingest calls the builtin method and populates the data to be returned
 func (idi *RuleDataIngest) Ingest(
-	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Result, error) {
+	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*interfaces.Ingested, error) {
 	method, err := idi.ruleMethods.GetMethod(idi.method)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get method: %w", err)
@@ -99,7 +99,7 @@ func (idi *RuleDataIngest) Ingest(
 		return nil, fmt.Errorf("cannot unmarshal json: %w", err)
 	}
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object:     resultObj,
 		Checkpoint: checkpoints.NewCheckpointV1Now(),
 	}, nil

@@ -107,7 +107,7 @@ func (rdi *Ingestor) GetConfig() protoreflect.ProtoMessage {
 // Ingest calls the REST endpoint and returns the data
 func (rdi *Ingestor) Ingest(
 	ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any,
-) (*interfaces.Result, error) {
+) (*interfaces.Ingested, error) {
 	retp := &EndpointTemplateParams{
 		Entity: ent,
 		Params: params,
@@ -145,7 +145,7 @@ func (rdi *Ingestor) Ingest(
 		return nil, fmt.Errorf("cannot parse body: %w", err)
 	}
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object:     data,
 		Checkpoint: checkpoints.NewCheckpointV1Now().WithHTTP(endpoint, rdi.method),
 	}, nil

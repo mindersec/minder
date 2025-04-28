@@ -92,7 +92,7 @@ allow {
 			}
 
 			tk := tkv1.NewTestKit(tkv1.WithGitDir(tdir))
-			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk, nil)
+			rte, err := NewRuleTypeEngine(ctx, tt.ruleType, tk)
 			require.NoError(t, err, "NewRuleTypeEngine() failed")
 
 			// Override ingester. This is needed for the test.

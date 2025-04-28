@@ -59,7 +59,7 @@ func NewHomoglyphsEvaluator(
 func evaluateHomoglyphs(
 	ctx context.Context,
 	processor domain.HomoglyphProcessor,
-	res *interfaces.Result,
+	res *interfaces.Ingested,
 	reviewHandler *communication.GhReviewPrHandler,
 ) ([]*domain.Violation, error) {
 	// create an empty list of violations

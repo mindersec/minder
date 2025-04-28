@@ -17,7 +17,7 @@ import (
 // Ingester is the interface for a rule type ingester
 type Ingester interface {
 	// Ingest does the actual data ingestion for a rule type
-	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*Result, error)
+	Ingest(ctx context.Context, ent protoreflect.ProtoMessage, params map[string]any) (*Ingested, error)
 	// GetType returns the type of the ingester
 	GetType() string
 	// GetConfig returns the config for the ingester
@@ -26,11 +26,11 @@ type Ingester interface {
 
 // Evaluator is the interface for a rule type evaluator
 type Evaluator interface {
-	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, res *Result) (*EvaluationResult, error)
+	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, data *Ingested) (*EvaluationResult, error)
 }
 
-// Result is the result of an ingester
-type Result struct {
+// Ingested is the result of an ingester
+type Ingested struct {
 	// Object is the object that was ingested. Normally comes from an external
 	// system like an HTTP server.
 	Object any
@@ -59,7 +59,7 @@ type EvaluationResult struct {
 }
 
 // GetCheckpoint returns the checkpoint of the result
-func (r *Result) GetCheckpoint() *checkpoints.CheckpointEnvelopeV1 {
+func (r *Ingested) GetCheckpoint() *checkpoints.CheckpointEnvelopeV1 {
 	if r == nil {
 		return nil
 	}
@@ -69,5 +69,5 @@ func (r *Result) GetCheckpoint() *checkpoints.CheckpointEnvelopeV1 {
 
 // ResultSink sets the result of an ingestion
 type ResultSink interface {
-	SetIngestResult(*Result)
+	SetIngestResult(*Ingested)
 }

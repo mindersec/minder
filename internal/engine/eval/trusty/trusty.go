@@ -85,7 +85,7 @@ func (e *Evaluator) Eval(
 	ctx context.Context,
 	pol map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *interfaces.Result,
+	res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	// Extract the dependency list from the PR
 	prDependencies, err := readPullRequestDependencies(res)
@@ -168,7 +168,7 @@ func getEcosystemConfig(
 }
 
 // readPullRequestDependencies returns the dependencies found in theingestion results
-func readPullRequestDependencies(res *interfaces.Result) (*pbinternal.PrDependencies, error) {
+func readPullRequestDependencies(res *interfaces.Ingested) (*pbinternal.PrDependencies, error) {
 	prdeps, ok := res.Object.(*pbinternal.PrDependencies)
 	if !ok {
 		return nil, fmt.Errorf("object type incompatible with the Trusty evaluator")

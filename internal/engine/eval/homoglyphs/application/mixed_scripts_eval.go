@@ -54,7 +54,7 @@ func (mse *MixedScriptsEvaluator) Eval(
 	ctx context.Context,
 	_ map[string]any,
 	_ protoreflect.ProtoMessage,
-	res *interfaces.Result,
+	res *interfaces.Ingested,
 ) (*interfaces.EvaluationResult, error) {
 	violations, err := evaluateHomoglyphs(ctx, mse.processor, res, mse.reviewHandler)
 	if err != nil {

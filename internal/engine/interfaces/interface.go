@@ -48,7 +48,7 @@ const (
 // a repo and most profiles are expecting a repo, the RepoID parameter is mandatory. For entities
 // other than artifacts, the ArtifactID should be 0 that is translated to NULL in the database.
 type EvalStatusParams struct {
-	Result           *interfaces.Result
+	Result           *interfaces.Ingested
 	Profile          *models.ProfileAggregate
 	Rule             *models.RuleInstance
 	ProjectID        uuid.UUID
@@ -139,12 +139,12 @@ func (e *EvalStatusParams) GetProfile() *models.ProfileAggregate {
 }
 
 // SetIngestResult sets the result of the ingestion for use later on in the actions
-func (e *EvalStatusParams) SetIngestResult(res *interfaces.Result) {
+func (e *EvalStatusParams) SetIngestResult(res *interfaces.Ingested) {
 	e.Result = res
 }
 
 // GetIngestResult returns the result of the ingestion, if any
-func (e *EvalStatusParams) GetIngestResult() *interfaces.Result {
+func (e *EvalStatusParams) GetIngestResult() *interfaces.Ingested {
 	return e.Result
 }
 
@@ -165,7 +165,7 @@ func (e *EvalStatusParams) DecorateLogger(l zerolog.Logger) zerolog.Logger {
 // EvalParamsReader is the interface used for a rule type evaluator
 type EvalParamsReader interface {
 	GetRule() *models.RuleInstance
-	GetIngestResult() *interfaces.Result
+	GetIngestResult() *interfaces.Ingested
 }
 
 // ActionsParams is the interface used for processing a rule type action

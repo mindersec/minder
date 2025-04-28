@@ -43,7 +43,7 @@ type DataSourceFuncDef interface {
 	// It is the responsibility of the data source implementation to handle the call.
 	// It is also the responsibility of the caller to validate the arguments
 	// before calling the function.
-	Call(ctx context.Context, ingest *interfaces.Result, args any) (any, error)
+	Call(ctx context.Context, ingest *interfaces.Ingested, args any) (any, error)
 	// GetArgsSchema returns the schema of the arguments.
 	GetArgsSchema() *structpb.Struct
 }
@@ -63,5 +63,5 @@ type ContextKey struct {
 
 // Context encapsulates the context passed to all context function calls
 type Context struct {
-	Ingest *interfaces.Result
+	Ingest *interfaces.Ingested
 }

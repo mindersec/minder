@@ -17,6 +17,7 @@ import (
 
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
+	"github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
@@ -43,14 +44,13 @@ allow {
 	file.exists("foo")
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Matches
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -78,14 +78,14 @@ allow {
     base_file.exists("foo")
 }`,
 		},
-		featureClient,
+		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
 	// Matches
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		BaseFs: fs,
 	})
 	require.NoError(t, err, "could not evaluate")
@@ -108,13 +108,12 @@ allow {
 	file.exists("unexistent")
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -146,13 +145,12 @@ allow {
 	contents == "bar"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -184,13 +182,12 @@ allow {
 	contents == "bar"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -215,13 +212,12 @@ allow {
 	is_null(files)
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -248,13 +244,12 @@ allow {
 	count(files) == 0
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -286,13 +281,12 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -324,13 +318,12 @@ allow {
 	files[0] == "foo/bar"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -365,13 +358,12 @@ allow {
 	count(files) == 3
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -409,13 +401,12 @@ allow {
 	count(files) == 3
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -448,13 +439,12 @@ allow {
 	count(files) == 1
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -546,13 +536,12 @@ allow {
 	actions == expected_set
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -583,13 +572,12 @@ allow {
 	actions == expected_set
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -619,13 +607,12 @@ allow {
 	count(files) == 1
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -666,13 +653,12 @@ allow {
 	count(files) == 3
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -703,13 +689,12 @@ allow {
 	htype == "text/plain; charset=utf-8"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -741,13 +726,12 @@ allow {
 	htype == "application/octet-stream"
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -792,13 +776,12 @@ allow {
 	count(files) == 7
 }`,
 		},
-		nil,
 	)
 	require.NoError(t, err, "could not create evaluator")
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -848,7 +831,7 @@ violations contains {"msg": sprintf("Expected: %s", [input.profile.expected])} i
 violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != expectedTar
 `,
 		},
-		featureClient,
+		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -857,7 +840,7 @@ violations contains {"msg": sprintf("Got     : %s", [encoded])} if tarball != ex
 		"expected": base64.StdEncoding.EncodeToString(expectedTarball),
 	}
 
-	_, err = e.Eval(context.Background(), policy, nil, &interfaces.Result{
+	_, err = e.Eval(context.Background(), policy, nil, &interfaces.Ingested{
 		Object: nil,
 		Fs:     fs,
 	})
@@ -1002,14 +985,13 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
-				nil,
 			)
 			require.NoError(t, err, "could not create evaluator")
 
 			emptyPol := map[string]any{}
 
 			var evalErr *engerrors.EvaluationError
-			_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Result{
+			_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 				Object: nil,
 				Fs:     fs,
 			})
@@ -1108,11 +1090,10 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
-				nil,
 			)
 			require.NoError(t, err, "could not create evaluator")
 
-			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Ingested{})
 
 			if s.wantErr {
 				require.Error(t, err)
@@ -1182,12 +1163,11 @@ allow {
 					Type: rego.DenyByDefaultEvaluationType.String(),
 					Def:  regoCode,
 				},
-				nil,
 			)
 
 			require.NoError(t, err, "could not create evaluator")
 
-			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Result{})
+			_, err = e.Eval(context.Background(), map[string]any{}, nil, &interfaces.Ingested{})
 
 			if s.wantErr {
 				require.Error(t, err)
@@ -1276,7 +1256,7 @@ allow if {
 }
 `,
 		},
-		featureClient,
+		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -1289,7 +1269,7 @@ allow if {
 				"expected": tc.expectedDeps,
 			}
 
-			result, err := e.Eval(context.Background(), policy, nil, &interfaces.Result{
+			result, err := e.Eval(context.Background(), policy, nil, &interfaces.Ingested{
 				Fs: fs,
 			})
 

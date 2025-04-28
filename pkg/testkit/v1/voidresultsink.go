@@ -14,5 +14,5 @@ func NewVoidResultSink() *VoidResultSink {
 }
 
 // SetIngestResult implements the ResultSink interface
-func (VoidResultSink) SetIngestResult(_ *interfaces.Result) {
+func (VoidResultSink) SetIngestResult(_ *interfaces.Ingested) {
 }

@@ -84,7 +84,7 @@ func (i *Ingest) Ingest(
 	ctx context.Context,
 	ent proto.Message,
 	params map[string]any,
-) (*interfaces.Result, error) {
+) (*interfaces.Ingested, error) {
 	cfg, err := configFromParams(params)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (i *Ingest) Ingest(
 		return nil, err
 	}
 
-	return &interfaces.Result{
+	return &interfaces.Ingested{
 		Object: applicable,
 		// We would ideally return an artifact's digest here, but
 		// the current state of the artifact ingester is actually evaluating
