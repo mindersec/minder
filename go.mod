@@ -30,7 +30,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/goccy/go-json v0.10.5
 	github.com/golang-jwt/jwt/v4 v4.5.2
-	github.com/golang-migrate/migrate/v4 v4.18.2
+	github.com/golang-migrate/migrate/v4 v4.18.3
 	github.com/google/cel-go v0.24.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.20.3
