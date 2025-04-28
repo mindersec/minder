@@ -80,7 +80,7 @@ require (
 	github.com/styrainc/regal v0.31.1
 	github.com/thomaspoignant/go-feature-flag v1.42.0
 	github.com/yuin/goldmark v1.7.8
-	gitlab.com/gitlab-org/api/client-go v0.127.0
+	gitlab.com/gitlab-org/api/client-go v0.128.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.60.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.60.0
 	go.opentelemetry.io/otel v1.35.0
