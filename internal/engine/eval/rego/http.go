@@ -45,6 +45,7 @@ func LimitedDialer(transport *http.Transport) http.RoundTripper {
 			transport = &http.Transport{}
 		}
 	}
+	transport = transport.Clone()
 	transport.DialContext = publicOnlyDialer(transport.DialContext)
 	return transport
 }
