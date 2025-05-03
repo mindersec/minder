@@ -107,11 +107,11 @@ func dependabotPrRem() *pb.RuleType_Definition_Remediate_PullRequestRemediation 
 		Contents: []*pb.RuleType_Definition_Remediate_PullRequestRemediation_Content{
 			{
 				Path:    ".github/dependabot.yml",
-				Content: "dependabot config for {{.Profile.package_ecosystem }}",
+				Content: "dependabot config for {{ .EvalResultOutput.ViolationMsg }}",
 			},
 			{
 				Path:    "README.md",
-				Content: "This project uses dependabot",
+				Content: "This project uses dependabot for {{ .Profile.package_ecosystem }}",
 			},
 		},
 	}
@@ -685,6 +685,9 @@ func TestPullRequestRemediate(t *testing.T) {
 					Fs:     testWt.Filesystem,
 					Storer: testrepo.Storer,
 				})
+			evalParams.SetEvalResult(&interfaces2.EvaluationResult{
+				Output: struct{ ViolationMsg string }{ViolationMsg: "gomod"},
+			})
 			retMeta, err := engine.Do(context.Background(),
 				interfaces.ActionCmdOn,
 				tt.remArgs.ent,
