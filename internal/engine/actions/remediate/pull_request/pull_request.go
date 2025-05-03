@@ -130,6 +130,8 @@ type PrTemplateParams struct {
 	Profile map[string]any
 	// Params are the rule instance parameters
 	Params map[string]any
+	// EvalResultOutput is the data output by the rule evaluation engine
+	EvalResultOutput any
 }
 
 // Class returns the action type of the remediation engine
@@ -188,6 +190,10 @@ func (r *Remediator) getParamsForPRRemediation(
 		Entity:  ent,
 		Profile: params.GetRule().Def,
 		Params:  params.GetRule().Params,
+	}
+
+	if params.GetEvalResult() != nil {
+		tmplParams.EvalResultOutput = params.GetEvalResult().Output
 	}
 
 	ingested := params.GetIngestResult()

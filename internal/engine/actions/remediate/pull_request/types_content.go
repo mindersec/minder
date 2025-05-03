@@ -110,6 +110,9 @@ func (ca *contentModification) createFsModEntries(
 		"Params":  params.GetRule().Params,
 		"Profile": params.GetRule().Def,
 	}
+	if params.GetEvalResult() != nil {
+		data["EvalResultOutput"] = params.GetEvalResult().Output
+	}
 	for i, entry := range ca.entries {
 		content := new(bytes.Buffer)
 		path := new(bytes.Buffer)
