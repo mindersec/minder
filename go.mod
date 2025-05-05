@@ -53,7 +53,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/open-feature/go-sdk v1.14.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
-	github.com/open-policy-agent/opa v1.2.0
+	github.com/open-policy-agent/opa v1.3.0
 	github.com/openfga/go-sdk v0.6.3
 	github.com/openfga/openfga v1.8.11
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -77,7 +77,7 @@ require (
 	github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3
 	github.com/stretchr/testify v1.10.0
-	github.com/styrainc/regal v0.31.1
+	github.com/styrainc/regal v0.33.1
 	github.com/thomaspoignant/go-feature-flag v1.42.0
 	github.com/yuin/goldmark v1.7.8
 	gitlab.com/gitlab-org/api/client-go v0.128.0
@@ -118,7 +118,7 @@ require (
 	github.com/Microsoft/hcsshim v0.12.8 // indirect
 	github.com/Yiling-J/theine-go v0.6.1 // indirect
 	github.com/a8m/envsubst v1.4.2 // indirect
-	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
+	github.com/alecthomas/chroma/v2 v2.15.0 // indirect
 	github.com/alecthomas/participle/v2 v2.1.1 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20240925125616-a0883641c664 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
@@ -362,7 +362,7 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.1.0
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
