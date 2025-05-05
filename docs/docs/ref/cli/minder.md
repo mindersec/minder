@@ -8,18 +8,18 @@ Minder controls the hosted minder service
 ### Synopsis
 
 For more information about minder, please visit:
-https://docs.stacklok.com/minder
+https://mindersec.github.io/
 
 ### Options
 
 ```
       --config string            Config file (default is $PWD/config.yaml)
-      --grpc-host string         Server host (default "api.stacklok.com")
+      --grpc-host string         Server host (default "api.custcodian.dev")
       --grpc-insecure            Allow establishing insecure connections
       --grpc-port int            Server port (default 443)
   -h, --help                     help for minder
       --identity-client string   Identity server client ID (default "minder-cli")
-      --identity-url string      Identity server issuer URL (default "https://auth.stacklok.com")
+      --identity-url string      Identity server issuer URL (default "https://auth.custcodian.dev")
   -v, --verbose                  Output additional messages to STDERR
 ```
 
