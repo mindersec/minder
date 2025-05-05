@@ -32,8 +32,9 @@ func NewBundleReaderMock(opts ...func(mock BundleMock)) BundleMockBuilder {
 }
 
 var (
-	errDefault      = errors.New("bundle operation failed")
-	BundleName      = "healthcheck"
+	errDefault = errors.New("bundle operation failed")
+	BundleName = "healthcheck"
+	// TODO: make this configurable?
 	BundleNamespace = "stacklok"
 	BundleVersion   = "1.0.0"
 )

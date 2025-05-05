@@ -119,9 +119,9 @@ profiles and ensure the specifics of their security posture are attested to.
 For more information about `minder`, see:
 
 - `minder` CLI commands -
-  [Docs](https://minder-docs.stacklok.dev/ref/cli/minder).
+  [Docs](https://mindersec.github.io/ref/cli/minder).
 - `minder` REST API Documentation -
-  [Docs](https://minder-docs.stacklok.dev/ref/api).
+  [Docs](https://mindersec.github.io/ref/api).
 - `minder` rules and profiles maintained by Minder's team -
   [GitHub](https://github.com/mindersec/minder-rules-and-profiles).
-- Minder documentation - [Docs](https://minder-docs.stacklok.dev).
+- Minder documentation - [Docs](https://mindersec.github.io/).

@@ -31,9 +31,9 @@ Appropriate usages of feature flags:
   generally affects all behavior of the server.
 
 - **Feature acceptance testing** (A/B testing). When running Minder as a
-  service, the Stacklok team may want to perform large-scale evaluation of
-  whether a feature is useful to end-users. Feature flags can allow comparing
-  the usage of two groups with and without the feature enabled.
+  service, the team may want to perform large-scale evaluation of whether a
+  feature is useful to end-users. Feature flags can allow comparing the usage
+  of two groups with and without the feature enabled.
 
 ### Inappropriate use of feature flags
 

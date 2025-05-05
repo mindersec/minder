@@ -6,7 +6,7 @@
 
 Deploy Minder on Kubernetes
 
-Stacklok runs Minder on Kubernetes, using these helm charts. In order to use
+[Custcodian](https://custcodian.dev/hosted) runs Minder on Kubernetes, using these helm charts. In order to use
 these helm charts, you will need the following:
 
 - Postgres running in your cluster. In particular, you need a `postgres` Service

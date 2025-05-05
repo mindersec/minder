@@ -8,17 +8,9 @@ The minder community take security seriously! We appreciate your efforts to disc
 
 To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/mindersec/minder/security/advisories/new) tab.
 
-If you are unable to access GitHub you can also email us at security@stacklok.com. 
-
-The [Minder Security Response Team](https://github.com/orgs/stacklok/teams/minder-security-response-team) will acknowledge the report within 24 hours.
-
 Include steps to reproduce the vulnerability, the vulnerable versions, and any additional files to reproduce the vulnerability.
 
-If you are only comfortable sharing under GPG, please start by sending an email requesting a public PGP key to use for encryption.
-
-### Contacting the Minder Security Team
-
-Contact the team by sending email to security@stacklok.com.
+If you are only comfortable sharing under GPG or Signal, please start by filing an issue requesting a public PGP key or Signal contact to use for encryption.
 
 ## Disclosures
 
@@ -28,7 +20,7 @@ The Minder community asks that all suspected vulnerabilities be handled in accor
 
 ### Public Disclosure Processes
 
-If anyone knows of a publicly disclosed security vulnerability please IMMEDIATELY email security@stacklok.com to inform us about the vulnerability so that we may start the patch, release, and communication process.
+If anyone knows of a publicly disclosed security vulnerability please IMMEDIATELY file a GitHub Security Advisory to inform us about the vulnerability so that we may start the patch, release, and communication process.
 
 If a reporter contacts the us to express intent to make an issue public before a fix is available, we will request if the issue can be handled via a private disclosure process. If the reporter denies the request, we will move swiftly with the fix and release process.
 
@@ -90,20 +82,20 @@ With the Fix Development underway, the security team needs to come up with an ov
 ![Security Advisory](docs/images/publish.png)
 - The security team will ensure all the binaries are built, signed, publicly available, and functional.
 - The security team will announce the new releases, the CVE number, severity, and impact, and the location of the binaries to get wide distribution and user action. As much as possible this announcement should be actionable, and include any mitigating steps users can take prior to upgrading to a fixed version. An announcement template is available below. The announcement will be sent to the the following channels:
-  - minder-dev@googlegroups.com
-- A link to fix will be posted to the [Stackloks Discord Server](https://t.co/3sCyFqDNWA) in the general and minder channels.
+  - [minder-dev@googlegroups.com](https://groups.google.com/g/minder-dev)
+- A link to fix will be posted to the [OpenSSF `#minder` Slack channel](https://openssf.slack.com/archives/C07SP9RSM2L).
 
 ## Retrospective
 
 These steps should be completed 1-3 days after the Release Date. The retrospective process [should be blameless](https://landing.google.com/sre/book/chapters/postmortem-culture.html).
 
-- The security team will send a retrospective of the process to the [Stackloks Discord Server](https://t.co/3sCyFqDNWA) including details on everyone involved, the timeline of the process, links to relevant PRs that introduced the issue, if relevant, and any critiques of the response and release process.
+- The security team will send a retrospective of the process to the [OpenSSF `#minder` channel](https://openssf.slack.com/archives/C07SP9RSM2L) including details on everyone involved, the timeline of the process, links to relevant PRs that introduced the issue, if relevant, and any critiques of the response and release process.
 
 ## Private Distributors List List
 
 Private Distributors are people who need to be notified of a security issue before it is made public, typically because they are running a service that is affected by the issue. The security team will notify the Private Distributors list before the fix is released. The security team will maintain this list.
 
-* Stacklok, Inc.
+* Custcodian LLC
 
 ### Private Distributors List Membership Criteria
 

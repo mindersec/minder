@@ -23,7 +23,7 @@ func CmdRoot() *cobra.Command {
 		Use:   "mindev",
 		Short: "mindev provides developer tooling for minder",
 		Long: `For more information about minder, please visit:
-https://docs.stacklok.com/minder`,
+https://mindersec.github.io/`,
 	}
 
 	cmd.AddCommand(rule_type.CmdRuleType())

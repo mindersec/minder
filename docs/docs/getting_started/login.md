@@ -6,8 +6,8 @@ sidebar_position: 20
 To start using Minder, you must first log in. Logging in to a Minder server for
 the first time will create your account.
 
-By default, the Minder CLI will log in to api.stacklok.com, a
-[free public instance provided by Stacklok](../../#minder-public-instance). If
+By default as of 0.0.89, the Minder CLI will log in to `api.custcodian.dev`, a
+[free public instance provided by Custcodian](../../#minder-public-instance). If
 you have your own hosted instance of Minder, you can log in to that server
 instead.
 
@@ -18,18 +18,18 @@ Before you can log in, you must have
 
 ## Logging in to the Minder Public Instance
 
-The `minder` CLI defaults to using the hosted Stacklok public instance. When
+The `minder` CLI defaults to using the hosted Custcodian public instance. When
 using the hosted environment, you do not need to set up a server; you simply log
-in to the Stacklok authentication instance using your GitHub credentials.
+in to the Custcodian authentication instance using your GitHub credentials.
 
-You can use the Stacklok public instance by running:
+You can use the Custcodian public instance by running:
 
 ```bash
 minder auth login
 ```
 
 A new browser window will open and you will be prompted to log in to the
-Stacklok instance using your GitHub credentials. Once you have logged in,
+Custcodian instance using your GitHub credentials. Once you have logged in,
 proceed to enroll your credentials in Minder.
 
 ## Logging in to your own Minder instance

@@ -19,7 +19,7 @@ jobs:
           version: v0.16.0
       - run: |
           ko build --platform=linux/amd64,linux/arm64 --push=false ./cmd/server \
-            --image-label=org.opencontainers.image.source=https://github.com/mindersec/minder,org.opencontainers.image.title="Stacklok Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=Stacklok
+            --image-label=org.opencontainers.image.source=https://github.com/mindersec/minder,org.opencontainers.image.title="Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=OpenSSF
         env:
           KO_DOCKER_REPO: "ko.local"
   check-helm:
