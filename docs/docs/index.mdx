@@ -43,15 +43,18 @@ tooling and processes.
   ensure they're tamper-proof, using the open source project Sigstore.
 - **Dependency management:** Manage dependency security posture by helping
   developers make better choices and enforcing controls. Minder is integrated
-  with [OSV](https://osv.dev/) and
-  [Stacklok Insight](https://insight.stacklok.com) to enable policy-driven
+  with [OSV](https://osv.dev/) (and
+  can be integrated with other SCA APIs) to enable policy-driven
   dependency management based on the risk level of dependencies.
 
 ## Minder Public Instance
 
-Stacklok, a company supporting Minder, provides a free-to-use public instance of
-Minder. This is the default instance used when you use the `minder` CLI. This
-instance is available for public repositories only.
+Custcodian [provides a free-to-use public instance of
+Minder](https://custcodian.dev/hosted) at `api.custcodian.dev`. This is the
+default instance used when you use the `minder` CLI starting with release
+0.0.89. This instance is available for public repositories; for private
+repositories, they may be an additional charge for using this cloud-hosted
+instance.
 
 ## Status
 

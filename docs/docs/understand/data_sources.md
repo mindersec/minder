@@ -166,7 +166,7 @@ def:
 
 #### Rule Evaluation In Action
 
-When the **osps-vm-05** rule is evaluated, Minder (a.k.a. Stacklok Insight) executes the following steps to determine whether there is a clear way for end-users to report vulnerabilities in the repository:
+When the **osps-vm-05** rule is evaluated, Minder executes the following steps to determine whether there is a clear way for end-users to report vulnerabilities in the repository:
 
 1. **Ingestion**  
    - `ingest: { type: git }` indicates this rule runs on a Git-based repository, allowing you to check for the existence of files like `SECURITY.md` by first copying the repository’s content.

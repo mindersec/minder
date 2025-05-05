@@ -56,10 +56,10 @@ func TestReadClientConfigWithDefaults(t *testing.T) {
 	cfg, err := config.ReadConfigFromViper[clientconfig.Config](v)
 	require.NoError(t, err, "Unexpected error")
 
-	require.Equal(t, "api.stacklok.com", cfg.GRPCClientConfig.Host)
+	require.Equal(t, "api.custcodian.dev", cfg.GRPCClientConfig.Host)
 	require.Equal(t, 443, cfg.GRPCClientConfig.Port)
 	require.Equal(t, false, cfg.GRPCClientConfig.Insecure)
-	require.Equal(t, "https://auth.stacklok.com", cfg.Identity.CLI.IssuerUrl)
+	require.Equal(t, "https://auth.custcodian.dev", cfg.Identity.CLI.IssuerUrl)
 	require.Equal(t, "minder-cli", cfg.Identity.CLI.ClientId)
 }
 

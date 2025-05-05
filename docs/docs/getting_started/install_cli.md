@@ -5,7 +5,7 @@ sidebar_position: 10
 ---
 
 The open source Minder CLI can communicate with either
-[the free public instance provided by Stacklok](../../#minder-public-instance),
+[the free public instance provided by Custcodian](../../#minder-public-instance),
 or with a [self managed server](../run_minder_server/run_the_server).
 
 The `minder` CLI is built for `amd64` and `arm64` architectures on Windows,
@@ -36,7 +36,7 @@ xattr -d com.apple.quarantine minder
 For Windows, the built-in `winget` tool is the easiest way to install `minder`:
 
 ```bash
-winget install stacklok.minder
+winget install mindersec.minder
 ```
 
 Alternatively, you can

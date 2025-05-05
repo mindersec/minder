@@ -2,17 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # This configuration defines the endpoints for the minder CLI when
-# communicating with the Stacklok Minder instance.
+# communicating with the Custcodian Minder instance.
 #
 # Set MINDER_CONFIG to point to this file to communicate with the
 # hosted Minder instance.
 
 grpc_server:
-  host: api.stacklok.com
+  host: api.custcodian.dev
   port: 443
   insecure: false
 
 identity:
   cli:
-    issuer_url: https://auth.stacklok.com
+    issuer_url: https://auth.custcodian.dev
     client_id: minder-cli
+    realm: login

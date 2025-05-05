@@ -3,7 +3,7 @@
 [![Continuous integration](https://github.com/mindersec/minder/actions/workflows/main.yml/badge.svg)](https://github.com/mindersec/minder/actions/workflows/main.yml) | [![Coverage Status](https://coveralls.io/repos/github/mindersec/minder/badge.svg?branch=main)](https://coveralls.io/github/mindersec/minder?branch=main) | [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-brightgreen.svg)](https://opensource.org/licenses/Apache-2.0) | [![SLSA 3](https://slsa.dev/images/gh-badge-level3.svg)](https://slsa.dev) | [![](https://dcbadge.vercel.app/api/server/RkzVuTp3WK?logo=discord&label=Discord&color=5865&style=flat)](https://discord.gg/RkzVuTp3WK)
 ---
 
-[Installation](https://minder-docs.stacklok.dev/getting_started/install_cli) | [Documentation](https://mindersec.github.io/) | [Releases](https://github.com/mindersec/minder/releases)
+[Installation](https://mindersec.github.io/getting_started/install_cli) | [Documentation](https://mindersec.github.io/) | [Releases](https://github.com/mindersec/minder/releases)
 ---
 
 # What is Minder?
@@ -17,8 +17,8 @@ Minder allows users to enroll repositories and define policy to ensure repositor
 consistently and securely. Policies can be set to alert only or auto-remediate. Minder provides a predefined set of
 rules and can also be configured to apply custom rules.
 
-Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Stacklok, a company supporting Minder, also
-provides a [free-to-use hosted version of Minder (for public repositories only)](#public-instance). Minder is designed to be extensible,
+Minder can be deployed as a Helm chart and provides a CLI tool `minder`. Custcodian also
+provides a [free-to-use hosted version of Minder](#public-instance). Minder is designed to be extensible,
 allowing users to integrate with their existing tooling and processes.
 
 ## Features
@@ -26,11 +26,11 @@ allowing users to integrate with their existing tooling and processes.
 * **Repo configuration and security:** Simplify configuration and management of security settings and policies across repos.
 * **Proactive security enforcement:** Continuously enforce best practice security configurations by setting granular policies to alert only or auto-remediate.
 * **Artifact attestation:** Continuously verify that packages are signed to ensure they’re tamper-proof, using the open source project Sigstore.
-* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [OSV](https://osv.dev/) and [Stacklok Insight](https://insight.stacklok.com) to enable policy-driven dependency management based on the risk level of dependencies.
+* **Dependency management:** Manage dependency security posture by helping developers make better choices and enforcing controls. Minder is integrated with [OSV](https://osv.dev/) (and can be integrated with other SCA APIs) to enable policy-driven dependency management based on the risk level of dependencies.
 
 ## Public Instance
 
-Stacklok, a company supporting Minder, provides a free-to-use public instance of Minder. This is the default instance used when you use the `minder` CLI. This instance is available for public repositories only.
+Custcodian [provides a free-to-use public instance of Minder](https://custcodian.dev/hosted/) at `api.custcodian.dev`. This is the default instance used when you use the `minder` CLI starting with release 0.0.89.  This instance is free to use for public repositories; for private repositories, there may be an additional charge for using this cloud-hosted instance.
 
 ---
 # Getting Started (< 1 minute)
@@ -75,13 +75,13 @@ Build `minder` and `minder-server` from source by following the [build from sour
 
 ## Logging in to Minder
 
-To use `minder` with the [public instance](#public-instance) of Minder (`api.stacklok.com`), log in by running: 
+To use `minder` with the [public instance](#public-instance) of Minder (`api.custcodian.dev`), log in by running: 
 
 ```bash
-minder auth login
+minder auth login --grpc-host api.custcodian.dev
 ```
 
-Upon completion, you should see that the Minder Server is set to `api.stacklok.com`.
+(This API host is the default starting with the 0.0.89 release.) Upon completion, you should see that the Minder Server is set to `api.custcodian.dev`.
 
 
 ## Run Minder quickstart
@@ -173,15 +173,15 @@ Run the following to build `minder` and `minder-server` (binaries will be presen
 make build
 ```
 
-To use `minder` with the public instance of Minder (`api.stacklok.com`), run:
+To use `minder` with the public instance of Minder (`api.custcodian.dev`), run:
 
 ```bash
-minder auth login
+minder auth login --grpc-host api.custcodian.dev
 ```
 
-Upon completion, you should see that the Minder Server is set to `api.stacklok.com`.
+Upon completion, you should see that the Minder Server is set to `api.custcodian.dev`.
 
-If you want to run `minder` against a local `minder-server` instance, proceed with the steps below.
+If you want to run `minder` against a local `minder-server` instance, you can use the `--grpc-host=localhost` and `--grpc-port=8090` flags, or use a configuration file following the steps below.
 
 #### Initial configuration
 
@@ -191,13 +191,13 @@ Create the initial configuration file for `minder`. You may do so by doing.
 cp config/config.yaml.example config.yaml
 ```
 
-Create the initial configuration file for `minder-server`. You may do so by doing.
+Create the initial configuration file for `minder-server`. You may do so by doing:
 
 ```bash
 cp config/server-config.yaml.example server-config.yaml
 ```
 
-You'd also have to set up an OAuth2 application for `minder-server` to use.
+You also have to set up an OAuth2 application for `minder-server` to use.
 Once completed, update the configuration file with the appropriate values.
 See the documentation on how to do that - [Docs](https://mindersec.github.io/run_minder_server/config_oauth).
 
@@ -236,7 +236,7 @@ minder auth login
 
 Upon completion, you should see that the Minder Server is set to `localhost:8090`.
 
-By default, the `minder` CLI will point to the production Stacklok environment if a config file is not present, but [creating the `config.yaml` for running the server](#initial-configuration) will point the CLI at your local development environment.  If you explicitly want to use a different instance, you can set the `MINDER_CONFIG` environment variable to point to a particular configuration.  We have configurations for local development, the Stacklok production environment, and Stacklok staging environment (updated frequently) checked in to [the `config` directory](./config/).
+By default, the `minder` CLI will point to the Custcodian cloud environment if a config file is not present, but [creating the `config.yaml` for running the server](#initial-configuration) will point the CLI at your local development environment.  If you explicitly want to use a different instance, you can set the `MINDER_CONFIG` environment variable to point to a particular configuration.  We have configurations for local development and the Custcodian cloud environment checked in to [the `config` directory](./config/).
 
 ### Development guidelines
 

@@ -11,8 +11,9 @@ learn about what features we're working on, what stage they're in, and when we
 expect to bring them to you. Priorities and requirements may change based on
 community feedback, roadblocks encountered, community contributions, and other
 factors. If you depend on a specific item, we encourage you to reach out to
-Stacklok to get updated status information, or help us deliver that feature by
-contributing to Minder.
+[the Minder team on OpenSSF Slack
+(`#minder`)](https://openssf.slack.com/archives/C07SP9RSM2L) to get updated
+status information, or help us deliver that feature by contributing to Minder.
 
 ## How to contribute
 
@@ -37,12 +38,12 @@ feedback via
 
 ## Next
 
-- **Report CVEs, Stacklok Insight scores, and license info for ingested SBOMs:**
-  Ingest SBOMS and identify dependencies; show CVEs, Stacklok Insight scores,
-  and license information including any changes over time.
-- **Block PRs based on Stacklok Insight scores:** In addition to adding comments
-  to pull requests (as is currently available), add the option to block pull
-  requests as a policy remediation.
+- **Report CVEs and license info for ingested SBOMs:**
+  Ingest SBOMS and identify dependencies; show CVEs, and license information
+  including any changes over time.
+- **Block PRs based on Minder rules:** In addition to adding comments to pull
+  requests (as is currently available), add the option to block pull requests
+  as a policy remediation.
 - **Policy events:** Provide information about rule evaluation as it changes,
   and historical rule evaluation.
 - **Generate SBOMs:** Enable users to automatically create and sign SBOMs.
@@ -67,7 +68,7 @@ feedback via
   provide the option to enable temporary permissions.
 - **Create PRs for dependency updates:** As a policy autoremediation option,
   enable Minder to automatically create pull requests to update dependencies
-  based on vulnerabilities, Stacklok Insight scores, or license changes.
+  based on vulnerabilities or license changes.
 - **Drive policy through git (config management):** Enable users to dynamically
   create and maintain policies from other sources, e.g. Git, allowing for easier
   policy maintenance and the ability to manage policies through GitOps
@@ -75,6 +76,5 @@ feedback via
 - **Integrations with additional OSS and commercial tools:** Integrate with
   tools that run code and secrets scanning (eg Snyk), and behavior analysis (eg
   [OSSF Package Analysis tool](https://github.com/ossf/package-analysis)).
-- **Help package authors improve Stacklok Insight Scores:** Provide guidance
-  and/or policy to improve key Stacklok Insight Store metrics (open issues,
-  active contributors).
+- **Help package authors improve OpenSSF Scorecard scores:** Provide policies
+  to improve OpenSSF Scorecard scores through targeted remediations.

@@ -20,8 +20,8 @@ delve into the essential components of a Minder rule type:
   GitHub API.
 
 - Evaluation: Applying policy logic to the ingested data. Minder offers a set of
-  engines to evaluate data: jq and rego being general-purpose engines, while
-  Stacklok Insight and vulncheck are more use case-specific ones.
+  engines to evaluate data: `jq` and `rego` being general-purpose engines, while
+  `vulncheck` and `homoglyphs` are more use case-specific ones.
 
 - Remediation and alerting: Taking actions or providing notifications based on
   evaluation results. E.g. creating a pull request or generating a GitHub

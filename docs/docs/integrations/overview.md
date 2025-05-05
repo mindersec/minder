@@ -32,14 +32,3 @@ Examples of integrations include:
 
 For more information, see the [OSS integrations](community_integrations.md)
 documentation.
-
-## Stacklok Insight
-
-Stacklok Insight is a tool that helps you make better decisions about your
-dependencies. It provides a set of heuristics to help you decide if a dependency
-is trustworthy or not.
-
-Stacklok Insight is integrated into Minder via a dedicated rule type.
-
-For more information, see the [Stacklok Insight](stacklok-insight.md)
-documentation.

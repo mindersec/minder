@@ -11,27 +11,19 @@ specified location, the CLI application will use its default values.
 ## Prerequisites
 
 - The `minder` CLI application
-- A Stacklok account
+- A Custcodian account
 
 ## Configuration file example
 
 Below is an example configuration file. The `grpc_server` section configures the
-gRPC server that the CLI application will connect to. The `identity` section
-configures the issuer URL and client ID for the Stacklok Identity service.
+gRPC server that the CLI application will connect to.
 
 ```yaml
----
 # Minder CLI configuration
 # gRPC server configuration
 grpc_server:
   host: '127.0.0.1'
   port: 8090
-
-identity:
-  cli:
-    issuer_url: http://localhost:8081
-    client_id: minder-cli
----
 ```
 
 ## Handle multiple contexts using a configuration file

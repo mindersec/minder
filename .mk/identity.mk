@@ -11,6 +11,7 @@ ifndef KC_GITHUB_CLIENT_SECRET
 endif
 	@echo "Setting up GitHub login..."
 # Delete the existing GitHub identity provider, if it exists.  Otherwise, ignore the error.
+# TODO(evankanderson): Move to a non-branded realm name for development...
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh delete identity-provider/instances/github -r stacklok || true
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create identity-provider/instances -r stacklok -s alias=github -s providerId=github -s enabled=true  -s 'config.useJwksUrl="true"' -s config.clientId=$$KC_GITHUB_CLIENT_ID -s config.clientSecret=$$KC_GITHUB_CLIENT_SECRET
 	@$(CONTAINER) exec -it keycloak_container /opt/keycloak/bin/kcadm.sh create identity-provider/instances/github/mappers -r stacklok -s name=gh_id -s identityProviderAlias=github -s identityProviderMapper=github-user-attribute-mapper -s config='{"syncMode":"FORCE", "jsonField":"id", "userAttribute":"gh_id"}'

@@ -216,8 +216,9 @@ the pull request if any vulnerabilities are found.
 
 These were some of the open source tooling integrations that Minder supports.
 The policy engine is flexible enough to integrate with a variety of tools. For
-more custom integrations, contact the Minder team at Stacklok. If you feel
-adventurous, you can also write your own rule types and integrations.
+more custom integrations, contact [the Minder team at
+Custcodian](https://custcodian.dev/about/). If you feel adventurous, you can
+also write your own rule types and integrations.
 
 Here are some resources to get you started:
 

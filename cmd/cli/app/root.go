@@ -23,7 +23,7 @@ var (
 		Use:   "minder",
 		Short: "Minder controls the hosted minder service",
 		Long: `For more information about minder, please visit:
-https://docs.stacklok.com/minder`,
+https://mindersec.github.io/`,
 		SilenceErrors: true, // don't print errors twice, we handle them in cli.ExitNicelyOnError
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// Print a warning if the build is not pointing to the production environment

@@ -50,7 +50,7 @@ func registerClientIdentityConfigFlags(v *viper.Viper, flags *pflag.FlagSet) err
 // GRPCClientConfig is the configuration for a service to connect to minder gRPC server
 type GRPCClientConfig struct {
 	// Host is the host to connect to
-	Host string `mapstructure:"host" yaml:"host" json:"host" default:"api.stacklok.com"`
+	Host string `mapstructure:"host" yaml:"host" json:"host" default:"api.custcodian.dev"`
 
 	// Port is the port to connect to
 	Port int `mapstructure:"port" yaml:"port" json:"port" default:"443"`

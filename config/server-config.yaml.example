@@ -57,7 +57,7 @@ webhook-config:
 # previous_webhook_secret_file: ./previous_secrets
 
 
-# See https://minder-docs.stacklok.dev/run_minder_server/config_oauth for more information on setting these values
+# See https://mindersec.github.io/run_minder_server/config_oauth for more information on setting these values
 github-app:
   client_id: "client-id"
   client_secret: "client-secret"

@@ -34,14 +34,17 @@ func NewErrValidationFailed(fieldName, fieldValue string, err error) error {
 const (
 	// TopicQueueInviteEmail is the topic for sending invite emails
 	TopicQueueInviteEmail = "invite.email.event"
-	// DefaultMinderTermsURL is the default terms URL for minder
-	DefaultMinderTermsURL = "https://stacklok.com/stacklok-terms-of-service"
-	// DefaultMinderPrivacyURL is the default privacy URL for minder
-	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 	// BodyMaxLength is the maximum length of the email body
 	BodyMaxLength = 10000
 	// MaxFieldLength is the maximum length of a string field
 	MaxFieldLength = 200
+	// TODO: These params should be written directly to the email template,
+	// not static in the binary...
+
+	// DefaultMinderTermsURL is the default terms URL for minder
+	DefaultMinderTermsURL = "https://stacklok.com/stacklok-terms-of-service"
+	// DefaultMinderPrivacyURL is the default privacy URL for minder
+	DefaultMinderPrivacyURL = "https://stacklok.com/privacy-policy/"
 )
 
 var (

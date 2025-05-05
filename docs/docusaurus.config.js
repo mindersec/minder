@@ -33,10 +33,12 @@ const redocusaurus = [
 const config = {
   title: 'Minder docs',
   tagline: 'Documentation site for Minder',
+  // This doesn't seem to exist?
   favicon: 'img/stacklok-favicon.png',
   themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
   // Set the production url of your site here
+  // TODO: pivot this to be under https://mindersec.dev/docs
   url: 'https://minder-docs.stacklok.dev/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
@@ -85,11 +87,7 @@ const config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
-          {
-            /* Trusty rebrand */
-            to: '/integrations/stacklok-insight',
-            from: '/integrations/trusty',
-          },
+          // {to: ... from: ...}
         ],
       },
     ],

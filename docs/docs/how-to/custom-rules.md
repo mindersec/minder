@@ -118,7 +118,7 @@ multiple repositories in Minder. Thus, Minder has a templating system that
 allows you to base multiple parts of the rule type on the entity you're
 evaluating (remember the in_entity part of the rule type?). The fields you may
 use are part of the entity's protobuf, which can be found in
-[our documentation](https://minder-docs.stacklok.dev/ref/proto#repository).
+[our documentation](https://mindersec.github.io/ref/proto#repository).
 
 Now, we want to tell Minder what to actually evaluate from that state. This is
 the evaluation step. In our case, we want to verify that delete_branch_on_merge
@@ -273,8 +273,8 @@ guidance: |
 
 The whole rule can be seen in the
 [rules and profiles GitHub repository](https://github.com/mindersec/minder-rules-and-profiles).
-In order to try it out, we'll use the minder CLI, which points to the Minder
-server hosted by your friends at Stacklok.
+In order to try it out, we'll use the minder CLI, which points to the [Minder
+server hosted by your friends at Custcodian](https://custcodian.dev/hosted).
 
 Before continuing, make sure you use our Quickstart to install the CLI and
 enroll your GitHub repos.
