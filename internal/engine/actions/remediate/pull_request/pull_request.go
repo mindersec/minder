@@ -42,7 +42,6 @@ const (
 	// if no Mode is specified, create a regular file with 0644 UNIX permissions
 	ghModeNonExecFile = "100644"
 	dflBranchBaseName = "minder"
-	dflBranchTo       = "main"
 )
 
 const (
@@ -365,7 +364,7 @@ func (r *Remediator) runOn(
 			ctx, p.repo.GetOwner(), p.repo.GetName(),
 			p.title, p.body,
 			refspec,
-			dflBranchTo,
+			currHeadName.Short(),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("cannot create pull request: %w, %w", err, enginerr.ErrActionFailed)

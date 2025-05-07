@@ -45,8 +45,9 @@ import (
 const (
 	ghApiUrl = "https://api.github.com"
 
-	repoOwner = "stacklok"
-	repoName  = "minder"
+	repoOwner   = "stacklok"
+	repoName    = "minder"
+	dflBranchTo = "main"
 
 	commitTitle = "Add Dependabot configuration for gomod"
 	prBody      = `Adds Dependabot configuration for gomod`
@@ -279,7 +280,7 @@ func mockUpstreamSetup(t *testing.T, postSetupHooks ...hookFunc) (*git.Repositor
 	fs := osfs.New(tmpdir, osfs.WithBoundOS())
 
 	// initialize the repo with a commit or else creating a branch will fail
-	r, err := git.Init(fsStorer, fs)
+	r, err := git.InitWithOptions(fsStorer, fs, git.InitOptions{DefaultBranch: "refs/heads/main"})
 	if err != nil {
 		return nil, err
 	}
