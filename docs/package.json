@@ -32,7 +32,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "redocusaurus": "^2.2.3",
-    "styled-components": "^6.1.17"
+    "styled-components": "^6.1.18"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.7.0",
