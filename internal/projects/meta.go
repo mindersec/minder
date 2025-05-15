@@ -21,6 +21,11 @@ const (
 var (
 	// ErrValidationFailed is returned when a project fails validation
 	ErrValidationFailed = fmt.Errorf("validation failed")
+
+	// Patterns for validating project names
+	projectAlnum     = regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
+	projectUuidAlike = regexp.MustCompile(`^[[:alnum:]]{8}-([[:alnum:]]{4}-){3}[[:alnum:]]{12}$`)
+	projectDnsName   = regexp.MustCompile(`^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])$`)
 )
 
 // Metadata contains metadata relevant for a project.
@@ -83,20 +88,20 @@ func ValidateName(name string) error {
 		return fmt.Errorf("%w: name cannot contain '/'", ErrValidationFailed)
 	}
 
+	// Don't allow names that look like UUIDs, because that is confusing.
+	// Note that we are somewhat loose here, because l/1 and other look-alike
+	// characters in a 36-character string.
+	if projectUuidAlike.MatchString(name) {
+		return fmt.Errorf("%w: name cannot be UUID-like", ErrValidationFailed)
+	}
+
 	// Check if the name is too long.
 	if len(name) > 63 {
 		return fmt.Errorf("%w: name is too long", ErrValidationFailed)
 	}
 
-	// Attempt to match against alphanumeric characters only
-	alphanumr := regexp.MustCompile(`^[a-zA-Z0-9](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?$`)
-	if !alphanumr.MatchString(name) {
-		// Attempt to match against a valid DNS name
-		r := regexp.MustCompile(`^(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])$`)
-
-		if !r.MatchString(name) {
-			return fmt.Errorf("%w: name must be a valid DNS name or an alphanumeric sequence", ErrValidationFailed)
-		}
+	if !projectAlnum.MatchString(name) && !projectDnsName.MatchString(name) {
+		return fmt.Errorf("%w: name must be a valid DNS name or an alphanumeric sequence", ErrValidationFailed)
 	}
 
 	return nil

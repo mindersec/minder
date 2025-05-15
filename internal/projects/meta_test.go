@@ -58,6 +58,16 @@ func TestValidateName(t *testing.T) {
 			args:    args{name: "name/with/slash"},
 			wantErr: true,
 		},
+		{
+			name:    "uuid name",
+			args:    args{name: "123e4567-e89b-12d3-a456-426614174000"},
+			wantErr: true,
+		},
+		{
+			name:    "uuid-like name",
+			args:    args{name: "l23e4567-e89b-12d3-a4S6-426614174O00"},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
