@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth/jwt"
@@ -21,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/config/server"
 )
 
@@ -101,11 +103,12 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name string
+		name   string
+		errMsg string
 	}{
-		{"///invalid-name"},
-		{""},
-		{"longestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidname"},
+		{"///invalid-name", `name cannot contain '/'`},
+		{"", `name cannot be empty`},
+		{"longestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidname", `name is too long`},
 	}
 
 	authzClient := &mock.SimpleClient{}
@@ -124,7 +127,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 			tc.name,
 			"test-user",
 		)
-		assert.EqualError(t, err, "invalid project name: validation failed")
+		assert.EqualError(t, err, util.UserVisibleError(codes.InvalidArgument, "invalid project name: validation failed: %s", tc.errMsg).Error())
 	}
 
 }
