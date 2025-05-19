@@ -70,7 +70,11 @@ func ensurePostgres() (*embeddedpostgres.Config, CancelFunc, error) {
 		instance.inFlight.Wait()
 		instance.lock.Lock()
 		defer instance.lock.Unlock()
-		if err := instance.postgres.Stop(); err != nil {
+		// Reset state so we can start a new server if needed.
+		old := instance.postgres
+		instance.postgres = nil
+		instance.inFlight = sync.WaitGroup{}
+		if err := old.Stop(); err != nil {
 			fmt.Printf("Unable to stop postgres: %v\n", err)
 		}
 		cleanupDir()
