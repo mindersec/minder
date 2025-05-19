@@ -83,7 +83,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -127,7 +127,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -171,7 +171,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -222,7 +222,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -307,7 +307,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -366,7 +366,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -425,7 +425,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -477,7 +477,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -597,7 +597,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -634,7 +634,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -672,7 +672,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -708,7 +708,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -740,7 +740,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -773,7 +773,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -874,7 +874,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -912,7 +912,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -971,7 +971,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1026,7 +1026,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1178,7 +1178,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1267,7 +1267,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1305,7 +1305,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1392,7 +1392,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1514,7 +1514,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1560,7 +1560,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1659,7 +1659,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1702,7 +1702,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1731,7 +1731,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "The id of the profile to patch. Same explanation about explicitness\nas for the context",
+            "description": "The id or name of the profile to patch. Same explanation about explicitness\nas for the context",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1754,7 +1754,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1799,7 +1799,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1881,7 +1881,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1919,7 +1919,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1978,7 +1978,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2071,7 +2071,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2128,7 +2128,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -2200,7 +2200,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2238,7 +2238,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2289,7 +2289,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2357,7 +2357,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2402,7 +2402,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2447,7 +2447,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2499,7 +2499,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2558,7 +2558,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2609,7 +2609,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2653,7 +2653,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2697,7 +2697,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2739,7 +2739,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2790,7 +2790,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2839,7 +2839,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2890,7 +2890,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2939,7 +2939,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3035,7 +3035,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3158,7 +3158,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3203,7 +3203,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3246,7 +3246,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3284,7 +3284,7 @@
           },
           {
             "name": "context.project",
-            "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -4045,7 +4045,7 @@
         },
         "project": {
           "type": "string",
-          "description": "ID of the project.  If empty or unset, will select the user's default project\nif they only have one project."
+          "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project."
         },
         "retiredOrganization": {
           "type": "string"
@@ -4058,7 +4058,7 @@
       "properties": {
         "projectId": {
           "type": "string",
-          "description": "project is the project ID.  If empty or unset, will select the user's default project\nif they only have one project."
+          "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project."
         },
         "provider": {
           "type": "string",

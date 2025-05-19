@@ -4820,7 +4820,7 @@ type PatchProfileRequest struct {
 	// so that the patch itself can be minimal and contain only
 	// the attribute to set, e.g. remediate=true
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	// The id of the profile to patch. Same explanation about explicitness
+	// The id or name of the profile to patch. Same explanation about explicitness
 	// as for the context
 	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	// The patch to apply to the profile
@@ -6589,8 +6589,8 @@ type Context struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name of the provider
 	Provider *string `protobuf:"bytes,1,opt,name=provider,proto3,oneof" json:"provider,omitempty"`
-	// ID of the project.  If empty or unset, will select the user's default project
-	// if they only have one project.
+	// ID or name of the project.  If empty or unset, will select the user's default
+	// project if they only have one project.
 	Project             *string `protobuf:"bytes,3,opt,name=project,proto3,oneof" json:"project,omitempty"`
 	RetiredOrganization *string `protobuf:"bytes,2,opt,name=retired_organization,json=retiredOrganization,proto3,oneof" json:"retired_organization,omitempty"`
 	unknownFields       protoimpl.UnknownFields
@@ -6651,8 +6651,8 @@ func (x *Context) GetRetiredOrganization() string {
 // ContextV2 defines the context in which a rule is evaluated.
 type ContextV2 struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// project is the project ID.  If empty or unset, will select the user's default project
-	// if they only have one project.
+	// project is the project ID or name.  If empty or unset, will select the user's
+	// default project if they only have one project.
 	ProjectId string `protobuf:"bytes,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
 	// name of the provider. Set to empty string when not applicable.
 	Provider      string `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
@@ -15010,18 +15010,18 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x14UpdateProfileRequest\x121\n" +
 	"\aprofile\x18\x01 \x01(\v2\x12.minder.v1.ProfileB\x03\xe0A\x02R\aprofileJ\x04\b\x02\x10\x03\"J\n" +
 	"\x15UpdateProfileResponse\x121\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.minder.v1.ProfileB\x03\xe0A\x02R\aprofile\"\xc7\x01\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.minder.v1.ProfileB\x03\xe0A\x02R\aprofile\"\xe3\x01\n" +
 	"\x13PatchProfileRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1b\n" +
-	"\x02id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12(\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
+	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\x12(\n" +
 	"\x05patch\x18\x03 \x01(\v2\x12.minder.v1.ProfileR\x05patch\x12;\n" +
 	"\vupdate_mask\x18\x04 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
 	"updateMask\"I\n" +
 	"\x14PatchProfileResponse\x121\n" +
-	"\aprofile\x18\x01 \x01(\v2\x12.minder.v1.ProfileB\x03\xe0A\x02R\aprofile\"a\n" +
+	"\aprofile\x18\x01 \x01(\v2\x12.minder.v1.ProfileB\x03\xe0A\x02R\aprofile\"}\n" +
 	"\x14DeleteProfileRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1b\n" +
-	"\x02id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x17\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
+	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\"\x17\n" +
 	"\x15DeleteProfileResponse\"\x8b\x01\n" +
 	"\x13ListProfilesRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12F\n" +
@@ -15137,18 +15137,18 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12GHCRProviderConfig\x12!\n" +
 	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
 	"\n" +
-	"_namespace\"\xe5\x01\n" +
+	"_namespace\"\xfb\x01\n" +
 	"\aContext\x12D\n" +
-	"\bprovider\x18\x01 \x01(\tB#\xbaH \xd8\x01\x02r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$H\x00R\bprovider\x88\x01\x01\x12*\n" +
-	"\aproject\x18\x03 \x01(\tB\v\xbaH\b\xd8\x01\x02r\x03\xb0\x01\x01H\x01R\aproject\x88\x01\x01\x126\n" +
+	"\bprovider\x18\x01 \x01(\tB#\xbaH \xd8\x01\x02r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$H\x00R\bprovider\x88\x01\x01\x12@\n" +
+	"\aproject\x18\x03 \x01(\tB!\xbaH\x1e\xd8\x01\x02r\x19\x18?2\x15^[-a-zA-Z0-9.]{1,63}$H\x01R\aproject\x88\x01\x01\x126\n" +
 	"\x14retired_organization\x18\x02 \x01(\tH\x02R\x13retiredOrganization\x88\x01\x01B\v\n" +
 	"\t_providerB\n" +
 	"\n" +
 	"\b_projectB\x17\n" +
-	"\x15_retired_organization\"x\n" +
-	"\tContextV2\x12*\n" +
+	"\x15_retired_organization\"\x8e\x01\n" +
+	"\tContextV2\x12@\n" +
 	"\n" +
-	"project_id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x02r\x03\xb0\x01\x01R\tprojectId\x12?\n" +
+	"project_id\x18\x01 \x01(\tB!\xbaH\x1e\xd8\x01\x02r\x19\x18?2\x15^[-a-zA-Z0-9.]{1,63}$R\tprojectId\x12?\n" +
 	"\bprovider\x18\x02 \x01(\tB#\xbaH \xd8\x01\x02r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\bprovider\"D\n" +
 	"\x14ListRuleTypesRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\"P\n" +

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	// ignore this linter warning - this is pre-existing code, and I do not
 	// want to change the logging library it uses at this time.
 	// nolint:depguard
@@ -59,17 +60,24 @@ type ProfileService interface {
 		qtx db.Querier,
 	) (*minderv1.Profile, error)
 
-	// PatchProfile updates the profile in the specified project
-	// by applying the changes in the provided profile structure
-	// as specified by the updateMask
+	// PatchProfile updates the profile (as either a UUID or name)
+	// in the specified project by applying the changes in the
+	// provided profile structure as specified by the updateMask
 	PatchProfile(
 		ctx context.Context,
 		projectID uuid.UUID,
-		profileID uuid.UUID,
+		profileID string,
 		profile *minderv1.Profile,
 		updateMask *fieldmaskpb.FieldMask,
 		qtx db.Querier,
 	) (*minderv1.Profile, error)
+
+	DeleteProfile(
+		ctx context.Context,
+		projectID uuid.UUID,
+		profile string,
+		qtx db.Querier,
+	) (*db.Profile, error)
 }
 
 type profileService struct {
@@ -314,14 +322,30 @@ func (p *profileService) UpdateProfile(
 func (p *profileService) PatchProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
-	profileID uuid.UUID,
+	profile string,
 	patch *minderv1.Profile,
 	updateMask *fieldmaskpb.FieldMask,
 	qtx db.Querier,
 ) (*minderv1.Profile, error) {
+	var dbProfile db.Profile
+	profileID, err := uuid.Parse(profile)
+	if err != nil {
+		// if the profile is not a valid UUID, try to look it up by name
+		dbProfile, err = qtx.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
+			ProjectID: projectID,
+			Name:      profile,
+		})
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "profile %q not found", profile)
+			}
+			return nil, status.Errorf(codes.Internal, "error fetching profile to be patched: %v", err)
+		}
+		profileID = dbProfile.ID
+	}
 	baseProfilePb, err := getProfilePBFromDB(ctx, profileID, projectID, qtx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get profile: %w", err)
+		return nil, fmt.Errorf("failed to get profile %s: %w", profileID, err)
 	}
 
 	patchProfilePb(baseProfilePb, patch, updateMask)
@@ -346,6 +370,55 @@ func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldma
 
 		copyFieldValue(oldReflect, patchReflect, fieldDesc)
 	}
+}
+
+// DeleteProfile deletes the profile in the specified project.  profile may be either
+// the ID of the profile or the name of the profile, which will be looked up if needed.
+// This function assumes that any transactions are externally managed by the supplied qtx.
+func (p *profileService) DeleteProfile(
+	ctx context.Context,
+	projectID uuid.UUID,
+	profile string,
+	qtx db.Querier,
+) (*db.Profile, error) {
+	var dbProfile db.Profile
+	profileID, err := uuid.Parse(profile)
+	if err == nil {
+		// if the profile is a valid UUID, look it up by ID
+		dbProfile, err = qtx.GetProfileByIDAndLock(ctx, db.GetProfileByIDAndLockParams{
+			ProjectID: projectID,
+			ID:        profileID,
+		})
+	} else {
+		// if the profile is not a valid UUID, try to look it up by name
+		dbProfile, err = qtx.GetProfileByNameAndLock(ctx, db.GetProfileByNameAndLockParams{
+			ProjectID: projectID,
+			Name:      profile,
+		})
+	}
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "profile %q not found", profile)
+		}
+		return nil, status.Errorf(codes.Internal, "error fetching profile to be deleted: %v", err)
+	}
+
+	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+	// profile yet, reject deletion requests in the API
+	// TODO: Move this deletion logic to ProfileService
+	if dbProfile.SubscriptionID.Valid {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot delete profile from bundle")
+	}
+
+	err = qtx.DeleteProfile(ctx, db.DeleteProfileParams{
+		ProjectID: projectID,
+		ID:        dbProfile.ID,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete profile: %s", err)
+	}
+
+	return &dbProfile, nil
 }
 
 // this is NOT a generic function, it only works because our Profiles only contain repeated or scalars.

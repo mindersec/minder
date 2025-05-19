@@ -397,7 +397,7 @@ buf compatibility checks.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> | optional | name of the provider |
-| project | <TypeLink type="string">string</TypeLink> | optional | ID of the project. If empty or unset, will select the user's default project if they only have one project. |
+| project | <TypeLink type="string">string</TypeLink> | optional | ID or name of the project. If empty or unset, will select the user's default project if they only have one project. |
 | retired_organization | <TypeLink type="string">string</TypeLink> | optional |  |
 
 
@@ -409,7 +409,7 @@ ContextV2 defines the context in which a rule is evaluated.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| project_id | <TypeLink type="string">string</TypeLink> |  | project is the project ID. If empty or unset, will select the user's default project if they only have one project. |
+| project_id | <TypeLink type="string">string</TypeLink> |  | project is the project ID or name. If empty or unset, will select the user's default project if they only have one project. |
 | provider | <TypeLink type="string">string</TypeLink> |  | name of the provider. Set to empty string when not applicable. |
 
 
@@ -2073,7 +2073,7 @@ ListRuleTypesResponse is the response to list rule types.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | The context in which the patch is applied. Provided explicitly so that the patch itself can be minimal and contain only the attribute to set, e.g. remediate=true |
-| id | <TypeLink type="string">string</TypeLink> |  | The id of the profile to patch. Same explanation about explicitness as for the context |
+| id | <TypeLink type="string">string</TypeLink> |  | The id or name of the profile to patch. Same explanation about explicitness as for the context |
 | patch | <TypeLink type="minder-v1-Profile">Profile</TypeLink> |  | The patch to apply to the profile |
 | update_mask | <TypeLink type="google-protobuf-FieldMask">google.protobuf.FieldMask</TypeLink> |  | needed to enable PATCH, see https://grpc-ecosystem.github.io/grpc-gateway/docs/mapping/patch_feature/ is not exposed to the API user |
 
