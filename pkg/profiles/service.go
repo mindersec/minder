@@ -10,12 +10,8 @@ import (
 	"errors"
 	"fmt"
 
-	// ignore this linter warning - this is pre-existing code, and I do not
-	// want to change the logging library it uses at this time.
-	// nolint:depguard
-	"log"
-
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -162,10 +158,10 @@ func (p *profileService) CreateProfile(
 	// Create profile
 	newProfile, err := qtx.CreateProfile(ctx, params)
 	if db.ErrIsUniqueViolation(err) {
-		log.Printf("profile already exists: %v", err)
+		zerolog.Ctx(ctx).Warn().Str("profile", name).Msgf("profile already exists: %v", err)
 		return nil, util.UserVisibleError(codes.AlreadyExists, "profile already exists")
 	} else if err != nil {
-		log.Printf("error creating profile: %v", err)
+		zerolog.Ctx(ctx).Warn().Str("profile", name).Msgf("error creating profile: %v", err)
 		return nil, status.Errorf(codes.Internal, "error creating profile")
 	}
 
@@ -190,7 +186,7 @@ func (p *profileService) CreateProfile(
 	}
 
 	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profile.Name, ID: newProfile.ID}
-	p.sendNewProfileEvent(projectID)
+	p.sendNewProfileEvent(ctx, projectID)
 
 	profile.Id = ptr.Ptr(newProfile.ID.String())
 	profile.Context = &minderv1.Context{
@@ -314,7 +310,7 @@ func (p *profileService) UpdateProfile(
 	profile.Alert = ptr.Ptr(string(updatedProfile.Alert.ActionType))
 
 	// re-trigger profile evaluation
-	p.sendNewProfileEvent(projectID)
+	p.sendNewProfileEvent(ctx, projectID)
 
 	return profile, nil
 }
@@ -375,7 +371,7 @@ func patchProfilePb(oldProfilePb, patchPb *minderv1.Profile, updateMask *fieldma
 // DeleteProfile deletes the profile in the specified project.  profile may be either
 // the ID of the profile or the name of the profile, which will be looked up if needed.
 // This function assumes that any transactions are externally managed by the supplied qtx.
-func (p *profileService) DeleteProfile(
+func (*profileService) DeleteProfile(
 	ctx context.Context,
 	projectID uuid.UUID,
 	profile string,
@@ -467,8 +463,8 @@ func createProfileRulesForEntity(
 
 	marshalled, err := json.Marshal(rules)
 	if err != nil {
-		log.Printf("error marshalling %s rules: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error marshalling %s rules", entity)
+		return status.Errorf(codes.Internal, "error creating profile: %s", err)
 	}
 	_, err = qtx.CreateProfileForEntity(ctx, db.CreateProfileForEntityParams{
 		ProfileID:       profile.ID,
@@ -476,25 +472,26 @@ func createProfileRulesForEntity(
 		ContextualRules: marshalled,
 	})
 	if err != nil {
-		log.Printf("error creating profile for entity %s: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error creating profile for entity %s", entity)
+		return status.Errorf(codes.Internal, "error creating profile: %s", err)
 	}
 
 	return err
 }
 
 func (p *profileService) sendNewProfileEvent(
+	ctx context.Context,
 	projectID uuid.UUID,
 ) {
 	// both errors in this case are considered non-fatal
 	msg, err := reconcilers.NewProfileInitMessage(projectID)
 	if err != nil {
-		log.Printf("error creating reconciler event: %v", err)
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error creating reconciler event")
 	}
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err := p.publisher.Publish(constants.TopicQueueReconcileProfileInit, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error publishing reconciler event")
 	}
 }
 
@@ -616,8 +613,8 @@ func updateProfileRulesForEntity(
 
 	marshalled, err := json.Marshal(rules)
 	if err != nil {
-		log.Printf("error marshalling %s rules: %v", entity, err)
-		return status.Errorf(codes.Internal, "error creating profile")
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error marshalling %s rules", entity)
+		return status.Errorf(codes.Internal, "error creating profile: %s", err)
 	}
 	_, err = qtx.UpsertProfileForEntity(ctx, db.UpsertProfileForEntityParams{
 		ProfileID:       profile.ID,
@@ -625,7 +622,7 @@ func updateProfileRulesForEntity(
 		ContextualRules: marshalled,
 	})
 	if err != nil {
-		log.Printf("error updating profile for entity %s: %v", entity, err)
+		zerolog.Ctx(ctx).Info().Err(err).Msgf("error updating profile for entity %s", entity)
 		return err
 	}
 
