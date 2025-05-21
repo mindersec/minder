@@ -43,10 +43,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -76,10 +76,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -109,10 +109,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -150,10 +150,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -217,10 +217,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -267,10 +267,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -315,10 +315,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -356,10 +356,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -436,10 +436,10 @@ paths:
           pattern: .+
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -465,10 +465,10 @@ paths:
           pattern: .+
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -494,10 +494,10 @@ paths:
           type: string
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -522,10 +522,10 @@ paths:
           type: string
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -547,10 +547,10 @@ paths:
       parameters:
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -575,10 +575,10 @@ paths:
       parameters:
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -656,10 +656,10 @@ paths:
           type: string
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -686,10 +686,10 @@ paths:
           type: string
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -733,10 +733,10 @@ paths:
           pattern: .+
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: query
           required: false
           type: string
@@ -773,10 +773,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -902,10 +902,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -963,10 +963,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -992,10 +992,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1058,10 +1058,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1140,10 +1140,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1175,10 +1175,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1258,10 +1258,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1291,10 +1291,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1313,8 +1313,10 @@ paths:
             $ref: '#/definitions/v1PatchProfileResponse'
       parameters:
         - name: id
-          description: |-
-            The id of the profile to patch. Same explanation about explicitness
+          description: >-
+            The id or name of the profile to patch. Same explanation about
+            explicitness
+
             as for the context
           in: path
           required: true
@@ -1332,10 +1334,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1366,10 +1368,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1430,10 +1432,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1459,10 +1461,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1512,10 +1514,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1576,10 +1578,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1616,10 +1618,10 @@ paths:
       parameters:
         - name: context.projectId
           description: >-
-            project is the project ID.  If empty or unset, will select the
-            user's default project
+            project is the project ID or name.  If empty or unset, will select
+            the user's
 
-            if they only have one project.
+            default project if they only have one project.
           in: path
           required: true
           type: string
@@ -1667,10 +1669,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1696,10 +1698,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1739,10 +1741,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1787,10 +1789,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1821,10 +1823,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1855,10 +1857,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1896,10 +1898,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1944,10 +1946,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -1984,10 +1986,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2017,10 +2019,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2050,10 +2052,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2082,10 +2084,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2120,10 +2122,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2157,10 +2159,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2195,10 +2197,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2232,10 +2234,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2297,10 +2299,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2395,10 +2397,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2429,10 +2431,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2462,10 +2464,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -2491,10 +2493,10 @@ paths:
           type: string
         - name: context.project
           description: >-
-            ID of the project.  If empty or unset, will select the user's
-            default project
+            ID or name of the project.  If empty or unset, will select the
+            user's default
 
-            if they only have one project.
+            project if they only have one project.
           in: query
           required: false
           type: string
@@ -3178,10 +3180,10 @@ definitions:
       project:
         type: string
         description: >-
-          ID of the project.  If empty or unset, will select the user's default
-          project
+          ID or name of the project.  If empty or unset, will select the user's
+          default
 
-          if they only have one project.
+          project if they only have one project.
       retiredOrganization:
         type: string
     description: >-
@@ -3200,10 +3202,10 @@ definitions:
       projectId:
         type: string
         description: >-
-          project is the project ID.  If empty or unset, will select the user's
-          default project
+          project is the project ID or name.  If empty or unset, will select the
+          user's
 
-          if they only have one project.
+          default project if they only have one project.
       provider:
         type: string
         description: name of the provider. Set to empty string when not applicable.
