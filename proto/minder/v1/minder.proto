@@ -1702,10 +1702,13 @@ message PatchProfileRequest {
     // so that the patch itself can be minimal and contain only
     // the attribute to set, e.g. remediate=true
     Context context = 1;
-    // The id of the profile to patch. Same explanation about explicitness
+    // The id or name of the profile to patch. Same explanation about explicitness
     // as for the context
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9][-/[:word:]]*$",
+            max_len: 200,
+        },
         (google.api.field_behavior) = REQUIRED
     ];
     // The patch to apply to the profile
@@ -1726,7 +1729,10 @@ message DeleteProfileRequest {
     Context context = 1;
     // id is the id of the profile to delete
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9][-/[:word:]]*$",
+            max_len: 200,
+        },
         (google.api.field_behavior) = REQUIRED
     ];
 }
@@ -2100,10 +2106,13 @@ message Context {
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
-    // ID of the project.  If empty or unset, will select the user's default project
-    // if they only have one project.
+    // ID or name of the project.  If empty or unset, will select the user's default
+    // project if they only have one project.
     optional string project = 3 [
-        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).string = {
+            pattern: "^[-a-zA-Z0-9.]{1,63}$"
+            max_len: 63
+        },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
@@ -2112,10 +2121,13 @@ message Context {
 
 // ContextV2 defines the context in which a rule is evaluated.
 message ContextV2 {
-    // project is the project ID.  If empty or unset, will select the user's default project
-    // if they only have one project.
+    // project is the project ID or name.  If empty or unset, will select the user's
+    // default project if they only have one project.
     string project_id = 1 [
-        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).string = {
+            pattern: "^[-a-zA-Z0-9.]{1,63}$"
+            max_len: 63
+        },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 

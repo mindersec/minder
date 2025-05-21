@@ -59,8 +59,23 @@ func (mr *MockProfileServiceMockRecorder) CreateProfile(ctx, projectID, subscrip
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProfile", reflect.TypeOf((*MockProfileService)(nil).CreateProfile), ctx, projectID, subscriptionID, profile, qtx)
 }
 
+// DeleteProfile mocks base method.
+func (m *MockProfileService) DeleteProfile(ctx context.Context, projectID uuid.UUID, profile string, qtx db.Querier) (*db.Profile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteProfile", ctx, projectID, profile, qtx)
+	ret0, _ := ret[0].(*db.Profile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteProfile indicates an expected call of DeleteProfile.
+func (mr *MockProfileServiceMockRecorder) DeleteProfile(ctx, projectID, profile, qtx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProfile", reflect.TypeOf((*MockProfileService)(nil).DeleteProfile), ctx, projectID, profile, qtx)
+}
+
 // PatchProfile mocks base method.
-func (m *MockProfileService) PatchProfile(ctx context.Context, projectID, profileID uuid.UUID, profile *v1.Profile, updateMask *fieldmaskpb.FieldMask, qtx db.Querier) (*v1.Profile, error) {
+func (m *MockProfileService) PatchProfile(ctx context.Context, projectID uuid.UUID, profileID string, profile *v1.Profile, updateMask *fieldmaskpb.FieldMask, qtx db.Querier) (*v1.Profile, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PatchProfile", ctx, projectID, profileID, profile, updateMask, qtx)
 	ret0, _ := ret[0].(*v1.Profile)

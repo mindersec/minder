@@ -131,7 +131,7 @@ func populateEntityContext(
 	authzClient authz.Client,
 	req any,
 ) (context.Context, error) {
-	projectID, err := getProjectIDFromRequest(req)
+	projectID, err := getProjectIDFromRequest(ctx, req, store)
 	if err != nil {
 		if errors.Is(err, ErrNoProjectInContext) {
 			projectID, err = getDefaultProjectID(ctx, store, authzClient)
@@ -155,26 +155,35 @@ func populateEntityContext(
 	return engcontext.WithEntityContext(ctx, entityCtx), nil
 }
 
-func getProjectIDFromRequest(req any) (uuid.UUID, error) {
+func getProjectIDFromRequest(ctx context.Context, req any, store db.Store) (uuid.UUID, error) {
+	var selectedProject string
 	switch req := req.(type) {
-	case HasProtoContextV2Compat:
-		return getProjectFromContextV2Compat(req)
 	case HasProtoContextV2:
-		return getProjectFromContextV2(req)
+		selectedProject = req.GetContext().GetProjectId()
 	case HasProtoContext:
-		return getProjectFromContext(req)
+		selectedProject = req.GetContext().GetProject()
 	default:
 		return uuid.Nil, status.Errorf(codes.Internal, "Error extracting context from request")
 	}
+	if selectedProject == "" || selectedProject == uuid.Nil.String() {
+		return uuid.Nil, ErrNoProjectInContext
+	}
+	if id, err := uuid.Parse(selectedProject); err == nil {
+		return id, nil
+	}
+	// We may have a string project name, look it up.
+	project, err := store.GetProjectByName(ctx, selectedProject)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return uuid.Nil, util.UserVisibleError(codes.InvalidArgument, "project %q not found", selectedProject)
+		}
+		return uuid.Nil, status.Errorf(codes.Internal, "error getting project: %v", err)
+	}
+	return project.ID, nil
 }
 
 func getProviderFromRequest(req any) string {
 	switch req := req.(type) {
-	case HasProtoContextV2Compat:
-		if req.GetContextV2().GetProvider() != "" {
-			return req.GetContextV2().GetProvider()
-		}
-		return req.GetContext().GetProvider()
 	case HasProtoContextV2:
 		return req.GetContext().GetProvider()
 	case HasProtoContext:
@@ -213,7 +222,7 @@ func getDefaultProjectID(
 	}
 
 	if len(prjs) != 1 {
-		return uuid.UUID{}, util.UserVisibleError(codes.PermissionDenied, "Multiple project found, cannot "+
+		return uuid.UUID{}, util.UserVisibleError(codes.InvalidArgument, "Multiple projects found, cannot "+
 			"determine default project. Please explicitly set a project and run the command again.")
 	}
 

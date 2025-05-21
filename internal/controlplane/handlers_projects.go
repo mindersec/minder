@@ -165,7 +165,7 @@ func (s *Server) CreateProject(
 	ctx context.Context,
 	req *minderv1.CreateProjectRequest,
 ) (*minderv1.CreateProjectResponse, error) {
-	parentProjectID, err := getProjectIDFromRequest(req)
+	parentProjectID, err := getProjectIDFromRequest(ctx, req, s.store)
 	if err != nil && !errors.Is(err, ErrNoProjectInContext) {
 		return nil, err
 	}

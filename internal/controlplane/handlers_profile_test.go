@@ -1260,10 +1260,11 @@ func TestGetProfileStatusById(t *testing.T) {
 type deleteProfileTestCase struct {
 	name    string
 	req     *minderv1.DeleteProfileRequest
+	id      uuid.UUID
 	wantErr string
 }
 
-func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *db.Profile) {
+func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *db.Profile, *db.Profile) {
 	t.Helper()
 
 	dbStore, cancelFunc, err := embedded.GetFakeStore()
@@ -1281,6 +1282,13 @@ func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *
 
 	testProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
 		Name:      "test_profile",
+		ProjectID: dbproj.ID,
+		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
+	})
+	require.NoError(t, err, "Error creating test profile")
+
+	namedProfile, err := dbStore.CreateProfile(ctx, db.CreateProfileParams{
+		Name:      "named_profile",
 		ProjectID: dbproj.ID,
 		Alert:     db.NullActionType{ActionType: db.ActionTypeOn, Valid: true},
 	})
@@ -1312,13 +1320,14 @@ func setupDeleteProfileTest(t *testing.T) (db.Store, *db.Project, *db.Profile, *
 	})
 	require.NoError(t, err, "Error creating test bundle profile")
 
-	return dbStore, &dbproj, &testProfile, &bundleProfile
+	return dbStore, &dbproj, &testProfile, &namedProfile, &bundleProfile
 }
 
 func TestDeleteProfile(t *testing.T) {
 	t.Parallel()
 
-	dbStore, dbproj, testProfile, bundleProfile := setupDeleteProfileTest(t)
+	dbStore, dbproj, testProfile, namedProfile, bundleProfile := setupDeleteProfileTest(t)
+	otherUUID := uuid.New()
 
 	tests := []deleteProfileTestCase{
 		{
@@ -1328,18 +1337,25 @@ func TestDeleteProfile(t *testing.T) {
 			},
 		},
 		{
+			name: "Delete existing profile by name",
+			req: &minderv1.DeleteProfileRequest{
+				Id: namedProfile.Name,
+			},
+			id: namedProfile.ID,
+		},
+		{
 			name: "Delete non-existent profile",
 			req: &minderv1.DeleteProfileRequest{
-				Id: uuid.New().String(),
+				Id: otherUUID.String(),
 			},
-			wantErr: "profile not found",
+			wantErr: fmt.Sprintf("profile %q not found", otherUUID),
 		},
 		{
 			name: "Delete with invalid profile ID",
 			req: &minderv1.DeleteProfileRequest{
 				Id: "not-a-uuid",
 			},
-			wantErr: "invalid profile ID",
+			wantErr: `profile "not-a-uuid" not found`,
 		},
 		{
 			name: "Delete bundle profile",
@@ -1376,8 +1392,12 @@ func TestDeleteProfile(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, res)
 
+			id := tc.id
+			if id == uuid.Nil {
+				id = uuid.MustParse(tc.req.Id)
+			}
 			_, err = dbStore.GetProfileByID(ctx, db.GetProfileByIDParams{
-				ID:        uuid.MustParse(tc.req.Id),
+				ID:        id,
 				ProjectID: dbproj.ID,
 			})
 			require.ErrorIs(t, err, sql.ErrNoRows)

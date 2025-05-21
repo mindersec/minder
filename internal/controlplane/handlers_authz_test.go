@@ -65,9 +65,11 @@ type replyType struct {
 func TestEntityContextProjectInterceptor(t *testing.T) {
 	t.Parallel()
 	projectID := uuid.New()
+	otherProjectID := uuid.New()
 	defaultProjectID := uuid.New()
 	projectIdStr := projectID.String()
 	malformedProjectID := "malformed"
+	projectName := "my-project"
 	//nolint:goconst
 	provider := "github"
 	userJWT := openid.New()
@@ -93,37 +95,49 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 		},
 		{
 			name:     "target resource unspecified throws error",
-			req:      &request{},
+			req:      &minder.CheckHealthRequest{},
 			resource: minder.TargetResource_TARGET_RESOURCE_UNSPECIFIED,
 			rpcErr:   status.Errorf(codes.Internal, "cannot perform authorization, because target resource is unspecified"),
 		},
 		{
 			name:            "non project owner bypasses interceptor",
-			req:             &request{},
+			req:             &minder.CreateUserRequest{},
 			resource:        minder.TargetResource_TARGET_RESOURCE_USER,
 			expectedContext: engcontext.EntityContext{},
 		},
 		{
-			name:     "invalid request with nil context",
+			name:     "invalid request with nil context and multiple projects",
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			req: &request{
+			req: &minder.RegisterRepositoryRequest{
 				Context: nil,
 			},
-			rpcErr: util.UserVisibleError(codes.InvalidArgument, "context cannot be nil"),
+			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
+				t.Helper()
+				store.EXPECT().GetUserBySubject(gomock.Any(), userJWT.Subject()).
+					Return(db.User{}, nil)
+			},
+			rpcErr: util.UserVisibleError(codes.InvalidArgument, "Multiple projects found, cannot determine default project."+
+				" Please explicitly set a project and run the command again."),
 		},
 		{
 			name: "malformed project ID",
-			req: &request{
+			req: &minder.RegisterRepositoryRequest{
 				Context: &minder.Context{
 					Project: &malformedProjectID,
 				},
 			},
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
-			rpcErr:   util.UserVisibleError(codes.InvalidArgument, "malformed project ID"),
+			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
+				t.Helper()
+				store.EXPECT().
+					GetProjectByName(gomock.Any(), malformedProjectID).
+					Return(db.Project{}, sql.ErrNoRows)
+			},
+			rpcErr: util.UserVisibleError(codes.InvalidArgument, `project "malformed" not found`),
 		},
 		{
 			name: "empty context",
-			req: &request{
+			req: &minder.RegisterRepositoryRequest{
 				Context: &minder.Context{},
 			},
 			resource:       minder.TargetResource_TARGET_RESOURCE_PROJECT,
@@ -142,7 +156,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			},
 		}, {
 			name: "no provider",
-			req: &request{
+			req: &minder.CreateProviderRequest{
 				Context: &minder.Context{
 					Project: &projectIdStr,
 				},
@@ -153,10 +167,43 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			},
 		}, {
 			name: "sets entity context",
-			req: &request{
+			req: &minder.RegisterRepositoryRequest{
 				Context: &minder.Context{
 					Project:  &projectIdStr,
 					Provider: &provider,
+				},
+			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			expectedContext: engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: provider},
+			},
+		}, {
+			name: "lookup by name",
+			req: &minder.AssignRoleRequest{
+				Context: &minder.Context{
+					Project: &projectName,
+				},
+			},
+			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
+			buildStubs: func(t *testing.T, store *mockdb.MockStore) {
+				t.Helper()
+				store.EXPECT().
+					GetProjectByName(gomock.Any(), projectName).
+					Return(db.Project{
+						ID:   projectID,
+						Name: projectName,
+					}, nil)
+			},
+			expectedContext: engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			},
+		}, {
+			name: "with ContextV2",
+			req: &minder.GetDataSourceByNameRequest{
+				Context: &minder.ContextV2{
+					ProjectId: projectIdStr,
+					Provider:  provider,
 				},
 			},
 			resource: minder.TargetResource_TARGET_RESOURCE_PROJECT,
@@ -196,7 +243,7 @@ func TestEntityContextProjectInterceptor(t *testing.T) {
 			if tc.defaultProject {
 				authzClient.Allowed = []uuid.UUID{defaultProjectID}
 			} else {
-				authzClient.Allowed = []uuid.UUID{projectID}
+				authzClient.Allowed = []uuid.UUID{projectID, otherProjectID}
 			}
 
 			server := Server{

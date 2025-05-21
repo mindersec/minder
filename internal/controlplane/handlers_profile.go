@@ -79,35 +79,11 @@ func (s *Server) DeleteProfile(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	parsedProfileID, err := uuid.Parse(in.Id)
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid profile ID")
-	}
-
-	profile, err := s.store.GetProfileByID(ctx, db.GetProfileByIDParams{
-		ProjectID: entityCtx.Project.ID,
-		ID:        parsedProfileID,
+	profile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.Profile, error) {
+		return s.profiles.DeleteProfile(ctx, entityCtx.Project.ID, in.GetId(), qtx)
 	})
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, status.Error(codes.NotFound, "profile not found")
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %s", err)
-	}
-
-	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
-	// profile yet, reject deletion requests in the API
-	// TODO: Move this deletion logic to ProfileService
-	if profile.SubscriptionID.Valid {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot delete profile from bundle")
-	}
-
-	err = s.store.DeleteProfile(ctx, db.DeleteProfileParams{
-		ID:        profile.ID,
-		ProjectID: entityCtx.Project.ID,
-	})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete profile: %s", err)
+		return nil, err
 	}
 
 	// Telemetry logging
@@ -521,13 +497,8 @@ func (s *Server) PatchProfile(ctx context.Context, ppr *minderv1.PatchProfileReq
 		return nil, util.UserVisibleError(codes.InvalidArgument, "profile ID must be specified")
 	}
 
-	profileID, err := uuid.Parse(ppr.GetId())
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "Malformed UUID")
-	}
-
 	patchedProfile, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.Profile, error) {
-		return s.profiles.PatchProfile(ctx, entityCtx.Project.ID, profileID, patch, ppr.GetUpdateMask(), qtx)
+		return s.profiles.PatchProfile(ctx, entityCtx.Project.ID, ppr.GetId(), patch, ppr.GetUpdateMask(), qtx)
 	})
 	if err != nil {
 		// assumption: service layer sets sensible errors
