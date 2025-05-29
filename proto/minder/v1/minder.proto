@@ -1727,7 +1727,7 @@ message PatchProfileResponse {
 message DeleteProfileRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // id is the id of the profile to delete
+    // id is the name or id of the profile to delete
     string id = 2 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z0-9][-/[:word:]]*$",
@@ -2236,9 +2236,12 @@ message UpdateRuleTypeResponse {
 message DeleteRuleTypeRequest {
     // context is the context in which the rule type is evaluated.
     Context context = 1;
-    // id is the id of the rule type to be deleted.
+    // id is the name or id of the rule type to be deleted.
     string id = 2 [
-        (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).string = {
+            pattern: "^[A-Za-z0-9][-/[:word:]]*$",
+            max_len: 200,
+        },
         (google.api.field_behavior) = REQUIRED
     ];
 }

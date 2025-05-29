@@ -261,59 +261,80 @@ func (s *Server) DeleteRuleType(
 	ctx context.Context,
 	in *minderv1.DeleteRuleTypeRequest,
 ) (*minderv1.DeleteRuleTypeResponse, error) {
-	parsedRuleTypeID, err := uuid.Parse(in.GetId())
-	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid rule type ID")
-	}
-
-	// first read rule type by id, so we can get provider
-	rtdb, err := s.store.GetRuleTypeByID(ctx, parsedRuleTypeID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
-		}
-		return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
-	}
-
-	// TEMPORARY HACK: Since we do not need to support the deletion of bundle
-	// rule types yet, reject them in the API
-	// TODO: Move this deletion logic to RuleTypeService
-	if rtdb.SubscriptionID.Valid {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
-	}
-
 	entityCtx := engcontext.EntityFromContext(ctx)
 
-	err = entityCtx.ValidateProject(ctx, s.store)
+	err := entityCtx.ValidateProject(ctx, s.store)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
 
-	profiles, err := s.store.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
-	// We have profiles that use this rule type, so we can't delete it
-	if err == nil {
-		if len(profiles) > 0 {
-			return nil, util.UserVisibleError(codes.FailedPrecondition,
-				"cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", "))
-		}
-	} else if !errors.Is(err, sql.ErrNoRows) {
-		// If we failed for another reason, return an error
-		return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
-	}
+	oldRule, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.RuleType, error) {
+		var rtdb db.RuleType
+		// first read rule type, so we can get provider
+		parsedRuleTypeID, err := uuid.Parse(in.GetId())
+		if err != nil {
+			rtdb, err = qtx.GetRuleTypeByName(ctx, db.GetRuleTypeByNameParams{
+				Projects: []uuid.UUID{entityCtx.Project.ID},
+				Name:     in.GetId(),
+			})
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+				}
+				return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+			}
+		} else {
+			rtdb, err = qtx.GetRuleTypeByID(ctx, parsedRuleTypeID)
 
-	// If there are no profiles instantiating this rule type, we can delete it
-	err = s.store.DeleteRuleType(ctx, parsedRuleTypeID)
-	if err != nil {
-		// The rule got deleted in parallel?
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+			if err != nil {
+				if errors.Is(err, sql.ErrNoRows) {
+					return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+				}
+				return nil, status.Errorf(codes.Unknown, "failed to get rule type: %s", err)
+			}
+			if rtdb.ProjectID != entityCtx.Project.ID {
+				return nil, util.UserVisibleError(codes.InvalidArgument,
+					"rule type %s does not belong to project %s", rtdb.ID, entityCtx.Project.ID)
+			}
 		}
-		return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
+
+		// TEMPORARY HACK: Since we do not need to support the deletion of bundle
+		// rule types yet, reject them in the API
+		// TODO: Move this deletion logic to RuleTypeService
+		if rtdb.SubscriptionID.Valid {
+			return nil, status.Errorf(codes.InvalidArgument, "cannot delete rule type from bundle")
+		}
+
+		profiles, err := qtx.ListProfilesInstantiatingRuleType(ctx, rtdb.ID)
+		// We have profiles that use this rule type, so we can't delete it
+		if err == nil {
+			if len(profiles) > 0 {
+				return nil, util.UserVisibleError(codes.FailedPrecondition,
+					"cannot delete: rule type %s is used by profiles %s", in.GetId(), strings.Join(profiles, ", "))
+			}
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			// If we failed for another reason, return an error
+			return nil, status.Errorf(codes.Unknown, "failed to get profiles: %s", err)
+		}
+
+		// If there are no profiles instantiating this rule type, we can delete it
+		err = qtx.DeleteRuleType(ctx, rtdb.ID)
+		if err != nil {
+			// The rule got deleted in parallel?
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, util.UserVisibleError(codes.NotFound, "rule type %s not found", in.GetId())
+			}
+			return nil, status.Errorf(codes.Unknown, "failed to delete rule type: %s", err)
+		}
+		return &rtdb, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// Telemetry logging
-	logger.BusinessRecord(ctx).Project = rtdb.ProjectID
-	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: rtdb.Name, ID: rtdb.ID}
+	logger.BusinessRecord(ctx).Project = oldRule.ProjectID
+	logger.BusinessRecord(ctx).RuleType = logger.RuleType{Name: oldRule.Name, ID: oldRule.ID}
 
 	return &minderv1.DeleteRuleTypeResponse{}, nil
 }

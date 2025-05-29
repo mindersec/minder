@@ -4938,7 +4938,7 @@ type DeleteProfileRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// context is the context in which the rule type is evaluated.
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	// id is the id of the profile to delete
+	// id is the name or id of the profile to delete
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -7187,7 +7187,7 @@ type DeleteRuleTypeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// context is the context in which the rule type is evaluated.
 	Context *Context `protobuf:"bytes,1,opt,name=context,proto3" json:"context,omitempty"`
-	// id is the id of the rule type to be deleted.
+	// id is the name or id of the rule type to be deleted.
 	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -15172,10 +15172,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x15UpdateRuleTypeRequest\x125\n" +
 	"\trule_type\x18\x02 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleTypeJ\x04\b\x03\x10\x04\"O\n" +
 	"\x16UpdateRuleTypeResponse\x125\n" +
-	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\"b\n" +
+	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\"~\n" +
 	"\x15DeleteRuleTypeRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1b\n" +
-	"\x02id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\x18\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
+	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\"\x18\n" +
 	"\x16DeleteRuleTypeResponse\"\xf1\x02\n" +
 	"\x1cListEvaluationResultsRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12E\n" +

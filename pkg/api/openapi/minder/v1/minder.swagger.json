@@ -1688,7 +1688,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "id is the id of the profile to delete",
+            "description": "id is the name or id of the profile to delete",
             "in": "path",
             "required": true,
             "type": "string"
@@ -3232,7 +3232,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "id is the id of the rule type to be deleted.",
+            "description": "id is the name or id of the rule type to be deleted.",
             "in": "path",
             "required": true,
             "type": "string"

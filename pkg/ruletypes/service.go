@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/google/uuid"
 
@@ -84,6 +85,8 @@ var (
 	// ErrRuleTypeInvalid is returned by both create and update if validation
 	// fails
 	ErrRuleTypeInvalid = errors.New("rule type validation failed")
+	// Pattern for validating rule names do not collide with UUIDs
+	uuidLike = regexp.MustCompile(`^[[:alnum:]]{8}-([[:alnum:]]{4}-){3}[[:alnum:]]{12}$`)
 )
 
 func (*ruleTypeService) CreateRuleType(
@@ -98,6 +101,9 @@ func (*ruleTypeService) CreateRuleType(
 
 	if err := ruleType.Validate(); err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+	if uuidLike.MatchString(ruleType.Name) {
+		return nil, errors.Join(ErrRuleTypeInvalid, errors.New("rule type name must not be UUID-like"))
 	}
 
 	if err := namespaces.ValidateNamespacedNameRules(ruleType.GetName(), subscriptionID); err != nil {
