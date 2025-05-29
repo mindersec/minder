@@ -280,6 +280,143 @@ func TestUpdateRuleType(t *testing.T) {
 	}
 }
 
+func TestDeleteRuleType(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	ruleTypeId := uuid.New()
+	ruleTypeName := "testing"
+	tests := []struct {
+		name          string
+		mockStoreFunc df.MockStoreBuilder
+		features      map[string]any
+		request       *minderv1.DeleteRuleTypeRequest
+		error         bool
+	}{
+		{
+			name: "delete by id",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				df.WithTransaction(),
+				func(mockStore *mockdb.MockStore) {
+					mockStore.EXPECT().
+						GetRuleTypeByID(gomock.Any(), ruleTypeId).
+						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
+					mockStore.EXPECT().
+						ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
+						Return([]string{}, nil)
+					mockStore.EXPECT().
+						DeleteRuleType(gomock.Any(), ruleTypeId).
+						Return(nil)
+				},
+			),
+			request: &minderv1.DeleteRuleTypeRequest{
+				Id: ruleTypeId.String(),
+			},
+		},
+		{
+			name: "delete by name",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				df.WithTransaction(),
+				func(mockStore *mockdb.MockStore) {
+					mockStore.EXPECT().
+						GetRuleTypeByName(gomock.Any(), db.GetRuleTypeByNameParams{
+							Projects: []uuid.UUID{projectID},
+							Name:     ruleTypeName,
+						}).
+						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
+					mockStore.EXPECT().
+						ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
+						Return([]string{}, nil)
+					mockStore.EXPECT().
+						DeleteRuleType(gomock.Any(), ruleTypeId).
+						Return(nil)
+				},
+			),
+			request: &minderv1.DeleteRuleTypeRequest{
+				Id: ruleTypeName,
+			},
+		},
+		{
+			name: "no delete subscription",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				df.WithRollbackTransaction(),
+				func(mockStore *mockdb.MockStore) {
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+						Return(db.RuleType{
+							ID:             ruleTypeId,
+							SubscriptionID: uuid.NullUUID{Valid: true},
+							ProjectID:      projectID,
+						}, nil)
+				},
+			),
+			request: &minderv1.DeleteRuleTypeRequest{
+				Id: ruleTypeId.String(),
+			},
+			error: true,
+		},
+		{
+			name: "used by profile",
+			mockStoreFunc: df.NewMockStore(
+				WithSuccessfulGetProjectByID(projectID),
+				df.WithRollbackTransaction(),
+				func(mockStore *mockdb.MockStore) {
+					mockStore.EXPECT().GetRuleTypeByID(gomock.Any(), ruleTypeId).
+						Return(db.RuleType{ID: ruleTypeId, ProjectID: projectID}, nil)
+					mockStore.EXPECT().ListProfilesInstantiatingRuleType(gomock.Any(), ruleTypeId).
+						Return([]string{uuid.NewString()}, nil)
+				},
+			),
+			request: &minderv1.DeleteRuleTypeRequest{
+				Id: ruleTypeId.String(),
+			},
+			error: true,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			var mockStore *mockdb.MockStore
+			if tt.mockStoreFunc != nil {
+				mockStore = tt.mockStoreFunc(ctrl)
+			} else {
+				mockStore = mockdb.NewMockStore(ctrl)
+			}
+
+			featureClient := &flags.FakeClient{}
+			if tt.features != nil {
+				featureClient.Data = tt.features
+			}
+
+			srv := newDefaultServer(t, mockStore, nil, nil, nil)
+			srv.featureFlags = featureClient
+
+			ctx := context.Background()
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: "testing"},
+			})
+			resp, err := srv.DeleteRuleType(ctx, tt.request)
+			if tt.error {
+				require.Error(t, err)
+				require.Nil(t, resp)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+		})
+	}
+}
+
 func TestListRuleTypes(t *testing.T) {
 	t.Parallel()
 
