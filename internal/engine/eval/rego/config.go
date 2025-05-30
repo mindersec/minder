@@ -18,8 +18,8 @@ type Config struct {
 	// Type is the type of evaluation to perform
 	Type EvaluationType `json:"type" mapstructure:"type" validate:"required"`
 	// Def is the definition of the profile
-	Def             string                      `json:"def" mapstructure:"def" validate:"required"`
-	ViolationFormat ConstraintsViolationsFormat `json:"violation_format" mapstructure:"violationFormat"`
+	Def             string           `json:"def" mapstructure:"def" validate:"required"`
+	ViolationFormat EvalOutputFormat `json:"violation_format" mapstructure:"violationFormat"`
 }
 
 func (c *Config) getEvalType() resultEvaluator {
@@ -52,7 +52,7 @@ func parseConfig(cfg *minderv1.RuleType_Definition_Eval_Rego) (*Config, error) {
 	}
 
 	if cfg.ViolationFormat == nil {
-		conf.ViolationFormat = ConstraintsViolationsOutputText
+		conf.ViolationFormat = OutputText
 	}
 
 	typ := conf.getEvalType()

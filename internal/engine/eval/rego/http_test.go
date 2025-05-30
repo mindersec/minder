@@ -74,7 +74,9 @@ func TestLimitedDialer(t *testing.T) {
 				return
 			}
 
-			require.Nil(t, res, "expected nil result")
+			require.Equal(t, &interfaces.EvaluationResult{
+				Output: `Get "` + tt.url + `": remote address is not public`,
+			}, res)
 			require.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
 			detailErr := err.(*engerrors.EvaluationError)
 			require.Contains(t, detailErr.Details(), tt.wantErr)
