@@ -71,7 +71,8 @@ following custom functions:
   as an array of strings.
 
 - **github_workflow.ls_actions(directory)**: Lists all actions in the given
-  GitHub workflow directory, returning the filenames as an array of strings.
+  GitHub workflow directory, returning the actions references as an array of
+  strings.
 
 - **parse_yaml**: Parses a YAML string into a JSON object. This implementation
   uses https://gopkg.in/yaml.v3, which avoids bugs when parsing `"on"` as an
