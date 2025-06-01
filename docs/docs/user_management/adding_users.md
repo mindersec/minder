@@ -1,6 +1,6 @@
 ---
 title: Adding users to your project
-sidebar_position: 100
+sidebar_position: 40
 ---
 
 ## Prerequisites
