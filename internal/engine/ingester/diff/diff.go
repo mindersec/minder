@@ -233,7 +233,7 @@ func (di *Diff) getScalibrTypeDiff(ctx context.Context, _ int, pr *pbinternal.Pu
 	return &interfaces.Ingested{Object: &deps, Checkpoint: checkpoints.NewCheckpointV1Now()}, nil
 }
 
-func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {
+func inventorySorter(a *extractor.Package, b *extractor.Package) int {
 	// If we compare by name and version first, we can avoid serializing Locations to strings
 	res := cmp.Or(cmp.Compare(a.Name, b.Name), cmp.Compare(a.Version, b.Version))
 	if res != 0 {
@@ -245,7 +245,7 @@ func inventorySorter(a *extractor.Inventory, b *extractor.Inventory) int {
 	return cmp.Compare(aLoc, bLoc)
 }
 
-func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Inventory, error) {
+func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string) ([]*extractor.Package, error) {
 	clone, err := di.cli.Clone(ctx, repoURL, ref)
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func (di *Diff) scalibrInventory(ctx context.Context, repoURL string, ref string
 	return scanFs(ctx, tree.Filesystem, map[string]string{})
 }
 
-func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([]*extractor.Inventory, error) {
+func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([]*extractor.Package, error) {
 	// have to down-cast here, because scalibr needs multiple io/fs types
 	wrapped, ok := iofs.New(memFS).(scalibr_fs.FS)
 	if !ok {
@@ -267,7 +267,7 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 
 	desiredCaps := scalibr_plugin.Capabilities{
 		OS:            scalibr_plugin.OSLinux,
-		Network:       true,
+		Network:       scalibr_plugin.NetworkOffline,
 		DirectFS:      false,
 		RunningSystem: false,
 	}
@@ -276,7 +276,7 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
 		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		FilesystemExtractors: list.FilterByCapabilities(list.Default, &desiredCaps),
+		FilesystemExtractors: list.FromCapabilities(&desiredCaps),
 		Capabilities:         &desiredCaps,
 	}
 
@@ -290,10 +290,10 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
 
-	return scanResults.Inventories, nil
+	return scanResults.Inventory.Packages, nil
 }
 
-func inventoryToEcosystem(inventory *extractor.Inventory) pbinternal.DepEcosystem {
+func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem {
 	if inventory == nil {
 		zerolog.Ctx(context.Background()).Warn().Msg("nil ecosystem scanning diffs")
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
