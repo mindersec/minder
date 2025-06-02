@@ -11,10 +11,14 @@ rule types, which are used to enforce security policies.
 
 ## Writing rule types in Minder
 
-Minder organizes policies into rule types, each with specific sections defining
-how policies are ingested, evaluated, and acted upon. Rule types are then called
-within profiles to express the security posture of your organization. Let's
-delve into the essential components of a Minder rule type:
+<!-- TODO: this is common between the rego and jq docs. Move somewhere common? -->
+
+Minder
+[organizes policies into rule types](../understand/key_concepts.md#rule-types),
+each with specific sections defining how policies are ingested, evaluated, and
+acted upon. Rule types are then called within profiles to express the security
+posture of your organization. Let's delve into the essential components of a
+Minder rule type:
 
 - Ingesting data: Fetching relevant data, often from external sources like
   GitHub API.
@@ -85,9 +89,9 @@ following custom functions:
   files under the given paths. Returns the archive contents as a (binary)
   string.
 
-In addition, when operating in a pull request context, `base_file` versions of 
-the `file` operations are available for accessing the files in the base branch 
-of the pull request. The `file` versions of the operations operate on the head 
+In addition, when operating in a pull request context, `base_file` versions of
+the `file` operations are available for accessing the files in the base branch
+of the pull request. The `file` versions of the operations operate on the head
 (proposed changes) versions of the files in a pull request context.
 
 In addition, most of the
