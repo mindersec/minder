@@ -381,7 +381,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/sony/gobreaker v1.0.0 // indirect
-	github.com/spf13/afero v1.12.0
+	github.com/spf13/afero v1.14.0
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
