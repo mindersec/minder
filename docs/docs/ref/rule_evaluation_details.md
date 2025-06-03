@@ -19,9 +19,7 @@ of entity:
 
 - [Repository](../ref/proto.mdx#minder-v1-Repository)
 - [Pull Request](https://github.com/mindersec/minder/tree/main/internal/providers/github/properties/pull_request.go)
-<!--
-- ??? what other types? Artifact?
--->
+{/* - ??? what other types? Artifact? */}
 
 ### Ingest Types and Their Outputs
 
@@ -72,15 +70,15 @@ following data for rule evaluatino:
    can evaluate `full` (all files) and `dep` (dependency changes) for these
    evaluators.
 
-   <!--, and `new-dep` (which uses a more sophisticated extraction method using the [osv-scalibr library](https://github.com/google/osv-scalibr)). -->
+   {/*, and `new-dep` (which uses a more sophisticated extraction method using the [osv-scalibr library](https://github.com/google/osv-scalibr)). */}
 
-<!--
+{/*
 1. **Ingest** (`builtin`)
 
    _Entity_Types_:
 
    _Data Content_:  calls builtin function (none exist since https://github.com/mindersec/minder/pull/760)
--->
+*/}
 
 ## Evaluate
 

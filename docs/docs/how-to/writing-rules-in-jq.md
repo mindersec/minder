@@ -9,7 +9,7 @@ as the result of an API call.
 
 ## Writing rule types in Minder
 
-<!-- TODO: this is common between the rego and jq docs. Move somewhere common? -->
+{/* TODO: this is common between the rego and jq docs. Move somewhere common? */}
 
 Minder
 [organizes policies into rule types](../understand/key_concepts.md#rule-types),
