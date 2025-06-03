@@ -18,8 +18,10 @@ rules apply to. The `Entity` objects have specific properties based on the type
 of entity:
 
 - [Repository](../ref/proto.mdx#minder-v1-Repository)
-- [Pull Request](../../internal/providers/github/properties/pull_request.go)
+- [Pull Request](https://github.com/mindersec/minder/tree/main/internal/providers/github/properties/pull_request.go)
+<!--
 - ??? what other types? Artifact?
+-->
 
 ### Ingest Types and Their Outputs
 
