@@ -199,8 +199,17 @@ func TestIngestRepo(t *testing.T) {
 					Name: "sourceFile",
 					Data: "requirements.txt",
 				}},
+			}, {
+				Type: sbom.Node_PACKAGE,
+				Name: "rich",
+				Identifiers: map[int32]string{
+					int32(sbom.SoftwareIdentifierType_PURL): "pkg:pypi/rich",
+				},
+				Properties: []*sbom.Property{{
+					Name: "sourceFile",
+					Data: "requirements.txt",
+				}},
 			}},
-			// Can't pick up "rich" without a version
 		},
 	}, {
 		name:      "simple JavaScript",
@@ -308,10 +317,10 @@ func TestIngestRepo(t *testing.T) {
 				}},
 			}, {
 				Type:    sbom.Node_PACKAGE,
-				Name:    "husky:", // TODO: This is probably a bug in scalibr!
+				Name:    "husky",
 				Version: "0.11.9",
 				Identifiers: map[int32]string{
-					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/husky%3A@0.11.9",
+					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/husky@0.11.9",
 				},
 				Properties: []*sbom.Property{{
 					Name: "sourceFile",
@@ -462,10 +471,10 @@ func TestIngestRepo(t *testing.T) {
 				}},
 			}, {
 				Type:    sbom.Node_PACKAGE,
-				Name:    "use-strict:",
+				Name:    "use-strict",
 				Version: "1.0.1",
 				Identifiers: map[int32]string{
-					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/use-strict%3A@1.0.1",
+					int32(sbom.SoftwareIdentifierType_PURL): "pkg:npm/use-strict@1.0.1",
 				},
 				Properties: []*sbom.Property{{
 					Name: "sourceFile",

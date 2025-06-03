@@ -48,13 +48,13 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 
 	desiredCaps := scalibr_plugin.Capabilities{
 		OS:            scalibr_plugin.OSLinux,
-		Network:       false, // Don't fetch over the network, as we may be running in a trusted context.
+		Network:       scalibr_plugin.NetworkOffline, // Don't fetch over the network, as we may be running in a trusted context.
 		DirectFS:      false,
 		RunningSystem: false,
 	}
 
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
-	extractors := list.FilterByCapabilities(list.Default, &desiredCaps)
+	extractors := list.FromCapabilities(&desiredCaps)
 	// Don't run the go binary extractor; it sometimes panics on certain files.
 	extractors = slices.DeleteFunc(extractors, func(e filesystem.Extractor) bool {
 		_, ok := e.(*gobinary.Extractor)
@@ -78,13 +78,15 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	}
 
 	res := sbom.NewNodeList()
-	for _, inv := range scanResults.Inventories {
+	for _, inv := range scanResults.Inventory.Packages {
+		// TODO: use repo and commit from inv.SourceCode
 		node := &sbom.Node{
 			Type:    sbom.Node_PACKAGE,
 			Id:      uuid.New().String(),
 			Name:    inv.Name,
 			Version: inv.Version,
 			Identifiers: map[int32]string{
+				// TODO: switch to inv.PURL() once b/400910349 (Google buganizer bug) is resolved
 				int32(sbom.SoftwareIdentifierType_PURL): inv.Extractor.ToPURL(inv).String(),
 				// TODO: scalibr returns a _list_ of CPEs, but protobom will store one.
 				// use the first?
