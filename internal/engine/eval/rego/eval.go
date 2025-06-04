@@ -57,7 +57,7 @@ type Input struct {
 	// the provider
 	Properties map[string]any `json:"properties"`
 	// OutputFormat is the format to output violations in
-	OutputFormat ConstraintsViolationsFormat `json:"output_format"`
+	OutputFormat EvalOutputFormat `json:"output_format"`
 }
 
 type hook struct {
@@ -86,7 +86,7 @@ func NewRegoEvaluator(
 		cfg:     c,
 		reseval: re,
 		regoOpts: []func(*rego.Rego){
-			re.getQuery(),
+			rego.Query(RegoQueryPrefix),
 			rego.Module(MinderRegoFile, c.Def),
 			rego.Strict(true),
 		},

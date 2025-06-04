@@ -15,11 +15,81 @@ import (
 	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	v1mockds "github.com/mindersec/minder/pkg/datasources/v1/mock"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
+
+func TestEvalNoDef(t *testing.T) {
+	t.Parallel()
+
+	_, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+		},
+	)
+
+	assert.ErrorContains(t, err, "could not parse rego config:")
+}
+
+func TestEvalDefEmpty(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def:  ` `,
+		},
+	)
+
+	require.NoError(t, err, "expected successful creation of evaluator")
+
+	emptyPol := map[string]any{}
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorContains(t, err, "rego_parse_error: empty module")
+}
+
+func TestEvalDefWrongPackage(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def:  "package badday\n\nallow := true",
+		},
+	)
+
+	require.NoError(t, err, "expected successful creation of evaluator")
+
+	emptyPol := map[string]any{}
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorContains(t, err, "evaluation failure: no results from Rego eval")
+}
+
+func TestEvalDefNoOutput(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def:  "package minder\n#Does not define allow",
+		},
+	)
+
+	require.NoError(t, err, "expected successful creation of evaluator")
+
+	emptyPol := map[string]any{}
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorContains(t, err, "evaluation failure: unable to get allow result")
+}
 
 // Evaluates a simple query against a simple profile
 // In this case, the profile is a simple "allow" rule.
@@ -39,7 +109,10 @@ default allow = false
 
 allow {
 	input.ingested.data == "foo"
-}`,
+}
+	
+message = "By the pricking of my thumbs..."
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -47,20 +120,46 @@ allow {
 	emptyPol := map[string]any{}
 
 	// Matches
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	assert.NoError(t, err, "could not evaluate")
+	assert.Equal(t, &interfaces.EvaluationResult{}, res)
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+	res, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.Equal(t, &interfaces.EvaluationResult{
+		Output: "By the pricking of my thumbs...",
+	}, res)
+}
+
+func TestEvaluatorDenyByDefaultEvalWrongType(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+allow := "false"`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorContains(t, err, "evaluation failure: allow result is not a bool")
 }
 
 func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
@@ -94,7 +193,93 @@ skip {
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationSkipped, "should have been skipped")
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationSkipped, "should have been skipped, %+v", err)
+}
+
+func TestEvaluatorDenyByDefaultSkipWrongType(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+allow := true
+
+skip := "true"
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorContains(t, err, "evaluation failure: skip result is not a bool")
+	assert.Nil(t, res)
+}
+
+func TestEvaluatorDenyByDefaultJSONOutput(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type:            rego.DenyByDefaultEvaluationType.String(),
+			ViolationFormat: ptr.Ptr(rego.OutputJSON.String()),
+			Def: `
+package minder
+
+allow := false
+
+message := "always fail"
+output := [1, 2, 3]
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
+	assert.ErrorContains(t, err, "evaluation failure: denied")
+	assert.Equal(t, err.(*engerrors.EvaluationError).Details(), "always fail")
+	assert.Equal(t, &interfaces.EvaluationResult{
+		Output: []any{json.Number("1"), json.Number("2"), json.Number("3")},
+	}, res)
+}
+
+func TestEvaluatorDenyByDefaultJSONOutputFromMessage(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			// ViolationFormat is not used for deny_by_default
+			ViolationFormat: ptr.Ptr(rego.OutputJSON.String()),
+			Def: `
+package minder
+
+allow := false
+
+message := "[1, 2, 3]"
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{},
+	})
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
+	assert.Equal(t, &interfaces.EvaluationResult{
+		// Output is just a string when promoted from message.
+		Output: "[1, 2, 3]",
+	}, res)
 }
 
 func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
@@ -122,16 +307,50 @@ violations[{"msg": msg}] {
 			"data": "foo",
 		},
 	})
-	require.NoError(t, err, "could not evaluate")
+	require.NoError(t, err)
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	require.ErrorContains(t, err, "data did not contain foo", "should have failed the evaluation")
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "data did not contain foo")
+	assert.Equal(t, []any{"data did not contain foo"}, res.Output)
+}
+
+func TestEvaluatorConstraintWithOutput(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+messages = ["one", "two"]
+violations[{"msg": msg}] {
+    msg := messages[_]
+}
+
+output := {"messages_len": 2, "messages": messages}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "evaluation failure: Evaluation failures: \n - one\n - two")
+	assert.Equal(t,
+		map[string]any{"messages_len": json.Number("2"), "messages": []any{"one", "two"}},
+		res.Output)
 }
 
 func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
@@ -159,15 +378,122 @@ violations[{"msg": msg}] {
 
 	emptyPol := map[string]any{}
 
-	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data":  "foo",
 			"datum": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
-	require.ErrorContains(t, err, "- data should not contain foo\n")
-	require.ErrorContains(t, err, "- datum should not contain bar")
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorContains(t, err, "- data should not contain foo\n")
+	assert.ErrorContains(t, err, "- datum should not contain bar")
+	assert.Equal(t, []any{"data should not contain foo", "datum should not contain bar"}, res.Output)
+}
+
+func TestEvaluatorConstraintWrongType(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+violations := {"msg": "I forgot the list"}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "evaluation failure: unable to get violations array, found map[string]interface {}")
+}
+
+func TestEvaluatorConstraintWrongTypeInArray(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+violations[msg] {
+  msg := "I forgot the list"
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "wrong type for violation: string")
+}
+
+func TestEvaluatorConstraintWrongKeyInMap(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+violations[{"problem": msg}] {
+  msg := "this is the wrong key!"
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "missing msg in details")
+}
+
+func TestEvaluatorConstraintWrongTypeInObject(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+violations[{"msg": msg}] {
+  msg := {"detail": "this is the wrong key!"}
+}
+`,
+		},
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{"data": "foo"},
+	})
+
+	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorContains(t, err, "msg is not a string")
 }
 
 // Evaluates a simple query against a simple profile
@@ -244,13 +570,14 @@ violations[{"msg": msg}] {
 	require.NoError(t, err, "could not evaluate")
 
 	// Doesn't match
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
+	res, err := e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": "bar",
 		},
 	})
 	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "data did not match profile: foo", "should have failed the evaluation")
+	assert.Equal(t, []any{"data did not match profile: foo"}, res.Output)
 }
 
 const (
@@ -285,7 +612,7 @@ format_message(difference, format) = msg {
 func TestConstraintsJSONOutput(t *testing.T) {
 	t.Parallel()
 
-	violationFormat := rego.ConstraintsViolationsOutputJSON.String()
+	violationFormat := rego.OutputJSON.String()
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type:            rego.ConstraintsEvaluationType.String(),
@@ -317,19 +644,19 @@ func TestConstraintsJSONOutput(t *testing.T) {
 	assert.Contains(t, errDetails[0].ActionsNotAllowed, "baz", "should have baz in the result")
 
 	// check that result is a list with a single element
-	outputList, ok := evalResult.Output.([]map[string]interface{})
-	require.True(t, ok, "evaluation result output should be a list")
+	outputList, ok := evalResult.Output.([]any)
+	require.True(t, ok, "evaluation result output should be a list, got %+T", evalResult.Output)
 
 	assert.Len(t, outputList, 1, "evaluation result should have one element")
 
 	assert.Contains(t, outputList[0], "actions_not_allowed", "evaluation result should contain actions_not_allowed key")
-	assert.Contains(t, outputList[0]["actions_not_allowed"], "baz", "evaluation result should contain baz")
+	assert.Contains(t, outputList[0].(map[string]any)["actions_not_allowed"], "baz", "evaluation result should contain baz")
 }
 
 func TestConstraintsJSONFalback(t *testing.T) {
 	t.Parallel()
 
-	violationFormat := rego.ConstraintsViolationsOutputJSON.String()
+	violationFormat := rego.OutputJSON.String()
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type:            rego.ConstraintsEvaluationType.String(),
@@ -367,6 +694,7 @@ violations[{"msg": msg}] {
 
 	// check that result is a list with a single element
 	assert.Len(t, evalResult.Output, 1, "evaluation result should have one element")
+	assert.Equal(t, []any{map[string]any{"msg": "data did not match profile: foo"}}, evalResult.Output)
 }
 
 func TestOutputTypePassedIntoRule(t *testing.T) {
@@ -384,7 +712,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		"data": []string{"one", "two"},
 	}
 
-	_, err = e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
+	res, err := e.Eval(context.Background(), pol, nil, &interfaces.Ingested{
 		Object: map[string]any{
 			"data": []string{"two", "three"},
 		},
@@ -395,6 +723,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 	errmsg := engerrors.ErrorAsEvalDetails(err)
 	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
 	assert.Contains(t, errmsg, "three", "should have the expected content")
+	assert.Equal(t, []any{`extra actions found in workflows but not allowed in the profile: ["three"]`}, res.Output)
 }
 
 func TestCantCreateEvaluatorWithInvalidConfig(t *testing.T) {
@@ -469,6 +798,7 @@ violations[{"msg": msg}] {
 	_, err = e.Eval(context.Background(), map[string]any{}, nil,
 		&interfaces.Ingested{Object: map[string]any{}})
 	assert.Error(t, err, "should have failed to evaluate")
+	assert.ErrorContains(t, err, "rego_compile_error: variables must not shadow input (use a different variable name)")
 }
 
 func TestCustomDatasourceRegister(t *testing.T) {

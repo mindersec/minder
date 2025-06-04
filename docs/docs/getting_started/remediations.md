@@ -13,7 +13,7 @@ remediate it, bringing it back into compliance.
 ## Prerequisites
 
 Before you can enable automatic remediations, you need to
-[add rule types](first_profile#adding-rule-types).
+[add rule types](first_profile#add-rule-types).
 
 ## Enabling automatic remediation
 
