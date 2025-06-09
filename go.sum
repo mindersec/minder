@@ -57,8 +57,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 cloud.google.com/go/storage v1.50.0 h1:3TbVkzTooBvnZsk7WaAQfOsNrdoM8QHusXA1cpk6QJs=
 cloud.google.com/go/storage v1.50.0/go.mod h1:l7XeiD//vx5lfqE3RavfmU9yvk5Pp0Zhcv482poyafY=
-dario.cat/mergo v1.0.1 h1:Ra4+bf83h2ztPIQYNP99R6m+Y7KfnARDfID+a+vLl4s=
-dario.cat/mergo v1.0.1/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
+dario.cat/mergo v1.0.2 h1:85+piFYR1tMbRrLcDwR18y4UKJ3aH1Tbzi24VRW1TK8=
+dario.cat/mergo v1.0.2/go.mod h1:E/hbnu0NxMFBjpMIE34DRGLWqDy0g5FuKDhCb31ngxA=
 deps.dev/api/v3 v3.0.0-20250307021655-d811e36f9cad h1:eBGvlhIacSTSCIyylfzAo0tEBUNNGE8HVbOwnUG79XI=
 deps.dev/api/v3 v3.0.0-20250307021655-d811e36f9cad/go.mod h1:o6PwfRErnKxbT8Sdij64ZMiTqMNxPsYwfymiyjXPh7A=
 deps.dev/util/maven v0.0.0-20250307021655-d811e36f9cad h1:ei3Dw2a5LRHnFN7sqr7JYQUs7ByGcrM933pDMiJ/lkg=
