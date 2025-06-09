@@ -27,6 +27,8 @@ const (
 	PullRequestCommitSHA = "commit_sha"
 	// PullRequestBaseCloneURL represents the clone URL of the base repository
 	PullRequestBaseCloneURL = "base_clone_url"
+	// PullRequestBaseBranch represents the target branch of the base repository for pull requests
+	PullRequestBaseBranch = "base_branch"
 	// PullRequestBaseDefaultBranch represents the default branch of the base repository
 	PullRequestBaseDefaultBranch = "base_default_branch"
 	// PullRequestTargetCloneURL represents the clone URL of the target repository.

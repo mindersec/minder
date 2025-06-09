@@ -15,7 +15,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // MixedScriptsEvaluator is the evaluator for the mixed scripts rule type
@@ -27,7 +26,7 @@ type MixedScriptsEvaluator struct {
 // NewMixedScriptEvaluator creates a new mixed scripts evaluator
 func NewMixedScriptEvaluator(
 	ctx context.Context,
-	ghClient provifv1.GitHub,
+	ghClient interfaces.GitHubIssuePRClient,
 	opts ...eoptions.Option,
 ) (*MixedScriptsEvaluator, error) {
 	msProcessor, err := domain.NewMixedScriptsProcessor(ctx)

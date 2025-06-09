@@ -50,20 +50,6 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 	return m.recorder
 }
 
-// CanImplement mocks base method.
-func (m *MockProvider) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockProviderMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockProvider)(nil).CanImplement), trait)
-}
-
 // DeregisterEntity mocks base method.
 func (m *MockProvider) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -91,21 +77,6 @@ func (m *MockProvider) FetchAllProperties(ctx context.Context, getByProps *prope
 func (mr *MockProviderMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockProvider)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockProvider) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockProviderMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockProvider)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetEntityName mocks base method.
@@ -153,20 +124,6 @@ func (mr *MockProviderMockRecorder) RegisterEntity(ctx, entType, props any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockProvider)(nil).RegisterEntity), ctx, entType, props)
 }
 
-// ReregisterEntity mocks base method.
-func (m *MockProvider) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockProviderMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockProvider)(nil).ReregisterEntity), ctx, entType, props)
-}
-
 // SupportsEntity mocks base method.
 func (m *MockProvider) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -203,20 +160,6 @@ func NewMockGit(ctrl *gomock.Controller) *MockGit {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockGit) EXPECT() *MockGitMockRecorder {
 	return m.recorder
-}
-
-// CanImplement mocks base method.
-func (m *MockGit) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockGitMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockGit)(nil).CanImplement), trait)
 }
 
 // Clone mocks base method.
@@ -261,21 +204,6 @@ func (m *MockGit) FetchAllProperties(ctx context.Context, getByProps *properties
 func (mr *MockGitMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockGit)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockGit) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockGitMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockGit)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetEntityName mocks base method.
@@ -323,20 +251,6 @@ func (mr *MockGitMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGit)(nil).RegisterEntity), ctx, entType, props)
 }
 
-// ReregisterEntity mocks base method.
-func (m *MockGit) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockGitMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockGit)(nil).ReregisterEntity), ctx, entType, props)
-}
-
 // SupportsEntity mocks base method.
 func (m *MockGit) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -373,20 +287,6 @@ func NewMockREST(ctrl *gomock.Controller) *MockREST {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockREST) EXPECT() *MockRESTMockRecorder {
 	return m.recorder
-}
-
-// CanImplement mocks base method.
-func (m *MockREST) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockRESTMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockREST)(nil).CanImplement), trait)
 }
 
 // DeregisterEntity mocks base method.
@@ -431,21 +331,6 @@ func (m *MockREST) FetchAllProperties(ctx context.Context, getByProps *propertie
 func (mr *MockRESTMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockREST)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockREST) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockRESTMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockREST)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetBaseURL mocks base method.
@@ -522,20 +407,6 @@ func (mr *MockRESTMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockREST)(nil).RegisterEntity), ctx, entType, props)
 }
 
-// ReregisterEntity mocks base method.
-func (m *MockREST) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockRESTMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockREST)(nil).ReregisterEntity), ctx, entType, props)
-}
-
 // SupportsEntity mocks base method.
 func (m *MockREST) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -574,20 +445,6 @@ func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
 	return m.recorder
 }
 
-// CanImplement mocks base method.
-func (m *MockRepoLister) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockRepoListerMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockRepoLister)(nil).CanImplement), trait)
-}
-
 // DeregisterEntity mocks base method.
 func (m *MockRepoLister) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -615,21 +472,6 @@ func (m *MockRepoLister) FetchAllProperties(ctx context.Context, getByProps *pro
 func (mr *MockRepoListerMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockRepoLister)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockRepoLister) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockRepoListerMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockRepoLister)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetEntityName mocks base method.
@@ -690,20 +532,6 @@ func (m *MockRepoLister) RegisterEntity(ctx context.Context, entType v10.Entity,
 func (mr *MockRepoListerMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockRepoLister)(nil).RegisterEntity), ctx, entType, props)
-}
-
-// ReregisterEntity mocks base method.
-func (m *MockRepoLister) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockRepoListerMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockRepoLister)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.
@@ -833,20 +661,6 @@ func (m *MockGitHub) AddAuthToPushOptions(ctx context.Context, options *git.Push
 func (mr *MockGitHubMockRecorder) AddAuthToPushOptions(ctx, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAuthToPushOptions", reflect.TypeOf((*MockGitHub)(nil).AddAuthToPushOptions), ctx, options)
-}
-
-// CanImplement mocks base method.
-func (m *MockGitHub) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockGitHubMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockGitHub)(nil).CanImplement), trait)
 }
 
 // Clone mocks base method.
@@ -1054,21 +868,6 @@ func (m *MockGitHub) FetchAllProperties(ctx context.Context, getByProps *propert
 func (mr *MockGitHubMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockGitHub)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockGitHub) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockGitHubMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockGitHub)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetArtifactVersions mocks base method.
@@ -1458,20 +1257,6 @@ func (mr *MockGitHubMockRecorder) RegisterEntity(ctx, entType, props any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockGitHub)(nil).RegisterEntity), ctx, entType, props)
 }
 
-// ReregisterEntity mocks base method.
-func (m *MockGitHub) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockGitHubMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockGitHub)(nil).ReregisterEntity), ctx, entType, props)
-}
-
 // SetCommitStatus mocks base method.
 func (m *MockGitHub) SetCommitStatus(arg0 context.Context, arg1, arg2, arg3 string, arg4 *github.RepoStatus) (*github.RepoStatus, error) {
 	m.ctrl.T.Helper()
@@ -1598,20 +1383,6 @@ func (m *MockImageLister) EXPECT() *MockImageListerMockRecorder {
 	return m.recorder
 }
 
-// CanImplement mocks base method.
-func (m *MockImageLister) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockImageListerMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockImageLister)(nil).CanImplement), trait)
-}
-
 // DeregisterEntity mocks base method.
 func (m *MockImageLister) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -1639,21 +1410,6 @@ func (m *MockImageLister) FetchAllProperties(ctx context.Context, getByProps *pr
 func (mr *MockImageListerMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockImageLister)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockImageLister) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockImageListerMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockImageLister)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetEntityName mocks base method.
@@ -1730,20 +1486,6 @@ func (mr *MockImageListerMockRecorder) RegisterEntity(ctx, entType, props any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockImageLister)(nil).RegisterEntity), ctx, entType, props)
 }
 
-// ReregisterEntity mocks base method.
-func (m *MockImageLister) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockImageListerMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockImageLister)(nil).ReregisterEntity), ctx, entType, props)
-}
-
 // SupportsEntity mocks base method.
 func (m *MockImageLister) SupportsEntity(entType v10.Entity) bool {
 	m.ctrl.T.Helper()
@@ -1782,20 +1524,6 @@ func (m *MockOCI) EXPECT() *MockOCIMockRecorder {
 	return m.recorder
 }
 
-// CanImplement mocks base method.
-func (m *MockOCI) CanImplement(trait v10.ProviderType) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CanImplement", trait)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// CanImplement indicates an expected call of CanImplement.
-func (mr *MockOCIMockRecorder) CanImplement(trait any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanImplement", reflect.TypeOf((*MockOCI)(nil).CanImplement), trait)
-}
-
 // DeregisterEntity mocks base method.
 func (m *MockOCI) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -1823,21 +1551,6 @@ func (m *MockOCI) FetchAllProperties(ctx context.Context, getByProps *properties
 func (mr *MockOCIMockRecorder) FetchAllProperties(ctx, getByProps, entType, cachedProps any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchAllProperties", reflect.TypeOf((*MockOCI)(nil).FetchAllProperties), ctx, getByProps, entType, cachedProps)
-}
-
-// FetchProperty mocks base method.
-func (m *MockOCI) FetchProperty(ctx context.Context, getByProps *properties.Properties, entType v10.Entity, key string) (*properties.Property, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FetchProperty", ctx, getByProps, entType, key)
-	ret0, _ := ret[0].(*properties.Property)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FetchProperty indicates an expected call of FetchProperty.
-func (mr *MockOCIMockRecorder) FetchProperty(ctx, getByProps, entType, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchProperty", reflect.TypeOf((*MockOCI)(nil).FetchProperty), ctx, getByProps, entType, key)
 }
 
 // GetArtifactVersions mocks base method.
@@ -1944,21 +1657,6 @@ func (mr *MockOCIMockRecorder) GetRegistry() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegistry", reflect.TypeOf((*MockOCI)(nil).GetRegistry))
 }
 
-// ListTags mocks base method.
-func (m *MockOCI) ListTags(ctx context.Context, name string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTags", ctx, name)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListTags indicates an expected call of ListTags.
-func (mr *MockOCIMockRecorder) ListTags(ctx, name any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockOCI)(nil).ListTags), ctx, name)
-}
-
 // PropertiesToProtoMessage mocks base method.
 func (m *MockOCI) PropertiesToProtoMessage(entType v10.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error) {
 	m.ctrl.T.Helper()
@@ -1987,20 +1685,6 @@ func (m *MockOCI) RegisterEntity(ctx context.Context, entType v10.Entity, props 
 func (mr *MockOCIMockRecorder) RegisterEntity(ctx, entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEntity", reflect.TypeOf((*MockOCI)(nil).RegisterEntity), ctx, entType, props)
-}
-
-// ReregisterEntity mocks base method.
-func (m *MockOCI) ReregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReregisterEntity", ctx, entType, props)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ReregisterEntity indicates an expected call of ReregisterEntity.
-func (mr *MockOCIMockRecorder) ReregisterEntity(ctx, entType, props any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReregisterEntity", reflect.TypeOf((*MockOCI)(nil).ReregisterEntity), ctx, entType, props)
 }
 
 // SupportsEntity mocks base method.

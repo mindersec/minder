@@ -17,7 +17,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/ingester/rest"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // test that the ingester implementations implements the interface
@@ -25,10 +24,13 @@ import (
 var _ interfaces.Ingester = (*artifact.Ingest)(nil)
 var _ interfaces.Ingester = (*builtin.RuleDataIngest)(nil)
 var _ interfaces.Ingester = (*rest.Ingestor)(nil)
+var _ interfaces.Ingester = (*git.Git)(nil)
+var _ interfaces.Ingester = (*diff.Diff)(nil)
+var _ interfaces.Ingester = (*deps.Deps)(nil)
 
 // NewRuleDataIngest creates a new rule data ingest based no the given rule
 // type definition.
-func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces.Ingester, error) {
+func NewRuleDataIngest(rt *pb.RuleType, provider interfaces.Provider) (interfaces.Ingester, error) {
 	ing := rt.Def.GetIngest()
 
 	switch ing.GetType() {
@@ -36,7 +38,7 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces
 		if rt.Def.Ingest.GetRest() == nil {
 			return nil, fmt.Errorf("rule type engine missing rest configuration")
 		}
-		client, err := provinfv1.As[provinfv1.REST](provider)
+		client, err := interfaces.As[interfaces.RESTProvider](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement rest trait")
 		}
@@ -55,19 +57,19 @@ func NewRuleDataIngest(rt *pb.RuleType, provider provinfv1.Provider) (interfaces
 		return artifact.NewArtifactDataIngest(provider)
 
 	case git.GitRuleDataIngestType:
-		client, err := provinfv1.As[provinfv1.Git](provider)
+		client, err := interfaces.As[interfaces.GitProvider](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement git trait")
 		}
 		return git.NewGitIngester(ing.GetGit(), client)
 	case diff.DiffRuleDataIngestType:
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := interfaces.As[interfaces.GitHubListAndClone](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return diff.NewDiffIngester(ing.GetDiff(), client)
 	case deps.DepsRuleDataIngestType:
-		client, err := provinfv1.As[provinfv1.Git](provider)
+		client, err := interfaces.As[interfaces.GitProvider](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement git trait")
 		}

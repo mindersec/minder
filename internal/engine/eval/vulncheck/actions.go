@@ -12,7 +12,6 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type prStatusHandler interface {
@@ -29,7 +28,7 @@ func newPrStatusHandler(
 	ctx context.Context,
 	action pr_actions.Action,
 	pr *pbinternal.PullRequest,
-	client provifv1.GitHub,
+	client GitHubRESTAndPRClient,
 ) (prStatusHandler, error) {
 	switch action {
 	case pr_actions.ActionReviewPr:

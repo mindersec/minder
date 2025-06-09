@@ -22,7 +22,6 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -46,7 +45,7 @@ type ingestorFallback struct {
 // Ingestor is the engine for a rule type that uses REST data ingest
 type Ingestor struct {
 	restCfg          *pb.RestType
-	cli              provifv1.REST
+	cli              interfaces.RESTProvider
 	endpointTemplate *util.SafeTemplate
 	method           string
 	fallback         []ingestorFallback
@@ -55,7 +54,7 @@ type Ingestor struct {
 // NewRestRuleDataIngest creates a new REST rule data ingest engine
 func NewRestRuleDataIngest(
 	restCfg *pb.RestType,
-	cli provifv1.REST,
+	cli interfaces.RESTProvider,
 ) (*Ingestor, error) {
 	if len(restCfg.Endpoint) == 0 {
 		return nil, fmt.Errorf("missing endpoint")

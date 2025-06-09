@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	gitlab "gitlab.com/gitlab-org/api/client-go"
 
@@ -119,6 +118,7 @@ func gitlabMergeRequestToProperties(
 		properties.PropertyName:                 formatPullRequestName(ns, projName, FormatPullRequestUpstreamID(mr.IID)),
 		properties.PullRequestCommitSHA:         mr.SHA,
 		properties.PullRequestBaseCloneURL:      proj.HTTPURLToRepo,
+		properties.PullRequestBaseBranch:        mr.TargetBranch,
 		properties.PullRequestBaseDefaultBranch: mr.TargetBranch,
 		properties.PullRequestTargetCloneURL:    targetproj.HTTPURLToRepo,
 		properties.PullRequestTargetBranch:      mr.SourceBranch,
@@ -140,9 +140,9 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.Pu
 		return nil, fmt.Errorf("failed to get upstream ID: %w", err)
 	}
 
-	iid, err := getStringProp(prProps, PullRequestNumber)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get merge request number: %w", err)
+	id := prProps.GetProperty(PullRequestNumber).GetInt64()
+	if id == 0 {
+		return nil, fmt.Errorf("failed to get merge request number: %w", provifv1.ErrEntityNotFound)
 	}
 
 	ns, err := getStringProp(prProps, RepoPropertyNamespace)
@@ -174,12 +174,6 @@ func pullRequestV1FromProperties(prProps *properties.Properties) (*pbinternal.Pu
 	targetcloneurl := prProps.GetProperty(properties.PullRequestTargetCloneURL).GetString()
 	basebranch := prProps.GetProperty(properties.PullRequestBaseDefaultBranch).GetString()
 	targetbranch := prProps.GetProperty(properties.PullRequestTargetBranch).GetString()
-
-	// parse UpstreamID to int64
-	id, err := strconv.ParseInt(iid, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse upstream ID: %w", err)
-	}
 
 	pbPR := &pbinternal.PullRequest{
 		Number:         id,

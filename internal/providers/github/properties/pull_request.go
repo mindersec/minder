@@ -160,23 +160,24 @@ func getPrWrapper(
 		properties.PropertyName:                 fmt.Sprintf("%s/%s/%d", owner, name, intId),
 		properties.PullRequestCommitSHA:         prReply.GetHead().GetSHA(),
 		properties.PullRequestBaseCloneURL:      prReply.GetBase().GetRepo().GetCloneURL(),
+		properties.PullRequestBaseBranch:        prReply.GetBase().GetRef(),
 		properties.PullRequestBaseDefaultBranch: prReply.GetBase().GetRepo().GetDefaultBranch(),
 		properties.PullRequestTargetCloneURL:    prReply.GetHead().GetRepo().GetCloneURL(),
 		properties.PullRequestTargetBranch:      prReply.GetHead().GetRef(),
 		properties.PullRequestUpstreamURL:       prReply.GetHTMLURL(),
-		// github-specific
-		PullPropertyURL: prReply.GetHTMLURL(),
+		// github-specific (mostly legacy, prefer common properties) above where supported.
+		PullPropertyURL: prReply.GetHTMLURL(), // prefer upstream_url
 		// our proto representation uses int64 for the number but GH uses int
 		PullPropertyNumber:         int64(prReply.GetNumber()),
-		PullPropertySha:            prReply.GetHead().GetSHA(),
+		PullPropertySha:            prReply.GetHead().GetSHA(), // prefer commit_sha
 		PullPropertyRepoOwner:      owner,
 		PullPropertyRepoName:       name,
 		PullPropertyAuthorID:       prReply.GetUser().GetID(),
 		PullPropertyAuthorLogin:    prReply.GetUser().GetLogin(),
-		PullPropertyBaseCloneURL:   prReply.GetBase().GetRepo().GetCloneURL(),
-		PullPropertyTargetCloneURL: prReply.GetHead().GetRepo().GetCloneURL(),
-		PullPropertyBaseRef:        prReply.GetBase().GetRef(),
-		PullPropertyTargetRef:      prReply.GetHead().GetRef(),
+		PullPropertyBaseCloneURL:   prReply.GetBase().GetRepo().GetCloneURL(), // prefer base_clone_url
+		PullPropertyTargetCloneURL: prReply.GetHead().GetRepo().GetCloneURL(), // prefer target_clone_url
+		PullPropertyBaseRef:        prReply.GetBase().GetRef(),                // prefer base_branch
+		PullPropertyTargetRef:      prReply.GetHead().GetRef(),                // prefer target_branch
 	}
 
 	return prProps, nil
@@ -201,17 +202,17 @@ func getPrWrapperAttrsFromProps(props *properties.Properties) (string, string, i
 // PullRequestV1FromProperties creates a PullRequestV1 from a properties object
 func PullRequestV1FromProperties(props *properties.Properties) (*pbinternal.PullRequest, error) {
 	return &pbinternal.PullRequest{
-		Url:            props.GetProperty(PullPropertyURL).GetString(),
-		CommitSha:      props.GetProperty(PullPropertySha).GetString(),
-		TargetRef:      props.GetProperty(PullPropertyTargetRef).GetString(),
-		BaseRef:        props.GetProperty(PullPropertyBaseRef).GetString(),
+		Url:            props.GetProperty(properties.PullRequestUpstreamURL).GetString(),
+		CommitSha:      props.GetProperty(properties.PullRequestCommitSHA).GetString(),
+		TargetRef:      props.GetProperty(properties.PullRequestTargetBranch).GetString(),
+		BaseRef:        props.GetProperty(properties.PullRequestBaseBranch).GetString(),
 		Number:         props.GetProperty(PullPropertyNumber).GetInt64(),
 		RepoOwner:      props.GetProperty(PullPropertyRepoOwner).GetString(),
 		RepoName:       props.GetProperty(PullPropertyRepoName).GetString(),
 		AuthorId:       props.GetProperty(PullPropertyAuthorID).GetInt64(),
 		Action:         props.GetProperty(PullPropertyAction).GetString(),
-		BaseCloneUrl:   props.GetProperty(PullPropertyBaseCloneURL).GetString(),
-		TargetCloneUrl: props.GetProperty(PullPropertyTargetCloneURL).GetString(),
+		BaseCloneUrl:   props.GetProperty(properties.PullRequestBaseCloneURL).GetString(),
+		TargetCloneUrl: props.GetProperty(properties.PullRequestTargetCloneURL).GetString(),
 		Properties:     props.ToProtoStruct(),
 	}, nil
 }
