@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog"
 
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 const (
@@ -51,7 +51,7 @@ func countLeadingWhitespace(line string) int {
 
 func locateDepInPr(
 	ctx context.Context,
-	client provifv1.GitHub,
+	client interfaces.RESTProvider,
 	dep *pbinternal.PrDependencies_ContextualDependency,
 	patch patchLocatorFormatter,
 ) (*reviewLocation, error) {
@@ -102,8 +102,15 @@ func reviewBodyWithSuggestion(comment string) string {
 	return fmt.Sprintf("```suggestion\n%s\n```\n", comment)
 }
 
+// GitHubRESTAndPRClient is an interface that combines the needed provider methods.
+type GitHubRESTAndPRClient interface {
+	interfaces.GitHubIssuePRClient
+	interfaces.RESTProvider
+	interfaces.SelfAwareness
+}
+
 type reviewPrHandler struct {
-	cli provifv1.GitHub
+	cli GitHubRESTAndPRClient
 	pr  *pbinternal.PullRequest
 
 	trackedDeps []dependencyVulnerabilities
@@ -131,7 +138,7 @@ func withVulnsFoundReviewStatus(status *string) reviewPrHandlerOption {
 func newReviewPrHandler(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
-	cli provifv1.GitHub,
+	cli GitHubRESTAndPRClient,
 	opts ...reviewPrHandlerOption,
 ) (*reviewPrHandler, error) {
 	if pr == nil {
@@ -469,7 +476,7 @@ type commitStatusPrHandler struct {
 func newCommitStatusPrHandler(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
-	client provifv1.GitHub,
+	client GitHubRESTAndPRClient,
 ) (prStatusHandler, error) {
 	// create a reviewPrHandler and embed it in the commitStatusPrHandler
 	rph, err := newReviewPrHandler(
@@ -529,7 +536,7 @@ func (csh *commitStatusPrHandler) setCommitStatus(
 
 // summaryPrHandler is a prStatusHandler that adds a summary text to the PR as a comment.
 type summaryPrHandler struct {
-	cli provifv1.GitHub
+	cli interfaces.GitHubIssuePRClient
 	pr  *pbinternal.PullRequest
 
 	logger      zerolog.Logger
@@ -577,7 +584,7 @@ func (sph *summaryPrHandler) submit(ctx context.Context) error {
 func newSummaryPrHandler(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
-	cli provifv1.GitHub,
+	cli interfaces.GitHubIssuePRClient,
 ) *summaryPrHandler {
 	logger := zerolog.Ctx(ctx).With().
 		Int64("pull-number", pr.Number).

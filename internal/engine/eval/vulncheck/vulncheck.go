@@ -20,7 +20,6 @@ import (
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -30,7 +29,7 @@ const (
 
 // Evaluator is the vulncheck evaluator
 type Evaluator struct {
-	cli          provifv1.GitHub
+	cli          GitHubRESTAndPRClient
 	featureFlags flags.Interface
 }
 
@@ -45,7 +44,7 @@ func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
 
 // NewVulncheckEvaluator creates a new vulncheck evaluator
 func NewVulncheckEvaluator(
-	ghcli provifv1.GitHub,
+	ghcli GitHubRESTAndPRClient,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	if ghcli == nil {

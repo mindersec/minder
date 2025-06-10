@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	// ErrNotIngeserOverridden is returned when a provider trait is not overridden.
-	ErrNotIngeserOverridden = errors.New("ingester not overridden")
+	// ErrNotIngesterOverridden is returned when a provider trait is not overridden.
+	ErrNotIngesterOverridden = errors.New("ingester not overridden")
 )
 
 // Ensure that TestKit implements the Provider interface
@@ -76,5 +76,5 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 // This will later be overridden by the actual implementation.
 func (*TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
 	// Note that this should not be called. If it is, it means that the ingester has not been overridden.
-	return nil, ErrNotIngeserOverridden
+	return nil, ErrNotIngesterOverridden
 }

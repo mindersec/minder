@@ -37,7 +37,7 @@ const (
 // Deps is the engine for a rule type that uses deps data ingest
 type Deps struct {
 	cfg       *pb.DepsType
-	gitprov   provifv1.Git
+	gitprov   interfaces.GitProvider
 	extractor mdeps.Extractor
 }
 
@@ -62,7 +62,7 @@ const (
 )
 
 // NewDepsIngester creates a new deps rule data ingest engine
-func NewDepsIngester(cfg *pb.DepsType, gitprov provifv1.Git) (*Deps, error) {
+func NewDepsIngester(cfg *pb.DepsType, gitprov interfaces.GitProvider) (*Deps, error) {
 	if gitprov == nil {
 		return nil, fmt.Errorf("provider is nil")
 	}

@@ -31,7 +31,6 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -43,14 +42,14 @@ const (
 
 // Diff is the diff rule data ingest engine
 type Diff struct {
-	cli provifv1.GitHub
+	cli interfaces.GitHubListAndClone
 	cfg *pb.DiffType
 }
 
 // NewDiffIngester creates a new diff ingester
 func NewDiffIngester(
 	cfg *pb.DiffType,
-	cli provifv1.GitHub,
+	cli interfaces.GitHubListAndClone,
 ) (*Diff, error) {
 	if cfg == nil {
 		cfg = &pb.DiffType{}
@@ -77,8 +76,6 @@ func (di *Diff) GetConfig() protoreflect.ProtoMessage {
 }
 
 // Ingest ingests a diff from a pull request in accordance with its type
-//
-//nolint:gocyclo
 func (di *Diff) Ingest(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,

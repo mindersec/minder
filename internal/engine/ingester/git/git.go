@@ -33,11 +33,11 @@ const (
 // Git is the engine for a rule type that uses git data ingest
 type Git struct {
 	cfg     *pb.GitType
-	gitprov provifv1.Git
+	gitprov interfaces.GitProvider
 }
 
 // NewGitIngester creates a new git rule data ingest engine
-func NewGitIngester(cfg *pb.GitType, gitprov provifv1.Git) (*Git, error) {
+func NewGitIngester(cfg *pb.GitType, gitprov interfaces.GitProvider) (*Git, error) {
 	if gitprov == nil {
 		return nil, fmt.Errorf("provider is nil")
 	}

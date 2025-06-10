@@ -38,7 +38,7 @@ const (
 // Ingest is the engine for a rule type that uses artifact data ingest
 // Implements enginer.ingester.Ingester
 type Ingest struct {
-	prov provifv1.Provider
+	prov interfaces.Provider
 
 	// artifactVerifier is the verifier for sigstore. It's only used in the Ingest method
 	// but we store it in the Ingest structure to allow tests to set a custom artifactVerifier
@@ -62,7 +62,7 @@ type verifiedAttestation struct {
 }
 
 // NewArtifactDataIngest creates a new artifact rule data ingest engine
-func NewArtifactDataIngest(prov provifv1.Provider) (*Ingest, error) {
+func NewArtifactDataIngest(prov interfaces.Provider) (*Ingest, error) {
 	return &Ingest{
 		prov: prov,
 	}, nil
@@ -124,7 +124,7 @@ func (i *Ingest) getApplicableArtifactVersions(
 		return nil, err
 	}
 
-	vers, err := getVersioner(i.prov)
+	vers, err := interfaces.As[provifv1.ArtifactProvider](i.prov)
 	if err != nil {
 		return nil, err
 	}
@@ -247,17 +247,9 @@ func getVerifier(i *Ingest, cfg *ingesterConfig) (verifyif.ArtifactVerifier, err
 	}
 
 	verifieropts := []container.AuthMethod{}
-	if i.prov.CanImplement(pb.ProviderType_PROVIDER_TYPE_GITHUB) {
-		ghcli, err := provifv1.As[provifv1.GitHub](i.prov)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get github provider from provider configuration")
-		}
+	if ghcli, err := interfaces.As[provifv1.GitHub](i.prov); err == nil {
 		verifieropts = append(verifieropts, container.WithGitHubClient(ghcli))
-	} else if i.prov.CanImplement(pb.ProviderType_PROVIDER_TYPE_OCI) {
-		ocicli, err := provifv1.As[provifv1.OCI](i.prov)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get oci provider from provider configuration")
-		}
+	} else if ocicli, err := interfaces.As[provifv1.OCI](i.prov); err == nil {
 		cauthn, err := ocicli.GetAuthenticator()
 		if err != nil {
 			return nil, fmt.Errorf("unable to get oci authenticator: %w", err)
@@ -367,13 +359,4 @@ func signerIdentityFromCertificate(c *certificate.Summary) (string, error) {
 	builderURL = strings.TrimPrefix(builderURL, c.SourceRepositoryURI)
 
 	return builderURL, nil
-}
-
-func getVersioner(prov provifv1.Provider) (provifv1.ArtifactProvider, error) {
-	ap, ok := prov.(provifv1.ArtifactProvider)
-	if !ok {
-		return nil, fmt.Errorf("provider does not implement ArtifactProvider")
-	}
-
-	return ap, nil
 }

@@ -14,14 +14,14 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/util"
 	pbinternal "github.com/mindersec/minder/internal/proto"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 // GhReviewPrHandler is a GitHub pull request review handler
 type GhReviewPrHandler struct {
 	logger zerolog.Logger
 
-	ghClient provifv1.GitHub
+	ghClient interfaces.GitHubIssuePRClient
 	pr       *pbinternal.PullRequest
 
 	minderReview *github.PullRequestReview
@@ -29,7 +29,7 @@ type GhReviewPrHandler struct {
 }
 
 // NewGhReviewPrHandler creates a new GitHub pull request review handler
-func NewGhReviewPrHandler(ghClient provifv1.GitHub) *GhReviewPrHandler {
+func NewGhReviewPrHandler(ghClient interfaces.GitHubIssuePRClient) *GhReviewPrHandler {
 	return &GhReviewPrHandler{
 		ghClient: ghClient,
 	}

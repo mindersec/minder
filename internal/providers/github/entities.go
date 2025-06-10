@@ -108,9 +108,6 @@ func (c *GitHub) RegisterEntity(
 		ghprop.RepoPropertyHookName: webhook.GetName(),
 		ghprop.RepoPropertyHookType: webhook.GetType(),
 	})
-	if err != nil {
-		return nil, fmt.Errorf("error creating webhook properties: %w", err)
-	}
 
 	return props.Merge(whprops), nil
 }
