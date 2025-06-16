@@ -50,7 +50,7 @@ require (
 	github.com/nats-io/nats-server/v2 v2.10.27
 	github.com/nats-io/nats.go v1.39.1
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/olekukonko/tablewriter v0.0.5
+	github.com/olekukonko/tablewriter v1.0.7
 	github.com/open-feature/go-sdk v1.14.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
 	github.com/open-policy-agent/opa v1.4.2
@@ -236,6 +236,8 @@ require (
 	github.com/nikunjy/rules v1.5.0 // indirect
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
+	github.com/olekukonko/errors v0.0.0-20250405072817-4e6d85265da6 // indirect
+	github.com/olekukonko/ll v0.0.8 // indirect
 	github.com/opencontainers/runtime-spec v1.2.0 // indirect
 	github.com/opencontainers/selinux v1.11.1 // indirect
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // indirect
