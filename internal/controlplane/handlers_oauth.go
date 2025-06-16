@@ -175,11 +175,17 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		if gitHubAppConfig == nil || gitHubAppConfig.AppName == "" {
 			return nil, status.Errorf(codes.Internal, "error getting GitHub App config: %s", err)
 		}
-		authorizationURL = fmt.Sprintf("%s/apps/%v/installations/new?state=%v", githubURL, gitHubAppConfig.AppName, state)
-		_, err := url.Parse(authorizationURL)
+		params := url.Values{
+			"state":        []string{state},
+			"redirect_uri": []string{gitHubAppConfig.RedirectURI},
+		}
+		authorizationURL = fmt.Sprintf("%s/apps/%v/installations/new", githubURL, gitHubAppConfig.AppName)
+		asURL, err := url.Parse(authorizationURL)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error parsing URL: %s", err)
 		}
+		asURL.RawQuery = params.Encode()
+		authorizationURL = asURL.String()
 	} else if slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
 		authorizationURL = oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	}
