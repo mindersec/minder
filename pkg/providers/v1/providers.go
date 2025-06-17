@@ -37,17 +37,10 @@ var ErrEntityNotFound = errors.New("entity not found")
 
 // Provider is the general interface for all providers
 type Provider interface {
-	// CanImplement returns true/false depending on whether the Provider
-	// can implement the specified trait
-	CanImplement(trait minderv1.ProviderType) bool
-
 	// FetchAllProperties fetches all properties for the given entity
 	FetchAllProperties(
 		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
 	) (*properties.Properties, error)
-	// FetchProperty fetches a single property for the given entity
-	FetchProperty(
-		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, key string) (*properties.Property, error)
 	// GetEntityName forms an entity name from the given properties
 	// The name is used to identify the entity within minder and is how
 	// it will be stored in the database.
@@ -73,15 +66,14 @@ type Provider interface {
 	// (e.g. a webhook is already deleted), then this should not return an error.
 	DeregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
 
-	// ReregisterEntity runs the necessary updates to the entity registration. This could be
-	// updating the webhook URL or secret for a particular repository or artifact. This is useful
-	// for secret rotation.
-	ReregisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) error
-
-	// PropertiesToProtoMessage is the interface for converting properties to a proto message
-	// this is temporary until we can get rid of the typed proto messages in EntityInfoWrapper
-	// and the engine. That's also why we just didn't add the method to the generic Provider
-	// interface.
+	// PropertiesToProtoMessage is the interface for converting properties to an entity-typed
+	// proto message (e.g. Repository, Artifact, etc.).  Different providers may use different
+	// property names for entity fields that are in the entity-specific message (e.g.
+	// github/pull_number vs gitlab/merge_request_number, or github/repo_owner +
+	// github/repo_name vs gitlab/namespace + gitlab/project_name). We hope this is a
+	// transitional state until we can get rid of the typed proto messages in EntityInfoWrapper
+	// and the engine, but for now, each provider may have a custom mapping here for each
+	// supported message type.
 	PropertiesToProtoMessage(entType minderv1.Entity, props *properties.Properties) (protoreflect.ProtoMessage, error)
 }
 
@@ -89,7 +81,8 @@ type Provider interface {
 type Git interface {
 	Provider
 
-	// Clone clones a git repository
+	// Clone clones a git repository.  This provides a full git Repository
+	// which can be used to create new commits, etc.
 	Clone(ctx context.Context, url string, branch string) (*git.Repository, error)
 }
 
@@ -199,10 +192,6 @@ type ImageLister interface {
 type OCI interface {
 	Provider
 	ArtifactProvider
-
-	// ListTags lists the tags available for the given container in the given namespace
-	// for the OCI provider.
-	ListTags(ctx context.Context, name string) ([]string, error)
 
 	// GetDigest returns the digest for the given tag of the given container in the given namespace
 	// for the OCI provider.
