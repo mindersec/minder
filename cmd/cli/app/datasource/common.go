@@ -140,5 +140,7 @@ func appendDataSourcePropertiesToName(ds *minderv1.DataSource) string {
 
 // initializeTableForList initializes the table for listing data sources
 func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.DataSourceList, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Project ID", "ID", "Name", "Description"})
+	// TODO: add automerge common cells (project ID)
 }

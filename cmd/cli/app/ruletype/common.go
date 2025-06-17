@@ -101,12 +101,15 @@ func shouldSkipFile(f string) bool {
 
 // initializeTableForList initializes the table for the rule type
 func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.RuleTypeList, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Project", "ID", "Name", "Description"})
+	// TODO: set automerge common cells
 }
 
 // initializeTableForList initializes the table for the rule type
 func initializeTableForOne() table.Table {
-	return table.New(table.Simple, layouts.RuleTypeOne, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Rule Type", "Details"})
 }
 
 func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {

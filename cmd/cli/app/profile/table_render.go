@@ -36,7 +36,8 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable() table.Table {
-	return table.New(table.Simple, layouts.ProfileSettings, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"ID", "Name", "Alert", "Remediate"})
 }
 
 // RenderProfileSettingsTable renders the profile settings table
@@ -46,7 +47,8 @@ func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
 
 // NewProfileTable creates a new table for rendering profiles
 func NewProfileTable() table.Table {
-	return table.New(table.Simple, layouts.Profile, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"})
 }
 
 // RenderProfileTable renders the profile table
@@ -84,7 +86,8 @@ func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, 
 
 // NewProfileStatusTable creates a new table for rendering profile status
 func NewProfileStatusTable() table.Table {
-	return table.New(table.Simple, layouts.ProfileStatus, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"ID", "Name", "Status", "Last Updated"})
 }
 
 // RenderProfileStatusTable renders the profile status table
@@ -99,7 +102,9 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table) {
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable() table.Table {
-	return table.New(table.Simple, layouts.RuleEvaluations, nil)
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Rule Name", "entity", "Status", "Remediation", "Entity Info"})
+	// TODO: add automerge common cells (name/entity)
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table
