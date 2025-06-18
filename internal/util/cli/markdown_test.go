@@ -27,8 +27,8 @@ func TestRenderMarkdown(t *testing.T) {
 		{
 			name:  "normal",
 			input: "foo",
-			// Output is padded to 80 characters by default
-			expected: fmt.Sprintf("\n  foo %s \n\n", strings.Repeat(" ", 75)),
+			// Output is padded to 76 characters by default
+			expected: fmt.Sprintf("\n  foo%s\n\n", strings.Repeat(" ", 73)),
 		},
 		{
 			name:     "html tags",
@@ -38,7 +38,7 @@ func TestRenderMarkdown(t *testing.T) {
 		{
 			name:     "xss",
 			input:    "Hello <STYLE>.XSS{background-image:url(\"javascript:alert('XSS')\");}</STYLE><A CLASS=XSS></A>World",
-			expected: "\n  Hello .XSS{background-image:url(\"javascript:alert('XSS')\");}World               \n\n",
+			expected: "\n  Hello .XSS{background-image:url(\"javascript:alert('XSS')\");}World           \n\n",
 		},
 		{
 			name:     "script",
@@ -64,8 +64,7 @@ func TestRenderMarkdown(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			res, err := RenderMarkdown(tt.input)
-			require.NoError(t, err)
+			res := RenderMarkdown(tt.input)
 			require.Equal(t, tt.expected, res)
 		})
 	}

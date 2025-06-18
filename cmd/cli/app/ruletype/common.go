@@ -132,7 +132,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 		alert = rt.Def.GetAlert().Type
 	}
 	t.AddRow("Alert", alert)
-	t.AddRow("Guidance", cli.MaybeRenderMarkdown(rt.Guidance))
+	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance))
 }
 
 func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {
