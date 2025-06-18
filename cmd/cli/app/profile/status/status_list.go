@@ -71,7 +71,9 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
 		table.Render()
 		if detailed {
+			fmt.Println()
 			table = profile.NewRuleEvaluationsTable()
+			table.SeparateRows()
 			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table)
 			table.Render()
 		}

@@ -67,6 +67,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 	case app.Table:
 		table := initializeTableForList()
+		table.SeparateRows()
 		for _, rt := range resp.RuleTypes {
 			name := appendRuleTypePropertiesToName(rt)
 			table.AddRow(
