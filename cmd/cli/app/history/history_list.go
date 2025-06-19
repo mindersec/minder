@@ -148,9 +148,12 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 }
 
 func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse) {
-	historyTable := table.New(table.Simple, layouts.EvaluationHistory, nil)
+	historyTable := table.New(table.Simple, layouts.Default,
+		[]string{"Time", "Rule", "Entity", "Status", "Remediation Status", "Alert Status"})
+	// TODO: add automerge common cells
 	renderRuleEvaluationStatusTable(resp.Data, historyTable)
 	historyTable.Render()
+	fmt.Println("")
 	if next := getNext(resp); next != nil {
 		// Ordering is fixed for evaluation history
 		// log and the next page points to older

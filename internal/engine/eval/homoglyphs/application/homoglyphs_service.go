@@ -17,7 +17,6 @@ import (
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -32,7 +31,7 @@ const (
 func NewHomoglyphsEvaluator(
 	ctx context.Context,
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
-	ghClient provifv1.GitHub,
+	ghClient interfaces.GitHubIssuePRClient,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	if ghClient == nil {

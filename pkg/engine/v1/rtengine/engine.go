@@ -20,7 +20,6 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles"
-	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // RuleMeta is the metadata for a rule
@@ -60,7 +59,7 @@ type RuleTypeEngine struct {
 func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
-	provider provinfv1.Provider,
+	provider interfaces.Provider,
 	opts ...eoptions.Option,
 ) (*RuleTypeEngine, error) {
 	if ruletype.Context.GetProject() == "" {

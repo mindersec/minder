@@ -18,14 +18,13 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // NewRuleEvaluator creates a new rule data evaluator
 func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
-	provider provinfv1.Provider,
+	provider interfaces.Provider,
 	opts ...eoptions.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
@@ -34,6 +33,7 @@ func NewRuleEvaluator(
 	}
 
 	// TODO: make this more generic and/or use constants
+	// Note that the JQ and Rego evaluators get the data through ingestion.
 	switch ruletype.Def.Eval.Type {
 	case "jq":
 		if ruletype.Def.Eval.GetJq() == nil {
@@ -43,19 +43,19 @@ func NewRuleEvaluator(
 	case rego.RegoEvalType:
 		return rego.NewRegoEvaluator(e.GetRego(), opts...)
 	case vulncheck.VulncheckEvalType:
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := interfaces.As[vulncheck.GitHubRESTAndPRClient](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return vulncheck.NewVulncheckEvaluator(client, opts...)
 	case trusty.TrustyEvalType:
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement github trait")
 		}
 		return trusty.NewTrustyEvaluator(ctx, client, opts...)
 	case application.HomoglyphsEvalType:
-		client, err := provinfv1.As[provinfv1.GitHub](provider)
+		client, err := interfaces.As[interfaces.GitHubIssuePRClient](provider)
 		if err != nil {
 			return nil, errors.New("provider does not implement git trait")
 		}

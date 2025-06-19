@@ -23,7 +23,6 @@ import (
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -35,7 +34,7 @@ const (
 
 // Evaluator is the trusty evaluator
 type Evaluator struct {
-	cli      provifv1.GitHub
+	cli      interfaces.GitHubIssuePRClient
 	endpoint string
 	client   trusty.Trusty
 }
@@ -43,7 +42,7 @@ type Evaluator struct {
 // NewTrustyEvaluator creates a new trusty evaluator
 func NewTrustyEvaluator(
 	ctx context.Context,
-	ghcli provifv1.GitHub,
+	ghcli interfaces.GitHubIssuePRClient,
 	opts ...eoptions.Option,
 ) (*Evaluator, error) {
 	if ghcli == nil {

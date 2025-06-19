@@ -76,7 +76,7 @@ func ListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 }
 
 func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.RoleList, nil)
+	return table.New(table.Simple, layouts.Default, []string{"Name", "Description"})
 }
 
 func init() {

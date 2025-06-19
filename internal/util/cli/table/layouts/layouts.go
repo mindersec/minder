@@ -1,41 +1,17 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO: retire this entirely in favor of more native lipgloss
+
 // Package layouts defines the available table layouts
 package layouts
-
-import "github.com/olekukonko/tablewriter"
 
 // TableLayout is the type for table layouts
 type TableLayout string
 
 const (
-	// KeyValue is the key value table layout
-	KeyValue TableLayout = "keyvalue"
-	// RuleTypeOne is the rule type table layout
-	RuleTypeOne TableLayout = "ruletype"
-	// RuleTypeList is the rule type table layout
-	RuleTypeList TableLayout = "ruletype_list"
-	// ProfileSettings is the profile settings table layout
-	ProfileSettings TableLayout = "profile_settings"
-	// Profile is the profile table layout
-	Profile TableLayout = "profile"
-	// ProviderList is the provider list table layout
-	ProviderList TableLayout = "provider_list"
-	// RepoList is the repo list table layout
-	RepoList TableLayout = "repolist"
-	// ProfileStatus is the profile status table layout
-	ProfileStatus TableLayout = "profile_status"
-	// RuleEvaluations is the rule evaluations table layout
-	RuleEvaluations TableLayout = "rule_evaluations"
-	// EvaluationHistory is the evaluation history table layout
-	EvaluationHistory TableLayout = "evaluation_history"
-	// RoleList is the roles list table layout
-	RoleList TableLayout = "role_list"
 	// Default is the default table layout
 	Default TableLayout = ""
-	// DataSourceList is the data source list table layout
-	DataSourceList TableLayout = "datasource_list"
 )
 
 // Color is the type for table colors
@@ -63,26 +39,6 @@ func RowsFromColoredColumns(c []ColoredColumn) []string {
 		columns = append(columns, col.Column)
 	}
 	return columns
-}
-
-// ColorsFromColoredColumns returns the colors of the colored columns
-func ColorsFromColoredColumns(r []ColoredColumn) []tablewriter.Colors {
-	colors := make([]tablewriter.Colors, len(r))
-	for i := range r {
-		c := r[i].Color
-		switch c {
-		case ColorRed:
-			colors[i] = tablewriter.Colors{tablewriter.FgRedColor}
-		case ColorGreen:
-			colors[i] = tablewriter.Colors{tablewriter.FgGreenColor}
-		case ColorYellow:
-			colors[i] = tablewriter.Colors{tablewriter.FgYellowColor}
-		default:
-			colors[i] = tablewriter.Colors{}
-		}
-	}
-
-	return colors
 }
 
 // RedColumn returns a red colored column

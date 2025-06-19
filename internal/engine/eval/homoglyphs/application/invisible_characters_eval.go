@@ -14,7 +14,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // InvisibleCharactersEvaluator is an evaluator for the invisible characters rule type
@@ -26,7 +25,7 @@ type InvisibleCharactersEvaluator struct {
 // NewInvisibleCharactersEvaluator creates a new invisible characters evaluator
 func NewInvisibleCharactersEvaluator(
 	_ context.Context,
-	ghClient provifv1.GitHub,
+	ghClient interfaces.GitHubIssuePRClient,
 	opts ...eoptions.Option,
 ) (*InvisibleCharactersEvaluator, error) {
 	evaluator := &InvisibleCharactersEvaluator{
