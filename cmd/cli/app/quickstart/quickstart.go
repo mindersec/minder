@@ -364,8 +364,8 @@ func quickstartCommand(
 		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
 		// Print the profile create result table
 		cmd.Println("Profile details (minder profile list):")
-		table := profile.NewProfileTable()
-		profile.RenderProfileTable(resp.GetProfile(), table)
+		table := profile.NewProfileRulesTable()
+		profile.RenderProfileRulesTable(resp.GetProfile(), table)
 		table.Render()
 	}
 	return nil

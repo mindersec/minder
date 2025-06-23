@@ -39,7 +39,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	table := NewProfileTable()
+	table := NewProfileRulesTable()
 
 	createFunc := func(ctx context.Context, _ string, p *minderv1.Profile) (*minderv1.Profile, error) {
 		if enableAlerts {

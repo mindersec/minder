@@ -20,9 +20,10 @@ import (
 
 // DocsCmd generates documentation
 var DocsCmd = &cobra.Command{
-	Use:   "docs",
-	Short: "Generates documentation for the client",
-	Long:  `Generates documentation for the client.`,
+	Use:    "docs",
+	Short:  "Generates documentation for the client",
+	Long:   `Generates documentation for the client.`,
+	Hidden: true,
 	PreRunE: func(cmd *cobra.Command, _ []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return cli.MessageAndError("Error binding flags", err)

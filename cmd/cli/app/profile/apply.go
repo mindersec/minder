@@ -48,7 +48,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	table := NewProfileTable()
+	table := NewProfileRulesTable()
 	alreadyExists := false
 
 	applyFunc := func(ctx context.Context, _ string, p *minderv1.Profile) (*minderv1.Profile, error) {

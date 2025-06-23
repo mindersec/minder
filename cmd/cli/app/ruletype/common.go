@@ -4,6 +4,7 @@
 package ruletype
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"io"
@@ -102,7 +103,7 @@ func shouldSkipFile(f string) bool {
 // initializeTableForList initializes the table for the rule type
 func initializeTableForList() table.Table {
 	return table.New(table.Simple, layouts.Default,
-		[]string{"Project", "ID", "Name", "Description"})
+		[]string{"Name", "Entity Type", "Description"})
 	// TODO: set automerge common cells
 }
 
@@ -113,29 +114,19 @@ func initializeTableForOne() table.Table {
 }
 
 func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
-	t.AddRow("ID", *rt.Id)
 	t.AddRow("Name", rt.Name)
-	t.AddRow("Description", rt.Description)
+	t.AddRow("ID", *rt.Id)
 	t.AddRow("Applicable Entity", rt.GetDef().InEntity)
-	t.AddRow("Project", *rt.Context.Project)
-	t.AddRow("Ingest type", rt.Def.Ingest.Type)
-	t.AddRow("Eval type", rt.Def.Eval.Type)
 	releasePhaseString := ruleTypeReleasePhaseToString(rt.ReleasePhase)
 	if releasePhaseString != "" {
 		t.AddRow("Release phase", releasePhaseString)
 	}
-	rem := "unsupported"
-	if rt.Def.GetRemediate() != nil {
-		rem = rt.Def.GetRemediate().Type
-	}
-	t.AddRow("Remediation", rem)
-
-	alert := "unsupported"
-	if rt.Def.GetAlert() != nil {
-		alert = rt.Def.GetAlert().Type
-	}
-	t.AddRow("Alert", alert)
-	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance))
+	t.AddRow("Description", rt.Description)
+	t.AddRow("Ingest type", rt.Def.Ingest.Type)
+	t.AddRow("Eval type", rt.Def.Eval.Type)
+	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(0.7)))
+	t.AddRow("Remediation", cmp.Or(rt.Def.GetRemediate().GetType(), "unsupported"))
+	t.AddRow("Alert", cmp.Or(rt.Def.GetAlert().GetType(), "unsupported"))
 }
 
 func ruleTypeReleasePhaseToString(phase minderv1.RuleTypeReleasePhase) string {
@@ -174,7 +165,7 @@ func appendRuleTypePropertiesToName(rt *minderv1.RuleType) string {
 
 	// return the name with the properties if any
 	if len(properties) != 0 {
-		return fmt.Sprintf("%s (%s)", name, strings.Join(properties, ", "))
+		return fmt.Sprintf("%s\n(%s)", name, strings.Join(properties, ", "))
 	}
 
 	// return only name otherwise
