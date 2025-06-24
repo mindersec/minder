@@ -86,8 +86,7 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 			Name:    inv.Name,
 			Version: inv.Version,
 			Identifiers: map[int32]string{
-				// TODO: switch to inv.PURL() once b/400910349 (Google buganizer bug) is resolved
-				int32(sbom.SoftwareIdentifierType_PURL): inv.Extractor.ToPURL(inv).String(),
+				int32(sbom.SoftwareIdentifierType_PURL): inv.PURL().String(),
 				// TODO: scalibr returns a _list_ of CPEs, but protobom will store one.
 				// use the first?
 				// int32(sbom.SoftwareIdentifierType_CPE23):  inv.Extractor.ToCPEs(inv),
