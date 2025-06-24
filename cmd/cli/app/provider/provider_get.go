@@ -83,6 +83,7 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 
 		t.AddRow("ID", p.GetId())
 		t.AddRow("Name", p.GetName())
+		t.AddRow("Class", p.GetClass())
 		t.AddRow("Project", p.GetProject())
 		t.AddRow("Version", p.GetVersion())
 		t.AddRow("Implements", strings.Join(impls, ", "))

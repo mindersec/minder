@@ -41,7 +41,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 		return nil, err
 	}
 
-	RenderProfileTable(profile, t)
+	RenderProfileRulesTable(profile, t)
 	return profile, nil
 }
 

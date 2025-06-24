@@ -18,12 +18,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/cmd/cli/app"
-	"github.com/mindersec/minder/cmd/cli/app/common"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
+	"github.com/mindersec/minder/internal/util/cli/types"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -127,7 +127,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		printTable(cmd.OutOrStderr(), resp)
+		printTable(cmd.OutOrStderr(), resp, viper.GetBool("emoji"))
 	}
 
 	return nil
@@ -147,11 +147,11 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 	return cursor
 }
 
-func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse) {
+func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji bool) {
 	historyTable := table.New(table.Simple, layouts.Default,
-		[]string{"Time", "Rule", "Entity", "Status", "Remediation Status", "Alert Status"})
+		[]string{"Time", "Entity", "Rule", "Status"})
 	// TODO: add automerge common cells
-	renderRuleEvaluationStatusTable(resp.Data, historyTable)
+	renderRuleEvaluationStatusTable(resp.Data, historyTable, emoji)
 	historyTable.Render()
 	fmt.Println("")
 	if next := getNext(resp); next != nil {
@@ -200,15 +200,14 @@ func validatedFilter(filters []string, acceptedValues []string) error {
 func renderRuleEvaluationStatusTable(
 	statuses []*minderv1.EvaluationHistory,
 	t table.Table,
+	emoji bool,
 ) {
 	for _, eval := range statuses {
 		t.AddRowWithColor(
 			layouts.NoColor(eval.EvaluatedAt.AsTime().Format(time.DateTime)),
-			layouts.NoColor(eval.Rule.Name),
 			layouts.NoColor(eval.Entity.Name),
-			common.GetEvalStatusColor(eval.Status.Status),
-			common.GetRemediateStatusColor(eval.Remediation.Status),
-			common.GetAlertStatusColor(eval.Alert.Status),
+			layouts.NoColor(eval.Rule.Name),
+			table.GetStatusIcon(types.HistoryStatus(eval), emoji),
 		)
 	}
 }
@@ -238,6 +237,7 @@ func init() {
 	listCmd.Flags().String("to", "", "Filter evaluation history list by time")
 	listCmd.Flags().StringP("cursor", "c", "", "Fetch previous or next page from the list")
 	listCmd.Flags().Uint64P("size", "s", defaultPageSize, "Change the number of items fetched")
+	listCmd.Flags().Bool("emoji", true, "Use emojis in the output")
 }
 
 // TODO: we should have a common set of enums and validators in `internal`
