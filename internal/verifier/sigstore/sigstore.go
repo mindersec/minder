@@ -36,7 +36,7 @@ const (
 
 // Sigstore is the sigstore verifier
 type Sigstore struct {
-	verifier *verify.SignedEntityVerifier
+	verifier *verify.Verifier
 	authOpts []container.AuthMethod
 }
 
@@ -56,7 +56,7 @@ func New(sigstoreTUFRepoURL string, authOpts ...container.AuthMethod) (*Sigstore
 		return nil, err
 	}
 
-	sev, err := verify.NewSignedEntityVerifier(trustedMaterial, opts...)
+	sev, err := verify.NewVerifier(trustedMaterial, opts...)
 	if err != nil {
 		return nil, err
 	}
