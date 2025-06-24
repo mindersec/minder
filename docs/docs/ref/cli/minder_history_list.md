@@ -18,6 +18,7 @@ minder history list [flags]
 ```
       --alert-status strings         Filter evaluation history list by alert status - one of off, on, error, skipped, not_available
   -c, --cursor string                Fetch previous or next page from the list
+      --emoji                        Use emojis in the output (default true)
       --entity-name strings          Filter evaluation history list by entity name
       --entity-type strings          Filter evaluation history list by entity type - one of repository, artifact, pull_request
       --eval-status strings          Filter evaluation history list by evaluation status - one of pending, failure, error, success, skipped

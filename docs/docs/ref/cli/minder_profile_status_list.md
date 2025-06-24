@@ -17,6 +17,7 @@ minder profile status list [flags]
 
 ```
   -d, --detailed          List all profile violations
+      --emoji             Use emojis in the output (default true)
   -h, --help              help for list
   -n, --name string       Profile name to list status for
       --ruleName string   Filter profile status list by rule name
