@@ -16,6 +16,7 @@ minder profile status get [flags]
 ### Options
 
 ```
+      --emoji                Use emojis in the output (default true)
   -e, --entity string        Entity ID to get profile status for
   -t, --entity-type string   the entity type to get profile status for (one of artifact, build, build_environment, pipeline_run, release, repository, task_run)
   -h, --help                 help for get
