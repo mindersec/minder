@@ -107,7 +107,6 @@ require (
 
 require (
 	cel.dev/expr v0.23.1 // indirect
-	cloud.google.com/go/monitoring v1.24.0 // indirect
 	deps.dev/api/v3 v3.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/maven v0.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/pypi v0.0.0-20250429014815-ac0aa6a085fa // indirect
