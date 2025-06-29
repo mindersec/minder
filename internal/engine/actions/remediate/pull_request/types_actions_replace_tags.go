@@ -11,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/stacklok/frizbee/pkg/replacer"
 	"github.com/stacklok/frizbee/pkg/utils/config"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -52,7 +53,8 @@ func newFrizbeeTagResolveModification(
 	}, nil
 }
 
-func (ftr *frizbeeTagResolveModification) createFsModEntries(ctx context.Context, _ interfaces.ActionsParams) error {
+func (ftr *frizbeeTagResolveModification) createFsModEntries(
+	ctx context.Context, _ proto.Message, _ interfaces.ActionsParams) error {
 	// Create a new Frizbee instance
 	r := replacer.NewGitHubActionsReplacer(&config.Config{GHActions: *ftr.fzcfg}).WithGitHubClient(ftr.ghCli)
 

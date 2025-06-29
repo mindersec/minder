@@ -6,6 +6,7 @@ package util
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -20,12 +21,7 @@ const (
 
 // HttpMethodFromString returns the HTTP method from a string based on upprecase inMeth, defaulting to dfl
 func HttpMethodFromString(inMeth, dfl string) string {
-	method := strings.ToUpper(inMeth)
-	if len(method) == 0 {
-		method = dfl
-	}
-
-	return method
+	return strings.ToUpper(cmp.Or(inMeth, dfl))
 }
 
 // GenerateCurlCommand generates a curl command from a method, apiBaseURL, endpoint, and body
