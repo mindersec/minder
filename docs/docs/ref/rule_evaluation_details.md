@@ -208,8 +208,8 @@ Minder supports three remediation actions:
      [yq `expression`](https://mikefarah.gitbook.io/yq/) to files selected by a
      list of `patterns`. Each element in the `patterns` list is represented as:
      `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
-     supported pattern type. This action does not support templating either
-     `expression` or `pattern`
+     supported pattern type. This action supports using Go templates in the
+     `expression` but not in the `pattern` selection.
 
    If the content modification produces a diff in the repository, Minder will
    open and manage a pull request against the branch used in the `git` ingest,
