@@ -6,23 +6,16 @@ package util
 
 import (
 	"bytes"
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 )
 
 const (
 	// CurlCmdMaxSize is the maximum size of the rendered curl command
 	CurlCmdMaxSize = 2048
 )
-
-// HttpMethodFromString returns the HTTP method from a string based on upprecase inMeth, defaulting to dfl
-func HttpMethodFromString(inMeth, dfl string) string {
-	return strings.ToUpper(cmp.Or(inMeth, dfl))
-}
 
 // GenerateCurlCommand generates a curl command from a method, apiBaseURL, endpoint, and body
 // this is useful to provide a dry-run for remediations

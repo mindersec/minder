@@ -7451,11 +7451,14 @@ type RestType struct {
 	// us dynamically fill in the values.
 	Endpoint string `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
 	// method is the method to use to fetch data.
+	// Go templates may be used to vary the method using the same parameters
+	// as the endpoint.
 	Method string `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
 	// headers are the headers to be sent to the endpoint.
 	Headers []string `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
-	// body is the body to be sent to the endpoint.
-	// This is expected to be a valid JSON string.
+	// body is the body to be sent to the endpoint, which must be valid JSON
+	// Go templates may be used to vary the method using the same parameters
+	// as the endpoint.
 	Body *string `protobuf:"bytes,4,opt,name=body,proto3,oneof" json:"body,omitempty"`
 	// parse is the parsing mechanism to be used to parse the data.
 	Parse string `protobuf:"bytes,5,opt,name=parse,proto3" json:"parse,omitempty"`
@@ -15191,10 +15194,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\aresults\x18\x02 \x03(\v2\x1f.minder.v1.RuleEvaluationStatusR\aresults\x1a\xb0\x01\n" +
 	"\x17EntityEvaluationResults\x120\n" +
 	"\x06entity\x18\x01 \x01(\v2\x18.minder.v1.EntityTypedIdR\x06entity\x12c\n" +
-	"\bprofiles\x18\x02 \x03(\v2G.minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResultsR\bprofilesJ\x04\b\x01\x10\x02R\x06status\"\xb7\x03\n" +
+	"\bprofiles\x18\x02 \x03(\v2G.minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResultsR\bprofilesJ\x04\b\x01\x10\x02R\x06status\"\x96\x03\n" +
 	"\bRestType\x12'\n" +
-	"\bendpoint\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\x18\x90\x03R\bendpoint\x12C\n" +
-	"\x06method\x18\x02 \x01(\tB+\xbaH(\xd8\x01\x02r#2!^(?i)(GET|POST|PUT|PATCH|DELETE)$R\x06method\x12Q\n" +
+	"\bendpoint\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\x18\x90\x03R\bendpoint\x12\"\n" +
+	"\x06method\x18\x02 \x01(\tB\n" +
+	"\xbaH\a\xd8\x01\x02r\x02\x182R\x06method\x12Q\n" +
 	"\aheaders\x18\x03 \x03(\tB7\xbaH4\xd8\x01\x02\x92\x01.\",r*\x18\x90\x032%^[a-zA-Z0-9-]+:[[:graph:][:blank:]]+$R\aheaders\x12$\n" +
 	"\x04body\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x02r\x03\x18\xe8\aH\x00R\x04body\x88\x01\x01\x12+\n" +
 	"\x05parse\x18\x05 \x01(\tB\x15\xbaH\x12\xd8\x01\x02r\r\x1822\t^[a-z_]+$R\x05parse\x128\n" +

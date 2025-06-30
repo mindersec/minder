@@ -5,6 +5,8 @@
 package rest
 
 import (
+	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -31,8 +33,12 @@ const (
 	// MaxBytesLimit is the maximum number of bytes to read from the response body
 	// We limit to 1MB to prevent abuse
 	MaxBytesLimit int64 = 1 << 20
-	// EndpointBytesLimit is the maximum number of bytes for the endpoint
-	EndpointBytesLimit = 1024
+	// endpointBytesLimit is the maximum number of bytes for the endpoint
+	endpointBytesLimit = 1024
+	// bodyBytesLimit is the maximum number of bytes for the body
+	bodyBytesLimit = 1024
+	// methodBytesLimit is the maximum number of bytes for the method
+	methodBytesLimit = 10
 )
 
 type ingestorFallback struct {
@@ -47,7 +53,8 @@ type Ingestor struct {
 	restCfg          *pb.RestType
 	cli              interfaces.RESTProvider
 	endpointTemplate *util.SafeTemplate
-	method           string
+	bodyTemplate     *util.SafeTemplate
+	methodTemplate   *util.SafeTemplate
 	fallback         []ingestorFallback
 }
 
@@ -65,7 +72,19 @@ func NewRestRuleDataIngest(
 		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
 	}
 
-	method := util.HttpMethodFromString(restCfg.Method, http.MethodGet)
+	var bodyTmpl *util.SafeTemplate
+	if restCfg.GetBody() != "" {
+		bodyTmpl, err = util.NewSafeHTMLTemplate(restCfg.Body, "body")
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse body template: %w", err)
+		}
+	}
+
+	method := cmp.Or(restCfg.Method, http.MethodGet)
+	methodTmpl, err := util.NewSafeTextTemplate(&method, "method")
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse method template: %w", err)
+	}
 
 	fallback := make([]ingestorFallback, len(restCfg.Fallback))
 	for _, fb := range restCfg.Fallback {
@@ -80,7 +99,8 @@ func NewRestRuleDataIngest(
 		restCfg:          restCfg,
 		cli:              cli,
 		endpointTemplate: tmpl,
-		method:           method,
+		bodyTemplate:     bodyTmpl,
+		methodTemplate:   methodTmpl,
 		fallback:         fallback,
 	}, nil
 }
@@ -112,18 +132,31 @@ func (rdi *Ingestor) Ingest(
 		Params: params,
 	}
 
-	endpoint, err := rdi.endpointTemplate.Render(ctx, retp, EndpointBytesLimit)
+	endpoint, err := rdi.endpointTemplate.Render(ctx, retp, endpointBytesLimit)
 	if err != nil {
 		return nil, fmt.Errorf("cannot execute endpoint template: %w", err)
 	}
 
-	// create string buffer
-	var bodyr io.Reader
-	if rdi.restCfg.Body != nil {
-		bodyr = strings.NewReader(*rdi.restCfg.Body)
+	var bodyOut any
+	if rdi.bodyTemplate != nil {
+		var body bytes.Buffer
+		if err := rdi.bodyTemplate.Execute(ctx, &body, retp, bodyBytesLimit); err != nil {
+			return nil, fmt.Errorf("cannot execute body template: %w", err)
+		}
+		// Newlines are not valid in JSON, but are handy when writing e.g. graphql queries.
+		data := bytes.ReplaceAll(body.Bytes(), []byte("\n"), []byte(" "))
+		if err := json.Unmarshal(data, &bodyOut); err != nil {
+			return nil, fmt.Errorf("cannot parse request body as JSON: %w", err)
+		}
 	}
 
-	req, err := rdi.cli.NewRequest(rdi.method, endpoint, bodyr)
+	method, err := rdi.methodTemplate.Render(ctx, retp, methodBytesLimit)
+	if err != nil {
+		return nil, fmt.Errorf("cannot execute method template: %w", err)
+	}
+	method = strings.ToUpper(method)
+
+	req, err := rdi.cli.NewRequest(method, endpoint, bodyOut)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create request: %w", err)
 	}
@@ -146,7 +179,7 @@ func (rdi *Ingestor) Ingest(
 
 	return &interfaces.Ingested{
 		Object:     data,
-		Checkpoint: checkpoints.NewCheckpointV1Now().WithHTTP(endpoint, rdi.method),
+		Checkpoint: checkpoints.NewCheckpointV1Now().WithHTTP(endpoint, method),
 	}, nil
 }
 

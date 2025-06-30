@@ -189,6 +189,12 @@ func (def *RuleType_Definition) Validate() error {
 		}
 	}
 
+	if def.Remediate != nil {
+		if err := def.Remediate.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return def.Eval.Validate()
 }
 
@@ -422,6 +428,21 @@ func (rem *RuleType_Definition_Remediate) Validate() error {
 	default:
 		return fmt.Errorf("%w: remediate type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}
+
+	fieldsSet := 0
+	if rem.GetRest() != nil {
+		fieldsSet++
+	}
+	if rem.GetGhBranchProtection() != nil {
+		fieldsSet++
+	}
+	if rem.GetPullRequest() != nil {
+		fieldsSet++
+	}
+	if fieldsSet > 1 {
+		return fmt.Errorf("%w: only one remediation type can be set", ErrInvalidRuleTypeDefinition)
+	}
+
 	return nil
 }
 
@@ -433,6 +454,20 @@ func (rest *RestType) Validate() error {
 
 	if rest.Endpoint == "" {
 		return fmt.Errorf("%w: rest endpoint cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	// Check text/template parsing on endpoint
+	_, err := util.NewSafeTextTemplate(&rest.Endpoint, "endpoint")
+	if err != nil {
+		return fmt.Errorf("%w: rest endpoint is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	// Check text/template parsing on method
+	if rest.Method != "" {
+		_, err := util.NewSafeTextTemplate(&rest.Method, "method")
+		if err != nil {
+			return fmt.Errorf("%w: rest method is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+		}
 	}
 
 	return nil
