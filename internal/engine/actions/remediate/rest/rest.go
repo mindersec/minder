@@ -63,21 +63,21 @@ func NewRestRemediate(
 
 	endpointTmpl, err := util.NewSafeTextTemplate(&restCfg.Endpoint, "endpoint")
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse endpoint template: %w", err)
+		return nil, fmt.Errorf("invalid endpoint: %w", err)
 	}
 
 	var bodyTmpl *util.SafeTemplate
 	if restCfg.Body != nil {
 		bodyTmpl, err = util.NewSafeTextTemplate(restCfg.Body, "body")
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse body template: %w", err)
+			return nil, fmt.Errorf("invalid body: %w", err)
 		}
 	}
 
 	methodStr := cmp.Or(restCfg.Method, http.MethodPatch)
 	methodTemplate, err := util.NewSafeTextTemplate(&methodStr, "method")
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse method template: %w", err)
+		return nil, fmt.Errorf("invalid method: %w", err)
 	}
 
 	return &Remediator{

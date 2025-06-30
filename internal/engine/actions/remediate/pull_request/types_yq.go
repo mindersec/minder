@@ -33,6 +33,8 @@ type patternType string
 
 const (
 	patternTypeGlob patternType = "glob"
+
+	maxExpressionSize int = 3000
 )
 
 const (
@@ -132,7 +134,7 @@ func (yq *yqExecute) createFsModEntries(ctx context.Context, ent proto.Message, 
 		if err != nil {
 			return fmt.Errorf("unable to parse templates in expression: %w", err)
 		}
-		if err := expressionTmpl.Execute(ctx, expressionBytes, templateData, 3000); err != nil {
+		if err := expressionTmpl.Execute(ctx, expressionBytes, templateData, maxExpressionSize); err != nil {
 			return fmt.Errorf("unable to expand templates in expression: %w", err)
 		}
 		expression = expressionBytes.String()

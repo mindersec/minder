@@ -66,9 +66,9 @@ func TestNewRestRemediate(t *testing.T) {
 		actionType interfaces.ActionType
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name      string
+		args      args
+		errString string
 	}{
 		{
 			name: "invalid action type",
@@ -79,7 +79,7 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: "",
 			},
-			wantErr: true,
+			errString: "action type cannot be empty",
 		},
 		{
 			name: "valid rest remediatior",
@@ -90,7 +90,6 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: false,
 		},
 		{
 			name: "nondefault method",
@@ -102,7 +101,6 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: false,
 		},
 		{
 			name: "invalid endpoint template",
@@ -113,7 +111,7 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: true,
+			errString: "invalid endpoint: cannot parse template:",
 		},
 		{
 			name: "invalid body template",
@@ -124,7 +122,7 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: true,
+			errString: "invalid body: cannot parse template:",
 		},
 		{
 			name: "invalid method template",
@@ -135,8 +133,9 @@ func TestNewRestRemediate(t *testing.T) {
 					Endpoint: "/graphql",
 					Body:     &simpleBodyTemplate,
 				},
+				actionType: TestActionTypeValid,
 			},
-			wantErr: true,
+			errString: "invalid method: cannot parse template:",
 		},
 	}
 	for _, tt := range tests {
@@ -156,8 +155,9 @@ func TestNewRestRemediate(t *testing.T) {
 
 			got, err := NewRestRemediate(
 				tt.args.actionType, tt.args.restCfg, restProvider, models.ActionOptOn)
-			if tt.wantErr {
+			if tt.errString != "" {
 				require.Error(t, err, "expected error")
+				require.ErrorContains(t, err, tt.errString)
 				require.Nil(t, got, "expected nil")
 				return
 			}
