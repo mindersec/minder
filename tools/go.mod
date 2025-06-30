@@ -8,7 +8,7 @@ require (
 	github.com/go-critic/go-critic v0.13.0
 	github.com/golangci/golangci-lint/v2 v2.2.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
 	github.com/mikefarah/yq/v4 v4.45.4
 	github.com/norwoodj/helm-docs v1.14.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1
