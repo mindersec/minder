@@ -50,8 +50,8 @@ require (
 	github.com/nats-io/nats-server/v2 v2.10.27
 	github.com/nats-io/nats.go v1.39.1
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/open-feature/go-sdk v1.14.1
-	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.0
+	github.com/open-feature/go-sdk v1.15.1
+	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1
 	github.com/open-policy-agent/opa v1.4.2
 	github.com/openfga/go-sdk v0.7.1
 	github.com/openfga/openfga v1.8.15
