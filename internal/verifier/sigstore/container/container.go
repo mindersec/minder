@@ -113,7 +113,7 @@ func (c *containerAuth) getRegistry() string {
 // isVerified is true only if we were able to verify the constructed bundle against the configured sigstore instance.
 func Verify(
 	ctx context.Context,
-	sev *verify.SignedEntityVerifier,
+	sev *verify.Verifier,
 	owner, artifact, checksumref string,
 	authOpts ...AuthMethod,
 ) ([]verifyif.Result, error) {
@@ -149,7 +149,7 @@ func Verify(
 // and returns the extracted metadata that we need for ingestion
 func getVerifiedResults(
 	ctx context.Context,
-	sev *verify.SignedEntityVerifier,
+	sev *verify.Verifier,
 	bundles []sigstoreBundle,
 ) []verifyif.Result {
 	var results []verifyif.Result

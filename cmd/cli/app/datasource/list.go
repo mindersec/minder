@@ -6,6 +6,9 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"iter"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -61,9 +64,17 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name", "Type"})
+		t := table.New(table.Simple, layouts.Default, []string{"Name", "Type", "Functions"})
 		for _, ds := range resp.GetDataSources() {
-			t.AddRow(ds.Id, ds.Name, ds.GetDriverType())
+			var functions iter.Seq[string]
+			switch driver := ds.Driver.(type) {
+			case *minderv1.DataSource_Rest:
+				// TODO: do we want to also include arguments?
+				functions = maps.Keys(driver.Rest.GetDef())
+			case *minderv1.DataSource_Structured:
+				functions = maps.Keys(driver.Structured.GetDef())
+			}
+			t.AddRow(ds.Name, ds.GetDriverType(), strings.Join(slices.Sorted(functions), "\n"))
 		}
 		t.Render()
 	default:

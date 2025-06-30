@@ -87,8 +87,10 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		settable := NewProfileSettingsTable()
 		RenderProfileSettingsTable(prof, settable)
 		settable.Render()
-		table := NewProfileTable()
-		RenderProfileTable(prof, table)
+		fmt.Println()
+		table := NewProfileRulesTable()
+		table.SeparateRows()
+		RenderProfileRulesTable(prof, table)
 		table.Render()
 	}
 	return nil

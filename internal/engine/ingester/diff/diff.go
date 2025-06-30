@@ -296,8 +296,7 @@ func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem 
 		return pbinternal.DepEcosystem_DEP_ECOSYSTEM_UNSPECIFIED
 	}
 
-	// This should be inventory.PURL()... but there isn't a convenience wrapper yet
-	package_url := inventory.Extractor.ToPURL(inventory)
+	package_url := inventory.PURL()
 
 	// Sometimes Scalibr uses the string "PyPI" instead of "pypi" when reporting the ecosystem.
 	switch package_url.Type {

@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -80,25 +81,15 @@ func validateFilesArg(files []string) error {
 		return fmt.Errorf("error: file must be set")
 	}
 
-	if contains(files, "") {
+	if slices.Contains(files, "") {
 		return fmt.Errorf("error: file must be set")
 	}
 
-	if contains(files, "-") && len(files) > 1 {
+	if slices.Contains(files, "-") && len(files) > 1 {
 		return fmt.Errorf("error: cannot use stdin with other files")
 	}
 
 	return nil
-}
-
-// contains checks if a slice contains a specific string
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
 
 // shouldSkipFile determines if a file should be skipped based on its extension

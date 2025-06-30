@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,38 +18,39 @@ func TestRenderMarkdown(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
+		opts     []glamour.TermRendererOption
 		expected string
 	}{
 		{
 			name:     "empty",
 			input:    "",
-			expected: "\n\n",
+			expected: "",
 		},
 		{
 			name:  "normal",
 			input: "foo",
-			// Output is padded to 76 characters by default
-			expected: fmt.Sprintf("\n  foo%s\n\n", strings.Repeat(" ", 73)),
+			// Output is padded to 80 characters by default
+			expected: fmt.Sprintf("foo%s\n", strings.Repeat(" ", 77)),
 		},
 		{
 			name:     "html tags",
 			input:    "<div>foo</div>",
-			expected: "\n  foo\n",
+			expected: "foo",
 		},
 		{
 			name:     "xss",
 			input:    "Hello <STYLE>.XSS{background-image:url(\"javascript:alert('XSS')\");}</STYLE><A CLASS=XSS></A>World",
-			expected: "\n  Hello .XSS{background-image:url(\"javascript:alert('XSS')\");}World           \n\n",
+			expected: "Hello .XSS{background-image:url(\"javascript:alert('XSS')\");}World               \n",
 		},
 		{
 			name:     "script",
 			input:    "<script>alert`1`</script>",
-			expected: "\n\n",
+			expected: "",
 		},
 		{
 			name:     "div script",
 			input:    "<div> <script>alert`1`</script> </div>",
-			expected: "\n\n",
+			expected: "",
 		},
 		{
 			name: "multiline",
@@ -56,7 +58,7 @@ func TestRenderMarkdown(t *testing.T) {
 <script>x=’$varUnsafe’</script>
 <div onmouseover="'$varUnsafe'"</div>
 `,
-			expected: "\n\n",
+			expected: "",
 		},
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/profile"
@@ -48,13 +49,13 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
-		return formatAndDisplayOutputById(cmd, format, resp)
+		return formatAndDisplayOutput(cmd, format, resp, viper.GetBool("emoji"))
 	} else if profileName != "" {
 		resp, err := getProfileStatusByName(ctx, client, project, profileName, entityId, entityType)
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
-		return formatAndDisplayOutputByName(cmd, format, resp)
+		return formatAndDisplayOutput(cmd, format, resp, viper.GetBool("emoji"))
 	}
 
 	return cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id or profile name required"))
@@ -114,29 +115,13 @@ func getProfileStatusByName(
 	}, nil
 }
 
-func formatAndDisplayOutputById(cmd *cobra.Command, format string, resp *minderv1.GetProfileStatusByIdResponse) error {
-	switch format {
-	case app.JSON:
-		out, err := util.GetJsonFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(resp)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
-	case app.Table:
-		table := profile.NewProfileStatusTable()
-		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
-		table.Render()
-	}
-	return nil
+type protoWithProfileStatus interface {
+	proto.Message
+	GetProfileStatus() *minderv1.ProfileStatus
 }
 
-func formatAndDisplayOutputByName(cmd *cobra.Command, format string, resp *minderv1.GetProfileStatusByNameResponse) error {
+func formatAndDisplayOutput(
+	cmd *cobra.Command, format string, resp protoWithProfileStatus, emoji bool) error {
 	switch format {
 	case app.JSON:
 		out, err := util.GetJsonFromProto(resp)
@@ -152,7 +137,7 @@ func formatAndDisplayOutputByName(cmd *cobra.Command, format string, resp *minde
 		cmd.Println(out)
 	case app.Table:
 		table := profile.NewProfileStatusTable()
-		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
+		profile.RenderProfileStatusTable(resp.GetProfileStatus(), table, emoji)
 		table.Render()
 	}
 	return nil
@@ -166,6 +151,7 @@ func init() {
 		fmt.Sprintf("the entity type to get profile status for (one of %s)", entities.KnownTypesCSV()))
 	getCmd.Flags().StringP("id", "i", "", "ID to get profile status for")
 	getCmd.Flags().StringP("name", "n", "", "Profile name to get profile status for")
+	getCmd.Flags().Bool("emoji", true, "Use emojis in the output")
 
 	getCmd.MarkFlagsOneRequired("id", "name")
 	// Required

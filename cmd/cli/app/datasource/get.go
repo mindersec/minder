@@ -6,6 +6,9 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"iter"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -89,8 +92,16 @@ func outputDataSource(cmd *cobra.Command, format string, ds *minderv1.DataSource
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name", "Type"})
-		t.AddRow(ds.Id, ds.Name, ds.GetDriverType())
+		t := table.New(table.Simple, layouts.Default, []string{"Name", "Type", "Functions"})
+		var functions iter.Seq[string]
+		switch driver := ds.Driver.(type) {
+		case *minderv1.DataSource_Rest:
+			// TODO: do we want to also include arguments?
+			functions = maps.Keys(driver.Rest.GetDef())
+		case *minderv1.DataSource_Structured:
+			functions = maps.Keys(driver.Structured.GetDef())
+		}
+		t.AddRow(ds.Name, ds.GetDriverType(), strings.Join(slices.Sorted(functions), ", "))
 		t.Render()
 	default:
 		return fmt.Errorf("unsupported output format: %s", format)

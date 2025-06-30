@@ -32,10 +32,10 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
-	format := viper.GetString("output")
 	detailed := viper.GetBool("detailed")
 	ruleType := viper.GetString("ruleType")
 	ruleName := viper.GetString("ruleName")
+	format := viper.GetString("output")
 
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
@@ -68,13 +68,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		cmd.Println(out)
 	case app.Table:
 		table := profile.NewProfileStatusTable()
-		profile.RenderProfileStatusTable(resp.ProfileStatus, table)
+		profile.RenderProfileStatusTable(resp.ProfileStatus, table, viper.GetBool("emoji"))
 		table.Render()
 		if detailed {
 			fmt.Println()
 			table = profile.NewRuleEvaluationsTable()
 			table.SeparateRows()
-			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table)
+			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table, viper.GetBool("emoji"))
 			table.Render()
 		}
 	}
@@ -89,6 +89,7 @@ func init() {
 	listCmd.Flags().String("ruleName", "", "Filter profile status list by rule name")
 
 	listCmd.Flags().StringP("name", "n", "", "Profile name to list status for")
+	listCmd.Flags().Bool("emoji", true, "Use emojis in the output")
 
 	if err := listCmd.MarkFlagRequired("name"); err != nil {
 		listCmd.Printf("Error marking flag required: %s", err)
