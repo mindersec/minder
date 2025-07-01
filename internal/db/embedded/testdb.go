@@ -104,13 +104,9 @@ func newDBFromShared() (*embeddedpostgres.Config, CancelFunc, error) {
 	}
 	cfg := instance.cfg
 	cfg = cfg.Database(dbName)
-	cancel := func() {
-		instance.lock.Lock()
-		defer instance.lock.Unlock()
-		// TODO: do we care about dropping the database?
-		instance.inFlight.Done()
-	}
-	return &cfg, cancel, nil
+	// Note: because we copy the reference to WaitGroup here, we don't need to
+	// lock the Done call later.
+	return &cfg, instance.inFlight.Done, nil
 }
 
 // GetFakeStore returns a new embedded Postgres database and a cancel function
