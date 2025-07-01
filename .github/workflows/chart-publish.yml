@@ -17,12 +17,13 @@ jobs:
   check-helm:
     name: Build Helm chart
     runs-on: ubuntu-latest
+    if: github.repository_owner == 'mindersec' || vars.PUBLISH_IMAGES == 'true'
     permissions:
       contents: read
       packages: write
       id-token: write # To sign the provenance.
     env:
-      BASE_REPO: "ghcr.io/mindersec/minder"
+      BASE_REPO: "ghcr.io/${{ github.repository }}"
     steps:
       - name: Install Cosign
         uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3.9.1
@@ -47,6 +48,8 @@ jobs:
       - name: Build images and Helm Chart
         run: |
           KO_DOCKER_REPO=$BASE_REPO make helm
+          echo "Built images:"
+          cat deployment/helm/built-images.yaml
         env:
           KO_PUSH_IMAGE: "true"
           HELM_PACKAGE_VERSION: "${{ steps.version-string.outputs.tag }}"
@@ -56,14 +59,18 @@ jobs:
         run: |
           helm registry login $BASE_REPO --username ${{ github.repository_owner }} --password ${{ secrets.GITHUB_TOKEN }}
       - name: Push Helm Chart
+        id: helm-push
         run: |
           cd deployment/helm
-          helm push minder-*.tgz oci://$BASE_REPO/helm
+          helm push minder-*.tgz oci://$BASE_REPO/helm 2>&1 | tee helm-push.log
+          DIGEST=$(grep Digest: helm-push.log | awk '{print $2}')
+          echo "Helm chart digest: $DIGEST"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
       - name: Sign the published helm chart and ko image
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: |
           # Sign the ko image
-          cosign sign --yes $BASE_REPO/server
+          cosign sign --yes $(cat deployment/helm/built-images.yaml)
           # Sign the helm chart
-          cosign sign --yes $BASE_REPO/helm/minder:$(echo "${{ steps.version-string.outputs.tag }}" | sed 's/+/_/g')
+          cosign sign --yes $BASE_REPO/helm/minder@${{ steps.helm-push.outputs.digest }}
