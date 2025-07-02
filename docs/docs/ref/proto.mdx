@@ -2579,9 +2579,9 @@ This is used to fetch data from a REST endpoint.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | endpoint | <TypeLink type="string">string</TypeLink> |  | endpoint is the endpoint to fetch data from. This can be a URL or path on the API. This is a required field and must be set. This is also evaluated via a template which allows us dynamically fill in the values. |
-| method | <TypeLink type="string">string</TypeLink> |  | method is the method to use to fetch data. |
+| method | <TypeLink type="string">string</TypeLink> |  | method is the method to use to fetch data. Go templates may be used to vary the method using the same parameters as the endpoint. |
 | headers | <TypeLink type="string">string</TypeLink> | repeated | headers are the headers to be sent to the endpoint. |
-| body | <TypeLink type="string">string</TypeLink> | optional | body is the body to be sent to the endpoint. This is expected to be a valid JSON string. |
+| body | <TypeLink type="string">string</TypeLink> | optional | body is the body to be sent to the endpoint, which must be valid JSON Go templates may be used to vary the method using the same parameters as the endpoint. |
 | parse | <TypeLink type="string">string</TypeLink> |  | parse is the parsing mechanism to be used to parse the data. |
 | fallback | <TypeLink type="minder-v1-RestType-Fallback">RestType.Fallback</TypeLink> | repeated | fallback provides a body that the ingester would return in case the REST call returns a non-200 status code. |
 

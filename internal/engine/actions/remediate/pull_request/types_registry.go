@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/go-git/go-billy/v5"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -18,7 +19,7 @@ import (
 type fsModifier interface {
 	hash() (string, error)
 	writeSummary(out io.Writer) error
-	createFsModEntries(ctx context.Context, params interfaces.ActionsParams) error
+	createFsModEntries(ctx context.Context, ent proto.Message, params interfaces.ActionsParams) error
 	modifyFs() ([]*fsEntry, error)
 }
 

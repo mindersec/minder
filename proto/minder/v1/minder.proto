@@ -2358,9 +2358,11 @@ message RestType {
     ];
 
     // method is the method to use to fetch data.
+    // Go templates may be used to vary the method using the same parameters
+    // as the endpoint.
     string method = 2 [
         (buf.validate.field).string = {
-            pattern: '^(?i)(GET|POST|PUT|PATCH|DELETE)$'
+            max_len: 50
         },
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
@@ -2378,8 +2380,9 @@ message RestType {
         (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
     ];
 
-    // body is the body to be sent to the endpoint.
-    // This is expected to be a valid JSON string.
+    // body is the body to be sent to the endpoint, which must be valid JSON
+    // Go templates may be used to vary the method using the same parameters
+    // as the endpoint.
     optional string body = 4 [
         (buf.validate.field).string = {
             max_len: 1000,

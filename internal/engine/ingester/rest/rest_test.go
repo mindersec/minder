@@ -4,9 +4,11 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -162,6 +164,10 @@ const (
 func TestRestIngest(t *testing.T) {
 	t.Parallel()
 
+	graphQLQuery := `{"query":"query { repository(owner: \"{{.Entity.Owner}}\", name: \"{{.Entity.Name}}\") { id } }"}`
+	graphQLExpected := `{"query":"query { repository(owner: \"OwnerVar\", name: \"NameVar\") { id } }"}` + "\n"
+	graphQLReply := []byte(`{"data": {"repository": {"id": 456}}}`)
+
 	type ingestArgs struct {
 		ent    protoreflect.ProtoMessage
 		params map[string]any
@@ -284,6 +290,49 @@ func TestRestIngest(t *testing.T) {
 				writer.WriteHeader(http.StatusForbidden)
 			},
 			wantErr: true,
+		},
+		{
+			name: "test body templates",
+			newIngArgs: newRestIngestArgs{
+				restCfg: &pb.RestType{
+					Endpoint: `/graphql`,
+					Method:   "POST",
+					Parse:    "json",
+					Body:     &graphQLQuery,
+				},
+			},
+			ingArgs: ingestArgs{
+				ent: &pb.Repository{
+					Owner:  "OwnerVar",
+					Name:   "NameVar",
+					RepoId: 456,
+				},
+				params: map[string]any{
+					"branch": "main",
+				},
+			},
+			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+				defer request.Body.Close()
+				assert.Equal(t, "/graphql", request.URL.Path, "unexpected path")
+				assert.Equal(t, http.MethodPost, request.Method, "unexpected method")
+				var body bytes.Buffer
+				if _, err := io.Copy(&body, request.Body); err != nil {
+					t.Errorf("Failed to read request body: %v", err)
+				}
+				assert.Equal(t, graphQLExpected, body.String())
+
+				_, err := writer.Write(graphQLReply)
+				assert.NoError(t, err, "unexpected error writing response")
+				writer.WriteHeader(http.StatusOK)
+			},
+			ingResultFn: func() *interfaces.Ingested {
+				ret := &interfaces.Ingested{}
+				if err := json.Unmarshal(graphQLReply, &ret.Object); err != nil {
+					return nil
+				}
+				return ret
+			},
+			wantErr: false,
 		},
 	}
 

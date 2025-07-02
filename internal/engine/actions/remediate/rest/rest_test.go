@@ -6,6 +6,7 @@
 package rest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -26,6 +27,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	engif "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -64,9 +66,9 @@ func TestNewRestRemediate(t *testing.T) {
 		actionType interfaces.ActionType
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name      string
+		args      args
+		errString string
 	}{
 		{
 			name: "invalid action type",
@@ -77,7 +79,7 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: "",
 			},
-			wantErr: true,
+			errString: "action type cannot be empty",
 		},
 		{
 			name: "valid rest remediatior",
@@ -88,7 +90,6 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: false,
 		},
 		{
 			name: "nondefault method",
@@ -100,7 +101,6 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: false,
 		},
 		{
 			name: "invalid endpoint template",
@@ -111,7 +111,7 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: true,
+			errString: "invalid endpoint: cannot parse template:",
 		},
 		{
 			name: "invalid body template",
@@ -122,7 +122,20 @@ func TestNewRestRemediate(t *testing.T) {
 				},
 				actionType: TestActionTypeValid,
 			},
-			wantErr: true,
+			errString: "invalid body: cannot parse template:",
+		},
+		{
+			name: "invalid method template",
+			args: args{
+				restCfg: &pb.RestType{
+					// No {{end}}
+					Method:   "{{if .EvalResultOutput.doPatch}}patch{{else}}put",
+					Endpoint: "/graphql",
+					Body:     &simpleBodyTemplate,
+				},
+				actionType: TestActionTypeValid,
+			},
+			errString: "invalid method: cannot parse template:",
 		},
 	}
 	for _, tt := range tests {
@@ -142,17 +155,21 @@ func TestNewRestRemediate(t *testing.T) {
 
 			got, err := NewRestRemediate(
 				tt.args.actionType, tt.args.restCfg, restProvider, models.ActionOptOn)
-			if tt.wantErr {
+			if tt.errString != "" {
 				require.Error(t, err, "expected error")
+				require.ErrorContains(t, err, tt.errString)
 				require.Nil(t, got, "expected nil")
 				return
 			}
 
-			if tt.args.restCfg.Method != "" {
-				require.Equal(t, tt.args.restCfg.Method, got.method, "unexpected method")
-			}
 			require.NoError(t, err, "unexpected error")
 			require.NotNil(t, got, "expected non-nil")
+			methodBytes := new(bytes.Buffer)
+			require.NoError(t, got.method.Execute(context.Background(), methodBytes, nil, 10))
+			// We don't actually do any template evaluation here, just check that pass-through worked
+			if tt.args.restCfg.Method != "" {
+				require.Equal(t, tt.args.restCfg.Method, methodBytes.String())
+			}
 		})
 	}
 }
@@ -165,6 +182,7 @@ func TestRestRemediate(t *testing.T) {
 		ent       protoreflect.ProtoMessage
 		pol       map[string]any
 		params    map[string]any
+		output    any
 	}
 
 	type newRestRemediateArgs struct {
@@ -292,6 +310,48 @@ func TestRestRemediate(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "PUT or POST on Eval Output",
+			newRemArgs: newRestRemediateArgs{
+				restCfg: &pb.RestType{
+					Method:   `{{if .EvalResultOutput.Id}}PUT{{else}}POST{{end}}`,
+					Endpoint: `/repos/{{.Entity.Owner}}/{{.Entity.Name}}/rulesets{{if .EvalResultOutput.Id}}/{{ .EvalResultOutput.Id }}{{end}}`,
+					Body:     &bodyTemplateWithVars,
+				},
+			},
+			remArgs: remediateArgs{
+				remAction: models.ActionOptOn,
+				ent: &pb.Repository{
+					Owner:  "OwnerVar",
+					Name:   "NameVar",
+					RepoId: 456,
+				},
+				pol: map[string]any{
+					"allowed_actions": "selected",
+				},
+				params: map[string]any{
+					"branch": "main",
+				},
+				output: map[string]any{"Id": "1234"},
+			},
+			testHandler: func(writer http.ResponseWriter, request *http.Request) {
+				assert.Equal(t, "/repos/OwnerVar/NameVar/rulesets/1234", request.URL.Path, "unexpected path")
+				assert.Equal(t, http.MethodPut, request.Method, "unexpected method")
+
+				var requestBody struct {
+					Enabled        bool   `json:"enabled"`
+					AllowedActions string `json:"allowed_actions"`
+				}
+
+				err := json.NewDecoder(request.Body).Decode(&requestBody)
+				assert.NoError(t, err, "unexpected error decoding body")
+				assert.Equal(t, true, requestBody.Enabled, "unexpected enabled")
+				assert.Equal(t, "selected", requestBody.AllowedActions, "unexpected allowed actions")
+
+				defer request.Body.Close()
+				writer.WriteHeader(http.StatusOK)
+			},
+			wantErr: false},
+		{
 			name: "valid dry run",
 			newRemArgs: newRestRemediateArgs{
 				restCfg: &pb.RestType{
@@ -383,6 +443,12 @@ func TestRestRemediate(t *testing.T) {
 					Def:    tt.remArgs.pol,
 					Params: tt.remArgs.params,
 				},
+			}
+			if tt.remArgs.output != nil {
+				res := engif.EvaluationResult{
+					Output: tt.remArgs.output,
+				}
+				evalParams.SetEvalResult(&res)
 			}
 
 			retMeta, err := engine.Do(

@@ -178,7 +178,7 @@ Remediation actions have access to:
 
 - The `Entity` object representing the resource being evaluated
 - The `Profile` object containing rule parameters and definitions
-- For remediations which create a pull request, output from the rule evaluation
+- For pull request and REST call remediations, output from the rule evaluation
   is available in `EvalResultOutput`.
 
 ### Remediation Types
@@ -208,8 +208,8 @@ Minder supports three remediation actions:
      [yq `expression`](https://mikefarah.gitbook.io/yq/) to files selected by a
      list of `patterns`. Each element in the `patterns` list is represented as:
      `{"type": "glob", "pattern": "file/path/*"}`. `glob` is currently the only
-     supported pattern type. This action does not support templating either
-     `expression` or `pattern`
+     supported pattern type. This action supports using Go templates in the
+     `expression` but not in the `pattern` selection.
 
    If the content modification produces a diff in the repository, Minder will
    open and manage a pull request against the branch used in the `git` ingest,
@@ -232,16 +232,17 @@ Minder supports three remediation actions:
 
    The
    [REST remediation](https://mindersec.github.io/ref/proto#minder-v1-RestType)
-   calls the specified `endpoint` using the defined HTTP `method`, passing a
-   `body` and optional `headers`.
+   calls the specified `endpoint` using the defined HTTP `method`, passing the
+   supplied `body`. Currently, `headers` are not supported.
 
-   Both the endpoint and the body support Go template parameters, with the
+   `endpoint`, `method` and `body` support Go template parameters, with the
    following data:
 
    - `Entity` contains the same entity information available during rule
      evaluation
    - `Profile` contains the profile data supplied in the `def` field
    - `Params` contains the profile data supplied in the `params` field
+   - `EvalResultOutput` contains the output data from the rule evaluation step
 
 3. **GitHub Branch Protection** (`gh_branch_protect`)
 

@@ -529,6 +529,19 @@ func TestRuleType_Definition_Remediate_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "multiple remediation data",
+			rem: &RuleType_Definition_Remediate{
+				Type: "rest",
+				Rest: &RestType{
+					Endpoint: "https://example.com/api",
+				},
+				GhBranchProtection: &RuleType_Definition_Remediate_GhBranchProtectionType{
+					Patch: "patch content",
+				},
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -565,10 +578,39 @@ func TestRestType_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "templated method",
+			rest: &RestType{
+				Method:   "{{if .CanPut}}PUT{{else}}POST{{end}}",
+				Endpoint: "https://example.com/api",
+			},
+			wantErr: false,
+		},
+		{
+			name: "templated URI",
+			rest: &RestType{
+				Endpoint: "https://example.com/api/{{if .CanPut}}object{{end}}",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid templated method",
+			rest: &RestType{
+				Method:   "{{if .CanPut}}PUT",
+				Endpoint: "https://example.com/api",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid templated endpoint",
+			rest: &RestType{
+				Endpoint: "https://example.com/api{{else}}object{{end}}",
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

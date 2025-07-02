@@ -6000,7 +6000,7 @@
         },
         "method": {
           "type": "string",
-          "description": "method is the method to use to fetch data."
+          "description": "method is the method to use to fetch data.\nGo templates may be used to vary the method using the same parameters\nas the endpoint."
         },
         "headers": {
           "type": "array",
@@ -6011,7 +6011,7 @@
         },
         "body": {
           "type": "string",
-          "description": "body is the body to be sent to the endpoint.\nThis is expected to be a valid JSON string."
+          "description": "body is the body to be sent to the endpoint, which must be valid JSON\nGo templates may be used to vary the method using the same parameters\nas the endpoint."
         },
         "parse": {
           "type": "string",
