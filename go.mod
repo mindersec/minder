@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250625184727-c923a0c2a132.1
-	buf.build/go/protovalidate v0.12.0
+	buf.build/go/protovalidate v0.13.1
 	buf.build/go/protoyaml v0.6.0
 	github.com/ThreeDotsLabs/watermill v1.4.6
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
