@@ -149,15 +149,19 @@ func (s *UnitTestSuite) TestHandleWebHookPing() {
 	packageJson, err := json.Marshal(event)
 	require.NoError(t, err, "failed to marshal ping event")
 
-	req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-	require.NoError(t, err, "failed to create request")
+	resp, err := httpDoWithRetry(ts.Client(), func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+		if err != nil {
+			return nil, err
+		}
 
-	req.Header.Add("X-GitHub-Event", "ping")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	// the ping event has an empty body ({}), the value below is a SHA256 hmac of the empty body with the shared key "test"
-	req.Header.Add("X-Hub-Signature-256", "sha256=5f5863b9805ad4e66e954a260f9cab3f2e95718798dec0bb48a655195893d10e")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+		req.Header.Add("X-GitHub-Event", "ping")
+		req.Header.Add("X-GitHub-Delivery", "12345")
+		// the ping event has an empty body ({}), the value below is a SHA256 hmac of the empty body with the shared key "test"
+		req.Header.Add("X-Hub-Signature-256", "sha256=5f5863b9805ad4e66e954a260f9cab3f2e95718798dec0bb48a655195893d10e")
+		req.Header.Add("Content-Type", "application/json")
+		return req, nil
+	})
 	require.NoError(t, err, "failed to make request")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
 	assert.Len(t, queued, 0, "unexpected number of queued events")
@@ -209,13 +213,17 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepository() {
 	packageJson, err := json.Marshal(event)
 	require.NoError(t, err, "failed to marshal package event")
 
-	req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-	require.NoError(t, err, "failed to create request")
+	resp, err := httpDoWithRetry(ts.Client(), func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+		if err != nil {
+			return nil, err
+		}
 
-	req.Header.Add("X-GitHub-Event", "meta")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+		req.Header.Add("X-GitHub-Event", "meta")
+		req.Header.Add("X-GitHub-Delivery", "12345")
+		req.Header.Add("Content-Type", "application/json")
+		return req, nil
+	})
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -370,13 +378,17 @@ func (s *UnitTestSuite) TestHandleWebHookUnexistentRepoPackage() {
 	packageJson, err := json.Marshal(event)
 	require.NoError(t, err, "failed to marshal package event")
 
-	req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-	require.NoError(t, err, "failed to create request")
+	resp, err := httpDoWithRetry(ts.Client(), func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+		if err != nil {
+			return nil, err
+		}
 
-	req.Header.Add("X-GitHub-Event", "package")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+		req.Header.Add("X-GitHub-Event", "package")
+		req.Header.Add("X-GitHub-Delivery", "12345")
+		req.Header.Add("Content-Type", "application/json")
+		return req, nil
+	})
 	require.NoError(t, err, "failed to make request")
 	// We expect OK since we don't want to leak information about registered repositories
 	require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -413,13 +425,17 @@ func (s *UnitTestSuite) TestNoopWebhookHandler() {
 	packageJson, err := json.Marshal(event)
 	require.NoError(t, err, "failed to marshal marketplace event")
 
-	req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-	require.NoError(t, err, "failed to create request")
+	resp, err := httpDoWithRetry(ts.Client(), func() (*http.Request, error) {
+		req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+		if err != nil {
+			return nil, err
+		}
 
-	req.Header.Add("X-GitHub-Event", "marketplace_purchase")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+		req.Header.Add("X-GitHub-Event", "marketplace_purchase")
+		req.Header.Add("X-GitHub-Delivery", "12345")
+		req.Header.Add("Content-Type", "application/json")
+		return req, nil
+	})
 
 	require.NoError(t, err, "failed to make request")
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status code")
@@ -2699,14 +2715,18 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 			expectedMAC := sign(packageJson, "test")
 
 			client := &http.Client{}
-			req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-			require.NoError(t, err, "failed to create request")
+			resp, err := httpDoWithRetry(client, func() (*http.Request, error) {
+				req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+				if err != nil {
+					return nil, err
+				}
 
-			req.Header.Add("X-GitHub-Event", tt.event)
-			req.Header.Add("X-GitHub-Delivery", "12345")
-			req.Header.Add("Content-Type", "application/json")
-			req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
-			resp, err := httpDoWithRetry(client, req)
+				req.Header.Add("X-GitHub-Event", tt.event)
+				req.Header.Add("X-GitHub-Delivery", "12345")
+				req.Header.Add("Content-Type", "application/json")
+				req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
+				return req, nil
+			})
 			require.NoError(t, err, "failed to make request")
 			// We expect OK since we don't want to leak information about registered repositories
 			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
@@ -3311,14 +3331,18 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 
 			expectedMAC := sign(packageJson, "test")
 			client := &http.Client{}
-			req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
-			require.NoError(t, err, "failed to create request")
+			resp, err := httpDoWithRetry(client, func() (*http.Request, error) {
+				req, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(packageJson))
+				if err != nil {
+					return nil, err
+				}
 
-			req.Header.Add("X-GitHub-Event", tt.event)
-			req.Header.Add("X-GitHub-Delivery", "12345")
-			req.Header.Add("Content-Type", "application/json")
-			req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
-			resp, err := httpDoWithRetry(client, req)
+				req.Header.Add("X-GitHub-Event", tt.event)
+				req.Header.Add("X-GitHub-Delivery", "12345")
+				req.Header.Add("Content-Type", "application/json")
+				req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
+				return req, nil
+			})
 			require.NoError(t, err, "failed to make request")
 			// We expect OK since we don't want to leak information about registered repositories
 			require.Equal(t, tt.statusCode, resp.StatusCode, "unexpected status code")
@@ -3401,10 +3425,17 @@ func sign(payload []byte, key string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
-func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
+// httpDoWithRetry takes a createRequest function rather than a request
+// to avoid reusing the req.Body io.Reader for a second request.
+func httpDoWithRetry(client *http.Client, createRequest func() (*http.Request, error)) (*http.Response, error) {
 	var resp *http.Response
+
 	err := backoff.Retry(func() error {
-		var err error
+		req, err := createRequest()
+		if err != nil {
+			return err
+		}
+
 		resp, err = client.Do(req)
 		return err
 	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
