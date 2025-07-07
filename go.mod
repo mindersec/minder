@@ -45,7 +45,7 @@ require (
 	github.com/itchyny/gojq v0.12.17
 	github.com/lib/pq v1.10.9
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/mikefarah/yq/v4 v4.45.1
+	github.com/mikefarah/yq/v4 v4.45.4
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/nats-io/nats-server/v2 v2.10.27
 	github.com/nats-io/nats.go v1.39.1
@@ -119,9 +119,9 @@ require (
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/hcsshim v0.13.0 // indirect
 	github.com/Yiling-J/theine-go v0.6.1 // indirect
-	github.com/a8m/envsubst v1.4.2 // indirect
+	github.com/a8m/envsubst v1.4.3 // indirect
 	github.com/alecthomas/chroma/v2 v2.18.0 // indirect
-	github.com/alecthomas/participle/v2 v2.1.1 // indirect
+	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20240925125616-a0883641c664 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
@@ -171,7 +171,7 @@ require (
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
-	github.com/elliotchance/orderedmap v1.7.1 // indirect
+	github.com/elliotchance/orderedmap v1.8.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
@@ -182,7 +182,7 @@ require (
 	github.com/go-chi/chi/v5 v5.2.2 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
-	github.com/goccy/go-yaml v1.13.3 // indirect
+	github.com/goccy/go-yaml v1.17.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
@@ -364,7 +364,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20241021211548-844334e04aef // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
-	github.com/magiconair/properties v1.8.9 // indirect
+	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
