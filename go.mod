@@ -64,8 +64,8 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.1
 	github.com/sendgrid/rest v2.6.9+incompatible
 	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
-	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.26.0
-	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.26.0
+	github.com/signalfx/splunk-otel-go/instrumentation/database/sql/splunksql v1.27.0
+	github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq v1.27.0
 	github.com/sigstore/protobuf-specs v0.4.3
 	github.com/sigstore/sigstore-go v1.0.0
 	github.com/spf13/cobra v1.9.1
@@ -252,7 +252,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
-	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.26.0 // indirect
+	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.27.0 // indirect
 	github.com/sigstore/sigstore v1.9.4 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spdx/gordf v0.0.0-20221230105357-b735bd5aac89 // indirect
