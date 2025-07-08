@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -19,7 +18,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog/log"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -187,38 +185,35 @@ func TestHandleRequestTooLarge(t *testing.T) {
 
 	ts := httptest.NewServer(withMaxSizeMiddleware(http.HandlerFunc(handler)))
 
-	event := github.PackageEvent{
-		Action: github.String("published"),
-		Repo: &github.Repository{
-			ID:   github.Int64(12345),
-			Name: github.String("stacklok/minder"),
-		},
-		Org: &github.Organization{
-			Login: github.String("stacklok"),
-		},
-	}
-	packageJson, err := json.Marshal(event)
-	require.NoError(t, err, "failed to marshal package event")
+	resp, err := httpDoWithRetry(ts.Client(), func() (*http.Request, error) {
+		// Recreate the malicious body reader for each retry attempt
+		maliciousBody := strings.NewReader(strings.Repeat("1337", 100000000))
+		maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
 
-	maliciousBody := strings.NewReader(strings.Repeat("1337", 100000000))
-	maliciousBodyReader := io.MultiReader(maliciousBody, maliciousBody, maliciousBody, maliciousBody, maliciousBody)
-	_ = packageJson
+		req, err := http.NewRequest("POST", ts.URL, maliciousBodyReader)
+		if err != nil {
+			return nil, err
+		}
 
-	req, err := http.NewRequest("POST", ts.URL, maliciousBodyReader)
-	require.NoError(t, err, "failed to create request")
-
-	req.Header.Add("X-GitHub-Event", "meta")
-	req.Header.Add("X-GitHub-Delivery", "12345")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := httpDoWithRetry(ts.Client(), req)
+		req.Header.Add("X-GitHub-Event", "meta")
+		req.Header.Add("X-GitHub-Delivery", "12345")
+		req.Header.Add("Content-Type", "application/json")
+		return req, nil
+	})
 	require.NoError(t, err, "failed to make request")
 	require.Equal(t, http.StatusRequestEntityTooLarge, resp.StatusCode, "unexpected status code")
 }
 
-func httpDoWithRetry(client *http.Client, req *http.Request) (*http.Response, error) {
+// httpDoWithRetry takes a createRequest function rather than a request
+// to avoid reusing the req.Body io.Reader for a second request.
+func httpDoWithRetry(client *http.Client, createRequest func() (*http.Request, error)) (*http.Response, error) {
 	var resp *http.Response
 	err := backoff.Retry(func() error {
-		var err error
+		req, err := createRequest()
+		if err != nil {
+			return err
+		}
+
 		resp, err = client.Do(req)
 		return err
 	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
