@@ -27,25 +27,30 @@ type CancelFunc func()
 type sharedPostgres struct {
 	postgres *embeddedpostgres.EmbeddedPostgres
 	cfg      embeddedpostgres.Config
-	inFlight sync.WaitGroup
-	lock     sync.Mutex
+	uses     int
+	done     chan struct{}
 }
 
-var instance sharedPostgres
+var instance *sharedPostgres
+var lock sync.Mutex
 
 // ensurePostgres is a one-shot function to set up an embedded Postgres server.
 // Individual tests should use GetFakeStore to get a handle to a unique database
 // table space within the shared server.  Using a shared server allows us to
 // amortize the cost of starting the server across multiple tests.
 func ensurePostgres() (*embeddedpostgres.Config, CancelFunc, error) {
-	instance.lock.Lock()
-	defer instance.lock.Unlock()
+	lock.Lock()
+	defer lock.Unlock()
 
-	if instance.postgres != nil {
-		return newDBFromShared()
+	// Use existing shared instance if it is not shutting down
+	// N.B. we always exit the lock with instance.uses > 0 or an error
+	if instance != nil && instance.uses != 0 {
+		return newDBFromShared(instance)
 	}
 
-	instance.cfg = embeddedpostgres.DefaultConfig()
+	var newInstance = sharedPostgres{
+		done: make(chan struct{}),
+	}
 	port, err := pickUnusedPort()
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to pick a port: %w", err)
@@ -59,22 +64,24 @@ func ensurePostgres() (*embeddedpostgres.Config, CancelFunc, error) {
 			fmt.Printf("Unable to remove tmpdir %q: %v\n", tmpName, err)
 		}
 	}
-	instance.cfg = instance.cfg.Port(uint32(port)).RuntimePath(tmpName)
+	newInstance.cfg = embeddedpostgres.DefaultConfig().
+		Port(uint32(port)).
+		RuntimePath(tmpName).
+		StartParameters(map[string]string{"max_connections": "500"})
 
-	instance.postgres = embeddedpostgres.NewDatabase(instance.cfg)
-	if err := instance.postgres.Start(); err != nil {
+	newInstance.postgres = embeddedpostgres.NewDatabase(newInstance.cfg)
+	if err := newInstance.postgres.Start(); err != nil {
 		return nil, cleanupDir, fmt.Errorf("unable to start postgres: %w", err)
 	}
-	cfg, cancel, err := newDBFromShared()
+	cfg, cancel, err := newDBFromShared(&newInstance)
+	instance = &newInstance
 	go func() {
-		instance.inFlight.Wait()
-		instance.lock.Lock()
-		defer instance.lock.Unlock()
-		// Reset state so we can start a new server if needed.
-		old := instance.postgres
-		instance.postgres = nil
-		instance.inFlight = sync.WaitGroup{}
-		if err := old.Stop(); err != nil {
+		<-newInstance.done
+		lock.Lock()
+		instance = nil
+		// Stop may take a while, but we don't need to do it under lock.
+		lock.Unlock()
+		if err := newInstance.postgres.Stop(); err != nil {
 			fmt.Printf("Unable to stop postgres: %v\n", err)
 		}
 		cleanupDir()
@@ -85,8 +92,8 @@ func ensurePostgres() (*embeddedpostgres.Config, CancelFunc, error) {
 
 // newDBFromShared is a helper function to create a new database in the shared
 // Postgres instance.  It assumes that the instance global is locked.
-func newDBFromShared() (*embeddedpostgres.Config, CancelFunc, error) {
-	sqlDB, err := sql.Open("postgres", instance.cfg.GetConnectionURL()+"?sslmode=disable")
+func newDBFromShared(sp *sharedPostgres) (*embeddedpostgres.Config, CancelFunc, error) {
+	sqlDB, err := sql.Open("postgres", sp.cfg.GetConnectionURL()+"?sslmode=disable")
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to open database: %w", err)
 	}
@@ -95,18 +102,23 @@ func newDBFromShared() (*embeddedpostgres.Config, CancelFunc, error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to generate database name: %w", err)
 	}
-	instance.inFlight.Add(1)
 
+	sqlDB.SetMaxIdleConns(0)
 	_, err = sqlDB.Exec(fmt.Sprintf("CREATE DATABASE %q", dbName))
 	if err != nil {
-		instance.inFlight.Done()
 		return nil, nil, fmt.Errorf("unable to create database: %w", err)
 	}
-	cfg := instance.cfg
-	cfg = cfg.Database(dbName)
-	// Note: because we copy the reference to WaitGroup here, we don't need to
-	// lock the Done call later.
-	return &cfg, instance.inFlight.Done, nil
+	cfg := sp.cfg.Database(dbName)
+	sp.uses++
+	cancel := func() {
+		lock.Lock()
+		defer lock.Unlock()
+		sp.uses--
+		if sp.uses == 0 {
+			close(sp.done)
+		}
+	}
+	return &cfg, cancel, nil
 }
 
 // GetFakeStore returns a new embedded Postgres database and a cancel function
