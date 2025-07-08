@@ -21,7 +21,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/db"
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
@@ -152,7 +152,7 @@ func (r *Remediator) GetOnOffState() models.ActionOpt {
 func (r *Remediator) Do(
 	ctx context.Context,
 	cmd interfaces.ActionCmd,
-	ent protoreflect.ProtoMessage,
+	ent proto.Message,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
 ) (json.RawMessage, error) {
@@ -174,7 +174,7 @@ func (r *Remediator) Do(
 
 func (r *Remediator) getParamsForPRRemediation(
 	ctx context.Context,
-	ent protoreflect.ProtoMessage,
+	ent proto.Message,
 	params interfaces.ActionsParams,
 	metadata *json.RawMessage,
 ) (*paramsPR, error) {
@@ -215,7 +215,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		return nil, fmt.Errorf("cannot get modification: %w", err)
 	}
 
-	err = modification.createFsModEntries(ctx, params)
+	err = modification.createFsModEntries(ctx, ent, params)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create PR entries: %w", err)
 	}

@@ -15,7 +15,10 @@ import (
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	engif "github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
 const (
@@ -133,6 +136,8 @@ func TestYQExecute(t *testing.T) {
 	scenarios := []struct {
 		name         string
 		yqParams     func(*testing.T) *modificationConstructorParams
+		evalParams   map[string]any
+		evalOutput   any
 		testFiles    map[string]testFileContents
 		fs           func(*testing.T, testFileMap) billy.Filesystem
 		checkEntries func(*testing.T, testFileMap, []*fsEntry)
@@ -218,6 +223,101 @@ func TestYQExecute(t *testing.T) {
 					if entry.Path == nonMatchingFileNameOutsideTree || entry.Path == nonMatchingFileNameInsideTree {
 						t.Errorf("matched file %s that shouldn't be matched", entry.Path)
 					}
+					file, ok := testFilesCopy[entry.Path]
+					require.True(t, ok)
+					delete(testFilesCopy, entry.Path) // remove the entry from the map to make sure we catch duplicates
+					if file.modifiedContents != "" {
+						require.Equal(t, file.modifiedContents, entry.Content)
+					}
+				}
+			},
+		},
+		{
+			name: "TestTemplatedExpression",
+			yqParams: func(t *testing.T) *modificationConstructorParams {
+				t.Helper()
+
+				return newModificationParams(withParams(map[string]any{
+					"expression": `
+.updates += [
+{{- $last := len (slice .EvalResultOutput.Ecosystems 1) -}}
+{{- $schedule := .Params.schedule -}}
+{{- range $index, $item := .EvalResultOutput.Ecosystems -}}
+{"package-ecosystem": "{{ $item.name }}",
+	{{- if index $item "directory" }} "directory": "{{ $item.directory }}", {{- end }}
+	"schedule": {"interval": "{{ $schedule }}"}}
+	{{- /* YQ is sensitive to trailing commas, so use last to omit them */ -}}
+	{{- if lt $index $last }},{{ end }}
+{{- end -}}
+]
+`,
+					"patterns": []any{
+						map[string]any{
+							"pattern": ".github/dependabot.yml",
+							"type":    "glob",
+						},
+						map[string]any{
+							"pattern": ".github/dependabot.yaml",
+							"type":    "glob",
+						},
+					},
+				}))
+			},
+			evalParams: map[string]any{
+				"schedule": "weekly",
+			},
+			evalOutput: map[string]any{
+				"Ecosystems": []any{
+					map[string]any{"name": "gomod", "directory": "/go"},
+					map[string]any{"name": "github-actions"},
+				},
+			},
+			testFiles: testFileMap{
+				".github/dependabot.yml": {
+					origContents: `# Dependabot configuration file
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/docs"
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+`,
+					modifiedContents: `# Dependabot configuration file
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/docs"
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /go
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    schedule:
+      interval: weekly
+`,
+				},
+			},
+			fs: func(t *testing.T, testFiles testFileMap) billy.Filesystem {
+				t.Helper()
+				opts := make([]fsConstructorOpt, 0, len(testFiles))
+				for path, contents := range testFiles {
+					opts = append(opts, withFile(path, contents.origContents))
+				}
+				return newTestFS(t, opts...)
+			},
+			checkEntries: func(t *testing.T, testFiles testFileMap, entries []*fsEntry) {
+				t.Helper()
+
+				// two non-matching files
+				require.Len(t, entries, len(testFiles))
+				testFilesCopy := maps.Clone(testFiles)
+				for _, entry := range entries {
 					file, ok := testFilesCopy[entry.Path]
 					require.True(t, ok)
 					delete(testFilesCopy, entry.Path) // remove the entry from the map to make sure we catch duplicates
@@ -343,7 +443,18 @@ func TestYQExecute(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, yqe)
 
-			err = yqe.createFsModEntries(context.Background(), nil)
+			ifParams := interfaces.EvalStatusParams{
+				Rule: &models.RuleInstance{
+					Params: scenario.evalParams,
+				},
+			}
+			if scenario.evalOutput != nil {
+				ifParams.SetEvalResult(&engif.EvaluationResult{
+					Output: scenario.evalOutput,
+				})
+			}
+
+			err = yqe.createFsModEntries(context.Background(), nil, &ifParams)
 			if scenario.createErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), scenario.createErr)

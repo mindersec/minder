@@ -13,10 +13,14 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/filemode"
 	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"github.com/rs/zerolog"
+	"google.golang.org/protobuf/proto"
 	gologging "gopkg.in/op/go-logging.v1"
 
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	textutil "github.com/mindersec/minder/internal/util"
 )
+
+// TODO: document the YQ remediation model.
 
 // unfortunately yqlib does seem to be using global variables...
 func init() {
@@ -29,6 +33,8 @@ type patternType string
 
 const (
 	patternTypeGlob patternType = "glob"
+
+	maxExpressionSize int = 3000
 )
 
 const (
@@ -82,7 +88,19 @@ func newYqExecute(
 	}, nil
 }
 
-func (yq *yqExecute) createFsModEntries(ctx context.Context, _ interfaces.ActionsParams) error {
+// templateParams are the parameters for template expansion for the expression template
+type templateParams struct {
+	// Entity is the metadata for the entity which was evaluated
+	Entity any
+	// Profile is the parameters to be used in the template
+	Profile map[string]any
+	// Params are the rule instance parameters
+	Params map[string]any
+	// EvalResultOutput is the output from the rule evaluation
+	EvalResultOutput any
+}
+
+func (yq *yqExecute) createFsModEntries(ctx context.Context, ent proto.Message, params interfaces.ActionsParams) error {
 	matchingFiles := make([]string, 0)
 	for _, pattern := range yq.config.Patterns {
 		if pattern.Type != string(patternTypeGlob) {
@@ -100,8 +118,30 @@ func (yq *yqExecute) createFsModEntries(ctx context.Context, _ interfaces.Action
 		matchingFiles = append(matchingFiles, patternMatches...)
 	}
 
+	templateData := templateParams{
+		Entity:  ent,
+		Profile: params.GetRule().Def,
+		Params:  params.GetRule().Params,
+	}
+	if params.GetEvalResult() != nil {
+		templateData.EvalResultOutput = params.GetEvalResult().Output
+	}
+
+	expression := ""
+	if yq.config.Expression != "" {
+		expressionBytes := new(bytes.Buffer)
+		expressionTmpl, err := textutil.NewSafeTextTemplate(&yq.config.Expression, "expression")
+		if err != nil {
+			return fmt.Errorf("unable to parse templates in expression: %w", err)
+		}
+		if err := expressionTmpl.Execute(ctx, expressionBytes, templateData, maxExpressionSize); err != nil {
+			return fmt.Errorf("unable to expand templates in expression: %w", err)
+		}
+		expression = expressionBytes.String()
+	}
+
 	for _, file := range matchingFiles {
-		newContent, err := yq.executeYq(file, yq.config.Expression)
+		newContent, err := yq.executeYq(file, expression)
 		if err != nil {
 			return fmt.Errorf("cannot execute yq: %w", err)
 		}

@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,7 +25,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/engine/eval/rego"
-	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -93,7 +93,7 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 		rawInputSchema: def.GetInputSchema(),
 		inputSchema:    schema,
 		endpointTmpl:   def.GetEndpoint(),
-		method:         util.HttpMethodFromString(def.GetMethod(), http.MethodGet),
+		method:         strings.ToUpper(cmp.Or(def.GetMethod(), http.MethodGet)),
 		headers:        def.GetHeaders(),
 		body:           body,
 		bodyFromInput:  bodyFromInput,

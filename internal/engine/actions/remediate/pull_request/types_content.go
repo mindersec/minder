@@ -9,6 +9,8 @@ import (
 	"context" // #nosec G505 - we're not using sha1 for crypto, only to quickly compare contents
 	"fmt"
 
+	"google.golang.org/protobuf/proto"
+
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -104,9 +106,11 @@ func prConfigToEntries(prCfg *pb.RuleType_Definition_Remediate_PullRequestRemedi
 
 func (ca *contentModification) createFsModEntries(
 	ctx context.Context,
+	ent proto.Message,
 	params interfaces.ActionsParams,
 ) error {
 	data := map[string]interface{}{
+		"Entity":  ent,
 		"Params":  params.GetRule().Params,
 		"Profile": params.GetRule().Def,
 	}
