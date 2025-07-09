@@ -29,6 +29,14 @@ import (
 //nolint:gosec // This is not a hardcoded credential
 const MinderAuthTokenEnvVar = "MINDER_AUTH_TOKEN"
 
+// GitHubActionsEndpoint is the environment variable GitHub uses to signal the
+// endpoint for GitHub Actions OIDC token requests
+const GitHubActionsEndpoint = "ACTIONS_ID_TOKEN_REQUEST_URL"
+
+// GitHubActionsTokenEnv is the environment variable GitHub uses to authenticate
+// the calls to the GitHubActionsEndpoint
+const GitHubActionsTokenEnv = "ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+
 // ErrGettingRefreshToken is an error for when we can't get a refresh token
 var ErrGettingRefreshToken = errors.New("error refreshing credentials")
 
@@ -90,6 +98,12 @@ func GetGrpcConnection(
 	token := ""
 	if os.Getenv(MinderAuthTokenEnvVar) != "" {
 		token = os.Getenv(MinderAuthTokenEnvVar)
+	} else if os.Getenv(GitHubActionsTokenEnv) != "" {
+		var err error
+		token, err = GetTokenFromGitHub()
+		if err != nil {
+			return nil, fmt.Errorf("could not fetch GitHub Actions token: %w", err)
+		}
 	} else {
 		t, err := GetToken(cfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 		if err == nil {
@@ -238,6 +252,47 @@ func extractWWWAuthenticateRealm(header string) string {
 		}
 	}
 	return ""
+}
+
+// GetTokenFromGitHub uses the GitHub $ACTIONS_ID_TOKEN_REQUEST_URL to fetch
+// an OIDC token from GitHub which can be used to authenticate to Minder if the
+// machine_accounts flag is enabled.
+func GetTokenFromGitHub() (string, error) {
+	requestURL := os.Getenv(GitHubActionsEndpoint)
+	requestToken := os.Getenv(GitHubActionsTokenEnv)
+	if requestURL == "" || requestToken == "" {
+		return "", fmt.Errorf("missing %s or %s environment variables", GitHubActionsEndpoint, GitHubActionsTokenEnv)
+	}
+
+	// Add audience=minder to the query params
+	u, err := url.Parse(requestURL)
+	if err != nil {
+		return "", fmt.Errorf("cannot parse URL %q: %w", requestURL, err)
+	}
+	q := u.Query()
+	q.Set("audience", "minder")
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("unable to create request to %q: %w", u.String(), err)
+	}
+	req.Header.Set("Authorization", "Bearer "+requestToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("unable to fetch %s: %w", u.String(), err)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Value string `json:"value"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("unable to decode JSON: %w", err)
+	}
+	return result.Value, nil
 }
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
