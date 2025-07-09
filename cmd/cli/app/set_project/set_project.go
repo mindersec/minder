@@ -5,7 +5,6 @@
 package set_project
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -46,16 +45,19 @@ func spCommand(cmd *cobra.Command, args []string) error {
 		return cli.MessageAndError("Error parsing project ID", err)
 	}
 
-	cfgp := cli.GetRelevantCLIConfigPath(viper.GetViper())
-	if cfgp == "" {
-		// There is no config file at the moment. Let's create one.
-		cfgp, err = persistEmptyDefaultConfig()
+	configFile := viper.GetViper().ConfigFileUsed()
+	if configFile == "" {
+		cfgDir, err := cli.GetConfigDirPath()
 		if err != nil {
-			return cli.MessageAndError("Error creating config file", err)
+			cfgDir = "."
+		}
+		configFile = filepath.Join(cfgDir, "config.yaml")
+		if err := os.MkdirAll(cfgDir, 0700); err != nil {
+			return cli.MessageAndError("Error creating config directory", err)
 		}
 	}
 
-	viper.SetConfigFile(cfgp)
+	viper.SetConfigFile(configFile)
 	if err := viper.ReadInConfig(); err != nil {
 		return cli.MessageAndError("Error reading config file", err)
 	}
@@ -67,7 +69,7 @@ func spCommand(cmd *cobra.Command, args []string) error {
 
 	cfg.Project = project
 
-	w, err := os.OpenFile(filepath.Clean(cfgp), os.O_WRONLY|os.O_TRUNC, 0600)
+	w, err := os.OpenFile(filepath.Clean(configFile), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return cli.MessageAndError("Error opening config file for writing", err)
 	}
@@ -87,31 +89,6 @@ func spCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
-}
-
-func persistEmptyDefaultConfig() (string, error) {
-	cfgp := cli.GetDefaultCLIConfigPath()
-	if cfgp == "" {
-		return "", errors.New("no default config path found")
-	}
-	f, err := os.Create(filepath.Clean(cfgp))
-	if err != nil {
-		if !errors.Is(err, os.ErrExist) {
-			return "", err
-		}
-
-		// File already exists, no need to write the default config
-		return cfgp, nil
-	}
-	// Ensure we've written the default config to the file
-	if err := f.Sync(); err != nil {
-		return "", err
-	}
-
-	//nolint:errcheck // leaking file handle is not a concern here
-	_ = f.Close()
-
-	return cfgp, nil
 }
 
 func init() {

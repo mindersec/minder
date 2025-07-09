@@ -7,7 +7,6 @@ package app
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -55,11 +54,8 @@ func initConfig() {
 	serverconfig.SetViperDefaults(viper.GetViper())
 
 	cfgFile := viper.GetString("config")
-	cfgFilePath := config.GetRelevantCfgPath(append([]string{cfgFile},
-		filepath.Join(".", "server-config.yaml"),
-	))
-	if cfgFilePath != "" {
-		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
+	if cfgStat, err := os.Stat(cfgFile); err == nil && !cfgStat.IsDir() {
+		cfgFileData, err := config.GetConfigFileData(cfgFile)
 		if err != nil {
 			RootCmd.PrintErrln(err)
 			os.Exit(1)
@@ -74,7 +70,7 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		viper.SetConfigFile(cfgFilePath)
+		viper.SetConfigFile(cfgFile)
 	} else {
 		// use defaults
 		viper.SetConfigName("server-config")

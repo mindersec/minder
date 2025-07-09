@@ -4,12 +4,16 @@
 package cli_test
 
 import (
+	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -17,8 +21,16 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/client"
 )
 
@@ -51,65 +63,131 @@ func setEnvVar(t *testing.T, env string, value string) {
 //nolint:paralleltest
 func TestGetGrpcConnection(t *testing.T) {
 	// authTokenMutex := &sync.Mutex{}
+
+	fakeSvc := fakeUserService{}
+	grpcServer := grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	minderv1.RegisterUserServiceServer(grpcServer, &fakeSvc)
+	var grpcCalls, authCalls, legacyCalls int
+
+	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor == 2 && strings.HasPrefix(r.Header.Get("content-type"), "application/grpc") {
+			grpcCalls++
+			grpcServer.ServeHTTP(w, r)
+			return
+		}
+		switch r.URL.Path {
+		case "/realms/stacklok/protocol/openid-connect/token":
+			legacyCalls++
+			w.WriteHeader(http.StatusBadRequest) // Custom error for hard-coded default
+		case "/custom/protocol/openid-connect/token":
+			authCalls++
+			_, _ = w.Write([]byte(`{"access_token":"JWT"}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	})
+
+	h2cServer := http2.Server{}
+	h2cHandler := h2c.NewHandler(requestHandler, &h2cServer)
+
+	authServer := httptest.NewUnstartedServer(h2cHandler)
+	authServer.EnableHTTP2 = true
+	require.NoError(t, http2.ConfigureServer(authServer.Config, &h2cServer))
+	authServer.Start()
+	fakeSvc.authUrl = authServer.URL + "/custom"
+	t.Cleanup(authServer.Close)
+
+	grpcHost, grpcPortStr, err := net.SplitHostPort(authServer.URL[7:]) // strip off "http://"
+	require.NoError(t, err)
+	grpcPort, err := strconv.Atoi(grpcPortStr)
+	require.NoError(t, err)
+
 	tests := []struct {
-		name          string
-		grpcHost      string
-		grpcPort      int
-		allowInsecure bool
-		issuerUrl     string
-		clientId      string
-		envToken      string
-		expectedError bool
+		name           string
+		externalName   bool
+		overridePort   int
+		allowInsecure  bool
+		envToken       string
+		expectedGRPC   int
+		expectedAuths  int
+		expectedLegacy int
+		expectedError  string
 	}{
 		{
-			name:          "Valid GRPC connection to localhost with secure connection",
-			grpcHost:      "127.0.0.1",
-			grpcPort:      8090,
-			allowInsecure: false,
-			issuerUrl:     "http://localhost:8081",
-			clientId:      "minder-cli",
-			envToken:      "MINDER_AUTH_TOKEN",
-			expectedError: false,
+			name:     "If the token is provided, create connection without calling server",
+			envToken: "IS_A_TOKEN",
 		},
 		{
-			name:          "Valid GRPC connection to localhost with insecure connection",
-			grpcHost:      "localhost",
-			grpcPort:      8090,
+			name:          "With token, don't dial or handshake endpoint",
+			externalName:  true,
+			allowInsecure: false, // Force TLS with non-localhost name
+			envToken:      "IS_A_TOKEN",
+		},
+		{
+			name:          "Connect and get token from GRPC handshake",
 			allowInsecure: true,
-			issuerUrl:     "http://localhost:8081",
-			clientId:      "minder-cli",
-			envToken:      "MINDER_AUTH_TOKEN",
-			expectedError: false,
+			envToken:      "IS_A_TOKEN",
 		},
 		{
-			name:          "Valid GRPC connection to localhost without passing MINDER_AUTH_TOKEN as an argument",
-			grpcHost:      "127.0.0.1",
-			grpcPort:      8090,
+			name:          "Localhost GRPC auto-discovery",
 			allowInsecure: false,
-			issuerUrl:     "http://localhost:8081",
-			clientId:      "minder-cli",
+			expectedGRPC:  1,
+			expectedAuths: 1,
 			envToken:      "",
-			expectedError: false,
+		},
+		{
+			// It's not easy to thread a set of trusted certs to the client call, so we only test non-TLS here
+			name:          "GRPC auto-discovery with insecure external host",
+			externalName:  true,
+			allowInsecure: true,
+			envToken:      "IS_A_TOKEN",
+		},
+		{
+			name:           "Defaults connect to legacy endpoint",
+			overridePort:   9, // discard service, generally not listening
+			allowInsecure:  true,
+			expectedLegacy: 1,
+			expectedError:  "error unmarshaling credentials: EOF",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
+			grpcCalls = 0
+			authCalls = 0
+			legacyCalls = 0
+
+			host := grpcHost
+			// Use https://sslip.io to fake out localhost detection
+			if tt.externalName {
+				host = strings.ReplaceAll(host, ":", "-") + ".sslip.io"
+			}
+			port := cmp.Or(tt.overridePort, grpcPort)
+
 			grpcCfg := client.GRPCClientConfig{
-				Host:     tt.grpcHost,
-				Port:     tt.grpcPort,
+				Host:     host,
+				Port:     port,
 				Insecure: tt.allowInsecure,
 			}
-			conn, err := cli.GetGrpcConnection(grpcCfg, tt.issuerUrl, "stacklok", tt.clientId)
-			if (err != nil) != tt.expectedError {
-				t.Errorf("expected error: %v, got: %v", tt.expectedError, err)
+			conn, err := cli.GetGrpcConnection(grpcCfg, authServer.URL, "stacklok", "minder-cli")
+
+			if tt.expectedGRPC > 0 && tt.expectedGRPC != grpcCalls {
+				t.Errorf("Expected %d grpc calls, got %d", tt.expectedAuths, authCalls)
+			}
+			if tt.expectedAuths > 0 && tt.expectedAuths != authCalls {
+				t.Errorf("Expected %d auth calls, got %d", tt.expectedAuths, authCalls)
+			}
+			if tt.expectedLegacy > 0 && tt.expectedLegacy != legacyCalls {
+				t.Errorf("Expected %d auth calls, got %d", tt.expectedLegacy, legacyCalls)
+			}
+
+			if tt.expectedError != "" {
+				require.ErrorContains(t, err, tt.expectedError)
+				return
 			}
 			if conn != nil {
-				err = conn.Close()
-				if err != nil {
-					t.Errorf("error closing connection: %v", err)
-				}
+				require.NoError(t, conn.Close())
 			}
 		})
 	}
@@ -418,4 +496,23 @@ func TestRevokeToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+// fakeUserService implements just enough of UserService to bootstrap OAuth authentication
+type fakeUserService struct {
+	minderv1.UnimplementedUserServiceServer
+
+	authUrl string
+}
+
+var _ minderv1.UserServiceServer = (*fakeUserService)(nil)
+
+func (fus *fakeUserService) GetUser(ctx context.Context, _ *minderv1.GetUserRequest) (*minderv1.GetUserResponse, error) {
+	err := grpc.SendHeader(ctx, metadata.New(map[string]string{
+		"www-authenticate": fmt.Sprintf(`Bearer realm=%q, scope="minder"`, fus.authUrl),
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return nil, status.Error(codes.Unauthenticated, "unauthenticated")
 }
