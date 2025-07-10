@@ -105,22 +105,6 @@ func GetConfigFileData(cfgFilePath string) (interface{}, error) {
 	return cfgFileData, nil
 }
 
-// GetRelevantCfgPath returns the first path that exists (and is a config file).
-func GetRelevantCfgPath(paths []string) string {
-	for _, path := range paths {
-		if path == "" {
-			continue
-		}
-
-		cleanPath := filepath.Clean(path)
-		if info, err := os.Stat(cleanPath); err == nil && !info.IsDir() {
-			return cleanPath
-		}
-	}
-
-	return ""
-}
-
 // GetKeysWithNullValueFromYAML returns a list of paths to null values in the given configuration data.
 func GetKeysWithNullValueFromYAML(data interface{}, currentPath string) []string {
 	var keysWithNullValue []string

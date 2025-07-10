@@ -5,8 +5,6 @@
 package app
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/cmd/dev/app/bundles"
@@ -38,8 +36,6 @@ https://mindersec.github.io/`,
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	cmd := CmdRoot()
-	cmd.SetOut(os.Stdout)
-	cmd.SetErr(os.Stderr)
 	err := cmd.Execute()
 	cli.ExitNicelyOnError(err, "Error on execute")
 }

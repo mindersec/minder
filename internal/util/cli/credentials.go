@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/url"
 	"os"
@@ -94,6 +95,8 @@ func GetGrpcConnection(
 		t, err := GetToken(cfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 		if err == nil {
 			token = t
+		} else {
+			return nil, err
 		}
 	}
 
@@ -152,20 +155,21 @@ func RemoveCredentials(serverAddress string) error {
 func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string, clientId string) (string, error) {
 	refreshLimit := 10 * time.Second
 	creds, err := LoadCredentials(serverAddress)
-	if err != nil {
-		return "", fmt.Errorf("error loading credentials: %v", err)
+	// If the credentials file doesn't exist, proceed as if it were empty (zero default)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return "", fmt.Errorf("error loading credentials: %w", err)
 	}
 	needsRefresh := time.Now().Add(refreshLimit).After(creds.AccessTokenExpiresAt)
 
 	if needsRefresh {
 		realmUrl, err := GetRealmUrl(serverAddress, opts, issuerUrl, realm)
 		if err != nil {
-			return "", fmt.Errorf("error building realm URL: %v", err)
+			return "", fmt.Errorf("error building realm URL: %w", err)
 		}
 		// TODO: this should probably use rp.NewRelyingPartyOIDC from zitadel, rather than making its own URL
 		parsedUrl, err := url.Parse(realmUrl)
 		if err != nil {
-			return "", fmt.Errorf("error parsing realm URL: %v", err)
+			return "", fmt.Errorf("error parsing realm URL: %w", err)
 		}
 		parsedUrl = parsedUrl.JoinPath("protocol/openid-connect/token")
 		updatedCreds, err := RefreshCredentials(serverAddress, creds.RefreshToken, parsedUrl.String(), clientId)
@@ -288,19 +292,19 @@ func RefreshCredentials(serverAddress string, refreshToken string, realmUrl stri
 func LoadCredentials(serverAddress string) (OpenIdCredentials, error) {
 	filePath, err := getCredentialsPath(serverAddress, false)
 	if err != nil {
-		return OpenIdCredentials{}, fmt.Errorf("error getting credentials path: %v", err)
+		return OpenIdCredentials{}, fmt.Errorf("error getting credentials path: %w", err)
 	}
 
 	// Read the file
 	credsJSON, err := os.ReadFile(filepath.Clean(filePath))
 	if err != nil {
-		return OpenIdCredentials{}, fmt.Errorf("error reading credentials file: %v", err)
+		return OpenIdCredentials{}, fmt.Errorf("error reading credentials file: %w", err)
 	}
 
 	var creds OpenIdCredentials
 	err = json.Unmarshal(credsJSON, &creds)
 	if err != nil {
-		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %v", err)
+		return OpenIdCredentials{}, fmt.Errorf("error unmarshaling credentials: %w", err)
 	}
 	return creds, nil
 }

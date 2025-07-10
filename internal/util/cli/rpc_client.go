@@ -78,13 +78,25 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 		opts = append(opts, grpc.WithUnaryInterceptor(requestIDInterceptor(cmd.PrintErrf)))
 	}
 
-	return GetGrpcConnection(
+	conn, err := GetGrpcConnection(
 		clientConfig.GRPCClientConfig,
 		issuerUrl,
 		realm,
 		clientId,
 		opts...,
 	)
+	if err != nil {
+		if errors.Is(err, ErrGettingRefreshToken) {
+			_, err := LoginAndSaveCreds(context.Background(), cmd, clientConfig)
+			if err != nil {
+				return nil, err
+			}
+			return GetGrpcConnection(
+				clientConfig.GRPCClientConfig, issuerUrl, realm, clientId, opts...)
+		}
+	}
+
+	return conn, err
 }
 
 // EnsureCredentials is a PreRunE function to ensure that the user

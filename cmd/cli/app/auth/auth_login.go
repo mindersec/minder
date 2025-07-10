@@ -49,7 +49,7 @@ func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.C
 
 	client := minderv1.NewUserServiceClient(conn)
 
-	// check if the user already exists in the local database
+	// check if the user already exists on the server
 	registered, userInfo, err := userRegistered(ctx, client)
 	if err != nil {
 		return cli.MessageAndError("Error checking if user exists", err)

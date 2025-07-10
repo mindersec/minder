@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/mindersec/minder/internal/util"
-	"github.com/mindersec/minder/pkg/config"
 )
 
 // ErrWrappedCLIError is an error that wraps another error and provides a message used from within the CLI
@@ -220,33 +219,6 @@ func GetConfigDirPath() (string, error) {
 
 	filePath := filepath.Join(xdgConfigHome, "minder")
 	return filePath, nil
-}
-
-// GetDefaultCLIConfigPath returns the default path for the CLI config file
-// Returns an empty string if the path cannot be determined
-func GetDefaultCLIConfigPath() string {
-	//nolint:errcheck // ignore error as we are just checking if the file exists
-	cfgDirPath, _ := GetConfigDirPath()
-
-	var xdgConfigPath string
-	if cfgDirPath != "" {
-		xdgConfigPath = filepath.Join(cfgDirPath, "config.yaml")
-	}
-
-	return xdgConfigPath
-}
-
-// GetRelevantCLIConfigPath returns the relevant CLI config path.
-// It will return the first path that exists from the following:
-// 1. The path specified in the config flag
-// 2. The local config.yaml file
-// 3. The default CLI config path
-func GetRelevantCLIConfigPath(v *viper.Viper) string {
-	cfgFile := v.GetString("config")
-	return config.GetRelevantCfgPath(append([]string{cfgFile},
-		filepath.Join(".", "config.yaml"),
-		GetDefaultCLIConfigPath(),
-	))
 }
 
 // IsYAMLFileAndNotATest checks if a file is a YAML file and not a test file

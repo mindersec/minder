@@ -5,8 +5,10 @@
 package app
 
 import (
+	"cmp"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -74,8 +76,6 @@ const (
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
-	RootCmd.SetOut(os.Stdout)
-	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.Execute()
 	cli.ExitNicelyOnError(err, "")
 }
@@ -106,6 +106,7 @@ func initConfig() {
 
 	// Get the config flag value directly to ensure we catch explicitly specified configs
 	configFlag := viper.GetString("config")
+	cfgDirPath, _ := cli.GetConfigDirPath()
 	if configFlag != "" {
 		// User explicitly specified a config file via --config flag
 		if _, err := os.Stat(configFlag); err != nil {
@@ -121,7 +122,7 @@ func initConfig() {
 		// No config file specified, use defaults
 		viper.SetConfigName("config")
 		viper.AddConfigPath(".")
-		if cfgDirPath := cli.GetDefaultCLIConfigPath(); cfgDirPath != "" {
+		if cfgDirPath != "" {
 			viper.AddConfigPath(cfgDirPath)
 		}
 	}
@@ -138,7 +139,16 @@ func initConfig() {
 
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Only allow "config not found" when no config was explicitly specified
-			RootCmd.PrintErrln("No config file present, using default values.")
+			RootCmd.PrintErrf("%s, creating.\n", err)
+			cfgDirPath = cmp.Or(cfgDirPath, ".")
+			if err := os.MkdirAll(cfgDirPath, 0o700); err != nil {
+				RootCmd.PrintErrln(fmt.Sprintf("Error creating config directory: %v", err))
+				return
+			}
+			if err := os.WriteFile(filepath.Join(cfgDirPath, "config.yaml"), []byte{}, 0o600); err != nil {
+				RootCmd.PrintErrln(fmt.Sprintf("Error creating config file: %v", err))
+				return
+			}
 		} else {
 			RootCmd.PrintErrln(fmt.Sprintf("Error reading config file: %s", err))
 			os.Exit(1)

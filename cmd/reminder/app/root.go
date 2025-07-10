@@ -33,8 +33,6 @@ const configFileName = "reminder-config.yaml"
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
-	RootCmd.SetOut(os.Stdout)
-	RootCmd.SetErr(os.Stderr)
 	err := RootCmd.ExecuteContext(context.Background())
 	cli.ExitNicelyOnError(err, "Error executing root command")
 }
@@ -55,11 +53,9 @@ func init() {
 
 func initConfig() {
 	cfgFile := viper.GetString("config")
-	cfgFilePath := config.GetRelevantCfgPath(append([]string{cfgFile},
-		filepath.Join(".", configFileName),
-	))
-	if cfgFilePath != "" {
-		cfgFileData, err := config.GetConfigFileData(cfgFilePath)
+
+	if cfgStat, err := os.Stat(cfgFile); err == nil && !cfgStat.IsDir() {
+		cfgFileData, err := config.GetConfigFileData(cfgFile)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error reading config file")
 		}
@@ -73,7 +69,7 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		viper.SetConfigFile(cfgFilePath)
+		viper.SetConfigFile(cfgFile)
 	} else {
 		// use defaults
 		viper.SetConfigName(strings.TrimSuffix(configFileName, filepath.Ext(configFileName)))
