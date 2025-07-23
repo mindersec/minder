@@ -18,7 +18,7 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.5
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
-	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.15.2
+	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.1
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.15.2
 	github.com/cloudevents/sdk-go/v2 v2.16.1
 	github.com/erikgeiser/promptkit v0.9.0
