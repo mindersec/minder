@@ -84,6 +84,11 @@ source:
 changelog:
   sort: asc
   use: github
+  filters:
+    exclude:
+      # Don't include dependabot upgrades in the changelog, this can lead to
+      # release notes > 10k, which fails winget validation.
+      - 'build\(deps\): bump'
 # This section defines for which artifact types to generate SBOMs.
 sboms:
   - artifacts: archive
