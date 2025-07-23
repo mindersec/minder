@@ -43,7 +43,7 @@ func TestProtoValidationInterceptor(t *testing.T) {
 				},
 				Name: "-?invalid",
 			},
-			errMsg:  "Validation failed:\n- Field 'name': value does not match regex pattern",
+			errMsg:  "validation error:\n - name: value does not match regex pattern `^[-[:word:]]*$`",
 			errCode: codes.InvalidArgument,
 		},
 		{
@@ -58,7 +58,7 @@ func TestProtoValidationInterceptor(t *testing.T) {
 					},
 				},
 			},
-			errMsg:  "Validation failed:\n- Field 'entity[0].id': value must be a valid UUID",
+			errMsg:  "validation error:\n - entity[0].id: value must be a valid UUID",
 			errCode: codes.InvalidArgument,
 		},
 	}
