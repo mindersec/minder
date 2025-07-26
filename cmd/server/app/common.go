@@ -64,7 +64,7 @@ func confirm(cmd *cobra.Command, message string) bool {
 	return true
 }
 
-// cliError prints the error and exits
+// cliErrorf prints the error and exits
 func cliErrorf(cmd *cobra.Command, message string, args ...any) {
 	cmd.Printf(message, args...)
 	os.Exit(1)
