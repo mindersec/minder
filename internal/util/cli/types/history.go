@@ -35,7 +35,7 @@ func (h *historyToDisplay) GetRemediationDetail() string {
 	return h.history.GetRemediation().GetDetails()
 }
 
-// GetAlertStatus implements table.EvalStatus.
+// GetAlert implements table.EvalStatus.
 func (h *historyToDisplay) GetAlert() table.StatusDetails {
 	return h.history.GetAlert()
 }

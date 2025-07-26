@@ -49,7 +49,7 @@ var eventTypes = [23]string{
 	"pull_request",
 }
 
-// FuzzGithubEventParsers tests Minder's GH event parsers:
+// FuzzGitHubEventParsers tests Minder's GH event parsers:
 //
 //   - processPingEvent
 //   - processRelevantRepositoryEvent
