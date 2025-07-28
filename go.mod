@@ -95,7 +95,7 @@ require (
 	golang.org/x/sync v0.16.0
 	golang.org/x/term v0.33.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250603155806-513f23925822
-	google.golang.org/grpc v1.73.0
+	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v2 v2.4.0
@@ -106,7 +106,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.23.1 // indirect
+	cel.dev/expr v0.24.0 // indirect
 	deps.dev/api/v3 v3.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/maven v0.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/pypi v0.0.0-20250429014815-ac0aa6a085fa // indirect
