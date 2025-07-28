@@ -31,7 +31,7 @@ require (
 	github.com/goccy/go-json v0.10.5
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.18.3
-	github.com/google/cel-go v0.25.0
+	github.com/google/cel-go v0.26.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.20.6
 	github.com/google/go-github/v63 v63.0.0
@@ -106,7 +106,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.23.1 // indirect
+	cel.dev/expr v0.24.0 // indirect
 	deps.dev/api/v3 v3.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/maven v0.0.0-20250429014815-ac0aa6a085fa // indirect
 	deps.dev/util/pypi v0.0.0-20250429014815-ac0aa6a085fa // indirect
