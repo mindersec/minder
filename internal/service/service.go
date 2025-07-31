@@ -24,6 +24,7 @@ import (
 	"github.com/mindersec/minder/internal/email/awsses"
 	"github.com/mindersec/minder/internal/email/noop"
 	"github.com/mindersec/minder/internal/email/sendgrid"
+	"github.com/mindersec/minder/internal/email/smtp"
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
@@ -289,6 +290,11 @@ func AllInOneServerService(
 		mailClient, err = sendgrid.New(cfg.Email.SendGrid)
 		if err != nil {
 			return fmt.Errorf("unable to create SendGrid email client: %w", err)
+		}
+	} else if cfg.Email.SMTP.Host != "" && cfg.Email.SMTP.Sender != "" {
+		mailClient, err = smtp.New(cfg.Email.SMTP)
+		if err != nil {
+			return fmt.Errorf("unable to create SMTP email client: %w", err)
 		}
 	} else {
 		mailClient = noop.New()

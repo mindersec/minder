@@ -109,3 +109,22 @@ crypto:
 
 email:
   minder_url_base: "http://localhost:6463" # Change to the URL of the frontend server
+  # Uncomment and configure one of the following email providers:
+  
+  # AWS SES configuration
+  # aws_ses:
+  #   sender: "noreply@example.com"
+  #   region: "us-east-1"
+  
+  # SendGrid configuration  
+  # sendgrid:
+  #   sender: "noreply@example.com"
+  #   api_key_file: "/path/to/sendgrid/api/key"
+  
+  # SMTP relay configuration
+  # smtp:
+  #   sender: "noreply@example.com"
+  #   host: "smtp.example.com"
+  #   port: 587
+  #   username: "smtp-user@example.com"
+  #   password_file: "/path/to/smtp/password"
