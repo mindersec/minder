@@ -16,7 +16,6 @@ import (
 	"github.com/go-viper/mapstructure/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -149,10 +148,10 @@ func (gi *Git) fetchClone(
 	r, err := gi.gitprov.Clone(ctx, url, branch)
 	if err != nil {
 		if errors.Is(err, provifv1.ErrProviderGitBranchNotFound) {
-			return nil, nil, nil, fmt.Errorf("%w: %s: branch %s", engerrors.ErrEvaluationFailed,
+			return nil, nil, nil, fmt.Errorf("%w: %s: branch %s", interfaces.ErrEvaluationFailed,
 				provifv1.ErrProviderGitBranchNotFound, branch)
 		} else if errors.Is(err, provifv1.ErrRepositoryEmpty) {
-			return nil, nil, nil, fmt.Errorf("%w: %s", engerrors.ErrEvaluationSkipped, provifv1.ErrRepositoryEmpty)
+			return nil, nil, nil, fmt.Errorf("%w: %s", interfaces.ErrEvaluationSkipped, provifv1.ErrRepositoryEmpty)
 		}
 		return nil, nil, nil, err
 	}

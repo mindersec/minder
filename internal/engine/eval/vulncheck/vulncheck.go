@@ -45,7 +45,7 @@ func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
 // NewVulncheckEvaluator creates a new vulncheck evaluator
 func NewVulncheckEvaluator(
 	ghcli GitHubRESTAndPRClient,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*Evaluator, error) {
 	if ghcli == nil {
 		return nil, fmt.Errorf("provider builder is nil")

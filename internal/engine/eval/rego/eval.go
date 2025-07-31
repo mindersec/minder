@@ -73,7 +73,7 @@ var _ print.Hook = (*hook)(nil)
 // NewRegoEvaluator creates a new rego evaluator
 func NewRegoEvaluator(
 	cfg *minderv1.RuleType_Definition_Eval_Rego,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*Evaluator, error) {
 	c, err := parseConfig(cfg)
 	if err != nil {

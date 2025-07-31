@@ -16,7 +16,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/engine/ingester"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles"
@@ -60,7 +59,7 @@ func NewRuleTypeEngine(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider interfaces.Provider,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*RuleTypeEngine, error) {
 	if ruletype.Context.GetProject() == "" {
 		return nil, fmt.Errorf("rule type context must have a project")
@@ -185,4 +184,18 @@ func (r *RuleTypeEngine) Eval(
 func (r *RuleTypeEngine) WithCustomIngester(ing interfaces.Ingester) *RuleTypeEngine {
 	r.ingester = ing
 	return r
+}
+
+// NewRuleEvaluator creates an Evaluator from the specified RuleType.
+// The external caller is responsible for populating the ingested data in
+// the Evaluator's Eval() method; the provider is used only for certain
+// PR-based file content checks (trusty, vulncheck, and homoglyphs).
+// Unlike NewRuleTypeEngine, ingestion data is not cached within the library.
+func NewRuleEvaluator(
+	ctx context.Context,
+	ruletype *minderv1.RuleType,
+	provider interfaces.Provider,
+	opts ...interfaces.Option,
+) (interfaces.Evaluator, error) {
+	return eval.NewRuleEvaluator(ctx, ruletype, provider, opts...)
 }

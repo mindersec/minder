@@ -24,7 +24,7 @@ type Option func(interfaces.Evaluator) error
 // WithFlagsClient provides the evaluation engine with an
 // `openfeature` client. In case the given evaluator dows not support
 // feature flags, WithFlagsClient silently ignores the error.
-func WithFlagsClient(client flags.Interface) Option {
+func WithFlagsClient(client flags.Interface) interfaces.Option {
 	return func(e interfaces.Evaluator) error {
 		inner, ok := e.(SupportsFlags)
 		if !ok {
@@ -43,7 +43,7 @@ type SupportsDataSources interface {
 // WithDataSources provides the evaluation engine with a list of data sources
 // to register. In case the given evaluator does not support data sources,
 // WithDataSources silently ignores the error.
-func WithDataSources(ds *v1datasources.DataSourceRegistry) Option {
+func WithDataSources(ds *v1datasources.DataSourceRegistry) interfaces.Option {
 	return func(e interfaces.Evaluator) error {
 		inner, ok := e.(SupportsDataSources)
 		if !ok {

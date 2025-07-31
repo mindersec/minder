@@ -12,7 +12,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -26,7 +25,7 @@ type InvisibleCharactersEvaluator struct {
 func NewInvisibleCharactersEvaluator(
 	_ context.Context,
 	ghClient interfaces.GitHubIssuePRClient,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*InvisibleCharactersEvaluator, error) {
 	evaluator := &InvisibleCharactersEvaluator{
 		processor:     domain.NewInvisibleCharactersProcessor(),

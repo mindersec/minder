@@ -577,7 +577,7 @@ func TestValidJQEvalsFailed(t *testing.T) {
 			assert.NotNil(t, jqe, "Got unexpected nil")
 
 			_, err = jqe.Eval(context.Background(), tt.args.pol, nil, &interfaces.Ingested{Object: tt.args.obj})
-			assert.ErrorIs(t, err, evalerrors.ErrEvaluationFailed, "Got unexpected error")
+			assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "Got unexpected error")
 		})
 	}
 }

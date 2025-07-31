@@ -117,7 +117,7 @@ allow {
 		Object: nil,
 		Fs:     fs,
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "could not evaluate")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "could not evaluate")
 }
 
 func TestFileReadWithContentsMatching(t *testing.T) {
@@ -191,7 +191,7 @@ allow {
 		Object: nil,
 		Fs:     fs,
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "could not evaluate")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "could not evaluate")
 }
 
 func TestFileLsWithUnexistentFile(t *testing.T) {

@@ -134,7 +134,7 @@ message = "By the pricking of my thumbs..."
 			"data": "bar",
 		},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.Equal(t, &interfaces.EvaluationResult{
 		Output: "By the pricking of my thumbs...",
 	}, res)
@@ -158,7 +158,7 @@ allow := "false"`,
 	_, err = e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "evaluation failure: allow result is not a bool")
 }
 
@@ -193,7 +193,7 @@ skip {
 			"data": "bar",
 		},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationSkipped, "should have been skipped, %+v", err)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationSkipped, "should have been skipped, %+v", err)
 }
 
 func TestEvaluatorDenyByDefaultSkipWrongType(t *testing.T) {
@@ -244,7 +244,7 @@ output := [1, 2, 3]
 	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
 	assert.ErrorContains(t, err, "evaluation failure: denied")
 	assert.Equal(t, err.(*engerrors.EvaluationError).Details(), "always fail")
 	assert.Equal(t, &interfaces.EvaluationResult{
@@ -275,7 +275,7 @@ message := "[1, 2, 3]"
 	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
 		Object: map[string]any{},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "expected evaulation failed, got %+v", err)
 	assert.Equal(t, &interfaces.EvaluationResult{
 		// Output is just a string when promoted from message.
 		Output: "[1, 2, 3]",
@@ -315,7 +315,7 @@ violations[{"msg": msg}] {
 			"data": "bar",
 		},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "data did not contain foo")
 	assert.Equal(t, []any{"data did not contain foo"}, res.Output)
 }
@@ -346,7 +346,7 @@ output := {"messages_len": 2, "messages": messages}
 		Object: map[string]any{"data": "foo"},
 	})
 
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "evaluation failure: Evaluation failures: \n - one\n - two")
 	assert.Equal(t,
 		map[string]any{"messages_len": json.Number("2"), "messages": []any{"one", "two"}},
@@ -384,7 +384,7 @@ violations[{"msg": msg}] {
 			"datum": "bar",
 		},
 	})
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "- data should not contain foo\n")
 	assert.ErrorContains(t, err, "- datum should not contain bar")
 	assert.Equal(t, []any{"data should not contain foo", "datum should not contain bar"}, res.Output)
@@ -411,7 +411,7 @@ violations := {"msg": "I forgot the list"}
 		Object: map[string]any{"data": "foo"},
 	})
 
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "evaluation failure: unable to get violations array, found map[string]interface {}")
 }
 
@@ -438,7 +438,7 @@ violations[msg] {
 		Object: map[string]any{"data": "foo"},
 	})
 
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "wrong type for violation: string")
 }
 
@@ -465,7 +465,7 @@ violations[{"problem": msg}] {
 		Object: map[string]any{"data": "foo"},
 	})
 
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "missing msg in details")
 }
 
@@ -492,7 +492,7 @@ violations[{"msg": msg}] {
 		Object: map[string]any{"data": "foo"},
 	})
 
-	assert.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
+	assert.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
 	assert.ErrorContains(t, err, "msg is not a string")
 }
 
@@ -537,7 +537,7 @@ allow {
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 }
 
 func TestConstrainedEvaluationWithProfile(t *testing.T) {
@@ -575,7 +575,7 @@ violations[{"msg": msg}] {
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 	assert.ErrorContains(t, err, "data did not match profile: foo", "should have failed the evaluation")
 	assert.Equal(t, []any{"data did not match profile: foo"}, res.Output)
 }
@@ -631,7 +631,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 			"data": []string{"foo", "bar", "baz"},
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
 	errmsg := engerrors.ErrorAsEvalDetails(err)
@@ -681,7 +681,7 @@ violations[{"msg": msg}] {
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
 	errmsg := engerrors.ErrorAsEvalDetails(err)
@@ -718,7 +718,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 		},
 	})
 	require.Error(t, err, "should have failed the evaluation")
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	errmsg := engerrors.ErrorAsEvalDetails(err)
 	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
@@ -854,5 +854,5 @@ allow {
 			"data": "bar",
 		},
 	})
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "should have failed the evaluation")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 }

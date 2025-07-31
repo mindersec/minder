@@ -13,7 +13,6 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -32,7 +31,7 @@ func NewHomoglyphsEvaluator(
 	ctx context.Context,
 	reh *pb.RuleType_Definition_Eval_Homoglyphs,
 	ghClient interfaces.GitHubIssuePRClient,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (interfaces.Evaluator, error) {
 	if ghClient == nil {
 		return nil, fmt.Errorf("provider builder is nil")

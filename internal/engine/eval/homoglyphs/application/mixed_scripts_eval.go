@@ -13,7 +13,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -27,7 +26,7 @@ type MixedScriptsEvaluator struct {
 func NewMixedScriptEvaluator(
 	ctx context.Context,
 	ghClient interfaces.GitHubIssuePRClient,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*MixedScriptsEvaluator, error) {
 	msProcessor, err := domain.NewMixedScriptsProcessor(ctx)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -265,7 +266,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 		// Action is on or dry-run, do not skip yet. Check the evaluation error
 		skipAction =
 			// rule evaluation was skipped, skip action too
-			errors.Is(evalErr, enginerr.ErrEvaluationSkipped) ||
+			errors.Is(evalErr, interfaces.ErrEvaluationSkipped) ||
 				// rule evaluation was skipped silently, skip action
 				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently)
 	}
