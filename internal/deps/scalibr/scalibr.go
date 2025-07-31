@@ -13,11 +13,10 @@ import (
 	"slices"
 
 	scalibr "github.com/google/osv-scalibr"
-	"github.com/google/osv-scalibr/extractor/filesystem"
 	"github.com/google/osv-scalibr/extractor/filesystem/language/golang/gobinary"
-	"github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
 )
@@ -56,15 +55,15 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
 	extractors := list.FromCapabilities(&desiredCaps)
 	// Don't run the go binary extractor; it sometimes panics on certain files.
-	extractors = slices.DeleteFunc(extractors, func(e filesystem.Extractor) bool {
+	extractors = slices.DeleteFunc(extractors, func(e scalibr_plugin.Plugin) bool {
 		_, ok := e.(*gobinary.Extractor)
 		return ok
 	})
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
 		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		FilesystemExtractors: extractors,
-		Capabilities:         &desiredCaps,
+		Plugins:      extractors,
+		Capabilities: &desiredCaps,
 	}
 
 	scanner := scalibr.New()

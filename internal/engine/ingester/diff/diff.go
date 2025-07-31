@@ -20,9 +20,9 @@ import (
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
-	"github.com/google/osv-scalibr/extractor/filesystem/list"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
+	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/osv-scalibr/purl"
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -273,8 +273,8 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
 		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		FilesystemExtractors: list.FromCapabilities(&desiredCaps),
-		Capabilities:         &desiredCaps,
+		Plugins:      list.FromCapabilities(&desiredCaps),
+		Capabilities: &desiredCaps,
 	}
 
 	scanner := scalibr.New()
