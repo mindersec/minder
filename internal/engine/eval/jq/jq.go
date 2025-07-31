@@ -15,7 +15,6 @@ import (
 
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -29,7 +28,7 @@ type Evaluator struct {
 // NewJQEvaluator creates a new JQ rule data evaluator
 func NewJQEvaluator(
 	assertions []*pb.RuleType_Definition_Eval_JQComparison,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*Evaluator, error) {
 	if len(assertions) == 0 {
 		return nil, fmt.Errorf("missing jq assertions")

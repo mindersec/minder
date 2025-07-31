@@ -15,7 +15,6 @@ import (
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/eval/trusty"
 	"github.com/mindersec/minder/internal/engine/eval/vulncheck"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -25,7 +24,7 @@ func NewRuleEvaluator(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider interfaces.Provider,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (interfaces.Evaluator, error) {
 	e := ruletype.Def.GetEval()
 	if e == nil {

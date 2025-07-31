@@ -10,13 +10,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	gitengine "github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	gitclient "github.com/mindersec/minder/internal/providers/git"
 	"github.com/mindersec/minder/internal/providers/testproviders"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -166,7 +166,7 @@ func TestGitIngestWithUnexistentBranchFromParams(t *testing.T) {
 		"branch":    "unexistent-branch",
 	})
 	require.Error(t, err, "expected error")
-	require.ErrorIs(t, err, engerrors.ErrEvaluationFailed, "expected ErrActionFailed")
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "expected ErrActionFailed")
 	require.Nil(t, got, "expected non-nil result")
 }
 

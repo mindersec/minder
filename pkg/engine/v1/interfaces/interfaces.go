@@ -6,6 +6,7 @@ package interfaces
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5/storage"
@@ -25,9 +26,30 @@ type Ingester interface {
 }
 
 // Evaluator is the interface for a rule type evaluator
+//
+// `profile` is a set of parameters exposed to the rule evaluation by the rule engine
+// `entity` is one of minderv1.Repository or minderv1.Artifact
+// `data` is the data ingested
 type Evaluator interface {
 	Eval(ctx context.Context, profile map[string]any, entity protoreflect.ProtoMessage, data *Ingested) (*EvaluationResult, error)
 }
+
+// Option is a function that takes an evaluator and does some
+// unspecified operation to it, returning an error in case of failure.
+type Option func(Evaluator) error
+
+// EvalError is an interface providing additional details from Evaluator.Eval()
+// errors when the evaluation determines that the rule is violated.
+type EvalError interface {
+	Error() string
+	Details() string
+}
+
+// ErrEvaluationFailed is an error that occurs during evaluation of a rule.
+var ErrEvaluationFailed = errors.New("evaluation failure")
+
+// ErrEvaluationSkipped specifies that the rule was evaluated but skipped.
+var ErrEvaluationSkipped = errors.New("evaluation skipped")
 
 // Ingested is the result of an ingester
 type Ingested struct {

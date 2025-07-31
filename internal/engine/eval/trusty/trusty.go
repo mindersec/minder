@@ -20,7 +20,6 @@ import (
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
-	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -43,7 +42,7 @@ type Evaluator struct {
 func NewTrustyEvaluator(
 	ctx context.Context,
 	ghcli interfaces.GitHubIssuePRClient,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*Evaluator, error) {
 	if ghcli == nil {
 		return nil, fmt.Errorf("provider builder is nil")

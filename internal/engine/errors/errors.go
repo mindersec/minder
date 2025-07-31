@@ -13,6 +13,7 @@ import (
 	"text/template"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
 const (
@@ -103,32 +104,26 @@ func NewDetailedErrEvaluationFailed(
 ) error {
 	formatted := fmt.Sprintf(sfmt, args...)
 	return &EvaluationError{
-		Base:         ErrEvaluationFailed,
+		Base:         interfaces.ErrEvaluationFailed,
 		Msg:          formatted,
 		Template:     tmpl,
 		TemplateArgs: tmplArgs,
 	}
 }
 
-// ErrEvaluationFailed is an error that occurs during evaluation of a rule.
-var ErrEvaluationFailed = errors.New("evaluation failure")
-
 // NewErrEvaluationFailed creates a new evaluation error with a formatted message.
 func NewErrEvaluationFailed(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
 	return &EvaluationError{
-		Base: ErrEvaluationFailed,
+		Base: interfaces.ErrEvaluationFailed,
 		Msg:  msg,
 	}
 }
 
-// ErrEvaluationSkipped specifies that the rule was evaluated but skipped.
-var ErrEvaluationSkipped = errors.New("evaluation skipped")
-
 // NewErrEvaluationSkipped creates a new evaluation error
 func NewErrEvaluationSkipped(sfmt string, args ...any) error {
 	msg := fmt.Sprintf(sfmt, args...)
-	return fmt.Errorf("%w: %s", ErrEvaluationSkipped, msg)
+	return fmt.Errorf("%w: %s", interfaces.ErrEvaluationSkipped, msg)
 }
 
 // ErrEvaluationSkipSilently specifies that the rule was evaluated but skipped silently.
@@ -185,9 +180,9 @@ type ActionsError struct {
 
 // ErrorAsEvalStatus returns the evaluation status for a given error
 func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, ErrEvaluationFailed) {
+	if errors.Is(err, interfaces.ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
-	} else if errors.Is(err, ErrEvaluationSkipped) {
+	} else if errors.Is(err, interfaces.ErrEvaluationSkipped) {
 		return db.EvalStatusTypesSkipped
 	} else if err != nil {
 		return db.EvalStatusTypesError

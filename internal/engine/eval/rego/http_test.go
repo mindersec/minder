@@ -13,7 +13,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -77,8 +76,8 @@ func TestLimitedDialer(t *testing.T) {
 			require.Equal(t, &interfaces.EvaluationResult{
 				Output: `Get "` + tt.url + `": remote address is not public`,
 			}, res)
-			require.ErrorIs(t, err, engerrors.ErrEvaluationFailed)
-			detailErr := err.(*engerrors.EvaluationError)
+			require.ErrorIs(t, err, interfaces.ErrEvaluationFailed)
+			detailErr := err.(interfaces.EvalError)
 			require.Contains(t, detailErr.Details(), tt.wantErr)
 		})
 	}

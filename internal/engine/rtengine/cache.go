@@ -15,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
+	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	rtengine2 "github.com/mindersec/minder/pkg/engine/v1/rtengine"
 	"github.com/mindersec/minder/pkg/flags"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -36,7 +37,7 @@ type ruleEngineCache struct {
 	ingestCache  ingestcache.Cache
 	engines      cacheType
 	dssvc        datasourceservice.DataSourcesService
-	opts         []eoptions.Option
+	opts         []interfaces.Option
 }
 
 // NewRuleEngineCache creates the rule engine cache
@@ -51,7 +52,7 @@ func NewRuleEngineCache(
 	featureFlags flags.Interface,
 	ingestCache ingestcache.Cache,
 	dssvc datasourceservice.DataSourcesService,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (Cache, error) {
 
 	// Get the full project hierarchy
@@ -132,7 +133,7 @@ func cacheRuleEngine(
 	ingestCache ingestcache.Cache,
 	engineCache cacheType,
 	dssvc datasourceservice.DataSourcesService,
-	opts ...eoptions.Option,
+	opts ...interfaces.Option,
 ) (*rtengine2.RuleTypeEngine, error) {
 	// Parse the rule type
 	pbRuleType, err := ruletypes.RuleTypePBFromDB(ruleType)
