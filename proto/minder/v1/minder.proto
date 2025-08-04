@@ -194,7 +194,7 @@ message ListArtifactsRequest {
             pattern: "^[[:word:]]+=[-,/[:word:]]+$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     reserved 2; // deprecated project_id
@@ -235,7 +235,7 @@ message Artifact {
 // This is currently not populated in any requests or responses.
 message ArtifactVersion {
     int64 version_id = 1 [
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (buf.validate.field).int64 = { gte: 1 }
     ];
     repeated string tags = 2;
@@ -249,7 +249,7 @@ message ArtifactVersion {
 message GetArtifactByIdRequest {
     string id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
 
@@ -273,7 +273,7 @@ message GetArtifactByNameRequest {
             pattern: "^[-./[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
     Context context = 4;
@@ -1131,7 +1131,7 @@ message GetAuthorizationURLRequest {
             pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     Context context = 6;
 
@@ -1141,7 +1141,7 @@ message GetAuthorizationURLRequest {
             uri: true,
             max_len: 600,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // config is a JSON object that can be used to pass additional configuration
@@ -1152,7 +1152,7 @@ message GetAuthorizationURLRequest {
             pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     reserved 1, 2, 4;
@@ -1188,7 +1188,7 @@ message StoreProviderTokenRequest {
             pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     Context context = 5;
 
@@ -1261,20 +1261,20 @@ message UpstreamRepositoryRef {
             pattern: "^[A-Za-z][-[:word:]]*$"
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     string name = 2 [
         (buf.validate.field).string = {
             pattern: "^[-.[:alnum:]_]+$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
     // The upstream identity of the repository, as an integer.
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3 [
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE, // Given it's ignored on input, we can ignore empty values
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE, // Given it's ignored on input, we can ignore empty values
         (buf.validate.field).int64 = { gte: 1 }
     ];
     Context context = 4;
@@ -1390,7 +1390,7 @@ message GetRepositoryByNameRequest {
             pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
     Context context = 4;
@@ -1411,7 +1411,7 @@ message DeleteRepositoryByNameRequest {
             pattern: "^[A-Za-z][-[:word:]./]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = REQUIRED
     ];
     Context context = 4;
@@ -1754,7 +1754,7 @@ message ListProfilesRequest {
             pattern: "^(\\*|[a-z][a-z0-9_]*)$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -1907,7 +1907,7 @@ message GetProfileStatusByNameRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // entity is the entity to get status for. Incompatible with `all`.
@@ -1928,7 +1928,7 @@ message GetProfileStatusByNameRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$"
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // rule_name is the name of the rule to filter on.
@@ -1938,7 +1938,7 @@ message GetProfileStatusByNameRequest {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -1968,14 +1968,14 @@ message GetProfileStatusByIdRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$"
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     string rule_name = 6 [
         (buf.validate.field).string = {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2104,7 +2104,7 @@ message Context {
             pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // ID or name of the project.  If empty or unset, will select the user's default
     // project if they only have one project.
@@ -2113,7 +2113,7 @@ message Context {
             pattern: "^[-a-zA-Z0-9.]{1,63}$"
             max_len: 63
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     optional string retired_organization = 2;
@@ -2128,7 +2128,7 @@ message ContextV2 {
             pattern: "^[-a-zA-Z0-9.]{1,63}$"
             max_len: 63
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // name of the provider. Set to empty string when not applicable.
@@ -2137,7 +2137,7 @@ message ContextV2 {
             pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2167,7 +2167,7 @@ message GetRuleTypeByNameRequest {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2268,7 +2268,7 @@ message ListEvaluationResultsRequest {
                 pattern: "^([[:alnum:]][-[:word:]]*)?$"
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
         // Filter profiles to only those matching the specified labels.
         //
@@ -2280,7 +2280,7 @@ message ListEvaluationResultsRequest {
                 pattern: "^(\\*|[a-zA-Z][a-zA-Z0-9_]*)$",
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -2299,7 +2299,7 @@ message ListEvaluationResultsRequest {
                     }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2341,7 +2341,7 @@ message RestType {
             (buf.validate.field).string = {
                 max_len: 1000,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -2364,7 +2364,7 @@ message RestType {
         (buf.validate.field).string = {
             max_len: 50
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // headers are the headers to be sent to the endpoint.
@@ -2377,7 +2377,7 @@ message RestType {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // body is the body to be sent to the endpoint, which must be valid JSON
@@ -2387,7 +2387,7 @@ message RestType {
         (buf.validate.field).string = {
             max_len: 1000,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // parse is the parsing mechanism to be used to parse the data.
@@ -2396,7 +2396,7 @@ message RestType {
             pattern: "^[a-z_]+$",
             max_len: 50,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // fallback provides a body that the ingester would return in case
@@ -2421,7 +2421,7 @@ message GitType {
             uri: true,
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // branch is the branch of the git repository.
@@ -2430,7 +2430,7 @@ message GitType {
             pattern: "^[[:word:]./-]+$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2467,7 +2467,7 @@ message DiffType {
             pattern: "^[a-z]+(_[a-z]+)*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -2482,7 +2482,7 @@ message DepsType {
                 pattern: "^[[:word:]./-]+$",
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -2492,7 +2492,7 @@ message DepsType {
             (buf.validate.field).string = {
                 in: ["NEW_AND_UPDATED", "NEW_ONLY"],
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -2561,7 +2561,7 @@ message RuleType {
     // This is mostly optional and is set by the server.
     optional string id = 1 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // name is the name of the rule type.
@@ -2579,7 +2579,7 @@ message RuleType {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // short_failure_message is the message to display when the evaluation fails.
@@ -2587,7 +2587,7 @@ message RuleType {
         (buf.validate.field).string = {
             max_len: 400,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // context is the context in which the rule is evaluated.
@@ -2710,7 +2710,7 @@ message RuleType {
                         min_len: 1,
                         max_len: 200,
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
                 // def is the definition of the rego profile.
                 string def = 2 [
@@ -2724,7 +2724,7 @@ message RuleType {
                     (buf.validate.field).string = {
                         in: ["text", "json"],
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
 
@@ -2739,7 +2739,7 @@ message RuleType {
                     (buf.validate.field).string = {
                         uri: true,
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
 
@@ -2786,7 +2786,7 @@ message RuleType {
                 (buf.validate.field).string = {
                     in: ["rest", "gh_branch_protection", "pull_request"],
                 },
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
 
             message GhBranchProtectionType {
@@ -2794,7 +2794,7 @@ message RuleType {
                     (buf.validate.field).string = {
                         max_len: 1000,
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
 
@@ -2827,7 +2827,7 @@ message RuleType {
                             pattern: "^\\d+$",
                             max_len: 6,
                         },
-                        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                     ];
                 }
 
@@ -2874,7 +2874,7 @@ message RuleType {
                     (buf.validate.field).string = {
                         in: ["minder.content", "minder.actions.replace_tags_with_sha", "minder.yq.evaluate"],
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
                 // params are unstructured parameters passed to the method. These are optional
                 // and evaluated by the method.
@@ -2896,7 +2896,7 @@ message RuleType {
                 (buf.validate.field).string = {
                     in: ["security_advisory", "pull_request_comment"],
                 },
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
 
             message AlertTypeSA {
@@ -2904,7 +2904,7 @@ message RuleType {
                     (buf.validate.field).string = {
                         in: ["unknown", "info", "low", "medium", "high", "critical"],
                     },
-                    (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
             optional AlertTypeSA security_advisory = 2;
@@ -2964,7 +2964,7 @@ message Profile {
     // This is optional and is set by the system.
     optional string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // name is the name of the profile instance.
@@ -2973,7 +2973,7 @@ message Profile {
             pattern: "^[A-Za-z][-/[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // labels are a set of system-provided attributes which can be used to
@@ -3000,7 +3000,7 @@ message Profile {
                 unique: true
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // Rule defines the individual call of a certain rule type.
@@ -3011,7 +3011,7 @@ message Profile {
                 pattern: "^[A-Za-z][-/[:word:]]*$",
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
         // params are the parameters that are passed to the rule.
         // This is optional and depends on the rule type.
@@ -3026,7 +3026,7 @@ message Profile {
                 pattern: "^[A-Za-z][-/'()[:word:] :]*$",
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -3050,14 +3050,14 @@ message Profile {
                 min_len: 1,
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
         // expr is the expression to select the entity.
         string selector = 4 [
             (buf.validate.field).string = {
                 max_len: 200,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
         reserved 5;
         reserved "comment";
@@ -3067,7 +3067,7 @@ message Profile {
                 pattern: "^[A-Za-z][-/.!?,:;'[:word:] ]*$",
                 max_len: 1000,
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
     }
 
@@ -3079,7 +3079,7 @@ message Profile {
         (buf.validate.field).string = {
             in: ["on", "off", "dry_run"]
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // whether and how to alert (on,off,dry_run)
@@ -3088,7 +3088,7 @@ message Profile {
         (buf.validate.field).string = {
             in: ["on", "off", "dry_run"]
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // type is a placeholder for the object type. It should always be set to "profile".
@@ -3111,7 +3111,7 @@ message Profile {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 1000,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -3169,7 +3169,7 @@ message UpdateProjectRequest {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // description is the description of the project to update.
@@ -3180,7 +3180,7 @@ message UpdateProjectRequest {
             min_len: 0,
             max_len: 1000,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -3198,7 +3198,7 @@ message ProjectPatch {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // description is the description of the project to update.
@@ -3208,7 +3208,7 @@ message ProjectPatch {
             min_len: 0,
             max_len: 1000,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -3315,7 +3315,7 @@ message UpdateRoleRequest {
     // The account must already have permissions on the project
     string subject = 2 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // All subject roles are _replaced_ with the following role assignments.  Must be non-empty,
     // use RemoveRole to remove permissions entirely from the project.
@@ -3334,7 +3334,7 @@ message UpdateRoleRequest {
     // email is the email address of the subject used for updating invitations
     string email = 5 [
       (buf.validate.field) = {string: {email: true}},
-      (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+      (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     reserved 3; // deprecated repeated string role = 3;
@@ -3396,7 +3396,7 @@ message RoleAssignment {
         (buf.validate.field).string.pattern =
             // Can be either a UUID or a providername/<subject> string
             "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([a-z]+/[-/[:word:]:]+)$",
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // display_name is the display name of the subject.
     string display_name = 5 [
@@ -3404,17 +3404,17 @@ message RoleAssignment {
             pattern: "^[A-Za-z][-/'()[:word:] :]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // project is the project in which the role is assigned.
     optional string project = 4 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // email is the email address of the subject used for invitations.
     string email = 6 [
         (buf.validate.field) = {string: {email: true}},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // first_name is the first name of the subject.
     string first_name = 7 [
@@ -3422,7 +3422,7 @@ message RoleAssignment {
             pattern: "^[A-Za-z][- [:word:]\\[\\]\\(\\)]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // last_name is the last name of the subject.
     string last_name = 8 [
@@ -3430,7 +3430,7 @@ message RoleAssignment {
             pattern: "^[A-Za-z][- [:word:]\\[\\]\\(\\)]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     reserved 3; // deprecated context
@@ -3670,7 +3670,7 @@ message GitHubAppParams {
     // The GitHub installation ID for the app.  On create, this is the only
     // parameter used; the organization parameters are ignored.
     int64 installation_id = 1 [
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (buf.validate.field).int64 = {gt: 0}
     ];
 
@@ -3682,7 +3682,7 @@ message GitHubAppParams {
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
     int64 organization_id = 3 [
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (buf.validate.field).int64 = {gt: 0}
     ];
 }
@@ -3730,7 +3730,7 @@ message Provider {
             pattern: "^[A-Za-z][-[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // class is the name of the provider implementation, eg. 'github' or 'gh-app'.
     string class = 7 [
@@ -3738,7 +3738,7 @@ message Provider {
             pattern: "^[a-z][a-z0-9_-]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // project is the project where the provider is.  This is ignored on input
     // in favor of the context field in CreateProviderRequest.
@@ -3749,7 +3749,7 @@ message Provider {
         (buf.validate.field).string = {
             pattern: "v1",
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // implements is the list of interfaces that the provider implements.
@@ -3771,7 +3771,7 @@ message Provider {
     // id is the unique identifier of the provider.
     string id = 10 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }
 
@@ -3803,7 +3803,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // List of entity names to retrieve.
     repeated string entity_name = 3 [
@@ -3815,7 +3815,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // List of profile names to retrieve.
     repeated string profile_name = 4 [
@@ -3827,7 +3827,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // List of evaluation statuses to retrieve.
     repeated string status = 5 [
@@ -3839,7 +3839,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // List of remediation statuses to retrieve.
     repeated string remediation = 6 [
@@ -3851,7 +3851,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // List of alert statuses to retrieve.
     repeated string alert = 7 [
@@ -3863,7 +3863,7 @@ message ListEvaluationHistoryRequest {
                 }
             }
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
     // Timestamp representing the start time of the selection window.
     google.protobuf.Timestamp from = 8;
@@ -3884,7 +3884,7 @@ message ListEvaluationHistoryRequest {
 		},
 	    },
 	},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 
     // Cursor object to select the "page" of data to retrieve. This is optional.
@@ -4289,7 +4289,7 @@ message DataSource {
     // id is the unique identifier of the data source.
     string id = 5 [
         (buf.validate.field).string = {uuid: true},
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE,
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
@@ -4312,7 +4312,7 @@ message StructDataSource {
         message Path {
             string file_name = 1;
             repeated string alternatives = 2 [
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
         }
     }
@@ -4341,7 +4341,7 @@ message RestDataSource {
             (buf.validate.field).string = {
                 in: ["GET", "POST", "PUT", "PATCH", "DELETE"]
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
 
         // headers is a map of headers to send with the request.
@@ -4378,20 +4378,20 @@ message RestDataSource {
             (buf.validate.field).string = {
                 in: ["json"]
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
 
         message Fallback {
             int32 http_status = 1 [
                 (buf.validate.field).int32 = {gte: 100, lte: 599},
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
 
             string body = 2 [
                 (buf.validate.field).string = {
                     max_len: 1000,
                 },
-                (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+                (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
         }
 
@@ -4411,7 +4411,7 @@ message RestDataSource {
                     }
                 }
             },
-            (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+            (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
         ];
 
         // input_schema is the schema for the input to the REST API.
@@ -4441,6 +4441,6 @@ message DataSourceReference {
             pattern: "^[a-z][-_[:word:]]*$",
             max_len: 200,
         },
-        (buf.validate.field).ignore = IGNORE_IF_DEFAULT_VALUE
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
     ];
 }

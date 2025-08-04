@@ -3707,28 +3707,6 @@
         "accessToken"
       ]
     },
-    "ProfileRule": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string",
-          "description": "type is the type of the rule to be instantiated."
-        },
-        "params": {
-          "type": "object",
-          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
-        },
-        "def": {
-          "type": "object",
-          "description": "def is the definition of the rule.\nThis depends on the rule type."
-        },
-        "name": {
-          "type": "string",
-          "title": "name is the descriptive name of the rule, not to be confused with type"
-        }
-      },
-      "description": "Rule defines the individual call of a certain rule type."
-    },
     "ProfileSelector": {
       "type": "object",
       "properties": {
@@ -5428,7 +5406,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           },
           "description": "These are the entities that one could set in the profile."
         },
@@ -5436,49 +5414,49 @@
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "artifact": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "pullRequest": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "release": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "pipelineRun": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "taskRun": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "build": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/ProfileRule"
+            "$ref": "#/definitions/v1ProfileRule"
           }
         },
         "selection": {
@@ -5510,6 +5488,28 @@
         }
       },
       "description": "Profile defines a profile that is user defined.\nAll fields are optional because we want to allow partial updates."
+    },
+    "v1ProfileRule": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "type is the type of the rule to be instantiated."
+        },
+        "params": {
+          "type": "object",
+          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
+        },
+        "def": {
+          "type": "object",
+          "description": "def is the definition of the rule.\nThis depends on the rule type."
+        },
+        "name": {
+          "type": "string",
+          "title": "name is the descriptive name of the rule, not to be confused with type"
+        }
+      },
+      "description": "Rule defines the individual call of a certain rule type."
     },
     "v1ProfileStatus": {
       "type": "object",
