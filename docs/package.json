@@ -29,8 +29,8 @@
     "docusaurus-protobuffet": "^0.3.3",
     "mobx": "^6.13.7",
     "prism-react-renderer": "^2.4.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "redocusaurus": "^2.5.0",
     "styled-components": "^6.1.19"
   },
