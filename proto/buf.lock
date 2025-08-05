@@ -4,10 +4,10 @@ deps:
   - remote: buf.build
     owner: bufbuild
     repository: protovalidate
-    commit: 5a7b106cbb87462d9a8c9ffecdbd2e38
-    digest: shake256:2f7efa5a904668219f039d4f6eeb51e871f8f7f5966055a10663cba335bd65f76cac84da3fa758ab7b5dcb489ec599521390ce3951d119fb56df1fc2def16bb0
+    commit: 6c6e0d3c608e4549802254a2eee81bc8
+    digest: shake256:0ef32b59cbbf249d9068e009725befd8109b8d2d6541f15184c8622711bc71d532bb3746d43d50ac051810044b82992b756a048df334b770b38571b2bb04331c
   - remote: buf.build
     owner: googleapis
     repository: googleapis
-    commit: f52d4f76a8434cc5966798b1d3b4f110
-    digest: shake256:71566dd80e39b7d85fdaa9b7f82107385181d5b6d17ea56c0aacce61099b35f9f1bcf7333ad9838ca19d24d7f076b039de7c9c09c55d23bb4c2fddfceff4d2c2
+    commit: 61b203b9a9164be9a834f58c37be6f62
+    digest: shake256:e619113001d6e284ee8a92b1561e5d4ea89a47b28bf0410815cb2fa23914df8be9f1a6a98dcf069f5bc2d829a2cfb1ac614863be45cd4f8a5ad8606c5f200224
