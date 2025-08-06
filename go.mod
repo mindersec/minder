@@ -44,6 +44,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/itchyny/gojq v0.12.17
 	github.com/lib/pq v1.10.9
+	github.com/mhale/smtpd v0.8.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mikefarah/yq/v4 v4.47.1
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
@@ -78,6 +79,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/styrainc/regal v0.35.1
 	github.com/thomaspoignant/go-feature-flag v1.42.0
+	github.com/wneessen/go-mail v0.6.2
 	github.com/yuin/goldmark v1.7.12
 	gitlab.com/gitlab-org/api/client-go v0.137.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
