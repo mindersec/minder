@@ -396,8 +396,8 @@ buf compatibility checks.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider | <TypeLink type="string">string</TypeLink> | optional | name of the provider |
-| project | <TypeLink type="string">string</TypeLink> | optional | ID or name of the project. If empty or unset, will select the user's default project if they only have one project. |
+| provider | <TypeLink type="string">string</TypeLink> | optional | name of the provider This is optional, but some existing clients may set the field unconditionally, so an empty string is also an allowed value. |
+| project | <TypeLink type="string">string</TypeLink> | optional | ID or name of the project. If empty or unset, will select the user's default project if they only have one project. Existing clients may unconditionally set this to the empty string rather than leaving this unset, so we allow "" as an alias for unset. |
 | retired_organization | <TypeLink type="string">string</TypeLink> | optional |  |
 
 
@@ -1140,7 +1140,7 @@ Namespace: is the namespace for the GHCR provider.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | cli | <TypeLink type="bool">bool</TypeLink> |  | cli is true if the request is being made from a CLI. |
-| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional. |
+| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional; we allow empty string because the client may set the field unconditionally, even though the field is marked as `optional`. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 | redirect_url | <TypeLink type="string">string</TypeLink> | optional | redirect_url is the URL to redirect to after the authorization is complete. |
 | config | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | config is a JSON object that can be used to pass additional configuration |
@@ -1798,7 +1798,7 @@ the next and/or previous pages of data.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  | context is the context in which the evaluation results are evaluated. |
-| profile | <TypeLink type="string">string</TypeLink> |  | ID can contain either a profile name or an ID |
+| profile | <TypeLink type="string">string</TypeLink> |  | ID can contain either a profile name or an ID. |
 | label_filter | <TypeLink type="string">string</TypeLink> |  | Filter profiles to only those matching the specified labels.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
@@ -2948,7 +2948,7 @@ Severity defines the severity of the rule.
 | ----- | ---- | ----- | ----------- |
 | provider | <TypeLink type="string">string</TypeLink> |  | **Deprecated.**  |
 | access_token | <TypeLink type="string">string</TypeLink> |  | access_token is the token to store. |
-| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional. |
+| owner | <TypeLink type="string">string</TypeLink> | optional | owner is the owner (e.g GitHub org) that the provider is associated with. This is optional, but an empty string is allowed as existing clients may set the field unconditionally. |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
 
 
