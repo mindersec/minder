@@ -37,7 +37,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -46,7 +52,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -70,7 +82,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -79,7 +97,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -103,7 +127,13 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -112,7 +142,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -144,7 +180,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -153,7 +195,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -206,12 +254,22 @@ paths:
             owner is the owner (e.g GitHub org) that the provider is associated
             with.
 
-            This is optional.
+            This is optional; we allow empty string because the client may set
+            the
+
+            field unconditionally, even though the field is marked as
+            `optional`.
           in: query
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -220,7 +278,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -261,7 +325,13 @@ paths:
             $ref: '#/definitions/v1VerifyProviderCredentialResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -270,7 +340,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -309,7 +385,13 @@ paths:
           type: string
           format: date-time
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -318,7 +400,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -350,7 +438,13 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -359,7 +453,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -767,7 +867,13 @@ paths:
             $ref: '#/definitions/v1ListEvaluationHistoryResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -776,7 +882,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -896,7 +1008,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -905,7 +1023,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -957,7 +1081,13 @@ paths:
             $ref: '#/definitions/v1ListRoleAssignmentsResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -966,7 +1096,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -986,7 +1122,13 @@ paths:
             $ref: '#/definitions/v1RemoveRoleResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -995,7 +1137,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1052,7 +1200,13 @@ paths:
             $ref: '#/definitions/v1ListRolesResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1061,7 +1215,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1134,7 +1294,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1143,7 +1309,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1169,7 +1341,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1178,7 +1356,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1252,7 +1436,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1261,7 +1451,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1285,7 +1481,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1294,7 +1496,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1328,7 +1536,13 @@ paths:
           schema:
             $ref: '#/definitions/v1Profile'
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1337,7 +1551,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1362,7 +1582,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1371,7 +1597,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1426,7 +1658,13 @@ paths:
             $ref: '#/definitions/v1GetProfileStatusByProjectResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1435,7 +1673,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1455,7 +1699,13 @@ paths:
             $ref: '#/definitions/v1ListProfilesResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1464,7 +1714,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1508,7 +1764,13 @@ paths:
             $ref: '#/definitions/v1DeleteProjectResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1517,7 +1779,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1572,7 +1840,13 @@ paths:
           schema:
             $ref: '#/definitions/v1ProjectPatch'
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1581,7 +1855,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1663,7 +1943,13 @@ paths:
             $ref: '#/definitions/v1ListProviderClassesResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1672,7 +1958,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1692,7 +1984,13 @@ paths:
             $ref: '#/definitions/v1ListProvidersResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1701,7 +1999,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1735,7 +2039,13 @@ paths:
             $ref: '#/definitions/v1DeleteProviderResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1744,7 +2054,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1783,7 +2099,13 @@ paths:
           schema:
             $ref: '#/definitions/v1Provider'
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1792,7 +2114,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1817,7 +2145,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1826,7 +2160,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1851,7 +2191,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1860,7 +2206,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1892,7 +2244,13 @@ paths:
           type: string
           format: int64
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1901,7 +2259,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1940,7 +2304,13 @@ paths:
           type: string
           format: int64
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1949,7 +2319,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -1980,7 +2356,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -1989,7 +2371,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2013,7 +2401,13 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2022,7 +2416,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2046,7 +2446,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2055,7 +2461,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2078,7 +2490,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2087,7 +2505,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2116,7 +2540,13 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2125,7 +2555,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2153,7 +2589,13 @@ paths:
           required: false
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2162,7 +2604,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2191,7 +2639,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2200,7 +2654,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2228,7 +2688,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2237,7 +2703,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2293,7 +2765,13 @@ paths:
             $ref: '#/definitions/v1ListEvaluationResultsResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2302,7 +2780,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2311,7 +2795,7 @@ paths:
           required: false
           type: string
         - name: profile
-          description: ID can contain either a profile name or an ID
+          description: ID can contain either a profile name or an ID.
           in: query
           required: false
           type: string
@@ -2391,7 +2875,13 @@ paths:
           type: string
           pattern: .+
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2400,7 +2890,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2425,7 +2921,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2434,7 +2936,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2458,7 +2966,13 @@ paths:
           required: true
           type: string
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2467,7 +2981,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2487,7 +3007,13 @@ paths:
             $ref: '#/definitions/v1ListRuleTypesResponse'
       parameters:
         - name: context.provider
-          description: name of the provider
+          description: >-
+            name of the provider
+
+            This is optional, but some existing clients may set the field
+            unconditionally,
+
+            so an empty string is also an allowed value.
           in: query
           required: false
           type: string
@@ -2496,7 +3022,13 @@ paths:
             ID or name of the project.  If empty or unset, will select the
             user's default
 
-            project if they only have one project.
+            project if they only have one project.  Existing clients may
+            unconditionally set
+
+            this to the empty string rather than leaving this unset, so we allow
+            "" as an
+
+            alias for unset.
           in: query
           required: false
           type: string
@@ -2856,7 +3388,10 @@ definitions:
           owner is the owner (e.g GitHub org) that the provider is associated
           with.
 
-          This is optional.
+          This is optional, but an empty string is allowed as existing clients
+          may
+
+          set the field unconditionally.
       context:
         $ref: '#/definitions/v1Context'
     required:
@@ -3156,14 +3691,26 @@ definitions:
     properties:
       provider:
         type: string
-        title: name of the provider
+        description: >-
+          name of the provider
+
+          This is optional, but some existing clients may set the field
+          unconditionally,
+
+          so an empty string is also an allowed value.
       project:
         type: string
         description: >-
           ID or name of the project.  If empty or unset, will select the user's
           default
 
-          project if they only have one project.
+          project if they only have one project.  Existing clients may
+          unconditionally set
+
+          this to the empty string rather than leaving this unset, so we allow
+          "" as an
+
+          alias for unset.
       retiredOrganization:
         type: string
     description: >-
@@ -5096,7 +5643,10 @@ definitions:
           owner is the owner (e.g GitHub org) that the provider is associated
           with.
 
-          This is optional.
+          This is optional, but an empty string is allowed as existing clients
+          may
+
+          set the field unconditionally.
       context:
         $ref: '#/definitions/v1Context'
     required:
