@@ -76,14 +76,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -120,14 +120,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -164,14 +164,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -215,14 +215,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -293,21 +293,21 @@
           },
           {
             "name": "owner",
-            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional.",
+            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional; we allow empty string because the client may set the\nfield unconditionally, even though the field is marked as `optional`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -359,14 +359,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -418,14 +418,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -470,14 +470,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1019,14 +1019,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1171,14 +1171,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1260,14 +1260,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1298,14 +1298,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1385,14 +1385,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1507,14 +1507,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1553,14 +1553,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1652,14 +1652,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1695,14 +1695,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1747,14 +1747,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1792,14 +1792,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1874,14 +1874,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1912,14 +1912,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1971,14 +1971,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2064,14 +2064,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2193,14 +2193,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2231,14 +2231,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2282,14 +2282,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2350,14 +2350,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2395,14 +2395,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2440,14 +2440,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2492,14 +2492,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2551,14 +2551,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2602,14 +2602,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2646,14 +2646,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2690,14 +2690,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2732,14 +2732,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2783,14 +2783,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2832,14 +2832,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2883,14 +2883,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2932,14 +2932,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3028,14 +3028,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3048,7 +3048,7 @@
           },
           {
             "name": "profile",
-            "description": "ID can contain either a profile name or an ID",
+            "description": "ID can contain either a profile name or an ID.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3151,14 +3151,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3196,14 +3196,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3239,14 +3239,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3277,14 +3277,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider",
+            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3697,7 +3697,7 @@
         },
         "owner": {
           "type": "string",
-          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional, but an empty string is allowed as existing clients may\nset the field unconditionally."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -4019,11 +4019,11 @@
       "properties": {
         "provider": {
           "type": "string",
-          "title": "name of the provider"
+          "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value."
         },
         "project": {
           "type": "string",
-          "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project."
+          "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset."
         },
         "retiredOrganization": {
           "type": "string"
@@ -6308,7 +6308,7 @@
         },
         "owner": {
           "type": "string",
-          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional, but an empty string is allowed as existing clients may\nset the field unconditionally."
         },
         "context": {
           "$ref": "#/definitions/v1Context"

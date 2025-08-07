@@ -1768,7 +1768,8 @@ type GetAuthorizationURLRequest struct {
 	// cli is true if the request is being made from a CLI.
 	Cli bool `protobuf:"varint,3,opt,name=cli,proto3" json:"cli,omitempty"`
 	// owner is the owner (e.g GitHub org) that the provider is associated with.
-	// This is optional.
+	// This is optional; we allow empty string because the client may set the
+	// field unconditionally, even though the field is marked as `optional`.
 	Owner   *string  `protobuf:"bytes,5,opt,name=owner,proto3,oneof" json:"owner,omitempty"`
 	Context *Context `protobuf:"bytes,6,opt,name=context,proto3" json:"context,omitempty"`
 	// redirect_url is the URL to redirect to after the authorization is complete.
@@ -1911,7 +1912,8 @@ type StoreProviderTokenRequest struct {
 	// access_token is the token to store.
 	AccessToken string `protobuf:"bytes,3,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	// owner is the owner (e.g GitHub org) that the provider is associated with.
-	// This is optional.
+	// This is optional, but an empty string is allowed as existing clients may
+	// set the field unconditionally.
 	Owner         *string  `protobuf:"bytes,4,opt,name=owner,proto3,oneof" json:"owner,omitempty"`
 	Context       *Context `protobuf:"bytes,5,opt,name=context,proto3" json:"context,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -6588,9 +6590,13 @@ func (x *GHCRProviderConfig) GetNamespace() string {
 type Context struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// name of the provider
+	// This is optional, but some existing clients may set the field unconditionally,
+	// so an empty string is also an allowed value.
 	Provider *string `protobuf:"bytes,1,opt,name=provider,proto3,oneof" json:"provider,omitempty"`
 	// ID or name of the project.  If empty or unset, will select the user's default
-	// project if they only have one project.
+	// project if they only have one project.  Existing clients may unconditionally set
+	// this to the empty string rather than leaving this unset, so we allow "" as an
+	// alias for unset.
 	Project             *string `protobuf:"bytes,3,opt,name=project,proto3,oneof" json:"project,omitempty"`
 	RetiredOrganization *string `protobuf:"bytes,2,opt,name=retired_organization,json=retiredOrganization,proto3,oneof" json:"retired_organization,omitempty"`
 	unknownFields       protoimpl.UnknownFields
@@ -7378,7 +7384,7 @@ type isListEvaluationResultsRequest_ProfileSelector interface {
 }
 
 type ListEvaluationResultsRequest_Profile struct {
-	// ID can contain either a profile name or an ID
+	// ID can contain either a profile name or an ID.
 	Profile string `protobuf:"bytes,2,opt,name=profile,proto3,oneof"`
 }
 
@@ -14784,25 +14790,25 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\aexpired\x18\x04 \x01(\bB\x03\xe0A\x02R\aexpired\"\x14\n" +
 	"\x12CheckHealthRequest\"2\n" +
 	"\x13CheckHealthResponse\x12\x1b\n" +
-	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\"\x9a\x03\n" +
+	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\"\x9e\x03\n" +
 	"\x1aGetAuthorizationURLRequest\x12\x10\n" +
-	"\x03cli\x18\x03 \x01(\bR\x03cli\x12>\n" +
-	"\x05owner\x18\x05 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$H\x00R\x05owner\x88\x01\x01\x12,\n" +
-	"\acontext\x18\x06 \x01(\v2\x12.minder.v1.ContextR\acontext\x126\n" +
-	"\fredirect_url\x18\a \x01(\tB\x0e\xbaH\v\xd8\x01\x01r\x06\x18\xd8\x04\x88\x01\x01H\x01R\vredirectUrl\x88\x01\x01\x12/\n" +
-	"\x06config\x18\b \x01(\v2\x17.google.protobuf.StructR\x06config\x12J\n" +
-	"\x0eprovider_class\x18\t \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\rproviderClassB\b\n" +
+	"\x03cli\x18\x03 \x01(\bR\x03cli\x12@\n" +
+	"\x05owner\x18\x05 \x01(\tB%\xbaH\"r \x18\xc8\x012\x1b^(?:[A-Za-z][-[:word:]]*)?$H\x00R\x05owner\x88\x01\x01\x12,\n" +
+	"\acontext\x18\x06 \x01(\v2\x12.minder.v1.ContextR\acontext\x123\n" +
+	"\fredirect_url\x18\a \x01(\tB\v\xbaH\br\x06\x18\xd8\x04\x88\x01\x01H\x01R\vredirectUrl\x88\x01\x01\x12/\n" +
+	"\x06config\x18\b \x01(\v2\x17.google.protobuf.StructR\x06config\x12O\n" +
+	"\x0eprovider_class\x18\t \x01(\tB(\xbaH%\xd8\x01\x01r \x18\xc8\x012\x1b^(?:[A-Za-z][-[:word:]]*)?$R\rproviderClassB\b\n" +
 	"\x06_ownerB\x0f\n" +
 	"\r_redirect_urlJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03J\x04\b\x04\x10\x05R\bproviderR\n" +
 	"project_idR\x04port\"O\n" +
 	"\x1bGetAuthorizationURLResponse\x12\x15\n" +
 	"\x03url\x18\x01 \x01(\tB\x03\xe0A\x02R\x03url\x12\x19\n" +
-	"\x05state\x18\x02 \x01(\tB\x03\xe0A\x02R\x05state\"\xfd\x01\n" +
+	"\x05state\x18\x02 \x01(\tB\x03\xe0A\x02R\x05state\"\xff\x01\n" +
 	"\x19StoreProviderTokenRequest\x12\x1e\n" +
 	"\bprovider\x18\x01 \x01(\tB\x02\x18\x01R\bprovider\x12B\n" +
 	"\faccess_token\x18\x03 \x01(\tB\x1f\xe0A\x02\xbaH\x19r\x17\x10\n" +
-	"\x18\xc8\x012\x10^[a-zA-Z0-9-_]+$R\vaccessToken\x12>\n" +
-	"\x05owner\x18\x04 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$H\x00R\x05owner\x88\x01\x01\x12,\n" +
+	"\x18\xc8\x012\x10^[a-zA-Z0-9-_]+$R\vaccessToken\x12@\n" +
+	"\x05owner\x18\x04 \x01(\tB%\xbaH\"r \x18\xc8\x012\x1b^(?:[A-Za-z][-[:word:]]*)?$H\x00R\x05owner\x88\x01\x01\x12,\n" +
 	"\acontext\x18\x05 \x01(\v2\x12.minder.v1.ContextR\acontextB\b\n" +
 	"\x06_ownerJ\x04\b\x02\x10\x03\"\x1c\n" +
 	"\x1aStoreProviderTokenResponse\"\x8b\x02\n" +
@@ -15140,10 +15146,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12GHCRProviderConfig\x12!\n" +
 	"\tnamespace\x18\x01 \x01(\tH\x00R\tnamespace\x88\x01\x01B\f\n" +
 	"\n" +
-	"_namespace\"\xfb\x01\n" +
-	"\aContext\x12D\n" +
-	"\bprovider\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$H\x00R\bprovider\x88\x01\x01\x12@\n" +
-	"\aproject\x18\x03 \x01(\tB!\xbaH\x1e\xd8\x01\x01r\x19\x18?2\x15^[-a-zA-Z0-9.]{1,63}$H\x01R\aproject\x88\x01\x01\x126\n" +
+	"_namespace\"\xfa\x01\n" +
+	"\aContext\x12F\n" +
+	"\bprovider\x18\x01 \x01(\tB%\xbaH\"r \x18\xc8\x012\x1b^(?:[A-Za-z][-[:word:]]*)?$H\x00R\bprovider\x88\x01\x01\x12=\n" +
+	"\aproject\x18\x03 \x01(\tB\x1e\xbaH\x1br\x19\x18?2\x15^[-a-zA-Z0-9.]{0,63}$H\x01R\aproject\x88\x01\x01\x126\n" +
 	"\x14retired_organization\x18\x02 \x01(\tH\x02R\x13retiredOrganization\x88\x01\x01B\v\n" +
 	"\t_providerB\n" +
 	"\n" +
@@ -15179,13 +15185,13 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x15DeleteRuleTypeRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
 	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\"\x18\n" +
-	"\x16DeleteRuleTypeResponse\"\xf1\x02\n" +
+	"\x16DeleteRuleTypeResponse\"\xe8\x02\n" +
 	"\x1cListEvaluationResultsRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12E\n" +
-	"\aprofile\x18\x02 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^([[:alnum:]][-[:word:]]*)?$H\x00R\aprofile\x12N\n" +
-	"\flabel_filter\x18\x03 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^(\\*|[a-zA-Z][a-zA-Z0-9_]*)$H\x00R\vlabelFilter\x120\n" +
-	"\x06entity\x18\x04 \x03(\v2\x18.minder.v1.EntityTypedIdR\x06entity\x12F\n" +
-	"\trule_name\x18\x05 \x03(\tB)\xbaH&\xd8\x01\x01\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\bruleNameB\x12\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12B\n" +
+	"\aprofile\x18\x02 \x01(\tB&\xbaH#r!\x18\xc8\x012\x1c^([[:alnum:]][-[:word:]]*)?$H\x00R\aprofile\x12K\n" +
+	"\flabel_filter\x18\x03 \x01(\tB&\xbaH#r!\x18\xc8\x012\x1c^(\\*|[a-zA-Z][a-zA-Z0-9_]*)$H\x00R\vlabelFilter\x120\n" +
+	"\x06entity\x18\x04 \x03(\v2\x18.minder.v1.EntityTypedIdR\x06entity\x12C\n" +
+	"\trule_name\x18\x05 \x03(\tB&\xbaH#\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\bruleNameB\x12\n" +
 	"\x10profile_selector\"\xe2\x03\n" +
 	"\x1dListEvaluationResultsResponse\x12a\n" +
 	"\bentities\x18\x02 \x03(\v2@.minder.v1.ListEvaluationResultsResponse.EntityEvaluationResultsB\x03\xe0A\x02R\bentities\x1a\x9c\x01\n" +
@@ -15194,13 +15200,13 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\aresults\x18\x02 \x03(\v2\x1f.minder.v1.RuleEvaluationStatusR\aresults\x1a\xb0\x01\n" +
 	"\x17EntityEvaluationResults\x120\n" +
 	"\x06entity\x18\x01 \x01(\v2\x18.minder.v1.EntityTypedIdR\x06entity\x12c\n" +
-	"\bprofiles\x18\x02 \x03(\v2G.minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResultsR\bprofilesJ\x04\b\x01\x10\x02R\x06status\"\x96\x03\n" +
+	"\bprofiles\x18\x02 \x03(\v2G.minder.v1.ListEvaluationResultsResponse.EntityProfileEvaluationResultsR\bprofilesJ\x04\b\x01\x10\x02R\x06status\"\x90\x03\n" +
 	"\bRestType\x12'\n" +
 	"\bendpoint\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\x18\x90\x03R\bendpoint\x12\"\n" +
 	"\x06method\x18\x02 \x01(\tB\n" +
-	"\xbaH\a\xd8\x01\x01r\x02\x182R\x06method\x12Q\n" +
-	"\aheaders\x18\x03 \x03(\tB7\xbaH4\xd8\x01\x01\x92\x01.\",r*\x18\x90\x032%^[a-zA-Z0-9-]+:[[:graph:][:blank:]]+$R\aheaders\x12$\n" +
-	"\x04body\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xe8\aH\x00R\x04body\x88\x01\x01\x12+\n" +
+	"\xbaH\a\xd8\x01\x01r\x02\x182R\x06method\x12N\n" +
+	"\aheaders\x18\x03 \x03(\tB4\xbaH1\x92\x01.\",r*\x18\x90\x032%^[a-zA-Z0-9-]+:[[:graph:][:blank:]]+$R\aheaders\x12!\n" +
+	"\x04body\x18\x04 \x01(\tB\b\xbaH\x05r\x03\x18\xe8\aH\x00R\x04body\x88\x01\x01\x12+\n" +
 	"\x05parse\x18\x05 \x01(\tB\x15\xbaH\x12\xd8\x01\x01r\r\x1822\t^[a-z_]+$R\x05parse\x128\n" +
 	"\bfallback\x18\x06 \x03(\v2\x1c.minder.v1.RestType.FallbackR\bfallback\x1aT\n" +
 	"\bFallback\x12'\n" +
@@ -15242,11 +15248,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x8a$\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x81$\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
-	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
-	"\x02id\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12\x1d\n" +
+	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
 	"\x04name\x18\x02 \x01(\tB$\xe0A\x02\xbaH\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12L\n" +
 	"\fdisplay_name\x18\b \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12?\n" +
 	"\x15short_failure_message\x18\n" +
@@ -15256,7 +15262,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x85\x1f\n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xff\x1e\n" +
 	"\n" +
 	"Definition\x12;\n" +
 	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x128\n" +
@@ -15281,7 +15287,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\t_artifactB\x06\n" +
 	"\x04_gitB\a\n" +
 	"\x05_diffB\a\n" +
-	"\x05_deps\x1a\xd3\t\n" +
+	"\x05_deps\x1a\xd0\t\n" +
 	"\x04Eval\x12E\n" +
 	"\x04type\x18\x01 \x01(\tB1\xe0A\x02\xbaH+r)R\x02jqR\x04regoR\tvulncheckR\x06trustyR\n" +
 	"homoglyphsR\x04type\x12@\n" +
@@ -15298,11 +15304,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\aprofile\x18\x02 \x01(\v29.minder.v1.RuleType.Definition.Eval.JQComparison.OperatorR\aprofile\x122\n" +
 	"\bconstant\x18\x03 \x01(\v2\x16.google.protobuf.ValueR\bconstant\x1ab\n" +
 	"\bOperator\x12V\n" +
-	"\x03def\x18\x01 \x01(\tBD\xe0A\x02\xbaH>r<\x10\x01\x18\xc8\x0125^\\.[a-zA-Z_]+(\\.[a-zA-Z_]+|\\[\\d+]|\\[\"[a-zA-Z_]+\"\\])*$R\x03def\x1a\xb2\x01\n" +
+	"\x03def\x18\x01 \x01(\tBD\xe0A\x02\xbaH>r<\x10\x01\x18\xc8\x0125^\\.[a-zA-Z_]+(\\.[a-zA-Z_]+|\\[\\d+]|\\[\"[a-zA-Z_]+\"\\])*$R\x03def\x1a\xaf\x01\n" +
 	"\x04Rego\x128\n" +
 	"\x04type\x18\x01 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x10\x01\x18\xc8\x012\x15^[a-z]+([_-][a-z]+)*$R\x04type\x12\x15\n" +
-	"\x03def\x18\x02 \x01(\tB\x03\xe0A\x02R\x03def\x12D\n" +
-	"\x10violation_format\x18\x03 \x01(\tB\x14\xbaH\x11\xd8\x01\x01r\fR\x04textR\x04jsonH\x00R\x0fviolationFormat\x88\x01\x01B\x13\n" +
+	"\x03def\x18\x02 \x01(\tB\x03\xe0A\x02R\x03def\x12A\n" +
+	"\x10violation_format\x18\x03 \x01(\tB\x11\xbaH\x0er\fR\x04textR\x04jsonH\x00R\x0fviolationFormat\x88\x01\x01B\x13\n" +
 	"\x11_violation_format\x1a\v\n" +
 	"\tVulncheck\x1a1\n" +
 	"\x06Trusty\x12'\n" +
@@ -15314,7 +15320,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"_vulncheckB\t\n" +
 	"\a_trustyB\r\n" +
-	"\v_homoglyphs\x1a\x9c\n" +
+	"\v_homoglyphs\x1a\x99\n" +
 	"\n" +
 	"\tRemediate\x12F\n" +
 	"\x04type\x18\x01 \x01(\tB2\xbaH/\xd8\x01\x01r*R\x04restR\x14gh_branch_protectionR\fpull_requestR\x04type\x12,\n" +
@@ -15322,20 +15328,20 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x14gh_branch_protection\x18\x03 \x01(\v2?.minder.v1.RuleType.Definition.Remediate.GhBranchProtectionTypeH\x01R\x12ghBranchProtection\x88\x01\x01\x12g\n" +
 	"\fpull_request\x18\x04 \x01(\v2?.minder.v1.RuleType.Definition.Remediate.PullRequestRemediationH\x02R\vpullRequest\x88\x01\x01\x1a;\n" +
 	"\x16GhBranchProtectionType\x12!\n" +
-	"\x05patch\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xe8\aR\x05patch\x1a\xc7\x06\n" +
+	"\x05patch\x18\x01 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\x18\xe8\aR\x05patch\x1a\xc4\x06\n" +
 	"\x16PullRequestRemediation\x12\x1f\n" +
 	"\x05title\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18KR\x05title\x12\x1f\n" +
 	"\x04body\x18\x02 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\x04body\x12c\n" +
 	"\bcontents\x18\x03 \x03(\v2G.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ContentR\bcontents\x12j\n" +
 	"\x06method\x18\x04 \x01(\tBR\xbaHO\xd8\x01\x01rJR\x0eminder.contentR$minder.actions.replace_tags_with_shaR\x12minder.yq.evaluateR\x06method\x12/\n" +
 	"\x06params\x18\x06 \x01(\v2\x17.google.protobuf.StructR\x06params\x12\xa0\x01\n" +
-	"\x1dactions_replace_tags_with_sha\x18\x05 \x01(\v2Y.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithShaH\x00R\x19actionsReplaceTagsWithSha\x88\x01\x01\x1a\xa4\x01\n" +
+	"\x1dactions_replace_tags_with_sha\x18\x05 \x01(\v2Y.minder.v1.RuleType.Definition.Remediate.PullRequestRemediation.ActionsReplaceTagsWithShaH\x00R\x19actionsReplaceTagsWithSha\x88\x01\x01\x1a\xa1\x01\n" +
 	"\aContent\x12\x1e\n" +
 	"\x04path\x18\x01 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\xc8\x01R\x04path\x12*\n" +
 	"\x06action\x18\x02 \x01(\tB\x12\xbaH\x0fr\r\x10\x01\x182R\areplaceR\x06action\x12\x18\n" +
-	"\acontent\x18\x04 \x01(\tR\acontent\x12*\n" +
-	"\x04mode\x18\x03 \x01(\tB\x11\xbaH\x0e\xd8\x01\x01r\t\x18\x062\x05^\\d+$H\x00R\x04mode\x88\x01\x01B\a\n" +
+	"\acontent\x18\x04 \x01(\tR\acontent\x12'\n" +
+	"\x04mode\x18\x03 \x01(\tB\x0e\xbaH\vr\t\x18\x062\x05^\\d+$H\x00R\x04mode\x88\x01\x01B\a\n" +
 	"\x05_mode\x1a}\n" +
 	"\x19ActionsReplaceTagsWithSha\x12`\n" +
 	"\aexclude\x18\x01 \x03(\tBF\xbaHC\x92\x01@\">r<\x18\xc8\x0127^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$R\aexcludeB \n" +
@@ -15354,12 +15360,12 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12_security_advisoryB\x17\n" +
 	"\x15_pull_request_commentB\x0f\n" +
 	"\r_param_schemaB\x05\n" +
-	"\x03_id\"\x8b\f\n" +
+	"\x03_id\"\xff\v\n" +
 	"\aProfile\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12 \n" +
-	"\x02id\x18\x02 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
-	"\x04name\x18\x03 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12\x8b\x01\n" +
-	"\x06labels\x18\f \x03(\tBs\xbaHp\xd8\x01\x01\x92\x01j\x18\x01\"frd2b^([a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?:)?[a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?$R\x06labels\x127\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1d\n" +
+	"\x02id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\x04name\x18\x03 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12\x88\x01\n" +
+	"\x06labels\x18\f \x03(\tBp\xbaHm\x92\x01j\x18\x01\"frd2b^([a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?:)?[a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?$R\x06labels\x127\n" +
 	"\n" +
 	"repository\x18\x04 \x03(\v2\x17.minder.v1.Profile.RuleR\n" +
 	"repository\x12D\n" +
@@ -15370,9 +15376,9 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\fpipeline_run\x18\x10 \x03(\v2\x17.minder.v1.Profile.RuleR\vpipelineRun\x122\n" +
 	"\btask_run\x18\x11 \x03(\v2\x17.minder.v1.Profile.RuleR\ataskRun\x12-\n" +
 	"\x05build\x18\x12 \x03(\v2\x17.minder.v1.Profile.RuleR\x05build\x129\n" +
-	"\tselection\x18\x0e \x03(\v2\x1b.minder.v1.Profile.SelectorR\tselection\x12=\n" +
-	"\tremediate\x18\b \x01(\tB\x1a\xbaH\x17\xd8\x01\x01r\x12R\x02onR\x03offR\adry_runH\x01R\tremediate\x88\x01\x01\x125\n" +
-	"\x05alert\x18\t \x01(\tB\x1a\xbaH\x17\xd8\x01\x01r\x12R\x02onR\x03offR\adry_runH\x02R\x05alert\x88\x01\x01\x12\"\n" +
+	"\tselection\x18\x0e \x03(\v2\x1b.minder.v1.Profile.SelectorR\tselection\x12:\n" +
+	"\tremediate\x18\b \x01(\tB\x17\xbaH\x14r\x12R\x02onR\x03offR\adry_runH\x01R\tremediate\x88\x01\x01\x122\n" +
+	"\x05alert\x18\t \x01(\tB\x17\xbaH\x14r\x12R\x02onR\x03offR\adry_runH\x02R\x05alert\x88\x01\x01\x12\"\n" +
 	"\x04type\x18\n" +
 	" \x01(\tB\x0e\xbaH\vr\t2\aprofileR\x04type\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12L\n" +
@@ -15409,10 +15415,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\fdisplay_name\x18\x02 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12P\n" +
 	"\vdescription\x18\x03 \x01(\tB.\xbaH+\xd8\x01\x01r&\x10\x00\x18\xe8\a2\x1f^[A-Za-z][-/.!?,:;'[:word:] ]*$R\vdescription\"J\n" +
 	"\x15UpdateProjectResponse\x121\n" +
-	"\aproject\x18\x01 \x01(\v2\x12.minder.v1.ProjectB\x03\xe0A\x02R\aproject\"\xd9\x01\n" +
-	"\fProjectPatch\x12Q\n" +
-	"\fdisplay_name\x18\x01 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$H\x00R\vdisplayName\x88\x01\x01\x12U\n" +
-	"\vdescription\x18\x02 \x01(\tB.\xbaH+\xd8\x01\x01r&\x10\x00\x18\xe8\a2\x1f^[A-Za-z][-/.!?,:;'[:word:] ]*$H\x01R\vdescription\x88\x01\x01B\x0f\n" +
+	"\aproject\x18\x01 \x01(\v2\x12.minder.v1.ProjectB\x03\xe0A\x02R\aproject\"\xd3\x01\n" +
+	"\fProjectPatch\x12N\n" +
+	"\fdisplay_name\x18\x01 \x01(\tB&\xbaH#r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$H\x00R\vdisplayName\x88\x01\x01\x12R\n" +
+	"\vdescription\x18\x02 \x01(\tB+\xbaH(r&\x10\x00\x18\xe8\a2\x1f^[A-Za-z][-/.!?,:;'[:word:] ]*$H\x01R\vdescription\x88\x01\x01B\x0f\n" +
 	"\r_display_nameB\x0e\n" +
 	"\f_description\"\xaf\x01\n" +
 	"\x13PatchProjectRequest\x12,\n" +
@@ -15468,12 +15474,12 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x04Role\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12&\n" +
 	"\fdisplay_name\x18\x03 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12%\n" +
-	"\vdescription\x18\x02 \x01(\tB\x03\xe0A\x02R\vdescription\"\x9b\x04\n" +
+	"\vdescription\x18\x02 \x01(\tB\x03\xe0A\x02R\vdescription\"\x98\x04\n" +
 	"\x0eRoleAssignment\x125\n" +
 	"\x04role\x18\x01 \x01(\tB!\xe0A\x02\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\x04role\x12\x8b\x01\n" +
 	"\asubject\x18\x02 \x01(\tBq\xbaHn\xd8\x01\x01ri2g^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})|([a-z]+/[-/[:word:]:]+)$R\asubject\x12L\n" +
-	"\fdisplay_name\x18\x05 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12*\n" +
-	"\aproject\x18\x04 \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01H\x00R\aproject\x88\x01\x01\x12 \n" +
+	"\fdisplay_name\x18\x05 \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12'\n" +
+	"\aproject\x18\x04 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\aproject\x88\x01\x01\x12 \n" +
 	"\x05email\x18\x06 \x01(\tB\n" +
 	"\xbaH\a\xd8\x01\x01r\x02`\x01R\x05email\x12K\n" +
 	"\n" +
@@ -15582,20 +15588,20 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"h\n" +
 	"\x1bGetEvaluationHistoryRequest\x12\x1b\n" +
 	"\x02id\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12,\n" +
-	"\acontext\x18\x02 \x01(\v2\x12.minder.v1.ContextR\acontext\"\xad\x05\n" +
+	"\acontext\x18\x02 \x01(\v2\x12.minder.v1.ContextR\acontext\"\x98\x05\n" +
 	"\x1cListEvaluationHistoryRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12A\n" +
-	"\ventity_type\x18\x02 \x03(\tB \xbaH\x1d\xd8\x01\x01\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\n" +
-	"entityType\x12D\n" +
-	"\ventity_name\x18\x03 \x03(\tB#\xbaH \xd8\x01\x01\x92\x01\x1a\"\x18r\x16\x18\xc8\x012\x11^[,-./[:word:]]*$R\n" +
-	"entityName\x12L\n" +
-	"\fprofile_name\x18\x04 \x03(\tB)\xbaH&\xd8\x01\x01\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\vprofileName\x128\n" +
-	"\x06status\x18\x05 \x03(\tB \xbaH\x1d\xd8\x01\x01\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\x06status\x12B\n" +
-	"\vremediation\x18\x06 \x03(\tB \xbaH\x1d\xd8\x01\x01\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\vremediation\x126\n" +
-	"\x05alert\x18\a \x03(\tB \xbaH\x1d\xd8\x01\x01\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\x05alert\x12.\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12>\n" +
+	"\ventity_type\x18\x02 \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\n" +
+	"entityType\x12A\n" +
+	"\ventity_name\x18\x03 \x03(\tB \xbaH\x1d\x92\x01\x1a\"\x18r\x16\x18\xc8\x012\x11^[,-./[:word:]]*$R\n" +
+	"entityName\x12I\n" +
+	"\fprofile_name\x18\x04 \x03(\tB&\xbaH#\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\vprofileName\x125\n" +
+	"\x06status\x18\x05 \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\x06status\x12?\n" +
+	"\vremediation\x18\x06 \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\vremediation\x123\n" +
+	"\x05alert\x18\a \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\x05alert\x12.\n" +
 	"\x04from\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
-	"\x02to\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12K\n" +
-	"\flabel_filter\x18\v \x03(\tB(\xbaH%\xd8\x01\x01\x92\x01\x1f\"\x1dr\x1b\x18\xc8\x012\x16^(\\*|[a-z][a-z0-9_]*)$R\vlabelFilter\x12)\n" +
+	"\x02to\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12H\n" +
+	"\flabel_filter\x18\v \x03(\tB%\xbaH\"\x92\x01\x1f\"\x1dr\x1b\x18\xc8\x012\x16^(\\*|[a-z][a-z0-9_]*)$R\vlabelFilter\x12)\n" +
 	"\x06cursor\x18\n" +
 	" \x01(\v2\x11.minder.v1.CursorR\x06cursor\"a\n" +
 	"\x1cGetEvaluationHistoryResponse\x12A\n" +
@@ -15688,14 +15694,14 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"structured\x18\b \x01(\v2\x1b.minder.v1.StructDataSourceH\x00R\n" +
 	"structured\x12/\n" +
 	"\x04rest\x18\x06 \x01(\v2\x19.minder.v1.RestDataSourceH\x00R\x04restB\b\n" +
-	"\x06driver\"\xbb\x02\n" +
+	"\x06driver\"\xb3\x02\n" +
 	"\x10StructDataSource\x126\n" +
-	"\x03def\x18\x01 \x03(\v2$.minder.v1.StructDataSource.DefEntryR\x03def\x1a\x95\x01\n" +
+	"\x03def\x18\x01 \x03(\v2$.minder.v1.StructDataSource.DefEntryR\x03def\x1a\x8d\x01\n" +
 	"\x03Def\x12=\n" +
-	"\x04path\x18\x01 \x01(\v2$.minder.v1.StructDataSource.Def.PathB\x03\xe0A\x02R\x04path\x1aO\n" +
+	"\x04path\x18\x01 \x01(\v2$.minder.v1.StructDataSource.Def.PathB\x03\xe0A\x02R\x04path\x1aG\n" +
 	"\x04Path\x12\x1b\n" +
-	"\tfile_name\x18\x01 \x01(\tR\bfileName\x12*\n" +
-	"\falternatives\x18\x02 \x03(\tB\x06\xbaH\x03\xd8\x01\x01R\falternatives\x1aW\n" +
+	"\tfile_name\x18\x01 \x01(\tR\bfileName\x12\"\n" +
+	"\falternatives\x18\x02 \x03(\tR\falternatives\x1aW\n" +
 	"\bDefEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
 	"\x05value\x18\x02 \x01(\v2\x1f.minder.v1.StructDataSource.DefR\x05value:\x028\x01\"\xf6\x06\n" +
