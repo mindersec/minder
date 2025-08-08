@@ -44,8 +44,9 @@ func buildFromDataSource(
 	k := normalizeKey(key)
 	return rego.Function1(
 		&rego.Function{
-			Name: k,
-			Decl: types.NewFunction(types.Args(types.A), types.A),
+			Name:             k,
+			Decl:             types.NewFunction(types.Args(types.A), types.A),
+			Nondeterministic: true,
 		},
 		func(bctx rego.BuiltinContext, obj *ast.Term) (*ast.Term, error) {
 			// Convert the AST value back to a Go interface{}
