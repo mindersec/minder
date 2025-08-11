@@ -19,7 +19,7 @@ require (
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.1
-	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.15.2
+	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.1
 	github.com/cloudevents/sdk-go/v2 v2.16.1
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/evanphx/json-patch/v5 v5.9.11
@@ -49,7 +49,7 @@ require (
 	github.com/mikefarah/yq/v4 v4.47.1
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/nats-io/nats-server/v2 v2.10.27
-	github.com/nats-io/nats.go v1.39.1
+	github.com/nats-io/nats.go v1.43.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/open-feature/go-sdk v1.15.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1
@@ -235,7 +235,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nats-io/jwt/v2 v2.7.3 // indirect
-	github.com/nats-io/nkeys v0.4.10 // indirect
+	github.com/nats-io/nkeys v0.4.11 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
