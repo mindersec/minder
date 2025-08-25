@@ -15,7 +15,7 @@ require (
 	github.com/openfga/cli v0.7.2
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.29.0
-	go.uber.org/mock v0.5.2
+	go.uber.org/mock v0.6.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.36.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
