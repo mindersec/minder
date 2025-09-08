@@ -58,7 +58,7 @@ require (
 	github.com/openfga/openfga v1.9.5
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.23.0
-	github.com/protobom/protobom v0.5.2
+	github.com/protobom/protobom v0.5.4
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.34.0
@@ -104,7 +104,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.33.4
 	k8s.io/client-go v0.33.4
-	sigs.k8s.io/release-utils v0.11.1
+	sigs.k8s.io/release-utils v0.12.1
 )
 
 require (
