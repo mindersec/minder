@@ -3,8 +3,8 @@ module github.com/mindersec/minder
 go 1.24.3
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.8-20250717185734-6c6e0d3c608e.1
-	buf.build/go/protovalidate v0.14.0
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.9-20250912141014-52f32327d4b0.1
+	buf.build/go/protovalidate v1.0.0
 	buf.build/go/protoyaml v0.6.0
 	github.com/ThreeDotsLabs/watermill v1.4.7
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
@@ -98,7 +98,7 @@ require (
 	golang.org/x/term v0.35.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5
 	google.golang.org/grpc v1.75.0
-	google.golang.org/protobuf v1.36.8
+	google.golang.org/protobuf v1.36.9
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
