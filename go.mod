@@ -79,7 +79,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/styrainc/regal v0.35.1
 	github.com/thomaspoignant/go-feature-flag v1.42.0
-	github.com/wneessen/go-mail v0.6.2
+	github.com/wneessen/go-mail v0.7.1
 	github.com/yuin/goldmark v1.7.12
 	gitlab.com/gitlab-org/api/client-go v0.142.2
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
