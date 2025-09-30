@@ -8,7 +8,7 @@ require (
 	github.com/go-critic/go-critic v0.13.0
 	github.com/golangci/golangci-lint/v2 v2.4.0
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 	github.com/mikefarah/yq/v4 v4.47.1
 	github.com/norwoodj/helm-docs v1.14.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
@@ -375,9 +375,9 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
-	google.golang.org/grpc v1.73.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250818200422-3122310a409c // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250818200422-3122310a409c // indirect
+	google.golang.org/grpc v1.75.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
