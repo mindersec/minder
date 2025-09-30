@@ -26,10 +26,12 @@ import (
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type restDataSource struct {
 	handlers map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef
+	provider provinfv1.Provider
 }
 
 // ensure that restDataSource implements the v1datasources.DataSource interface
@@ -41,7 +43,7 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 }
 
 // NewRestDataSource builds a new REST data source.
-func NewRestDataSource(rest *minderv1.RestDataSource) (v1datasources.DataSource, error) {
+func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provider) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
 	}
@@ -52,6 +54,7 @@ func NewRestDataSource(rest *minderv1.RestDataSource) (v1datasources.DataSource,
 
 	out := &restDataSource{
 		handlers: make(map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef, len(rest.GetDef())),
+		provider: provider,
 	}
 
 	for key, handlerCfg := range rest.GetDef() {

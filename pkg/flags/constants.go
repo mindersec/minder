@@ -20,4 +20,6 @@ const (
 	DependencyExtract Experiment = "dependency_extract"
 	// ProjectCreateDelete enables creating top-level projects and deleting them.
 	ProjectCreateDelete Experiment = "project_create_delete"
+	// AuthenticatedDataSources enables provider authentication for data sources.
+	AuthenticatedDataSources Experiment = "authenticated_datasources"
 )

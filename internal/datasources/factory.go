@@ -11,11 +11,12 @@ import (
 	"github.com/mindersec/minder/internal/datasources/structured"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
-func BuildFromProtobuf(ds *minderv1.DataSource) (v1datasources.DataSource, error) {
+func BuildFromProtobuf(ds *minderv1.DataSource, provider provinfv1.Provider) (v1datasources.DataSource, error) {
 	if ds == nil {
 		return nil, fmt.Errorf("data source is nil")
 	}
@@ -28,7 +29,7 @@ func BuildFromProtobuf(ds *minderv1.DataSource) (v1datasources.DataSource, error
 	case *minderv1.DataSource_Structured:
 		return structured.NewStructDataSource(ds.GetStructured())
 	case *minderv1.DataSource_Rest:
-		return rest.NewRestDataSource(ds.GetRest())
+		return rest.NewRestDataSource(ds.GetRest(), provider)
 	default:
 		return nil, fmt.Errorf("unknown data source type: %T", ds)
 	}
