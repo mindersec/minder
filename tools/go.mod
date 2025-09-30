@@ -14,12 +14,12 @@ require (
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
 	github.com/openfga/cli v0.7.2
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
-	github.com/sqlc-dev/sqlc v1.29.0
+	github.com/sqlc-dev/sqlc v1.30.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.37.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.36.7
+	google.golang.org/protobuf v1.36.8
 	mvdan.cc/gofumpt v0.8.0
 )
 
@@ -165,7 +165,7 @@ require (
 	github.com/golangci/revgrep v0.8.0 // indirect
 	github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e // indirect
 	github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e // indirect
-	github.com/google/cel-go v0.26.0 // indirect
+	github.com/google/cel-go v0.26.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -377,7 +377,7 @@ require (
 	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
-	google.golang.org/grpc v1.73.0 // indirect
+	google.golang.org/grpc v1.75.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/op/go-logging.v1 v1.0.0-20160211212156-b2cb9fa56473 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
@@ -385,10 +385,10 @@ require (
 	gotest.tools/v3 v3.5.2 // indirect
 	helm.sh/helm/v3 v3.18.5 // indirect
 	honnef.co/go/tools v0.6.1 // indirect
-	modernc.org/libc v1.65.10 // indirect
+	modernc.org/libc v1.66.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.38.0 // indirect
+	modernc.org/sqlite v1.38.2 // indirect
 	mvdan.cc/unparam v0.0.0-20250301125049-0df0534333a4 // indirect
 	pluginrpc.com/pluginrpc v0.5.0 // indirect
 )
