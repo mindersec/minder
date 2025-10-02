@@ -78,13 +78,13 @@ func OpenFeatureProviderFromFlags(ctx context.Context, cfg config.FlagsConfig) {
 	}
 
 	if flagProvider != nil {
-		if err := openfeature.SetProvider(flagProvider); err != nil {
+		if err := openfeature.SetProviderAndWait(flagProvider); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to set flag provider, continuing without flag data")
 		} else {
 			zerolog.Ctx(ctx).Info().Msg("Feature flag provider installed")
 		}
 	} else {
-		if err := openfeature.SetProvider(openfeature.NoopProvider{}); err != nil {
+		if err := openfeature.SetProviderAndWait(openfeature.NoopProvider{}); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to clear flag provider")
 		} else {
 			zerolog.Ctx(ctx).Warn().Msg("No feature flag provider installed")
