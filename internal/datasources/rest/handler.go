@@ -4,6 +4,7 @@
 package rest
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +31,7 @@ import (
 	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 const (
@@ -57,6 +60,7 @@ type restHandler struct {
 	parse         string
 	// TODO implement fallback
 	// TODO implement auth
+	provider interfaces.RESTProvider
 }
 
 func initMetrics() {
@@ -74,7 +78,7 @@ func initMetrics() {
 	})
 }
 
-func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
+func newHandlerFromDef(def *minderv1.RestDataSource_Def, provider provinfv1.Provider) (*restHandler, error) {
 	if def == nil {
 		return nil, errors.New("rest data source handler definition is nil")
 	}
@@ -85,9 +89,15 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 		return nil, err
 	}
 
-	bodyFromInput, body := parseRequestBodyConfig(def)
+	bodyFromInput, body, err := parseRequestBodyConfig(def)
+	if err != nil {
+		return nil, err
+	}
 
 	initMetrics()
+
+	// If this is not a RESTProvider, restProvider will be nil, which we already need to handle.
+	restProvider, _ := interfaces.As[interfaces.RESTProvider](provider)
 
 	return &restHandler{
 		rawInputSchema: def.GetInputSchema(),
@@ -98,6 +108,7 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def) (*restHandler, error) {
 		body:           body,
 		bodyFromInput:  bodyFromInput,
 		parse:          def.GetParse(),
+		provider:       restProvider,
 	}, nil
 }
 
@@ -152,21 +163,41 @@ func (h *restHandler) Call(ctx context.Context, _ *interfaces.Ingested, args any
 		Transport: transport,
 	}
 
-	b, err := h.getBody(argsMap)
+	b, bLen, err := h.getBody(argsMap)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, h.method, expandedEndpoint, b)
-	if err != nil {
-		return nil, err
+	// Adapt slightly different calling patterns for Providers vs http.Client
+	var req *http.Request
+	var doer func(*http.Request) (*http.Response, error)
+	if h.provider != nil && urlContains(h.provider.GetBaseURL(), expandedEndpoint) {
+		// The RESTProvider NewRequest method inconsistently assumes either
+		// parsed data (GitHub) or unparsed data (e.g. REST).  Explicitly set
+		// body separately to avoid ambiguity.
+		req, err = h.provider.NewRequest(h.method, expandedEndpoint, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Body = io.NopCloser(b)
+		req.ContentLength = int64(bLen)
+		doer = func(req *http.Request) (*http.Response, error) {
+			return h.provider.Do(req.Context(), req)
+		}
+	} else {
+		req, err = http.NewRequest(h.method, expandedEndpoint, b)
+		if err != nil {
+			return nil, err
+		}
+		doer = cli.Do
 	}
+	req = req.WithContext(ctx)
 
 	for k, v := range h.headers {
 		req.Header.Add(k, v)
 	}
 
-	return h.doRequest(cli, req)
+	return h.doRequest(doer, req)
 }
 
 func recordMetrics(ctx context.Context, resp *http.Response, start time.Time) {
@@ -179,9 +210,9 @@ func recordMetrics(ctx context.Context, resp *http.Response, start time.Time) {
 	dataSourceLatencyHistogram.Record(ctx, time.Since(start).Milliseconds(), metric.WithAttributes(attrs...))
 }
 
-func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error) {
+func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, error), req *http.Request) (any, error) {
 	start := time.Now()
-	resp, err := retriableDo(cli, req)
+	resp, err := h.retriableDo(dofunc, req)
 	if err != nil {
 		return nil, err
 	}
@@ -199,41 +230,41 @@ func (h *restHandler) doRequest(cli *http.Client, req *http.Request) (any, error
 	return buildRestOutput(resp.StatusCode, bout), nil
 }
 
-func (h *restHandler) getBody(args map[string]any) (io.Reader, error) {
+func (h *restHandler) getBody(args map[string]any) (io.Reader, int, error) {
 	if h.bodyFromInput {
 		return h.getBodyFromInput(args)
 	}
 
 	if h.body == "" {
-		return nil, nil
+		return nil, 0, nil
 	}
 
-	return strings.NewReader(h.body), nil
+	return strings.NewReader(h.body), len(h.body), nil
 }
 
-func (h *restHandler) getBodyFromInput(args map[string]any) (io.Reader, error) {
+func (h *restHandler) getBodyFromInput(args map[string]any) (io.Reader, int, error) {
 	if h.body == "" {
-		return nil, errors.New("body key is empty")
+		return nil, 0, errors.New("body key is empty")
 	}
 
 	body, ok := args[h.body]
 	if !ok {
-		return nil, fmt.Errorf("body key %q not found in args", h.body)
+		return nil, 0, fmt.Errorf("body key %q not found in args", h.body)
 	}
 
 	switch outb := body.(type) {
 	case string:
-		return strings.NewReader(outb), nil
+		return strings.NewReader(outb), len(outb), nil
 	case map[string]any:
 		// stringify the object
-		obj, err := json.Marshal(outb)
+		serialized, err := json.Marshal(outb)
 		if err != nil {
-			return nil, fmt.Errorf("cannot marshal body object: %w", err)
+			return nil, 0, fmt.Errorf("cannot marshal body object: %w", err)
 		}
 
-		return strings.NewReader(string(obj)), nil
+		return bytes.NewBuffer(serialized), len(serialized), nil
 	default:
-		return nil, fmt.Errorf("body key %q is not a string or object", h.body)
+		return nil, 0, fmt.Errorf("body key %q is not a string or object", h.body)
 	}
 }
 
@@ -266,26 +297,29 @@ func (h *restHandler) parseResponseBody(body io.Reader) (any, error) {
 	return data, nil
 }
 
-func parseRequestBodyConfig(def *minderv1.RestDataSource_Def) (bool, string) {
+func parseRequestBodyConfig(def *minderv1.RestDataSource_Def) (bool, string, error) {
 	defBody := def.GetBody()
 	if defBody == nil {
-		return false, ""
+		return false, "", nil
 	}
 
 	switch defBody.(type) {
 	case *minderv1.RestDataSource_Def_Bodyobj:
-		// stringify the object
 		obj, err := json.Marshal(def.GetBodyobj())
+		// Since BodyObj is a proto struct, this should never error
 		if err != nil {
-			return false, ""
+			return false, "", err
 		}
 
-		return false, string(obj)
+		return false, string(obj), nil
 	case *minderv1.RestDataSource_Def_BodyFromField:
-		return true, def.GetBodyFromField()
+		if def.GetBodyFromField() == "" {
+			return true, "", fmt.Errorf("body_from_field is empty")
+		}
+		return true, def.GetBodyFromField(), nil
 	}
 
-	return false, def.GetBodystr()
+	return false, def.GetBodystr(), nil
 }
 
 func buildRestOutput(statusCode int, body any) any {
@@ -295,13 +329,13 @@ func buildRestOutput(statusCode int, body any) any {
 	}
 }
 
-func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
+func (h *restHandler) retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	retryCount := 0
 
 	err := backoff.Retry(func() error {
 		var err error
-		resp, err = cli.Do(req)
+		resp, err = dofunc(req)
 		if err != nil {
 			zerolog.Ctx(req.Context()).Debug().
 				Err(err).
@@ -320,8 +354,7 @@ func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
 		}
 
 		return nil
-	}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 5))
-
+	}, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3))
 	if err != nil {
 		zerolog.Ctx(req.Context()).Warn().
 			Err(err).
@@ -331,4 +364,24 @@ func retriableDo(cli *http.Client, req *http.Request) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+func urlContains(base, endpoint string) bool {
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		return false
+	}
+
+	endpointURL, err := url.Parse(endpoint)
+	if err != nil {
+		return false
+	}
+
+	// Normalize paths to have a trailing slash for prefix comparison
+	basePath := strings.TrimSuffix(baseURL.Path, "/") + "/"
+	endpointPath := strings.TrimSuffix(endpointURL.Path, "/") + "/"
+
+	return baseURL.Scheme == endpointURL.Scheme &&
+		baseURL.Host == endpointURL.Host &&
+		strings.HasPrefix(endpointPath, basePath)
 }

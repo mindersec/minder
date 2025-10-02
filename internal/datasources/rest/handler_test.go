@@ -16,6 +16,7 @@ import (
 
 	"github.com/mindersec/minder/internal/util/schemavalidate"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 func Test_newHandlerFromDef(t *testing.T) {
@@ -25,10 +26,11 @@ func Test_newHandlerFromDef(t *testing.T) {
 		def *minderv1.RestDataSource_Def
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *restHandler
-		wantErr bool
+		name     string
+		args     args
+		provider provinfv1.Provider
+		want     *restHandler
+		wantErr  bool
 	}{
 		{
 			name: "Nil definition",
@@ -65,7 +67,7 @@ func Test_newHandlerFromDef(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := newHandlerFromDef(tt.args.def)
+			got, err := newHandlerFromDef(tt.args.def, tt.provider)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

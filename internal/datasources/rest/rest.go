@@ -31,7 +31,6 @@ import (
 
 type restDataSource struct {
 	handlers map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef
-	provider provinfv1.Provider
 }
 
 // ensure that restDataSource implements the v1datasources.DataSource interface
@@ -52,13 +51,17 @@ func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provide
 		return nil, errors.New("rest data source definition is nil")
 	}
 
+	// Provider auth is opt-in, so the property must be true to pass along the provider.
+	if !rest.GetProviderAuth() {
+		provider = nil
+	}
+
 	out := &restDataSource{
 		handlers: make(map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef, len(rest.GetDef())),
-		provider: provider,
 	}
 
 	for key, handlerCfg := range rest.GetDef() {
-		handler, err := newHandlerFromDef(handlerCfg)
+		handler, err := newHandlerFromDef(handlerCfg, provider)
 		if err != nil {
 			return nil, err
 		}
