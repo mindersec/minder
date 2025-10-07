@@ -12,6 +12,7 @@ While providers in Minder typically create or manage entities (e.g., repositorie
 - They do **not** create entities. Data sources only enhance an entity already known to Minder.  
 - They can reference external services—for instance, pulling in vulnerability data from OSV or ClearlyDefined or a malware scanning service.  
 - They have arguments that help shape the queries or requests the data source makes against external systems (e.g., specifying the package name, ecosystem, or version).
+- They can leverage the authentication from the current Provider to fetch additional authenticated data after the initial ingestion.
 
 ---
 
@@ -19,9 +20,10 @@ While providers in Minder typically create or manage entities (e.g., repositorie
 
 You would create a data source in Minder whenever you need additional information about an entity that was not included in the initial ingest. Common scenarios include:
 
-- **Enriching dependencies**: If a provider ingests a list of dependencies from a repository, a data source can query a vulnerability database (like OSV or ClearlyDefined) to see if any are known to be risky *from a security or licensing point of view*.  
-- **Performing security checks**: A data source might call out to a malware scanner or an external REST service to verify the integrity of binaries or tarballs.  
-- **Fetching attestation data**: If you need statements of provenance or supply-chain attestations from a separate system, a data source can gather this data for your entity.  
+- **Followup queries**: In some cases, it may be necessary to fetch additional information to evaluate the state of the entity based on data from the initial ingestion.  (For example, checking whether a workflow action has been passing after determining the relevant action.)
+- **Enriching dependencies**: If a provider ingests a list of dependencies from a repository, a data source can query a vulnerability database (like OSV or ClearlyDefined) to see if any are known to be risky *from a security or licensing point of view*.
+- **Performing security checks**: A data source might call out to a malware scanner or an external REST service to verify the integrity of binaries or tarballs.
+- **Fetching attestation data**: If you need statements of provenance or supply-chain attestations from a separate system, a data source can gather this data for your entity.
 - **Aggregating metadata from multiple sources**: For instance, combining ClearlyDefined’s scoring data with an internal database that tracks maintainers, deprecation status, or license data.
 
 Essentially, data sources let Minder orchestrate external queries that feed into policy evaluations (e.g., Rego constraints) to create richer compliance, security, or operational checks.
@@ -32,7 +34,7 @@ Essentially, data sources let Minder orchestrate external queries that feed into
 
 When you invoke a data source in a Rego policy, you typically provide a set of arguments. These arguments tell the data source *what* to fetch or *how* to fetch it.
 
-For example, consider the YAML snippet below:
+For example, consider the two YAML snippets below:
 
 ```yaml
 version: v1
@@ -40,6 +42,7 @@ type: data-source
 name: ghapi
 context: {}
 rest:
+  providerAuth: true
   def:
     license:
       endpoint: https://api.github.com/repos/{owner}/{repo}/license
@@ -71,20 +74,46 @@ rest:
             type: string
           repo:
             type: string
+    graphql:
+      endpoint: https://api.github.com/graphql
+      method: POST
+      body_from_field: query
+      input_schema:
+        query:
+          type: object
+          properties:
+            query:
+              type: object
+          # We don't specify properties here, but a caller might use:
+          # {concat("", "repository(name:\"", repo "\", owner:\"", owner "\"") {rulesets(first:20) ...}}
+      fallback:
+        http_status: 200
+        body: '{results: [], error: "Error fetching data"}'
 ```
 
 #### Key Fields
 
-- **version / type / name**: Defines this resource as a data source called `ghapi`.  
-- **context**: Typically holds the project context. Here it’s `{}`, meaning it’s globally available (or within your chosen project scope).  
-- **rest**: Declares REST-based operations. Under `def`, we define three endpoints:
-  - `license` → Fetches repository license info from GitHub  
-  - `repo_config` → Fetches general repo config (e.g., visibility, description, forks, watchers)  
-  - `private_vuln_reporting` → Fetches whether the repository has private vulnerability reporting enabled  
-- **endpoint**: A template URI with placeholders for `{owner}` and `{repo}`.  
-- **parse**: Indicates the response format (`json`).  
-- **input_schema**: Uses JSON Schema to define the parameters needed by this data source in Rego. If you specify `input_schema` incorrectly, you will receive an error at runtime, helping ensure that the data you pass in matches what the data source expects.  
+- **version / type / name**: Defines this resource as a data source called `ghapi`.
+- **context**: Typically holds the project context. Here it’s `{}`, meaning it’s globally available (or within your chosen project scope).
+- **rest**: Declares REST-based operations. If `providerAuth` is set to `true`, the provider's authentication mechanism will be used if the method's endpoint matches the provider's URL. Under `def`, we define three endpoints:
+  - `license` → Fetches repository license info from GitHub
+  - `repo_config` → Fetches general repo config (e.g., visibility, description, forks, watchers)
+  - `private_vuln_reporting` → Fetches whether the repository has private vulnerability reporting enabled
+  - `graphql` → Performs a GraphQL query
+
+Each method defined in the rest endpoints has the following fields:
+
+- **endpoint**: A [RFC 6570](https://tools.ietf.org/html/rfc6570) template URI with the supplied arguments (see [Using a data source in a Rule](#using-a-data-source-in-a-rule)).
+- **method**: The HTTP method to invoke.  Defaults to `GET`.
+- **headers**: A key-value map of static headers to add to the request.
+- **bodyobj**: Specifies the request body as a static JSON object.
+- **bodystr**: Specifies the request body as a static string.
+- **body_from_field**: Specifies that the request body should be produced from the specified argument. Objects will be converted to JSON representation, while strings will be used as an exact request body.
+- **parse**: Indicates the response format (`json`). If unset, the result will be the body as a string.
+- **input_schema**: Uses JSON Schema to define the parameters needed by this data source in Rego. If you specify `input_schema` incorrectly, you will receive an error at runtime, helping ensure that the data you pass in matches what the data source expects.
   - *(Note: You can define additional properties as needed, but only fields explicitly handled by the data source code will be recognized.)*
+- **expected_status**: Defines the expected response code. The default expected code is 200. If an unexpected response code is received, an error will be raised.
+- **fallback**: If the request fails after 4 attempts and a fallback is defined, the specified **http_status** and **body** will be returned.
 
 ---
 

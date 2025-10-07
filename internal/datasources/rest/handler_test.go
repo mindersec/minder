@@ -99,9 +99,8 @@ func Test_parseRequestBodyConfig(t *testing.T) {
 			if tt.errMsg != "" {
 				assert.Error(t, err)
 				return
-			} else {
-				assert.NoError(t, err)
 			}
+			assert.NoError(t, err)
 			assert.Equal(t, tt.want, gotStr)
 			assert.Equal(t, tt.wantFromInput, gotFromInput)
 		})
@@ -286,7 +285,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("GET", "http://provider/example", nil).Return(
 					http.NewRequest("GET", "http://provider/example", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
 						return &http.Response{
 							StatusCode: http.StatusOK,
 							Body:       io.NopCloser(strings.NewReader(`{"key":"value"}`)),
@@ -307,7 +306,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("INVALID", "http://provider/invalid-method", nil).Return(
 					http.NewRequest("INVALID", "http://provider/invalid-method", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
 						return &http.Response{
 							StatusCode: http.StatusMethodNotAllowed,
 							Body:       io.NopCloser(strings.NewReader(`{"error":"method not allowed"}`)),
@@ -327,7 +326,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("", "http://provider/failure", nil).Return(
 					http.NewRequest("GET", "http://provider/failure", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, _ *http.Request) (*http.Response, error) {
 						return nil, errors.New("failed to do request")
 					}).Times(4)
 			},
@@ -344,14 +343,17 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 			prepareMock: func(provider *mock_v1.MockREST) {
 				provider.EXPECT().NewRequest("POST", "http://provider/static-body", nil).Return(
 					http.NewRequest("POST", "http://provider/static-body", nil))
-				provider.EXPECT().Do(gomock.Any(), gomock.Cond(func(req *http.Request) bool {
-					b, err := io.ReadAll(req.Body)
-					if err != nil {
-						return false
-					}
-					return string(b) == `{"static":"body"}`
-				})).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
+						b, err := io.ReadAll(req.Body)
+						if err != nil {
+							t.Logf("Failed to read body: %v", err)
+							return nil, err
+						}
+						if string(b) != `{"static":"body"}` {
+							t.Logf("Got %q", string(b))
+							return nil, fmt.Errorf("request body %q does not match expected", string(b))
+						}
 						return &http.Response{
 							StatusCode: http.StatusOK,
 							Body:       io.NopCloser(strings.NewReader(`{"result":"success"}`)),
@@ -374,7 +376,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("POST", "http://provider/static-body", nil).Return(
 					http.NewRequest("POST", "http://provider/static-body", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
 						b, err := io.ReadAll(req.Body)
 						if err != nil {
 							t.Logf("Failed to read body: %v", err)
@@ -411,7 +413,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("POST", "http://provider/static-body", nil).Return(
 					http.NewRequest("POST", "http://provider/static-body", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
 						b, err := io.ReadAll(req.Body)
 						if err != nil {
 							t.Logf("Failed to read body: %v", err)
@@ -477,7 +479,7 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 				provider.EXPECT().NewRequest("", "http://provider/invalid-body", nil).Return(
 					http.NewRequest("GET", "http://provider/invalid-body", nil))
 				provider.EXPECT().Do(gomock.Any(), gomock.Any()).DoAndReturn(
-					func(ctx context.Context, req *http.Request) (*http.Response, error) {
+					func(_ context.Context, req *http.Request) (*http.Response, error) {
 						return &http.Response{
 							StatusCode: http.StatusOK,
 							Body:       io.NopCloser(strings.NewReader(`{invalid json`)),
@@ -488,33 +490,6 @@ func Test_restHandler_ProviderCall(t *testing.T) {
 			args:   map[string]any{},
 			errMsg: "cannot decode json: invalid character 'i' looking for beginning of object key string",
 		},
-		/*
-			{
-				name: "JSON parsing",
-				fields: fields{
-					endpointTmpl: "/json",
-					method:       "GET",
-					headers:      map[string]string{"Content-Type": "application/json"},
-					parse:        "json",
-				},
-				args:       map[string]any{},
-				want:       buildRestOutput(http.StatusOK, map[string]any{"key": "value"}),
-				mockStatus: http.StatusOK,
-				mockBody:   `{"key":"value"}`,
-			},
-			{
-				name: "Non-JSON response",
-				fields: fields{
-					endpointTmpl: "/non-json",
-					method:       "GET",
-					headers:      map[string]string{"Content-Type": "application/json"},
-					parse:        "",
-				},
-				args:       map[string]any{},
-				want:       buildRestOutput(http.StatusOK, "plain text response"),
-				mockStatus: http.StatusOK,
-				mockBody:   "plain text response",
-			},*/
 	}
 	for _, tt := range tests {
 		tt := tt

@@ -4,6 +4,8 @@
 package datasources
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -21,12 +23,12 @@ func TestBuildFromProtobuf(t *testing.T) {
 	t.Parallel()
 	// mockProv := &mock.Provider{name: "test-provider"}
 	tests := []struct {
-		name         string
-		ds           *minderv1.DataSource
-		withProvider bool
-		provider     provinfv1.Provider
-		errorMsg     string
-		validateFn   func(t *testing.T, result v1datasources.DataSource)
+		name          string
+		ds            *minderv1.DataSource
+		withProvider  bool
+		provider      provinfv1.Provider
+		expectedFuncs []string
+		errorMsg      string
 	}{
 		{
 			name:     "nil data source",
@@ -64,11 +66,7 @@ func TestBuildFromProtobuf(t *testing.T) {
 					},
 				},
 			},
-			validateFn: func(t *testing.T, result v1datasources.DataSource) {
-				require.NotNil(t, result)
-				funcs := result.GetFuncs()
-				require.Contains(t, funcs, v1datasources.DataSourceFuncKey("test"))
-			},
+			expectedFuncs: []string{"test"},
 		},
 		{
 			name: "successful structured data source creation with provider (ignored)",
@@ -89,12 +87,8 @@ func TestBuildFromProtobuf(t *testing.T) {
 					},
 				},
 			},
-			withProvider: true, // Provider should be ignored for structured data sources
-			validateFn: func(t *testing.T, result v1datasources.DataSource) {
-				require.NotNil(t, result)
-				funcs := result.GetFuncs()
-				require.Contains(t, funcs, v1datasources.DataSourceFuncKey("test"))
-			},
+			withProvider:  true, // Provider should be ignored for structured data sources
+			expectedFuncs: []string{"test"},
 		},
 		{
 			name: "successful REST data source creation without provider",
@@ -114,11 +108,7 @@ func TestBuildFromProtobuf(t *testing.T) {
 					},
 				},
 			},
-			validateFn: func(t *testing.T, result v1datasources.DataSource) {
-				require.NotNil(t, result)
-				funcs := result.GetFuncs()
-				require.Contains(t, funcs, v1datasources.DataSourceFuncKey("get_data"))
-			},
+			expectedFuncs: []string{"get_data"},
 		},
 		{
 			name: "successful REST data source creation with provider",
@@ -142,12 +132,8 @@ func TestBuildFromProtobuf(t *testing.T) {
 					},
 				},
 			},
-			withProvider: true,
-			validateFn: func(t *testing.T, result v1datasources.DataSource) {
-				require.NotNil(t, result)
-				funcs := result.GetFuncs()
-				require.Contains(t, funcs, v1datasources.DataSourceFuncKey("get_authenticated_data"))
-			},
+			withProvider:  true,
+			expectedFuncs: []string{"get_authenticated_data"},
 		},
 		{
 			name: "REST data source with complex configuration",
@@ -182,11 +168,7 @@ func TestBuildFromProtobuf(t *testing.T) {
 					},
 				},
 			},
-			validateFn: func(t *testing.T, result v1datasources.DataSource) {
-				require.NotNil(t, result)
-				funcs := result.GetFuncs()
-				require.Contains(t, funcs, v1datasources.DataSourceFuncKey("post_data"))
-			},
+			expectedFuncs: []string{"post_data"},
 		},
 		{
 			name: "invalid structured data source",
@@ -252,17 +234,17 @@ func TestBuildFromProtobuf(t *testing.T) {
 			result, err := BuildFromProtobuf(tt.ds, mockProv)
 
 			if tt.errorMsg != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.errorMsg)
-				assert.Nil(t, result)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, result)
-
-				if tt.validateFn != nil {
-					tt.validateFn(t, result)
-				}
+				assert.ErrorContains(t, err, tt.errorMsg)
+				return
 			}
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			funcs := result.GetFuncs()
+			want := make([]v1datasources.DataSourceFuncKey, len(funcs))
+			for i, v := range tt.expectedFuncs {
+				want[i] = v1datasources.DataSourceFuncKey(v)
+			}
+			require.ElementsMatch(t, slices.Collect(maps.Keys(funcs)), want)
 		})
 	}
 }

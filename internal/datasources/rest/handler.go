@@ -212,7 +212,7 @@ func recordMetrics(ctx context.Context, resp *http.Response, start time.Time) {
 
 func (h *restHandler) doRequest(dofunc func(*http.Request) (*http.Response, error), req *http.Request) (any, error) {
 	start := time.Now()
-	resp, err := h.retriableDo(dofunc, req)
+	resp, err := retriableDo(dofunc, req)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func buildRestOutput(statusCode int, body any) any {
 	}
 }
 
-func (h *restHandler) retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.Request) (*http.Response, error) {
+func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.Request) (*http.Response, error) {
 	var resp *http.Response
 	retryCount := 0
 
