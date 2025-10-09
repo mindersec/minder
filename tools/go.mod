@@ -9,18 +9,18 @@ require (
 	github.com/golangci/golangci-lint/v2 v2.4.0
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
-	github.com/mikefarah/yq/v4 v4.47.1
+	github.com/mikefarah/yq/v4 v4.47.2
 	github.com/norwoodj/helm-docs v1.14.2
 	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
 	github.com/openfga/cli v0.7.4
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
-	github.com/sqlc-dev/sqlc v1.29.0
+	github.com/sqlc-dev/sqlc v1.30.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/tools v0.37.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
-	google.golang.org/protobuf v1.36.7
-	mvdan.cc/gofumpt v0.8.0
+	google.golang.org/protobuf v1.36.8
+	mvdan.cc/gofumpt v0.9.1
 )
 
 require (
@@ -165,7 +165,7 @@ require (
 	github.com/golangci/revgrep v0.8.0 // indirect
 	github.com/golangci/swaggoswag v0.0.0-20250504205917-77f2aca3143e // indirect
 	github.com/golangci/unconvert v0.0.0-20250410112200-a129a6e6413e // indirect
-	github.com/google/cel-go v0.26.0 // indirect
+	github.com/google/cel-go v0.26.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -309,8 +309,8 @@ require (
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
-	github.com/spf13/pflag v1.0.7 // indirect
+	github.com/spf13/cobra v1.10.1 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.20.1 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.2.0 // indirect
