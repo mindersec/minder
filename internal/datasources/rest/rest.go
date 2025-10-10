@@ -26,6 +26,7 @@ import (
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 type restDataSource struct {
@@ -41,7 +42,7 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 }
 
 // NewRestDataSource builds a new REST data source.
-func NewRestDataSource(rest *minderv1.RestDataSource) (v1datasources.DataSource, error) {
+func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provider) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
 	}
@@ -50,12 +51,17 @@ func NewRestDataSource(rest *minderv1.RestDataSource) (v1datasources.DataSource,
 		return nil, errors.New("rest data source definition is nil")
 	}
 
+	// Provider auth is opt-in, so the property must be true to pass along the provider.
+	if !rest.GetProviderAuth() {
+		provider = nil
+	}
+
 	out := &restDataSource{
 		handlers: make(map[v1datasources.DataSourceFuncKey]v1datasources.DataSourceFuncDef, len(rest.GetDef())),
 	}
 
 	for key, handlerCfg := range rest.GetDef() {
-		handler, err := newHandlerFromDef(handlerCfg)
+		handler, err := newHandlerFromDef(handlerCfg, provider)
 		if err != nil {
 			return nil, err
 		}

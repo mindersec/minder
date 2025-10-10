@@ -7,11 +7,13 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
+	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Options is a struct that contains the options for a service call
 type Options struct {
-	qtx db.ExtendQuerier
+	qtx      db.ExtendQuerier
+	provider provinfv1.Provider
 }
 
 // OptionsBuilder is a function that returns a new Options struct
@@ -22,9 +24,18 @@ func OptionsBuilder() *Options {
 // WithTransaction is a function that sets the transaction field in the Options struct
 func (o *Options) WithTransaction(qtx db.ExtendQuerier) *Options {
 	if o == nil {
-		return nil
+		o = &Options{}
 	}
 	o.qtx = qtx
+	return o
+}
+
+// WithProvider is a function that sets the provider field in the Options struct
+func (o *Options) WithProvider(provider provinfv1.Provider) *Options {
+	if o == nil {
+		o = &Options{}
+	}
+	o.provider = provider
 	return o
 }
 
@@ -33,6 +44,13 @@ func (o *Options) getTransaction() db.ExtendQuerier {
 		return nil
 	}
 	return o.qtx
+}
+
+func (o *Options) getProvider() provinfv1.Provider {
+	if o == nil {
+		return nil
+	}
+	return o.provider
 }
 
 type txGetter interface {
@@ -57,7 +75,7 @@ func ReadBuilder() *ReadOptions {
 // Hierarchical allows the service to search in the project hierarchy
 func (o *ReadOptions) Hierarchical() *ReadOptions {
 	if o == nil {
-		return nil
+		o = &ReadOptions{}
 	}
 	o.hierarchical = true
 	return o
@@ -66,9 +84,18 @@ func (o *ReadOptions) Hierarchical() *ReadOptions {
 // WithTransaction is a function that sets the transaction field in the Options struct
 func (o *ReadOptions) WithTransaction(qtx db.ExtendQuerier) *ReadOptions {
 	if o == nil {
-		return nil
+		o = &ReadOptions{}
 	}
 	o.qtx = qtx
+	return o
+}
+
+// WithProvider is a function that sets the provider field in the ReadOptions struct
+func (o *ReadOptions) WithProvider(provider provinfv1.Provider) *ReadOptions {
+	if o == nil {
+		o = &ReadOptions{}
+	}
+	o.provider = provider
 	return o
 }
 
@@ -76,7 +103,7 @@ func (o *ReadOptions) WithTransaction(qtx db.ExtendQuerier) *ReadOptions {
 // This is left internal for now to disallow external use.
 func (o *ReadOptions) withHierarchy(projs []uuid.UUID) *ReadOptions {
 	if o == nil {
-		return nil
+		o = &ReadOptions{}
 	}
 	o.hierarchy = projs
 	return o

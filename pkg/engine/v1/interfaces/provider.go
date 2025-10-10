@@ -30,6 +30,7 @@ type GitProvider interface {
 
 // RESTProvider is a subset of the Provider interface used for REST API ingestion.
 type RESTProvider interface {
+	GetBaseURL() string
 	NewRequest(method, url string, body any) (*http.Request, error)
 	Do(ctx context.Context, req *http.Request) (*http.Response, error)
 }

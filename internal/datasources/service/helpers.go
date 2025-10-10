@@ -180,13 +180,13 @@ func validateDataSourceFunctionsUpdate(
 		return fmt.Errorf("failed to convert data source to protobuf: %w", err)
 	}
 
-	existingImpl, err := datasources.BuildFromProtobuf(existingDsProto)
+	existingImpl, err := datasources.BuildFromProtobuf(existingDsProto, nil)
 	if err != nil {
 		// If we got here, it means the existing data source is invalid.
 		return fmt.Errorf("failed to build data source from protobuf: %w", err)
 	}
 
-	updatedImpl, err := datasources.BuildFromProtobuf(newDS)
+	updatedImpl, err := datasources.BuildFromProtobuf(newDS, nil)
 	if err != nil {
 		return fmt.Errorf("failed to build data source from protobuf: %w", err)
 	}

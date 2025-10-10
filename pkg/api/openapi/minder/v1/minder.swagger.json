@@ -5928,6 +5928,10 @@
             "$ref": "#/definitions/v1RestDataSourceDef"
           },
           "description": "defs is the list of definitions for the REST API."
+        },
+        "providerAuth": {
+          "type": "boolean",
+          "description": "provider_auth enables provider authentication for this data source.\nWhen enabled, the data source will use the provider's authentication\ncredentials to make requests."
         }
       },
       "description": "RestDataSource is the REST data source driver."
