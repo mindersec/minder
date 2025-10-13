@@ -43,7 +43,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - uses: chainguard-dev/actions/boilerplate@6f4f4de7549514e7b659741b30f6476f245600dd # v1.5.3
+      - uses: chainguard-dev/actions/boilerplate@7b18ea9960f945cabf19a84752e580829347f4ed # v1.5.4
         with:
           extension: ${{ matrix.extension }}
           language: ${{ matrix.language }}
