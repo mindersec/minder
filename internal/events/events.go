@@ -216,7 +216,7 @@ func (e *eventer) Register(
 ) {
 	// From https://stackoverflow.com/questions/7052693/how-to-get-the-name-of-a-function-in-go
 	funcName := fmt.Sprintf("%s-%s", runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name(), topic)
-	hand := e.router.AddNoPublisherHandler(
+	hand := e.router.AddConsumerHandler(
 		funcName,
 		topic,
 		e.webhookSubscriber,
