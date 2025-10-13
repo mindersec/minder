@@ -288,11 +288,13 @@ func Login(
 		}
 	}
 
-	http.Handle("/login", rp.AuthURLHandler(stateFn, provider))
-	http.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
+	mux := http.NewServeMux()
+	mux.Handle("/login", rp.AuthURLHandler(stateFn, provider))
+	mux.Handle(callbackPath, rp.CodeExchangeHandler(callback, provider))
 
 	server := &http.Server{
 		Addr:              fmt.Sprintf(":%d", port),
+		Handler:           mux,
 		ReadHeaderTimeout: time.Second * 10,
 	}
 	// Start the server in a goroutine
