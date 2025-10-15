@@ -236,7 +236,7 @@ func (h *restHandler) getBody(args map[string]any) (io.Reader, int, error) {
 	}
 
 	if h.body == "" {
-		return nil, 0, nil
+		return strings.NewReader(""), 0, nil
 	}
 
 	return strings.NewReader(h.body), len(h.body), nil

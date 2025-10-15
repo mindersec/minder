@@ -228,11 +228,16 @@ func (d *dataSourceService) Create(
 	}
 
 	// Create data source record
+	metadataBytes, err := metadataForDataSource(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal metadata: %w", err)
+	}
 	dsRecord, err := tx.CreateDataSource(ctx, db.CreateDataSourceParams{
 		ProjectID:      projectID,
 		Name:           ds.GetName(),
 		DisplayName:    ds.GetName(),
 		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
+		Metadata:       metadataBytes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data source: %w", err)
@@ -309,10 +314,15 @@ func (d *dataSourceService) Update(
 		return nil, err
 	}
 
+	metadataBytes, err := metadataForDataSource(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize metadata: %w", err)
+	}
 	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
 		ID:          existingDS.ID,
 		ProjectID:   projectID,
 		DisplayName: ds.GetName(),
+		Metadata:    metadataBytes,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to update data source: %w", err)
 	}

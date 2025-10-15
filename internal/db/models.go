@@ -496,13 +496,14 @@ type Bundle struct {
 }
 
 type DataSource struct {
-	ID             uuid.UUID     `json:"id"`
-	Name           string        `json:"name"`
-	DisplayName    string        `json:"display_name"`
-	ProjectID      uuid.UUID     `json:"project_id"`
-	CreatedAt      time.Time     `json:"created_at"`
-	UpdatedAt      time.Time     `json:"updated_at"`
-	SubscriptionID uuid.NullUUID `json:"subscription_id"`
+	ID             uuid.UUID             `json:"id"`
+	Name           string                `json:"name"`
+	DisplayName    string                `json:"display_name"`
+	ProjectID      uuid.UUID             `json:"project_id"`
+	CreatedAt      time.Time             `json:"created_at"`
+	UpdatedAt      time.Time             `json:"updated_at"`
+	SubscriptionID uuid.NullUUID         `json:"subscription_id"`
+	Metadata       pqtype.NullRawMessage `json:"metadata"`
 }
 
 type DataSourcesFunction struct {
