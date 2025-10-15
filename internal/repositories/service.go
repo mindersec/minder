@@ -180,7 +180,7 @@ func (r *repositoryService) CreateRepository(
 	ewp.Properties = props
 
 	// insert the repository into the DB
-	dbID, pbRepo, err := r.persistRepository(ctx, ewp, provider.Name)
+	dbID, pbRepo, err := r.persistRepository(ctx, ewp)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).
 			Dict("properties", fetchByProps.ToLogDict()).
@@ -364,11 +364,7 @@ func (r *repositoryService) deleteRepository(
 	}
 
 	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		// then remove the entry in the DB
-		if err := t.DeleteRepository(ctx, repo.Entity.ID); err != nil {
-			return nil, fmt.Errorf("error deleting repository from DB: %w", err)
-		}
-
+		// Remove the entity from the DB
 		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
 			ID:        repo.Entity.ID,
 			ProjectID: repo.Entity.ProjectID,
@@ -406,7 +402,6 @@ func (r *repositoryService) pushReconcilerEvent(entityID uuid.UUID, projectID uu
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
 	ewp *models.EntityWithProperties,
-	providerName string,
 ) (uuid.UUID, *pb.Repository, error) {
 	var outid uuid.UUID
 	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
@@ -420,44 +415,13 @@ func (r *repositoryService) persistRepository(
 	}
 
 	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		License := sql.NullString{}
-		if pbRepo.License != "" {
-			License.String = pbRepo.License
-			License.Valid = true
-		}
-
-		// update the database
-		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
-			Provider:   providerName,
-			ProviderID: ewp.Entity.ProviderID,
-			ProjectID:  ewp.Entity.ProjectID,
-			RepoOwner:  pbRepo.Owner,
-			RepoName:   pbRepo.Name,
-			RepoID:     pbRepo.RepoId,
-			IsPrivate:  pbRepo.IsPrivate,
-			IsFork:     pbRepo.IsFork,
-			WebhookID: sql.NullInt64{
-				Int64: pbRepo.HookId,
-				Valid: true,
-			},
-			CloneUrl:   pbRepo.CloneUrl,
-			WebhookUrl: pbRepo.HookUrl,
-			DeployUrl:  pbRepo.DeployUrl,
-			DefaultBranch: sql.NullString{
-				String: pbRepo.DefaultBranch,
-				Valid:  true,
-			},
-			License: License,
-		})
-		if err != nil {
-			return pbRepo, err
-		}
-
-		outid = dbRepo.ID
-		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
+		// Generate a new UUID for the entity
+		entityID := uuid.New()
+		outid = entityID
+		pbRepo.Id = ptr.Ptr(entityID.String())
 
 		repoEnt, err := t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
-			ID:         dbRepo.ID,
+			ID:         entityID,
 			EntityType: db.EntitiesRepository,
 			Name:       ewp.Entity.Name,
 			ProjectID:  ewp.Entity.ProjectID,

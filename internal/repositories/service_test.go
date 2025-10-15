@@ -141,9 +141,16 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			res, err := svc.CreateRepository(ctx, &provider, projectID, fetchByProps)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
-				// cheat here a little...
+				// Verify the repository was created successfully
+				require.NotNil(t, res)
+				require.NotNil(t, res.Id)
+				require.NotEmpty(t, *res.Id)
+				// Verify other fields match expectations
 				expectation := newExpectation(res.IsPrivate)
-				require.Equal(t, expectation, res)
+				require.Equal(t, expectation.Owner, res.Owner)
+				require.Equal(t, expectation.Name, res.Name)
+				require.Equal(t, expectation.RepoId, res.RepoId)
+				require.Equal(t, expectation.IsPrivate, res.IsPrivate)
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
@@ -217,7 +224,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 				return pf.NewProviderManagerMock(pf.WithSuccessfulInstantiateFromID(p))
 			},
 			ProviderSetup: newProviderMock(withSuccessfulDeregister),
-			ExpectedError: "error deleting repository from DB",
+			ExpectedError: "error deleting entity from DB",
 		},
 		{
 			Name:         "DeleteByName succeeds",
@@ -270,7 +277,7 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 				return pf.NewProviderManagerMock(pf.WithSuccessfulInstantiateFromID(p))
 			},
 			ProviderSetup: newProviderMock(withSuccessfulDeregister),
-			ExpectedError: "error deleting repository from DB",
+			ExpectedError: "error deleting entity from DB",
 		},
 		{
 			Name:         "DeleteByID succeeds",
@@ -506,7 +513,7 @@ func withFailedDelete(mock dbMock) {
 	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
 	mock.EXPECT().BeginTransaction().Return(nil, nil)
 	mock.EXPECT().
-		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
+		DeleteEntity(gomock.Any(), gomock.Any()).
 		Return(errDefault)
 	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
 }
@@ -514,9 +521,6 @@ func withFailedDelete(mock dbMock) {
 func withSuccessfulDelete(mock dbMock) {
 	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
 	mock.EXPECT().BeginTransaction().Return(nil, nil)
-	mock.EXPECT().
-		DeleteRepository(gomock.Any(), gomock.Eq(repoID)).
-		Return(nil)
 	mock.EXPECT().
 		DeleteEntity(gomock.Any(), gomock.Any()).
 		Return(nil)
@@ -552,17 +556,14 @@ func withFailedCreate(mock dbMock) {
 	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
 	mock.EXPECT().BeginTransaction().Return(nil, nil)
 	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
+		CreateEntityWithID(gomock.Any(), gomock.Any()).
+		Return(db.EntityInstance{}, errDefault)
 	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
 }
 
 func withSuccessfulCreate(mock dbMock) {
 	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
 	mock.EXPECT().BeginTransaction().Return(nil, nil)
-	mock.EXPECT().
-		CreateRepository(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
 	mock.EXPECT().
 		CreateEntityWithID(gomock.Any(), gomock.Any()).
 		Return(db.EntityInstance{}, nil)
