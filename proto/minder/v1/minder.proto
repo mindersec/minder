@@ -4397,6 +4397,11 @@ message RestDataSource {
 
     // defs is the list of definitions for the REST API.
     map<string, Def> def = 1;
+
+    // provider_auth enables provider authentication for this data source.
+    // When enabled, the data source will use the provider's authentication
+    // credentials to make requests.
+    bool provider_auth = 2;
 }
 
 // DataSourceReference is a reference to a data source.

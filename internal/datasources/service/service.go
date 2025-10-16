@@ -25,10 +25,8 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
-var (
-	// ErrDataSourceAlreadyExists is returned when a data source already exists
-	ErrDataSourceAlreadyExists = util.UserVisibleError(codes.AlreadyExists, "data source already exists")
-)
+// ErrDataSourceAlreadyExists is returned when a data source already exists
+var ErrDataSourceAlreadyExists = util.UserVisibleError(codes.AlreadyExists, "data source already exists")
 
 // DataSourcesService is an interface that defines the methods for the data sources service.
 type DataSourcesService interface {
@@ -100,7 +98,8 @@ func (d *dataSourceService) WithTransactionBuilder(txBuilder func(d *dataSourceS
 var _ DataSourcesService = (*dataSourceService)(nil)
 
 func (d *dataSourceService) GetByName(
-	ctx context.Context, name string, project uuid.UUID, opts *ReadOptions) (*minderv1.DataSource, error) {
+	ctx context.Context, name string, project uuid.UUID, opts *ReadOptions,
+) (*minderv1.DataSource, error) {
 	return d.getDataSourceSomehow(
 		ctx, project, opts, func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID,
 		) (db.DataSource, error) {
@@ -109,7 +108,8 @@ func (d *dataSourceService) GetByName(
 }
 
 func (d *dataSourceService) GetByID(
-	ctx context.Context, id uuid.UUID, project uuid.UUID, opts *ReadOptions) (*minderv1.DataSource, error) {
+	ctx context.Context, id uuid.UUID, project uuid.UUID, opts *ReadOptions,
+) (*minderv1.DataSource, error) {
 	return d.getDataSourceSomehow(
 		ctx, project, opts, func(ctx context.Context, tx db.ExtendQuerier, projs []uuid.UUID,
 		) (db.DataSource, error) {
@@ -118,7 +118,8 @@ func (d *dataSourceService) GetByID(
 }
 
 func (d *dataSourceService) List(
-	ctx context.Context, project uuid.UUID, opts *ReadOptions) ([]*minderv1.DataSource, error) {
+	ctx context.Context, project uuid.UUID, opts *ReadOptions,
+) ([]*minderv1.DataSource, error) {
 	stx, err := d.txBuilder(d, opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
@@ -227,11 +228,16 @@ func (d *dataSourceService) Create(
 	}
 
 	// Create data source record
+	metadataBytes, err := metadataForDataSource(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal metadata: %w", err)
+	}
 	dsRecord, err := tx.CreateDataSource(ctx, db.CreateDataSourceParams{
 		ProjectID:      projectID,
 		Name:           ds.GetName(),
 		DisplayName:    ds.GetName(),
 		SubscriptionID: uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
+		Metadata:       metadataBytes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create data source: %w", err)
@@ -308,10 +314,15 @@ func (d *dataSourceService) Update(
 		return nil, err
 	}
 
+	metadataBytes, err := metadataForDataSource(ds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize metadata: %w", err)
+	}
 	if _, err := tx.UpdateDataSource(ctx, db.UpdateDataSourceParams{
 		ID:          existingDS.ID,
 		ProjectID:   projectID,
 		DisplayName: ds.GetName(),
+		Metadata:    metadataBytes,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to update data source: %w", err)
 	}
@@ -368,7 +379,8 @@ func (d *dataSourceService) Upsert(
 
 // Delete deletes a data source in the given project.
 func (d *dataSourceService) Delete(
-	ctx context.Context, id uuid.UUID, project uuid.UUID, opts *Options) error {
+	ctx context.Context, id uuid.UUID, project uuid.UUID, opts *Options,
+) error {
 	stx, err := d.txBuilder(d, opts)
 	if err != nil {
 		return fmt.Errorf("failed to start transaction: %w", err)
@@ -442,7 +454,8 @@ func (d *dataSourceService) Delete(
 //
 // Note that this assumes that the rule type has already been validated.
 func (d *dataSourceService) BuildDataSourceRegistry(
-	ctx context.Context, rt *minderv1.RuleType, opts *Options) (*v1datasources.DataSourceRegistry, error) {
+	ctx context.Context, rt *minderv1.RuleType, opts *Options,
+) (*v1datasources.DataSourceRegistry, error) {
 	rawproj := rt.GetContext().GetProject()
 	proj, err := uuid.Parse(rawproj)
 	if err != nil {
@@ -478,7 +491,9 @@ func (d *dataSourceService) BuildDataSourceRegistry(
 			return nil, fmt.Errorf("failed to instantiate data source: %w", err)
 		}
 
-		impl, err := datasources.BuildFromProtobuf(inst)
+		// Get provider from options if available, needed for authenticated data sources
+		provider := opts.getProvider()
+		impl, err := datasources.BuildFromProtobuf(inst, provider)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build data source from protobuf: %w", err)
 		}

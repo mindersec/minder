@@ -190,7 +190,7 @@ func testCmdRun(cmd *cobra.Command, _ []string) error {
 		Alert:     actionOptFromString(profile.Alert, models.ActionOptOff),
 	}
 
-	dsRegistry, err := getDataSources(dataSourcefiles)
+	dsRegistry, err := getDataSources(dataSourcefiles, prov)
 	if err != nil {
 		return fmt.Errorf("error getting data sources: %w", err)
 	}
@@ -502,7 +502,7 @@ func actionOptFromString(s *string, defAction models.ActionOpt) models.ActionOpt
 	return models.ActionOptUnknown
 }
 
-func getDataSources(readers []*os.File) (*v1datasources.DataSourceRegistry, error) {
+func getDataSources(readers []*os.File, provider provifv1.Provider) (*v1datasources.DataSourceRegistry, error) {
 	reg := v1datasources.NewDataSourceRegistry()
 	for _, r := range readers {
 		fname := r.Name()
@@ -515,7 +515,7 @@ func getDataSources(readers []*os.File) (*v1datasources.DataSourceRegistry, erro
 			return nil, fmt.Errorf("error validating data source %s: %w", fname, err)
 		}
 
-		intds, err := internalds.BuildFromProtobuf(ds)
+		intds, err := internalds.BuildFromProtobuf(ds, provider)
 		if err != nil {
 			return nil, fmt.Errorf("error building data source %s: %w", fname, err)
 		}

@@ -73,15 +73,16 @@ func (q *Queries) AddRuleTypeDataSourceReference(ctx context.Context, arg AddRul
 
 const createDataSource = `-- name: CreateDataSource :one
 
-INSERT INTO data_sources (project_id, name, display_name, subscription_id)
-VALUES ($1, $2, $3, $4) RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id
+INSERT INTO data_sources (project_id, name, display_name, subscription_id, metadata)
+VALUES ($1, $2, $3, $4, $5::json) RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata
 `
 
 type CreateDataSourceParams struct {
-	ProjectID      uuid.UUID     `json:"project_id"`
-	Name           string        `json:"name"`
-	DisplayName    string        `json:"display_name"`
-	SubscriptionID uuid.NullUUID `json:"subscription_id"`
+	ProjectID      uuid.UUID       `json:"project_id"`
+	Name           string          `json:"name"`
+	DisplayName    string          `json:"display_name"`
+	SubscriptionID uuid.NullUUID   `json:"subscription_id"`
+	Metadata       json.RawMessage `json:"metadata"`
 }
 
 // CreateDataSource creates a new datasource in a given project.
@@ -91,6 +92,7 @@ func (q *Queries) CreateDataSource(ctx context.Context, arg CreateDataSourcePara
 		arg.Name,
 		arg.DisplayName,
 		arg.SubscriptionID,
+		arg.Metadata,
 	)
 	var i DataSource
 	err := row.Scan(
@@ -101,6 +103,7 @@ func (q *Queries) CreateDataSource(ctx context.Context, arg CreateDataSourcePara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SubscriptionID,
+		&i.Metadata,
 	)
 	return i, err
 }
@@ -108,7 +111,7 @@ func (q *Queries) CreateDataSource(ctx context.Context, arg CreateDataSourcePara
 const deleteDataSource = `-- name: DeleteDataSource :one
 DELETE FROM data_sources
 WHERE id = $1 AND project_id = $2
-RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id
+RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata
 `
 
 type DeleteDataSourceParams struct {
@@ -127,6 +130,7 @@ func (q *Queries) DeleteDataSource(ctx context.Context, arg DeleteDataSourcePara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SubscriptionID,
+		&i.Metadata,
 	)
 	return i, err
 }
@@ -223,7 +227,7 @@ func (q *Queries) DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTy
 
 const getDataSource = `-- name: GetDataSource :one
 
-SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id FROM data_sources
+SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata FROM data_sources
 WHERE id = $1 AND project_id = ANY($2::uuid[])
 `
 
@@ -247,13 +251,14 @@ func (q *Queries) GetDataSource(ctx context.Context, arg GetDataSourceParams) (D
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SubscriptionID,
+		&i.Metadata,
 	)
 	return i, err
 }
 
 const getDataSourceByName = `-- name: GetDataSourceByName :one
 
-SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id FROM data_sources
+SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata FROM data_sources
 WHERE name = $1 AND project_id = ANY($2::uuid[])
 `
 
@@ -278,6 +283,7 @@ func (q *Queries) GetDataSourceByName(ctx context.Context, arg GetDataSourceByNa
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SubscriptionID,
+		&i.Metadata,
 	)
 	return i, err
 }
@@ -328,7 +334,7 @@ func (q *Queries) ListDataSourceFunctions(ctx context.Context, arg ListDataSourc
 
 const listDataSources = `-- name: ListDataSources :many
 
-SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id FROM data_sources
+SELECT id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata FROM data_sources
 WHERE project_id = ANY($1::uuid[])
 `
 
@@ -353,6 +359,7 @@ func (q *Queries) ListDataSources(ctx context.Context, projects []uuid.UUID) ([]
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.SubscriptionID,
+			&i.Metadata,
 		); err != nil {
 			return nil, err
 		}
@@ -400,20 +407,26 @@ func (q *Queries) ListRuleTypesReferencesByDataSource(ctx context.Context, dataS
 const updateDataSource = `-- name: UpdateDataSource :one
 
 UPDATE data_sources
-SET display_name = $3
+SET display_name = $3, metadata = $4::json
 WHERE id = $1 AND project_id = $2
-RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id
+RETURNING id, name, display_name, project_id, created_at, updated_at, subscription_id, metadata
 `
 
 type UpdateDataSourceParams struct {
-	ID          uuid.UUID `json:"id"`
-	ProjectID   uuid.UUID `json:"project_id"`
-	DisplayName string    `json:"display_name"`
+	ID          uuid.UUID       `json:"id"`
+	ProjectID   uuid.UUID       `json:"project_id"`
+	DisplayName string          `json:"display_name"`
+	Metadata    json.RawMessage `json:"metadata"`
 }
 
 // UpdateDataSource updates a datasource in a given project.
 func (q *Queries) UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error) {
-	row := q.db.QueryRowContext(ctx, updateDataSource, arg.ID, arg.ProjectID, arg.DisplayName)
+	row := q.db.QueryRowContext(ctx, updateDataSource,
+		arg.ID,
+		arg.ProjectID,
+		arg.DisplayName,
+		arg.Metadata,
+	)
 	var i DataSource
 	err := row.Scan(
 		&i.ID,
@@ -423,6 +436,7 @@ func (q *Queries) UpdateDataSource(ctx context.Context, arg UpdateDataSourcePara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.SubscriptionID,
+		&i.Metadata,
 	)
 	return i, err
 }

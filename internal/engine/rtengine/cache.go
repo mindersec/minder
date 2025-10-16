@@ -54,7 +54,6 @@ func NewRuleEngineCache(
 	dssvc datasourceservice.DataSourcesService,
 	opts ...interfaces.Option,
 ) (Cache, error) {
-
 	// Get the full project hierarchy
 	hierarchy, err := store.GetParentProjects(ctx, projectID)
 	if err != nil {
@@ -149,7 +148,16 @@ func cacheRuleEngine(
 	//
 	// TODO: Do we need to pass in a transaction here?
 	// TODO: We _might_ want to pass in a slice of the hierarchy here.
-	dsreg, err := dssvc.BuildDataSourceRegistry(ctx, pbRuleType, nil)
+
+	// Create options for data source service
+	var dsOpts *datasourceservice.Options
+
+	// Check if authenticated data sources are enabled and pass provider
+	if flags.Bool(ctx, featureFlags, flags.AuthenticatedDataSources) {
+		dsOpts = dsOpts.WithProvider(provider)
+	}
+
+	dsreg, err := dssvc.BuildDataSourceRegistry(ctx, pbRuleType, dsOpts)
 	if err != nil {
 		return nil, fmt.Errorf("error building data source registry: %w", err)
 	}

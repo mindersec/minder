@@ -12644,7 +12644,11 @@ func (x *StructDataSource) GetDef() map[string]*StructDataSource_Def {
 type RestDataSource struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// defs is the list of definitions for the REST API.
-	Def           map[string]*RestDataSource_Def `protobuf:"bytes,1,rep,name=def,proto3" json:"def,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Def map[string]*RestDataSource_Def `protobuf:"bytes,1,rep,name=def,proto3" json:"def,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// provider_auth enables provider authentication for this data source.
+	// When enabled, the data source will use the provider's authentication
+	// credentials to make requests.
+	ProviderAuth  bool `protobuf:"varint,2,opt,name=provider_auth,json=providerAuth,proto3" json:"provider_auth,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12684,6 +12688,13 @@ func (x *RestDataSource) GetDef() map[string]*RestDataSource_Def {
 		return x.Def
 	}
 	return nil
+}
+
+func (x *RestDataSource) GetProviderAuth() bool {
+	if x != nil {
+		return x.ProviderAuth
+	}
+	return false
 }
 
 // DataSourceReference is a reference to a data source.
@@ -15704,9 +15715,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\falternatives\x18\x02 \x03(\tR\falternatives\x1aW\n" +
 	"\bDefEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
-	"\x05value\x18\x02 \x01(\v2\x1f.minder.v1.StructDataSource.DefR\x05value:\x028\x01\"\xf6\x06\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.minder.v1.StructDataSource.DefR\x05value:\x028\x01\"\x9b\a\n" +
 	"\x0eRestDataSource\x124\n" +
-	"\x03def\x18\x01 \x03(\v2\".minder.v1.RestDataSource.DefEntryR\x03def\x1a\xd6\x05\n" +
+	"\x03def\x18\x01 \x03(\v2\".minder.v1.RestDataSource.DefEntryR\x03def\x12#\n" +
+	"\rprovider_auth\x18\x02 \x01(\bR\fproviderAuth\x1a\xd6\x05\n" +
 	"\x03Def\x126\n" +
 	"\bendpoint\x18\x01 \x01(\tB\x1a\xe0A\x02\xbaH\x14r\x12\x18\xa0\x062\r^https?://.*$R\bendpoint\x12?\n" +
 	"\x06method\x18\x02 \x01(\tB'\xbaH$\xd8\x01\x01r\x1fR\x03GETR\x04POSTR\x03PUTR\x05PATCHR\x06DELETER\x06method\x12D\n" +
