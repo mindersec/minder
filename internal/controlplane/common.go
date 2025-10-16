@@ -56,14 +56,6 @@ func providerError(err error) error {
 	return fmt.Errorf("provider error: %w", err)
 }
 
-// getNameFilterParam allows us to build a name filter for our provider queries
-func getNameFilterParam(name string) sql.NullString {
-	return sql.NullString{
-		String: name,
-		Valid:  name != "",
-	}
-}
-
 // getRemediationURLFromMetadata returns the "remediation URL". For now, this is
 // the URL link to the PR
 func getRemediationURLFromMetadata(data []byte, repoSlug string) (string, error) {

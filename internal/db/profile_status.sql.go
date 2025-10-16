@@ -116,6 +116,46 @@ func (q *Queries) GetProfileStatusByProject(ctx context.Context, projectID uuid.
 	return items, nil
 }
 
+const listOldestRuleEvaluationsByEntityID = `-- name: ListOldestRuleEvaluationsByEntityID :many
+
+SELECT ere.entity_instance_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
+FROM evaluation_rule_entities AS ere
+    INNER JOIN latest_evaluation_statuses AS les ON ere.id = les.rule_entity_id
+    INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id
+WHERE ere.entity_instance_id = ANY ($1::uuid[])
+GROUP BY ere.entity_instance_id
+`
+
+type ListOldestRuleEvaluationsByEntityIDRow struct {
+	EntityInstanceID  uuid.UUID `json:"entity_instance_id"`
+	OldestLastUpdated time.Time `json:"oldest_last_updated"`
+}
+
+// ListOldestRuleEvaluationsByEntityID returns the oldest evaluation time for each entity.
+// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+func (q *Queries) ListOldestRuleEvaluationsByEntityID(ctx context.Context, entityIds []uuid.UUID) ([]ListOldestRuleEvaluationsByEntityIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, listOldestRuleEvaluationsByEntityID, pq.Array(entityIds))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListOldestRuleEvaluationsByEntityIDRow{}
+	for rows.Next() {
+		var i ListOldestRuleEvaluationsByEntityIDRow
+		if err := rows.Scan(&i.EntityInstanceID, &i.OldestLastUpdated); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listOldestRuleEvaluationsByRepositoryId = `-- name: ListOldestRuleEvaluationsByRepositoryId :many
 
 SELECT ere.entity_instance_id::uuid AS repository_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
@@ -134,6 +174,7 @@ type ListOldestRuleEvaluationsByRepositoryIdRow struct {
 
 // ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 // cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+// DEPRECATED: Use ListOldestRuleEvaluationsByEntityID instead
 func (q *Queries) ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error) {
 	rows, err := q.db.QueryContext(ctx, listOldestRuleEvaluationsByRepositoryId, pq.Array(repositoryIds))
 	if err != nil {

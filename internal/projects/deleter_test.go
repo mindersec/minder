@@ -42,7 +42,10 @@ func TestDeleteProjectOneProjectWithNoParents(t *testing.T) {
 		Return([]db.Provider{}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{}, nil)
@@ -97,7 +100,10 @@ func TestDeleteProjectWithOneParent(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{}, nil)
@@ -154,7 +160,10 @@ func TestDeleteProjectProjectInThreeNodeHierarchy(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{}, nil)
@@ -224,7 +233,10 @@ func TestDeleteMiddleProjectInThreeNodeHierarchy(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{}, nil)
@@ -270,7 +282,10 @@ func TestDeleteProjectWithProvider(t *testing.T) {
 		}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{}, nil)
@@ -331,7 +346,7 @@ func TestCleanupUnmanaged(t *testing.T) {
 		}, nil).AnyTimes()
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), gomock.Any()).
 		Return(int64(0), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), gomock.Any()).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), gomock.Any()).
 		Return(int64(0), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), gomock.Any()).
 		Return([]string{}, nil)
@@ -378,7 +393,10 @@ func TestDeleteProjectWithTombstone(t *testing.T) {
 		Return([]db.Provider{}, nil)
 	mockStore.EXPECT().CountProfilesByProjectID(gomock.Any(), proj).
 		Return(int64(3), nil)
-	mockStore.EXPECT().CountRepositoriesByProjectID(gomock.Any(), proj).
+	mockStore.EXPECT().CountEntitiesByTypeAndProject(gomock.Any(), db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  proj,
+	}).
 		Return(int64(6), nil)
 	mockStore.EXPECT().GetEntitlementFeaturesByProjectID(gomock.Any(), proj).
 		Return([]string{"stacklok"}, nil)

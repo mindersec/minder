@@ -323,17 +323,20 @@ func TestRepositoryService_GetRepositoryById(t *testing.T) {
 
 	scenarios := []struct {
 		Name          string
-		DBSetup       dbMockBuilder
-		DeleteType    DeleteCallType
+		ServiceSetup  propSvcMockBuilder
 		ShouldSucceed bool
 	}{
 		{
-			Name:    "Get by ID fails when DB call fails",
-			DBSetup: newDBMock(withFailedGetById),
+			Name:         "Get by ID fails when DB call fails",
+			ServiceSetup: newPropSvcMock(withFailedEntityWithProps),
 		},
 		{
-			Name:          "Get by ID succeeds",
-			DBSetup:       newDBMock(withSuccessfulGetById),
+			Name: "Get by ID succeeds",
+			ServiceSetup: newPropSvcMock(
+				withSuccessfulEntityWithProps,
+				withSuccessfulRetrieveAll,
+				withSucessfulEntityToProto,
+			),
 			ShouldSucceed: true,
 		},
 	}
@@ -345,10 +348,7 @@ func TestRepositoryService_GetRepositoryById(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			// For the purposes of this test, we do not need to attach any
-			// mock behaviour to the client. We can leave it as a nil pointer.
-
-			svc := createService(ctrl, scenario.DBSetup, newPropSvcMock(), nil, false)
+			svc := createService(ctrl, nil, scenario.ServiceSetup, nil, false)
 			_, err := svc.GetRepositoryById(ctx, repoID, projectID)
 
 			if scenario.ShouldSucceed {
@@ -366,16 +366,22 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 	scenarios := []struct {
 		Name          string
 		DBSetup       dbMockBuilder
-		DeleteType    DeleteCallType
+		ServiceSetup  propSvcMockBuilder
 		ShouldSucceed bool
 	}{
 		{
-			Name:    "Get by name fails when DB call fails",
-			DBSetup: newDBMock(withFailedGetByName),
+			Name:         "Get by name fails when DB call fails",
+			DBSetup:      newDBMock(withFailedGetByName),
+			ServiceSetup: newPropSvcMock(),
 		},
 		{
-			Name:          "Get by name succeeds",
-			DBSetup:       newDBMock(withSuccessfulGetByName),
+			Name:    "Get by name succeeds",
+			DBSetup: newDBMock(withSuccessfulGetByName),
+			ServiceSetup: newPropSvcMock(
+				withSuccessfulEntityWithProps,
+				withSuccessfulRetrieveAll,
+				withSucessfulEntityToProto,
+			),
 			ShouldSucceed: true,
 		},
 	}
@@ -387,10 +393,7 @@ func TestRepositoryService_GetRepositoryByName(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			// For the purposes of this test, we do not need to attach any
-			// mock behaviour to the client. We can leave it as a nil pointer.
-
-			svc := createService(ctrl, scenario.DBSetup, newPropSvcMock(), nil, false)
+			svc := createService(ctrl, scenario.DBSetup, scenario.ServiceSetup, nil, false)
 			_, err := svc.GetRepositoryByName(ctx, repoOwner, repoName, projectID, providerName)
 
 			if scenario.ShouldSucceed {
@@ -528,28 +531,24 @@ func withSuccessfulDelete(mock dbMock) {
 	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
 }
 
-func withFailedGetById(mock dbMock) {
-	mock.EXPECT().
-		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
-}
-
-func withSuccessfulGetById(mock dbMock) {
-	mock.EXPECT().
-		GetRepositoryByIDAndProject(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
-}
-
 func withFailedGetByName(mock dbMock) {
+	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByProperty
 	mock.EXPECT().
-		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
-		Return(db.Repository{}, errDefault)
+		GetProviderByName(gomock.Any(), gomock.Any()).
+		Return(provider, nil)
+	mock.EXPECT().
+		GetTypedEntitiesByProperty(gomock.Any(), gomock.Any()).
+		Return([]db.EntityInstance{}, errDefault)
 }
 
 func withSuccessfulGetByName(mock dbMock) {
+	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByProperty
 	mock.EXPECT().
-		GetRepositoryByRepoName(gomock.Any(), gomock.Any()).
-		Return(dbRepo, nil)
+		GetProviderByName(gomock.Any(), gomock.Any()).
+		Return(provider, nil)
+	mock.EXPECT().
+		GetTypedEntitiesByProperty(gomock.Any(), gomock.Any()).
+		Return([]db.EntityInstance{{ID: dbRepo.ID}}, nil)
 }
 
 func withFailedCreate(mock dbMock) {
@@ -696,6 +695,7 @@ func withSuccessfulEntityWithProps(mock propSvcMock) {
 		EntityWithPropertiesByID(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
 			ID:         dbRepo.ID,
+			Type:       pb.Entity_ENTITY_REPOSITORIES,
 			ProjectID:  projectID,
 			ProviderID: dbRepo.ProviderID,
 		}, publicProps), nil)
@@ -718,6 +718,12 @@ func withFailedEntityToProto(mock propSvcMock) {
 	mock.EXPECT().
 		EntityWithPropertiesAsProto(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(nil, errDefault)
+}
+
+func withSuccessfulRetrieveAll(mock propSvcMock) {
+	mock.EXPECT().
+		RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(nil)
 }
 
 func newProviderMock(opts ...func(providerMock)) providerMockBuilder {

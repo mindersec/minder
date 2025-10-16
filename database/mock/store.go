@@ -132,6 +132,36 @@ func (mr *MockStoreMockRecorder) Commit(tx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Commit", reflect.TypeOf((*MockStore)(nil).Commit), tx)
 }
 
+// CountEntitiesByType mocks base method.
+func (m *MockStore) CountEntitiesByType(ctx context.Context, entityType db.Entities) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountEntitiesByType", ctx, entityType)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountEntitiesByType indicates an expected call of CountEntitiesByType.
+func (mr *MockStoreMockRecorder) CountEntitiesByType(ctx, entityType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEntitiesByType", reflect.TypeOf((*MockStore)(nil).CountEntitiesByType), ctx, entityType)
+}
+
+// CountEntitiesByTypeAndProject mocks base method.
+func (m *MockStore) CountEntitiesByTypeAndProject(ctx context.Context, arg db.CountEntitiesByTypeAndProjectParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountEntitiesByTypeAndProject", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountEntitiesByTypeAndProject indicates an expected call of CountEntitiesByTypeAndProject.
+func (mr *MockStoreMockRecorder) CountEntitiesByTypeAndProject(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountEntitiesByTypeAndProject", reflect.TypeOf((*MockStore)(nil).CountEntitiesByTypeAndProject), ctx, arg)
+}
+
 // CountProfilesByEntityType mocks base method.
 func (m *MockStore) CountProfilesByEntityType(ctx context.Context) ([]db.CountProfilesByEntityTypeRow, error) {
 	m.ctrl.T.Helper()
@@ -832,6 +862,21 @@ func (m *MockStore) EnqueueFlush(ctx context.Context, arg db.EnqueueFlushParams)
 func (mr *MockStoreMockRecorder) EnqueueFlush(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueFlush", reflect.TypeOf((*MockStore)(nil).EnqueueFlush), ctx, arg)
+}
+
+// EntityExistsAfterID mocks base method.
+func (m *MockStore) EntityExistsAfterID(ctx context.Context, arg db.EntityExistsAfterIDParams) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EntityExistsAfterID", ctx, arg)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EntityExistsAfterID indicates an expected call of EntityExistsAfterID.
+func (mr *MockStoreMockRecorder) EntityExistsAfterID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityExistsAfterID", reflect.TypeOf((*MockStore)(nil).EntityExistsAfterID), ctx, arg)
 }
 
 // FindProviders mocks base method.
@@ -2031,6 +2076,21 @@ func (mr *MockStoreMockRecorder) ListDataSources(ctx, projects any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDataSources", reflect.TypeOf((*MockStore)(nil).ListDataSources), ctx, projects)
 }
 
+// ListEntitiesAfterID mocks base method.
+func (m *MockStore) ListEntitiesAfterID(ctx context.Context, arg db.ListEntitiesAfterIDParams) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEntitiesAfterID", ctx, arg)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEntitiesAfterID indicates an expected call of ListEntitiesAfterID.
+func (mr *MockStoreMockRecorder) ListEntitiesAfterID(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitiesAfterID", reflect.TypeOf((*MockStore)(nil).ListEntitiesAfterID), ctx, arg)
+}
+
 // ListEvaluationHistory mocks base method.
 func (m *MockStore) ListEvaluationHistory(ctx context.Context, arg db.ListEvaluationHistoryParams) ([]db.ListEvaluationHistoryRow, error) {
 	m.ctrl.T.Helper()
@@ -2089,6 +2149,21 @@ func (m *MockStore) ListInvitationsForProject(ctx context.Context, project uuid.
 func (mr *MockStoreMockRecorder) ListInvitationsForProject(ctx, project any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvitationsForProject", reflect.TypeOf((*MockStore)(nil).ListInvitationsForProject), ctx, project)
+}
+
+// ListOldestRuleEvaluationsByEntityID mocks base method.
+func (m *MockStore) ListOldestRuleEvaluationsByEntityID(ctx context.Context, entityIds []uuid.UUID) ([]db.ListOldestRuleEvaluationsByEntityIDRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListOldestRuleEvaluationsByEntityID", ctx, entityIds)
+	ret0, _ := ret[0].([]db.ListOldestRuleEvaluationsByEntityIDRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListOldestRuleEvaluationsByEntityID indicates an expected call of ListOldestRuleEvaluationsByEntityID.
+func (mr *MockStoreMockRecorder) ListOldestRuleEvaluationsByEntityID(ctx, entityIds any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListOldestRuleEvaluationsByEntityID", reflect.TypeOf((*MockStore)(nil).ListOldestRuleEvaluationsByEntityID), ctx, entityIds)
 }
 
 // ListOldestRuleEvaluationsByRepositoryId mocks base method.

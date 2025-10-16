@@ -20,6 +20,10 @@ type Querier interface {
 	//
 	AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
+	// CountEntitiesByType counts all entities of a given type (across all projects/providers).
+	CountEntitiesByType(ctx context.Context, entityType Entities) (int64, error)
+	// CountEntitiesByTypeAndProject counts entities of a given type for a specific project.
+	CountEntitiesByTypeAndProject(ctx context.Context, arg CountEntitiesByTypeAndProjectParams) (int64, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
@@ -84,6 +88,8 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
+	// EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+	EntityExistsAfterID(ctx context.Context, arg EntityExistsAfterIDParams) (bool, error)
 	// FindProviders allows us to take a trait and filter
 	// providers by it. It also optionally takes a name, in case we want to
 	// filter by name as well.
@@ -209,6 +215,9 @@ type Querier interface {
 	// Note that to get a datasource for a given project, one can simply
 	// pass one project id in the project_id array.
 	ListDataSources(ctx context.Context, projects []uuid.UUID) ([]DataSource, error)
+	// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+	// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
+	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -217,8 +226,12 @@ type Querier interface {
 	// *does not* report the invitation code, which is a secret intended for
 	// the invitee.
 	ListInvitationsForProject(ctx context.Context, project uuid.UUID) ([]ListInvitationsForProjectRow, error)
+	// ListOldestRuleEvaluationsByEntityID returns the oldest evaluation time for each entity.
+	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	ListOldestRuleEvaluationsByEntityID(ctx context.Context, entityIds []uuid.UUID) ([]ListOldestRuleEvaluationsByEntityIDRow, error)
 	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	// DEPRECATED: Use ListOldestRuleEvaluationsByEntityID instead
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
 	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error)

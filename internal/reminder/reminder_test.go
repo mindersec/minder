@@ -23,12 +23,12 @@ func Test_getRepositoryBatch(t *testing.T) {
 	t.Parallel()
 
 	type expectedOutput struct {
-		repos      []db.Repository
+		repos      []db.EntityInstance
 		repoCursor uuid.UUID
 	}
 
 	type input struct {
-		repos []db.Repository
+		repos []db.EntityInstance
 		cfg   reminderconfig.RecurrenceConfig
 	}
 
@@ -48,8 +48,8 @@ func Test_getRepositoryBatch(t *testing.T) {
 				},
 			},
 			setup: func(store *mockdb.MockStore, _ input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(nil, nil)
-				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), []uuid.UUID{}).Return(nil, nil)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(nil, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), []uuid.UUID{}).Return(nil, nil)
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func Test_getRepositoryBatch(t *testing.T) {
 				},
 			},
 			setup: func(store *mockdb.MockStore, _ input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(nil, sql.ErrConnDone)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(nil, sql.ErrConnDone)
 			},
 			err: sql.ErrConnDone.Error(),
 		},
@@ -79,9 +79,9 @@ func Test_getRepositoryBatch(t *testing.T) {
 				repoCursor: generateUUIDFromNum(t, 2),
 			},
 			setup: func(store *mockdb.MockStore, in input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
-				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
-				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().EntityExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
 			},
 		},
 		{
@@ -97,9 +97,9 @@ func Test_getRepositoryBatch(t *testing.T) {
 				repos: getReposTillId(t, 2),
 			},
 			setup: func(store *mockdb.MockStore, in input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
-				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
-				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(false, nil)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().EntityExistsAfterID(gomock.Any(), gomock.Any()).Return(false, nil)
 			},
 		},
 		{
@@ -115,9 +115,9 @@ func Test_getRepositoryBatch(t *testing.T) {
 				repos: getReposTillId(t, 3),
 			},
 			setup: func(store *mockdb.MockStore, in input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
-				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
-				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(false, sql.ErrConnDone)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(getStandardOldestRuleEvals(t, in.repos), nil)
+				store.EXPECT().EntityExistsAfterID(gomock.Any(), gomock.Any()).Return(false, sql.ErrConnDone)
 			},
 		},
 		{
@@ -134,11 +134,11 @@ func Test_getRepositoryBatch(t *testing.T) {
 				repoCursor: generateUUIDFromNum(t, 3),
 			},
 			setup: func(store *mockdb.MockStore, in input) {
-				store.EXPECT().ListRepositoriesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
+				store.EXPECT().ListEntitiesAfterID(gomock.Any(), gomock.Any()).Return(in.repos, nil)
 				oldestRuleEvals := getStandardOldestRuleEvals(t, in.repos)
 				oldestRuleEvals[2].OldestLastUpdated = time.Now().Add(-time.Second)
-				store.EXPECT().ListOldestRuleEvaluationsByRepositoryId(gomock.Any(), gomock.Any()).Return(oldestRuleEvals, nil)
-				store.EXPECT().RepositoryExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
+				store.EXPECT().ListOldestRuleEvaluationsByEntityID(gomock.Any(), gomock.Any()).Return(oldestRuleEvals, nil)
+				store.EXPECT().EntityExistsAfterID(gomock.Any(), gomock.Any()).Return(true, nil)
 			},
 		},
 	}
@@ -186,12 +186,15 @@ func generateUUIDFromNum(t *testing.T, num int) uuid.UUID {
 	return u
 }
 
-func getReposTillId(t *testing.T, id int) []db.Repository {
+func getReposTillId(t *testing.T, id int) []db.EntityInstance {
 	t.Helper()
 
-	repos := make([]db.Repository, 0, id)
+	repos := make([]db.EntityInstance, 0, id)
 	for i := 1; i <= id; i++ {
-		repos = append(repos, db.Repository{ID: generateUUIDFromNum(t, i)})
+		repos = append(repos, db.EntityInstance{
+			ID:         generateUUIDFromNum(t, i),
+			EntityType: db.EntitiesRepository,
+		})
 	}
 
 	return repos
@@ -206,13 +209,13 @@ func createTestReminder(t *testing.T, store db.Store, config *reminderconfig.Con
 	}
 }
 
-func getStandardOldestRuleEvals(t *testing.T, repos []db.Repository) []db.ListOldestRuleEvaluationsByRepositoryIdRow {
+func getStandardOldestRuleEvals(t *testing.T, repos []db.EntityInstance) []db.ListOldestRuleEvaluationsByEntityIDRow {
 	t.Helper()
 
-	oldestRuleEvals := make([]db.ListOldestRuleEvaluationsByRepositoryIdRow, 0, len(repos))
+	oldestRuleEvals := make([]db.ListOldestRuleEvaluationsByEntityIDRow, 0, len(repos))
 	for _, repo := range repos {
-		oldestRuleEvals = append(oldestRuleEvals, db.ListOldestRuleEvaluationsByRepositoryIdRow{
-			RepositoryID:      repo.ID,
+		oldestRuleEvals = append(oldestRuleEvals, db.ListOldestRuleEvaluationsByEntityIDRow{
+			EntityInstanceID:  repo.ID,
 			OldestLastUpdated: time.Now().Add(-time.Hour),
 		})
 	}
