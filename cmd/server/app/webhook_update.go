@@ -5,13 +5,13 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/url"
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -147,20 +147,18 @@ func updateGithubWebhooks(
 	webhookHost string,
 	secret string,
 ) error {
-	repos, err := store.ListRegisteredRepositoriesByProjectIDAndProvider(ctx,
-		db.ListRegisteredRepositoriesByProjectIDAndProviderParams{
-			Provider: sql.NullString{
-				String: provider.Name,
-				Valid:  true,
-			},
-			ProjectID: provider.ProjectID,
-		})
+	// Get all repository entities for this provider and project
+	repoEnts, err := store.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
+		EntityType: db.EntitiesRepository,
+		ProviderID: provider.ID,
+		Projects:   []uuid.UUID{provider.ProjectID},
+	})
 	if err != nil {
-		return fmt.Errorf("unable to list registered repositories: %w", err)
+		return fmt.Errorf("unable to list repositories: %w", err)
 	}
 
-	for _, repo := range repos {
-		err := updateGithubRepoHooks(ctx, ghCli, repo, webhookHost, secret)
+	for _, repoEnt := range repoEnts {
+		err := updateGithubRepoHooks(ctx, ghCli, repoEnt, webhookHost, secret)
 		if err != nil {
 			zerolog.Ctx(ctx).Err(err).Msg("unable to update repo hooks")
 			continue
@@ -173,14 +171,27 @@ func updateGithubWebhooks(
 func updateGithubRepoHooks(
 	ctx context.Context,
 	ghCli provifv1.GitHub,
-	repo db.Repository,
+	repoEnt db.EntityInstance,
 	webhookHost string,
 	secret string,
 ) error {
-	repoLogger := zerolog.Ctx(ctx).With().Str("repo", repo.RepoName).Str("uuid", repo.ID.String()).Logger()
+	// Parse the entity name to extract owner and repo name
+	// Entity name format is "owner/repo"
+	parts := strings.Split(repoEnt.Name, "/")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid entity name format: %s", repoEnt.Name)
+	}
+	repoOwner := parts[0]
+	repoName := parts[1]
+
+	repoLogger := zerolog.Ctx(ctx).With().
+		Str("repo", repoName).
+		Str("owner", repoOwner).
+		Str("uuid", repoEnt.ID.String()).
+		Logger()
 	repoLogger.Info().Msg("updating repo hooks")
 
-	hooks, err := ghCli.ListHooks(ctx, repo.RepoOwner, repo.RepoName)
+	hooks, err := ghCli.ListHooks(ctx, repoOwner, repoName)
 	if errors.Is(err, ghprovider.ErrNotFound) {
 		repoLogger.Debug().Msg("no hooks found")
 		return nil
@@ -201,7 +212,7 @@ func updateGithubRepoHooks(
 		}
 
 		hook.Config.Secret = &secret
-		_, err = ghCli.EditHook(ctx, repo.RepoOwner, repo.RepoName, hook.GetID(), hook)
+		_, err = ghCli.EditHook(ctx, repoOwner, repoName, hook.GetID(), hook)
 		if err != nil {
 			hookLogger.Err(err).Msg("unable to update hook")
 			continue

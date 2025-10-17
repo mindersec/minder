@@ -6,7 +6,6 @@ package controlplane
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -75,19 +74,17 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	// the artifact name is the rest of the parts
 	artifactName := strings.Join(nameParts[2:], "/")
 
-	// Search for artifact by name property
-	nameJSON, err := json.Marshal(artifactName)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling name: %w", err)
-	}
-
-	entities, err := s.store.GetTypedEntitiesByProperty(ctx, db.GetTypedEntitiesByPropertyParams{
-		EntityType: db.EntitiesArtifact,
-		ProjectID:  projectID,
-		ProviderID: provider.ID,
-		Key:        properties.PropertyName,
-		Value:      nameJSON,
-	})
+	// Search for artifact by name property using V1 helper
+	entities, err := s.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		db.EntitiesArtifact,
+		properties.PropertyName,
+		artifactName,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectID,
+			ProviderID: provider.ID,
+		},
+	)
 	if err != nil {
 		return nil, status.Errorf(codes.Unknown, "failed to search artifact: %s", err)
 	}

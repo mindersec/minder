@@ -27,8 +27,6 @@ type Querier interface {
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
-	CountRepositories(ctx context.Context) (int64, error)
-	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	// CreateDataSource creates a new datasource in a given project.
 	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
@@ -100,8 +98,6 @@ type Querier interface {
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error)
-	GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams) (Artifact, error)
-	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	// GetDataSource retrieves a datasource by its id and a project hierarchy.
@@ -176,11 +172,6 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	// avoid using this, where possible use GetRepositoryByIDAndProject instead
-	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
-	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
-	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
-	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
@@ -207,7 +198,6 @@ type Querier interface {
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
-	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	// ListDataSourceFunctions retrieves all functions for a datasource.
 	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
 	// ListDataSources retrieves all datasources for project hierarchy.
@@ -241,9 +231,6 @@ type Querier interface {
 	// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
-	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
-	ListRepositoriesAfterID(ctx context.Context, arg ListRepositoriesAfterIDParams) ([]Repository, error)
-	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
 	// ListRuleTypesReferencesByDataSource retrieves all rule types
@@ -272,7 +259,6 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
-	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
 	// UpdateDataSource updates a datasource in a given project.
 	UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error)

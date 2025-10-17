@@ -532,22 +532,22 @@ func withSuccessfulDelete(mock dbMock) {
 }
 
 func withFailedGetByName(mock dbMock) {
-	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByProperty
+	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByPropertyV1
 	mock.EXPECT().
 		GetProviderByName(gomock.Any(), gomock.Any()).
 		Return(provider, nil)
 	mock.EXPECT().
-		GetTypedEntitiesByProperty(gomock.Any(), gomock.Any()).
+		GetTypedEntitiesByPropertyV1(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return([]db.EntityInstance{}, errDefault)
 }
 
 func withSuccessfulGetByName(mock dbMock) {
-	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByProperty
+	// GetRepositoryByName now calls GetProviderByName + GetTypedEntitiesByPropertyV1
 	mock.EXPECT().
 		GetProviderByName(gomock.Any(), gomock.Any()).
 		Return(provider, nil)
 	mock.EXPECT().
-		GetTypedEntitiesByProperty(gomock.Any(), gomock.Any()).
+		GetTypedEntitiesByPropertyV1(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return([]db.EntityInstance{{ID: dbRepo.ID}}, nil)
 }
 

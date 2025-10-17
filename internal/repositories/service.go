@@ -7,7 +7,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -326,20 +325,17 @@ func (r *repositoryService) GetRepositoryByName(
 		providerID = prov.ID
 	}
 
-	// Search for repository by name property using GetTypedEntitiesByProperty
-	// Marshal the name value as JSON for the query
-	nameJSON, err := json.Marshal(fullName)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling name: %w", err)
-	}
-
-	entities, err := r.store.GetTypedEntitiesByProperty(ctx, db.GetTypedEntitiesByPropertyParams{
-		EntityType: db.EntitiesRepository,
-		ProjectID:  projectID,
-		ProviderID: providerID,
-		Key:        properties.PropertyName,
-		Value:      nameJSON,
-	})
+	// Search for repository by name property using V1 helper
+	entities, err := r.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		db.EntitiesRepository,
+		properties.PropertyName,
+		fullName,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectID,
+			ProviderID: providerID,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error searching for repository: %w", err)
 	}
@@ -417,19 +413,17 @@ func (r *repositoryService) DeleteByName(
 		providerID = prov.ID
 	}
 
-	// Search for repository by name property
-	nameJSON, err := json.Marshal(fullName)
-	if err != nil {
-		return fmt.Errorf("error marshaling name: %w", err)
-	}
-
-	entities, err := r.store.GetTypedEntitiesByProperty(ctx, db.GetTypedEntitiesByPropertyParams{
-		EntityType: db.EntitiesRepository,
-		ProjectID:  projectID,
-		ProviderID: providerID,
-		Key:        properties.PropertyName,
-		Value:      nameJSON,
-	})
+	// Search for repository by name property using V1 helper
+	entities, err := r.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		db.EntitiesRepository,
+		properties.PropertyName,
+		fullName,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectID,
+			ProviderID: providerID,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("error searching for repository: %w", err)
 	}

@@ -424,13 +424,6 @@ var (
 			ghprops.RepoPropertyOwner:     repoOwner,
 		}),
 	}
-	dbExistingRepo = db.Repository{
-		ID:        uuid.UUID{},
-		Provider:  ghprovider.Github,
-		RepoOwner: repoOwner,
-		RepoName:  repoName,
-		RepoID:    remoteRepoId,
-	}
 )
 
 func mustNewPBStruct(m map[string]any) *structpb.Struct {
@@ -553,9 +546,6 @@ func createServer(
 					RawMessage: make(json.RawMessage, 16),
 				},
 			}, nil).AnyTimes()
-		store.EXPECT().
-			ListRepositoriesByProjectID(gomock.Any(), gomock.Any()).
-			Return([]db.Repository{dbExistingRepo}, nil).AnyTimes()
 	}
 
 	return &Server{

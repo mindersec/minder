@@ -80,16 +80,6 @@ func WithFailedGetInstallationIDByAppID(
 	}
 }
 
-func WithSuccessfulGetRepositoryByRepoID(
-	repository db.Repository,
-) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			GetRepositoryByRepoID(gomock.Any(), gomock.Any()).
-			Return(repository, nil)
-	}
-}
-
 func WithSuccessfulGetFeatureInProject(
 	active bool,
 ) func(*mockdb.MockStore) {
@@ -150,16 +140,6 @@ func WithSuccessfulUpsertPullRequestWithParams(
 		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), coeebipMatcher).
 			Return(instance, nil)
-	}
-}
-
-func WithSuccessfulGetArtifactByID(
-	artifact db.Artifact,
-) func(*mockdb.MockStore) {
-	return func(mockStore *mockdb.MockStore) {
-		mockStore.EXPECT().
-			GetArtifactByID(gomock.Any(), gomock.Any()).
-			Return(artifact, nil)
 	}
 }
 
