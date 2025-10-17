@@ -16,9 +16,7 @@ import (
 	"github.com/mindersec/minder/internal/util/rand"
 )
 
-type RepositoryOption func(*CreateRepositoryParams)
-
-func createRandomRepository(t *testing.T, project uuid.UUID, prov Provider, opts ...RepositoryOption) Repository {
+func createRandomRepository(t *testing.T, project uuid.UUID, prov Provider) Repository {
 	t.Helper()
 
 	seed := time.Now().UnixNano()
@@ -35,22 +33,10 @@ func createRandomRepository(t *testing.T, project uuid.UUID, prov Provider, opts
 		WebhookUrl: randomURL(seed),
 		DeployUrl:  randomURL(seed),
 	}
-	// Allow arbitrary fixups to the Repository
-	for _, o := range opts {
-		o(&arg)
-	}
 
-	// Avoid unique constraint violation by checking if repo with same
-	// RepoID exists and incrementing seed until it doesn't.
-	for {
-		_, err := testQueries.GetRepositoryByRepoID(context.Background(), arg.RepoID)
-		if err != sql.ErrNoRows {
-			seed++
-			arg.RepoID = rand.RandomInt(0, 5000, seed)
-		} else {
-			break
-		}
-	}
+	// Generate a unique repo ID by using a larger range
+	// to avoid unique constraint violations
+	arg.RepoID = rand.RandomInt(10000, 1000000, seed)
 
 	repo, err := testQueries.CreateRepository(context.Background(), arg)
 	require.NoError(t, err)
@@ -93,184 +79,9 @@ func TestRepository(t *testing.T) {
 	createRandomRepository(t, project.ID, prov)
 }
 
-func TestGetRepositoryByID(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-	repo1 := createRandomRepository(t, project.ID, prov)
-
-	repo2, err := testQueries.GetRepositoryByID(context.Background(), repo1.ID)
-	require.NoError(t, err)
-	require.NotEmpty(t, repo2)
-
-	require.Equal(t, repo1.ID, repo2.ID)
-	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
-	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
-	require.Equal(t, repo1.RepoName, repo2.RepoName)
-	require.Equal(t, repo1.RepoID, repo2.RepoID)
-	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
-	require.Equal(t, repo1.IsFork, repo2.IsFork)
-	require.Equal(t, repo1.WebhookID, repo2.WebhookID)
-	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
-	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
-	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
-	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
-}
-
-func TestGetRepositoryByRepoName(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-	repo1 := createRandomRepository(t, project.ID, prov)
-
-	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
-		Provider: sql.NullString{
-			String: repo1.Provider,
-			Valid:  true,
-		},
-		RepoOwner: repo1.RepoOwner,
-		RepoName:  repo1.RepoName,
-		ProjectID: project.ID,
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, repo2)
-
-	require.Equal(t, repo1.ID, repo2.ID)
-	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
-	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
-	require.Equal(t, repo1.RepoName, repo2.RepoName)
-	require.Equal(t, repo1.RepoID, repo2.RepoID)
-	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
-	require.Equal(t, repo1.IsFork, repo2.IsFork)
-	require.Equal(t, repo1.WebhookID, repo2.WebhookID)
-	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
-	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
-	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
-	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
-}
-
-func TestGetRepositoryByRepoNameNoProvider(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-
-	// Create repositories with hardcoded repo IDs because the random ID generation was still causing collisions
-	createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
-		r.RepoID = int64(100)
-	})
-	repo1 := createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
-		r.RepoID = int64(200)
-	})
-
-	repo2, err := testQueries.GetRepositoryByRepoName(context.Background(), GetRepositoryByRepoNameParams{
-		RepoOwner: repo1.RepoOwner,
-		RepoName:  repo1.RepoName,
-		ProjectID: project.ID,
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, repo2)
-
-	require.Equal(t, repo1.ID, repo2.ID)
-	require.Equal(t, repo1.Provider, repo2.Provider)
-	require.Equal(t, repo1.ProjectID, repo2.ProjectID)
-	require.Equal(t, repo1.RepoOwner, repo2.RepoOwner)
-	require.Equal(t, repo1.RepoName, repo2.RepoName)
-	require.Equal(t, repo1.RepoID, repo2.RepoID)
-	require.Equal(t, repo1.IsPrivate, repo2.IsPrivate)
-	require.Equal(t, repo1.IsFork, repo2.IsFork)
-	require.Equal(t, repo1.WebhookID, repo2.WebhookID)
-	require.Equal(t, repo1.WebhookUrl, repo2.WebhookUrl)
-	require.Equal(t, repo1.DeployUrl, repo2.DeployUrl)
-	require.Equal(t, repo1.CreatedAt, repo2.CreatedAt)
-	require.Equal(t, repo1.UpdatedAt, repo2.UpdatedAt)
-}
-
-func TestListRepositoriesByProjectID(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-	createRandomRepository(t, project.ID, prov)
-
-	for i := 1001; i < 1020; i++ {
-		createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
-			r.RepoID = int64(i)
-		})
-	}
-
-	arg := ListRepositoriesByProjectIDParams{
-		Provider: sql.NullString{
-			String: prov.Name,
-			Valid:  true,
-		},
-		ProjectID: project.ID,
-	}
-
-	repos, err := testQueries.ListRepositoriesByProjectID(context.Background(), arg)
-	require.NoError(t, err)
-	require.NotEmpty(t, repos)
-
-	for _, repo := range repos {
-		require.NotEmpty(t, repo)
-		require.Equal(t, arg.ProjectID, repo.ProjectID)
-	}
-}
-
-func TestListRepositoriesByProjectIDAndProvider(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	otherProject := createRandomProject(t, org.ID)
-	project := createRandomProject(t, org.ID)
-	otherProv := createRandomProvider(t, otherProject.ID)
-	prov := createRandomProvider(t, project.ID)
-	createRandomRepository(t, otherProject.ID, otherProv)
-
-	for i := 2001; i < 2010; i++ {
-		createRandomRepository(t, project.ID, prov, func(r *CreateRepositoryParams) {
-			r.RepoID = int64(i)
-		})
-	}
-
-	arg := ListRegisteredRepositoriesByProjectIDAndProviderParams{
-		ProjectID: project.ID,
-	}
-
-	repos, err := testQueries.ListRegisteredRepositoriesByProjectIDAndProvider(context.Background(), arg)
-	require.NoError(t, err)
-	require.NotEmpty(t, repos)
-
-	for _, repo := range repos {
-		require.NotEmpty(t, repo)
-		require.Equal(t, arg.ProjectID, repo.ProjectID)
-	}
-}
-
-func TestDeleteRepository(t *testing.T) {
-	t.Parallel()
-
-	org := createRandomOrganization(t)
-	project := createRandomProject(t, org.ID)
-	prov := createRandomProvider(t, project.ID)
-	repo1 := createRandomRepository(t, project.ID, prov)
-
-	err := testQueries.DeleteRepository(context.Background(), repo1.ID)
-	require.NoError(t, err)
-
-	repo2, err := testQueries.GetRepositoryByID(context.Background(), repo1.ID)
-	require.Error(t, err)
-	require.EqualError(t, err, sql.ErrNoRows.Error())
-	require.Empty(t, repo2)
-}
+// The following tests have been removed as they tested legacy SQL queries
+// that have been migrated to entity-based queries. The functionality is now
+// tested at a higher level in the repository service tests.
 
 func randomURL(seed int64) string {
 	return "http://" + rand.RandomString(10, seed) + ".com"

@@ -13,6 +13,39 @@ import (
 	"github.com/lib/pq"
 )
 
+const countEntitiesByType = `-- name: CountEntitiesByType :one
+
+SELECT COUNT(*) FROM entity_instances
+WHERE entity_instances.entity_type = $1
+`
+
+// CountEntitiesByType counts all entities of a given type (across all projects/providers).
+func (q *Queries) CountEntitiesByType(ctx context.Context, entityType Entities) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countEntitiesByType, entityType)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countEntitiesByTypeAndProject = `-- name: CountEntitiesByTypeAndProject :one
+
+SELECT COUNT(*) FROM entity_instances
+WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = $2
+`
+
+type CountEntitiesByTypeAndProjectParams struct {
+	EntityType Entities  `json:"entity_type"`
+	ProjectID  uuid.UUID `json:"project_id"`
+}
+
+// CountEntitiesByTypeAndProject counts entities of a given type for a specific project.
+func (q *Queries) CountEntitiesByTypeAndProject(ctx context.Context, arg CountEntitiesByTypeAndProjectParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countEntitiesByTypeAndProject, arg.EntityType, arg.ProjectID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createEntity = `-- name: CreateEntity :one
 
 INSERT INTO entity_instances (
@@ -187,6 +220,29 @@ type DeletePropertyParams struct {
 func (q *Queries) DeleteProperty(ctx context.Context, arg DeletePropertyParams) error {
 	_, err := q.db.ExecContext(ctx, deleteProperty, arg.EntityID, arg.Key)
 	return err
+}
+
+const entityExistsAfterID = `-- name: EntityExistsAfterID :one
+
+SELECT EXISTS (
+    SELECT 1
+    FROM entity_instances
+    WHERE entity_instances.entity_type = $1
+        AND entity_instances.id > $2
+) AS exists
+`
+
+type EntityExistsAfterIDParams struct {
+	EntityType Entities  `json:"entity_type"`
+	ID         uuid.UUID `json:"id"`
+}
+
+// EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+func (q *Queries) EntityExistsAfterID(ctx context.Context, arg EntityExistsAfterIDParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, entityExistsAfterID, arg.EntityType, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const getAllPropertiesForEntity = `-- name: GetAllPropertiesForEntity :many
@@ -457,6 +513,54 @@ func (q *Queries) GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEn
 		arg.Key,
 		arg.Value,
 	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEntitiesAfterID = `-- name: ListEntitiesAfterID :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.id > $2
+ORDER BY entity_instances.id
+LIMIT $3::bigint
+`
+
+type ListEntitiesAfterIDParams struct {
+	EntityType Entities  `json:"entity_type"`
+	ID         uuid.UUID `json:"id"`
+	Limit      int64     `json:"limit"`
+}
+
+// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
+func (q *Queries) ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, listEntitiesAfterID, arg.EntityType, arg.ID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

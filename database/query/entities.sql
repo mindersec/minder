@@ -70,6 +70,26 @@ WHERE entity_instances.entity_type = $1
     AND entity_instances.provider_id = sqlc.arg(provider_id)
     AND entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
 
+-- ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+-- This is used for cursor-based iteration over all entities (e.g., in the reminder service).
+
+-- name: ListEntitiesAfterID :many
+SELECT * FROM entity_instances
+WHERE entity_instances.entity_type = $1
+    AND entity_instances.id > $2
+ORDER BY entity_instances.id
+LIMIT sqlc.arg('limit')::bigint;
+
+-- EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+
+-- name: EntityExistsAfterID :one
+SELECT EXISTS (
+    SELECT 1
+    FROM entity_instances
+    WHERE entity_instances.entity_type = $1
+        AND entity_instances.id > $2
+) AS exists;
+
 -- GetEntitiesByProvider retrieves all entities of a given provider.
 -- this is how one would get all repositories, artifacts, etc. for a given provider.
 
@@ -82,6 +102,18 @@ WHERE entity_instances.provider_id = $1;
 -- name: GetEntitiesByProjectHierarchy :many
 SELECT * FROM entity_instances
 WHERE entity_instances.project_id = ANY(sqlc.arg(projects)::uuid[]);
+
+-- CountEntitiesByType counts all entities of a given type (across all projects/providers).
+
+-- name: CountEntitiesByType :one
+SELECT COUNT(*) FROM entity_instances
+WHERE entity_instances.entity_type = $1;
+
+-- CountEntitiesByTypeAndProject counts entities of a given type for a specific project.
+
+-- name: CountEntitiesByTypeAndProject :one
+SELECT COUNT(*) FROM entity_instances
+WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = $2;
 
 -- name: GetProperty :one
 SELECT * FROM properties

@@ -132,41 +132,12 @@ func (*addOriginatingEntityStrategy) GetName() string {
 }
 
 func (*addOriginatingEntityStrategy) upsertLegacyEntity(
-	ctx context.Context,
-	entType minderv1.Entity,
-	parentEwp *models.EntityWithProperties, pbEnt protoreflect.ProtoMessage,
-	t db.ExtendQuerier,
+	_ context.Context,
+	_ minderv1.Entity,
+	_ *models.EntityWithProperties, _ protoreflect.ProtoMessage,
+	_ db.ExtendQuerier,
 ) (uuid.UUID, error) {
-	if entType == minderv1.Entity_ENTITY_ARTIFACTS {
-		// TODO: remove this once we migrate artifacts to entities. We should get rid of the provider name.
-		dbProv, err := t.GetProviderByID(ctx, parentEwp.Entity.ProviderID)
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("error getting provider: %w", err)
-		}
-
-		art, ok := pbEnt.(*minderv1.Artifact)
-		if !ok {
-			return uuid.Nil, fmt.Errorf("unexpected proto message type: %T", pbEnt)
-		}
-
-		dbArtifact, err := t.UpsertArtifact(ctx, db.UpsertArtifactParams{
-			RepositoryID: uuid.NullUUID{
-				UUID:  parentEwp.Entity.ID,
-				Valid: true,
-			},
-			ArtifactName:       art.Name,
-			ArtifactType:       art.Type,
-			ArtifactVisibility: art.Visibility,
-			ProjectID:          parentEwp.Entity.ProjectID,
-			ProviderID:         parentEwp.Entity.ProviderID,
-			ProviderName:       dbProv.Name,
-		})
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("error upserting artifact: %w", err)
-		}
-
-		return dbArtifact.ID, nil
-	}
-
+	// Legacy entity writes have been removed as part of Phase 1 of the legacy table removal plan.
+	// All entities are now written only to entity_instances and properties tables.
 	return uuid.Nil, nil
 }

@@ -25,15 +25,11 @@ import (
 	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/util"
-	cursorutil "github.com/mindersec/minder/internal/util/cursor"
 	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
-
-// maxFetchLimit is the maximum number of repositories that can be fetched from the database in one call
-const maxFetchLimit = 100
 
 // RegisterRepository adds repositories to the database and registers a webhook
 // Once a user had enrolled in a project (they have a valid token), they can register
@@ -141,7 +137,7 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 // This function will typically be called by the client to get a list of
 // repositories that are registered present in the minder database
 func (s *Server) ListRepositories(ctx context.Context,
-	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+	_ *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
@@ -149,34 +145,17 @@ func (s *Server) ListRepositories(ctx context.Context,
 	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 
-	providerFilter := getNameFilterParam(providerName)
-
-	reqRepoCursor, err := cursorutil.NewRepoCursor(in.GetCursor())
+	// Get provider ID from name
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
 	if err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
-	}
-
-	repoId := sql.NullInt64{}
-	if reqRepoCursor.ProjectId == projectID.String() && reqRepoCursor.Provider == providerName {
-		repoId = sql.NullInt64{Valid: true, Int64: reqRepoCursor.RepoId}
-	}
-
-	limit := sql.NullInt64{Valid: false, Int64: 0}
-	reqLimit := in.GetLimit()
-	if reqLimit > 0 {
-		if reqLimit > maxFetchLimit {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "limit too high, max is %d", maxFetchLimit)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
 		}
-		limit = sql.NullInt64{Valid: true, Int64: reqLimit + 1}
+		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	repos, err := s.store.ListRepositoriesByProjectID(ctx, db.ListRepositoriesByProjectIDParams{
-		Provider:  providerFilter,
-		ProjectID: projectID,
-		RepoID:    repoId,
-		Limit:     limit,
-	})
-
+	// Fetch repositories using the service
+	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -184,31 +163,32 @@ func (s *Server) ListRepositories(ctx context.Context,
 	var resp pb.ListRepositoriesResponse
 	var results []*pb.Repository
 
-	for _, repo := range repos {
-		projID := repo.ProjectID.String()
-		r := repositories.PBRepositoryFromDB(repo)
-		r.Context = &pb.Context{
-			Project:  &projID,
-			Provider: &repo.Provider,
-		}
-		results = append(results, r)
-	}
-
-	var respRepoCursor *cursorutil.RepoCursor
-	if limit.Valid && int64(len(repos)) == limit.Int64 {
-		lastRepo := repos[len(repos)-1]
-		respRepoCursor = &cursorutil.RepoCursor{
-			ProjectId: projectID.String(),
-			Provider:  providerName,
-			RepoId:    lastRepo.RepoID,
+	// Convert each entity to protobuf
+	for _, ewp := range repoEntities {
+		somePB, err := s.props.EntityWithPropertiesAsProto(ctx, ewp, s.providerManager)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("entity_id", ewp.Entity.ID.String()).
+				Msg("error converting entity to protobuf")
+			continue
 		}
 
-		// remove the (limit + 1)th element from the results
-		results = results[:len(results)-1]
+		pbRepo, ok := somePB.(*pb.Repository)
+		if !ok {
+			zerolog.Ctx(ctx).Error().
+				Str("entity_id", ewp.Entity.ID.String()).
+				Msgf("unexpected type: %T", somePB)
+			continue
+		}
+
+		results = append(results, pbRepo)
 	}
+
+	// TODO: Implement cursor-based pagination using entity IDs
+	// For now, return all results without pagination
 
 	resp.Results = results
-	resp.Cursor = respRepoCursor.String()
+	resp.Cursor = ""
 
 	return &resp, nil
 }
@@ -222,30 +202,22 @@ func (s *Server) GetRepositoryById(ctx context.Context,
 	}
 	projectID := GetProjectID(ctx)
 
-	// read the repository
-	repo, err := s.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        parsedRepositoryID,
-		ProjectID: projectID,
-	})
+	// read the repository using the service
+	repo, err := s.repos.GetRepositoryById(ctx, parsedRepositoryID, projectID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	projID := repo.ProjectID.String()
-	r := repositories.PBRepositoryFromDB(repo)
-	r.Context = &pb.Context{
-		Project:  &projID,
-		Provider: &repo.Provider,
-	}
-
 	// Telemetry logging
-	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
+	repoID, _ := uuid.Parse(repo.GetId())
+	providerID, _ := uuid.Parse(repo.Context.GetProvider())
+	logger.BusinessRecord(ctx).ProviderID = providerID
+	logger.BusinessRecord(ctx).Project = projectID
+	logger.BusinessRecord(ctx).Repository = repoID
 
-	return &pb.GetRepositoryByIdResponse{Repository: r}, nil
+	return &pb.GetRepositoryByIdResponse{Repository: repo}, nil
 }
 
 // GetRepositoryByName returns information about a repository.
@@ -262,35 +234,24 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
-	// TODO: move this lookup logic out of the controlplane
-	providerFilter := getNameFilterParam(entityCtx.Provider.Name)
-	repo, err := s.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		Provider:  providerFilter,
-		RepoOwner: fragments[0],
-		RepoName:  fragments[1],
-		ProjectID: projectID,
-	})
-
+	// Use the service to fetch the repository
+	repo, err := s.repos.GetRepositoryByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, err
 	}
 
-	projID := repo.ProjectID.String()
-	r := repositories.PBRepositoryFromDB(repo)
-	r.Context = &pb.Context{
-		Project:  &projID,
-		Provider: &repo.Provider,
-	}
-
 	// Telemetry logging
-	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
+	repoID, _ := uuid.Parse(repo.GetId())
+	providerID, _ := uuid.Parse(repo.Context.GetProvider())
+	logger.BusinessRecord(ctx).ProviderID = providerID
+	logger.BusinessRecord(ctx).Project = projectID
+	logger.BusinessRecord(ctx).Repository = repoID
 
-	return &pb.GetRepositoryByNameResponse{Repository: r}, nil
+	return &pb.GetRepositoryByNameResponse{Repository: repo}, nil
 }
 
 // DeleteRepositoryById deletes a repository by its UUID

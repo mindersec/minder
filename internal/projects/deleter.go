@@ -176,7 +176,10 @@ func exportProjectMetadata(ctx context.Context, projectID uuid.UUID, qtx db.Quer
 		return nil, fmt.Errorf("error getting profiles count: %w", err)
 	}
 
-	reposCount, err := qtx.CountRepositoriesByProjectID(ctx, projectID)
+	reposCount, err := qtx.CountEntitiesByTypeAndProject(ctx, db.CountEntitiesByTypeAndProjectParams{
+		EntityType: db.EntitiesRepository,
+		ProjectID:  projectID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("error getting repositories count: %w", err)
 	}

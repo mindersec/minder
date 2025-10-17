@@ -69,22 +69,25 @@ func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
 	}
 
-	repo, err := store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repoUUID,
-		ProjectID: entityCtx.Project.ID,
-	})
+	// Fetch entity by ID
+	ent, err := store.GetEntityByID(ctx, repoUUID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
 	}
 
-	// Telemetry logging
-	logger.BusinessRecord(ctx).ProviderID = repo.ProviderID
-	logger.BusinessRecord(ctx).Project = repo.ProjectID
-	logger.BusinessRecord(ctx).Repository = repo.ID
+	// Verify project matches
+	if ent.ProjectID != entityCtx.Project.ID {
+		return nil, status.Errorf(codes.NotFound, "repository not found")
+	}
 
-	msg, err := reconcilers.NewRepoReconcilerMessage(repo.ProviderID, repo.ID, repo.ProjectID)
+	// Telemetry logging
+	logger.BusinessRecord(ctx).ProviderID = ent.ProviderID
+	logger.BusinessRecord(ctx).Project = ent.ProjectID
+	logger.BusinessRecord(ctx).Repository = ent.ID
+
+	msg, err := reconcilers.NewRepoReconcilerMessage(ent.ProviderID, ent.ID, ent.ProjectID)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "error getting reconciler message: %v", err)
 	}

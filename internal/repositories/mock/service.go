@@ -89,10 +89,10 @@ func (mr *MockRepositoryServiceMockRecorder) DeleteByName(ctx, repoOwner, repoNa
 }
 
 // GetRepositoryById mocks base method.
-func (m *MockRepositoryService) GetRepositoryById(ctx context.Context, repositoryID, projectID uuid.UUID) (db.Repository, error) {
+func (m *MockRepositoryService) GetRepositoryById(ctx context.Context, repositoryID, projectID uuid.UUID) (*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRepositoryById", ctx, repositoryID, projectID)
-	ret0, _ := ret[0].(db.Repository)
+	ret0, _ := ret[0].(*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -104,10 +104,10 @@ func (mr *MockRepositoryServiceMockRecorder) GetRepositoryById(ctx, repositoryID
 }
 
 // GetRepositoryByName mocks base method.
-func (m *MockRepositoryService) GetRepositoryByName(ctx context.Context, repoOwner, repoName string, projectID uuid.UUID, providerName string) (db.Repository, error) {
+func (m *MockRepositoryService) GetRepositoryByName(ctx context.Context, repoOwner, repoName string, projectID uuid.UUID, providerName string) (*v1.Repository, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRepositoryByName", ctx, repoOwner, repoName, projectID, providerName)
-	ret0, _ := ret[0].(db.Repository)
+	ret0, _ := ret[0].(*v1.Repository)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

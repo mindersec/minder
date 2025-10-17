@@ -20,11 +20,13 @@ type Querier interface {
 	//
 	AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
+	// CountEntitiesByType counts all entities of a given type (across all projects/providers).
+	CountEntitiesByType(ctx context.Context, entityType Entities) (int64, error)
+	// CountEntitiesByTypeAndProject counts entities of a given type for a specific project.
+	CountEntitiesByTypeAndProject(ctx context.Context, arg CountEntitiesByTypeAndProjectParams) (int64, error)
 	CountProfilesByEntityType(ctx context.Context) ([]CountProfilesByEntityTypeRow, error)
 	CountProfilesByName(ctx context.Context, name string) (int64, error)
 	CountProfilesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
-	CountRepositories(ctx context.Context) (int64, error)
-	CountRepositoriesByProjectID(ctx context.Context, projectID uuid.UUID) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	// CreateDataSource creates a new datasource in a given project.
 	CreateDataSource(ctx context.Context, arg CreateDataSourceParams) (DataSource, error)
@@ -84,6 +86,8 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
+	// EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+	EntityExistsAfterID(ctx context.Context, arg EntityExistsAfterIDParams) (bool, error)
 	// FindProviders allows us to take a trait and filter
 	// providers by it. It also optionally takes a name, in case we want to
 	// filter by name as well.
@@ -94,8 +98,6 @@ type Querier interface {
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
 	GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error)
-	GetArtifactByID(ctx context.Context, arg GetArtifactByIDParams) (Artifact, error)
-	GetArtifactByName(ctx context.Context, arg GetArtifactByNameParams) (Artifact, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	// GetDataSource retrieves a datasource by its id and a project hierarchy.
@@ -170,11 +172,6 @@ type Querier interface {
 	// if it exists in the project or any of its ancestors. It'll return the first
 	// provider that matches the name.
 	GetProviderByName(ctx context.Context, arg GetProviderByNameParams) (Provider, error)
-	// avoid using this, where possible use GetRepositoryByIDAndProject instead
-	GetRepositoryByID(ctx context.Context, id uuid.UUID) (Repository, error)
-	GetRepositoryByIDAndProject(ctx context.Context, arg GetRepositoryByIDAndProjectParams) (Repository, error)
-	GetRepositoryByRepoID(ctx context.Context, repoID int64) (Repository, error)
-	GetRepositoryByRepoName(ctx context.Context, arg GetRepositoryByRepoNameParams) (Repository, error)
 	GetRootProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetRuleInstancesEntityInProjects(ctx context.Context, arg GetRuleInstancesEntityInProjectsParams) ([]RuleInstance, error)
 	GetRuleInstancesForProfile(ctx context.Context, profileID uuid.UUID) ([]RuleInstance, error)
@@ -201,7 +198,6 @@ type Querier interface {
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
 	ListAllRootProjects(ctx context.Context) ([]Project, error)
-	ListArtifactsByRepoID(ctx context.Context, repositoryID uuid.NullUUID) ([]Artifact, error)
 	// ListDataSourceFunctions retrieves all functions for a datasource.
 	ListDataSourceFunctions(ctx context.Context, arg ListDataSourceFunctionsParams) ([]DataSourcesFunction, error)
 	// ListDataSources retrieves all datasources for project hierarchy.
@@ -209,6 +205,9 @@ type Querier interface {
 	// Note that to get a datasource for a given project, one can simply
 	// pass one project id in the project_id array.
 	ListDataSources(ctx context.Context, projects []uuid.UUID) ([]DataSource, error)
+	// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+	// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
+	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
@@ -217,8 +216,12 @@ type Querier interface {
 	// *does not* report the invitation code, which is a secret intended for
 	// the invitee.
 	ListInvitationsForProject(ctx context.Context, project uuid.UUID) ([]ListInvitationsForProjectRow, error)
+	// ListOldestRuleEvaluationsByEntityID returns the oldest evaluation time for each entity.
+	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	ListOldestRuleEvaluationsByEntityID(ctx context.Context, entityIds []uuid.UUID) ([]ListOldestRuleEvaluationsByEntityIDRow, error)
 	// ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 	// cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+	// DEPRECATED: Use ListOldestRuleEvaluationsByEntityID instead
 	ListOldestRuleEvaluationsByRepositoryId(ctx context.Context, repositoryIds []uuid.UUID) ([]ListOldestRuleEvaluationsByRepositoryIdRow, error)
 	ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListProfilesByProjectIDAndLabelParams) ([]ListProfilesByProjectIDAndLabelRow, error)
 	ListProfilesInstantiatingRuleType(ctx context.Context, ruleTypeID uuid.UUID) ([]string, error)
@@ -228,9 +231,6 @@ type Querier interface {
 	// ListProvidersByProjectIDPaginated allows us to lits all providers for a given project
 	// with pagination taken into account. In this case, the cursor is the creation date.
 	ListProvidersByProjectIDPaginated(ctx context.Context, arg ListProvidersByProjectIDPaginatedParams) ([]Provider, error)
-	ListRegisteredRepositoriesByProjectIDAndProvider(ctx context.Context, arg ListRegisteredRepositoriesByProjectIDAndProviderParams) ([]Repository, error)
-	ListRepositoriesAfterID(ctx context.Context, arg ListRepositoriesAfterIDParams) ([]Repository, error)
-	ListRepositoriesByProjectID(ctx context.Context, arg ListRepositoriesByProjectIDParams) ([]Repository, error)
 	ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error)
 	ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error)
 	// ListRuleTypesReferencesByDataSource retrieves all rule types
@@ -259,7 +259,6 @@ type Querier interface {
 	// entity_execution_lock record if the lock is held by the given locked_by
 	// value.
 	ReleaseLock(ctx context.Context, arg ReleaseLockParams) error
-	RepositoryExistsAfterID(ctx context.Context, id uuid.UUID) (bool, error)
 	SetSubscriptionBundleVersion(ctx context.Context, arg SetSubscriptionBundleVersionParams) error
 	// UpdateDataSource updates a datasource in a given project.
 	UpdateDataSource(ctx context.Context, arg UpdateDataSourceParams) (DataSource, error)

@@ -15,6 +15,7 @@ WHERE p.project_id = $1;
 
 -- ListOldestRuleEvaluationsByRepositoryId has casts in select statement as sqlc generates incorrect types.
 -- cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+-- DEPRECATED: Use ListOldestRuleEvaluationsByEntityID instead
 
 -- name: ListOldestRuleEvaluationsByRepositoryId :many
 SELECT ere.entity_instance_id::uuid AS repository_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
@@ -23,6 +24,17 @@ FROM evaluation_rule_entities AS ere
     INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id
 WHERE ere.entity_instance_id = ANY (sqlc.arg('repository_ids')::uuid[])
 AND ere.entity_type = 'repository'
+GROUP BY ere.entity_instance_id;
+
+-- ListOldestRuleEvaluationsByEntityID returns the oldest evaluation time for each entity.
+-- cast after MIN is required due to a known bug in sqlc: https://github.com/sqlc-dev/sqlc/issues/1965
+
+-- name: ListOldestRuleEvaluationsByEntityID :many
+SELECT ere.entity_instance_id, MIN(es.evaluation_time)::timestamp AS oldest_last_updated
+FROM evaluation_rule_entities AS ere
+    INNER JOIN latest_evaluation_statuses AS les ON ere.id = les.rule_entity_id
+    INNER JOIN evaluation_statuses AS es ON les.evaluation_history_id = es.id
+WHERE ere.entity_instance_id = ANY (sqlc.arg('entity_ids')::uuid[])
 GROUP BY ere.entity_instance_id;
 
 -- name: ListRuleEvaluationsByProfileId :many

@@ -90,7 +90,7 @@ func (m *metricsImpl) initInstrumentsOnce(store db.Store) error {
 		metric.WithDescription("Number of repositories in the database"),
 		metric.WithUnit("repositories"),
 		metric.WithInt64Callback(func(ctx context.Context, observer metric.Int64Observer) error {
-			c, err := store.CountRepositories(ctx)
+			c, err := store.CountEntitiesByType(ctx, db.EntitiesRepository)
 			if err != nil {
 				return err
 			}

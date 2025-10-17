@@ -73,7 +73,7 @@ type RepositoryService interface {
 	) ([]*models.EntityWithProperties, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
-	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (db.Repository, error)
+	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (*pb.Repository, error)
 	// GetRepositoryByName retrieves a repository by its name, owner, project and provider (if specified).
 	GetRepositoryByName(
 		ctx context.Context,
@@ -81,7 +81,7 @@ type RepositoryService interface {
 		repoName string,
 		projectID uuid.UUID,
 		providerName string,
-	) (db.Repository, error)
+	) (*pb.Repository, error)
 }
 
 var (
@@ -180,7 +180,7 @@ func (r *repositoryService) CreateRepository(
 	ewp.Properties = props
 
 	// insert the repository into the DB
-	dbID, pbRepo, err := r.persistRepository(ctx, ewp, provider.Name)
+	dbID, pbRepo, err := r.persistRepository(ctx, ewp)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).
 			Dict("properties", fetchByProps.ToLogDict()).
@@ -267,11 +267,39 @@ func (r *repositoryService) GetRepositoryById(
 	ctx context.Context,
 	repositoryID uuid.UUID,
 	projectID uuid.UUID,
-) (db.Repository, error) {
-	return r.store.GetRepositoryByIDAndProject(ctx, db.GetRepositoryByIDAndProjectParams{
-		ID:        repositoryID,
-		ProjectID: projectID,
-	})
+) (*pb.Repository, error) {
+	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, repositoryID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repository: %w", err)
+	}
+
+	// Verify the entity belongs to the correct project
+	if ewp.Entity.ProjectID != projectID {
+		return nil, sql.ErrNoRows
+	}
+
+	// Verify it's a repository entity
+	if ewp.Entity.Type != pb.Entity_ENTITY_REPOSITORIES {
+		return nil, fmt.Errorf("entity is not a repository")
+	}
+
+	// Retrieve all properties from provider
+	if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager, nil); err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+
+	// Convert to protobuf
+	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	pbRepo, ok := somePB.(*pb.Repository)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type: %T", somePB)
+	}
+
+	return pbRepo, nil
 }
 
 func (r *repositoryService) GetRepositoryByName(
@@ -280,18 +308,65 @@ func (r *repositoryService) GetRepositoryByName(
 	repoName string,
 	projectID uuid.UUID,
 	providerName string,
-) (db.Repository, error) {
-	providerFilter := sql.NullString{
-		String: providerName,
-		Valid:  providerName != "",
+) (*pb.Repository, error) {
+	// Build the full repository name
+	fullName := fmt.Sprintf("%s/%s", repoOwner, repoName)
+
+	// Get provider ID from name if specified
+	var providerID uuid.UUID
+	if providerName != "" {
+		prov, err := r.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+			Name:     providerName,
+			Projects: []uuid.UUID{projectID},
+		})
+		if err != nil {
+			return nil, fmt.Errorf("error fetching provider: %w", err)
+		}
+		providerID = prov.ID
 	}
-	params := db.GetRepositoryByRepoNameParams{
-		Provider:  providerFilter,
-		RepoOwner: repoOwner,
-		RepoName:  repoName,
-		ProjectID: projectID,
+
+	// Search for repository by name property using V1 helper
+	entities, err := r.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		db.EntitiesRepository,
+		properties.PropertyName,
+		fullName,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectID,
+			ProviderID: providerID,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error searching for repository: %w", err)
 	}
-	return r.store.GetRepositoryByRepoName(ctx, params)
+
+	if len(entities) == 0 {
+		return nil, sql.ErrNoRows
+	}
+
+	// Use the first matching entity
+	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching repository: %w", err)
+	}
+
+	// Retrieve all properties from provider
+	if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager, nil); err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+
+	// Convert to protobuf
+	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	pbRepo, ok := somePB.(*pb.Repository)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type: %T", somePB)
+	}
+
+	return pbRepo, nil
 }
 
 func (r *repositoryService) DeleteByID(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) error {
@@ -322,28 +397,50 @@ func (r *repositoryService) DeleteByName(
 ) error {
 	logger.BusinessRecord(ctx).Project = projectID
 
-	// TODO: Replace this with a search-by-properties call
-	repo, err := r.store.GetRepositoryByRepoName(ctx, db.GetRepositoryByRepoNameParams{
-		RepoOwner: repoOwner,
-		RepoName:  repoName,
-		ProjectID: projectID,
-		Provider: sql.NullString{
-			String: providerName,
-			Valid:  providerName != "",
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, err)
+	// Build the full repository name
+	fullName := fmt.Sprintf("%s/%s", repoOwner, repoName)
+
+	// Get provider ID from name if specified
+	var providerID uuid.UUID
+	if providerName != "" {
+		prov, err := r.store.GetProviderByName(ctx, db.GetProviderByNameParams{
+			Name:     providerName,
+			Projects: []uuid.UUID{projectID},
+		})
+		if err != nil {
+			return fmt.Errorf("error fetching provider: %w", err)
+		}
+		providerID = prov.ID
 	}
 
-	logger.BusinessRecord(ctx).Repository = repo.ID
+	// Search for repository by name property using V1 helper
+	entities, err := r.store.GetTypedEntitiesByPropertyV1(
+		ctx,
+		db.EntitiesRepository,
+		properties.PropertyName,
+		fullName,
+		db.GetTypedEntitiesOptions{
+			ProjectID:  projectID,
+			ProviderID: providerID,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error searching for repository: %w", err)
+	}
 
-	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, repo.ID, nil)
+	if len(entities) == 0 {
+		return fmt.Errorf("error retrieving repository %s/%s in project %s: %w", repoOwner, repoName, projectID, sql.ErrNoRows)
+	}
+
+	// Fetch the entity with properties
+	ent, err := r.propSvc.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
 	if err != nil {
 		return fmt.Errorf("error fetching repository: %w", err)
 	}
 
-	prov, err := r.providerManager.InstantiateFromID(ctx, repo.ProviderID)
+	logger.BusinessRecord(ctx).Repository = ent.Entity.ID
+
+	prov, err := r.providerManager.InstantiateFromID(ctx, ent.Entity.ProviderID)
 	if err != nil {
 		return fmt.Errorf("error instantiating provider: %w", err)
 	}
@@ -364,11 +461,7 @@ func (r *repositoryService) deleteRepository(
 	}
 
 	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		// then remove the entry in the DB
-		if err := t.DeleteRepository(ctx, repo.Entity.ID); err != nil {
-			return nil, fmt.Errorf("error deleting repository from DB: %w", err)
-		}
-
+		// Remove the entity from the DB
 		if err := t.DeleteEntity(ctx, db.DeleteEntityParams{
 			ID:        repo.Entity.ID,
 			ProjectID: repo.Entity.ProjectID,
@@ -406,7 +499,6 @@ func (r *repositoryService) pushReconcilerEvent(entityID uuid.UUID, projectID uu
 func (r *repositoryService) persistRepository(
 	ctx context.Context,
 	ewp *models.EntityWithProperties,
-	providerName string,
 ) (uuid.UUID, *pb.Repository, error) {
 	var outid uuid.UUID
 	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
@@ -420,44 +512,13 @@ func (r *repositoryService) persistRepository(
 	}
 
 	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		License := sql.NullString{}
-		if pbRepo.License != "" {
-			License.String = pbRepo.License
-			License.Valid = true
-		}
-
-		// update the database
-		dbRepo, err := t.CreateRepository(ctx, db.CreateRepositoryParams{
-			Provider:   providerName,
-			ProviderID: ewp.Entity.ProviderID,
-			ProjectID:  ewp.Entity.ProjectID,
-			RepoOwner:  pbRepo.Owner,
-			RepoName:   pbRepo.Name,
-			RepoID:     pbRepo.RepoId,
-			IsPrivate:  pbRepo.IsPrivate,
-			IsFork:     pbRepo.IsFork,
-			WebhookID: sql.NullInt64{
-				Int64: pbRepo.HookId,
-				Valid: true,
-			},
-			CloneUrl:   pbRepo.CloneUrl,
-			WebhookUrl: pbRepo.HookUrl,
-			DeployUrl:  pbRepo.DeployUrl,
-			DefaultBranch: sql.NullString{
-				String: pbRepo.DefaultBranch,
-				Valid:  true,
-			},
-			License: License,
-		})
-		if err != nil {
-			return pbRepo, err
-		}
-
-		outid = dbRepo.ID
-		pbRepo.Id = ptr.Ptr(dbRepo.ID.String())
+		// Generate a new UUID for the entity
+		entityID := uuid.New()
+		outid = entityID
+		pbRepo.Id = ptr.Ptr(entityID.String())
 
 		repoEnt, err := t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
-			ID:         dbRepo.ID,
+			ID:         entityID,
 			EntityType: db.EntitiesRepository,
 			Name:       ewp.Entity.Name,
 			ProjectID:  ewp.Entity.ProjectID,

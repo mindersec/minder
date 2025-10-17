@@ -179,35 +179,36 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		return fmt.Errorf("error publishing messages: %w", err)
 	}
 
-	repoIds := make([]uuid.UUID, len(repos))
 	for _, repo := range repos {
-		repoIds = append(repoIds, repo.ID)
 		if r.metrics != nil {
 			sendDelay := time.Since(repoToLastUpdated[repo.ID]) - r.cfg.RecurrenceConfig.MinElapsed
-
+			// TODO: Track whether this is a new vs existing reminder
+			// Previously used repo.ReminderLastSent field which is now removed
 			recorder := r.metrics.SendDelay
-			if !repo.ReminderLastSent.Valid {
-				recorder = r.metrics.NewSendDelay
-			}
 			recorder.Record(ctx, sendDelay.Seconds())
 		}
 	}
 
-	err = r.store.UpdateReminderLastSentForRepositories(ctx, repoIds)
-	if err != nil {
-		return fmt.Errorf("reminders published but error updating last sent time: %w", err)
-	}
+	// TODO: Implement reminder_last_sent tracking
+	// Options:
+	// 1. Store as property in properties table (key: "reminder_last_sent")
+	// 2. Create new entity_reminder_state table
+	// 3. Remove throttling entirely (rely on MinElapsed check only)
+	// For now, skip the UpdateReminderLastSentForRepositories call
 
 	return nil
 }
 
-func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, map[uuid.UUID]time.Time, error) {
+func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.EntityInstance, map[uuid.UUID]time.Time, error) {
 	logger := zerolog.Ctx(ctx)
 
 	logger.Debug().Msgf("fetching repositories after cursor: %s", r.repositoryCursor)
-	repos, err := r.store.ListRepositoriesAfterID(ctx, db.ListRepositoriesAfterIDParams{
-		ID:    r.repositoryCursor,
-		Limit: int64(r.cfg.RecurrenceConfig.BatchSize),
+
+	// Fetch repository entities after cursor
+	repos, err := r.store.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
+		EntityType: db.EntitiesRepository,
+		ID:         r.repositoryCursor,
+		Limit:      int64(r.cfg.RecurrenceConfig.BatchSize),
 	})
 	if err != nil {
 		return nil, nil, err
@@ -224,25 +225,25 @@ func (r *reminder) getRepositoryBatch(ctx context.Context) ([]db.Repository, map
 	return eligibleRepos, eligibleReposLastUpdated, nil
 }
 
-func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repository) (
-	[]db.Repository, map[uuid.UUID]time.Time, error,
+func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.EntityInstance) (
+	[]db.EntityInstance, map[uuid.UUID]time.Time, error,
 ) {
-	eligibleRepos := make([]db.Repository, 0, len(repos))
+	eligibleRepos := make([]db.EntityInstance, 0, len(repos))
 
-	// We have a slice of repositories, but the sqlc-generated code wants a slice of UUIDs,
-	// and similarly returns slices of ID -> date (in possibly different order), so we need
-	// to do a bunch of mapping here.
+	// We have a slice of entity instances, extract UUIDs for evaluation lookup
 	repoIds := make([]uuid.UUID, 0, len(repos))
 	for _, repo := range repos {
 		repoIds = append(repoIds, repo.ID)
 	}
-	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByRepositoryId(ctx, repoIds)
+
+	// Use entity_instance_id based query instead of repository_id
+	oldestRuleEvals, err := r.store.ListOldestRuleEvaluationsByEntityID(ctx, repoIds)
 	if err != nil {
 		return nil, nil, err
 	}
 	idToLastUpdate := make(map[uuid.UUID]time.Time, len(oldestRuleEvals))
 	for _, ruleEval := range oldestRuleEvals {
-		idToLastUpdate[ruleEval.RepositoryID] = ruleEval.OldestLastUpdated
+		idToLastUpdate[ruleEval.EntityInstanceID] = ruleEval.OldestLastUpdated
 	}
 
 	cutoff := time.Now().Add(-1 * r.cfg.RecurrenceConfig.MinElapsed)
@@ -255,7 +256,7 @@ func (r *reminder) getEligibleRepositories(ctx context.Context, repos []db.Repos
 	return eligibleRepos, idToLastUpdate, nil
 }
 
-func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.Repository) {
+func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.EntityInstance) {
 	logger := zerolog.Ctx(ctx)
 
 	if len(repos) == 0 {
@@ -270,8 +271,12 @@ func (r *reminder) updateRepositoryCursor(ctx context.Context, repos []db.Reposi
 
 func (r *reminder) adjustCursorForEndOfList(ctx context.Context) {
 	logger := zerolog.Ctx(ctx)
-	// Check if the cursor is the last element in the db
-	exists, err := r.store.RepositoryExistsAfterID(ctx, r.repositoryCursor)
+
+	// Check if any repository entities exist after the cursor
+	exists, err := r.store.EntityExistsAfterID(ctx, db.EntityExistsAfterIDParams{
+		EntityType: db.EntitiesRepository,
+		ID:         r.repositoryCursor,
+	})
 	if err != nil {
 		logger.Error().Err(err).Msgf("unable to check if repository exists after cursor: %s"+
 			", resetting cursor to zero uuid", r.repositoryCursor)
@@ -286,7 +291,7 @@ func (r *reminder) adjustCursorForEndOfList(ctx context.Context) {
 	}
 }
 
-func createReminderMessages(ctx context.Context, repos []db.Repository) ([]*message.Message, error) {
+func createReminderMessages(ctx context.Context, repos []db.EntityInstance) ([]*message.Message, error) {
 	logger := zerolog.Ctx(ctx)
 
 	messages := make([]*message.Message, 0, len(repos))
