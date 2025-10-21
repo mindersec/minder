@@ -2,10 +2,10 @@
 <html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-run_minder_server/config_webhook" data-has-hydrated="false">
 <head>
 <meta charset="UTF-8">
-<meta name="generator" content="Docusaurus v3.9.1">
-<title data-rh="true">Configuring a webhook | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://minder-docs.stacklok.dev/run_minder_server/config_webhook"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Configuring a webhook | Minder docs"><meta data-rh="true" name="description" content="Minder allows a webhook to be configured on the repository provider to respond"><meta data-rh="true" property="og:description" content="Minder allows a webhook to be configured on the repository provider to respond"><link data-rh="true" rel="icon" href="/img/stacklok-favicon.png"><link data-rh="true" rel="canonical" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook" hreflang="en"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Configuring a webhook","item":"https://minder-docs.stacklok.dev/run_minder_server/config_webhook"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.c7397a41.css">
-<script src="/assets/js/runtime~main.0f7c4dfb.js" defer="defer"></script>
-<script src="/assets/js/main.fe0b0180.js" defer="defer"></script>
+<meta name="generator" content="Docusaurus v3.9.2">
+<title data-rh="true">Configuring a webhook | Minder docs</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" name="twitter:image" content="https://minder-docs.stacklok.dev/img/Minder_darkMode.png"><meta data-rh="true" property="og:url" content="https://minder-docs.stacklok.dev/run_minder_server/config_webhook"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Configuring a webhook | Minder docs"><meta data-rh="true" name="description" content="Minder allows a webhook to be configured on the repository provider to respond"><meta data-rh="true" property="og:description" content="Minder allows a webhook to be configured on the repository provider to respond"><link data-rh="true" rel="icon" href="/img/stacklok-favicon.png"><link data-rh="true" rel="canonical" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook" hreflang="en"><link data-rh="true" rel="alternate" href="https://minder-docs.stacklok.dev/run_minder_server/config_webhook" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://F7OP01WFHV-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Configuring a webhook","item":"https://minder-docs.stacklok.dev/run_minder_server/config_webhook"}]}</script><link rel="search" type="application/opensearchdescription+xml" title="Minder docs" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.880f57a7.css">
+<script src="/assets/js/runtime~main.7e8cc3c7.js" defer="defer"></script>
+<script src="/assets/js/main.b1aa5ca1.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -16,17 +16,17 @@ to provider events. Currently, Minder only supports GitHub. The webhook allows
 GitHub to notify Minder when certain events occur in your repositories. To
 configure the webhook, Minder needs to be accessible from the internet. If you
 are running the server locally, you can use a service like
-<a href="https://ngrok.com/" target="_blank" rel="noopener noreferrer">ngrok</a> to expose your local server to the internet.</p>
+<a href="https://ngrok.com/" target="_blank" rel="noopener noreferrer" class="">ngrok</a> to expose your local server to the internet.</p>
 <p>Here are the steps to configure the webhook:</p>
 <ol>
-<li>
+<li class="">
 <p><strong>Expose your local server:</strong> If you are running the server locally, start
 ngrok or a similar service to expose your local server to the internet. Note
 down the URL provided by ngrok (it will look something like
 <code>https://&lt;random-hash&gt;.ngrok.io</code>). Make sure to expose the port that Minder
 is running on (by default, this is port <code>8080</code>).</p>
 </li>
-<li>
+<li class="">
 <p><strong>Update the Minder configuration:</strong> Open your <code>server-config.yaml</code> file and
 update the <code>webhook-config</code> section with the ngrok URL Minder is running on.
 The <code>external_webhook_url</code> should point to the <code>/api/v1/webhook/github</code>
