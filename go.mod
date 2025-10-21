@@ -49,7 +49,7 @@ require (
 	github.com/mikefarah/yq/v4 v4.47.1
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/nats-io/nats-server/v2 v2.12.0
-	github.com/nats-io/nats.go v1.45.0
+	github.com/nats-io/nats.go v1.47.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/open-feature/go-sdk v1.15.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1
