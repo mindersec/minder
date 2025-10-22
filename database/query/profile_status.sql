@@ -88,6 +88,7 @@ SELECT
     rt.guidance as rule_type_guidance,
     rt.display_name as rule_type_display_name,
     ere.entity_instance_id as entity_id,
+    ei.name as entity_name,
     ei.project_id as project_id,
     rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
@@ -99,8 +100,9 @@ FROM latest_evaluation_statuses les
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
          INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN providers prov ON prov.id = ei.provider_id
-WHERE les.profile_id = $1 AND
-    (ere.entity_instance_id = sqlc.narg(entity_id)::UUID OR sqlc.narg(entity_id)::UUID IS NULL)
+WHERE les.profile_id = $1
+    AND (ere.entity_instance_id = sqlc.narg(entity_id)::UUID OR sqlc.narg(entity_id)::UUID IS NULL)
+    AND (ei.name = sqlc.narg(entity_name) OR sqlc.narg(entity_name) IS NULL)
     AND (rt.name = sqlc.narg(rule_type_name) OR sqlc.narg(rule_type_name) IS NULL)
     AND (lower(ri.name) = lower(sqlc.narg(rule_name)) OR sqlc.narg(rule_name) IS NULL)
 ;

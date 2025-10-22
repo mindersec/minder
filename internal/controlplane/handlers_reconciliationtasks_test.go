@@ -52,7 +52,47 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
+				store.EXPECT().
+					GetEntityByID(gomock.Any(), repoUuid).
+					Return(db.EntityInstance{
+						ID:         repoUuid,
+						EntityType: db.EntitiesRepository,
+						ProviderID: uuid.New(),
+						ProjectID:  projId,
+					}, nil)
+			},
+			err: "",
+		},
+		{
+			name: "create reconciliation by name",
+			input: &pb.CreateEntityReconciliationTaskRequest{
+				Entity: &pb.EntityTypedId{
+					Type: pb.Entity_ENTITY_REPOSITORIES,
+					Name: "my/repo",
+				},
+			},
+			entityContext: &engcontext.EntityContext{
+				Project: engcontext.Project{
+					ID: uuid.New(),
+				},
+				Provider: engcontext.Provider{
+					Name: ghProvider,
+				},
+			},
+			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
+				projId := entityContext.Project.ID
+				prov := entityContext.Provider.Name
+				provId := uuid.New()
+				setupTestingEntityContextValidation(store, projId, prov, provId)
+				store.EXPECT().
+					GetEntityByName(gomock.Any(), db.GetEntityByNameParams{
+						ProjectID:  projId,
+						EntityType: "repository",
+						Name:       "my/repo",
+						ProviderID: provId,
+					}).
+					Return(db.EntityInstance{ID: repoUuid}, nil)
 				store.EXPECT().
 					GetEntityByID(gomock.Any(), repoUuid).
 					Return(db.EntityInstance{
@@ -146,7 +186,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 				store.EXPECT().
 					GetEntityByID(gomock.Any(), repoUuid).
 					Return(db.EntityInstance{}, sql.ErrNoRows)
@@ -172,7 +212,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 				store.EXPECT().
 					GetEntityByID(gomock.Any(), repoUuid).
 					Return(db.EntityInstance{}, sql.ErrConnDone)
@@ -198,7 +238,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
 			err: "error parsing repository id",
 		},
@@ -220,7 +260,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
 			err: "entity type ENTITY_UNSPECIFIED is not supported",
 		},
@@ -240,7 +280,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 			setup: func(store *mockdb.MockStore, entityContext *engcontext.EntityContext) {
 				projId := entityContext.Project.ID
 				prov := entityContext.Provider.Name
-				setupTestingEntityContextValidation(store, projId, prov)
+				setupTestingEntityContextValidation(store, projId, prov, uuid.New())
 			},
 			err: "entity is required",
 		},
@@ -283,7 +323,7 @@ func TestServer_CreateRepositoryReconciliationTask(t *testing.T) {
 	}
 }
 
-func setupTestingEntityContextValidation(store *mockdb.MockStore, projId uuid.UUID, prov string) {
+func setupTestingEntityContextValidation(store *mockdb.MockStore, projId uuid.UUID, prov string, provId uuid.UUID) {
 	store.EXPECT().
 		GetProjectByID(gomock.Any(), projId).
 		Return(db.Project{ID: projId}, nil)
@@ -295,5 +335,5 @@ func setupTestingEntityContextValidation(store *mockdb.MockStore, projId uuid.UU
 			Name:     sql.NullString{String: prov, Valid: true},
 			Projects: []uuid.UUID{projId},
 			Trait:    db.NullProviderType{},
-		}).Return([]db.Provider{{Name: prov}}, nil)
+		}).Return([]db.Provider{{Name: prov, ID: provId}}, nil)
 }
