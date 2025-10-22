@@ -34,7 +34,7 @@ Essentially, data sources let Minder orchestrate external queries that feed into
 
 When you invoke a data source in a Rego policy, you typically provide a set of arguments. These arguments tell the data source *what* to fetch or *how* to fetch it.
 
-For example, consider the two YAML snippets below:
+For example, consider the YAML snippet below:
 
 ```yaml
 version: v1
@@ -95,7 +95,7 @@ rest:
 
 - **version / type / name**: Defines this resource as a data source called `ghapi`.
 - **context**: Typically holds the project context. Here it’s `{}`, meaning it’s globally available (or within your chosen project scope).
-- **rest**: Declares REST-based operations. If `providerAuth` is set to `true`, the provider's authentication mechanism will be used if the method's endpoint matches the provider's URL. Under `def`, we define three endpoints:
+- **rest**: Declares REST-based operations. If `providerAuth` is set to `true`, the provider's authentication mechanism will be used if the method's endpoint matches the provider's URL. Under `def`, we define four endpoints:
   - `license` → Fetches repository license info from GitHub
   - `repo_config` → Fetches general repo config (e.g., visibility, description, forks, watchers)
   - `private_vuln_reporting` → Fetches whether the repository has private vulnerability reporting enabled
