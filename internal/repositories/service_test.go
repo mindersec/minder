@@ -466,15 +466,19 @@ var (
 	ghRepoID   = ptr.Ptr[int64](0xE1E10)
 	projectID  = uuid.New()
 	errDefault = errors.New("uh oh")
-	dbRepo     = db.Repository{
-		ID:        repoID,
-		ProjectID: projectID,
-		RepoOwner: repoOwner,
-		RepoName:  repoName,
-		WebhookID: sql.NullInt64{
-			Valid: true,
-			Int64: HookID,
-		},
+	// Test repository data - using a simple struct since db.Repository no longer exists
+	dbRepo = struct {
+		ID         uuid.UUID
+		ProjectID  uuid.UUID
+		RepoOwner  string
+		RepoName   string
+		ProviderID uuid.UUID
+	}{
+		ID:         repoID,
+		ProjectID:  projectID,
+		RepoOwner:  repoOwner,
+		RepoName:   repoName,
+		ProviderID: uuid.UUID{},
 	}
 	webhook = &gh.Hook{
 		ID: ptr.Ptr[int64](HookID),
