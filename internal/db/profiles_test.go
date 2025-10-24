@@ -239,7 +239,7 @@ func upsertAlertStatus(
 type testRandomEntities struct {
 	prov Provider
 	proj Project
-	repo Repository
+	repo EntityRepository
 
 	ruleType1 RuleType
 	ruleType2 RuleType
@@ -3372,14 +3372,14 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 
 	tests := []struct {
 		name                      string
-		ruleStatusSetupFn         func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository)
+		ruleStatusSetupFn         func(profile Profile, randomEntities *testRandomEntities, delRepo *EntityRepository)
 		expectedStatusAfterSetup  EvalStatusTypes
-		ruleStatusDeleteFn        func(delRepo *Repository)
+		ruleStatusDeleteFn        func(delRepo *EntityRepository)
 		expectedStatusAfterModify EvalStatusTypes
 	}{
 		{
 			name: "Removing last failure results in success",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *EntityRepository) {
 				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				require.NotEmpty(t, profile)
@@ -3420,13 +3420,8 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 				)
 			},
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
-			ruleStatusDeleteFn: func(delRepo *Repository) {
-				// TODO: This will be removed once we fully move
-				// to using the entity_instances table.
-				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
-				require.NoError(t, err)
-
-				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
+				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
 					ID:        delRepo.ID,
 					ProjectID: delRepo.ProjectID,
 				})
@@ -3436,7 +3431,7 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		},
 		{
 			name: "Removing last error results in failure",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *EntityRepository) {
 				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				require.NotEmpty(t, profile)
@@ -3478,13 +3473,8 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			},
 
 			expectedStatusAfterSetup: EvalStatusTypesError,
-			ruleStatusDeleteFn: func(delRepo *Repository) {
-				// TODO: This will be removed once we fully move
-				// to using the entity_instances table.
-				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
-				require.NoError(t, err)
-
-				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
+				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
 					ID:        delRepo.ID,
 					ProjectID: delRepo.ProjectID,
 				})
@@ -3494,7 +3484,7 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		},
 		{
 			name: "Removing one error retains the other one",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *EntityRepository) {
 				ruleID1 := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 				ruleID2 := createRuleInstance(t, profile.ID, randomEntities.ruleType2.ID, profile.ProjectID)
 				require.NotEmpty(t, profile)
@@ -3536,13 +3526,8 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			},
 
 			expectedStatusAfterSetup: EvalStatusTypesError,
-			ruleStatusDeleteFn: func(delRepo *Repository) {
-				// TODO: This will be removed once we fully move
-				// to using the entity_instances table.
-				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
-				require.NoError(t, err)
-
-				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
+				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
 					ID:        delRepo.ID,
 					ProjectID: delRepo.ProjectID,
 				})
@@ -3552,7 +3537,7 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 		},
 		{
 			name: "Removing all but skipped returns skipped",
-			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *Repository) {
+			ruleStatusSetupFn: func(profile Profile, randomEntities *testRandomEntities, delRepo *EntityRepository) {
 				ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
 
 				ruleEntityID1 := createRuleEntity(t, randomEntities.repo.ID, ruleID)
@@ -3575,13 +3560,8 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			},
 
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
-			ruleStatusDeleteFn: func(delRepo *Repository) {
-				// TODO: This will be removed once we fully move
-				// to using the entity_instances table.
-				err := testQueries.DeleteRepository(context.Background(), delRepo.ID)
-				require.NoError(t, err)
-
-				err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
+			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
+				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
 					ID:        delRepo.ID,
 					ProjectID: delRepo.ProjectID,
 				})
