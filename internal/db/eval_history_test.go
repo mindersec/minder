@@ -724,7 +724,7 @@ func TestListEvaluationHistoryPagination(t *testing.T) {
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
 
-	repos := make([]Repository, 0)
+	repos := make([]EntityRepository, 0)
 	for i := 0; i < 10; i++ {
 		repos = append(repos, createRandomRepository(t, proj.ID, prov))
 	}
@@ -882,7 +882,7 @@ func TestGetEvaluationHistory(t *testing.T) {
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
 
-	repos := make([]Repository, 0)
+	repos := make([]EntityRepository, 0)
 	for i := 0; i < 10; i++ {
 		repos = append(repos, createRandomRepository(t, proj.ID, prov))
 	}
@@ -962,8 +962,8 @@ func TestGetEvaluationHistory(t *testing.T) {
 	}
 }
 
-func fullRepoName(r Repository) string {
-	return fmt.Sprintf("%s/%s", r.RepoOwner, r.RepoName)
+func fullRepoName(r EntityRepository) string {
+	return r.Name
 }
 
 func createRandomEvaluationRuleEntity(

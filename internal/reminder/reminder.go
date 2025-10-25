@@ -189,12 +189,10 @@ func (r *reminder) sendReminders(ctx context.Context) error {
 		}
 	}
 
-	// TODO: Implement reminder_last_sent tracking
-	// Options:
-	// 1. Store as property in properties table (key: "reminder_last_sent")
-	// 2. Create new entity_reminder_state table
-	// 3. Remove throttling entirely (rely on MinElapsed check only)
-	// For now, skip the UpdateReminderLastSentForRepositories call
+	// Note: The legacy reminder_last_sent timestamp tracking has been removed.
+	// We rely solely on the MinElapsed check against evaluation history for throttling.
+	// This provides sufficient rate limiting while keeping the reminder service stateless
+	// and horizontally scalable.
 
 	return nil
 }

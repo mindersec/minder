@@ -98,12 +98,12 @@ func WithSuccessfulGetFeatureInProject(
 }
 
 func WithSuccessfulUpsertPullRequest(
-	pullRequest db.PullRequest,
+	instance db.EntityInstance,
 ) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
-			Return(db.EntityInstance{}, nil)
+			Return(instance, nil)
 	}
 }
 
@@ -131,7 +131,6 @@ func (m createOrEnsureEntityByIDParamsMatcher) Matches(x interface{}) bool {
 }
 
 func WithSuccessfulUpsertPullRequestWithParams(
-	pullRequest db.PullRequest,
 	instance db.EntityInstance,
 	entParams db.CreateOrEnsureEntityByIDParams,
 ) func(*mockdb.MockStore) {
@@ -144,15 +143,12 @@ func WithSuccessfulUpsertPullRequestWithParams(
 }
 
 func WithSuccessfulUpsertArtifact(
-	artifact db.Artifact,
+	instance db.EntityInstance,
 ) func(*mockdb.MockStore) {
 	return func(mockStore *mockdb.MockStore) {
 		mockStore.EXPECT().
-			UpsertArtifact(gomock.Any(), gomock.Any()).
-			Return(artifact, nil)
-		mockStore.EXPECT().
 			CreateOrEnsureEntityByID(gomock.Any(), gomock.Any()).
-			Return(db.EntityInstance{}, nil)
+			Return(instance, nil)
 	}
 }
 
