@@ -856,3 +856,187 @@ allow {
 	})
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 }
+
+func TestDenyByDefaultWithShortFailureMessage(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                string
+		shortFailureMessage string
+		regoDef             string
+		expectedMessage     string
+		expectedDetails     string
+	}{
+		{
+			name:                "uses custom message when provided in rego",
+			shortFailureMessage: "Repository does not meet security requirements",
+			regoDef: `
+package minder
+
+default allow = false
+
+allow {
+	input.ingested.secure == true
+}
+
+message = "Custom rego message: security check failed"`,
+			expectedMessage: "Custom rego message: security check failed",
+			expectedDetails: "Custom rego message: security check failed",
+		},
+		{
+			name:                "falls back to short_failure_message when no custom message",
+			shortFailureMessage: "Repository does not meet security requirements",
+			regoDef: `
+package minder
+
+default allow = false
+
+allow {
+	input.ingested.secure == true
+}`,
+			expectedMessage: "Repository does not meet security requirements",
+			expectedDetails: "Repository does not meet security requirements",
+		},
+		{
+			name:                "falls back to denied when neither message is provided",
+			shortFailureMessage: "",
+			regoDef: `
+package minder
+
+default allow = false
+
+allow {
+	input.ingested.secure == true
+}`,
+			expectedMessage: "denied",
+			expectedDetails: "denied",
+		},
+		{
+			name:                "empty custom message falls back to short_failure_message",
+			shortFailureMessage: "Short failure message used",
+			regoDef: `
+package minder
+
+default allow = false
+
+allow {
+	input.ingested.secure == true
+}
+
+message = ""`,
+			expectedMessage: "Short failure message used",
+			expectedDetails: "Short failure message used",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			e, err := rego.NewRegoEvaluator(
+				&minderv1.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def:  tt.regoDef,
+				},
+				rego.WithShortFailureMessage(tt.shortFailureMessage),
+			)
+			require.NoError(t, err, "could not create evaluator")
+
+			emptyPol := map[string]any{}
+
+			// Test failure case - ingested data does not match
+			res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+				Object: map[string]any{
+					"secure": false,
+				},
+			})
+
+			require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
+
+			// Check the error details
+			evalErr, ok := err.(*engerrors.EvaluationError)
+			require.True(t, ok, "error should be an EvaluationError")
+			assert.Contains(t, evalErr.Details(), tt.expectedDetails, "error details should contain expected message")
+
+			// Check the output matches the message
+			assert.Equal(t, tt.expectedMessage, res.Output, "output should match expected message")
+		})
+	}
+}
+
+func TestDenyByDefaultShortFailureMessageOnlyAppliedToDenyByDefault(t *testing.T) {
+	t.Parallel()
+
+	// Test that WithShortFailureMessage is silently ignored for constraints evaluator
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.ConstraintsEvaluationType.String(),
+			Def: `
+package minder
+
+violations[{"msg": msg}] {
+	input.ingested.data != "foo"
+	msg := "data did not contain foo"
+}`,
+		},
+		rego.WithShortFailureMessage("This should be ignored"),
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	res, err := e.Eval(context.Background(), emptyPol, nil, &interfaces.Ingested{
+		Object: map[string]any{
+			"data": "bar",
+		},
+	})
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
+	assert.ErrorContains(t, err, "data did not contain foo", "should use constraints message, not short_failure_message")
+	assert.Equal(t, []any{"data did not contain foo"}, res.Output)
+}
+
+func TestDenyByDefaultShortFailureMessageWithEntityName(t *testing.T) {
+	t.Parallel()
+
+	e, err := rego.NewRegoEvaluator(
+		&minderv1.RuleType_Definition_Eval_Rego{
+			Type: rego.DenyByDefaultEvaluationType.String(),
+			Def: `
+package minder
+
+default allow = false
+
+allow {
+	input.ingested.compliant == true
+}`,
+		},
+		rego.WithShortFailureMessage("Repository is not compliant"),
+	)
+	require.NoError(t, err, "could not create evaluator")
+
+	emptyPol := map[string]any{}
+
+	// Create a repository entity to test entity name inclusion
+	repo := &minderv1.Repository{
+		Owner: "testorg",
+		Name:  "testrepo",
+	}
+
+	res, err := e.Eval(context.Background(), emptyPol, repo, &interfaces.Ingested{
+		Object: map[string]any{
+			"compliant": false,
+		},
+	})
+
+	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
+
+	evalErr, ok := err.(*engerrors.EvaluationError)
+	require.True(t, ok, "error should be an EvaluationError")
+
+	// Check that details include both the message and entity name
+	details := evalErr.Details()
+	assert.Contains(t, details, "Repository is not compliant", "details should contain short failure message")
+	assert.Contains(t, details, "testorg/testrepo", "details should contain entity name")
+
+	assert.Equal(t, "Repository is not compliant", res.Output, "output should be the short failure message")
+}
