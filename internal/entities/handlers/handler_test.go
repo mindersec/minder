@@ -575,7 +575,7 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
 				df.WithSuccessfulUpsertPullRequestWithParams(
-					
+
 					db.EntityInstance{
 						ID:         pullRequestID,
 						EntityType: db.EntitiesPullRequest,

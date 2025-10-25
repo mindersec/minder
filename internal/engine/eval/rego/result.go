@@ -59,9 +59,10 @@ type resultEvaluator interface {
 }
 
 type denyByDefaultEvaluator struct {
+	shortFailureMessage string
 }
 
-func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage,
+func (d *denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflect.ProtoMessage,
 ) (*interfaces.EvaluationResult, error) {
 	expr, err := getExports(rs)
 	if err != nil {
@@ -95,7 +96,8 @@ func (*denyByDefaultEvaluator) parseResult(rs rego.ResultSet, entity protoreflec
 	if err != nil && !errors.Is(err, errNotFound) {
 		return nil, err
 	}
-	message = cmp.Or(message, "denied")
+	// Use short_failure_message as fallback if available, otherwise use "denied"
+	message = cmp.Or(message, d.shortFailureMessage, "denied")
 
 	// We don't need the error here; if the output can't be parsed, we
 	// *always* fall back to the message.
