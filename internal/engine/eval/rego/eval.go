@@ -189,6 +189,13 @@ func enrichInputWithEntityProps(
 }
 
 // WithShortFailureMessage returns an Option that sets the short failure message for deny-by-default evaluations.
+// This message will be used as a fallback when the rego policy doesn't provide a custom "message" field,
+// but before defaulting to the generic "denied" message.
+//
+// The fallback priority is: custom rego message > short_failure_message > "denied"
+//
+// This option only applies to deny-by-default evaluation type and is silently ignored for other evaluator types
+// (such as constraints evaluator).
 func WithShortFailureMessage(msg string) interfaces.Option {
 	return func(eval interfaces.Evaluator) error {
 		if e, ok := eval.(*Evaluator); ok {
