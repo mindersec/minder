@@ -20,7 +20,7 @@ require (
 	golang.org/x/tools v0.38.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.36.10
-	mvdan.cc/gofumpt v0.9.1
+	mvdan.cc/gofumpt v0.9.2
 )
 
 require (
