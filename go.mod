@@ -10,7 +10,7 @@ require (
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
 	github.com/alexdrl/zerowater v0.0.3
 	github.com/aws/aws-sdk-go-v2 v1.39.4
-	github.com/aws/aws-sdk-go-v2/config v1.31.12
+	github.com/aws/aws-sdk-go-v2/config v1.31.13
 	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.54.0
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df
 	github.com/cenkalti/backoff/v4 v4.3.0
@@ -78,7 +78,7 @@ require (
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5
 	github.com/stretchr/testify v1.11.1
 	github.com/styrainc/regal v0.35.1
-	github.com/thomaspoignant/go-feature-flag v1.46.1
+	github.com/thomaspoignant/go-feature-flag v1.47.0
 	github.com/wneessen/go-mail v0.7.2
 	github.com/yuin/goldmark v1.7.12
 	gitlab.com/gitlab-org/api/client-go v0.142.2
@@ -93,7 +93,7 @@ require (
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.43.0
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.32.0
 	golang.org/x/sync v0.17.0
 	golang.org/x/term v0.36.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4
@@ -110,14 +110,14 @@ require (
 require (
 	cel.dev/expr v0.24.0 // indirect
 	cloud.google.com/go v0.121.6 // indirect
-	cloud.google.com/go/auth v0.16.5 // indirect
+	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/compute/metadata v0.8.2 // indirect
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.5.2 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
 	cloud.google.com/go/spanner v1.84.1 // indirect
-	cloud.google.com/go/storage v1.56.2 // indirect
+	cloud.google.com/go/storage v1.57.0 // indirect
 	deps.dev/api/v3 v3.0.0-20250616031631-419a06b41f9b // indirect
 	deps.dev/api/v3alpha v0.0.0-20250616031631-419a06b41f9b // indirect
 	deps.dev/util/maven v0.0.0-20250616031631-419a06b41f9b // indirect
@@ -149,17 +149,17 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/avast/retry-go/v4 v4.6.1 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.16 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.9 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.17 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.10 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.29.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.38.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.29.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.38.7 // indirect
 	github.com/aws/smithy-go v1.23.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -313,6 +313,8 @@ require (
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/styrainc/roast v0.15.0 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.2.0 // indirect
+	github.com/thomaspoignant/go-feature-flag/modules/core v0.1.4 // indirect
+	github.com/thomaspoignant/go-feature-flag/modules/evaluation v0.1.2 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
@@ -350,7 +352,7 @@ require (
 	golang.org/x/vuln v1.1.4 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
-	google.golang.org/api v0.249.0 // indirect
+	google.golang.org/api v0.252.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -483,7 +485,7 @@ require (
 	golang.org/x/net v0.46.0
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
