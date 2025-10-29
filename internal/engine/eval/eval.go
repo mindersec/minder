@@ -40,6 +40,10 @@ func NewRuleEvaluator(
 		}
 		return jq.NewJQEvaluator(e.GetJq(), opts...)
 	case rego.RegoEvalType:
+		// Add short_failure_message as an option if available
+		if ruletype.ShortFailureMessage != "" {
+			opts = append(opts, rego.WithShortFailureMessage(ruletype.ShortFailureMessage))
+		}
 		return rego.NewRegoEvaluator(e.GetRego(), opts...)
 	case vulncheck.VulncheckEvalType:
 		client, err := interfaces.As[vulncheck.GitHubRESTAndPRClient](provider)

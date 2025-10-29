@@ -121,6 +121,14 @@ func (e *Evaluator) SetFlagsClient(client flags.Interface) error {
 	return nil
 }
 
+// SetShortFailureMessage sets the short failure message for deny-by-default evaluations.
+func (e *Evaluator) SetShortFailureMessage(msg string) error {
+	if dbd, ok := e.reseval.(*denyByDefaultEvaluator); ok {
+		dbd.shortFailureMessage = msg
+	}
+	return nil
+}
+
 // Eval implements the Evaluator interface.
 func (e *Evaluator) Eval(
 	ctx context.Context, pol map[string]any, entity protoreflect.ProtoMessage, res *interfaces.Ingested,
@@ -177,5 +185,22 @@ func enrichInputWithEntityProps(
 ) {
 	if inner, ok := entity.(propertiesFetcher); ok {
 		input.Properties = inner.GetProperties().AsMap()
+	}
+}
+
+// WithShortFailureMessage returns an Option that sets the short failure message for deny-by-default evaluations.
+// This message will be used as a fallback when the rego policy doesn't provide a custom "message" field,
+// but before defaulting to the generic "denied" message.
+//
+// The fallback priority is: custom rego message > short_failure_message > "denied"
+//
+// This option only applies to deny-by-default evaluation type and is silently ignored for other evaluator types
+// (such as constraints evaluator).
+func WithShortFailureMessage(msg string) interfaces.Option {
+	return func(eval interfaces.Evaluator) error {
+		if e, ok := eval.(*Evaluator); ok {
+			return e.SetShortFailureMessage(msg)
+		}
+		return nil
 	}
 }
