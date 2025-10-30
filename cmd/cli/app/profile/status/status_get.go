@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -44,14 +45,24 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
+	entity := &minderv1.EntityTypedId{
+		Type: minderv1.EntityFromString(entityType),
+	}
+	// If entityId is a UUID, fill the `id` field, otherwise fill the name field.
+	if _, err := uuid.Parse(entityId); err == nil {
+		entity.Id = entityId
+	} else {
+		entity.Name = entityId
+	}
+
 	if profileId != "" {
-		resp, err := getProfileStatusById(ctx, client, project, profileId, entityId, entityType)
+		resp, err := getProfileStatusById(ctx, client, project, profileId, entity)
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
 		return formatAndDisplayOutput(cmd, format, resp, viper.GetBool("emoji"))
 	} else if profileName != "" {
-		resp, err := getProfileStatusByName(ctx, client, project, profileName, entityId, entityType)
+		resp, err := getProfileStatusByName(ctx, client, project, profileName, entity)
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
@@ -64,7 +75,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 func getProfileStatusById(
 	ctx context.Context,
 	client minderv1.ProfileServiceClient,
-	project, profileId, entityId, entityType string,
+	project, profileId string,
+	entity *minderv1.EntityTypedId,
 ) (*minderv1.GetProfileStatusByIdResponse, error) {
 	if profileId == "" {
 		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile id required"))
@@ -73,10 +85,7 @@ func getProfileStatusById(
 	resp, err := client.GetProfileStatusById(ctx, &minderv1.GetProfileStatusByIdRequest{
 		Context: &minderv1.Context{Project: &project},
 		Id:      profileId,
-		Entity: &minderv1.EntityTypedId{
-			Id:   entityId,
-			Type: minderv1.EntityFromString(entityType),
-		},
+		Entity:  entity,
 	})
 	if err != nil {
 		return nil, err
@@ -91,7 +100,8 @@ func getProfileStatusById(
 func getProfileStatusByName(
 	ctx context.Context,
 	client minderv1.ProfileServiceClient,
-	project, profileName, entityId, entityType string,
+	project, profileName string,
+	entity *minderv1.EntityTypedId,
 ) (*minderv1.GetProfileStatusByNameResponse, error) {
 	if profileName == "" {
 		return nil, cli.MessageAndError("Error getting profile status", fmt.Errorf("profile name required"))
@@ -100,10 +110,7 @@ func getProfileStatusByName(
 	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
 		Context: &minderv1.Context{Project: &project},
 		Name:    profileName,
-		Entity: &minderv1.EntityTypedId{
-			Id:   entityId,
-			Type: minderv1.EntityFromString(entityType),
-		},
+		Entity:  entity,
 	})
 	if err != nil {
 		return nil, err

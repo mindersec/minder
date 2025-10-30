@@ -965,14 +965,17 @@ used for parsing resources in ruletypes
 
 <Message id="minder-v1-EntityTypedId">EntityTypedId</Message>
 
-EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
 such as (repo, 1), (artifact, 2), ...
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity is the entity to get status for. Incompatible with `all` |
+| type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity is the entity to get status for. Incompatible with `all`
+
+On input, at least one of id and name must be set. If both are set, they must both match. On output, both id and name will be set. |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the ID of the entity to get status for. Incompatible with `all` |
+| name | <TypeLink type="string">string</TypeLink> |  | name is the name of the entity. This name is unique within a given project, type, and provider, but may not be globally unique. |
 
 
 

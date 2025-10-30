@@ -1200,6 +1200,8 @@ func TestGetProfileStatusByName(t *testing.T) {
 		require.Equal(t, dbProfile.ID.String(), resp.ProfileStatus.ProfileId, "Profile ID should match")
 		require.Equal(t, expectedProfileName, resp.ProfileStatus.ProfileName, "Profile name should match")
 	})
+
+	// TODO: add test case for requesting evaluation details
 }
 
 func TestGetProfileStatusById(t *testing.T) {
@@ -1255,6 +1257,8 @@ func TestGetProfileStatusById(t *testing.T) {
 		require.Equal(t, dbProfile.ID.String(), resp.ProfileStatus.ProfileId, "Profile ID should match")
 		require.Equal(t, expectedProfileName, resp.ProfileStatus.ProfileName, "Profile name should match")
 	})
+
+	// TODO: add test case for requesting evaluation details
 }
 
 type deleteProfileTestCase struct {

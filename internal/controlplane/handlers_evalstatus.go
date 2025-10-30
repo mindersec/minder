@@ -666,11 +666,10 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 func buildEntityFromEvaluation(efp *entmodels.EntityWithProperties) *minderv1.EntityTypedId {
 	ent := &minderv1.EntityTypedId{
 		Type: efp.Entity.Type,
+		Id:   efp.Entity.ID.String(),
+		Name: efp.Entity.Name,
 	}
 
-	if ent.Type == minderv1.Entity_ENTITY_REPOSITORIES {
-		ent.Id = efp.Entity.ID.String()
-	}
 	return ent
 }
 

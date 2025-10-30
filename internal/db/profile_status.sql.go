@@ -249,6 +249,7 @@ SELECT
     rt.guidance as rule_type_guidance,
     rt.display_name as rule_type_display_name,
     ere.entity_instance_id as entity_id,
+    ei.name as entity_name,
     ei.project_id as project_id,
     rt.release_phase as rule_type_release_phase
 FROM latest_evaluation_statuses les
@@ -260,15 +261,17 @@ FROM latest_evaluation_statuses les
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
          INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN providers prov ON prov.id = ei.provider_id
-WHERE les.profile_id = $1 AND
-    (ere.entity_instance_id = $2::UUID OR $2::UUID IS NULL)
-    AND (rt.name = $3 OR $3 IS NULL)
-    AND (lower(ri.name) = lower($4) OR $4 IS NULL)
+WHERE les.profile_id = $1
+    AND (ere.entity_instance_id = $2::UUID OR $2::UUID IS NULL)
+    AND (ei.name = $3 OR $3 IS NULL)
+    AND (rt.name = $4 OR $4 IS NULL)
+    AND (lower(ri.name) = lower($5) OR $5 IS NULL)
 `
 
 type ListRuleEvaluationsByProfileIdParams struct {
 	ProfileID    uuid.UUID      `json:"profile_id"`
 	EntityID     uuid.NullUUID  `json:"entity_id"`
+	EntityName   sql.NullString `json:"entity_name"`
 	RuleTypeName sql.NullString `json:"rule_type_name"`
 	RuleName     sql.NullString `json:"rule_name"`
 }
@@ -295,6 +298,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	RuleTypeGuidance      string                 `json:"rule_type_guidance"`
 	RuleTypeDisplayName   string                 `json:"rule_type_display_name"`
 	EntityID              uuid.UUID              `json:"entity_id"`
+	EntityName            string                 `json:"entity_name"`
 	ProjectID             uuid.UUID              `json:"project_id"`
 	RuleTypeReleasePhase  ReleaseStatus          `json:"rule_type_release_phase"`
 }
@@ -303,6 +307,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 	rows, err := q.db.QueryContext(ctx, listRuleEvaluationsByProfileId,
 		arg.ProfileID,
 		arg.EntityID,
+		arg.EntityName,
 		arg.RuleTypeName,
 		arg.RuleName,
 	)
@@ -335,6 +340,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.RuleTypeGuidance,
 			&i.RuleTypeDisplayName,
 			&i.EntityID,
+			&i.EntityName,
 			&i.ProjectID,
 			&i.RuleTypeReleasePhase,
 		); err != nil {

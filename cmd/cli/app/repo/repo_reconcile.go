@@ -33,29 +33,19 @@ func reconcileCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	if id == "" {
-		repoClient := minderv1.NewRepositoryServiceClient(conn)
-
-		repo, err := repoClient.GetRepositoryByName(ctx, &minderv1.GetRepositoryByNameRequest{
-			Name: name,
-			Context: &minderv1.Context{
-				Provider: &provider,
-				Project:  &project,
-			},
-		})
-		if err != nil {
-			return cli.MessageAndError("Failed to get repository", err)
-		}
-
-		id = repo.GetRepository().GetId()
+	entity := &minderv1.EntityTypedId{
+		Type: minderv1.Entity_ENTITY_REPOSITORIES,
+	}
+	if id != "" {
+		entity.Id = id
+	}
+	if name != "" {
+		entity.Name = name
 	}
 
 	projectsClient := minderv1.NewProjectsServiceClient(conn)
 	_, err := projectsClient.CreateEntityReconciliationTask(ctx, &minderv1.CreateEntityReconciliationTaskRequest{
-		Entity: &minderv1.EntityTypedId{
-			Id:   id,
-			Type: minderv1.Entity_ENTITY_REPOSITORIES,
-		},
+		Entity: entity,
 		Context: &minderv1.Context{
 			Provider: &provider,
 			Project:  &project,
