@@ -617,17 +617,6 @@ func (s *Server) GetProfileStatusById(
 	}, nil
 }
 
-func extractEntitySelector(entity *minderv1.EntityTypedId) *uuid.NullUUID {
-	if entity == nil {
-		return nil
-	}
-	var selector uuid.NullUUID
-	if err := selector.Scan(entity.GetId()); err != nil {
-		return nil
-	}
-	return &selector
-}
-
 func (s *Server) processProfileStatusByName(
 	ctx context.Context,
 	profileName string,
@@ -638,21 +627,29 @@ func (s *Server) processProfileStatusByName(
 ) (*minderv1.GetProfileStatusByNameResponse, error) {
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 
-	selector, ruleType, ruleName, err := extractFiltersFromNameRequest(req)
-	if err != nil {
+	// Telemetry logging
+	entityCtx := engcontext.EntityFromContext(ctx)
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
+
+	if err := validateEntityType(req.GetEntity()); err != nil {
 		return nil, err
 	}
+	maybeEntityID, err := maybeNullUUID(req.GetEntity().GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "Unable to parse entity id: %q", req.GetEntity().GetId())
+	}
+	maybeEntityName := maybeNullString(req.GetEntity().GetName())
+	ruleType := maybeNullString(req.GetRuleType())
+	ruleName := maybeNullString(req.GetRuleName())
 
-	if selector != nil || req.GetAll() {
-		var entityID uuid.NullUUID
-		if selector != nil {
-			entityID = *selector
-		}
+	if req.GetAll() || maybeEntityID.Valid || maybeEntityName.Valid {
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    profileID,
-			EntityID:     entityID,
-			RuleTypeName: *ruleType,
-			RuleName:     *ruleName,
+			EntityID:     maybeEntityID,
+			EntityName:   maybeEntityName,
+			RuleTypeName: ruleType,
+			RuleName:     ruleName,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
@@ -662,11 +659,6 @@ func (s *Server) processProfileStatusByName(
 			ctx, dbRuleEvaluationStatuses, profileID.String(),
 		)
 	}
-
-	// Telemetry logging
-	entityCtx := engcontext.EntityFromContext(ctx)
-	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
 	return &minderv1.GetProfileStatusByNameResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
@@ -689,22 +681,30 @@ func (s *Server) processProfileStatusById(
 ) (*minderv1.GetProfileStatusByIdResponse, error) {
 	var ruleEvaluationStatuses []*minderv1.RuleEvaluationStatus
 
-	selector, ruleType, ruleName, err := extractFiltersFromIdRequest(req)
-	if err != nil {
+	// Telemetry logging
+	entityCtx := engcontext.EntityFromContext(ctx)
+	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
+	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
+
+	// selector, ruleType, ruleName, err := extractFiltersFromIdRequest(req)
+	if err := validateEntityType(req.GetEntity()); err != nil {
 		return nil, err
 	}
+	maybeEntityID, err := maybeNullUUID(req.GetEntity().GetId())
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "Unable to parse entity id: %q", req.GetEntity().GetId())
+	}
+	maybeEntityName := maybeNullString(req.GetEntity().GetName())
+	ruleType := maybeNullString(req.GetRuleType())
+	ruleName := maybeNullString(req.GetRuleName())
 
-	// Only fetch rule evaluations if selector is present or all is requested
-	if selector != nil || req.GetAll() {
-		var entityID uuid.NullUUID
-		if selector != nil {
-			entityID = *selector
-		}
+	if req.GetAll() || maybeEntityID.Valid || maybeEntityName.Valid {
 		dbRuleEvaluationStatuses, err := s.store.ListRuleEvaluationsByProfileId(ctx, db.ListRuleEvaluationsByProfileIdParams{
 			ProfileID:    profileID,
-			EntityID:     entityID,
-			RuleTypeName: *ruleType,
-			RuleName:     *ruleName,
+			EntityID:     maybeEntityID,
+			EntityName:   maybeEntityName,
+			RuleTypeName: ruleType,
+			RuleName:     ruleName,
 		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.Unknown, "failed to list rule evaluation status: %s", err)
@@ -714,11 +714,6 @@ func (s *Server) processProfileStatusById(
 			ctx, dbRuleEvaluationStatuses, profileID.String(),
 		)
 	}
-
-	// Telemetry logging
-	entityCtx := engcontext.EntityFromContext(ctx)
-	logger.BusinessRecord(ctx).Project = entityCtx.Project.ID
-	logger.BusinessRecord(ctx).Profile = logger.Profile{Name: profileName, ID: profileID}
 
 	return &minderv1.GetProfileStatusByIdResponse{
 		ProfileStatus: &minderv1.ProfileStatus{
@@ -731,61 +726,32 @@ func (s *Server) processProfileStatusById(
 	}, nil
 }
 
-func extractFiltersFromNameRequest(
-	req *minderv1.GetProfileStatusByNameRequest) (
-	*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
-	if e := req.GetEntity(); e != nil {
+func validateEntityType(e *minderv1.EntityTypedId) error {
+	if e != nil {
 		if !e.GetType().IsValid() {
-			return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
+			return util.UserVisibleError(codes.InvalidArgument,
 				"invalid entity type %s, please use one of %s",
 				e.GetType(), entities.KnownTypesCSV())
 		}
 	}
-
-	selector := extractEntitySelector(req.GetEntity())
-
-	ruleType := &sql.NullString{
-		String: req.GetRuleType(),
-		Valid:  req.GetRuleType() != "",
-	}
-	if !ruleType.Valid {
-		//nolint:staticcheck // ignore SA1019: Deprecated field supported for backward compatibility
-		ruleType = &sql.NullString{
-			String: req.GetRule(),
-			Valid:  req.GetRule() != "",
-		}
-	}
-
-	ruleName := &sql.NullString{
-		String: req.GetRuleName(),
-		Valid:  req.GetRuleName() != "",
-	}
-
-	return selector, ruleType, ruleName, nil
+	return nil
 }
 
-func extractFiltersFromIdRequest(
-	req *minderv1.GetProfileStatusByIdRequest) (
-	*uuid.NullUUID, *sql.NullString, *sql.NullString, error) {
-	if e := req.GetEntity(); e != nil {
-		if !e.GetType().IsValid() {
-			return nil, nil, nil, util.UserVisibleError(codes.InvalidArgument,
-				"invalid entity type %s, please use one of %s",
-				e.GetType(), entities.KnownTypesCSV())
-		}
+func maybeNullString(s string) sql.NullString {
+	return sql.NullString{
+		String: s,
+		Valid:  s != "",
 	}
+}
 
-	selector := extractEntitySelector(req.GetEntity())
-
-	ruleType := &sql.NullString{
-		String: req.GetRuleType(),
-		Valid:  req.GetRuleType() != "",
+func maybeNullUUID(s string) (uuid.NullUUID, error) {
+	var id uuid.UUID
+	var err error
+	if s != "" {
+		id, err = uuid.Parse(s)
 	}
-
-	ruleName := &sql.NullString{
-		String: req.GetRuleName(),
-		Valid:  req.GetRuleName() != "",
-	}
-
-	return selector, ruleType, ruleName, nil
+	return uuid.NullUUID{
+		UUID:  id,
+		Valid: s != "",
+	}, err
 }

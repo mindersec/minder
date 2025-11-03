@@ -1883,17 +1883,28 @@ message RuleEvaluationStatus {
     ];
 }
 
-// EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+// EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
 // such as (repo, 1), (artifact, 2), ...
 message EntityTypedId {
     // entity is the entity to get status for. Incompatible with `all`
     Entity type = 1 [
         (google.api.field_behavior) = REQUIRED
     ];
+    // On input, at least one of id and name must be set.  If both are set, they must both match.
+    // On output, both id and name will be set.
+
     // id is the ID of the entity to get status for. Incompatible with `all`
     string id = 2 [
         (buf.validate.field).string = {uuid: true},
-        (google.api.field_behavior) = REQUIRED
+        (google.api.field_behavior) = OPTIONAL
+    ];
+    // name is the name of the entity.  This name is unique within a given project, type, and provider, but may not be globally unique.
+    string name = 3 [
+        (buf.validate.field).string = {
+            max_bytes: 200
+            pattern: "^[[:alnum:]][-/[:word:]]*"
+        },
+        (google.api.field_behavior) = OPTIONAL
     ];
 }
 

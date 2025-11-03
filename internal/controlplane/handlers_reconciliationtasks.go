@@ -18,6 +18,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/logger"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
@@ -29,7 +30,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 ) {
 	// Populated by EntityContextProjectInterceptor using incoming request
 	entityCtx := engcontext.EntityFromContext(ctx)
-	err := entityCtx.Validate(ctx, s.store, s.providerStore)
+	dbProvider, err := entityCtx.Validate(ctx, s.store, s.providerStore)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error in entity context: %v", err)
 	}
@@ -40,19 +41,39 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "entity is required")
 	}
 
+	// TODO: Support other entity types, replace with switch and update remainder.
+	if entity.GetType() != pb.Entity_ENTITY_REPOSITORIES {
+		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
+	}
+	entityType := db.EntitiesRepository
+
+	if entity.GetId() == "" {
+		// Look up ID given name
+		dbEntity, err := s.store.GetEntityByName(ctx, db.GetEntityByNameParams{
+			ProjectID:  entityCtx.Project.ID,
+			EntityType: entityType,
+			Name:       entity.GetName(),
+			ProviderID: dbProvider.ID,
+		})
+		if err != nil {
+			return nil, util.UserVisibleError(codes.NotFound,
+				"Unable to find entity %q of type %s in provider %s",
+				entity.GetName(),
+				entityType,
+				entityCtx.Provider.Name,
+			)
+		}
+		entity.Id = dbEntity.ID.String()
+	}
+
 	var msg *message.Message
 	var topic string
 
-	// TODO: Support other entity types, replace with switch
-	if entity.GetType() == pb.Entity_ENTITY_REPOSITORIES {
-		msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
-		if err != nil {
-			return nil, err
-		}
-		topic = constants.TopicQueueReconcileRepoInit
-	} else {
-		return nil, status.Errorf(codes.InvalidArgument, "entity type %s is not supported", entity.GetType())
+	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	if err != nil {
+		return nil, err
 	}
+	topic = constants.TopicQueueReconcileRepoInit
 
 	// This is a non-fatal error, so we'll just log it and continue with the next ones
 	if err := s.evt.Publish(topic, msg); err != nil {

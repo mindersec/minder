@@ -5702,14 +5702,16 @@ func (x *RuleEvaluationStatus) GetReleasePhase() RuleTypeReleasePhase {
 	return RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED
 }
 
-// EntiryTypeId is a message that carries an ID together with a type to uniquely identify an entity
+// EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
 // such as (repo, 1), (artifact, 2), ...
 type EntityTypedId struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// entity is the entity to get status for. Incompatible with `all`
 	Type Entity `protobuf:"varint,1,opt,name=type,proto3,enum=minder.v1.Entity" json:"type,omitempty"`
 	// id is the ID of the entity to get status for. Incompatible with `all`
-	Id            string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	// name is the name of the entity.  This name is unique within a given project, type, and provider, but may not be globally unique.
+	Name          string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5754,6 +5756,13 @@ func (x *EntityTypedId) GetType() Entity {
 func (x *EntityTypedId) GetId() string {
 	if x != nil {
 		return x.Id
+	}
+	return ""
+}
+
+func (x *EntityTypedId) GetName() string {
+	if x != nil {
+		return x.Name
 	}
 	return ""
 }
@@ -15097,10 +15106,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x0fEntityInfoEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x1b\n" +
-	"\x19_remediation_last_updated\"X\n" +
+	"\x19_remediation_last_updated\"\x94\x01\n" +
 	"\rEntityTypedId\x12*\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x11.minder.v1.EntityB\x03\xe0A\x02R\x04type\x12\x1b\n" +
-	"\x02id\x18\x02 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\"\xee\x02\n" +
+	"\x02id\x18\x02 \x01(\tB\v\xe0A\x01\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12:\n" +
+	"\x04name\x18\x03 \x01(\tB&\xe0A\x01\xbaH r\x1e(\xc8\x012\x19^[[:alnum:]][-/[:word:]]*R\x04name\"\xee\x02\n" +
 	"\x1dGetProfileStatusByNameRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x128\n" +
 	"\x04name\x18\x02 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x120\n" +
