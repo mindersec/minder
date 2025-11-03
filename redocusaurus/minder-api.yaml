@@ -1371,7 +1371,13 @@ paths:
           required: false
           type: string
         - name: entity.type
-          description: entity is the entity to get status for. Incompatible with `all`
+          description: >-
+            entity is the entity to get status for. Incompatible with `all`
+
+
+            On input, at least one of id and name must be set.  If both are set,
+            they must both match.
+             On output, both id and name will be set.
           in: query
           required: true
           type: string
@@ -1391,7 +1397,14 @@ paths:
             id is the ID of the entity to get status for. Incompatible with
             `all`
           in: query
-          required: true
+          required: false
+          type: string
+        - name: entity.name
+          description: >-
+            name is the name of the entity.  This name is unique within a given
+            project, type, and provider, but may not be globally unique.
+          in: query
+          required: false
           type: string
         - name: all
           description: |-
@@ -1612,7 +1625,13 @@ paths:
           required: false
           type: string
         - name: entity.type
-          description: entity is the entity to get status for. Incompatible with `all`
+          description: >-
+            entity is the entity to get status for. Incompatible with `all`
+
+
+            On input, at least one of id and name must be set.  If both are set,
+            they must both match.
+             On output, both id and name will be set.
           in: query
           required: true
           type: string
@@ -1632,7 +1651,14 @@ paths:
             id is the ID of the entity to get status for. Incompatible with
             `all`
           in: query
-          required: true
+          required: false
+          type: string
+        - name: entity.name
+          description: >-
+            name is the name of the entity.  This name is unique within a given
+            project, type, and provider, but may not be globally unique.
+          in: query
+          required: false
           type: string
         - name: all
           in: query
@@ -4110,18 +4136,26 @@ definitions:
     properties:
       type:
         $ref: '#/definitions/v1Entity'
+        description: >-
+          On input, at least one of id and name must be set.  If both are set,
+          they must both match.
+           On output, both id and name will be set.
         title: entity is the entity to get status for. Incompatible with `all`
       id:
         type: string
         title: id is the ID of the entity to get status for. Incompatible with `all`
+      name:
+        type: string
+        description: >-
+          name is the name of the entity.  This name is unique within a given
+          project, type, and provider, but may not be globally unique.
     description: >-
-      EntiryTypeId is a message that carries an ID together with a type to
+      EntityTypedId is a message that carries an ID together with a type to
       uniquely identify an entity
 
       such as (repo, 1), (artifact, 2), ...
     required:
       - type
-      - id
   v1EvalResultAlert:
     type: object
     properties:
