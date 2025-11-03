@@ -48,7 +48,6 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProjectWithID(ctx context.Context, arg CreateProjectWithIDParams) (Project, error)
 	CreateProvider(ctx context.Context, arg CreateProviderParams) (Provider, error)
-	CreateRepository(ctx context.Context, arg CreateRepositoryParams) (Repository, error)
 	CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error)
 	CreateSelector(ctx context.Context, arg CreateSelectorParams) (ProfileSelector, error)
 	CreateSessionState(ctx context.Context, arg CreateSessionStateParams) (SessionStore, error)
@@ -56,7 +55,6 @@ type Querier interface {
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
 	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
-	DeleteArtifact(ctx context.Context, id uuid.UUID) error
 	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
 	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
 	// DeleteDataSourceFunctions deletes all functions associated with a given datasource
@@ -77,7 +75,6 @@ type Querier interface {
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
-	DeleteRepository(ctx context.Context, id uuid.UUID) error
 	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
 	DeleteRuleType(ctx context.Context, id uuid.UUID) error
 	DeleteRuleTypeDataSource(ctx context.Context, arg DeleteRuleTypeDataSourceParams) error
@@ -274,11 +271,9 @@ type Querier interface {
 	UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error)
 	UpdateProjectMeta(ctx context.Context, arg UpdateProjectMetaParams) (Project, error)
 	UpdateProvider(ctx context.Context, arg UpdateProviderParams) error
-	UpdateReminderLastSentForRepositories(ctx context.Context, repositoryIds []uuid.UUID) error
 	UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error)
 	UpdateSelector(ctx context.Context, arg UpdateSelectorParams) (ProfileSelector, error)
 	UpsertAccessToken(ctx context.Context, arg UpsertAccessTokenParams) (ProviderAccessToken, error)
-	UpsertArtifact(ctx context.Context, arg UpsertArtifactParams) (Artifact, error)
 	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 	// SPDX-License-Identifier: Apache-2.0
 	// Bundles --
