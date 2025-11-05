@@ -101,6 +101,7 @@ type Server struct {
 	dataSourcesService  datasourcessvc.DataSourcesService
 	repos               reposvc.RepositoryService
 	entityService       entitySvc.EntityService
+	entityCreator       entitySvc.EntityCreator
 	roles               roles.RoleService
 	profiles            profiles.ProfileService
 	history             history.EvaluationHistoryService
@@ -156,6 +157,7 @@ func NewServer(
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
 	entityService entitySvc.EntityService,
+	entityCreator entitySvc.EntityCreator,
 	featureFlagClient flags.Interface,
 ) *Server {
 	return &Server{
@@ -178,6 +180,7 @@ func NewServer(
 		invites:             inviteService,
 		repos:               repoService,
 		entityService:       entityService,
+		entityCreator:       entityCreator,
 		props:               propertyService,
 		roles:               roleService,
 		ghProviders:         ghProviders,
