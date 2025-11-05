@@ -19,7 +19,8 @@ import (
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
-	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	mock_propservice "github.com/mindersec/minder/internal/entities/properties/service/mock"
+	mock_entityservice "github.com/mindersec/minder/internal/entities/service/mock"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -433,7 +434,11 @@ func createService(
 
 	mockPropSvc := serviceSetup(ctrl)
 
-	return repositories.NewRepositoryService(store, mockPropSvc, events, providerManager)
+	// Create a mock entityCreator (we don't need to set expectations since CreateRepository
+	// is called via the entityCreator now, but we keep the old test structure)
+	mockEntityCreator := mock_entityservice.NewMockEntityCreator(ctrl)
+
+	return repositories.NewRepositoryService(store, mockPropSvc, events, providerManager, mockEntityCreator)
 }
 
 const (
@@ -498,7 +503,7 @@ var (
 type (
 	dbMock              = *mockdb.MockStore
 	dbMockBuilder       = func(controller *gomock.Controller) dbMock
-	propSvcMock         = *mock_service.MockPropertiesService
+	propSvcMock         = *mock_propservice.MockPropertiesService
 	propSvcMockBuilder  = func(controller *gomock.Controller) propSvcMock
 	eventMock           = *mockevents.MockInterface
 	eventMockBuilder    = func(controller *gomock.Controller) eventMock
@@ -666,7 +671,7 @@ func instantiatePBRepo(isPrivate bool) *pb.Repository {
 
 func newPropSvcMock(opts ...func(mock propSvcMock)) propSvcMockBuilder {
 	return func(ctrl *gomock.Controller) propSvcMock {
-		ms := mock_service.NewMockPropertiesService(ctrl)
+		ms := mock_propservice.NewMockPropertiesService(ctrl)
 		for _, opt := range opts {
 			opt(ms)
 		}

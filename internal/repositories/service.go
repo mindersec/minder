@@ -17,8 +17,9 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/entities/properties/service"
+	entityService "github.com/mindersec/minder/internal/entities/service"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
-	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	"github.com/mindersec/minder/internal/util/ptr"
@@ -88,10 +89,10 @@ var (
 	// ErrPrivateRepoForbidden is returned when creation fails due to an
 	// attempt to register a private repo in a project which does not allow
 	// private repos
-	ErrPrivateRepoForbidden = errors.New("private repos cannot be registered in this project")
+	ErrPrivateRepoForbidden = validators.ErrPrivateRepoForbidden
 	// ErrArchivedRepoForbidden is returned when creation fails due to an
 	// attempt to register an archived repo
-	ErrArchivedRepoForbidden = errors.New("archived repos cannot be registered in this project")
+	ErrArchivedRepoForbidden = validators.ErrArchivedRepoForbidden
 )
 
 type repositoryService struct {
@@ -99,6 +100,7 @@ type repositoryService struct {
 	eventProducer   interfaces.Publisher
 	providerManager manager.ProviderManager
 	propSvc         service.PropertiesService
+	entityCreator   entityService.EntityCreator
 }
 
 // NewRepositoryService creates an instance of the RepositoryService interface
@@ -107,12 +109,14 @@ func NewRepositoryService(
 	propSvc service.PropertiesService,
 	eventProducer interfaces.Publisher,
 	providerManager manager.ProviderManager,
+	entityCreator entityService.EntityCreator,
 ) RepositoryService {
 	return &repositoryService{
 		store:           store,
 		eventProducer:   eventProducer,
 		providerManager: providerManager,
 		propSvc:         propSvc,
+		entityCreator:   entityCreator,
 	}
 }
 
@@ -122,89 +126,35 @@ func (r *repositoryService) CreateRepository(
 	projectID uuid.UUID,
 	fetchByProps *properties.Properties,
 ) (*pb.Repository, error) {
-	prov, err := r.providerManager.InstantiateFromID(ctx, provider.ID)
+	// Use the EntityCreator service to create the repository entity
+	ewp, err := r.entityCreator.CreateEntity(ctx, provider, projectID,
+		pb.Entity_ENTITY_REPOSITORIES, fetchByProps, &entityService.EntityCreationOptions{
+			RegisterWithProvider:       true, // Create webhook
+			PublishReconciliationEvent: true, // Publish reconciliation event
+		})
 	if err != nil {
-		return nil, fmt.Errorf("error instantiating provider: %w", err)
-	}
-
-	repoProperties, err := r.propSvc.RetrieveAllProperties(
-		ctx,
-		prov,
-		projectID,
-		provider.ID,
-		fetchByProps,
-		pb.Entity_ENTITY_REPOSITORIES,
-		nil) // a transaction is used in the service. The repo is not cached here anyway
-	if err != nil {
-		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
-	}
-
-	isArchived, err := repoProperties.GetProperty(properties.RepoPropertyIsArchived).AsBool()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
-	}
-
-	// skip if this is an archived repo
-	if isArchived {
-		return nil, ErrArchivedRepoForbidden
-	}
-
-	isPrivate, err := repoProperties.GetProperty(properties.RepoPropertyIsPrivate).AsBool()
-	if err != nil {
-		return nil, fmt.Errorf("error fetching is_archived property: %w", err)
-	}
-
-	// skip if this is a private repo, and private repos are not enabled
-	if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, r.store, projectID) {
-		return nil, ErrPrivateRepoForbidden
-	}
-
-	entName, err := prov.GetEntityName(pb.Entity_ENTITY_REPOSITORIES, repoProperties)
-	if err != nil {
-		return nil, fmt.Errorf("error getting entity name: %w", err)
-	}
-
-	ewp := models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
-		Type:       pb.Entity_ENTITY_REPOSITORIES,
-		Name:       entName,
-		ProviderID: provider.ID,
-		ProjectID:  projectID,
-	}, repoProperties)
-
-	// create a webhook to capture events from the repository
-	props, err := prov.RegisterEntity(ctx, pb.Entity_ENTITY_REPOSITORIES, repoProperties)
-	if err != nil {
-		return nil, fmt.Errorf("error creating webhook in repo: %w", err)
-	}
-
-	ewp.Properties = props
-
-	// insert the repository into the DB
-	dbID, pbRepo, err := r.persistRepository(ctx, ewp)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).
-			Dict("properties", fetchByProps.ToLogDict()).
-			Msg("error persisting repository")
-		// Attempt to clean up the webhook we created earlier. This is a
-		// best-effort attempt: If it fails, the customer either has to delete
-		// the hook manually, or it will be deleted the next time the customer
-		// attempts to register a repo.
-		cleanupErr := prov.DeregisterEntity(ctx, pb.Entity_ENTITY_REPOSITORIES, props)
-		if cleanupErr != nil {
-			log.Printf("error deleting new webhook: %v", cleanupErr)
+		if errors.Is(err, validators.ErrPrivateRepoForbidden) ||
+			errors.Is(err, validators.ErrArchivedRepoForbidden) {
+			return nil, err
 		}
-		return nil, fmt.Errorf("error creating repository in database: %w", err)
+		return nil, fmt.Errorf("error creating repository: %w", err)
 	}
 
-	// publish a reconciling event for the registered repositories
-	if err = r.pushReconcilerEvent(dbID, projectID, provider.ID); err != nil {
-		return nil, err
+	// Convert to protobuf
+	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
+	if err != nil {
+		return nil, fmt.Errorf("error converting entity to protobuf: %w", err)
+	}
+
+	pbRepo, ok := somePB.(*pb.Repository)
+	if !ok {
+		return nil, fmt.Errorf("couldn't convert to protobuf. unexpected type: %T", somePB)
 	}
 
 	// Telemetry logging
 	logger.BusinessRecord(ctx).ProviderID = provider.ID
 	logger.BusinessRecord(ctx).Project = projectID
-	logger.BusinessRecord(ctx).Repository = dbID
+	logger.BusinessRecord(ctx).Repository = ewp.Entity.ID
 
 	return pbRepo, nil
 }

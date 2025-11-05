@@ -4206,9 +4206,12 @@ message RegisterEntityRequest {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // identifier_property is a blob that uniquely identifies the entity.
-    // This is meant to be interpreted by the provider.
-    string identifier_property = 3;
+    // identifying_properties uniquely identifies the entity in the provider.
+    // For example, for a GitHub repository use github/repo_owner and github/repo_name,
+    // or use upstream_id to identify by provider's internal ID.
+    google.protobuf.Struct identifying_properties = 3 [
+        (google.api.field_behavior) = REQUIRED
+    ];
 }
 
 // RegisterEntityResponse is the response message for the RegisterEntity method
