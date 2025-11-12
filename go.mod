@@ -118,6 +118,7 @@ require (
 	cloud.google.com/go/monitoring v1.24.2 // indirect
 	cloud.google.com/go/spanner v1.84.1 // indirect
 	cloud.google.com/go/storage v1.57.0 // indirect
+	cyphar.com/go-pathrs v0.2.1 // indirect
 	deps.dev/api/v3 v3.0.0-20250616031631-419a06b41f9b // indirect
 	deps.dev/api/v3alpha v0.0.0-20250616031631-419a06b41f9b // indirect
 	deps.dev/util/maven v0.0.0-20250616031631-419a06b41f9b // indirect
@@ -283,7 +284,7 @@ require (
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.1 // indirect
-	github.com/opencontainers/selinux v1.12.0 // indirect
+	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251003203216-7c0d09a1cc5a // indirect
 	github.com/ossf/osv-schema/bindings/go v0.0.0-20250527054414-66246866dc20 // indirect
@@ -385,7 +386,7 @@ require (
 	github.com/containerd/stargz-snapshotter/estargz v0.16.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 // indirect
-	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/cyphar/filepath-securejoin v0.6.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/digitorus/pkcs7 v0.0.0-20230818184609-3a137a874352 // indirect
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
