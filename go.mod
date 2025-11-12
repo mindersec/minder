@@ -81,7 +81,7 @@ require (
 	github.com/thomaspoignant/go-feature-flag v1.47.0
 	github.com/wneessen/go-mail v0.7.2
 	github.com/yuin/goldmark v1.7.12
-	gitlab.com/gitlab-org/api/client-go v0.142.2
+	gitlab.com/gitlab-org/api/client-go v0.159.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.63.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	go.opentelemetry.io/otel v1.38.0
@@ -108,7 +108,7 @@ require (
 )
 
 require (
-	cel.dev/expr v0.24.0 // indirect
+	cel.dev/expr v0.25.0 // indirect
 	cloud.google.com/go v0.121.6 // indirect
 	cloud.google.com/go/auth v0.17.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
