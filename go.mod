@@ -55,7 +55,7 @@ require (
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1
 	github.com/open-policy-agent/opa v1.9.0
 	github.com/openfga/go-sdk v0.7.1
-	github.com/openfga/openfga v1.10.3
+	github.com/openfga/openfga v1.11.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.23.2
 	github.com/protobom/protobom v0.5.4
@@ -136,6 +136,7 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.53.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.53.0 // indirect
+	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/Microsoft/hcsshim v0.13.0 // indirect
@@ -286,11 +287,11 @@ require (
 	github.com/opencontainers/runtime-spec v1.2.1 // indirect
 	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67 // indirect
-	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251003203216-7c0d09a1cc5a // indirect
+	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251027165255-0f8f255e5f6c // indirect
 	github.com/ossf/osv-schema/bindings/go v0.0.0-20250527054414-66246866dc20 // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
-	github.com/pressly/goose/v3 v3.25.0 // indirect
+	github.com/pressly/goose/v3 v3.26.0 // indirect
 	github.com/prometheus/otlptranslator v0.0.2 // indirect
 	github.com/puzpuzpuz/xsync v1.5.2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -362,11 +363,11 @@ require (
 	k8s.io/api v0.34.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
-	modernc.org/libc v1.66.3 // indirect
+	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.39.0 // indirect
-	sigs.k8s.io/controller-runtime v0.22.1 // indirect
+	modernc.org/sqlite v1.39.1 // indirect
+	sigs.k8s.io/controller-runtime v0.22.3 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
@@ -392,7 +393,7 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
 	github.com/docker/cli v28.2.2+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
-	github.com/docker/docker v28.4.0+incompatible // indirect
+	github.com/docker/docker v28.5.1+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.3 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
