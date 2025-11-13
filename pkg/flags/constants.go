@@ -4,8 +4,6 @@
 package flags
 
 const (
-	// UserManagement enables user management, i.e. invitations, role assignments, etc.
-	UserManagement Experiment = "user_management"
 	// DockerHubProvider enables the DockerHub provider.
 	DockerHubProvider Experiment = "dockerhub_provider"
 	// GitLabProvider enables the GitLab provider.
