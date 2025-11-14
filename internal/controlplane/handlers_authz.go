@@ -384,7 +384,7 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 			// Leaving the role assignment empty as it's an invitation
 			Invitation: invitation,
 		}, nil
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
+
 	} else if sub != "" && inviteeEmail == "" {
 		identity, err := s.idClient.Resolve(ctx, sub)
 		if err != nil || identity == nil {
@@ -440,7 +440,6 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 			Invitation: deletedInvitation,
 		}, nil
 
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment
 		deletedRoleAssignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
@@ -497,7 +496,6 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 			},
 		}, nil
 
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
 	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment update
 		updatedAssignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
