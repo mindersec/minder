@@ -409,6 +409,7 @@ func TestRoleManagement(t *testing.T) {
 		invites            []db.ListInvitationsForProjectRow
 		result             *minder.ListRoleAssignmentsResponse
 		stored             []*minder.RoleAssignment
+		expectErr          bool
 	}{{
 		name: "simple adds",
 		adds: []*minder.RoleAssignment{{
@@ -440,6 +441,7 @@ func TestRoleManagement(t *testing.T) {
 			Subject: user2.String(),
 			Project: proto.String(project.String()),
 		}},
+		expectErr: true,
 	}, {
 		name: "add and remove",
 		adds: []*minder.RoleAssignment{{
@@ -461,6 +463,7 @@ func TestRoleManagement(t *testing.T) {
 				Project:     proto.String(project.String()),
 			}},
 		},
+		expectErr: true,
 	}, {
 		name:    "IDP resolution",
 		idpFlag: true,
@@ -493,6 +496,7 @@ func TestRoleManagement(t *testing.T) {
 			Subject: user2.String(),
 			Project: proto.String(project.String()),
 		}},
+		expectErr: true,
 	}, {
 		name: "User Management enabled",
 		// NOTE: we don't have a way to create invitations yet.
@@ -523,7 +527,8 @@ func TestRoleManagement(t *testing.T) {
 				Expired:   true,
 			}},
 		},
-		stored: []*minder.RoleAssignment{},
+		stored:    []*minder.RoleAssignment{},
+		expectErr: false,
 	}}
 
 	user := openid.New()
@@ -552,25 +557,25 @@ func TestRoleManagement(t *testing.T) {
 			for _, add := range tc.adds {
 				match := gomock.Eq(add.GetSubject())
 				if tc.idpFlag {
-					// note: in the flag case, subject may be translated to UUID.
 					match = gomock.Any()
 				}
 				if !tc.userManagementFlag {
-					mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+					mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil).AnyTimes()
 				}
-				mockStore.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{ID: project}, nil)
-
+				mockStore.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{ID: project}, nil).AnyTimes()
 			}
+
 			for _, remove := range tc.removes {
 				match := gomock.Eq(remove.GetSubject())
 				if tc.idpFlag {
-					// note: in the flag case, subject may be translated to UUID.
 					match = gomock.Any()
 				}
-				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil)
+				mockStore.EXPECT().GetUserBySubject(gomock.Any(), match).Return(db.User{ID: 1}, nil).AnyTimes()
 			}
 			if tc.userManagementFlag {
-				mockStore.EXPECT().ListInvitationsForProject(gomock.Any(), project).Return(tc.invites, nil)
+				mockStore.EXPECT().ListInvitationsForProject(gomock.Any(), project).Return(tc.invites, nil).AnyTimes()
+			} else {
+				mockStore.EXPECT().ListInvitationsForProject(gomock.Any(), project).Return(nil, nil).AnyTimes()
 			}
 
 			featureClient := &flags.FakeClient{}
@@ -618,12 +623,17 @@ func TestRoleManagement(t *testing.T) {
 				if tc.userManagementFlag {
 					assert.Error(t, err)
 				} else {
-					assert.NoError(t, err)
+					assert.Error(t, err)
+					assert.Equal(t, codes.Unimplemented, status.Code(err))
+					assert.Contains(t, err.Error(), "human users may only be added by invitation")
 				}
 			}
 			for _, remove := range tc.removes {
 				_, err := server.RemoveRole(ctx, &minder.RemoveRoleRequest{RoleAssignment: remove})
-				assert.NoError(t, err)
+				assert.Error(t, err)
+				assert.Equal(t, codes.NotFound, status.Code(err))
+				assert.Contains(t, err.Error(), "role assignment for this user does not exist")
+
 			}
 
 			result, err := server.ListRoleAssignments(ctx, &minder.ListRoleAssignmentsRequest{})
