@@ -4,7 +4,7 @@ go 1.24.8
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
-	buf.build/go/protovalidate v1.0.0
+	buf.build/go/protovalidate v1.0.1
 	buf.build/go/protoyaml v0.6.0
 	github.com/ThreeDotsLabs/watermill v1.5.1
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
@@ -92,7 +92,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/mock v0.6.0
 	golang.org/x/crypto v0.45.0
-	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
+	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6
 	golang.org/x/oauth2 v0.33.0
 	golang.org/x/sync v0.18.0
 	golang.org/x/term v0.37.0
@@ -349,7 +349,6 @@ require (
 	golang.org/x/telemetry v0.0.0-20251008203120-078029d740a8 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
-	golang.org/x/tools/go/packages/packagestest v0.1.1-deprecated // indirect
 	golang.org/x/vuln v1.1.4 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.16.0 // indirect
