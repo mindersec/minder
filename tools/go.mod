@@ -11,7 +11,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/mikefarah/yq/v4 v4.49.2
 	github.com/norwoodj/helm-docs v1.14.2
-	github.com/oapi-codegen/oapi-codegen/v2 v2.5.0
+	github.com/oapi-codegen/oapi-codegen/v2 v2.5.1
 	github.com/openfga/cli v0.7.8
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.30.0
@@ -134,7 +134,7 @@ require (
 	github.com/firefart/nonamedreturns v1.0.6 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
-	github.com/getkin/kin-openapi v0.132.0 // indirect
+	github.com/getkin/kin-openapi v0.133.0 // indirect
 	github.com/ghostiam/protogetter v0.3.17 // indirect
 	github.com/go-chi/chi/v5 v5.2.3 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
@@ -340,6 +340,7 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/wasilibs/go-pgquery v0.0.0-20250409022910-10ac41983c07 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20240620070341-3dff1577cd52 // indirect
+	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/xen0n/gosmopolitan v1.3.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yagipy/maintidx v1.0.0 // indirect
