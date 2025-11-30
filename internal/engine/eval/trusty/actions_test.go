@@ -116,7 +116,6 @@ func TestBuildProvenanceStruct(t *testing.T) {
 			mustNil: true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res := buildProvenanceStruct(tc.sut)

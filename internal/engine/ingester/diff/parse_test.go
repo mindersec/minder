@@ -118,7 +118,6 @@ func TestGoParse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.description, func(t *testing.T) {
 			t.Parallel()
 			got, err := goParse(tt.content)
@@ -339,7 +338,6 @@ func TestPyPiParse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.description, func(t *testing.T) {
 			t.Parallel()
 			got, err := requirementsParse(tt.content)
@@ -507,7 +505,6 @@ func TestNpmParse(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.description, func(t *testing.T) {
 			t.Parallel()
 			got, err := npmParse(tt.content)

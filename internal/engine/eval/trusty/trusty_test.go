@@ -104,7 +104,6 @@ func TestBuildEvalResult(t *testing.T) {
 			},
 		}, false, true},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res := buildEvalResult(tc.sut)
@@ -144,7 +143,6 @@ func TestParseRuleConfig(t *testing.T) {
 			}, true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res, err := parseRuleConfig(tc.sut)
@@ -168,7 +166,6 @@ func TestReadPullRequestDependencies(t *testing.T) {
 		{name: "normal", sut: &interfaces.Ingested{Object: &pbinternal.PrDependencies{}}, mustErr: false},
 		{name: "invalid-object", sut: &interfaces.Ingested{Object: context.Background()}, mustErr: true},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			deps, err := readPullRequestDependencies(tc.sut)
@@ -193,7 +190,6 @@ func TestNewTrustyEvaluator(t *testing.T) {
 		{"normal", ghProvider, false},
 		{"no-provider", nil, true},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			c, err := NewTrustyEvaluator(context.Background(), tc.prv)
@@ -305,7 +301,6 @@ func TestClassifyDependency(t *testing.T) {
 			mustFilter: false,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			handler := summaryPrHandler{}
@@ -370,7 +365,6 @@ func TestMakeScoreComponents(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			scoreMatrix := makeScoreComponents(tc.sut)
@@ -434,7 +428,6 @@ func TestEvaluationDetailRendering(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

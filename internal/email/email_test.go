@@ -44,7 +44,6 @@ func TestIsValidField(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable for parallel execution
 		t.Run(tt.input, func(t *testing.T) {
 			t.Parallel()
 			err := isValidField(tt.input)
@@ -161,7 +160,6 @@ func TestValidateDataSourceTemplate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable for parallel execution
 		t.Run(tt.input.AdminName, func(t *testing.T) {
 			t.Parallel()
 			err := tt.input.Validate()

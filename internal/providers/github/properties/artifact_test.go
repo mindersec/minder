@@ -73,7 +73,6 @@ func TestParseArtifactName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			owner, name, artifactType, err := parseArtifactName(tt.input)
@@ -126,7 +125,6 @@ func TestGetName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			props := properties.NewProperties(tt.props)
@@ -167,7 +165,6 @@ func TestGetNameFromParams(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			result := getNameFromParams(tt.owner, tt.artifact)
@@ -215,7 +212,6 @@ func TestGetArtifactWrapperAttrsFromProps(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			props := properties.NewProperties(tt.props)

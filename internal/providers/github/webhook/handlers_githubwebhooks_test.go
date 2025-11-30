@@ -2661,7 +2661,6 @@ func (s *UnitTestSuite) TestHandleGitHubWebHook() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -3255,7 +3254,6 @@ func (s *UnitTestSuite) TestHandleGitHubAppWebHook() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

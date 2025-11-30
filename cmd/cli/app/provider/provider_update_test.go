@@ -66,7 +66,6 @@ func (s *UnitTestSuite) TestParseConfigAttribute() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -151,7 +150,6 @@ func (s *UnitTestSuite) TestByJSONName() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -254,7 +252,6 @@ func (s *UnitTestSuite) TestGetField() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -351,7 +348,6 @@ func (s *UnitTestSuite) TestInitField() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -499,7 +495,6 @@ func (s *UnitTestSuite) TestConfigAttribute() {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

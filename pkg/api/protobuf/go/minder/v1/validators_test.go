@@ -60,7 +60,6 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -135,7 +134,6 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -266,7 +264,6 @@ func TestRuleType_Definition_Eval_JQComparison_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -321,7 +318,6 @@ func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -370,7 +366,6 @@ func TestDataSourceReference_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -420,7 +415,6 @@ func TestRuleType_Definition_Alert_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -467,7 +461,6 @@ func TestRuleType_Definition_Alert_AlertTypePRComment_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -545,7 +538,6 @@ func TestRuleType_Definition_Remediate_Validate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -664,7 +656,6 @@ func TestRuleType_Definition_Remediate_PullRequestRemediation_Validate(t *testin
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -700,7 +691,6 @@ func TestRuleType_Definition_Remediate_GhBranchProtectionType_Validate(t *testin
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

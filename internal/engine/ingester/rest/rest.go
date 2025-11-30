@@ -88,7 +88,6 @@ func NewRestRuleDataIngest(
 
 	fallback := make([]ingestorFallback, len(restCfg.Fallback))
 	for _, fb := range restCfg.Fallback {
-		fb := fb
 		fallback = append(fallback, ingestorFallback{
 			httpCode: int(fb.HttpCode),
 			body:     fb.Body,

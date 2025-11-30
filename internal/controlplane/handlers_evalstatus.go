@@ -368,7 +368,6 @@ func (s *Server) sortEntitiesEvaluationStatus(
 	}
 
 	for _, p := range profileList {
-		p := p
 		evals, err := store.ListRuleEvaluationsByProfileId(
 			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.Profile.ID},
 		)

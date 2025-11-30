@@ -157,7 +157,6 @@ func TestWaitForRateLimitReset(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			th := setupTest(t)
@@ -218,7 +217,6 @@ func TestPerformWithRetry(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			result, err := performWithRetry(context.Background(), tt.operation)
@@ -557,7 +555,6 @@ func TestGetArtifactVersions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
