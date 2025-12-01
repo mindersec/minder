@@ -53,7 +53,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/open-feature/go-sdk v1.15.1
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1
-	github.com/open-policy-agent/opa v1.10.1
+	github.com/open-policy-agent/opa v1.11.0
 	github.com/openfga/go-sdk v0.7.3
 	github.com/openfga/openfga v1.11.1
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
@@ -139,7 +139,7 @@ require (
 	github.com/IBM/pgxpoolprometheus v1.1.2 // indirect
 	github.com/Masterminds/squirrel v1.5.4 // indirect
 	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
-	github.com/Microsoft/hcsshim v0.13.0 // indirect
+	github.com/Microsoft/hcsshim v0.14.0-rc.1 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/a8m/envsubst v1.4.3 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
@@ -173,15 +173,15 @@ require (
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250616121729-19b66ab4499b // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251022180443-0feb69152e9f // indirect
-	github.com/containerd/cgroups/v3 v3.0.5 // indirect
+	github.com/containerd/cgroups/v3 v3.1.0 // indirect
 	github.com/containerd/containerd v1.7.29 // indirect
-	github.com/containerd/containerd/api v1.9.0 // indirect
+	github.com/containerd/containerd/api v1.10.0 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/containerd/platforms v1.0.0-rc.1 // indirect
+	github.com/containerd/platforms v1.0.0-rc.2 // indirect
 	github.com/containerd/ttrpc v1.2.7 // indirect
 	github.com/containerd/typeurl/v2 v2.2.3 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
@@ -198,7 +198,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
 	github.com/elliotchance/orderedmap v1.8.0 // indirect
-	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
+	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.35.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
@@ -253,7 +253,7 @@ require (
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
 	github.com/lestrrat-go/httprc/v3 v3.0.1 // indirect
 	github.com/lestrrat-go/iter v1.0.2 // indirect
-	github.com/lestrrat-go/jwx/v3 v3.0.11 // indirect
+	github.com/lestrrat-go/jwx/v3 v3.0.12 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/mattn/go-localereader v0.0.1 // indirect
@@ -302,7 +302,7 @@ require (
 	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/secDre4mer/pkcs7 v0.0.0-20240322103146-665324a4461d // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.1 // indirect
-	github.com/segmentio/asm v1.2.0 // indirect
+	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/signalfx/splunk-otel-go/instrumentation/internal v1.28.0 // indirect
@@ -327,7 +327,7 @@ require (
 	github.com/transparency-dev/formats v0.0.0-20250421220931-bb8ad4d07c26 // indirect
 	github.com/transparency-dev/tessera v1.0.0-rc3 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
-	github.com/vektah/gqlparser/v2 v2.5.30 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.31 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
@@ -337,7 +337,7 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	github.com/zitadel/logging v0.6.2 // indirect
 	github.com/zitadel/schema v1.3.1 // indirect
-	go.etcd.io/bbolt v1.4.1 // indirect
+	go.etcd.io/bbolt v1.4.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.38.0 // indirect
