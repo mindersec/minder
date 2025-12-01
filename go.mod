@@ -35,7 +35,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.20.7
 	github.com/google/go-github/v63 v63.0.0
-	github.com/google/osv-scalibr v0.3.2
+	github.com/google/osv-scalibr v0.3.4
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/securecookie v1.1.2
@@ -119,12 +119,12 @@ require (
 	cloud.google.com/go/spanner v1.84.1 // indirect
 	cloud.google.com/go/storage v1.57.1 // indirect
 	cyphar.com/go-pathrs v0.2.1 // indirect
-	deps.dev/api/v3 v3.0.0-20250616031631-419a06b41f9b // indirect
-	deps.dev/api/v3alpha v0.0.0-20250616031631-419a06b41f9b // indirect
-	deps.dev/util/maven v0.0.0-20250616031631-419a06b41f9b // indirect
-	deps.dev/util/pypi v0.0.0-20250616031631-419a06b41f9b // indirect
-	deps.dev/util/resolve v0.0.0-20250616031631-419a06b41f9b // indirect
-	deps.dev/util/semver v0.0.0-20250610062038-1c74ed268106 // indirect
+	deps.dev/api/v3 v3.0.0-20250903005441-604c45d5b44b // indirect
+	deps.dev/api/v3alpha v0.0.0-20250903005441-604c45d5b44b // indirect
+	deps.dev/util/maven v0.0.0-20250903005441-604c45d5b44b // indirect
+	deps.dev/util/pypi v0.0.0-20250903005441-604c45d5b44b // indirect
+	deps.dev/util/resolve v0.0.0-20250903005441-604c45d5b44b // indirect
+	deps.dev/util/semver v0.0.0-20250903005441-604c45d5b44b // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20240806141605-e8a1dd7889d6 // indirect
 	github.com/AdamKorcz/go-118-fuzz-build v0.0.0-20231105174938-2b5cbb29f3e2 // indirect
@@ -288,7 +288,7 @@ require (
 	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/openfga/api/proto v0.0.0-20250909172242-b4b2a12f5c67 // indirect
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20251027165255-0f8f255e5f6c // indirect
-	github.com/ossf/osv-schema/bindings/go v0.0.0-20250527054414-66246866dc20 // indirect
+	github.com/ossf/osv-schema/bindings/go v0.0.0-20250805051309-c463400aa925 // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pressly/goose/v3 v3.26.0 // indirect
@@ -321,6 +321,7 @@ require (
 	github.com/tidwall/jsonc v0.3.2 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tink-crypto/tink-go/v2 v2.4.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/tonistiigi/go-csvvalue v0.0.0-20240814133006-030d3b2625d0 // indirect
@@ -365,6 +366,7 @@ require (
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.40.1 // indirect
+	osv.dev/bindings/go v0.0.0-20250808040635-c189436f8791 // indirect
 	sigs.k8s.io/controller-runtime v0.22.4 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
