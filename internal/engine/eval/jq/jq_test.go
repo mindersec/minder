@@ -66,7 +66,6 @@ func TestNewJQEvaluatorValid(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -175,7 +174,6 @@ func TestNewJQEvaluatorInvalid(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -358,7 +356,6 @@ func TestValidJQEvals(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -568,7 +565,6 @@ func TestValidJQEvalsFailed(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -639,7 +635,6 @@ func TestInvalidJQEvals(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -692,7 +687,6 @@ func TestEvaluationDetailRendering(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

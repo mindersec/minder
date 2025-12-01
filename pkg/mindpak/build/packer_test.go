@@ -117,7 +117,6 @@ func TestPackerInitBundle(t *testing.T) {
 			mustErr: true,
 		},
 	} {
-		tc := tc
 		t.Run(t.Name(), func(t *testing.T) {
 			t.Parallel()
 
@@ -211,7 +210,6 @@ func TestValidateInitOpts(t *testing.T) {
 			shouldErr: true,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			err := tc.opts.Validate()

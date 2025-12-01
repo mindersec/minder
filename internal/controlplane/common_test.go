@@ -26,7 +26,6 @@ func TestGetRemediationURLFromMetadata(t *testing.T) {
 		{"no-slug-no-pr", []byte(`{}`), "", "", true},
 		{"invalid-json", []byte(`Yo!`), "", "", true},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			url, err := getRemediationURLFromMetadata(tc.data, tc.repo)
@@ -58,7 +57,6 @@ func TestGetAlertURLFromMetadata(t *testing.T) {
 		{"no-advisory", []byte(`{"ghsa_id": ""}`), "", "", true},
 		{"invalid-slug", []byte(`{"ghsa_id": "abc"}`), "invalid slug", "", true},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res, err := getAlertURLFromMetadata(tc.data, tc.repo)

@@ -253,7 +253,6 @@ func TestEntityToSelectorEntity(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		scenario := scenario
 
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()

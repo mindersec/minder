@@ -216,7 +216,6 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	}
 
 	for _, cache := range caches {
-		cache := cache
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
 			cache.ProjectID, cache.EntityInstanceID)

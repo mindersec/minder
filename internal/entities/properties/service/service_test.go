@@ -606,7 +606,6 @@ func TestPropertiesService_EntityWithPropertiesByUpstreamHint(t *testing.T) {
 	}
 
 	for _, tt := range scenarios {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 

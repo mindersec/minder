@@ -37,7 +37,6 @@ func TestSeverity_MarshalJSON(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -84,7 +83,6 @@ func TestSeverity_UnmarshalJSON(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -127,7 +125,6 @@ func TestRuleType_WithDefaultShortFailureMessage(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -179,7 +176,6 @@ func TestRuleTypeState_MarshalJSON(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -224,7 +220,6 @@ func TestRuleTypeState_UnmarshalJSON(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

@@ -474,7 +474,6 @@ func TestProfileLabels(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -632,7 +631,6 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -2998,7 +2996,6 @@ func TestCreateProfileStatusMultiRuleTransitions(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -3335,7 +3332,6 @@ func TestCreateProfileStatusStoredProcedure(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -3574,7 +3570,6 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -3846,7 +3841,6 @@ func TestListRuleEvaluations(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()

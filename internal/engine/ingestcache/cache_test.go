@@ -106,7 +106,6 @@ func TestCache(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run("cache test "+tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -130,7 +129,6 @@ func TestCache(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 
 		t.Run("noopcache test "+tt.name, func(t *testing.T) {
 			t.Parallel()

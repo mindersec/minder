@@ -53,7 +53,6 @@ func TestManifestWrite(t *testing.T) {
 			false,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			b := bytes.NewBuffer([]byte{})

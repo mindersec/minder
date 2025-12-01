@@ -87,7 +87,6 @@ func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			res := buildEvalResultAlertFromLRERow(tc.sut, tc.efp)

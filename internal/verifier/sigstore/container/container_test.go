@@ -88,7 +88,6 @@ func TestBundleFromOCIImage(t *testing.T) {
 			err: ErrProvenanceNotFoundOrIncomplete,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			tc.prepare(t, fmt.Sprintf("bundle-from-oci-image/%s", tc.name))
