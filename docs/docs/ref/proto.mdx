@@ -2344,7 +2344,7 @@ RegisterEntityRequest is the request message for the RegisterEntity method
 | ----- | ---- | ----- | ----------- |
 | context | <TypeLink type="minder-v1-ContextV2">ContextV2</TypeLink> |  | context is the context in which the entity is created |
 | entity_type | <TypeLink type="minder-v1-Entity">Entity</TypeLink> |  | entity_type is the type of entity to create |
-| identifier_property | <TypeLink type="string">string</TypeLink> |  | identifier_property is a blob that uniquely identifies the entity. This is meant to be interpreted by the provider. |
+| identifying_properties | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | identifying_properties uniquely identifies the entity in the provider. For example, for a GitHub repository use github/repo_owner and github/repo_name, or use upstream_id to identify by provider's internal ID. |
 
 
 

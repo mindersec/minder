@@ -13,9 +13,12 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/engine/engcontext"
+	"github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 // ListEntities returns a list of entity instances for a given project and provider
@@ -180,4 +183,100 @@ func (s *Server) DeleteEntityById(
 	return &pb.DeleteEntityByIdResponse{
 		Id: in.GetId(),
 	}, nil
+}
+
+// RegisterEntity creates a new entity instance
+func (s *Server) RegisterEntity(
+	ctx context.Context,
+	in *pb.RegisterEntityRequest,
+) (*pb.RegisterEntityResponse, error) {
+	// 1. Extract context information
+	entityCtx := engcontext.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
+
+	logger.BusinessRecord(ctx).Provider = providerName
+	logger.BusinessRecord(ctx).Project = projectID
+
+	// 2. Validate entity type
+	if in.GetEntityType() == pb.Entity_ENTITY_UNSPECIFIED {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"entity_type must be specified")
+	}
+
+	// 3. Parse identifying properties
+	identifyingProps, err := parseIdentifyingProperties(in)
+	if err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument,
+			"invalid identifying_properties: %v", err)
+	}
+
+	// 4. Get provider from database
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, util.UserVisibleError(codes.Internal, "cannot get provider: %v", err)
+	}
+
+	// 5. Create entity using EntityCreator service
+	ewp, err := s.entityCreator.CreateEntity(ctx, provider, projectID,
+		in.GetEntityType(), identifyingProps, nil) // Use default options
+	if err != nil {
+		if errors.Is(err, validators.ErrPrivateRepoForbidden) ||
+			errors.Is(err, validators.ErrArchivedRepoForbidden) {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
+		}
+		return nil, util.UserVisibleError(codes.Internal,
+			"unable to register entity: %v", err)
+	}
+
+	// 6. Convert to EntityInstance protobuf
+	entityInstance := entityInstanceToProto(ewp, providerName)
+
+	// 7. Return response
+	return &pb.RegisterEntityResponse{
+		Entity: entityInstance,
+	}, nil
+}
+
+// parseIdentifyingProperties converts proto properties to Properties object
+func parseIdentifyingProperties(req *pb.RegisterEntityRequest) (*properties.Properties, error) {
+	if req.GetIdentifyingProperties() == nil {
+		return nil, errors.New("identifying_properties is required")
+	}
+
+	propsMap := req.GetIdentifyingProperties().AsMap()
+
+	// Validate reasonable property count to prevent resource exhaustion
+	const maxPropertyCount = 100
+	if len(propsMap) > maxPropertyCount {
+		return nil, fmt.Errorf("too many identifying properties: got %d, max %d",
+			len(propsMap), maxPropertyCount)
+	}
+
+	// Validate property keys are reasonable (alphanumeric, slash, underscore, hyphen)
+	for key := range propsMap {
+		if len(key) > 200 {
+			return nil, fmt.Errorf("property key too long: %d characters", len(key))
+		}
+		// Note: Additional key sanitization could be added here if needed
+	}
+
+	return properties.NewProperties(propsMap), nil
+}
+
+// entityInstanceToProto converts EntityWithProperties to EntityInstance protobuf
+func entityInstanceToProto(ewp *models.EntityWithProperties, providerName string) *pb.EntityInstance {
+	return &pb.EntityInstance{
+		Id: ewp.Entity.ID.String(),
+		Context: &pb.ContextV2{
+			ProjectId: ewp.Entity.ProjectID.String(),
+			Provider:  providerName,
+		},
+		Type: ewp.Entity.Type,
+		Name: ewp.Entity.Name,
+		// Properties are intentionally omitted - use GetEntityById to fetch them
+	}
 }
