@@ -938,10 +938,10 @@ github.com/onsi/ginkgo/v2 v2.22.0 h1:Yed107/8DjTr0lKCNt7Dn8yQ6ybuDRQoMGrNFKzMfHg
 github.com/onsi/ginkgo/v2 v2.22.0/go.mod h1:7Du3c42kxCUegi0IImZ1wUQzMBVecgIHjR1C+NkhLQo=
 github.com/onsi/gomega v1.36.1 h1:bJDPBO7ibjxcbHMgSCoo4Yj18UWbKDlLwX1x9sybDcw=
 github.com/onsi/gomega v1.36.1/go.mod h1:PvZbdDc8J6XJEpDK4HCuRBm8a6Fzp9/DmhC9C7yFlog=
-github.com/open-feature/go-sdk v1.15.1 h1:TC3FtHtOKlGlIbSf3SEpxXVhgTd/bCbuc39XHIyltkw=
-github.com/open-feature/go-sdk v1.15.1/go.mod h1:2WAFYzt8rLYavcubpCoiym3iSCXiHdPB6DxtMkv2wyo=
-github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1 h1:CACPIcxuILTqd7eVCXm8o4yuE4quxqt0xvz2VQA2eI4=
-github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.1/go.mod h1:UwIvBpdR91l2aSoHZRFlwtTeScl1yXK823BRzFSfa3Q=
+github.com/open-feature/go-sdk v1.16.0 h1:5NCHYv5slvNBIZhYXAzAufo0OI59OACZ5tczVqSE+Tg=
+github.com/open-feature/go-sdk v1.16.0/go.mod h1:EIF40QcoYT1VbQkMPy2ZJH4kvZeY+qGUXAorzSWgKSo=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.2 h1:Q9dNN8ymSVX/w9LH1DEE+txxdQIsAhTts8FwOkBwZgc=
+github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.2/go.mod h1:YAxDx9EvOcQq1BwFpZHYAiE5aLNx9v4AEJAiWft5Xv4=
 github.com/open-policy-agent/opa v1.11.0 h1:eOd/jJrbavakiX477yT4LrXZfUWViAot/AsKsjsfe7o=
 github.com/open-policy-agent/opa v1.11.0/go.mod h1:QimuJO4T3KYxWzrmAymqlFvsIanCjKrGjmmC8GgAdgE=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
