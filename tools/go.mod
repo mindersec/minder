@@ -6,7 +6,7 @@ require (
 	github.com/bufbuild/buf v1.61.0
 	github.com/daixiang0/gci v0.13.7
 	github.com/go-critic/go-critic v0.14.2
-	github.com/golangci/golangci-lint/v2 v2.6.2
+	github.com/golangci/golangci-lint/v2 v2.7.2
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3
 	github.com/mikefarah/yq/v4 v4.50.1
@@ -64,7 +64,7 @@ require (
 	github.com/Masterminds/sprig v2.15.0+incompatible // indirect
 	github.com/Masterminds/sprig/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/MirrexOne/unqueryvet v1.2.1 // indirect
+	github.com/MirrexOne/unqueryvet v1.3.0 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.2.1 // indirect
 	github.com/Yiling-J/theine-go v0.6.2 // indirect
 	github.com/a8m/envsubst v1.4.3 // indirect
@@ -94,7 +94,7 @@ require (
 	github.com/bufbuild/protoplugin v0.0.0-20250218205857-750e09ce93e1 // indirect
 	github.com/butuzov/ireturn v0.4.0 // indirect
 	github.com/butuzov/mirror v1.3.0 // indirect
-	github.com/catenacyber/perfsprint v0.10.0 // indirect
+	github.com/catenacyber/perfsprint v0.10.1 // indirect
 	github.com/ccojocar/zxcvbn-go v1.0.4 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -160,7 +160,7 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/goccy/go-yaml v1.19.0 // indirect
-	github.com/godoc-lint/godoc-lint v0.10.1 // indirect
+	github.com/godoc-lint/godoc-lint v0.10.2 // indirect
 	github.com/gofrs/flock v0.13.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -188,7 +188,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-immutable-radix/v2 v2.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
@@ -234,7 +234,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
-	github.com/mgechev/revive v1.12.0 // indirect
+	github.com/mgechev/revive v1.13.0 // indirect
 	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -307,7 +307,7 @@ require (
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.29.0 // indirect
 	github.com/schollz/progressbar/v3 v3.18.0 // indirect
-	github.com/securego/gosec/v2 v2.22.10 // indirect
+	github.com/securego/gosec/v2 v2.22.11-0.20251204091113-daccba6b93d7 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.3 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
@@ -324,7 +324,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spf13/viper v1.21.0 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
-	github.com/stbenjam/no-sprintf-host-port v0.2.0 // indirect
+	github.com/stbenjam/no-sprintf-host-port v0.3.1 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
@@ -334,7 +334,7 @@ require (
 	github.com/tidwall/btree v1.8.1 // indirect
 	github.com/timakin/bodyclose v0.0.0-20241222091800-1db5c5ca4d67 // indirect
 	github.com/timonwong/loggercheck v0.11.0 // indirect
-	github.com/tomarrell/wrapcheck/v2 v2.11.0 // indirect
+	github.com/tomarrell/wrapcheck/v2 v2.12.0 // indirect
 	github.com/tommy-muehle/go-mnd/v2 v2.5.1 // indirect
 	github.com/ultraware/funlen v0.2.0 // indirect
 	github.com/ultraware/whitespace v0.2.0 // indirect
