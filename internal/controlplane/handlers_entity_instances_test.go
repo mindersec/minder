@@ -363,19 +363,22 @@ func TestParseIdentifyingProperties(t *testing.T) {
 			errContains: "identifying_properties is required",
 		},
 		{
-			name: "rejects too many properties",
+			name: "rejects properties that are too large",
 			request: &pb.RegisterEntityRequest{
 				IdentifyingProperties: func() *structpb.Struct {
-					props := make(map[string]any)
-					for i := 0; i < 101; i++ {
-						props[string(rune('a'+i%26))+string(rune(i))] = "value"
+					// Create a value large enough to exceed 32KB limit
+					largeValue := string(make([]byte, 33*1024))
+					for i := range largeValue {
+						largeValue = string(append([]byte(largeValue[:i]), 'x'))
 					}
-					s, _ := structpb.NewStruct(props)
+					s, _ := structpb.NewStruct(map[string]any{
+						"large_key": largeValue,
+					})
 					return s
 				}(),
 			},
 			wantErr:     true,
-			errContains: "too many identifying properties",
+			errContains: "identifying_properties too large",
 		},
 		{
 			name: "rejects property key that is too long",

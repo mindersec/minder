@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
@@ -245,25 +246,27 @@ func (s *Server) RegisterEntity(
 
 // parseIdentifyingProperties converts proto properties to Properties object
 func parseIdentifyingProperties(req *pb.RegisterEntityRequest) (*properties.Properties, error) {
-	if req.GetIdentifyingProperties() == nil {
+	identifyingProps := req.GetIdentifyingProperties()
+	if identifyingProps == nil {
 		return nil, errors.New("identifying_properties is required")
 	}
 
-	propsMap := req.GetIdentifyingProperties().AsMap()
-
-	// Validate reasonable property count to prevent resource exhaustion
-	const maxPropertyCount = 100
-	if len(propsMap) > maxPropertyCount {
-		return nil, fmt.Errorf("too many identifying properties: got %d, max %d",
-			len(propsMap), maxPropertyCount)
+	// Validate total size to prevent resource exhaustion
+	// Using proto.Size provides a better bound than counting properties,
+	// as it accounts for arbitrarily large values in a Struct
+	const maxProtoSize = 32 * 1024 // 32KB should be plenty for identifying properties
+	if protoSize := proto.Size(identifyingProps); protoSize > maxProtoSize {
+		return nil, fmt.Errorf("identifying_properties too large: %d bytes, max %d bytes",
+			protoSize, maxProtoSize)
 	}
 
-	// Validate property keys are reasonable (alphanumeric, slash, underscore, hyphen)
+	propsMap := identifyingProps.AsMap()
+
+	// Validate property keys are reasonable length
 	for key := range propsMap {
 		if len(key) > 200 {
 			return nil, fmt.Errorf("property key too long: %d characters", len(key))
 		}
-		// Note: Additional key sanitization could be added here if needed
 	}
 
 	return properties.NewProperties(propsMap), nil

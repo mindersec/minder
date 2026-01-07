@@ -37,9 +37,6 @@ type EntityCreationOptions struct {
 
 	// Whether to publish reconciliation events
 	PublishReconciliationEvent bool
-
-	// Custom validators to run (in addition to default validators)
-	CustomValidators []EntityValidator
 }
 
 // EntityCreator creates entities in a consistent, reusable way
@@ -125,8 +122,8 @@ func (e *entityCreator) CreateEntity(
 		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
 
-	// 4. Run validators (default + custom)
-	if err := e.runValidators(ctx, entityType, allProps, projectID, opts.CustomValidators); err != nil {
+	// 4. Run validators
+	if err := e.runValidators(ctx, entityType, allProps, projectID); err != nil {
 		return nil, err
 	}
 
@@ -175,8 +172,9 @@ func (e *entityCreator) CreateEntity(
 			return nil, fmt.Errorf("error creating entity: %w", err)
 		}
 
-		// Save properties
-		if err := e.propSvc.SaveAllProperties(ctx, ent.ID, registeredProps,
+		// Replace properties - use Replace to ensure a clean slate
+		// (removes any stale properties from previous failed attempts)
+		if err := e.propSvc.ReplaceAllProperties(ctx, ent.ID, registeredProps,
 			propService.CallBuilder().WithStoreOrTransaction(t)); err != nil {
 			return nil, fmt.Errorf("error saving properties: %w", err)
 		}
@@ -206,10 +204,8 @@ func (e *entityCreator) runValidators(
 	entityType pb.Entity,
 	allProps *properties.Properties,
 	projectID uuid.UUID,
-	customValidators []EntityValidator,
 ) error {
-	allValidators := append(e.validators, customValidators...)
-	for _, validator := range allValidators {
+	for _, validator := range e.validators {
 		if err := validator.Validate(ctx, entityType, allProps, projectID); err != nil {
 			return err
 		}
