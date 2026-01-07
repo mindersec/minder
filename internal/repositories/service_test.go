@@ -5,8 +5,6 @@ package repositories_test
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -21,6 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/models"
 	mock_propservice "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	mock_entityservice "github.com/mindersec/minder/internal/entities/service/mock"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -33,89 +32,88 @@ import (
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
+// NOTE: Tests for CreateRepository that test the internal EntityCreator behavior have been
+// moved to service_integration_test.go and internal/entities/service/entity_creator_test.go.
+// The tests below now focus on the RepositoryService's direct responsibilities:
+// - Calling EntityCreator with correct parameters
+// - Converting the result to protobuf
+// - Error propagation
+
 func TestRepositoryService_CreateRepository(t *testing.T) {
 	t.Parallel()
 
 	scenarios := []struct {
-		Name              string
-		ProviderSetupFail bool
-		ServiceSetup      propSvcMockBuilder
-		DBSetup           dbMockBuilder
-		ProviderSetup     providerMockBuilder
-		EventsSetup       eventMockBuilder
-		EventSendFails    bool
-		ExpectedError     string
+		Name          string
+		EntityCreator func(*mock_entityservice.MockEntityCreator)
+		ServiceSetup  propSvcMockBuilder
+		ExpectedError string
 	}{
 		{
-			Name:              "CreateRepository fails when provider cannot be instantiated",
-			ProviderSetupFail: true,
-			ServiceSetup:      newPropSvcMock(),
-			ProviderSetup:     newProviderMock(),
-			ExpectedError:     "error instantiating provider",
+			Name: "CreateRepository succeeds",
+			EntityCreator: func(m *mock_entityservice.MockEntityCreator) {
+				m.EXPECT().
+					CreateEntity(gomock.Any(), gomock.Any(), projectID, pb.Entity_ENTITY_REPOSITORIES, gomock.Any(), gomock.Any()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:         repoID,
+							Type:       pb.Entity_ENTITY_REPOSITORIES,
+							Name:       fmt.Sprintf("%s/%s", repoOwner, repoName),
+							ProjectID:  projectID,
+							ProviderID: uuid.UUID{},
+						},
+						Properties: publicProps,
+					}, nil)
+			},
+			ServiceSetup: newPropSvcMock(withSucessfulEntityToProto),
 		},
 		{
-			Name:          "CreateRepository fails when repo properties cannot be found in GitHub",
-			ServiceSetup:  newPropSvcMock(withFailingGet),
-			ProviderSetup: newProviderMock(),
-			ExpectedError: "error fetching properties for repository",
-		},
-		{
-			Name:          "CreateRepository fails for private repo in project which disallows private repos",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(privateProps)),
-			DBSetup:       newDBMock(withPrivateReposDisabled),
-			ProviderSetup: newProviderMock(),
-			ExpectedError: "private repos cannot be registered in this project",
-		},
-		{
-			Name:          "CreateRepository fails when entity name cannot be retrieved",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps)),
-			ProviderSetup: newProviderMock(withFailedGetEntityName),
-			ExpectedError: "error getting entity name",
-		},
-		{
-			Name:          "CreateRepository fails when entity registration fails",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps)),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withFailedEntityRegister),
-			ExpectedError: "error creating webhook in repo",
-		},
-		{
-			Name:          "CreateRepository fails when entity cannot be converted to proto",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps), withFailedEntityToProto),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister, withSuccessfulDeregister),
-			ExpectedError: "error converting entity to proto",
-		},
-		{
-			Name:          "CreateRepository fails when repo cannot be inserted into database",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps), withSucessfulEntityToProto),
-			DBSetup:       newDBMock(withFailedCreate),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister, withSuccessfulDeregister),
+			Name: "CreateRepository fails when EntityCreator fails",
+			EntityCreator: func(m *mock_entityservice.MockEntityCreator) {
+				m.EXPECT().
+					CreateEntity(gomock.Any(), gomock.Any(), projectID, pb.Entity_ENTITY_REPOSITORIES, gomock.Any(), gomock.Any()).
+					Return(nil, errDefault)
+			},
+			ServiceSetup:  newPropSvcMock(),
 			ExpectedError: "error creating repository",
 		},
 		{
-			Name:          "CreateRepository fails when repo cannot be inserted into database (cleanup fails)",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps), withSucessfulEntityToProto),
-			DBSetup:       newDBMock(withFailedCreate),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister, withFailedDeregister),
-			ExpectedError: "error creating repository",
+			Name: "CreateRepository fails when proto conversion fails",
+			EntityCreator: func(m *mock_entityservice.MockEntityCreator) {
+				m.EXPECT().
+					CreateEntity(gomock.Any(), gomock.Any(), projectID, pb.Entity_ENTITY_REPOSITORIES, gomock.Any(), gomock.Any()).
+					Return(&models.EntityWithProperties{
+						Entity: models.EntityInstance{
+							ID:         repoID,
+							Type:       pb.Entity_ENTITY_REPOSITORIES,
+							Name:       fmt.Sprintf("%s/%s", repoOwner, repoName),
+							ProjectID:  projectID,
+							ProviderID: uuid.UUID{},
+						},
+						Properties: publicProps,
+					}, nil)
+			},
+			ServiceSetup:  newPropSvcMock(withFailedEntityToProto),
+			ExpectedError: "error converting entity to protobuf",
 		},
 		{
-			Name:          "CreateRepository succeeds",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(publicProps), withSucessfulEntityToProto, withSuccessfulReplaceProps),
-			DBSetup:       newDBMock(withSuccessfulCreate),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister),
+			Name: "CreateRepository propagates private repo error",
+			EntityCreator: func(m *mock_entityservice.MockEntityCreator) {
+				m.EXPECT().
+					CreateEntity(gomock.Any(), gomock.Any(), projectID, pb.Entity_ENTITY_REPOSITORIES, gomock.Any(), gomock.Any()).
+					Return(nil, validators.ErrPrivateRepoForbidden)
+			},
+			ServiceSetup:  newPropSvcMock(),
+			ExpectedError: "private repositories are not allowed",
 		},
 		{
-			Name:          "CreateRepository succeeds (private repos enabled)",
-			ServiceSetup:  newPropSvcMock(withSuccessfulPropFetch(privateProps), withSucessfulEntityToProto, withSuccessfulReplaceProps),
-			DBSetup:       newDBMock(withPrivateReposEnabled, withSuccessfulCreate),
-			ProviderSetup: newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister),
-		},
-		{
-			Name:           "CreateRepository succeeds (skips failed event send)",
-			ServiceSetup:   newPropSvcMock(withSuccessfulPropFetch(publicProps), withSucessfulEntityToProto, withSuccessfulReplaceProps),
-			DBSetup:        newDBMock(withSuccessfulCreate),
-			ProviderSetup:  newProviderMock(withSuccessfulGetEntityName, withSuccessfulEntityRegister),
-			EventSendFails: true,
+			Name: "CreateRepository propagates archived repo error",
+			EntityCreator: func(m *mock_entityservice.MockEntityCreator) {
+				m.EXPECT().
+					CreateEntity(gomock.Any(), gomock.Any(), projectID, pb.Entity_ENTITY_REPOSITORIES, gomock.Any(), gomock.Any()).
+					Return(nil, validators.ErrArchivedRepoForbidden)
+			},
+			ServiceSetup:  newPropSvcMock(),
+			ExpectedError: "archived repositories cannot be registered",
 		},
 	}
 
@@ -126,32 +124,18 @@ func TestRepositoryService_CreateRepository(t *testing.T) {
 			defer ctrl.Finish()
 			ctx := context.Background()
 
-			var opt func(mock pf.ProviderManagerMock)
+			mockEntityCreator := mock_entityservice.NewMockEntityCreator(ctrl)
+			scenario.EntityCreator(mockEntityCreator)
 
-			provm := scenario.ProviderSetup(ctrl)
+			mockPropSvc := scenario.ServiceSetup(ctrl)
+			mockEvents := mockevents.NewMockInterface(ctrl)
+			mockEvents.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 
-			if !scenario.ProviderSetupFail {
-				opt = pf.WithSuccessfulInstantiateFromID(provm)
-			} else {
-				opt = pf.WithFailedInstantiateFromID
-			}
-
-			providerSetup := pf.NewProviderManagerMock(opt)
-
-			svc := createService(ctrl, scenario.DBSetup, scenario.ServiceSetup, providerSetup, scenario.EventSendFails)
+			svc := repositories.NewRepositoryService(nil, mockPropSvc, mockEvents, nil, mockEntityCreator)
 			res, err := svc.CreateRepository(ctx, &provider, projectID, fetchByProps)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
-				// Verify the repository was created successfully
 				require.NotNil(t, res)
-				require.NotNil(t, res.Id)
-				require.NotEmpty(t, *res.Id)
-				// Verify other fields match expectations
-				expectation := newExpectation(res.IsPrivate)
-				require.Equal(t, expectation.Owner, res.Owner)
-				require.Equal(t, expectation.Name, res.Name)
-				require.Equal(t, expectation.RepoId, res.RepoId)
-				require.Equal(t, expectation.IsPrivate, res.IsPrivate)
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
@@ -491,7 +475,6 @@ var (
 	publicRepo   = newGithubRepo(false)
 	fetchByProps = newFetchByGithubRepoProperties()
 	publicProps  = newGithubRepoProperties(false)
-	privateProps = newGithubRepoProperties(true)
 	provider     = db.Provider{
 		ID:         uuid.UUID{},
 		Name:       providerName,
@@ -505,8 +488,6 @@ type (
 	dbMockBuilder       = func(controller *gomock.Controller) dbMock
 	propSvcMock         = *mock_propservice.MockPropertiesService
 	propSvcMockBuilder  = func(controller *gomock.Controller) propSvcMock
-	eventMock           = *mockevents.MockInterface
-	eventMockBuilder    = func(controller *gomock.Controller) eventMock
 	providerMock        = *mockgithub.MockGitHub
 	providerMockBuilder = func(controller *gomock.Controller) providerMock
 )
@@ -560,37 +541,6 @@ func withSuccessfulGetByName(mock dbMock) {
 		Return([]db.EntityInstance{{ID: dbRepo.ID}}, nil)
 }
 
-func withFailedCreate(mock dbMock) {
-	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
-	mock.EXPECT().BeginTransaction().Return(nil, nil)
-	mock.EXPECT().
-		CreateEntityWithID(gomock.Any(), gomock.Any()).
-		Return(db.EntityInstance{}, errDefault)
-	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
-}
-
-func withSuccessfulCreate(mock dbMock) {
-	mock.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mock)
-	mock.EXPECT().BeginTransaction().Return(nil, nil)
-	mock.EXPECT().
-		CreateEntityWithID(gomock.Any(), gomock.Any()).
-		Return(db.EntityInstance{}, nil)
-	mock.EXPECT().Commit(gomock.Any()).Return(nil)
-	mock.EXPECT().Rollback(gomock.Any()).Return(nil)
-}
-
-func withPrivateReposEnabled(mock dbMock) {
-	mock.EXPECT().
-		GetFeatureInProject(gomock.Any(), gomock.Any()).
-		Return(json.RawMessage{}, nil)
-}
-
-func withPrivateReposDisabled(mock dbMock) {
-	mock.EXPECT().
-		GetFeatureInProject(gomock.Any(), gomock.Any()).
-		Return(json.RawMessage{}, sql.ErrNoRows)
-}
-
 func newGithubRepo(isPrivate bool) *gh.Repository {
 	return &gh.Repository{
 		ID:   ghRepoID,
@@ -604,16 +554,6 @@ func newGithubRepo(isPrivate bool) *gh.Repository {
 		Fork:           ptr.Ptr(false),
 		DefaultBranch:  ptr.Ptr("main"),
 	}
-}
-
-func newWebhookProperties(hookID int64, hookUUID string) *properties.Properties {
-	webhookProps := map[string]any{
-		ghprop.RepoPropertyHookId:   hookID,
-		ghprop.RepoPropertyHookUiid: hookUUID,
-	}
-
-	props := properties.NewProperties(webhookProps)
-	return props
 }
 
 func newFetchByGithubRepoProperties() *properties.Properties {
@@ -646,10 +586,6 @@ func newGithubRepoProperties(isPrivate bool) *properties.Properties {
 	return props
 }
 
-func newExpectation(isPrivate bool) *pb.Repository {
-	return instantiatePBRepo(isPrivate)
-}
-
 func instantiatePBRepo(isPrivate bool) *pb.Repository {
 	return &pb.Repository{
 		Id:            ptr.Ptr(dbRepo.ID.String()),
@@ -676,26 +612,6 @@ func newPropSvcMock(opts ...func(mock propSvcMock)) propSvcMockBuilder {
 			opt(ms)
 		}
 		return ms
-	}
-}
-
-func withSuccessfulReplaceProps(mock propSvcMock) {
-	mock.EXPECT().
-		ReplaceAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil)
-}
-
-func withFailingGet(mock propSvcMock) {
-	mock.EXPECT().
-		RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, errDefault)
-}
-
-func withSuccessfulPropFetch(prop *properties.Properties) func(svcMock propSvcMock) {
-	return func(mock propSvcMock) {
-		mock.EXPECT().
-			RetrieveAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(prop, nil)
 	}
 }
 
@@ -743,31 +659,6 @@ func newProviderMock(opts ...func(providerMock)) providerMockBuilder {
 		}
 		return mock
 	}
-}
-
-func withSuccessfulGetEntityName(mock providerMock) {
-	mock.EXPECT().
-		GetEntityName(gomock.Any(), gomock.Any()).
-		Return("entity", nil)
-}
-
-func withFailedGetEntityName(mock providerMock) {
-	mock.EXPECT().
-		GetEntityName(gomock.Any(), gomock.Any()).
-		Return("", errDefault)
-}
-
-func withSuccessfulEntityRegister(mock providerMock) {
-	p := publicProps.Merge(newWebhookProperties(HookID, hookUUID))
-	mock.EXPECT().
-		RegisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(p, nil)
-}
-
-func withFailedEntityRegister(mock providerMock) {
-	mock.EXPECT().
-		RegisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).
-		Return(nil, errDefault)
 }
 
 func withSuccessfulDeregister(mock providerMock) {

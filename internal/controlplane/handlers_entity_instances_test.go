@@ -36,14 +36,14 @@ func TestServer_RegisterEntity(t *testing.T) {
 	providerName := "github"
 
 	tests := []struct {
-		name          string
-		request       *pb.RegisterEntityRequest
-		setupContext  func(context.Context) context.Context
-		setupMocks    func(*mockproviders.MockProviderStore, *mockentitysvc.MockEntityCreator)
-		wantErr       bool
-		wantCode      codes.Code
-		errContains   string
-		validateResp  func(*testing.T, *pb.RegisterEntityResponse)
+		name         string
+		request      *pb.RegisterEntityRequest
+		setupContext func(context.Context) context.Context
+		setupMocks   func(*mockproviders.MockProviderStore, *mockentitysvc.MockEntityCreator)
+		wantErr      bool
+		wantCode     codes.Code
+		errContains  string
+		validateResp func(*testing.T, *pb.RegisterEntityResponse)
 	}{
 		{
 			name: "successfully registers repository",
@@ -95,6 +95,7 @@ func TestServer_RegisterEntity(t *testing.T) {
 			},
 			wantErr: false,
 			validateResp: func(t *testing.T, resp *pb.RegisterEntityResponse) {
+				t.Helper()
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.GetEntity())
 				assert.Equal(t, entityID.String(), resp.GetEntity().GetId())
@@ -118,9 +119,7 @@ func TestServer_RegisterEntity(t *testing.T) {
 					Provider: engcontext.Provider{Name: providerName},
 				})
 			},
-			setupMocks: func(provStore *mockproviders.MockProviderStore, creator *mockentitysvc.MockEntityCreator) {
-				// No mocks needed - should fail early
-			},
+			// No mocks needed - should fail early
 			wantErr:     true,
 			wantCode:    codes.InvalidArgument,
 			errContains: "entity_type must be specified",
@@ -138,7 +137,7 @@ func TestServer_RegisterEntity(t *testing.T) {
 					Provider: engcontext.Provider{Name: providerName},
 				})
 			},
-			setupMocks: func(provStore *mockproviders.MockProviderStore, creator *mockentitysvc.MockEntityCreator) {},
+			// No mocks needed - should fail early
 			wantErr:     true,
 			wantCode:    codes.InvalidArgument,
 			errContains: "identifying_properties is required",
@@ -159,7 +158,7 @@ func TestServer_RegisterEntity(t *testing.T) {
 					Provider: engcontext.Provider{Name: providerName},
 				})
 			},
-			setupMocks: func(provStore *mockproviders.MockProviderStore, creator *mockentitysvc.MockEntityCreator) {
+			setupMocks: func(provStore *mockproviders.MockProviderStore, _ *mockentitysvc.MockEntityCreator) {
 				provStore.EXPECT().
 					GetByName(gomock.Any(), projectID, providerName).
 					Return(nil, sql.ErrNoRows)
@@ -286,7 +285,9 @@ func TestServer_RegisterEntity(t *testing.T) {
 			mockProvStore := mockproviders.NewMockProviderStore(ctrl)
 			mockEntityCreator := mockentitysvc.NewMockEntityCreator(ctrl)
 
-			tt.setupMocks(mockProvStore, mockEntityCreator)
+			if tt.setupMocks != nil {
+				tt.setupMocks(mockProvStore, mockEntityCreator)
+			}
 
 			server := &Server{
 				providerStore: mockProvStore,
@@ -342,6 +343,7 @@ func TestParseIdentifyingProperties(t *testing.T) {
 			},
 			wantErr: false,
 			validate: func(t *testing.T, props *properties.Properties) {
+				t.Helper()
 				owner := props.GetProperty("github/repo_owner").GetString()
 				assert.Equal(t, "stacklok", owner)
 
@@ -402,6 +404,7 @@ func TestParseIdentifyingProperties(t *testing.T) {
 			},
 			wantErr: false,
 			validate: func(t *testing.T, props *properties.Properties) {
+				t.Helper()
 				// Empty properties is valid (provider will validate)
 				assert.NotNil(t, props)
 			},

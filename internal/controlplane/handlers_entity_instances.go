@@ -14,7 +14,6 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
-	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -224,9 +223,12 @@ func (s *Server) RegisterEntity(
 	ewp, err := s.entityCreator.CreateEntity(ctx, provider, projectID,
 		in.GetEntityType(), identifyingProps, nil) // Use default options
 	if err != nil {
-		if errors.Is(err, validators.ErrPrivateRepoForbidden) ||
-			errors.Is(err, validators.ErrArchivedRepoForbidden) {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err.Error())
+		// If the error is already a UserVisibleError, pass it through directly.
+		// This allows providers and EntityCreator to add user-visible errors
+		// without needing to update this allow-list.
+		var userErr *util.NiceStatus
+		if errors.As(err, &userErr) {
+			return nil, err
 		}
 		return nil, util.UserVisibleError(codes.Internal,
 			"unable to register entity: %v", err)

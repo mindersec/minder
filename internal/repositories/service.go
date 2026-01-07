@@ -21,11 +21,8 @@ import (
 	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers/manager"
-	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
-	"github.com/mindersec/minder/internal/util/ptr"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
-	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -427,69 +424,4 @@ func (r *repositoryService) deleteRepository(
 	}
 
 	return nil
-}
-
-func (r *repositoryService) pushReconcilerEvent(entityID uuid.UUID, projectID uuid.UUID, providerID uuid.UUID) error {
-	log.Printf("publishing register event for repository: %s", entityID.String())
-
-	msg, err := reconcilers.NewRepoReconcilerMessage(providerID, entityID, projectID)
-	if err != nil {
-		return fmt.Errorf("error creating reconciler event: %v", err)
-	}
-
-	// This is a non-fatal error, so we'll just log it and continue with the next ones
-	if err = r.eventProducer.Publish(constants.TopicQueueReconcileRepoInit, msg); err != nil {
-		log.Printf("error publishing reconciler event: %v", err)
-	}
-
-	return nil
-}
-
-// returns DB PK along with protobuf representation of a repo
-func (r *repositoryService) persistRepository(
-	ctx context.Context,
-	ewp *models.EntityWithProperties,
-) (uuid.UUID, *pb.Repository, error) {
-	var outid uuid.UUID
-	somePB, err := r.propSvc.EntityWithPropertiesAsProto(ctx, ewp, r.providerManager)
-	if err != nil {
-		return uuid.Nil, nil, fmt.Errorf("error converting entity to protobuf: %w", err)
-	}
-
-	pbRepo, ok := somePB.(*pb.Repository)
-	if !ok {
-		return uuid.Nil, nil, fmt.Errorf("couldn't convert to protobuf. unexpected type: %T", somePB)
-	}
-
-	pbr, err := db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
-		// Generate a new UUID for the entity
-		entityID := uuid.New()
-		outid = entityID
-		pbRepo.Id = ptr.Ptr(entityID.String())
-
-		repoEnt, err := t.CreateEntityWithID(ctx, db.CreateEntityWithIDParams{
-			ID:         entityID,
-			EntityType: db.EntitiesRepository,
-			Name:       ewp.Entity.Name,
-			ProjectID:  ewp.Entity.ProjectID,
-			ProviderID: ewp.Entity.ProviderID,
-		})
-		if err != nil {
-			return pbRepo, fmt.Errorf("error creating entity: %w", err)
-		}
-
-		err = r.propSvc.ReplaceAllProperties(ctx, repoEnt.ID, ewp.Properties,
-			service.CallBuilder().WithStoreOrTransaction(t))
-
-		if err != nil {
-			return pbRepo, fmt.Errorf("error saving properties for repository: %w", err)
-		}
-
-		return pbRepo, err
-	})
-	if err != nil {
-		return uuid.Nil, nil, err
-	}
-
-	return outid, pbr, nil
 }

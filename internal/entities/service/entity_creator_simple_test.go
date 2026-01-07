@@ -191,7 +191,7 @@ type testEntityValidator struct {
 	failError  error
 }
 
-func (v *testEntityValidator) Validate(ctx context.Context, entType pb.Entity, props *properties.Properties, projectID uuid.UUID) error {
+func (v *testEntityValidator) Validate(_ context.Context, _ pb.Entity, _ *properties.Properties, _ uuid.UUID) error {
 	if v.shouldFail {
 		return v.failError
 	}

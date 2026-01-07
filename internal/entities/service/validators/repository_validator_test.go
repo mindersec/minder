@@ -39,9 +39,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsPrivate:  false,
 			}),
-			setupMocks: func(store *mockdb.MockStore) {
-				// No feature flag check needed for public repos
-			},
+			// No feature flag check needed for public repos
 			wantErr: false,
 		},
 		// Note: Testing private repository feature flag logic is complex
@@ -54,9 +52,8 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 				properties.RepoPropertyIsArchived: true,
 				properties.RepoPropertyIsPrivate:  false,
 			}),
-			setupMocks: func(store *mockdb.MockStore) {},
-			wantErr:    true,
-			errIs:      validators.ErrArchivedRepoForbidden,
+			wantErr: true,
+			errIs:   validators.ErrArchivedRepoForbidden,
 		},
 		{
 			name:       "skips validation for non-repository entities",
@@ -64,9 +61,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 			props: properties.NewProperties(map[string]any{
 				"some_property": "value",
 			}),
-			setupMocks: func(store *mockdb.MockStore) {
-				// No mocks needed - should return early
-			},
+			// No mocks needed - should return early
 			wantErr: false,
 		},
 		{
@@ -75,8 +70,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 			props: properties.NewProperties(map[string]any{
 				"name": "artifact",
 			}),
-			setupMocks: func(store *mockdb.MockStore) {},
-			wantErr:    false,
+			wantErr: false,
 		},
 		{
 			name:       "handles missing is_archived property gracefully",
@@ -85,8 +79,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 				properties.RepoPropertyIsPrivate: false,
 				// is_archived missing
 			}),
-			setupMocks: func(store *mockdb.MockStore) {},
-			wantErr:    true,
+			wantErr:     true,
 			errContains: "is_archived property",
 		},
 		{
@@ -96,8 +89,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 				properties.RepoPropertyIsArchived: false,
 				// is_private missing
 			}),
-			setupMocks: func(store *mockdb.MockStore) {},
-			wantErr:    true,
+			wantErr:     true,
 			errContains: "is_private property",
 		},
 	}
@@ -110,7 +102,9 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 			defer ctrl.Finish()
 
 			mockStore := mockdb.NewMockStore(ctrl)
-			tt.setupMocks(mockStore)
+			if tt.setupMocks != nil {
+				tt.setupMocks(mockStore)
+			}
 
 			validator := validators.NewRepositoryValidator(mockStore)
 

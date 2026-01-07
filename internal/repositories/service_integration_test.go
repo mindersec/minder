@@ -84,6 +84,7 @@ func TestRepositoryService_CreateRepository_Integration(t *testing.T) {
 			},
 			wantErr: false,
 			validateResult: func(t *testing.T, repo *pb.Repository) {
+				t.Helper()
 				require.NotNil(t, repo)
 				assert.NotNil(t, repo.Id)
 				assert.Equal(t, "test-repo", repo.Name)
@@ -92,7 +93,7 @@ func TestRepositoryService_CreateRepository_Integration(t *testing.T) {
 		},
 		{
 			name: "returns archived error from EntityCreator",
-			setupMocks: func(creator *mock_entityservice.MockEntityCreator, propSvc *mock_propservice.MockPropertiesService) {
+			setupMocks: func(creator *mock_entityservice.MockEntityCreator, _ *mock_propservice.MockPropertiesService) {
 				creator.EXPECT().
 					CreateEntity(gomock.Any(), testProvider, projectID, pb.Entity_ENTITY_REPOSITORIES, fetchByProps, gomock.Any()).
 					Return(nil, validators.ErrArchivedRepoForbidden)
@@ -102,7 +103,7 @@ func TestRepositoryService_CreateRepository_Integration(t *testing.T) {
 		},
 		{
 			name: "returns private repo error from EntityCreator",
-			setupMocks: func(creator *mock_entityservice.MockEntityCreator, propSvc *mock_propservice.MockPropertiesService) {
+			setupMocks: func(creator *mock_entityservice.MockEntityCreator, _ *mock_propservice.MockPropertiesService) {
 				creator.EXPECT().
 					CreateEntity(gomock.Any(), testProvider, projectID, pb.Entity_ENTITY_REPOSITORIES, fetchByProps, gomock.Any()).
 					Return(nil, validators.ErrPrivateRepoForbidden)
@@ -112,7 +113,7 @@ func TestRepositoryService_CreateRepository_Integration(t *testing.T) {
 		},
 		{
 			name: "wraps generic errors from EntityCreator",
-			setupMocks: func(creator *mock_entityservice.MockEntityCreator, propSvc *mock_propservice.MockPropertiesService) {
+			setupMocks: func(creator *mock_entityservice.MockEntityCreator, _ *mock_propservice.MockPropertiesService) {
 				creator.EXPECT().
 					CreateEntity(gomock.Any(), testProvider, projectID, pb.Entity_ENTITY_REPOSITORIES, fetchByProps, gomock.Any()).
 					Return(nil, errors.New("some internal error"))

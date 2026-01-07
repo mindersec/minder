@@ -7,9 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
-	"google.golang.org/protobuf/reflect/protoreflect"
-
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/handlers/message"
 	"github.com/mindersec/minder/internal/entities/handlers/strategies"
@@ -17,7 +14,6 @@ import (
 	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
 	entityService "github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/providers/manager"
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -83,15 +79,4 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 // GetName returns the name of the strategy. Used for debugging
 func (*addOriginatingEntityStrategy) GetName() string {
 	return "addOriginatingEntityStrategy"
-}
-
-func (*addOriginatingEntityStrategy) upsertLegacyEntity(
-	_ context.Context,
-	_ minderv1.Entity,
-	_ *models.EntityWithProperties, _ protoreflect.ProtoMessage,
-	_ db.ExtendQuerier,
-) (uuid.UUID, error) {
-	// Legacy entity writes have been removed as part of Phase 1 of the legacy table removal plan.
-	// All entities are now written only to entity_instances and properties tables.
-	return uuid.Nil, nil
 }

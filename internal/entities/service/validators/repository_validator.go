@@ -6,24 +6,23 @@ package validators
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/projects/features"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 var (
 	// ErrPrivateRepoForbidden is returned when a private repository is not allowed
-	// This is exported for use by other packages that need to check for this specific error
-	ErrPrivateRepoForbidden = errors.New("private repositories are not allowed in this project")
+	ErrPrivateRepoForbidden = util.UserVisibleError(codes.InvalidArgument, "private repositories are not allowed in this project")
 	// ErrArchivedRepoForbidden is returned when an archived repository cannot be registered
-	// This is exported for use by other packages that need to check for this specific error
-	ErrArchivedRepoForbidden = errors.New("archived repositories cannot be registered")
+	ErrArchivedRepoForbidden = util.UserVisibleError(codes.InvalidArgument, "archived repositories cannot be registered")
 )
 
 // RepositoryValidator validates repository entity creation
@@ -54,7 +53,7 @@ func (v *RepositoryValidator) Validate(
 		return fmt.Errorf("error checking is_archived property: %w", err)
 	}
 	if isArchived {
-		return fmt.Errorf("repository validation failed: %w", ErrArchivedRepoForbidden)
+		return ErrArchivedRepoForbidden
 	}
 
 	// Check if private
@@ -63,7 +62,7 @@ func (v *RepositoryValidator) Validate(
 		return fmt.Errorf("error checking is_private property: %w", err)
 	}
 	if isPrivate && !features.ProjectAllowsPrivateRepos(ctx, v.store, projectID) {
-		return fmt.Errorf("repository validation failed: %w", ErrPrivateRepoForbidden)
+		return ErrPrivateRepoForbidden
 	}
 
 	return nil

@@ -24,7 +24,6 @@ import (
 	"github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/entities/properties/service/mock/fixtures"
 	stubeventer "github.com/mindersec/minder/internal/events/stubs"
-	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockgithub "github.com/mindersec/minder/internal/providers/github/mock"
 	ghprops "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -96,10 +95,6 @@ type (
 	providerMockBuilder = func(controller *gomock.Controller) providerMock
 )
 
-func getPullRequestProperties() *properties.Properties {
-	return properties.NewProperties(pullRequestPropMap)
-}
-
 func newProviderMock(opts ...func(providerMock)) providerMockBuilder {
 	return func(ctrl *gomock.Controller) providerMock {
 		mock := mockgithub.NewMockGitHub(ctrl)
@@ -107,22 +102,6 @@ func newProviderMock(opts ...func(providerMock)) providerMockBuilder {
 			opt(mock)
 		}
 		return mock
-	}
-}
-
-func withSuccessfulGetEntityName(name string) func(providerMock) {
-	return func(mock providerMock) {
-		mock.EXPECT().
-			GetEntityName(gomock.Any(), gomock.Any()).
-			Return(name, nil)
-	}
-}
-
-func withSuccessfulFetchAllProperties(props *properties.Properties) func(mock providerMock) {
-	return func(mock providerMock) {
-		mock.EXPECT().
-			FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-			Return(props, nil)
 	}
 }
 
@@ -168,18 +147,6 @@ func checkRepoMessage(t *testing.T, msg *watermill.Message) {
 	assert.Equal(t, repoPropMap[properties.RepoPropertyIsFork].(bool), pbrepo.IsFork)
 }
 
-func checkPullRequestMessage(t *testing.T, msg *watermill.Message) {
-	t.Helper()
-
-	eiw, err := entities.ParseEntityEvent(msg)
-	require.NoError(t, err)
-	require.NotNil(t, eiw)
-
-	pbpr, ok := eiw.Entity.(*pbinternal.PullRequest)
-	require.True(t, ok)
-	assert.Equal(t, pullRequestPropMap[ghprops.PullPropertyNumber].(int64), pbpr.Number)
-}
-
 type handlerBuilder func(
 	evt interfaces.Publisher,
 	store db.Store,
@@ -203,17 +170,6 @@ func refreshByIDHandlerBuilder(
 	provMgr manager.ProviderManager,
 ) interfaces.Consumer {
 	return NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, provMgr)
-}
-
-func addOriginatingEntityHandlerBuilder(
-	evt interfaces.Publisher,
-	store db.Store,
-	propSvc service.PropertiesService,
-	provMgr manager.ProviderManager,
-) interfaces.Consumer {
-	// Create a nil entityCreator for testing - the tests focus on other handlers
-	// and addOriginatingEntityHandler tests would need separate setup
-	return NewAddOriginatingEntityHandler(evt, store, propSvc, provMgr, nil)
 }
 
 func removeOriginatingEntityHandlerBuilder(
@@ -548,80 +504,80 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 		// The test was testing internal implementation details that have been refactored
 		// New tests for addOriginatingEntityHandler should be written that properly mock EntityCreator
 		/*
-		{
-			name:             "NewAddOriginatingEntityHandler: Adding a pull request originating entity publishes",
-			handlerBuilderFn: addOriginatingEntityHandlerBuilder,
-			messageBuilder: func() *message.HandleEntityAndDoMessage {
-				prProps := properties.NewProperties(map[string]any{
-					properties.PropertyUpstreamID: "789",
-					ghprops.PullPropertyNumber:    int64(789),
-				})
-				originatorProps := properties.NewProperties(map[string]any{
-					properties.PropertyUpstreamID: "123",
-				})
+			{
+				name:             "NewAddOriginatingEntityHandler: Adding a pull request originating entity publishes",
+				handlerBuilderFn: addOriginatingEntityHandlerBuilder,
+				messageBuilder: func() *message.HandleEntityAndDoMessage {
+					prProps := properties.NewProperties(map[string]any{
+						properties.PropertyUpstreamID: "789",
+						ghprops.PullPropertyNumber:    int64(789),
+					})
+					originatorProps := properties.NewProperties(map[string]any{
+						properties.PropertyUpstreamID: "123",
+					})
 
-				return message.NewEntityRefreshAndDoMessage().
-					WithEntity(minderv1.Entity_ENTITY_PULL_REQUESTS, prProps).
-					WithOriginator(minderv1.Entity_ENTITY_REPOSITORIES, originatorProps).
-					WithProviderImplementsHint("github")
-			},
-			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
-				pullEwp := buildEwp(t, pullRequestEwp, pullRequestPropMap)
-				pullProtoEnt, err := ghprops.PullRequestV1FromProperties(pullEwp.Properties)
-				require.NoError(t, err)
+					return message.NewEntityRefreshAndDoMessage().
+						WithEntity(minderv1.Entity_ENTITY_PULL_REQUESTS, prProps).
+						WithOriginator(minderv1.Entity_ENTITY_REPOSITORIES, originatorProps).
+						WithProviderImplementsHint("github")
+				},
+				setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
+					pullEwp := buildEwp(t, pullRequestEwp, pullRequestPropMap)
+					pullProtoEnt, err := ghprops.PullRequestV1FromProperties(pullEwp.Properties)
+					require.NoError(t, err)
 
-				repoPropsEwp := buildEwp(t, repoEwp, pullRequestPropMap)
+					repoPropsEwp := buildEwp(t, repoEwp, pullRequestPropMap)
 
-				return fixtures.NewMockPropertiesService(
-					fixtures.WithSuccessfulEntityByUpstreamHint(repoPropsEwp, githubHint),
-					fixtures.WithSuccessfulEntityWithPropertiesAsProto(pullProtoEnt),
-					fixtures.WithSuccessfulSaveAllProperties(),
-				)
-			},
-			mockStoreFunc: df.NewMockStore(
-				df.WithTransaction(),
-				df.WithSuccessfulUpsertPullRequestWithParams(
+					return fixtures.NewMockPropertiesService(
+						fixtures.WithSuccessfulEntityByUpstreamHint(repoPropsEwp, githubHint),
+						fixtures.WithSuccessfulEntityWithPropertiesAsProto(pullProtoEnt),
+						fixtures.WithSuccessfulSaveAllProperties(),
+					)
+				},
+				mockStoreFunc: df.NewMockStore(
+					df.WithTransaction(),
+					df.WithSuccessfulUpsertPullRequestWithParams(
 
-					db.EntityInstance{
-						ID:         pullRequestID,
-						EntityType: db.EntitiesPullRequest,
-						Name:       "",
-						ProjectID:  projectID,
-						ProviderID: providerID,
-						OriginatedFrom: uuid.NullUUID{
-							UUID:  repoID,
-							Valid: true,
+						db.EntityInstance{
+							ID:         pullRequestID,
+							EntityType: db.EntitiesPullRequest,
+							Name:       "",
+							ProjectID:  projectID,
+							ProviderID: providerID,
+							OriginatedFrom: uuid.NullUUID{
+								UUID:  repoID,
+								Valid: true,
+							},
 						},
-					},
-					db.CreateOrEnsureEntityByIDParams{
-						ID:         uuid.New(),
-						EntityType: db.EntitiesPullRequest,
-						Name:       pullName,
-						ProjectID:  projectID,
-						ProviderID: providerID,
-						OriginatedFrom: uuid.NullUUID{
-							UUID:  repoID,
-							Valid: true,
+						db.CreateOrEnsureEntityByIDParams{
+							ID:         uuid.New(),
+							EntityType: db.EntitiesPullRequest,
+							Name:       pullName,
+							ProjectID:  projectID,
+							ProviderID: providerID,
+							OriginatedFrom: uuid.NullUUID{
+								UUID:  repoID,
+								Valid: true,
+							},
 						},
-					},
+					),
 				),
-			),
-			providerSetup: newProviderMock(
-				withSuccessfulGetEntityName(pullName),
-				withSuccessfulFetchAllProperties(getPullRequestProperties()),
-				WithSuccessfulPropertiesToProtoMessage(&pbinternal.PullRequest{
-					Number: 789,
-				}),
-			),
-			providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
-				return provManFixtures.NewProviderManagerMock(
-					provManFixtures.WithSuccessfulInstantiateFromID(prov),
-				)
+				providerSetup: newProviderMock(
+					withSuccessfulGetEntityName(pullName),
+					withSuccessfulFetchAllProperties(getPullRequestProperties()),
+					WithSuccessfulPropertiesToProtoMessage(&pbinternal.PullRequest{
+						Number: 789,
+					}),
+				),
+				providerManagerSetup: func(prov provifv1.Provider) provManFixtures.ProviderManagerMockBuilder {
+					return provManFixtures.NewProviderManagerMock(
+						provManFixtures.WithSuccessfulInstantiateFromID(prov),
+					)
+				},
+				expectedPublish: true,
+				topic:           constants.TopicQueueEntityEvaluate,
+				checkWmMsg:      checkPullRequestMessage,
 			},
-			expectedPublish: true,
-			topic:           constants.TopicQueueEntityEvaluate,
-			checkWmMsg:      checkPullRequestMessage,
-		},
 		*/
 		{
 			name:             "NewRemoveOriginatingEntityHandler: Happy path does not publish",

@@ -18,10 +18,11 @@ import (
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
-	"github.com/mindersec/minder/pkg/eventer/constants"
-	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
+	"github.com/mindersec/minder/pkg/eventer/constants"
+	"github.com/mindersec/minder/pkg/eventer/interfaces"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -125,11 +126,8 @@ func (e *entityCreator) CreateEntity(
 	}
 
 	// 4. Run validators (default + custom)
-	allValidators := append(e.validators, opts.CustomValidators...)
-	for _, validator := range allValidators {
-		if err := validator.Validate(ctx, entityType, allProps, projectID); err != nil {
-			return nil, err
-		}
+	if err := e.runValidators(ctx, entityType, allProps, projectID, opts.CustomValidators); err != nil {
+		return nil, err
 	}
 
 	// 5. Get entity name
@@ -151,7 +149,7 @@ func (e *entityCreator) CreateEntity(
 
 	// 7. Persist to database in transaction
 	ewp, err := db.WithTransaction(e.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
-		// Generate or use provided entity ID
+		// Generate entity ID
 		entityID := uuid.New()
 
 		// Prepare params
@@ -187,17 +185,7 @@ func (e *entityCreator) CreateEntity(
 	})
 	if err != nil {
 		// Cleanup: Try to deregister from provider if we registered
-		if opts.RegisterWithProvider && registeredProps != nil {
-			// Use background context for cleanup to avoid cancellation issues
-			cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
-			cleanupErr := prov.DeregisterEntity(cleanupCtx, entityType, registeredProps)
-			if cleanupErr != nil {
-				zerolog.Ctx(ctx).Error().Err(cleanupErr).
-					Msg("error cleaning up provider registration after failure")
-			}
-		}
+		e.cleanupProviderRegistration(ctx, prov, entityType, registeredProps, opts.RegisterWithProvider)
 		return nil, err
 	}
 
@@ -213,8 +201,24 @@ func (e *entityCreator) CreateEntity(
 	return ewp, nil
 }
 
-func (e *entityCreator) publishReconciliationEvent(
+func (e *entityCreator) runValidators(
 	ctx context.Context,
+	entityType pb.Entity,
+	allProps *properties.Properties,
+	projectID uuid.UUID,
+	customValidators []EntityValidator,
+) error {
+	allValidators := append(e.validators, customValidators...)
+	for _, validator := range allValidators {
+		if err := validator.Validate(ctx, entityType, allProps, projectID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *entityCreator) publishReconciliationEvent(
+	_ context.Context,
 	ewp *models.EntityWithProperties,
 	projectID uuid.UUID,
 	providerID uuid.UUID,
@@ -234,4 +238,26 @@ func (e *entityCreator) publishReconciliationEvent(
 	}
 
 	return nil
+}
+
+func (*entityCreator) cleanupProviderRegistration(
+	ctx context.Context,
+	prov provifv1.Provider,
+	entityType pb.Entity,
+	registeredProps *properties.Properties,
+	wasRegistered bool,
+) {
+	if !wasRegistered || registeredProps == nil {
+		return
+	}
+
+	// Use background context for cleanup to avoid cancellation issues
+	cleanupCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cleanupErr := prov.DeregisterEntity(cleanupCtx, entityType, registeredProps)
+	if cleanupErr != nil {
+		zerolog.Ctx(ctx).Error().Err(cleanupErr).
+			Msg("error cleaning up provider registration after failure")
+	}
 }
