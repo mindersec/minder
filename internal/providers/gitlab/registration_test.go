@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -21,11 +20,18 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	testhelper "github.com/mindersec/minder/pkg/providers/v1/testing"
 )
 
 const (
 	upstreamID = "test-upstream-id"
 )
+
+func TestRegistration(t *testing.T) {
+	// We don't need a full constructor here, so we're naughty
+	glc := &gitlabClient{}
+	testhelper.CheckRegistrationExcept(t, glc, minderv1.Entity_ENTITY_REPOSITORIES)
+}
 
 func TestRegisterEntity(t *testing.T) {
 	t.Parallel()
@@ -319,151 +325,6 @@ func TestDeregisterEntity(t *testing.T) {
 			ctx = zerolog.New(testlw).With().Logger().WithContext(ctx)
 
 			err := glc.DeregisterEntity(ctx, tt.entityType, tt.props)
-			if tt.wantErr {
-				assert.Error(t, err)
-				return
-			}
-
-			assert.NoError(t, err)
-		})
-	}
-}
-
-func TestReregisterEntity(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name        string
-		entityType  minderv1.Entity
-		props       *properties.Properties
-		mockHandler func(t *testing.T) http.HandlerFunc
-		wantErr     bool
-	}{
-		{
-			name:       "test reregister entity",
-			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: properties.NewProperties(map[string]any{
-				properties.PropertyUpstreamID: upstreamID,
-				RepoPropertyHookID:            "test-hook-id",
-				RepoPropertyHookURL:           fmt.Sprintf("http://test-hook-url/%s", uuid.New().String()),
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.URL.Path == fmt.Sprintf("/projects/%s/hooks/test-hook-id", upstreamID) {
-						if r.Method == http.MethodPut {
-							w.WriteHeader(http.StatusOK)
-							return
-						}
-					}
-					w.WriteHeader(http.StatusNotFound)
-				})
-			},
-		},
-		{
-			name:       "test reregister entity with error",
-			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: properties.NewProperties(map[string]any{
-				properties.PropertyUpstreamID: upstreamID,
-				RepoPropertyHookID:            "test-hook-id",
-				RepoPropertyHookURL:           "http://test-hook-url",
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusInternalServerError)
-				})
-			},
-			wantErr: true,
-		},
-		{
-			name:       "test reregister entity with missing upstream ID",
-			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: properties.NewProperties(map[string]any{
-				RepoPropertyHookID:  "test-hook-id",
-				RepoPropertyHookURL: "http://test-hook-url",
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusInternalServerError)
-				})
-			},
-			wantErr: true,
-		},
-		{
-			name:       "test reregister entity with missing hook ID",
-			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: properties.NewProperties(map[string]any{
-				properties.PropertyUpstreamID: upstreamID,
-				RepoPropertyHookURL:           "http://test-hook-url",
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusInternalServerError)
-				})
-			},
-			wantErr: true,
-		},
-		{
-			name:       "test reregister entity with missing hook URL",
-			entityType: minderv1.Entity_ENTITY_REPOSITORIES,
-			props: properties.NewProperties(map[string]any{
-				properties.PropertyUpstreamID: upstreamID,
-				RepoPropertyHookID:            "test-hook-id",
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusInternalServerError)
-				})
-			},
-			wantErr: true,
-		},
-		{
-			name:       "test reregister entity with unsupported entity type",
-			entityType: minderv1.Entity_ENTITY_UNSPECIFIED,
-			props: properties.NewProperties(map[string]any{
-				properties.PropertyUpstreamID: upstreamID,
-				RepoPropertyHookID:            "test-hook-id",
-				RepoPropertyHookURL:           "http://test-hook-url",
-			}),
-			mockHandler: func(t *testing.T) http.HandlerFunc {
-				t.Helper()
-				return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					w.WriteHeader(http.StatusInternalServerError)
-				})
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			mocksrv := httptest.NewServer(tt.mockHandler(t))
-			defer mocksrv.Close()
-
-			cli := mocksrv.Client()
-
-			glc := &gitlabClient{
-				cred: &mockCredentials{},
-				glcfg: &minderv1.GitLabProviderConfig{
-					Endpoint: mocksrv.URL,
-				},
-				cli:                  cli,
-				currentWebhookSecret: "test-secret",
-			}
-
-			ctx := context.Background()
-			testlw := zerolog.NewTestWriter(t)
-
-			// attach the logger to the context
-			ctx = zerolog.New(testlw).With().Logger().WithContext(ctx)
-
-			err := glc.ReregisterEntity(ctx, tt.entityType, tt.props)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

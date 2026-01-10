@@ -194,23 +194,18 @@ func (*dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface
-func (*dockerHubImageLister) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+func (d *dockerHubImageLister) RegisterEntity(
+	_ context.Context, entType minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {
-	// TODO: implement
-	return nil, nil
+	if !d.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+	// we don't need to do any explicit registration
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface
 func (*dockerHubImageLister) DeregisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
-) error {
-	// TODO: implement
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (*dockerHubImageLister) ReregisterEntity(
 	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
 ) error {
 	// TODO: implement

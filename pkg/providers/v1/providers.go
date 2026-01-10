@@ -33,6 +33,10 @@ const (
 // ErrEntityNotFound is the error returned when an entity is not found
 var ErrEntityNotFound = errors.New("entity not found")
 
+// ErrUnsupportedEntity is used when a provider is asked to register an
+// entity type which it does not recognize.
+var ErrUnsupportedEntity = errors.New("entity not supported by provider")
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // Provider is the general interface for all providers
@@ -51,7 +55,16 @@ type Provider interface {
 
 	// RegisterEntity ensures that the service provider has the necessary information
 	// to know that the entity is handled by Minder. This could be creating a webhook
-	// for a particular repository or artifact.
+	// for a particular repository or artifact, tagging a resource in some way, or
+	// even a no-op.
+	//
+	// If the provider is able to register the entity, it should return the full set
+	// of properties (including ones fetched from the provider backend) and a `nil`
+	// error.  If the entity is not supported by the current provider, the provider
+	// MUST return a nil properties set and an UnsupportedEntity error (or a wrapped
+	// version thereof).  If the entity is supported but the registration fails for
+	// for some reason, the original properties and the failure error should be returned.
+	//
 	// Note that the provider might choose to update the properties of the entity
 	// adding the information about the registration. e.g. The webhook ID and URL.
 	RegisterEntity(ctx context.Context, entType minderv1.Entity, props *properties.Properties) (*properties.Properties, error)

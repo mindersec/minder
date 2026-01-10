@@ -53,17 +53,13 @@ func (*TestKit) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface.
-func (*TestKit) RegisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
-	return nil, nil
+func (*TestKit) RegisterEntity(_ context.Context, _ minderv1.Entity, props *properties.Properties) (*properties.Properties, error) {
+	// Since this is a test scaffold, we accept all entity types
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface.
 func (*TestKit) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface.
-func (*TestKit) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	return nil
 }
 

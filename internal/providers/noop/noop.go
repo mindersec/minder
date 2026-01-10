@@ -47,17 +47,12 @@ func (*Provider) SupportsEntity(_ minderv1.Entity) bool {
 
 // RegisterEntity implements the Provider interface
 func (*Provider) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties) (*properties.Properties, error) {
-	return nil, nil
+	_ context.Context, _ minderv1.Entity, props *properties.Properties) (*properties.Properties, error) {
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface
 func (*Provider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (*Provider) ReregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	return nil
 }
 

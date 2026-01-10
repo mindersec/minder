@@ -70,22 +70,14 @@ func (*RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
 
 // RegisterEntity implements the Provider interface
 func (*RESTProvider) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+	_ context.Context, _ minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {
-	// TODO: implement
-	return nil, nil
+	// Since this is a test framework, we accept all entity types
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface
 func (*RESTProvider) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
-	// TODO: implement
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (*RESTProvider) ReregisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
-) error {
 	// TODO: implement
 	return nil
 }

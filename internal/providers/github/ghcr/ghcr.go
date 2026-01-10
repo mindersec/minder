@@ -155,23 +155,19 @@ func (*ImageLister) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface
-func (*ImageLister) RegisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
+func (i *ImageLister) RegisterEntity(
+	_ context.Context, entType minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {
-	// TODO: implement
-	return nil, nil
+	if !i.SupportsEntity(entType) {
+		return nil, provifv1.ErrUnsupportedEntity
+	}
+	// we don't need to do any explicit registration
+	return props, nil
 }
 
 // DeregisterEntity implements the Provider interface
 func (*ImageLister) DeregisterEntity(_ context.Context, _ minderv1.Entity, _ *properties.Properties) error {
 	// TODO: implement
-	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (*ImageLister) ReregisterEntity(
-	_ context.Context, _ minderv1.Entity, _ *properties.Properties,
-) error {
 	return nil
 }
 

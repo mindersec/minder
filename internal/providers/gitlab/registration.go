@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // RegisterEntity implements the Provider interface
@@ -27,7 +28,7 @@ func (c *gitlabClient) RegisterEntity(
 	ctx context.Context, entType minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {
 	if !c.SupportsEntity(entType) {
-		return nil, errors.New("unsupported entity type")
+		return nil, provifv1.ErrUnsupportedEntity
 	}
 
 	if entType != minderv1.Entity_ENTITY_REPOSITORIES {
@@ -86,32 +87,6 @@ func (c *gitlabClient) DeregisterEntity(
 	}
 
 	return nil
-}
-
-// ReregisterEntity implements the Provider interface
-func (c *gitlabClient) ReregisterEntity(
-	ctx context.Context, entType minderv1.Entity, props *properties.Properties,
-) error {
-	if !c.SupportsEntity(entType) {
-		return errors.New("unsupported entity type")
-	}
-
-	upstreamID := props.GetProperty(properties.PropertyUpstreamID).GetString()
-	if upstreamID == "" {
-		return errors.New("missing upstream ID")
-	}
-
-	hookID := props.GetProperty(RepoPropertyHookID).GetString()
-	if hookID == "" {
-		return errors.New("missing hook ID")
-	}
-
-	hookURL := props.GetProperty(RepoPropertyHookURL).GetString()
-	if hookURL == "" {
-		return errors.New("missing hook URL")
-	}
-
-	return c.updateWebhook(ctx, upstreamID, hookID, hookURL)
 }
 
 func (c *gitlabClient) createWebhook(ctx context.Context, upstreamID string) (*properties.Properties, error) {
