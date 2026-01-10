@@ -53,7 +53,8 @@ func (*TestKit) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // RegisterEntity implements the Provider interface.
-func (*TestKit) RegisterEntity(_ context.Context, _ minderv1.Entity, props *properties.Properties) (*properties.Properties, error) {
+func (*TestKit) RegisterEntity(_ context.Context, _ minderv1.Entity, props *properties.Properties,
+) (*properties.Properties, error) {
 	// Since this is a test scaffold, we accept all entity types
 	return props, nil
 }

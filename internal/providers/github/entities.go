@@ -54,6 +54,7 @@ func (c *GitHub) RegisterEntity(
 		return nil, provifv1.ErrUnsupportedEntity
 	}
 
+	//nolint:exhaustive
 	switch entityType {
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		fallthrough

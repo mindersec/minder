@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
+// Package testing provides common functions which can be used to implement provider tests.
 package testing
 
 import (
@@ -7,13 +11,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// Verify that registration works for the accepted entity types,
-// and fails for the unsupported ones, except for the specified
+// CheckRegistrationExcept verifies that registration works for the accepted
+// entity types, and fails for the unsupported ones, except for the specified
 // types which have more complex registration methods.
 func CheckRegistrationExcept(t *testing.T, provider provifv1.Provider, skip ...minderv1.Entity) {
 	t.Helper()

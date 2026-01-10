@@ -10,6 +10,7 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
+	t.Parallel()
 	// We don't need a full constructor here, so we're naughty
 	dh := &dockerHubImageLister{}
 	testhelper.CheckRegistrationExcept(t, dh)

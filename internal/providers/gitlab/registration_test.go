@@ -28,6 +28,7 @@ const (
 )
 
 func TestRegistration(t *testing.T) {
+	t.Parallel()
 	// We don't need a full constructor here, so we're naughty
 	glc := &gitlabClient{}
 	testhelper.CheckRegistrationExcept(t, glc, minderv1.Entity_ENTITY_REPOSITORIES)

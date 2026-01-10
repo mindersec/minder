@@ -12,6 +12,7 @@ import (
 )
 
 func TestRegistration(t *testing.T) {
+	t.Parallel()
 	// We don't need a full constructor here, so we're naughty
 	gh := &GitHub{
 		propertyFetchers: properties.NewPropertyFetcherFactory(),
