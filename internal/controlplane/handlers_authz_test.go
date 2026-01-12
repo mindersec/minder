@@ -39,7 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	mockinvites "github.com/mindersec/minder/internal/invites/mock"
+	"github.com/mindersec/minder/internal/invites/fake"
 	"github.com/mindersec/minder/internal/roles"
 	mockroles "github.com/mindersec/minder/internal/roles/mock"
 	"github.com/mindersec/minder/internal/util"
@@ -651,6 +651,7 @@ func TestUpdateRole(t *testing.T) {
 
 	userEmail := "test@example.com"
 	authzRole := authz.RoleAdmin
+	projectID := uuid.New()
 
 	tests := []struct {
 		name               string
@@ -693,16 +694,25 @@ func TestUpdateRole(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = authjwt.WithAuthTokenContext(ctx, user)
+			// Add Identity context for invite service
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: "testuser",
+			})
+			// Add entity context with project for UpdateRole endpoint
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
 
 			featureClient := &flags.FakeClient{}
 			featureClient.Data = map[string]any{
 				"user_management": true,
 			}
 
-			mockInviteService := mockinvites.NewMockInviteService(ctrl)
-			if tc.expectedInvitation {
-				mockInviteService.EXPECT().UpdateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{}, nil)
+			fakeInviteService := fake.NewFakeInviteService()
+			// Pre-populate invite for update test
+			if tc.expectedInvitation && tc.inviteeEmail != "" {
+				_, _ = fakeInviteService.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
+					projectID, authzRole, tc.inviteeEmail)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
 			if tc.expectedRole {
@@ -717,7 +727,7 @@ func TestUpdateRole(t *testing.T) {
 
 			server := &Server{
 				featureFlags: featureClient,
-				invites:      mockInviteService,
+				invites:      fakeInviteService,
 				roles:        mockRoleService,
 				store:        mockStore,
 				cfg:          &serverconfig.Config{Email: serverconfig.EmailConfig{}},
@@ -823,6 +833,10 @@ func TestAssignRole(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = authjwt.WithAuthTokenContext(ctx, user)
+			// Add Identity context for invite service
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: "testuser",
+			})
 			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 				Project: engcontext.Project{ID: cmp.Or(tc.project, projectId)},
 			})
@@ -833,19 +847,13 @@ func TestAssignRole(t *testing.T) {
 			idClient := mockauth.NewMockResolver(ctrl)
 			idClient.EXPECT().Resolve(gomock.Any(), tc.subject).Return(tc.userIdentity, nil).MaxTimes(1)
 
-			mockInviteService := mockinvites.NewMockInviteService(ctrl)
+			fakeInviteService := fake.NewFakeInviteService()
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
 			if tc.expectedError == "" && tc.userIdentity != nil {
 				mockRoleService.EXPECT().CreateRoleAssignment(gomock.Any(), gomock.Any(), gomock.Any(),
 					gomock.Any(), *tc.userIdentity, authzRole).Return(&minder.RoleAssignment{
 					Role:    authzRole.String(),
 					Project: &projectIdString,
-				}, nil)
-			} else if tc.expectedError == "" {
-				mockInviteService.EXPECT().CreateInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-					gomock.Any(), authzRole, tc.inviteeEmail).Return(&minder.Invitation{
-					Role:    authzRole.String(),
-					Project: projectIdString,
 				}, nil)
 			}
 
@@ -867,7 +875,7 @@ func TestAssignRole(t *testing.T) {
 
 			server := &Server{
 				featureFlags: featureClient,
-				invites:      mockInviteService,
+				invites:      fakeInviteService,
 				roles:        mockRoleService,
 				store:        mockStore,
 				idClient:     idClient,
@@ -905,7 +913,8 @@ func TestAssignRole(t *testing.T) {
 func TestRemoveRole(t *testing.T) {
 	t.Parallel()
 
-	projectIdString := uuid.New().String()
+	projectID := uuid.New()
+	projectIdString := projectID.String()
 	userEmail := "test@example.com"
 	authzRole := authz.RoleAdmin
 
@@ -945,19 +954,25 @@ func TestRemoveRole(t *testing.T) {
 
 			ctx := context.Background()
 			ctx = authjwt.WithAuthTokenContext(ctx, user)
+			// Add Identity context for invite service
+			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
+				UserID: "testuser",
+			})
+			// Add entity context with project for RemoveRole endpoint
+			ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
 
 			featureClient := &flags.FakeClient{}
 			featureClient.Data = map[string]any{
 				"user_management": true,
 			}
 
-			mockInviteService := mockinvites.NewMockInviteService(ctrl)
-			if tc.expectedInvitation {
-				mockInviteService.EXPECT().RemoveInvite(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
-					authzRole, tc.inviteeEmail).Return(&minder.Invitation{
-					Role:    authzRole.String(),
-					Project: projectIdString,
-				}, nil)
+			fakeInviteService := fake.NewFakeInviteService()
+			// Pre-populate invite for delete test
+			if tc.expectedInvitation && tc.inviteeEmail != "" {
+				_, _ = fakeInviteService.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
+					projectID, authzRole, tc.inviteeEmail)
 			}
 			mockRoleService := mockroles.NewMockRoleService(ctrl)
 			if tc.expectedRole {
@@ -975,7 +990,7 @@ func TestRemoveRole(t *testing.T) {
 
 			server := &Server{
 				featureFlags: featureClient,
-				invites:      mockInviteService,
+				invites:      fakeInviteService,
 				roles:        mockRoleService,
 				store:        mockStore,
 				cfg:          &serverconfig.Config{Email: serverconfig.EmailConfig{}},

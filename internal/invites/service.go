@@ -27,8 +27,6 @@ import (
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
-//go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
-
 // InviteService encapsulates the methods to manage user invites to a project
 type InviteService interface {
 	// CreateInvite creates a new user invite
