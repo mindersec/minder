@@ -435,8 +435,26 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 	if sub == "" && inviteeEmail != "" {
 		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			deletedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.RemoveInvite(ctx, qtx, s.idClient, targetProject, authzRole, inviteeEmail)
+				invites, err := s.invites.GetInvitesForEmail(ctx, qtx, targetProject, inviteeEmail)
+				if err != nil {
+					return nil, err
+				}
+
+				for _, i := range invites {
+					if i.GetRole() == authzRole.String() {
+						err := s.invites.RemoveInvite(ctx, qtx, i.GetCode())
+						if err != nil {
+							return nil, err
+						}
+						return i, nil
+					}
+				}
+
+				return nil, util.UserVisibleError(codes.NotFound,
+					"no invitation found for email %s with role %s in project %s",
+					inviteeEmail, authzRole.String(), targetProject)
 			})
+
 			if err != nil {
 				return nil, err
 			}

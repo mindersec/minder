@@ -39,7 +39,7 @@ import (
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/invites/fake"
+	fake "github.com/mindersec/minder/internal/invites/test"
 	"github.com/mindersec/minder/internal/roles"
 	mockroles "github.com/mindersec/minder/internal/roles/mock"
 	"github.com/mindersec/minder/internal/util"
@@ -934,6 +934,11 @@ func TestRemoveRole(t *testing.T) {
 			name:               "request with email deletes invite",
 			inviteeEmail:       "other@example.com",
 			expectedInvitation: true,
+		},
+		{
+			name:          "no invite present produces error",
+			inviteeEmail:  "no-invite@example.com",
+			expectedError: "no invitation found for email no-invite@example.com",
 		},
 		{
 			name:         "request with subject deletes role assignment",
