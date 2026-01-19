@@ -4209,7 +4209,8 @@ message RegisterEntityRequest {
     // identifying_properties uniquely identifies the entity in the provider.
     // For example, for a GitHub repository use github/repo_owner and github/repo_name,
     // or use upstream_id to identify by provider's internal ID.
-    google.protobuf.Struct identifying_properties = 3 [
+    // Each key maps to a value that can be a string, number, boolean, or nested structure.
+    map<string, google.protobuf.Value> identifying_properties = 3 [
         (google.api.field_behavior) = REQUIRED
     ];
 }

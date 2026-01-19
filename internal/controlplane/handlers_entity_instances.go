@@ -247,25 +247,31 @@ func (s *Server) RegisterEntity(
 // parseIdentifyingProperties converts proto properties to Properties object
 func parseIdentifyingProperties(req *pb.RegisterEntityRequest) (*properties.Properties, error) {
 	identifyingProps := req.GetIdentifyingProperties()
-	if identifyingProps == nil {
+	if len(identifyingProps) == 0 {
 		return nil, errors.New("identifying_properties is required")
 	}
 
 	// Validate total size to prevent resource exhaustion
-	// Using proto.Size provides a better bound than counting properties,
-	// as it accounts for arbitrarily large values in a Struct
+	// We sum the proto.Size of each value since map itself isn't a proto message
 	const maxProtoSize = 32 * 1024 // 32KB should be plenty for identifying properties
-	if protoSize := proto.Size(identifyingProps); protoSize > maxProtoSize {
+	var totalSize int
+	for _, v := range identifyingProps {
+		totalSize += proto.Size(v)
+	}
+	if totalSize > maxProtoSize {
 		return nil, fmt.Errorf("identifying_properties too large: %d bytes, max %d bytes",
-			protoSize, maxProtoSize)
+			totalSize, maxProtoSize)
 	}
 
-	propsMap := identifyingProps.AsMap()
-
-	// Validate property keys are reasonable length
-	for key := range propsMap {
+	// Convert map[string]*structpb.Value to map[string]any
+	propsMap := make(map[string]any, len(identifyingProps))
+	for key, value := range identifyingProps {
+		// Validate property keys are reasonable length
 		if len(key) > 200 {
 			return nil, fmt.Errorf("property key too long: %d characters", len(key))
+		}
+		if value != nil {
+			propsMap[key] = value.AsInterface()
 		}
 	}
 

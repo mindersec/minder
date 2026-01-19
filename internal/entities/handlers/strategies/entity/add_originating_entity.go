@@ -56,18 +56,26 @@ func (a *addOriginatingEntityStrategy) GetEntity(
 	}
 
 	// Get provider from DB
+	// Note: These reads are outside the transaction boundary in EntityCreator.CreateEntity
+	// because they read stable data (parent entity and provider configuration).
+	// The transaction in CreateEntity protects the writes (entity + properties).
+	// If there's a race where parent is deleted between read/write, the FK constraint catches it.
 	provider, err := a.store.GetProviderByID(ctx, parentEwp.Entity.ProviderID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting provider: %w", err)
 	}
 
 	// Use EntityCreator to create child entity
+	// Note: Child entities (artifacts, releases, PRs) don't trigger reconciliation events.
+	// This matches existing behavior and avoids potential loops since this code runs
+	// from a message handler. The parent repository's reconciliation handles the
+	// evaluation of child entities through the entity evaluation graph.
 	childEwp, err := a.entityCreator.CreateEntity(ctx, &provider,
 		parentEwp.Entity.ProjectID, entMsg.Entity.Type, childProps,
 		&entityService.EntityCreationOptions{
 			OriginatingEntityID:        &parentEwp.Entity.ID,
 			RegisterWithProvider:       false, // No webhooks for child entities
-			PublishReconciliationEvent: false, // No reconciliation for child entities
+			PublishReconciliationEvent: false, // Explained above
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error creating entity: %w", err)

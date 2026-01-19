@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -26,6 +27,16 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
+
+// toIdentifyingProps converts a map[string]any to map[string]*structpb.Value for tests
+func toIdentifyingProps(m map[string]any) map[string]*structpb.Value {
+	result := make(map[string]*structpb.Value, len(m))
+	for k, v := range m {
+		val, _ := structpb.NewValue(v)
+		result[k] = val
+	}
+	return result
+}
 
 func TestServer_RegisterEntity(t *testing.T) {
 	t.Parallel()
@@ -50,13 +61,10 @@ func TestServer_RegisterEntity(t *testing.T) {
 			request: &pb.RegisterEntityRequest{
 				Context:    &pb.ContextV2{},
 				EntityType: pb.Entity_ENTITY_REPOSITORIES,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{
-						"github/repo_owner": "test-owner",
-						"github/repo_name":  "test-repo",
-					})
-					return s
-				}(),
+				IdentifyingProperties: toIdentifyingProps(map[string]any{
+					"github/repo_owner": "test-owner",
+					"github/repo_name":  "test-repo",
+				}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -106,12 +114,9 @@ func TestServer_RegisterEntity(t *testing.T) {
 		{
 			name: "fails when entity_type is unspecified",
 			request: &pb.RegisterEntityRequest{
-				Context:    &pb.ContextV2{},
-				EntityType: pb.Entity_ENTITY_UNSPECIFIED,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{"key": "value"})
-					return s
-				}(),
+				Context:               &pb.ContextV2{},
+				EntityType:            pb.Entity_ENTITY_UNSPECIFIED,
+				IdentifyingProperties: toIdentifyingProps(map[string]any{"key": "value"}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -145,12 +150,9 @@ func TestServer_RegisterEntity(t *testing.T) {
 		{
 			name: "fails when provider not found",
 			request: &pb.RegisterEntityRequest{
-				Context:    &pb.ContextV2{},
-				EntityType: pb.Entity_ENTITY_REPOSITORIES,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{"key": "value"})
-					return s
-				}(),
+				Context:               &pb.ContextV2{},
+				EntityType:            pb.Entity_ENTITY_REPOSITORIES,
+				IdentifyingProperties: toIdentifyingProps(map[string]any{"key": "value"}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -172,13 +174,10 @@ func TestServer_RegisterEntity(t *testing.T) {
 			request: &pb.RegisterEntityRequest{
 				Context:    &pb.ContextV2{},
 				EntityType: pb.Entity_ENTITY_REPOSITORIES,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{
-						"github/repo_owner": "test-owner",
-						"github/repo_name":  "archived-repo",
-					})
-					return s
-				}(),
+				IdentifyingProperties: toIdentifyingProps(map[string]any{
+					"github/repo_owner": "test-owner",
+					"github/repo_name":  "archived-repo",
+				}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -209,13 +208,10 @@ func TestServer_RegisterEntity(t *testing.T) {
 			request: &pb.RegisterEntityRequest{
 				Context:    &pb.ContextV2{},
 				EntityType: pb.Entity_ENTITY_REPOSITORIES,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{
-						"github/repo_owner": "test-owner",
-						"github/repo_name":  "private-repo",
-					})
-					return s
-				}(),
+				IdentifyingProperties: toIdentifyingProps(map[string]any{
+					"github/repo_owner": "test-owner",
+					"github/repo_name":  "private-repo",
+				}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -243,12 +239,9 @@ func TestServer_RegisterEntity(t *testing.T) {
 		{
 			name: "handles internal errors appropriately",
 			request: &pb.RegisterEntityRequest{
-				Context:    &pb.ContextV2{},
-				EntityType: pb.Entity_ENTITY_REPOSITORIES,
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{"key": "value"})
-					return s
-				}(),
+				Context:               &pb.ContextV2{},
+				EntityType:            pb.Entity_ENTITY_REPOSITORIES,
+				IdentifyingProperties: toIdentifyingProps(map[string]any{"key": "value"}),
 			},
 			setupContext: func(ctx context.Context) context.Context {
 				return engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
@@ -332,14 +325,11 @@ func TestParseIdentifyingProperties(t *testing.T) {
 		{
 			name: "parses valid properties",
 			request: &pb.RegisterEntityRequest{
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{
-						"github/repo_owner": "stacklok",
-						"github/repo_name":  "minder",
-						"upstream_id":       "12345",
-					})
-					return s
-				}(),
+				IdentifyingProperties: toIdentifyingProps(map[string]any{
+					"github/repo_owner": "stacklok",
+					"github/repo_name":  "minder",
+					"upstream_id":       "12345",
+				}),
 			},
 			wantErr: false,
 			validate: func(t *testing.T, props *properties.Properties) {
@@ -365,16 +355,12 @@ func TestParseIdentifyingProperties(t *testing.T) {
 		{
 			name: "rejects properties that are too large",
 			request: &pb.RegisterEntityRequest{
-				IdentifyingProperties: func() *structpb.Struct {
+				IdentifyingProperties: func() map[string]*structpb.Value {
 					// Create a value large enough to exceed 32KB limit
-					largeValue := string(make([]byte, 33*1024))
-					for i := range largeValue {
-						largeValue = string(append([]byte(largeValue[:i]), 'x'))
-					}
-					s, _ := structpb.NewStruct(map[string]any{
+					largeValue := strings.Repeat("x", 33*1024)
+					return toIdentifyingProps(map[string]any{
 						"large_key": largeValue,
 					})
-					return s
 				}(),
 			},
 			wantErr:     true,
@@ -383,15 +369,11 @@ func TestParseIdentifyingProperties(t *testing.T) {
 		{
 			name: "rejects property key that is too long",
 			request: &pb.RegisterEntityRequest{
-				IdentifyingProperties: func() *structpb.Struct {
-					longKey := string(make([]byte, 201))
-					for i := range longKey {
-						longKey = string(append([]byte(longKey[:i]), 'a'))
-					}
-					s, _ := structpb.NewStruct(map[string]any{
+				IdentifyingProperties: func() map[string]*structpb.Value {
+					longKey := strings.Repeat("a", 201)
+					return toIdentifyingProps(map[string]any{
 						longKey: "value",
 					})
-					return s
 				}(),
 			},
 			wantErr:     true,
@@ -400,17 +382,10 @@ func TestParseIdentifyingProperties(t *testing.T) {
 		{
 			name: "handles empty properties map",
 			request: &pb.RegisterEntityRequest{
-				IdentifyingProperties: func() *structpb.Struct {
-					s, _ := structpb.NewStruct(map[string]any{})
-					return s
-				}(),
+				IdentifyingProperties: toIdentifyingProps(map[string]any{}),
 			},
-			wantErr: false,
-			validate: func(t *testing.T, props *properties.Properties) {
-				t.Helper()
-				// Empty properties is valid (provider will validate)
-				assert.NotNil(t, props)
-			},
+			wantErr:     true, // Empty map is now an error (changed behavior)
+			errContains: "identifying_properties is required",
 		},
 	}
 

@@ -5727,7 +5727,8 @@
         },
         "identifyingProperties": {
           "type": "object",
-          "description": "identifying_properties uniquely identifies the entity in the provider.\nFor example, for a GitHub repository use github/repo_owner and github/repo_name,\nor use upstream_id to identify by provider's internal ID."
+          "additionalProperties": {},
+          "description": "identifying_properties uniquely identifies the entity in the provider.\nFor example, for a GitHub repository use github/repo_owner and github/repo_name,\nor use upstream_id to identify by provider's internal ID.\nEach key maps to a value that can be a string, number, boolean, or nested structure."
         }
       },
       "title": "RegisterEntityRequest is the request message for the RegisterEntity method",

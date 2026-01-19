@@ -16,6 +16,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/entities"
 	"github.com/mindersec/minder/internal/entities/models"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/providers/manager"
 	reconcilers "github.com/mindersec/minder/internal/reconcilers/messages"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -52,23 +53,12 @@ type EntityCreator interface {
 	) (*models.EntityWithProperties, error)
 }
 
-// EntityValidator validates entity creation based on business rules
-type EntityValidator interface {
-	// Validate returns nil if entity is valid, error otherwise
-	Validate(
-		ctx context.Context,
-		entType pb.Entity,
-		props *properties.Properties,
-		projectID uuid.UUID,
-	) error
-}
-
 type entityCreator struct {
-	store           db.Store
-	propSvc         propService.PropertiesService
-	providerManager manager.ProviderManager
-	eventProducer   interfaces.Publisher
-	validators      []EntityValidator
+	store             db.Store
+	propSvc           propService.PropertiesService
+	providerManager   manager.ProviderManager
+	eventProducer     interfaces.Publisher
+	validatorRegistry validators.ValidatorRegistry
 }
 
 // NewEntityCreator creates a new EntityCreator
@@ -77,14 +67,14 @@ func NewEntityCreator(
 	propSvc propService.PropertiesService,
 	providerManager manager.ProviderManager,
 	eventProducer interfaces.Publisher,
-	validators []EntityValidator,
+	validatorRegistry validators.ValidatorRegistry,
 ) EntityCreator {
 	return &entityCreator{
-		store:           store,
-		propSvc:         propSvc,
-		providerManager: providerManager,
-		eventProducer:   eventProducer,
-		validators:      validators,
+		store:             store,
+		propSvc:           propSvc,
+		providerManager:   providerManager,
+		eventProducer:     eventProducer,
+		validatorRegistry: validatorRegistry,
 	}
 }
 
@@ -122,8 +112,8 @@ func (e *entityCreator) CreateEntity(
 		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
 
-	// 4. Run validators
-	if err := e.runValidators(ctx, entityType, allProps, projectID); err != nil {
+	// 4. Run validators via registry
+	if err := e.validatorRegistry.Validate(ctx, entityType, allProps, projectID); err != nil {
 		return nil, err
 	}
 
@@ -197,20 +187,6 @@ func (e *entityCreator) CreateEntity(
 	}
 
 	return ewp, nil
-}
-
-func (e *entityCreator) runValidators(
-	ctx context.Context,
-	entityType pb.Entity,
-	allProps *properties.Properties,
-	projectID uuid.UUID,
-) error {
-	for _, validator := range e.validators {
-		if err := validator.Validate(ctx, entityType, allProps, projectID); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (e *entityCreator) publishReconciliationEvent(

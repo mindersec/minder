@@ -51,6 +51,7 @@ import (
 	"github.com/mindersec/minder/internal/reminderprocessor"
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/roles"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/eventer"
@@ -173,8 +174,10 @@ func AllInOneServerService(
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
 
-	// Create validators
+	// Create validator registry and register validators
+	validatorRegistry := validators.NewValidatorRegistry()
 	repoValidator := validators.NewRepositoryValidator(store)
+	validatorRegistry.AddValidator(pb.Entity_ENTITY_REPOSITORIES, repoValidator)
 
 	// Create entity creator
 	entityCreator := entityService.NewEntityCreator(
@@ -182,7 +185,7 @@ func AllInOneServerService(
 		propSvc,
 		providerManager,
 		evt,
-		[]entityService.EntityValidator{repoValidator},
+		validatorRegistry,
 	)
 
 	historySvc := history.NewEvaluationHistoryService(providerManager)

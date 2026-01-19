@@ -14,7 +14,6 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/entities/service/validators"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -25,7 +24,6 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		entityType  pb.Entity
 		props       *properties.Properties
 		setupMocks  func(*mockdb.MockStore)
 		wantErr     bool
@@ -33,8 +31,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 		errContains string
 	}{
 		{
-			name:       "allows valid public repository",
-			entityType: pb.Entity_ENTITY_REPOSITORIES,
+			name: "allows valid public repository",
 			props: properties.NewProperties(map[string]any{
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsPrivate:  false,
@@ -46,8 +43,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 		// as it involves multiple database calls. This is better tested
 		// via integration tests.
 		{
-			name:       "rejects archived repository",
-			entityType: pb.Entity_ENTITY_REPOSITORIES,
+			name: "rejects archived repository",
 			props: properties.NewProperties(map[string]any{
 				properties.RepoPropertyIsArchived: true,
 				properties.RepoPropertyIsPrivate:  false,
@@ -56,25 +52,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 			errIs:   validators.ErrArchivedRepoForbidden,
 		},
 		{
-			name:       "skips validation for non-repository entities",
-			entityType: pb.Entity_ENTITY_RELEASE,
-			props: properties.NewProperties(map[string]any{
-				"some_property": "value",
-			}),
-			// No mocks needed - should return early
-			wantErr: false,
-		},
-		{
-			name:       "skips validation for artifacts",
-			entityType: pb.Entity_ENTITY_ARTIFACTS,
-			props: properties.NewProperties(map[string]any{
-				"name": "artifact",
-			}),
-			wantErr: false,
-		},
-		{
-			name:       "handles missing is_archived property gracefully",
-			entityType: pb.Entity_ENTITY_REPOSITORIES,
+			name: "handles missing is_archived property gracefully",
 			props: properties.NewProperties(map[string]any{
 				properties.RepoPropertyIsPrivate: false,
 				// is_archived missing
@@ -83,8 +61,7 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 			errContains: "is_archived property",
 		},
 		{
-			name:       "handles missing is_private property gracefully",
-			entityType: pb.Entity_ENTITY_REPOSITORIES,
+			name: "handles missing is_private property gracefully",
 			props: properties.NewProperties(map[string]any{
 				properties.RepoPropertyIsArchived: false,
 				// is_private missing
@@ -108,7 +85,9 @@ func TestRepositoryValidator_Validate(t *testing.T) {
 
 			validator := validators.NewRepositoryValidator(mockStore)
 
-			err := validator.Validate(context.Background(), tt.entityType, tt.props, projectID)
+			// Note: RepositoryValidator is now registered for ENTITY_REPOSITORIES
+			// via the ValidatorRegistry, so entity type is not passed to Validate()
+			err := validator.Validate(context.Background(), tt.props, projectID)
 
 			if tt.wantErr {
 				require.Error(t, err)

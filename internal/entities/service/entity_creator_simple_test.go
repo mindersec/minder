@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	mockprop "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/entities/service"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	mockprov "github.com/mindersec/minder/internal/providers/manager/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
@@ -58,7 +59,8 @@ func TestEntityCreator_ProviderValidation(t *testing.T) {
 			InstantiateFromID(gomock.Any(), providerID).
 			Return(nil, errors.New("provider error"))
 
-		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, nil)
+		registry := validators.NewValidatorRegistry()
+		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, registry)
 
 		_, err := creator.CreateEntity(context.Background(), testProvider, projectID,
 			pb.Entity_ENTITY_REPOSITORIES, identifyingProps, nil)
@@ -87,7 +89,8 @@ func TestEntityCreator_ProviderValidation(t *testing.T) {
 			SupportsEntity(pb.Entity_ENTITY_REPOSITORIES).
 			Return(false)
 
-		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, nil)
+		registry := validators.NewValidatorRegistry()
+		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, registry)
 
 		_, err := creator.CreateEntity(context.Background(), testProvider, projectID,
 			pb.Entity_ENTITY_REPOSITORIES, identifyingProps, nil)
@@ -120,7 +123,8 @@ func TestEntityCreator_ProviderValidation(t *testing.T) {
 			FetchAllProperties(gomock.Any(), identifyingProps, pb.Entity_ENTITY_REPOSITORIES, nil).
 			Return(nil, errors.New("API error"))
 
-		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, nil)
+		registry := validators.NewValidatorRegistry()
+		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, registry)
 
 		_, err := creator.CreateEntity(context.Background(), testProvider, projectID,
 			pb.Entity_ENTITY_REPOSITORIES, identifyingProps, nil)
@@ -168,14 +172,15 @@ func TestEntityCreator_ValidationFlow(t *testing.T) {
 			FetchAllProperties(gomock.Any(), identifyingProps, pb.Entity_ENTITY_REPOSITORIES, nil).
 			Return(archivedProps, nil)
 
-		// Create validator that rejects archived
+		// Create registry with a validator that rejects archived repos
+		registry := validators.NewValidatorRegistry()
 		testValidator := &testEntityValidator{
 			shouldFail: true,
 			failError:  errors.New("validation failed"),
 		}
+		registry.AddValidator(pb.Entity_ENTITY_REPOSITORIES, testValidator)
 
-		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt,
-			[]service.EntityValidator{testValidator})
+		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, registry)
 
 		_, err := creator.CreateEntity(context.Background(), testProvider, projectID,
 			pb.Entity_ENTITY_REPOSITORIES, identifyingProps, nil)
@@ -185,13 +190,13 @@ func TestEntityCreator_ValidationFlow(t *testing.T) {
 	})
 }
 
-// testEntityValidator is a simple test validator
+// testEntityValidator is a simple test validator that implements validators.Validator
 type testEntityValidator struct {
 	shouldFail bool
 	failError  error
 }
 
-func (v *testEntityValidator) Validate(_ context.Context, _ pb.Entity, _ *properties.Properties, _ uuid.UUID) error {
+func (v *testEntityValidator) Validate(_ context.Context, _ *properties.Properties, _ uuid.UUID) error {
 	if v.shouldFail {
 		return v.failError
 	}

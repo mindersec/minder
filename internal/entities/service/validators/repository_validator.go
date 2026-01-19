@@ -14,7 +14,6 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/util"
-	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
@@ -25,7 +24,9 @@ var (
 	ErrArchivedRepoForbidden = util.UserVisibleError(codes.InvalidArgument, "archived repositories cannot be registered")
 )
 
-// RepositoryValidator validates repository entity creation
+// RepositoryValidator validates repository entity creation.
+// This validator should be registered for ENTITY_REPOSITORIES using
+// the ValidatorRegistry.AddValidator method.
 type RepositoryValidator struct {
 	store db.Store
 }
@@ -35,18 +36,14 @@ func NewRepositoryValidator(store db.Store) *RepositoryValidator {
 	return &RepositoryValidator{store: store}
 }
 
-// Validate checks if a repository entity can be created
+// Validate checks if a repository entity can be created.
+// This validator is called only for repositories since it's registered
+// specifically for that entity type via the ValidatorRegistry.
 func (v *RepositoryValidator) Validate(
 	ctx context.Context,
-	entType pb.Entity,
 	props *properties.Properties,
 	projectID uuid.UUID,
 ) error {
-	// Only validate repositories
-	if entType != pb.Entity_ENTITY_REPOSITORIES {
-		return nil
-	}
-
 	// Check if archived
 	isArchived, err := props.GetProperty(properties.RepoPropertyIsArchived).AsBool()
 	if err != nil {
