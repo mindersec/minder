@@ -616,6 +616,7 @@ func TestResolveInvitation(t *testing.T) {
 	userGitHubId := "31137"
 	projectDisplayName := "Project"
 	projectID := uuid.New()
+	projectStr := projectID.String()
 	projectMetadata, err := json.Marshal(
 		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
 	)
@@ -630,10 +631,11 @@ func TestResolveInvitation(t *testing.T) {
 	})
 
 	testCases := []struct {
-		name          string
-		accept        bool
-		setup         func(fake *fake.FakeInviteService, store *mockdb.MockStore) string
-		expectedError string
+		name            string
+		accept          bool
+		setup           func(fake *fake.FakeInviteService, store *mockdb.MockStore) string
+		roleAssignments map[uuid.UUID][]*pb.RoleAssignment
+		expectedError   string
 	}{
 		{
 			name: "code not found",
@@ -719,6 +721,64 @@ func TestResolveInvitation(t *testing.T) {
 			},
 		},
 		{
+			name:   "Can't accept for current role",
+			accept: true,
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				require.NoError(t, err)
+
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
+				}, nil)
+				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
+			},
+			roleAssignments: map[uuid.UUID][]*pb.RoleAssignment{
+				projectID: {
+					{
+						Role:    authz.RoleViewer.String(),
+						Subject: userSubject,
+						Project: &projectStr,
+					},
+				},
+			},
+			expectedError: "user already has the same role in the project",
+		},
+		{
+			name:   "Update role if accepting existing invite",
+			accept: true,
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleEditor, userEmail)
+				require.NoError(t, err)
+
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
+				}, nil)
+				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
+				}, nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
+			},
+			roleAssignments: map[uuid.UUID][]*pb.RoleAssignment{
+				projectID: {
+					{
+						Role:    authz.RoleViewer.String(),
+						Subject: userSubject,
+						Project: &projectStr,
+					},
+				},
+			},
+		},
+		{
 			name:   "Success create user",
 			accept: true,
 			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
@@ -773,7 +833,9 @@ func TestResolveInvitation(t *testing.T) {
 				"user_management": true,
 			}
 
-			authzClient := &mock.SimpleClient{}
+			authzClient := &mock.SimpleClient{
+				Assignments: tc.roleAssignments,
+			}
 
 			server := &Server{
 				store:        mockStore,

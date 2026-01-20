@@ -361,7 +361,7 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to get or create user: %s", err)
 		}
-		if err := s.acceptInvitation(ctx, invite); err != nil {
+		if err := s.acceptInvitation(ctx, project, invite); err != nil {
 			return nil, err
 		}
 	}
@@ -398,11 +398,7 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 	}, nil
 }
 
-func (s *Server) acceptInvitation(ctx context.Context, userInvite *pb.Invitation) error {
-	projectID, err := uuid.Parse(userInvite.GetProject())
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to parse project ID: %s", err)
-	}
+func (s *Server) acceptInvitation(ctx context.Context, projectID uuid.UUID, userInvite *pb.Invitation) error {
 	// Validate in case there's an existing role assignment for the user
 	as, err := s.authzClient.AssignmentsToProject(ctx, projectID)
 	if err != nil {
