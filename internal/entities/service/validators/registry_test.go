@@ -187,7 +187,7 @@ func TestValidatorRegistry_ThreadSafety(t *testing.T) {
 			defer wg.Done()
 			v := &mockValidator{}
 			handle := registry.AddValidator(pb.Entity_ENTITY_REPOSITORIES, v)
-			// Sometimes remove it
+			// Always remove it
 			registry.RemoveValidator(handle)
 		}()
 
