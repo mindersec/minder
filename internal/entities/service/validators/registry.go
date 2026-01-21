@@ -29,8 +29,7 @@ type Validator interface {
 // ValidatorHandle is an opaque handle returned when registering a validator.
 // It can be used to remove the validator later.
 type ValidatorHandle struct {
-	entityType pb.Entity
-	id         uint64
+	id uint64
 }
 
 // ValidatorRegistry manages entity validators by entity type.
@@ -91,22 +90,24 @@ func (r *validatorRegistry) AddValidator(entityType pb.Entity, validator Validat
 	r.validators[entityType] = append(r.validators[entityType], entry)
 
 	return ValidatorHandle{
-		entityType: entityType,
-		id:         r.nextID,
+		id: r.nextID,
 	}
 }
 
 // RemoveValidator removes a previously registered validator.
+// It searches all entity types to find and remove the validator with the given handle.
 func (r *validatorRegistry) RemoveValidator(handle ValidatorHandle) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	entries := r.validators[handle.entityType]
-	for i, entry := range entries {
-		if entry.id == handle.id {
-			// Remove by creating a new slice without this element
-			r.validators[handle.entityType] = append(entries[:i], entries[i+1:]...)
-			return
+	// Search all entity types for this validator ID
+	for entityType, entries := range r.validators {
+		for i, entry := range entries {
+			if entry.id == handle.id {
+				// Remove by creating a new slice without this element
+				r.validators[entityType] = append(entries[:i], entries[i+1:]...)
+				return
+			}
 		}
 	}
 }

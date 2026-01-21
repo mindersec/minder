@@ -215,8 +215,7 @@ func TestValidatorRegistry_RemoveInvalidHandle(t *testing.T) {
 
 	// Remove a handle that was never added - should not panic
 	invalidHandle := ValidatorHandle{
-		entityType: pb.Entity_ENTITY_REPOSITORIES,
-		id:         99999,
+		id: 99999,
 	}
 	require.NotPanics(t, func() {
 		registry.RemoveValidator(invalidHandle)
