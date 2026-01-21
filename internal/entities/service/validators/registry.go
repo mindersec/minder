@@ -121,10 +121,13 @@ func (r *validatorRegistry) Validate(
 ) error {
 	r.mu.RLock()
 	entries := r.validators[entityType]
+	// Copy the slice so we can iterate safely after unlocking
+	validatorsCopy := make([]validatorEntry, len(entries))
+	copy(validatorsCopy, entries)
 	r.mu.RUnlock()
 
 	// No validators = validation passes (optional validation)
-	for _, entry := range entries {
+	for _, entry := range validatorsCopy {
 		if err := entry.validator.Validate(ctx, props, projectID); err != nil {
 			return err
 		}
