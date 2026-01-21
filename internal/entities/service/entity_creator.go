@@ -86,44 +86,49 @@ func (e *entityCreator) CreateEntity(
 	identifyingProps *properties.Properties,
 	opts *EntityCreationOptions,
 ) (*models.EntityWithProperties, error) {
-	// Default options if not provided
-	if opts == nil {
-		opts = &EntityCreationOptions{
-			RegisterWithProvider:       entityType == pb.Entity_ENTITY_REPOSITORIES,
-			PublishReconciliationEvent: entityType == pb.Entity_ENTITY_REPOSITORIES,
-		}
-	}
-
 	// 1. Instantiate provider
 	prov, err := e.providerManager.InstantiateFromID(ctx, provider.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	// 2. Check if provider supports this entity type
-	if !prov.SupportsEntity(entityType) {
+	// 2. Get default options from provider
+	providerDefaults := prov.CreationOptions(entityType)
+	if providerDefaults == nil {
 		return nil, fmt.Errorf("provider %s does not support entity type %s",
 			provider.Name, entityType)
 	}
 
-	// 3. Fetch all properties from provider
+	// 3. Merge with caller-provided options (caller can override defaults)
+	if opts == nil {
+		opts = &EntityCreationOptions{
+			RegisterWithProvider:       providerDefaults.RegisterWithProvider,
+			PublishReconciliationEvent: providerDefaults.PublishReconciliationEvent,
+		}
+	} else {
+		// If caller didn't explicitly set options, use provider defaults
+		// Note: We can't distinguish between "false" and "not set", so we trust
+		// the caller to provide explicit values if they want to override
+	}
+
+	// 4. Fetch all properties from provider
 	allProps, err := prov.FetchAllProperties(ctx, identifyingProps, entityType, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching properties: %w", err)
 	}
 
-	// 4. Run validators via registry
+	// 5. Run validators via registry
 	if err := e.validatorRegistry.Validate(ctx, entityType, allProps, projectID); err != nil {
 		return nil, err
 	}
 
-	// 5. Get entity name
+	// 6. Get entity name
 	entityName, err := prov.GetEntityName(entityType, allProps)
 	if err != nil {
 		return nil, fmt.Errorf("error getting entity name: %w", err)
 	}
 
-	// 6. Register with provider if needed (e.g., create webhook)
+	// 7. Register with provider if needed (e.g., create webhook)
 	var registeredProps *properties.Properties
 	if opts.RegisterWithProvider {
 		registeredProps, err = prov.RegisterEntity(ctx, entityType, allProps)
@@ -134,7 +139,7 @@ func (e *entityCreator) CreateEntity(
 		registeredProps = allProps
 	}
 
-	// 7. Persist to database in transaction
+	// 8. Persist to database in transaction
 	ewp, err := db.WithTransaction(e.store, func(t db.ExtendQuerier) (*models.EntityWithProperties, error) {
 		// Generate entity ID
 		entityID := uuid.New()
@@ -177,7 +182,7 @@ func (e *entityCreator) CreateEntity(
 		return nil, err
 	}
 
-	// 8. Publish reconciliation event if needed
+	// 9. Publish reconciliation event if needed
 	if opts.PublishReconciliationEvent {
 		if err := e.publishReconciliationEvent(ctx, ewp, projectID, provider.ID); err != nil {
 			// Log but don't fail - event publishing is non-critical

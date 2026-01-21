@@ -25,6 +25,7 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
 	mockevents "github.com/mindersec/minder/pkg/eventer/interfaces/mock"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 	mockprovidersv1 "github.com/mindersec/minder/pkg/providers/v1/mock"
 )
 
@@ -86,8 +87,8 @@ func TestEntityCreator_ProviderValidation(t *testing.T) {
 			Return(mockProv, nil)
 
 		mockProv.EXPECT().
-			SupportsEntity(pb.Entity_ENTITY_REPOSITORIES).
-			Return(false)
+			CreationOptions(pb.Entity_ENTITY_REPOSITORIES).
+			Return(nil) // Returns nil to indicate entity type is not supported
 
 		registry := validators.NewValidatorRegistry()
 		creator := service.NewEntityCreator(mockStore, mockPropSvc, mockProvMgr, mockEvt, registry)
@@ -116,8 +117,11 @@ func TestEntityCreator_ProviderValidation(t *testing.T) {
 			Return(mockProv, nil)
 
 		mockProv.EXPECT().
-			SupportsEntity(pb.Entity_ENTITY_REPOSITORIES).
-			Return(true)
+			CreationOptions(pb.Entity_ENTITY_REPOSITORIES).
+			Return(&provifv1.EntityCreationOptions{
+				RegisterWithProvider:       true,
+				PublishReconciliationEvent: true,
+			})
 
 		mockProv.EXPECT().
 			FetchAllProperties(gomock.Any(), identifyingProps, pb.Entity_ENTITY_REPOSITORIES, nil).
@@ -167,7 +171,12 @@ func TestEntityCreator_ValidationFlow(t *testing.T) {
 		mockEvt := mockevents.NewMockInterface(ctrl)
 
 		mockProvMgr.EXPECT().InstantiateFromID(gomock.Any(), providerID).Return(mockProv, nil)
-		mockProv.EXPECT().SupportsEntity(pb.Entity_ENTITY_REPOSITORIES).Return(true)
+		mockProv.EXPECT().
+			CreationOptions(pb.Entity_ENTITY_REPOSITORIES).
+			Return(&provifv1.EntityCreationOptions{
+				RegisterWithProvider:       true,
+				PublishReconciliationEvent: true,
+			})
 		mockProv.EXPECT().
 			FetchAllProperties(gomock.Any(), identifyingProps, pb.Entity_ENTITY_REPOSITORIES, nil).
 			Return(archivedProps, nil)
