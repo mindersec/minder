@@ -194,7 +194,7 @@ func (*dockerHubImageLister) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // CreationOptions implements the Provider interface
-func (d *dockerHubImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
+func (*dockerHubImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
 	// DockerHub doesn't support any entities yet
 	return nil
 }

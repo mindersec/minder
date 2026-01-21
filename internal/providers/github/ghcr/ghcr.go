@@ -155,7 +155,7 @@ func (*ImageLister) SupportsEntity(_ minderv1.Entity) bool {
 }
 
 // CreationOptions implements the Provider interface
-func (i *ImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
+func (*ImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
 	// GHCR doesn't support any entities yet
 	return nil
 }

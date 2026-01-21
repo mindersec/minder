@@ -105,11 +105,10 @@ func (e *entityCreator) CreateEntity(
 			RegisterWithProvider:       providerDefaults.RegisterWithProvider,
 			PublishReconciliationEvent: providerDefaults.PublishReconciliationEvent,
 		}
-	} else {
-		// If caller didn't explicitly set options, use provider defaults
-		// Note: We can't distinguish between "false" and "not set", so we trust
-		// the caller to provide explicit values if they want to override
 	}
+	// Note: If opts is provided, we use those values as-is. We can't distinguish
+	// between "false" and "not set", so we trust the caller to provide explicit
+	// values if they want to override provider defaults.
 
 	// 4. Fetch all properties from provider
 	allProps, err := prov.FetchAllProperties(ctx, identifyingProps, entityType, nil)
