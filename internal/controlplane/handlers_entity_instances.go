@@ -280,7 +280,7 @@ func parseIdentifyingProperties(req *pb.RegisterEntityRequest) (*properties.Prop
 
 // entityInstanceToProto converts EntityWithProperties to EntityInstance protobuf
 func entityInstanceToProto(ewp *models.EntityWithProperties, providerName string) *pb.EntityInstance {
-	return &pb.EntityInstance{
+	entityInstance := &pb.EntityInstance{
 		Id: ewp.Entity.ID.String(),
 		Context: &pb.ContextV2{
 			ProjectId: ewp.Entity.ProjectID.String(),
@@ -288,6 +288,12 @@ func entityInstanceToProto(ewp *models.EntityWithProperties, providerName string
 		},
 		Type: ewp.Entity.Type,
 		Name: ewp.Entity.Name,
-		// Properties are intentionally omitted - use GetEntityById to fetch them
 	}
+
+	// Include properties if available
+	if ewp.Properties != nil {
+		entityInstance.Properties = ewp.Properties.ToProtoStruct()
+	}
+
+	return entityInstance
 }
