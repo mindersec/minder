@@ -109,6 +109,9 @@ alternate_message_driver:
 			t.Parallel()
 			ctx := context.Background()
 
+			metricMutex.Lock() // Can run in parallel with non-metric-measuring tests
+			defer metricMutex.Unlock()
+
 			config := serverconfig.Config{
 				Events: serverconfig.EventConfig{
 					Driver: constants.FlaggedDriver,
@@ -152,9 +155,6 @@ alternate_message_driver:
 				}
 			})
 			<-eventer.Running()
-
-			metricMutex.Lock()
-			defer metricMutex.Unlock()
 
 			sendBefore := getMetric(t, reader, "events_published", tt.sendExperiment)
 			readBefore := getMetric(t, reader, "events_read", tt.sendExperiment)
