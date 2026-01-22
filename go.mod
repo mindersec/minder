@@ -48,7 +48,7 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mikefarah/yq/v4 v4.48.1
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
-	github.com/nats-io/nats-server/v2 v2.12.2
+	github.com/nats-io/nats-server/v2 v2.12.3
 	github.com/nats-io/nats.go v1.47.0
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/open-feature/go-sdk v1.15.1
@@ -134,7 +134,7 @@ require (
 	github.com/alecthomas/chroma/v2 v2.18.0 // indirect
 	github.com/alecthomas/participle/v2 v2.1.4 // indirect
 	github.com/anchore/go-struct-converter v0.0.0-20240925125616-a0883641c664 // indirect
-	github.com/antithesishq/antithesis-sdk-go v0.4.3-default-no-op // indirect
+	github.com/antithesishq/antithesis-sdk-go v0.5.0-default-no-op // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -215,7 +215,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/go-github/v66 v66.0.0 // indirect
-	github.com/google/go-tpm v0.9.6 // indirect
+	github.com/google/go-tpm v0.9.7 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/in-toto/attestation v1.1.2 // indirect
@@ -261,7 +261,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/natefinch/wrap v0.2.0 // indirect
 	github.com/nats-io/jwt/v2 v2.8.0 // indirect
-	github.com/nats-io/nkeys v0.4.11 // indirect
+	github.com/nats-io/nkeys v0.4.12 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nikunjy/rules v1.5.0 // indirect
@@ -408,7 +408,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
-	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lestrrat-go/jwx/v2 v2.1.6
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
