@@ -69,3 +69,6 @@ tuf-repo-cdn.sigstore.dev.json
 
 # Offline tokens from minder CLI
 offline.token
+
+# Test result files
+test-results.*

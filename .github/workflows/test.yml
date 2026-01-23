@@ -4,6 +4,11 @@
 on:
   workflow_call:
   workflow_dispatch:
+
+
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Unit testing
@@ -19,11 +24,18 @@ jobs:
           go-version-file: 'go.mod'
       - name: Set up helm (test dependency)
         uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
-      # Install gotestfmt on the VM running the action.
+      # Install gotestfmt and go-junit-report on the VM running the action.
       - name: Set up gotestfmt
         uses: GoTestTools/gotestfmt-action@8b4478c7019be847373babde9300210e7de34bfb # v2.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install go-junit-report
+        run: |
+          ARCH=$(echo "${{ runner.arch }}" | tr '[:upper:]' '[:lower:]' | sed 's/x64/amd64/')
+          OS=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]' | sed 's/macos/darwin/')
+          gh release download -R gotestyourself/gotestsum -p "gotestsum_1.13.0_${OS}_${ARCH}.tar.gz" -O - | tar -xzf - gotestsum
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       # copy config file into place
       - name: Copy config file
         run: cp config/server-config.yaml.example ./server-config.yaml
@@ -40,10 +52,22 @@ jobs:
         env:
           MINDER_TEST_REGISTRY: "localhost:5000"
         run: make test-cover-silent
-      - name: Try converting to LCOV
+      - name: Generate JUnit report
+        run: |
+          gotestsum  --junitfile test-results.xml --junitfile-hide-empty-pkg --raw-command -- cat test-results.json
+      - name: Upload test results
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: test-results
+          path: test-results.*
+      - name: Convert go coverage to LCOV
         run: go run github.com/jandelgado/gcov2lcov@latest -infile=./coverage.out -outfile=./coverage.lcov
       - name: Coveralls GitHub Action
         uses: coverallsapp/github-action@5cbfd81b66ca5d10c19b062c04de0199c215fb6e # v2.3.7
+      - name: Add top-level report from JUnit XML
+        if: ${{ !cancelled() }}
+        run: |
+          go run github.com/kitproj/junit2md@v1.0.0 < test-results.xml > "$GITHUB_STEP_SUMMARY"
   authz:
     name: Authz tests
     runs-on: ubuntu-latest
