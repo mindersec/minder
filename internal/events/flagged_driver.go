@@ -80,15 +80,15 @@ func (f *flaggedDriver) Subscribe(ctx context.Context, topic string) (<-chan *me
 					base = nil
 					continue
 				}
-				out <- msg
 				f.readMessages.Add(ctx, 1, metric.WithAttributes(attribute.Bool("experiment", false)))
+				out <- msg
 			case msg, ok := <-experiment:
 				if !ok {
 					experiment = nil
 					continue
 				}
-				out <- msg
 				f.readMessages.Add(ctx, 1, metric.WithAttributes(attribute.Bool("experiment", true)))
+				out <- msg
 			case <-ctx.Done():
 				return
 			}
@@ -149,5 +149,7 @@ func makeFlaggedDriver(ctx context.Context, cfg *serverconfig.EventConfig, flagC
 	return ret, ret, closer, nil
 }
 
-var _ message.Publisher = (*flaggedDriver)(nil)
-var _ message.Subscriber = (*flaggedDriver)(nil)
+var (
+	_ message.Publisher  = (*flaggedDriver)(nil)
+	_ message.Subscriber = (*flaggedDriver)(nil)
+)
