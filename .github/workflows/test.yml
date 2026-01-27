@@ -29,7 +29,7 @@ jobs:
         uses: GoTestTools/gotestfmt-action@8b4478c7019be847373babde9300210e7de34bfb # v2.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install go-junit-report
+      - name: Install gotestsum
         run: |
           ARCH=$(echo "${{ runner.arch }}" | tr '[:upper:]' '[:lower:]' | sed 's/x64/amd64/')
           OS=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]' | sed 's/macos/darwin/')
@@ -53,9 +53,11 @@ jobs:
           MINDER_TEST_REGISTRY: "localhost:5000"
         run: make test-cover-silent
       - name: Generate JUnit report
+        if: ${{ !cancelled() }}
         run: |
           gotestsum  --junitfile test-results.xml --junitfile-hide-empty-pkg --raw-command -- cat test-results.json
       - name: Upload test results
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: test-results
