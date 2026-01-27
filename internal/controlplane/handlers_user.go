@@ -313,11 +313,7 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 
 	invitations, err := s.invites.GetInvitesForSelf(ctx, s.store, s.idClient)
 	if err != nil {
-		var niceErr *util.NiceStatus // no need to wrap formatted errors
-		if errors.As(err, &niceErr) {
-			return nil, err
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get invitations: %s", err)
+		return nil, err
 	}
 
 	return &pb.ListInvitationsResponse{
@@ -344,11 +340,7 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 
 	invite, err := s.invites.GetInvite(ctx, qtx, req.Code)
 	if err != nil || invite == nil {
-		var niceErr *util.NiceStatus // no need to wrap formatted errors
-		if errors.As(err, &niceErr) {
-			return nil, err
-		}
-		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
+		return nil, err
 	}
 	project, err := uuid.Parse(invite.GetProject())
 	if err != nil {
