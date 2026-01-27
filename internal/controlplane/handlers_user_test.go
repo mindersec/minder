@@ -12,6 +12,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt/openid"
 	"github.com/stretchr/testify/assert"
@@ -20,19 +22,23 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/testing/protocmp"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
-	mockidentity "github.com/mindersec/minder/internal/auth/mock"
+	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
+	fake "github.com/mindersec/minder/internal/invites/test"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/providers"
 	mockprov "github.com/mindersec/minder/internal/providers/github/service/mock"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
@@ -480,55 +486,86 @@ func TestListInvitations(t *testing.T) {
 	t.Parallel()
 
 	userEmail := "user@example.com"
+	otherUser := "other@example.com"
 	project := uuid.New()
-	code := "code"
+	project2 := uuid.New()
 	identitySubject := "subject1"
-	role := "viewer"
-	projectDisplayName := "Project"
-	projectMetadata, err := json.Marshal(
-		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
-	)
+
+	inviteCtx := auth.WithIdentityContext(context.Background(), &auth.Identity{
+		UserID:    "sponsor",
+		HumanName: "Sponsor",
+	})
+	fakeInviteService := fake.NewFakeInviteService()
+	invite, err := fakeInviteService.CreateInvite(
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleViewer, userEmail)
+	require.NoError(t, err)
+	// Add a second invite to project 2
+	invite2, err := fakeInviteService.CreateInvite(
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project2, authz.RoleAdmin, userEmail)
+	require.NoError(t, err)
+	// And invite another user to project 1
+	invite3, err := fakeInviteService.CreateInvite(
+		inviteCtx, nil, nil, serverconfig.EmailConfig{}, project, authz.RoleAdmin, otherUser)
 	require.NoError(t, err)
 
 	testCases := []struct {
 		name           string
-		setup          func(store *mockdb.MockStore, idClient *mockidentity.MockResolver)
+		caller         *auth.Identity
 		expectedError  string
-		expectedResult *pb.ListInvitationsResponse
+		expectedResult []*pb.Invitation
 	}{
 		{
-			name: "Success",
-			setup: func(store *mockdb.MockStore, idClient *mockidentity.MockResolver) {
-				store.EXPECT().GetInvitationsByEmail(gomock.Any(), userEmail).Return([]db.GetInvitationsByEmailRow{
-					{
-						Project:         project,
-						Code:            code,
-						IdentitySubject: identitySubject,
-						Email:           userEmail,
-						Role:            role,
-					},
-				}, nil)
-				idClient.EXPECT().Resolve(gomock.Any(), identitySubject).Return(&auth.Identity{
-					UserID:    identitySubject,
-					HumanName: "User",
-				}, nil)
-				store.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{
-					Name:     "project1",
-					Metadata: projectMetadata,
-				}, nil)
+			name: "Main user",
+			caller: &auth.Identity{
+				UserID:    identitySubject,
+				HumanName: userEmail, // fake uses the email as the human name
 			},
-			expectedResult: &pb.ListInvitationsResponse{
-				Invitations: []*pb.Invitation{
-					{
-						Project:        project.String(),
-						ProjectDisplay: projectDisplayName,
-						Code:           code,
-						Role:           role,
-						Email:          userEmail,
-						Sponsor:        identitySubject,
-					},
+			expectedResult: []*pb.Invitation{
+				{
+					Project:        project.String(),
+					ProjectDisplay: "Test: " + project.String(),
+					Code:           invite.GetCode(),
+					Role:           authz.RoleViewer.String(),
+					Email:          userEmail,
+					Sponsor:        "sponsor",
+					SponsorDisplay: "Sponsor",
+				},
+				{
+					Project:        project2.String(),
+					ProjectDisplay: "Test: " + project2.String(),
+					Code:           invite2.GetCode(),
+					Role:           authz.RoleAdmin.String(),
+					Email:          userEmail,
+					Sponsor:        "sponsor",
+					SponsorDisplay: "Sponsor",
 				},
 			},
+		},
+		{
+			name: "Other user",
+			caller: &auth.Identity{
+				UserID:    "other-subject",
+				HumanName: otherUser, // fake uses the email as the human name
+			},
+			expectedResult: []*pb.Invitation{
+				{
+					Project:        project.String(),
+					ProjectDisplay: "Test: " + project.String(),
+					Code:           invite3.GetCode(),
+					Role:           authz.RoleAdmin.String(),
+					Email:          otherUser,
+					Sponsor:        "sponsor",
+					SponsorDisplay: "Sponsor",
+				},
+			},
+		},
+		{
+			name: "No invitations",
+			caller: &auth.Identity{
+				UserID:    "no-invites-subject",
+				HumanName: "nobody@loves.me", // fake uses the email as the human name
+			},
+			expectedResult: []*pb.Invitation{},
 		},
 	}
 
@@ -536,31 +573,18 @@ func TestListInvitations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			user := openid.New()
-			assert.NoError(t, user.Set("email", userEmail))
-
-			ctx := context.Background()
-			ctx = jwt.WithAuthTokenContext(ctx, user)
-
-			mockStore := mockdb.NewMockStore(ctrl)
-			mockIdClient := mockidentity.NewMockResolver(ctrl)
-			if tc.setup != nil {
-				tc.setup(mockStore, mockIdClient)
-			}
-
 			featureClient := &flags.FakeClient{}
 			featureClient.Data = map[string]any{
 				"user_management": true,
 			}
 
 			server := &Server{
-				store:        mockStore,
-				idClient:     mockIdClient,
 				featureFlags: featureClient,
+				invites:      fakeInviteService,
 			}
+
+			ctx := context.Background()
+			ctx = auth.WithIdentityContext(ctx, tc.caller)
 
 			response, err := server.ListInvitations(ctx, &pb.ListInvitationsRequest{})
 
@@ -571,13 +595,15 @@ func TestListInvitations(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, len(tc.expectedResult.Invitations), len(response.Invitations))
-			require.Equal(t, tc.expectedResult.Invitations[0].Email, response.Invitations[0].Email)
-			require.Equal(t, tc.expectedResult.Invitations[0].Project, response.Invitations[0].Project)
-			require.Equal(t, tc.expectedResult.Invitations[0].ProjectDisplay, response.Invitations[0].ProjectDisplay)
-			require.Equal(t, tc.expectedResult.Invitations[0].Code, response.Invitations[0].Code)
-			require.Equal(t, tc.expectedResult.Invitations[0].Role, response.Invitations[0].Role)
-			require.Equal(t, tc.expectedResult.Invitations[0].Sponsor, response.Invitations[0].Sponsor)
+			require.Equal(t, len(tc.expectedResult), len(response.Invitations))
+			diff := cmp.Diff(tc.expectedResult, response.Invitations,
+				protocmp.Transform(), protocmp.IgnoreFields(&pb.Invitation{}, "created_at", "expires_at"),
+				cmpopts.SortSlices(func(a, b *pb.Invitation) bool {
+					return a.Code < b.Code
+				}))
+			if diff != "" {
+				t.Errorf("Response invitations mismatch (-want +got):\n%s", diff)
+			}
 		})
 	}
 }
@@ -589,86 +615,82 @@ func TestResolveInvitation(t *testing.T) {
 	userSubject := "subject1"
 	userGitHubId := "31137"
 	projectDisplayName := "Project"
+	projectID := uuid.New()
+	projectStr := projectID.String()
 	projectMetadata, err := json.Marshal(
 		projects.Metadata{Public: projects.PublicMetadataV1{DisplayName: projectDisplayName}},
 	)
 	require.NoError(t, err)
+	inviterContext := context.Background()
+	inviterContext = auth.WithIdentityContext(inviterContext, &auth.Identity{
+		UserID:    "inviter",
+		HumanName: "Inviter",
+	})
+	inviterContext = engcontext.WithEntityContext(inviterContext, &engcontext.EntityContext{
+		Project: engcontext.Project{ID: projectID},
+	})
 
 	testCases := []struct {
-		name          string
-		accept        bool
-		setup         func(store *mockdb.MockStore)
-		expectedError string
+		name            string
+		accept          bool
+		setup           func(fake *fake.FakeInviteService, store *mockdb.MockStore) string
+		roleAssignments map[uuid.UUID][]*pb.RoleAssignment
+		expectedError   string
 	}{
 		{
 			name: "code not found",
-			setup: func(store *mockdb.MockStore) {
-				tx := sql.Tx{}
-				store.EXPECT().BeginTransaction().Return(&tx, nil)
+			setup: func(_ *fake.FakeInviteService, store *mockdb.MockStore) string {
+				store.EXPECT().BeginTransaction().Return(&sql.Tx{}, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{}, sql.ErrNoRows)
 				store.EXPECT().Rollback(gomock.Any())
+				return "no-such-code"
 			},
 			expectedError: "invitation not found or already used",
 		},
 		{
 			name: "user self resolving",
-			setup: func(store *mockdb.MockStore) {
-				userId := int32(1)
-				tx := sql.Tx{}
-				store.EXPECT().BeginTransaction().Return(&tx, nil)
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				ctx := auth.WithIdentityContext(inviterContext, &auth.Identity{
+					UserID:    userSubject,
+					HumanName: userEmail, // Fake uses this to get email
+				})
+				invite, err := fake.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail)
+				require.NoError(t, err)
+
+				store.EXPECT().BeginTransaction().Return(&sql.Tx{}, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
-					Project:         projectID,
-					IdentitySubject: userSubject,
-					Sponsor:         userId,
-				}, nil)
-				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
-					ID: userId,
-				}, nil)
 				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
 			},
-			expectedError: "user cannot resolve their own invitation",
+			expectedError: "users cannot accept their own invitation",
 		},
 		{
 			name: "expired invitation",
-			setup: func(store *mockdb.MockStore) {
-				tx := sql.Tx{}
-				store.EXPECT().BeginTransaction().Return(&tx, nil)
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				fake.Time = time.Now().Add(-10 * 24 * time.Hour)
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleAdmin, userEmail)
+				fake.Time = time.Time{}
+				require.NoError(t, err)
+
+				store.EXPECT().BeginTransaction().Return(&sql.Tx{}, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
-					Project:         projectID,
-					IdentitySubject: userSubject,
-					Sponsor:         1,
-					UpdatedAt:       time.Now().Add(-time.Hour * 24 * 8), // updated 8 days ago
-				}, nil)
-				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
-					ID: 2,
-				}, nil)
 				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
 			},
 			expectedError: "invitation expired",
 		},
 		{
 			name:   "Success accept",
 			accept: true,
-			setup: func(store *mockdb.MockStore) {
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				require.NoError(t, err)
+
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
-					Project:         projectID,
-					IdentitySubject: userSubject,
-					Sponsor:         1,
-					Role:            "viewer",
-					UpdatedAt:       time.Now(),
-				}, nil)
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
 					ID: 2,
-				}, nil)
-				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
-					Project: projectID,
-					Email:   userEmail,
 				}, nil)
 				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
 					Name:     "project1",
@@ -676,28 +698,67 @@ func TestResolveInvitation(t *testing.T) {
 				}, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
 			},
 		},
 		{
 			name:   "Success decline",
 			accept: false,
-			setup: func(store *mockdb.MockStore) {
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				require.NoError(t, err)
+
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
-					Project:         projectID,
-					IdentitySubject: userSubject,
-					Sponsor:         1,
-					Role:            "viewer",
-					UpdatedAt:       time.Now(),
+				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
+					Name:     "project1",
+					Metadata: projectMetadata,
 				}, nil)
+				store.EXPECT().Commit(gomock.Any())
+				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
+			},
+		},
+		{
+			name:   "Can't accept for current role",
+			accept: true,
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				require.NoError(t, err)
+
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
 					ID: 2,
 				}, nil)
-				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
-					Project: projectID,
-					Email:   userEmail,
+				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
+			},
+			roleAssignments: map[uuid.UUID][]*pb.RoleAssignment{
+				projectID: {
+					{
+						Role:    authz.RoleViewer.String(),
+						Subject: userSubject,
+						Project: &projectStr,
+					},
+				},
+			},
+			expectedError: "user already has the same role in the project",
+		},
+		{
+			name:   "Update role if accepting existing invite",
+			accept: true,
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleEditor, userEmail)
+				require.NoError(t, err)
+
+				tx := sql.Tx{}
+				store.EXPECT().BeginTransaction().Return(&tx, nil)
+				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
+				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{
+					ID: 2,
 				}, nil)
 				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
 					Name:     "project1",
@@ -705,35 +766,38 @@ func TestResolveInvitation(t *testing.T) {
 				}, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
+			},
+			roleAssignments: map[uuid.UUID][]*pb.RoleAssignment{
+				projectID: {
+					{
+						Role:    authz.RoleViewer.String(),
+						Subject: userSubject,
+						Project: &projectStr,
+					},
+				},
 			},
 		},
 		{
 			name:   "Success create user",
 			accept: true,
-			setup: func(store *mockdb.MockStore) {
+			setup: func(fake *fake.FakeInviteService, store *mockdb.MockStore) string {
+				invite, err := fake.CreateInvite(inviterContext, nil, nil, serverconfig.EmailConfig{}, projectID, authz.RoleViewer, userEmail)
+				require.NoError(t, err)
+
 				tx := sql.Tx{}
 				store.EXPECT().BeginTransaction().Return(&tx, nil)
 				store.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(store)
-				store.EXPECT().GetInvitationByCode(gomock.Any(), gomock.Any()).Return(db.GetInvitationByCodeRow{
-					Project:         projectID,
-					IdentitySubject: userSubject,
-					Sponsor:         1,
-					Role:            "viewer",
-					UpdatedAt:       time.Now(),
-				}, nil)
 				store.EXPECT().GetUserBySubject(gomock.Any(), userSubject).Return(db.User{}, sql.ErrNoRows)
 				store.EXPECT().CreateUser(gomock.Any(), userSubject).Return(db.User{ID: 2}, nil)
 				store.EXPECT().GetUnclaimedInstallationsByUser(gomock.Any(), sql.NullString{String: userGitHubId, Valid: true}).Return(nil, nil)
-				store.EXPECT().DeleteInvitation(gomock.Any(), gomock.Any()).Return(db.UserInvite{
-					Project: projectID,
-					Email:   userEmail,
-				}, nil)
 				store.EXPECT().GetProjectByID(gomock.Any(), projectID).Return(db.Project{
 					Name:     "project1",
 					Metadata: projectMetadata,
 				}, nil)
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
+				return invite.GetCode()
 			},
 		},
 	}
@@ -753,12 +817,15 @@ func TestResolveInvitation(t *testing.T) {
 			ctx := context.Background()
 			ctx = jwt.WithAuthTokenContext(ctx, user)
 			ctx = auth.WithIdentityContext(ctx, &auth.Identity{
-				UserID: userSubject,
+				UserID:    userSubject,
+				HumanName: userEmail, // Fake uses this to get email
 			})
+			code := "code"
 
 			mockStore := mockdb.NewMockStore(ctrl)
+			fakeInviteService := fake.NewFakeInviteService()
 			if tc.setup != nil {
-				tc.setup(mockStore)
+				code = tc.setup(fakeInviteService, mockStore)
 			}
 
 			featureClient := &flags.FakeClient{}
@@ -766,27 +833,36 @@ func TestResolveInvitation(t *testing.T) {
 				"user_management": true,
 			}
 
-			authzClient := &mock.SimpleClient{}
+			authzClient := &mock.SimpleClient{
+				Assignments: tc.roleAssignments,
+			}
 
 			server := &Server{
 				store:        mockStore,
 				featureFlags: featureClient,
+				invites:      fakeInviteService,
 				authzClient:  authzClient,
 			}
 
 			response, err := server.ResolveInvitation(ctx, &pb.ResolveInvitationRequest{
-				Code:   "code",
+				Code:   code,
 				Accept: tc.accept,
 			})
 
 			if tc.expectedError != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.expectedError)
+				var rpcErr *util.NiceStatus
+				require.ErrorAs(t, err, &rpcErr)
+				require.NotEqual(t, rpcErr.Code, codes.Unknown)
+				require.Contains(t, rpcErr.Details, tc.expectedError)
 				return
 			}
 
 			require.NoError(t, err)
 			require.Equal(t, tc.accept, response.IsAccepted)
+
+			// We shouldn't have any lingering invites
+			require.Empty(t, fakeInviteService.GetAllInvites())
 		})
 	}
 }

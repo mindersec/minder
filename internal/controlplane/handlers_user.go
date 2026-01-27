@@ -24,7 +24,6 @@ import (
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/util"
@@ -311,53 +310,14 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 		return nil, status.Error(codes.Unimplemented, "feature not enabled")
 	}
-	invitations := make([]*pb.Invitation, 0)
 
-	// Extracts the user email from the token
-	tokenEmail, err := jwt.GetUserEmailFromContext(ctx)
+	invitations, err := s.invites.GetInvitesForSelf(ctx, s.store, s.idClient)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get user email: %s", err)
-	}
-
-	// Get the list of invitations for the user
-	userInvites, err := s.store.GetInvitationsByEmail(ctx, tokenEmail)
-	if err != nil {
+		var niceErr *util.NiceStatus // no need to wrap formatted errors
+		if errors.As(err, &niceErr) {
+			return nil, err
+		}
 		return nil, status.Errorf(codes.Internal, "failed to get invitations: %s", err)
-	}
-
-	// Build the response list of invitations
-	for _, i := range userInvites {
-		// Resolve the sponsor's identity and display name
-		identity, err := s.idClient.Resolve(ctx, i.IdentitySubject)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error resolving identity")
-			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", i.IdentitySubject)
-		}
-
-		// Resolve the project's display name
-		targetProject, err := s.store.GetProjectByID(ctx, i.Project)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
-		}
-
-		// Parse the project metadata, so we can get the display name set by project owner
-		meta, err := projects.ParseMetadata(&targetProject)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error parsing project metadata: %v", err)
-		}
-
-		invitations = append(invitations, &pb.Invitation{
-			Code:           i.Code,
-			Role:           i.Role,
-			Email:          i.Email,
-			Project:        i.Project.String(),
-			ProjectDisplay: meta.Public.DisplayName,
-			CreatedAt:      timestamppb.New(i.CreatedAt),
-			ExpiresAt:      invites.GetExpireIn7Days(i.UpdatedAt),
-			Expired:        invites.IsExpired(i.UpdatedAt),
-			Sponsor:        identity.String(),
-			SponsorDisplay: identity.Human(),
-		})
 	}
 
 	return &pb.ListInvitationsResponse{
@@ -382,44 +342,38 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 		return nil, status.Errorf(codes.Internal, "failed to get transaction")
 	}
 
-	// Check if the invitation code is valid
-	userInvite, err := qtx.GetInvitationByCode(ctx, req.Code)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, util.UserVisibleError(codes.NotFound, "invitation not found or already used")
+	invite, err := s.invites.GetInvite(ctx, qtx, req.Code)
+	if err != nil || invite == nil {
+		var niceErr *util.NiceStatus // no need to wrap formatted errors
+		if errors.As(err, &niceErr) {
+			return nil, err
 		}
 		return nil, status.Errorf(codes.Internal, "failed to get invitation: %s", err)
 	}
-
-	user, err := ensureUser(ctx, s, qtx)
+	project, err := uuid.Parse(invite.GetProject())
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get or create user: %s", err)
-	}
-
-	if user.ID == userInvite.Sponsor {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "user cannot resolve their own invitation")
-	}
-
-	// Check if the invitation is expired
-	if invites.IsExpired(userInvite.UpdatedAt) {
-		return nil, util.UserVisibleError(codes.PermissionDenied, "invitation expired")
+		return nil, status.Errorf(codes.Internal, "failed to parse project ID: %s", err)
 	}
 
 	// Accept invitation
 	if req.Accept {
-		if err := s.acceptInvitation(ctx, userInvite); err != nil {
+		_, err := ensureUser(ctx, s, qtx)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get or create user: %s", err)
+		}
+		if err := s.acceptInvitation(ctx, project, invite); err != nil {
 			return nil, err
 		}
 	}
 
 	// Delete the invitation since its resolved
-	deletedInvite, err := qtx.DeleteInvitation(ctx, req.Code)
+	err = s.invites.RemoveInvite(ctx, qtx, req.Code)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete invitation: %s", err)
 	}
 
 	// Resolve the project's display name
-	targetProject, err := qtx.GetProjectByID(ctx, deletedInvite.Project)
+	targetProject, err := qtx.GetProjectByID(ctx, project)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to get project: %s", err)
 	}
@@ -436,17 +390,17 @@ func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitatio
 	}
 
 	return &pb.ResolveInvitationResponse{
-		Role:           deletedInvite.Role,
-		Project:        deletedInvite.Project.String(),
+		Role:           invite.GetRole(),
+		Project:        invite.GetProject(),
 		ProjectDisplay: meta.Public.DisplayName,
-		Email:          deletedInvite.Email,
+		Email:          invite.GetEmail(),
 		IsAccepted:     req.Accept,
 	}, nil
 }
 
-func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitationByCodeRow) error {
+func (s *Server) acceptInvitation(ctx context.Context, projectID uuid.UUID, userInvite *pb.Invitation) error {
 	// Validate in case there's an existing role assignment for the user
-	as, err := s.authzClient.AssignmentsToProject(ctx, userInvite.Project)
+	as, err := s.authzClient.AssignmentsToProject(ctx, projectID)
 	if err != nil {
 		return status.Errorf(codes.Internal, "error getting role assignments: %v", err)
 	}
@@ -484,7 +438,7 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 		return status.Errorf(codes.Internal, "failed to parse invitation role: %s", err)
 	}
 	// Add the user to the project
-	if err := s.authzClient.Write(ctx, currentUser, authzRole, userInvite.Project); err != nil {
+	if err := s.authzClient.Write(ctx, currentUser, authzRole, projectID); err != nil {
 		return status.Errorf(codes.Internal, "error writing role assignment: %v", err)
 	}
 	return nil
@@ -492,12 +446,6 @@ func (s *Server) acceptInvitation(ctx context.Context, userInvite db.GetInvitati
 
 func ensureUser(ctx context.Context, s *Server, store db.ExtendQuerier) (db.User, error) {
 	id := auth.IdentityFromContext(ctx)
-	// Only allow invitation flow for users from the primary provider / who can accept
-	// things like terms & conditions.  Secondary providers are for machine identities,
-	// which cannot operate webpages, etc.
-	if id == nil || id.String() != id.UserID {
-		return db.User{}, util.UserVisibleError(codes.FailedPrecondition, "this type of user cannot accept invitations")
-	}
 	sub := id.String()
 	if sub == "" {
 		return db.User{}, status.Error(codes.Internal, "failed to get user subject")
