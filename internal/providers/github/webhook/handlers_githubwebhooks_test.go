@@ -3385,16 +3385,12 @@ func TestAll(t *testing.T) {
 
 //nolint:unparam
 func withTimeout(ch <-chan *message.Message, timeout time.Duration) *message.Message {
-	wrapper := make(chan *message.Message, 1)
-	go func() {
-		select {
-		case item := <-ch:
-			wrapper <- item
-		case <-time.After(timeout):
-			wrapper <- nil
-		}
-	}()
-	return <-wrapper
+	select {
+	case item := <-ch:
+		return item
+	case <-time.After(timeout):
+		return nil
+	}
 }
 
 //nolint:unparam
