@@ -134,3 +134,24 @@ func (*gitlabClient) SupportsEntity(entType minderv1.Entity) bool {
 		entType == minderv1.Entity_ENTITY_PULL_REQUESTS ||
 		entType == minderv1.Entity_ENTITY_RELEASE
 }
+
+// CreationOptions implements the Provider interface
+func (c *gitlabClient) CreationOptions(entType minderv1.Entity) *provifv1.EntityCreationOptions {
+	if !c.SupportsEntity(entType) {
+		return nil
+	}
+
+	// Repositories need webhook registration and trigger policy evaluation
+	if entType == minderv1.Entity_ENTITY_REPOSITORIES {
+		return &provifv1.EntityCreationOptions{
+			RegisterWithProvider:       true,
+			PublishReconciliationEvent: true,
+		}
+	}
+
+	// Other entities (PRs, releases) don't need registration or events
+	return &provifv1.EntityCreationOptions{
+		RegisterWithProvider:       false,
+		PublishReconciliationEvent: false,
+	}
+}

@@ -50,6 +50,20 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 	return m.recorder
 }
 
+// CreationOptions mocks base method.
+func (m *MockProvider) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockProviderMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockProvider)(nil).CreationOptions), entType)
+}
+
 // DeregisterEntity mocks base method.
 func (m *MockProvider) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -177,6 +191,20 @@ func (mr *MockGitMockRecorder) Clone(ctx, url, branch any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Clone", reflect.TypeOf((*MockGit)(nil).Clone), ctx, url, branch)
 }
 
+// CreationOptions mocks base method.
+func (m *MockGit) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockGitMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockGit)(nil).CreationOptions), entType)
+}
+
 // DeregisterEntity mocks base method.
 func (m *MockGit) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -287,6 +315,20 @@ func NewMockREST(ctrl *gomock.Controller) *MockREST {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockREST) EXPECT() *MockRESTMockRecorder {
 	return m.recorder
+}
+
+// CreationOptions mocks base method.
+func (m *MockREST) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockRESTMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockREST)(nil).CreationOptions), entType)
 }
 
 // DeregisterEntity mocks base method.
@@ -443,6 +485,20 @@ func NewMockRepoLister(ctrl *gomock.Controller) *MockRepoLister {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRepoLister) EXPECT() *MockRepoListerMockRecorder {
 	return m.recorder
+}
+
+// CreationOptions mocks base method.
+func (m *MockRepoLister) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockRepoListerMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockRepoLister)(nil).CreationOptions), entType)
 }
 
 // DeregisterEntity mocks base method.
@@ -780,6 +836,20 @@ func (m *MockGitHub) CreateSecurityAdvisory(ctx context.Context, owner, repo, se
 func (mr *MockGitHubMockRecorder) CreateSecurityAdvisory(ctx, owner, repo, severity, summary, description, v any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSecurityAdvisory", reflect.TypeOf((*MockGitHub)(nil).CreateSecurityAdvisory), ctx, owner, repo, severity, summary, description, v)
+}
+
+// CreationOptions mocks base method.
+func (m *MockGitHub) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockGitHubMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockGitHub)(nil).CreationOptions), entType)
 }
 
 // DeleteHook mocks base method.
@@ -1383,6 +1453,20 @@ func (m *MockImageLister) EXPECT() *MockImageListerMockRecorder {
 	return m.recorder
 }
 
+// CreationOptions mocks base method.
+func (m *MockImageLister) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockImageListerMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockImageLister)(nil).CreationOptions), entType)
+}
+
 // DeregisterEntity mocks base method.
 func (m *MockImageLister) DeregisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) error {
 	m.ctrl.T.Helper()
@@ -1522,6 +1606,20 @@ func NewMockOCI(ctrl *gomock.Controller) *MockOCI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockOCI) EXPECT() *MockOCIMockRecorder {
 	return m.recorder
+}
+
+// CreationOptions mocks base method.
+func (m *MockOCI) CreationOptions(entType v10.Entity) *v11.EntityCreationOptions {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreationOptions", entType)
+	ret0, _ := ret[0].(*v11.EntityCreationOptions)
+	return ret0
+}
+
+// CreationOptions indicates an expected call of CreationOptions.
+func (mr *MockOCIMockRecorder) CreationOptions(entType any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreationOptions", reflect.TypeOf((*MockOCI)(nil).CreationOptions), entType)
 }
 
 // DeregisterEntity mocks base method.

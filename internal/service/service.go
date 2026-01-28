@@ -29,6 +29,7 @@ import (
 	"github.com/mindersec/minder/internal/entities/handlers"
 	propService "github.com/mindersec/minder/internal/entities/properties/service"
 	entityService "github.com/mindersec/minder/internal/entities/service"
+	"github.com/mindersec/minder/internal/entities/service/validators"
 	"github.com/mindersec/minder/internal/history"
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/marketplaces"
@@ -50,6 +51,7 @@ import (
 	"github.com/mindersec/minder/internal/reminderprocessor"
 	"github.com/mindersec/minder/internal/repositories"
 	"github.com/mindersec/minder/internal/roles"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/eventer"
@@ -171,8 +173,23 @@ func AllInOneServerService(
 	if err != nil {
 		return fmt.Errorf("failed to create provider auth manager: %w", err)
 	}
+
+	// Create validator registry and register validators
+	validatorRegistry := validators.NewValidatorRegistry()
+	repoValidator := validators.NewRepositoryValidator(store)
+	validatorRegistry.AddValidator(pb.Entity_ENTITY_REPOSITORIES, repoValidator)
+
+	// Create entity creator
+	entityCreator := entityService.NewEntityCreator(
+		store,
+		propSvc,
+		providerManager,
+		evt,
+		validatorRegistry,
+	)
+
 	historySvc := history.NewEvaluationHistoryService(providerManager)
-	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager)
+	repos := repositories.NewRepositoryService(store, propSvc, evt, providerManager, entityCreator)
 	projectDeleter := projects.NewProjectDeleter(authzClient, providerManager)
 	sessionsService := session.NewProviderSessionService(providerManager, providerStore, store)
 	entSvc := entityService.NewEntityService(store, propSvc, providerManager)
@@ -202,6 +219,7 @@ func AllInOneServerService(
 		projectDeleter,
 		projectCreator,
 		entSvc,
+		entityCreator,
 		featureFlagClient,
 	)
 
@@ -269,7 +287,7 @@ func AllInOneServerService(
 	refreshById := handlers.NewRefreshByIDAndEvaluateHandler(evt, store, propSvc, providerManager)
 	evt.ConsumeEvents(refreshById)
 
-	addOriginatingEntity := handlers.NewAddOriginatingEntityHandler(evt, store, propSvc, providerManager)
+	addOriginatingEntity := handlers.NewAddOriginatingEntityHandler(evt, store, propSvc, providerManager, entityCreator)
 	evt.ConsumeEvents(addOriginatingEntity)
 
 	delOriginatingEntity := handlers.NewRemoveOriginatingEntityHandler(evt, store, propSvc, providerManager)
