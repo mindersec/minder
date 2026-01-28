@@ -5,7 +5,6 @@
 package testqueue
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -14,9 +13,8 @@ import (
 // PassthroughQueue is a queue that passes messages through.
 // It's only useful for testing.
 type PassthroughQueue struct {
-	ch     chan *message.Message
-	chLock sync.Mutex
-	t      *testing.T
+	ch chan *message.Message
+	t  *testing.T
 }
 
 // NewPassthroughQueue creates a new PassthroughQueue
@@ -31,24 +29,20 @@ func NewPassthroughQueue(t *testing.T) *PassthroughQueue {
 
 // GetQueue returns the queue
 func (q *PassthroughQueue) GetQueue() <-chan *message.Message {
-	q.chLock.Lock()
-	defer q.chLock.Unlock()
 	return q.ch
 }
 
 // Pass passes a message through the queue
 func (q *PassthroughQueue) Pass(msg *message.Message) error {
 	q.t.Logf("Passing message through queue: %s", msg.UUID)
-	q.chLock.Lock()
-	defer q.chLock.Unlock()
-	q.ch <- msg
+	// Copy the message, to avoid a race between .Ack (after this function
+	// returns) and reading from the channel
+	q.ch <- msg.Copy()
 	return nil
 }
 
 // Close frees closes the channel used as queue.
 func (q *PassthroughQueue) Close() error {
-	q.chLock.Lock()
-	defer q.chLock.Unlock()
 	close(q.ch)
 	return nil
 }
