@@ -11,6 +11,7 @@ import (
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/entities/properties"
+	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
 // Provider is a no-op provider implementation
@@ -43,6 +44,12 @@ func (*Provider) GetEntityName(_ minderv1.Entity, _ *properties.Properties) (str
 // SupportsEntity implements the Provider interface
 func (*Provider) SupportsEntity(_ minderv1.Entity) bool {
 	return false
+}
+
+// CreationOptions implements the Provider interface
+func (*Provider) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
+	// No-op provider doesn't support any entities
+	return nil
 }
 
 // RegisterEntity implements the Provider interface

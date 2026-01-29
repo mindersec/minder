@@ -39,8 +39,22 @@ var ErrUnsupportedEntity = errors.New("entity not supported by provider")
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+// EntityCreationOptions defines default behavior for entity creation
+type EntityCreationOptions struct {
+	// Whether to call RegisterEntity (e.g., create webhooks for repositories)
+	RegisterWithProvider bool
+
+	// Whether to publish reconciliation events (trigger policy evaluation)
+	PublishReconciliationEvent bool
+}
+
 // Provider is the general interface for all providers
 type Provider interface {
+	// CreationOptions returns default options for creating entities of the given type.
+	// Returns nil if the entity type is not supported by this provider.
+	// These options define whether the provider should register the entity (e.g., create webhooks)
+	// and whether reconciliation events should be published for policy evaluation.
+	CreationOptions(entType minderv1.Entity) *EntityCreationOptions
 	// FetchAllProperties fetches all properties for the given entity
 	FetchAllProperties(
 		ctx context.Context, getByProps *properties.Properties, entType minderv1.Entity, cachedProps *properties.Properties,
