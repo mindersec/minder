@@ -1896,6 +1896,7 @@ message EntityTypedId {
     // id is the ID of the entity to get status for. Incompatible with `all`
     string id = 2 [
         (buf.validate.field).string = {uuid: true},
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = OPTIONAL
     ];
     // name is the name of the entity.  This name is unique within a given project, type, and provider, but may not be globally unique.
@@ -1904,6 +1905,7 @@ message EntityTypedId {
             max_bytes: 200
             pattern: "^[[:alnum:]][-/[:word:]]*"
         },
+        (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (google.api.field_behavior) = OPTIONAL
     ];
 }
