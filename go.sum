@@ -1138,8 +1138,8 @@ github.com/stacklok/frizbee v0.1.7 h1:IgrZy8dqKy+vBxNWrZTbDoctnV0doQKrFC6bNbWP5h
 github.com/stacklok/frizbee v0.1.7/go.mod h1:eqMjHEgRYDSlpYpir3wXO6jyGpxr1dnFTvrTdrTIF7E=
 github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687 h1:TIZiO871n9V6sSN+bKsG5SwQ4ZHwGtxcmfcL3siimcY=
 github.com/stacklok/trusty-sdk-go v0.2.3-0.20241121160719-089f44e88687/go.mod h1:QR01jLW/yfwcXY38dwDpgeEjVc2MAR1LycH1fXtoSXs=
-github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5 h1:d3ht4RA1cu00hB+olyK+ppvOEhphHY3oGfSo/BMPlqo=
-github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5/go.mod h1:Z5KcoM0YLC7INlNhEezeIZ0TZNYf7WSNO0Lvah4DSeQ=
+github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.8 h1:gMBdYMTHt2mmTdXW8YfvRjRUZ0GhyGV+IqSH9H15bGw=
+github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.8/go.mod h1:Z5KcoM0YLC7INlNhEezeIZ0TZNYf7WSNO0Lvah4DSeQ=
 github.com/stoewer/go-strcase v1.3.1 h1:iS0MdW+kVTxgMoE1LAZyMiYJFKlOzLooE4MxjirtkAs=
 github.com/stoewer/go-strcase v1.3.1/go.mod h1:fAH5hQ5pehh+j3nZfvwdk2RgEgQjAoM8wodgtPmh1xo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
