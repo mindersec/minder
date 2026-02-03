@@ -5149,14 +5149,23 @@ definitions:
       entityType:
         $ref: '#/definitions/v1Entity'
         title: entity_type is the type of entity to create
-      identifierProperty:
-        type: string
-        description: |-
-          identifier_property is a blob that uniquely identifies the entity.
-          This is meant to be interpreted by the provider.
+      identifyingProperties:
+        type: object
+        additionalProperties: {}
+        description: >-
+          identifying_properties uniquely identifies the entity in the provider.
+
+          For example, for a GitHub repository use github/repo_owner and
+          github/repo_name,
+
+          or use upstream_id to identify by provider's internal ID.
+
+          Each key maps to a value that can be a string, number, boolean, or
+          nested structure.
     title: RegisterEntityRequest is the request message for the RegisterEntity method
     required:
       - entityType
+      - identifyingProperties
   v1RegisterEntityResponse:
     type: object
     properties:
