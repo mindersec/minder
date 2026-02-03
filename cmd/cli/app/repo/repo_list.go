@@ -59,7 +59,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			t.AddRow(
 				v.GetOwner(),
 				v.GetName(),
-				*v.Context.Provider,
+				v.GetContext().GetProvider(),
 				fmt.Sprintf("%d", v.GetRepoId()),
 			)
 		}

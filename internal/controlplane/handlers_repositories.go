@@ -181,6 +181,13 @@ func (s *Server) ListRepositories(ctx context.Context,
 			continue
 		}
 
+		// Repositories contain a Context field which is not based on the entity properties,
+		// fill it.
+		pbRepo.Context = &pb.Context{
+			Provider: &provider.Name,
+			Project:  ptr.Ptr(projectID.String()),
+		}
+
 		results = append(results, pbRepo)
 	}
 

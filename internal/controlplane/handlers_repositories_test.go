@@ -9,18 +9,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/entities/models"
+	propService "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers"
 	ghprovider "github.com/mindersec/minder/internal/providers/github/clients"
 	mockgh "github.com/mindersec/minder/internal/providers/github/mock"
@@ -149,6 +153,147 @@ func TestServer_RegisterRepository(t *testing.T) {
 				}
 				require.NoError(t, err)
 				require.Equal(t, res, expectation)
+			} else {
+				require.Nil(t, res)
+				require.Contains(t, err.Error(), scenario.ExpectedError)
+			}
+		})
+	}
+}
+
+func TestServer_ListRepositories(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name             string
+		RepoServiceSetup repoMockBuilder
+		ProviderSetup    func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager)
+		ProviderFails    bool
+		ExpectedResults  []*pb.Repository
+		ExpectedError    string
+	}{
+		{
+			Name: "List repositories succeeds with multiple results",
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(
+					simpleDbRepository(repoName, remoteRepoId),
+					simpleDbRepository(repoName2, remoteRepoId2),
+				),
+			),
+			ProviderSetup: func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager) {
+				prov := newGitHub(func(mock githubMock) {
+					first := mock.EXPECT().PropertiesToProtoMessage(pb.Entity_ENTITY_REPOSITORIES, gomock.Any()).
+						Return(&pb.Repository{
+							Name:   repoName,
+							RepoId: remoteRepoId,
+							Properties: mustNewPBStruct(map[string]any{
+								"github/repo_id": map[string]any{
+									"minder.internal.type": "int64",
+									"value":                strconv.FormatInt(remoteRepoId, 10),
+								},
+							}),
+						}, nil)
+					mock.EXPECT().PropertiesToProtoMessage(pb.Entity_ENTITY_REPOSITORIES, gomock.Any()).
+						Return(&pb.Repository{
+							Name:   repoName2,
+							RepoId: remoteRepoId2,
+							Properties: mustNewPBStruct(map[string]any{
+								"github/repo_id": map[string]any{
+									"minder.internal.type": "int64",
+									"value":                strconv.FormatInt(remoteRepoId2, 10),
+								},
+							}),
+						}, nil).After(first)
+
+				})(ctrl)
+				mgr.EXPECT().InstantiateFromID(gomock.Any(), uuid.Nil).Return(prov, nil).Times(2)
+			},
+			ExpectedResults: []*pb.Repository{
+				{
+					Name: repoName,
+					Context: &pb.Context{
+						Provider: &provider.Name,
+						Project:  ptr.Ptr(projectID.String()),
+					},
+					RepoId: remoteRepoId,
+					Properties: mustNewPBStruct(map[string]any{
+						"github/repo_id": map[string]any{
+							"minder.internal.type": "int64",
+							"value":                strconv.FormatInt(remoteRepoId, 10),
+						}}),
+				},
+				{
+					Name: repoName2,
+					Context: &pb.Context{
+						Provider: &provider.Name,
+						Project:  ptr.Ptr(projectID.String()),
+					},
+					RepoId: remoteRepoId2,
+					Properties: mustNewPBStruct(map[string]any{
+						"github/repo_id": map[string]any{
+							"minder.internal.type": "int64",
+							"value":                strconv.FormatInt(remoteRepoId2, 10),
+						},
+					}),
+				},
+			},
+		},
+		{
+			Name:          "List repositories fails when provider cannot be found",
+			ProviderFails: true,
+			ExpectedError: "cannot retrieve providers",
+		},
+		{
+			Name: "List repositories succeeds with empty results",
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithSuccessfulListRepositories(),
+			),
+			ExpectedResults: nil,
+		},
+		{
+			Name: "List repositories fails when repo service returns error",
+			RepoServiceSetup: rf.NewRepoService(
+				rf.WithFailedListRepositories(errDefault),
+			),
+			ExpectedError: errDefault.Error(),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: ghprovider.Github},
+				Project:  engcontext.Project{ID: projectID},
+			})
+
+			mgr := mockmanager.NewMockProviderManager(ctrl)
+			if scenario.ProviderSetup != nil {
+				scenario.ProviderSetup(ctrl, mgr)
+			}
+
+			server := createServer(
+				ctrl,
+				scenario.RepoServiceSetup,
+				scenario.ProviderFails,
+				mgr,
+			)
+
+			req := &pb.ListRepositoriesRequest{}
+			res, err := server.ListRepositories(ctx, req)
+			if scenario.ExpectedError == "" {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Results, len(scenario.ExpectedResults))
+				require.Empty(t, res.Cursor)
+
+				diff := cmp.Diff(scenario.ExpectedResults, res.Results, protocmp.Transform())
+				if diff != "" {
+					t.Errorf("repository mismatch (-want +got):\n%s", diff)
+				}
 			} else {
 				require.Nil(t, res)
 				require.Contains(t, err.Error(), scenario.ExpectedError)
@@ -442,6 +587,7 @@ func simpleDbRepository(name string, id int64) *models.EntityWithProperties {
 	})
 	return models.NewEntityWithPropertiesFromInstance(models.EntityInstance{
 		ID:   uuid.UUID{},
+		Type: pb.Entity_ENTITY_REPOSITORIES,
 		Name: name,
 	}, props)
 }
@@ -554,5 +700,6 @@ func createServer(
 		cfg:             &server.Config{},
 		providerStore:   providers.NewProviderStore(store),
 		providerManager: providerManager,
+		props:           propService.NewPropertiesService(store),
 	}
 }
