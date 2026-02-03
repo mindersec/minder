@@ -797,7 +797,6 @@ func TestAssignRole(t *testing.T) {
 				UserID:   "repo:mindersec/community:ref:refs/heads/main",
 				Provider: &githubactions.GitHubActions{},
 			},
-			expectedError: "Description: Unimplemented\nDetails: machine accounts are not enabled",
 		},
 		{
 			name:    "grant permission to GitHub Action",

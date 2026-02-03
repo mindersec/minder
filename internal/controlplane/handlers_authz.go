@@ -398,9 +398,6 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 		if !isMachine && flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
 			return nil, util.UserVisibleError(codes.Unimplemented, "human users may only be added by invitation")
 		}
-		if isMachine {
-			return nil, util.UserVisibleError(codes.Unimplemented, "machine accounts are not enabled")
-		}
 		assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
 			return s.roles.CreateRoleAssignment(ctx, qtx, s.authzClient, targetProject, *identity, authzRole)
 		})
