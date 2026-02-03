@@ -80,7 +80,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				reposvc.ErrPrivateRepoForbidden,
 				projectID,
 			)),
-			ExpectedError: "private repos cannot be registered in this project",
+			ExpectedError: "private repositories are not allowed in this project",
 		},
 		{
 			Name:      "Repo creation fails repo is archived, and archived repos are not allowed",
@@ -90,7 +90,7 @@ func TestServer_RegisterRepository(t *testing.T) {
 				reposvc.ErrArchivedRepoForbidden,
 				projectID,
 			)),
-			ExpectedError: "archived repos cannot be registered in this project",
+			ExpectedError: "archived repositories cannot be registered",
 		},
 		{
 			Name:      "Repo creation on unexpected error",

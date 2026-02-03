@@ -18,6 +18,7 @@ import (
 	msgStrategies "github.com/mindersec/minder/internal/entities/handlers/strategies/message"
 	"github.com/mindersec/minder/internal/entities/models"
 	propertyService "github.com/mindersec/minder/internal/entities/properties/service"
+	entitySvc "github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/providers/manager"
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -259,13 +260,14 @@ func NewAddOriginatingEntityHandler(
 	store db.Store,
 	propSvc propertyService.PropertiesService,
 	provMgr manager.ProviderManager,
+	entityCreator entitySvc.EntityCreator,
 	handlerMiddleware ...watermill.HandlerMiddleware,
 ) interfaces.Consumer {
 	return &handleEntityAndDoBase{
 		evt:   evt,
 		store: store,
 
-		refreshEntity: entStrategies.NewAddOriginatingEntityStrategy(propSvc, provMgr, store),
+		refreshEntity: entStrategies.NewAddOriginatingEntityStrategy(propSvc, provMgr, store, entityCreator),
 		createMessage: msgStrategies.NewToEntityInfoWrapper(store, propSvc, provMgr),
 
 		handlerName:        constants.TopicQueueOriginatingEntityAdd,

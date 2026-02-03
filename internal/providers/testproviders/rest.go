@@ -68,6 +68,12 @@ func (*RESTProvider) SupportsEntity(_ minderv1.Entity) bool {
 	return false
 }
 
+// CreationOptions implements the Provider interface
+func (*RESTProvider) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
+	// Test provider doesn't support entities yet
+	return nil
+}
+
 // RegisterEntity implements the Provider interface
 func (*RESTProvider) RegisterEntity(
 	_ context.Context, _ minderv1.Entity, props *properties.Properties,

@@ -52,6 +52,15 @@ func (*TestKit) SupportsEntity(_ minderv1.Entity) bool {
 	return true
 }
 
+// CreationOptions implements the Provider interface.
+func (*TestKit) CreationOptions(_ minderv1.Entity) *provv1.EntityCreationOptions {
+	// Test scaffold returns no-op options
+	return &provv1.EntityCreationOptions{
+		RegisterWithProvider:       false,
+		PublishReconciliationEvent: false,
+	}
+}
+
 // RegisterEntity implements the Provider interface.
 func (*TestKit) RegisterEntity(_ context.Context, _ minderv1.Entity, props *properties.Properties,
 ) (*properties.Properties, error) {

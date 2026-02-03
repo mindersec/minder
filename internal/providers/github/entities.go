@@ -46,6 +46,27 @@ func (c *GitHub) SupportsEntity(entType minderv1.Entity) bool {
 	return c.propertyFetchers.EntityPropertyFetcher(entType) != nil
 }
 
+// CreationOptions implements the Provider interface
+func (c *GitHub) CreationOptions(entType minderv1.Entity) *provifv1.EntityCreationOptions {
+	if !c.SupportsEntity(entType) {
+		return nil
+	}
+
+	// Repositories need webhook registration and trigger policy evaluation
+	if entType == minderv1.Entity_ENTITY_REPOSITORIES {
+		return &provifv1.EntityCreationOptions{
+			RegisterWithProvider:       true,
+			PublishReconciliationEvent: true,
+		}
+	}
+
+	// Other entities (PRs, artifacts, releases) don't need registration or events
+	return &provifv1.EntityCreationOptions{
+		RegisterWithProvider:       false,
+		PublishReconciliationEvent: false,
+	}
+}
+
 // RegisterEntity implements the Provider interface
 func (c *GitHub) RegisterEntity(
 	ctx context.Context, entityType minderv1.Entity, props *properties.Properties,
