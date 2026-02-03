@@ -791,21 +791,12 @@ func TestAssignRole(t *testing.T) {
 				Provider: &keycloak.KeyCloak{},
 			},
 		}, {
-			name:    "machine accounts disabled",
-			subject: "githubactions/repo:mindersec/community:ref:refs/heads/main",
-			userIdentity: &auth.Identity{
-				UserID:   "repo:mindersec/community:ref:refs/heads/main",
-				Provider: &githubactions.GitHubActions{},
-			},
-		},
-		{
 			name:    "grant permission to GitHub Action",
 			subject: "githubactions/repo:mindersec/community:ref:refs/heads/main",
 			userIdentity: &auth.Identity{
 				UserID:   "repo:mindersec/community:ref:refs/heads/main",
 				Provider: &githubactions.GitHubActions{},
 			},
-			flagData: map[string]any{"machine_accounts": true},
 		},
 	}
 
