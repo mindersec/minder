@@ -66,7 +66,7 @@ func TestCreateInvite(t *testing.T) {
 			name: "error when existing invites",
 			dBSetup: dbf.NewDBMock(
 				withGetUserBySubject(validUser),
-				withExistingInvites(multipleInvites),
+				withExistingInvites(multipleInvites...),
 			),
 			expectedError: "invitation for this email and project already exists, use update instead",
 		},
@@ -74,7 +74,7 @@ func TestCreateInvite(t *testing.T) {
 			name: "invite created and message sent successfully",
 			dBSetup: dbf.NewDBMock(
 				withGetUserBySubject(validUser),
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 				withCreateInvite(userInvite, nil),
 				withProject(nil),
 			),
@@ -96,7 +96,7 @@ func TestCreateInvite(t *testing.T) {
 			name: "attempted injection",
 			dBSetup: dbf.NewDBMock(
 				withGetUserBySubject(validUser),
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 				withCreateInvite(userInvite, nil),
 				withProject(&projects.PublicMetadataV1{
 					Description: "<script>alert('xss')</script>",
@@ -109,7 +109,7 @@ func TestCreateInvite(t *testing.T) {
 			name: "bad name",
 			dBSetup: dbf.NewDBMock(
 				withGetUserBySubject(validUser),
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 				withCreateInvite(userInvite, nil),
 				withProject(&projects.PublicMetadataV1{
 					Description: "<script>alert('xss')</script>",
@@ -166,7 +166,7 @@ func TestUpdateInvite(t *testing.T) {
 	t.Parallel()
 
 	inviteWithin24h := singleInviteWithSameRole
-	inviteWithin24h[0].UpdatedAt = time.Now().Add(-5 * time.Hour)
+	inviteWithin24h.UpdatedAt = time.Now().Add(-5 * time.Hour)
 
 	scenarios := []struct {
 		name           string
@@ -178,14 +178,14 @@ func TestUpdateInvite(t *testing.T) {
 		{
 			name: "error when no existing invites",
 			dBSetup: dbf.NewDBMock(
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 			),
 			expectedError: "no invitations found for this email and project",
 		},
 		{
 			name: "error when multiple existing invites",
 			dBSetup: dbf.NewDBMock(
-				withExistingInvites(multipleInvites),
+				withExistingInvites(multipleInvites...),
 			),
 			expectedError: "multiple invitations found for this email and project",
 		},
@@ -296,7 +296,7 @@ func TestRemoveInvite(t *testing.T) {
 		{ // These technically test GetInvitesForEmail as well, following the implementation in handlers_users.go
 			name: "error when no existing invites",
 			dBSetup: dbf.NewDBMock(
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 			),
 			expectedError: "no invitation found",
 		},
@@ -615,7 +615,7 @@ func TestGetInvitesForEmail(t *testing.T) {
 		{
 			name: "no invites found",
 			dBSetup: dbf.NewDBMock(
-				withExistingInvites(noInvites),
+				withExistingInvites(),
 			),
 			expectedCount: 0,
 		},
@@ -629,7 +629,7 @@ func TestGetInvitesForEmail(t *testing.T) {
 		{
 			name: "multiple invites found",
 			dBSetup: dbf.NewDBMock(
-				withExistingInvites(multipleInvites),
+				withExistingInvites(multipleInvites...),
 			),
 			expectedCount: 2,
 		},
@@ -669,23 +669,18 @@ var (
 		ID:              1,
 		IdentitySubject: userSubject,
 	}
-	noInvites                     []db.GetInvitationsByEmailAndProjectRow
-	singleInviteWithDifferentRole = []db.GetInvitationsByEmailAndProjectRow{
-		{
-			Code:    inviteCode,
-			Email:   userEmail,
-			Project: projectId,
-			Role:    authz.RoleEditor.String(),
-		},
+	singleInviteWithDifferentRole = db.GetInvitationsByEmailAndProjectRow{
+		Code:    inviteCode,
+		Email:   userEmail,
+		Project: projectId,
+		Role:    authz.RoleEditor.String(),
 	}
-	singleInviteWithSameRole = []db.GetInvitationsByEmailAndProjectRow{
-		{
-			Code:      inviteCode,
-			Email:     userEmail,
-			Project:   projectId,
-			Role:      authz.RoleAdmin.String(),
-			UpdatedAt: time.Now().Add(-time.Hour),
-		},
+	singleInviteWithSameRole = db.GetInvitationsByEmailAndProjectRow{
+		Code:      inviteCode,
+		Email:     userEmail,
+		Project:   projectId,
+		Role:      authz.RoleAdmin.String(),
+		UpdatedAt: time.Now().Add(-time.Hour),
 	}
 	multipleInvites = []db.GetInvitationsByEmailAndProjectRow{
 		{
@@ -716,7 +711,7 @@ func withGetUserBySubject(result db.User) func(dbf.DBMock) {
 	}
 }
 
-func withExistingInvites(result []db.GetInvitationsByEmailAndProjectRow) func(dbf.DBMock) {
+func withExistingInvites(result ...db.GetInvitationsByEmailAndProjectRow) func(dbf.DBMock) {
 	return func(mock dbf.DBMock) {
 		mock.EXPECT().
 			GetInvitationsByEmailAndProject(gomock.Any(), gomock.Any()).
