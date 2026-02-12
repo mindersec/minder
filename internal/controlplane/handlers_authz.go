@@ -25,7 +25,6 @@ import (
 	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 )
 
 type rpcOptionsKey struct{}
@@ -310,26 +309,24 @@ func (s *Server) ListRoleAssignments(
 		}
 	}
 
-	if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-		// Add invitations, which are only stored in the Minder DB
-		projectInvites, err := s.store.ListInvitationsForProject(ctx, targetProject)
-		if err != nil {
-			// return the information we can and log the error
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error getting invitations")
-		}
-		for _, i := range projectInvites {
-			invitations = append(invitations, &minder.Invitation{
-				Role:           i.Role,
-				Email:          i.Email,
-				Project:        targetProject.String(),
-				CreatedAt:      timestamppb.New(i.CreatedAt),
-				ExpiresAt:      invites.GetExpireIn7Days(i.UpdatedAt),
-				Expired:        invites.IsExpired(i.UpdatedAt),
-				Sponsor:        i.IdentitySubject,
-				SponsorDisplay: mapIdToDisplay[i.IdentitySubject],
-				// Code is explicitly not returned here
-			})
-		}
+	// Add invitations, which are only stored in the Minder DB
+	projectInvites, err := s.store.ListInvitationsForProject(ctx, targetProject)
+	if err != nil {
+		// return the information we can and log the error
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error getting invitations")
+	}
+	for _, i := range projectInvites {
+		invitations = append(invitations, &minder.Invitation{
+			Role:           i.Role,
+			Email:          i.Email,
+			Project:        targetProject.String(),
+			CreatedAt:      timestamppb.New(i.CreatedAt),
+			ExpiresAt:      invites.GetExpireIn7Days(i.UpdatedAt),
+			Expired:        invites.IsExpired(i.UpdatedAt),
+			Sponsor:        i.IdentitySubject,
+			SponsorDisplay: mapIdToDisplay[i.IdentitySubject],
+			// Code is explicitly not returned here
+		})
 	}
 
 	return &minder.ListRoleAssignmentsResponse{
@@ -375,27 +372,24 @@ func (s *Server) AssignRole(ctx context.Context, req *minder.AssignRoleRequest) 
 
 	// Decide if it's an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			return &minder.AssignRoleResponse{
-				// Leaving the role assignment empty as it's an invitation
-				Invitation: invitation,
-			}, nil
+		invitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
+			return s.invites.CreateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+		})
+		if err != nil {
+			return nil, err
 		}
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
+
+		return &minder.AssignRoleResponse{
+			// Leaving the role assignment empty as it's an invitation
+			Invitation: invitation,
+		}, nil
 	} else if sub != "" && inviteeEmail == "" {
 		identity, err := s.idClient.Resolve(ctx, sub)
 		if err != nil || identity == nil {
 			return nil, util.UserVisibleError(codes.NotFound, "could not find identity %q", sub)
 		}
 		isMachine := identity.Provider.String() != ""
-		if !isMachine && flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
+		if !isMachine {
 			return nil, util.UserVisibleError(codes.Unimplemented, "human users may only be added by invitation")
 		}
 		assignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
@@ -430,37 +424,34 @@ func (s *Server) RemoveRole(ctx context.Context, req *minder.RemoveRoleRequest) 
 
 	// Validate the subject and email - decide if it's about removing an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			deletedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				invites, err := s.invites.GetInvitesForEmail(ctx, qtx, targetProject, inviteeEmail)
-				if err != nil {
-					return nil, err
-				}
-
-				for _, i := range invites {
-					if i.GetRole() == authzRole.String() {
-						err := s.invites.RemoveInvite(ctx, qtx, i.GetCode())
-						if err != nil {
-							return nil, err
-						}
-						return i, nil
-					}
-				}
-
-				return nil, util.UserVisibleError(codes.NotFound,
-					"no invitation found for email %s with role %s in project %s",
-					inviteeEmail, authzRole.String(), targetProject)
-			})
-
+		deletedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
+			invites, err := s.invites.GetInvitesForEmail(ctx, qtx, targetProject, inviteeEmail)
 			if err != nil {
 				return nil, err
 			}
 
-			return &minder.RemoveRoleResponse{
-				Invitation: deletedInvitation,
-			}, nil
+			for _, i := range invites {
+				if i.GetRole() == authzRole.String() {
+					err := s.invites.RemoveInvite(ctx, qtx, i.GetCode())
+					if err != nil {
+						return nil, err
+					}
+					return i, nil
+				}
+			}
+
+			return nil, util.UserVisibleError(codes.NotFound,
+				"no invitation found for email %s with role %s in project %s",
+				inviteeEmail, authzRole.String(), targetProject)
+		})
+
+		if err != nil {
+			return nil, err
 		}
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
+
+		return &minder.RemoveRoleResponse{
+			Invitation: deletedInvitation,
+		}, nil
 	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment
 		deletedRoleAssignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
@@ -504,21 +495,18 @@ func (s *Server) UpdateRole(ctx context.Context, req *minder.UpdateRoleRequest) 
 
 	// Validate the subject and email - decide if it's about updating an invitation or a role assignment
 	if sub == "" && inviteeEmail != "" {
-		if flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-			updatedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
-				return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			return &minder.UpdateRoleResponse{
-				Invitations: []*minder.Invitation{
-					updatedInvitation,
-				},
-			}, nil
+		updatedInvitation, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.Invitation, error) {
+			return s.invites.UpdateInvite(ctx, qtx, s.evt, s.cfg.Email, targetProject, authzRole, inviteeEmail)
+		})
+		if err != nil {
+			return nil, err
 		}
-		return nil, util.UserVisibleError(codes.Unimplemented, "user management is not enabled")
+
+		return &minder.UpdateRoleResponse{
+			Invitations: []*minder.Invitation{
+				updatedInvitation,
+			},
+		}, nil
 	} else if sub != "" && inviteeEmail == "" {
 		// If there's a subject, we assume it's a role assignment update
 		updatedAssignment, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minder.RoleAssignment, error) {
