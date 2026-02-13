@@ -4,11 +4,8 @@
 package auth
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -22,11 +19,11 @@ var loginCmd = &cobra.Command{
 	Short: "Login to Minder",
 	Long: `The login command allows for logging in to Minder. Upon successful login, credentials will be saved to
 $XDG_CONFIG_HOME/minder/ based on the hostname and port of the server.`,
-	RunE: cli.GRPCClientWrapRunE(LoginCommand),
+	RunE: LoginCommand,
 }
 
 // LoginCommand is the login subcommand
-func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+func LoginCommand(cmd *cobra.Command, _ []string) error {
 	clientConfig, err := config.ReadConfigFromViper[clientconfig.Config](viper.GetViper())
 	if err != nil {
 		return cli.MessageAndError("Unable to read config", err)
@@ -34,6 +31,8 @@ func LoginCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.C
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	ctx := cmd.Context()
 
 	filePath, err := cli.LoginAndSaveCreds(ctx, cmd, clientConfig)
 	if err != nil {
