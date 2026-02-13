@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gorilla/securecookie"
@@ -21,6 +22,7 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/client/rp"
 	httphelper "github.com/zitadel/oidc/v3/pkg/http"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -195,8 +197,8 @@ func Login(
 	cmd *cobra.Command,
 	cfg *clientconfig.Config,
 	extraScopes []string,
-	skipBroswer bool,
-) (*oidc.Tokens[*oidc.IDTokenClaims], error) {
+	skipBrowser bool,
+) (*oauth2.Token, error) {
 	if cfg == nil {
 		return nil, errors.New("client config is nil")
 	}
@@ -217,8 +219,6 @@ func Login(
 	if len(extraScopes) > 0 {
 		scopes = append(scopes, extraScopes...)
 	}
-
-	callbackPath := "/auth/callback"
 
 	errChan := make(chan loginError)
 
@@ -244,16 +244,35 @@ func Login(
 	options := []rp.Option{
 		rp.WithCookieHandler(cookieHandler),
 		rp.WithVerifierOpts(rp.WithIssuedAtOffset(5 * time.Second)),
-		rp.WithPKCE(cookieHandler),
 		rp.WithErrorHandler(errorHandler),
+		rp.WithPKCE(cookieHandler),
 	}
 
-	// Get random port
+	// Use device authorization flow when skipBrowser is true
+	if skipBrowser {
+		return loginWithDeviceFlow(ctx, cmd, options, realmUrl, clientID, scopes, errChan)
+	}
+
+	return loginWithBrowserFlow(ctx, cmd, options, realmUrl, clientID, scopes, errChan)
+}
+
+// loginWithBrowserFlow implements the OAuth 2.0 Authorization Code Flow
+// with a local callback server and browser-based authentication
+func loginWithBrowserFlow(
+	ctx context.Context,
+	cmd *cobra.Command,
+	options []rp.Option,
+	realmUrl string,
+	clientID string,
+	scopes []string,
+	errChan chan loginError,
+) (*oauth2.Token, error) {
+	callbackPath := "/auth/callback"
+
 	port, err := rand.GetRandomPort()
 	if err != nil {
 		return nil, MessageAndError("Error getting random port", err)
 	}
-
 	redirectURI := &url.URL{
 		Scheme: "http",
 		Host:   fmt.Sprintf("localhost:%v", port),
@@ -274,12 +293,12 @@ func Login(
 		return state
 	}
 
-	tokenChan := make(chan *oidc.Tokens[*oidc.IDTokenClaims])
+	tokenChan := make(chan *oauth2.Token)
 
 	callback := func(w http.ResponseWriter, _ *http.Request,
 		tokens *oidc.Tokens[*oidc.IDTokenClaims], _ string, _ rp.RelyingParty) {
 
-		tokenChan <- tokens
+		tokenChan <- tokens.Token
 		// send a success message to the browser
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, err := w.Write(loginSuccessHtml)
@@ -312,16 +331,12 @@ func Login(
 	// get the OAuth authorization URL
 	loginUrl := fmt.Sprintf("http://localhost:%v/login", port)
 
-	if !skipBroswer {
-		// Redirect user to provider to log in
-		cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
+	// Redirect user to provider to log in
+	cmd.Printf("Your browser will now be opened to: %s\n", loginUrl)
 
-		// open user's browser to login page
-		if err := browser.OpenURL(loginUrl); err != nil {
-			cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
-		}
-	} else {
-		cmd.Printf("Skipping browser login. You may login by pasting this URL into your browser: %s\n", loginUrl)
+	// open user's browser to login page
+	if err := browser.OpenURL(loginUrl); err != nil {
+		cmd.Printf("You may login by pasting this URL into your browser: %s\n", loginUrl)
 	}
 
 	cmd.Println("Please follow the instructions on the page to log in.")
@@ -329,7 +344,7 @@ func Login(
 	cmd.Println("Waiting for token...")
 
 	// wait for the token to be received
-	var token *oidc.Tokens[*oidc.IDTokenClaims]
+	var token *oauth2.Token
 	var loginErr error
 
 	select {
@@ -340,4 +355,66 @@ func Login(
 	}
 
 	return token, loginErr
+}
+
+// loginWithDeviceFlow implements the OAuth 2.0 Device Authorization Grant flow
+// using the zitadel/oidc library
+func loginWithDeviceFlow(
+	ctx context.Context,
+	cmd *cobra.Command,
+	options []rp.Option,
+	realmUrl string,
+	clientID string,
+	scopes []string,
+	errChan chan loginError,
+) (*oauth2.Token, error) {
+	// Create relying party with empty redirect URI since device flow doesn't use it
+	provider, err := rp.NewRelyingPartyOIDC(ctx, realmUrl, clientID, "", "", scopes, options...)
+	if err != nil {
+		return nil, MessageAndError("Error creating relying party", err)
+	}
+
+	// Step 1: Initiate device authorization flow
+	deviceAuthResp, err := rp.DeviceAuthorization(ctx, scopes, provider, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate device authorization: %w", err)
+	}
+
+	// Step 2: Display user code and verification URL
+	cmd.Println()
+	cmd.Println("To sign in, use a web browser to open the page:")
+	cmd.Printf("  %s\n", deviceAuthResp.VerificationURI)
+	cmd.Println()
+	cmd.Printf("And enter the code: %s\n", deviceAuthResp.UserCode)
+	cmd.Println()
+
+	// If there's a complete verification URI, show it as an alternative
+	if deviceAuthResp.VerificationURIComplete != "" {
+		cmd.Printf("Or open this URL directly: %s\n", deviceAuthResp.VerificationURIComplete)
+		cmd.Println()
+	}
+
+	cmd.Println("Waiting for authorization...")
+
+	// Step 3: Poll for tokens
+	interval := time.Duration(deviceAuthResp.Interval) * time.Second
+	if interval == 0 {
+		interval = 5 * time.Second // default polling interval
+	}
+
+	tokenResp, err := rp.DeviceAccessToken(ctx, deviceAuthResp.DeviceCode, interval, provider)
+	if err != nil {
+		// Check if it's an access denied error
+		if strings.Contains(err.Error(), "access_denied") {
+			return nil, loginError{ErrorType: "access_denied", Description: "User denied the authorization request"}
+		}
+		return nil, fmt.Errorf("failed to obtain device access token: %w", err)
+	}
+
+	return &oauth2.Token{
+		AccessToken:  tokenResp.AccessToken,
+		TokenType:    tokenResp.TokenType,
+		RefreshToken: tokenResp.RefreshToken,
+		Expiry:       time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
+	}, nil
 }

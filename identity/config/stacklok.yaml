@@ -99,6 +99,8 @@ clientScopes:
 
 clients:
   - clientId: minder-cli
+    name: "Minder CLI"
+    description: "Embedded client in Minder command line"
     enabled: true
     redirectUris:
       - "http://localhost/*"
@@ -116,6 +118,9 @@ clients:
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
+    attributes:
+      # Allow headless code authorization for remote cases
+      "oauth2.device.authorization.grant.enabled": "true"
   - clientId: minder-ui
     enabled: true
     redirectUris:
