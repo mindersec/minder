@@ -62,7 +62,7 @@ func offlineUseCommand(_ context.Context, cmd *cobra.Command, _ []string, _ *grp
 	clientID := clientConfig.Identity.CLI.ClientId
 	realm := clientConfig.Identity.CLI.Realm
 
-	realmUrl, err := cli.GetRealmUrl(grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
+	realmUrl, err := cli.GetRealmUrl(cmd, grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
 	if err != nil {
 		return fmt.Errorf("couldn't get realm URL: %v", err)
 	}

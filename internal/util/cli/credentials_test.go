@@ -20,6 +20,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -154,6 +155,7 @@ func TestGetGrpcConnection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setEnvVar(t, cli.MinderAuthTokenEnvVar, tt.envToken)
+			cmd := cobra.Command{}
 			grpcCalls = 0
 			authCalls = 0
 			legacyCalls = 0
@@ -170,7 +172,7 @@ func TestGetGrpcConnection(t *testing.T) {
 				Port:     port,
 				Insecure: tt.allowInsecure,
 			}
-			conn, err := cli.GetGrpcConnection(grpcCfg, authServer.URL, "stacklok", "minder-cli")
+			conn, err := cli.GetGrpcConnection(&cmd, grpcCfg, authServer.URL, "stacklok", "minder-cli")
 
 			if tt.expectedGRPC > 0 && tt.expectedGRPC != grpcCalls {
 				t.Errorf("Expected %d grpc calls, got %d", tt.expectedAuths, authCalls)

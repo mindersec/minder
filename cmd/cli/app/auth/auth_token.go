@@ -46,7 +46,7 @@ func TokenCommand(cmd *cobra.Command, _ []string) error {
 	issuerUrl := clientConfig.Identity.CLI.IssuerUrl
 	clientId := clientConfig.Identity.CLI.ClientId
 	realm := clientConfig.Identity.CLI.Realm
-	creds, err := cli.GetToken(grpcCfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
+	creds, err := cli.GetToken(cmd, grpcCfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 	if err != nil {
 		cmd.Printf("Error getting token: %v\n", err)
 		if errors.Is(err, os.ErrNotExist) || errors.Is(err, cli.ErrGettingRefreshToken) {

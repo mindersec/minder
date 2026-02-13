@@ -79,6 +79,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 	}
 
 	conn, err := GetGrpcConnection(
+		cmd,
 		clientConfig.GRPCClientConfig,
 		issuerUrl,
 		realm,
@@ -92,7 +93,7 @@ func GrpcForCommand(cmd *cobra.Command, v *viper.Viper) (*grpc.ClientConn, error
 				return nil, err
 			}
 			return GetGrpcConnection(
-				clientConfig.GRPCClientConfig, issuerUrl, realm, clientId, opts...)
+				cmd, clientConfig.GRPCClientConfig, issuerUrl, realm, clientId, opts...)
 		}
 	}
 
@@ -109,7 +110,7 @@ func EnsureCredentials(cmd *cobra.Command, _ []string) error {
 		return MessageAndError("Unable to read config", err)
 	}
 
-	_, err = GetToken(clientConfig.GRPCClientConfig.GetGRPCAddress(),
+	_, err = GetToken(cmd, clientConfig.GRPCClientConfig.GetGRPCAddress(),
 		[]grpc.DialOption{clientConfig.GRPCClientConfig.TransportCredentialsOption()},
 		clientConfig.Identity.CLI.IssuerUrl,
 		clientConfig.Identity.CLI.Realm,
@@ -205,7 +206,7 @@ func Login(
 	clientID := cfg.Identity.CLI.ClientId
 	realm := cfg.Identity.CLI.Realm
 
-	realmUrl, err := GetRealmUrl(grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
+	realmUrl, err := GetRealmUrl(cmd, grpcCfg.GetGRPCAddress(), opts, issuerUrlStr, realm)
 	if err != nil {
 		return nil, MessageAndError("Error building realm URL", err)
 	}
