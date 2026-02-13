@@ -142,7 +142,7 @@ var cmd = &cobra.Command{
 //
 //nolint:gocyclo
 func quickstartCommand(
-	ctx context.Context,
+	_ context.Context,
 	cmd *cobra.Command,
 	_ []string,
 	conn *grpc.ClientConn,
@@ -395,7 +395,7 @@ func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context,
 
 func loginPromptErrWrapper(
 	cmnd *cobra.Command,
-	conn *grpc.ClientConn,
+	_ *grpc.ClientConn,
 	inErr error,
 ) error {
 	// Check if the error is unauthenticated, if so, prompt the user to log in

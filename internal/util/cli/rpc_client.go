@@ -42,6 +42,9 @@ var accessDeniedHtml []byte
 //go:embed html/generic_failure.html
 var genericAuthFailure []byte
 
+// 1 year is wildly larger than we should get a token valid for, cap to 1 year
+const maxLifetimeSec = 365 * 24 * 3600
+
 func requestIDInterceptor(printer func(string, ...interface{})) grpc.UnaryClientInterceptor {
 	return func(
 		ctx context.Context,
@@ -366,7 +369,7 @@ func loginWithDeviceFlow(
 	realmUrl string,
 	clientID string,
 	scopes []string,
-	errChan chan loginError,
+	_ chan loginError,
 ) (*oauth2.Token, error) {
 	// Create relying party with empty redirect URI since device flow doesn't use it
 	provider, err := rp.NewRelyingPartyOIDC(ctx, realmUrl, clientID, "", "", scopes, options...)
@@ -409,6 +412,9 @@ func loginWithDeviceFlow(
 			return nil, loginError{ErrorType: "access_denied", Description: "User denied the authorization request"}
 		}
 		return nil, fmt.Errorf("failed to obtain device access token: %w", err)
+	}
+	if tokenResp.ExpiresIn >= maxLifetimeSec {
+		tokenResp.ExpiresIn = maxLifetimeSec
 	}
 
 	return &oauth2.Token{

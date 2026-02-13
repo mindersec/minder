@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -23,7 +24,6 @@ import (
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	clientconfig "github.com/mindersec/minder/pkg/config/client"
-	"github.com/spf13/cobra"
 )
 
 // MinderAuthTokenEnvVar is the environment variable for the minder auth token
@@ -168,7 +168,14 @@ func RemoveCredentials(serverAddress string) error {
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
-func GetToken(cmd *cobra.Command, serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string, clientId string) (string, error) {
+func GetToken(
+	cmd *cobra.Command,
+	serverAddress string,
+	opts []grpc.DialOption,
+	issuerUrl string,
+	realm string,
+	clientId string,
+) (string, error) {
 	refreshLimit := 10 * time.Second
 	creds, err := LoadCredentials(serverAddress)
 	// If the credentials file doesn't exist, proceed as if it were empty (zero default)
@@ -211,7 +218,8 @@ type refreshTokenResponse struct {
 // the server headers using the minder.v1.UserService.GetUser method (and extracting
 // the realm from the "WWW-Authenticate" header), but falling back to static
 // configuration if that fails.
-func GetRealmUrl(cmd *cobra.Command, serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
+func GetRealmUrl(
+	cmd *cobra.Command, serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
 	// Try making an unauthenticated call to get the "WWW-Authenticate" header
 	conn, err := grpc.NewClient(serverAddress, opts...)
 	if err == nil {
