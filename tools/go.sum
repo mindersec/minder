@@ -560,8 +560,8 @@ github.com/mfridman/interpolate v0.0.2 h1:pnuTK7MQIxxFz1Gr+rjSIx9u7qVjf5VOoM/u6B
 github.com/mfridman/interpolate v0.0.2/go.mod h1:p+7uk6oE07mpE/Ik1b8EckO0O4ZXiGAfshKBWLUM9Xg=
 github.com/mgechev/revive v1.14.0 h1:CC2Ulb3kV7JFYt+izwORoS3VT/+Plb8BvslI/l1yZsc=
 github.com/mgechev/revive v1.14.0/go.mod h1:MvnujelCZBZCaoDv5B3foPo6WWgULSSFxvfxp7GsPfo=
-github.com/mikefarah/yq/v4 v4.52.2 h1:g38MGUsWO4y6Te1tzZy3fk6hZ9xknRHLzBaXVoqfAyI=
-github.com/mikefarah/yq/v4 v4.52.2/go.mod h1:05ytoLM9RqcBCI73V3lqDL1gbQ29mEe573IslI9ibU8=
+github.com/mikefarah/yq/v4 v4.52.4 h1:wZlxBMjyKCzzQjL0u6a3zToKuyE7OdJr4OtLBtwph4Q=
+github.com/mikefarah/yq/v4 v4.52.4/go.mod h1:8QwgSgDsmt4LCbfwvGUAh5oWSukRRuVJ8Gj98zJ/45o=
 github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db h1:62I3jR2EmQ4l5rM/4FEfDWcRD+abF5XlKShorW5LRoQ=
 github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db/go.mod h1:l0dey0ia/Uv7NcFFVbCLtqEBQbrT4OCwCSKTEv6enCw=
 github.com/mitchellh/copystructure v1.2.0 h1:vpKXTN4ewci03Vljg/q9QvCGUDttBOGBIa15WveJJGw=
