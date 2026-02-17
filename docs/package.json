@@ -42,7 +42,7 @@
     "eslint-plugin-mdx": "^3.6.2",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^17.3.0",
-    "markdownlint-cli2": "0.20.0",
+    "markdownlint-cli2": "0.21.0",
     "prettier": "3.8.1",
     "typescript-eslint": "^8.54.0"
   },
