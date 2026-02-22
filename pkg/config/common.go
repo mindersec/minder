@@ -20,9 +20,10 @@ import (
 
 // DatabaseConfig is the configuration for the database
 type DatabaseConfig struct {
-	Host            string `mapstructure:"dbhost" default:"localhost"`
-	Port            int    `mapstructure:"dbport" default:"5432"`
-	User            string `mapstructure:"dbuser" default:"postgres"`
+	Host string `mapstructure:"dbhost" default:"localhost"`
+	Port int    `mapstructure:"dbport" default:"5432"`
+	User string `mapstructure:"dbuser" default:"postgres"`
+	//nolint:gosec // Deprecated; prefer to load password via environment or .pgpass file
 	Password        string `mapstructure:"dbpass" default:"postgres"`
 	Name            string `mapstructure:"dbname" default:"minder"`
 	SSLMode         string `mapstructure:"sslmode" default:"disable"`

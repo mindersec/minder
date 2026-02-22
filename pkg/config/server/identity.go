@@ -35,7 +35,9 @@ type IdentityConfig struct {
 	IssuerClaim string `mapstructure:"issuer_claim" default:"http://localhost:8081/realms/stacklok"`
 	// ClientId is the client ID that identifies the minder server
 	ClientId string `mapstructure:"client_id" default:"minder-server"`
-	// ClientSecret is the client secret for the minder server
+	// ClientSecret is the client secret for the minder server.  Prefer using ClientSecretFile
+	// instead of this field to avoid storing secrets in config files.
+	//nolint:gosec
 	ClientSecret string `mapstructure:"client_secret" default:"secret"`
 	// ClientSecretFile is the location of a file containing the client secret for the minder server (optional)
 	ClientSecretFile string `mapstructure:"client_secret_file"`
@@ -117,7 +119,8 @@ func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) 
 
 // AdminDo sends an HTTP request to the identity server, using the configured client credentials.
 func (sic *IdentityConfig) AdminDo(
-	ctx context.Context, method string, path string, query url.Values, body io.Reader) (*http.Response, error) {
+	ctx context.Context, method string, path string, query url.Values, body io.Reader,
+) (*http.Response, error) {
 	parsedUrl, err := sic.Path("admin/realms", sic.Realm, path)
 	if err != nil {
 		return nil, err

@@ -22,7 +22,9 @@ type OAuthClientConfig struct {
 	ClientID string `mapstructure:"client_id"`
 	// ClientIDFile is the location of the file containing the OAuth client ID
 	ClientIDFile string `mapstructure:"client_id_file"`
-	// ClientSecret is the OAuth client secret
+	// ClientSecret is the OAuth client secret. Prefer to use ClientSecretFile
+	// instead of this field to avoid storing secrets in config files.
+	//nolint:gosec
 	ClientSecret string `mapstructure:"client_secret"`
 	// ClientSecretFile is the location of the file containing the OAuth client secret
 	ClientSecretFile string `mapstructure:"client_secret_file"`

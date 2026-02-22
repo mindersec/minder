@@ -6,7 +6,7 @@ package table
 
 import (
 	"fmt"
-	"os"
+	"syscall"
 
 	"github.com/charmbracelet/lipgloss"
 	lg "github.com/charmbracelet/lipgloss/table"
@@ -32,13 +32,13 @@ type Table interface {
 
 // New creates a new table
 func New(_ string, _ layouts.TableLayout, header []string) Table {
-	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	w, _, err := term.GetSize(syscall.Stdout)
 	if err != nil || w == 0 {
 		w = 80 // Default width if we can't determine terminal size
 	}
 	return &lipGlossTable{
 		table: lg.New().
-			//Border(lipgloss.HiddenBorder()).
+			// Border(lipgloss.HiddenBorder()).
 			BorderTop(false).BorderBottom(false).
 			BorderLeft(false).BorderRight(false).
 			Headers(header...).
