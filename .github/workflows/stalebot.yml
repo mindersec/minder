@@ -19,7 +19,7 @@ jobs:
   stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # v10.1.1
+      - uses: actions/stale@b5d41d4e1d5dceea10e7104786b73624c18a190f # v10.2.0
         with:
           stale-issue-message: 'This issue needs additional information before we can continue. It is now marked as stale because it has been open for 30 days with no activity. Please provide the necessary details to continue or it will be closed in 30 days.'
           stale-pr-message: 'This PR needs additional information before we can continue. It is now marked as stale because it has been open for 30 days with no activity. Please provide the necessary details to continue or it will be closed in 30 days.'
