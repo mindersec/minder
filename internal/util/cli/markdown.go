@@ -4,7 +4,7 @@
 package cli
 
 import (
-	"os"
+	"syscall"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/styles"
@@ -15,7 +15,7 @@ import (
 // RenderMarkdown renders the given string as markdown.
 func RenderMarkdown(payload string, opts ...glamour.TermRendererOption) string {
 	style := styles.NoTTYStyleConfig
-	if term.IsTerminal(int(os.Stdout.Fd())) {
+	if term.IsTerminal(syscall.Stdout) {
 		if termenv.HasDarkBackground() {
 			style = styles.DarkStyleConfig
 		} else {
@@ -54,7 +54,7 @@ func RenderMarkdown(payload string, opts ...glamour.TermRendererOption) string {
 // WidthFraction sets the width of the markdown text to the fraction
 // of the terminal width (0.0 to 1.0).
 func WidthFraction(fraction float64) glamour.TermRendererOption {
-	w, _, err := term.GetSize(int(os.Stdout.Fd()))
+	w, _, err := term.GetSize(syscall.Stdout)
 	if err != nil || w == 0 {
 		w = 80 // Default width if we can't determine terminal size
 	}

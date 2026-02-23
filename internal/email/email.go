@@ -56,6 +56,7 @@ var (
 )
 
 func templateInit() {
+	//nolint:gosec // Filepath is controlled by server operator, so this is not a path traversal vulnerability.
 	templateOnce.Do(func() {
 		bodyTextContent, err := os.ReadFile(filepath.Join(os.Getenv("KO_DATA_PATH"), "templates", "invite-email.txt.tmpl"))
 		if err == nil {

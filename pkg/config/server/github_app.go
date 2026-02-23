@@ -22,9 +22,12 @@ type GitHubAppConfig struct {
 	AppID int64 `mapstructure:"app_id" default:"0"`
 	// UserID is the ID of the GitHub App user
 	UserID int64 `mapstructure:"user_id" default:"0"`
-	// PrivateKey is the path to the GitHub App's private key in PEM format
+	// PrivateKey is the path to the GitHub App's private key in PEM format.
+	//nolint:gosec // This is a filepath, not a secret
 	PrivateKey string `mapstructure:"private_key"`
-	// WebhookSecret is the GitHub App's webhook secret
+	// WebhookSecret is the GitHub App's webhook secret. Prefer to use
+	// WebhookSecretFile instead of this field to avoid storing secrets in config files.
+	//nolint:gosec
 	WebhookSecret string `mapstructure:"webhook_secret"`
 	// WebhookSecretFile is the location of the file containing the GitHub App's webhook secret
 	WebhookSecretFile string `mapstructure:"webhook_secret_file"`

@@ -47,6 +47,7 @@ linters:
         - G404
         - G307
         - G601
+        - G704  # In 2.23.0, see https://github.com/securego/gosec/issues/1500 for false positives
     lll:
       line-length: 130
     revive:
@@ -80,6 +81,7 @@ linters:
     rules:
       - linters:
           - lll
+          - gosec
         path: (.+)_test\.go
     paths:
       - third_party$

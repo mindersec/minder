@@ -42,6 +42,8 @@ const GitHubActionsTokenEnv = "ACTIONS_ID_TOKEN_REQUEST_TOKEN"
 var ErrGettingRefreshToken = errors.New("error refreshing credentials")
 
 // OpenIdCredentials is a struct to hold the access and refresh tokens
+//
+//nolint:gosec // These fields intentionally hold credential information for serialization
 type OpenIdCredentials struct {
 	AccessToken          string    `json:"access_token"`
 	RefreshToken         string    `json:"refresh_token"`
@@ -91,8 +93,8 @@ func GetGrpcConnection(
 	cfg clientconfig.GRPCClientConfig,
 	issuerUrl string, realm string, clientId string,
 	opts ...grpc.DialOption) (
-	*grpc.ClientConn, error) {
-
+	*grpc.ClientConn, error,
+) {
 	opts = append(opts, cfg.TransportCredentialsOption())
 
 	// read credentials
@@ -138,13 +140,13 @@ func SaveCredentials(serverAddress string, tokens OpenIdCredentials) (string, er
 		return "", fmt.Errorf("error getting credentials path: %v", err)
 	}
 
-	err = os.MkdirAll(filepath.Dir(filePath), 0750)
+	err = os.MkdirAll(filepath.Dir(filePath), 0o750)
 	if err != nil {
 		return "", fmt.Errorf("error creating directory: %v", err)
 	}
 
 	// Write the JSON data to the file
-	err = os.WriteFile(filePath, credsJSON, 0600)
+	err = os.WriteFile(filePath, credsJSON, 0o600)
 	if err != nil {
 		return "", fmt.Errorf("error writing credentials to file: %v", err)
 	}
@@ -196,6 +198,7 @@ func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, re
 	return creds.AccessToken, nil
 }
 
+//nolint:gosec // These exported names are intentionally used to decode secret credentials
 type refreshTokenResponse struct {
 	AccessToken          string `json:"access_token"`
 	RefreshToken         string `json:"refresh_token"`
@@ -277,6 +280,7 @@ func GetTokenFromGitHub() (string, error) {
 	q.Set("audience", "minder")
 	u.RawQuery = q.Encode()
 
+	//nolint:gosec // Used by GitHub Actions to fetch OIDC token, not SSRF.
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		return "", fmt.Errorf("unable to create request to %q: %w", u.String(), err)
@@ -284,6 +288,7 @@ func GetTokenFromGitHub() (string, error) {
 	req.Header.Set("Authorization", "Bearer "+requestToken)
 
 	client := &http.Client{}
+	//nolint:gosec // Used by GitHub Actions to fetch OIDC token, not SSRF.
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("unable to fetch %s: %w", u.String(), err)
@@ -301,7 +306,6 @@ func GetTokenFromGitHub() (string, error) {
 
 // RefreshCredentials uses a refresh token to get and save a new set of credentials
 func RefreshCredentials(serverAddress string, refreshToken string, realmUrl string, clientId string) (OpenIdCredentials, error) {
-
 	data := url.Values{}
 	data.Set("client_id", clientId)
 	data.Set("grant_type", "refresh_token")

@@ -46,7 +46,7 @@ func BindConfigFlag[V any](
 	binder FlagInst[V],
 ) error {
 	binder(cmdLineArg, defaultValue, help)
-	return doViperBind[V](v, flags, viperPath, cmdLineArg, defaultValue)
+	return doViperBind(v, flags, viperPath, cmdLineArg, defaultValue)
 }
 
 // BindConfigFlagWithShort is a helper function that binds a configuration value to a flag.
@@ -71,7 +71,7 @@ func BindConfigFlagWithShort[V any](
 	binder FlagInstShort[V],
 ) error {
 	binder(cmdLineArg, short, defaultValue, help)
-	return doViperBind[V](v, flags, viperPath, cmdLineArg, defaultValue)
+	return doViperBind(v, flags, viperPath, cmdLineArg, defaultValue)
 }
 
 func doViperBind[V any](
