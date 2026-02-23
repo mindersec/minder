@@ -125,7 +125,7 @@ services:
 
   keycloak:
     container_name: keycloak_container
-    image: quay.io/keycloak/keycloak:25.0
+    image: quay.io/keycloak/keycloak:26.5
     command: ["start-dev"]
     environment:
       KEYCLOAK_ADMIN: admin
@@ -145,8 +145,7 @@ services:
 
   keycloak-config:
     container_name: keycloak_config
-    image: bitnami/keycloak-config-cli:6.1.6
-    entrypoint: ["java", "-jar", "/opt/bitnami/keycloak-config-cli/keycloak-config-cli.jar"]
+    image: quay.io/adorsys/keycloak-config-cli:6.4.1-26
     environment:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_USER: admin

@@ -142,7 +142,7 @@ var cmd = &cobra.Command{
 //
 //nolint:gocyclo
 func quickstartCommand(
-	ctx context.Context,
+	_ context.Context,
 	cmd *cobra.Command,
 	_ []string,
 	conn *grpc.ClientConn,
@@ -173,7 +173,7 @@ func quickstartCommand(
 	userClient := minderv1.NewUserServiceClient(conn)
 	_, err = userClient.GetUser(cmd.Context(), &minderv1.GetUserRequest{})
 	if err != nil {
-		err = loginPromptErrWrapper(ctx, cmd, conn, err)
+		err = loginPromptErrWrapper(cmd, conn, err)
 		if err != nil {
 			return cli.MessageAndError("", err)
 		}
@@ -394,9 +394,8 @@ func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context,
 }
 
 func loginPromptErrWrapper(
-	ctx context.Context,
 	cmnd *cobra.Command,
-	conn *grpc.ClientConn,
+	_ *grpc.ClientConn,
 	inErr error,
 ) error {
 	// Check if the error is unauthenticated, if so, prompt the user to log in
@@ -410,7 +409,7 @@ func loginPromptErrWrapper(
 				true)
 			if yes {
 				// Run the login command
-				err := auth.LoginCommand(ctx, cmnd, []string{}, conn)
+				err := auth.LoginCommand(cmnd, []string{})
 				if err != nil {
 					return err
 				}

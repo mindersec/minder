@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -90,6 +91,7 @@ func (JWTTokenCredentials) RequireTransportSecurity() bool {
 
 // GetGrpcConnection is a helper for getting a testing connection for grpc
 func GetGrpcConnection(
+	cmd *cobra.Command,
 	cfg clientconfig.GRPCClientConfig,
 	issuerUrl string, realm string, clientId string,
 	opts ...grpc.DialOption) (
@@ -108,7 +110,7 @@ func GetGrpcConnection(
 			return nil, fmt.Errorf("could not fetch GitHub Actions token: %w", err)
 		}
 	} else {
-		t, err := GetToken(cfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
+		t, err := GetToken(cmd, cfg.GetGRPCAddress(), opts, issuerUrl, realm, clientId)
 		if err == nil {
 			token = t
 		} else {
@@ -168,7 +170,14 @@ func RemoveCredentials(serverAddress string) error {
 }
 
 // GetToken retrieves the access token from the credentials file and refreshes it if necessary
-func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string, clientId string) (string, error) {
+func GetToken(
+	cmd *cobra.Command,
+	serverAddress string,
+	opts []grpc.DialOption,
+	issuerUrl string,
+	realm string,
+	clientId string,
+) (string, error) {
 	refreshLimit := 10 * time.Second
 	creds, err := LoadCredentials(serverAddress)
 	// If the credentials file doesn't exist, proceed as if it were empty (zero default)
@@ -178,7 +187,7 @@ func GetToken(serverAddress string, opts []grpc.DialOption, issuerUrl string, re
 	needsRefresh := time.Now().Add(refreshLimit).After(creds.AccessTokenExpiresAt)
 
 	if needsRefresh {
-		realmUrl, err := GetRealmUrl(serverAddress, opts, issuerUrl, realm)
+		realmUrl, err := GetRealmUrl(cmd, serverAddress, opts, issuerUrl, realm)
 		if err != nil {
 			return "", fmt.Errorf("error building realm URL: %w", err)
 		}
@@ -212,7 +221,8 @@ type refreshTokenResponse struct {
 // the server headers using the minder.v1.UserService.GetUser method (and extracting
 // the realm from the "WWW-Authenticate" header), but falling back to static
 // configuration if that fails.
-func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
+func GetRealmUrl(
+	cmd *cobra.Command, serverAddress string, opts []grpc.DialOption, issuerUrl string, realm string) (string, error) {
 	// Try making an unauthenticated call to get the "WWW-Authenticate" header
 	conn, err := grpc.NewClient(serverAddress, opts...)
 	if err == nil {
@@ -220,7 +230,7 @@ func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string,
 		defer func() { _ = conn.Close() }()
 		client := minderv1.NewUserServiceClient(conn)
 		var headers metadata.MD
-		_, err := client.GetUser(context.Background(), &minderv1.GetUserRequest{}, grpc.Header(&headers))
+		_, err = client.GetUser(context.Background(), &minderv1.GetUserRequest{}, grpc.Header(&headers))
 		if err != nil && status.Code(err) == codes.Unauthenticated {
 			wwwAuthenticate := headers.Get("www-authenticate")
 			if len(wwwAuthenticate) > 0 && wwwAuthenticate[0] != "" {
@@ -233,6 +243,7 @@ func GetRealmUrl(serverAddress string, opts []grpc.DialOption, issuerUrl string,
 		// Unable to get the header, fall back to static configuration
 	}
 
+	cmd.Printf("Unable to fetch WWW-Authenticate header (%s), falling back on static configuration", err)
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
 		return "", fmt.Errorf("error parsing issuer URL: %v", err)
