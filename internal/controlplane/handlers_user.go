@@ -28,7 +28,6 @@ import (
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 )
 
 // CreateUser is a service for user self registration
@@ -306,11 +305,6 @@ func (s *Server) GetUser(ctx context.Context, _ *pb.GetUserRequest) (*pb.GetUser
 
 // ListInvitations is a service for listing invitations.
 func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsRequest) (*pb.ListInvitationsResponse, error) {
-	// Check if the UserManagement feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-		return nil, status.Error(codes.Unimplemented, "feature not enabled")
-	}
-
 	invitations, err := s.invites.GetInvitesForSelf(ctx, s.store, s.idClient)
 	if err != nil {
 		return nil, err
@@ -323,11 +317,6 @@ func (s *Server) ListInvitations(ctx context.Context, _ *pb.ListInvitationsReque
 
 // ResolveInvitation is a service for resolving an invitation.
 func (s *Server) ResolveInvitation(ctx context.Context, req *pb.ResolveInvitationRequest) (*pb.ResolveInvitationResponse, error) {
-	// Check if the UserManagement feature is enabled
-	if !flags.Bool(ctx, s.featureFlags, flags.UserManagement) {
-		return nil, status.Error(codes.Unimplemented, "feature not enabled")
-	}
-
 	tx, err := s.store.BeginTransaction()
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to begin transaction")

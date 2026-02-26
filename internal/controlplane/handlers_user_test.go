@@ -42,7 +42,6 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
-	"github.com/mindersec/minder/pkg/flags"
 )
 
 const (
@@ -573,14 +572,8 @@ func TestListInvitations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			featureClient := &flags.FakeClient{}
-			featureClient.Data = map[string]any{
-				"user_management": true,
-			}
-
 			server := &Server{
-				featureFlags: featureClient,
-				invites:      fakeInviteService,
+				invites: fakeInviteService,
 			}
 
 			ctx := context.Background()
@@ -828,20 +821,14 @@ func TestResolveInvitation(t *testing.T) {
 				code = tc.setup(fakeInviteService, mockStore)
 			}
 
-			featureClient := &flags.FakeClient{}
-			featureClient.Data = map[string]any{
-				"user_management": true,
-			}
-
 			authzClient := &mock.SimpleClient{
 				Assignments: tc.roleAssignments,
 			}
 
 			server := &Server{
-				store:        mockStore,
-				featureFlags: featureClient,
-				invites:      fakeInviteService,
-				authzClient:  authzClient,
+				store:       mockStore,
+				invites:     fakeInviteService,
+				authzClient: authzClient,
 			}
 
 			response, err := server.ResolveInvitation(ctx, &pb.ResolveInvitationRequest{
