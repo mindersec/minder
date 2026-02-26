@@ -317,6 +317,35 @@ func (f *FakeInviteService) GetInvitesForEmail(
 	return invitations, nil
 }
 
+// ListInvitationsForProject lists all invitations for a project (admin view, no codes)
+func (f *FakeInviteService) ListInvitationsForProject(
+	_ context.Context,
+	_ db.Querier,
+	targetProject uuid.UUID,
+) ([]*minder.Invitation, error) {
+	f.mu.RLock()
+	defer f.mu.RUnlock()
+
+	invitations := make([]*minder.Invitation, 0)
+	for _, invite := range f.invites {
+		if invite.project == targetProject {
+			invitations = append(invitations, &minder.Invitation{
+				Role:      invite.role.String(),
+				Email:     invite.email,
+				Project:   invite.project.String(),
+				CreatedAt: timestamppb.New(invite.createdAt),
+				ExpiresAt: invites.GetExpireIn7Days(invite.updatedAt),
+				Expired:   invites.IsExpired(invite.updatedAt),
+				Sponsor:   invite.sponsor,
+				// SponsorDisplay is left empty; the caller fills it in.
+				// Code is explicitly not returned here.
+			})
+		}
+	}
+
+	return invitations, nil
+}
+
 // GetInviteByEmailAndProject retrieves an invite by email and project (helper method for testing)
 func (f *FakeInviteService) GetInviteByEmailAndProject(email string, project uuid.UUID) (*storedInvite, bool) {
 	f.mu.RLock()
