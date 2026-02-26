@@ -15,14 +15,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/invites"
 	"github.com/mindersec/minder/internal/util"
 	minder "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -310,23 +308,14 @@ func (s *Server) ListRoleAssignments(
 	}
 
 	// Add invitations, which are only stored in the Minder DB
-	projectInvites, err := s.store.ListInvitationsForProject(ctx, targetProject)
+	projectInvites, err := s.invites.ListInvitationsForProject(ctx, s.store, targetProject)
 	if err != nil {
 		// return the information we can and log the error
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error getting invitations")
 	}
-	for _, i := range projectInvites {
-		invitations = append(invitations, &minder.Invitation{
-			Role:           i.Role,
-			Email:          i.Email,
-			Project:        targetProject.String(),
-			CreatedAt:      timestamppb.New(i.CreatedAt),
-			ExpiresAt:      invites.GetExpireIn7Days(i.UpdatedAt),
-			Expired:        invites.IsExpired(i.UpdatedAt),
-			Sponsor:        i.IdentitySubject,
-			SponsorDisplay: mapIdToDisplay[i.IdentitySubject],
-			// Code is explicitly not returned here
-		})
+	for _, inv := range projectInvites {
+		inv.SponsorDisplay = mapIdToDisplay[inv.Sponsor]
+		invitations = append(invitations, inv)
 	}
 
 	return &minder.ListRoleAssignmentsResponse{

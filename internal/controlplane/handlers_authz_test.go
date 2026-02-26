@@ -398,14 +398,23 @@ func TestRoleManagement(t *testing.T) {
 	user1 := uuid.New()
 	user2 := uuid.New()
 
+	// Non-zero fixed time for deterministic invitation timestamps.
+	// Using a time in the past so invitations show as expired in tests.
+	fixedTime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+
+	machineSubject := "githubactions/repo:mindersec/community:ref:refs/heads/main"
+	machineUserID := "repo:mindersec/community:ref:refs/heads/main"
+
 	tests := []struct {
 		name            string
 		adds            []*minder.RoleAssignment
 		removes         []*minder.RoleAssignment
 		expectAddErrors bool
-		invites         []db.ListInvitationsForProjectRow
-		result          *minder.ListRoleAssignmentsResponse
-		stored          []*minder.RoleAssignment
+		// setup runs before the test body to pre-populate the fake invite service and authz client
+		setup      func(ctx context.Context, fakeInvites *fake.FakeInviteService, authzClient *mock.SimpleClient)
+		identities []auth.Identity // overrides default idClient data if non-nil
+		result     *minder.ListRoleAssignmentsResponse
+		stored     []*minder.RoleAssignment
 	}{{
 		name: "email invitation adds",
 		adds: []*minder.RoleAssignment{{
@@ -417,6 +426,23 @@ func TestRoleManagement(t *testing.T) {
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{},
+			Invitations: []*minder.Invitation{{
+				Role:      authz.RoleAdmin.String(),
+				Email:     "user1@example.com",
+				Project:   project.String(),
+				Sponsor:   "testuser",
+				CreatedAt: timestamppb.New(fixedTime),
+				ExpiresAt: timestamppb.New(fixedTime.Add(7 * 24 * time.Hour)),
+				Expired:   true,
+			}, {
+				Role:      authz.RoleAdmin.String(),
+				Email:     "user2@example.com",
+				Project:   project.String(),
+				Sponsor:   "testuser",
+				CreatedAt: timestamppb.New(fixedTime),
+				ExpiresAt: timestamppb.New(fixedTime.Add(7 * 24 * time.Hour)),
+				Expired:   true,
+			}},
 		},
 	}, {
 		name: "email invitation add and remove",
@@ -433,6 +459,15 @@ func TestRoleManagement(t *testing.T) {
 		}},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{},
+			Invitations: []*minder.Invitation{{
+				Role:      authz.RoleAdmin.String(),
+				Email:     "user1@example.com",
+				Project:   project.String(),
+				Sponsor:   "testuser",
+				CreatedAt: timestamppb.New(fixedTime),
+				ExpiresAt: timestamppb.New(fixedTime.Add(7 * 24 * time.Hour)),
+				Expired:   true,
+			}},
 		},
 	}, {
 		name:            "human subject adds rejected",
@@ -444,26 +479,69 @@ func TestRoleManagement(t *testing.T) {
 			Role:    authz.RoleAdmin.String(),
 			Subject: user2.String(),
 		}},
-		invites: []db.ListInvitationsForProjectRow{{
-			Email:           "george@happyplace.dev",
-			Role:            authz.RoleEditor.String(),
-			IdentitySubject: user1.String(),
-			CreatedAt:       time.Time{},
-			UpdatedAt:       time.Time{},
-		}},
+		setup: func(ctx context.Context, fakeInvites *fake.FakeInviteService, _ *mock.SimpleClient) {
+			// Pre-populate an invitation in the fake (simulating a previously-created invite)
+			_, _ = fakeInvites.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
+				project, authz.RoleEditor, "george@happyplace.dev")
+		},
 		result: &minder.ListRoleAssignmentsResponse{
 			RoleAssignments: []*minder.RoleAssignment{},
 			Invitations: []*minder.Invitation{{
 				Role:      authz.RoleEditor.String(),
 				Email:     "george@happyplace.dev",
 				Project:   project.String(),
-				Sponsor:   user1.String(),
-				CreatedAt: timestamppb.New(time.Time{}),
-				ExpiresAt: timestamppb.New(time.Time{}.Add(7 * 24 * time.Hour)),
+				Sponsor:   "testuser",
+				CreatedAt: timestamppb.New(fixedTime),
+				ExpiresAt: timestamppb.New(fixedTime.Add(7 * 24 * time.Hour)),
 				Expired:   true,
 			}},
 		},
 		stored: []*minder.RoleAssignment{},
+	}, {
+		name: "machine account with invitations",
+		identities: []auth.Identity{{
+			UserID:    user1.String(),
+			HumanName: "user1",
+			Provider:  &keycloak.KeyCloak{},
+		}, {
+			UserID:    user2.String(),
+			HumanName: "user2",
+			Provider:  &keycloak.KeyCloak{},
+		}, {
+			UserID:    machineUserID,
+			HumanName: machineUserID,
+			Provider:  &githubactions.GitHubActions{},
+		}},
+		setup: func(ctx context.Context, fakeInvites *fake.FakeInviteService, authzClient *mock.SimpleClient) {
+			// Pre-load a machine account role assignment
+			if authzClient.Assignments == nil {
+				authzClient.Assignments = make(map[uuid.UUID][]*minder.RoleAssignment)
+			}
+			authzClient.Assignments[project] = []*minder.RoleAssignment{{
+				Subject: machineSubject,
+				Role:    authz.RoleAdmin.String(),
+			}}
+			_, _ = fakeInvites.CreateInvite(ctx, nil, nil, serverconfig.EmailConfig{},
+				project, authz.RoleEditor, "invitee@example.com")
+		},
+		result: &minder.ListRoleAssignmentsResponse{
+			RoleAssignments: []*minder.RoleAssignment{{
+				Subject:     machineSubject,
+				Role:        authz.RoleAdmin.String(),
+				DisplayName: machineSubject,
+				FirstName:   "",
+				LastName:    "",
+			}},
+			Invitations: []*minder.Invitation{{
+				Role:      authz.RoleEditor.String(),
+				Email:     "invitee@example.com",
+				Project:   project.String(),
+				Sponsor:   "testuser",
+				CreatedAt: timestamppb.New(fixedTime),
+				ExpiresAt: timestamppb.New(fixedTime.Add(7 * 24 * time.Hour)),
+				Expired:   true,
+			}},
+		},
 	}}
 
 	user := openid.New()
@@ -484,6 +562,7 @@ func TestRoleManagement(t *testing.T) {
 			// Use real implementation, not mock
 			roleService := roles.NewRoleService()
 			fakeInviteService := fake.NewFakeInviteService()
+			fakeInviteService.Time = fixedTime
 
 			mockStore.EXPECT().BeginTransaction().AnyTimes()
 			mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore).AnyTimes()
@@ -494,26 +573,27 @@ func TestRoleManagement(t *testing.T) {
 				mockStore.EXPECT().GetProjectByID(gomock.Any(), project).Return(db.Project{ID: project}, nil)
 			}
 
-			mockStore.EXPECT().ListInvitationsForProject(gomock.Any(), project).Return(tc.invites, nil)
+			identities := tc.identities
+			if identities == nil {
+				identities = []auth.Identity{{
+					UserID:    user1.String(),
+					HumanName: "user1",
+					Provider:  &keycloak.KeyCloak{},
+				}, {
+					UserID:    user2.String(),
+					HumanName: "user2",
+					Provider:  &keycloak.KeyCloak{},
+				}}
+			}
 
 			server := Server{
 				store:       mockStore,
 				authzClient: authzClient,
 				invites:     fakeInviteService,
 				cfg:         &serverconfig.Config{Email: serverconfig.EmailConfig{}},
-				idClient: &SimpleResolver{
-					data: []auth.Identity{{
-						UserID:    user1.String(),
-						HumanName: "user1",
-						Provider:  &keycloak.KeyCloak{},
-					}, {
-						UserID:    user2.String(),
-						HumanName: "user2",
-						Provider:  &keycloak.KeyCloak{},
-					}},
-				},
-				jwt:   noop.NewJwtValidator("test"),
-				roles: roleService,
+				idClient:    &SimpleResolver{data: identities},
+				jwt:         noop.NewJwtValidator("test"),
+				roles:       roleService,
 			}
 
 			ctx := context.Background()
@@ -534,6 +614,10 @@ func TestRoleManagement(t *testing.T) {
 			// Set the auth token in the incoming metadata
 			md := metadata.Pairs("authorization", "bearer "+tokenString)
 			ctx = metadata.NewIncomingContext(ctx, md)
+
+			if tc.setup != nil {
+				tc.setup(ctx, fakeInviteService, authzClient)
+			}
 
 			for _, add := range tc.adds {
 				_, err := server.AssignRole(ctx, &minder.AssignRoleRequest{RoleAssignment: add})
@@ -956,10 +1040,7 @@ var _ auth.Resolver = (*SimpleResolver)(nil)
 // Resolve implements auth.Resolver.
 func (s *SimpleResolver) Resolve(_ context.Context, id string) (*auth.Identity, error) {
 	for _, i := range s.data {
-		if i.UserID == id {
-			return &i, nil
-		}
-		if i.HumanName == id {
+		if i.UserID == id || i.HumanName == id || i.String() == id {
 			return &i, nil
 		}
 	}

@@ -56,6 +56,9 @@ type InviteService interface {
 	GetInvitesForEmail(ctx context.Context, qtx db.Querier, targetProject uuid.UUID,
 		inviteeEmail string,
 	) ([]*minder.Invitation, error)
+
+	// ListInvitationsForProject lists all invitations for a project (admin view, no codes)
+	ListInvitationsForProject(ctx context.Context, qtx db.Querier, targetProject uuid.UUID) ([]*minder.Invitation, error)
 }
 
 type inviteService struct {
@@ -405,6 +408,31 @@ func (*inviteService) GetInvitesForEmail(ctx context.Context, qtx db.Querier, ta
 			ProjectDisplay: "", // Not set, would require an extra DB round-trip
 			InviteUrl:      "", // Not set, would require email config
 			EmailSkipped:   false,
+		})
+	}
+
+	return invitations, nil
+}
+
+func (*inviteService) ListInvitationsForProject(ctx context.Context, qtx db.Querier, targetProject uuid.UUID,
+) ([]*minder.Invitation, error) {
+	rows, err := qtx.ListInvitationsForProject(ctx, targetProject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error listing invitations: %v", err)
+	}
+
+	invitations := make([]*minder.Invitation, 0, len(rows))
+	for _, i := range rows {
+		invitations = append(invitations, &minder.Invitation{
+			Role:      i.Role,
+			Email:     i.Email,
+			Project:   targetProject.String(),
+			CreatedAt: timestamppb.New(i.CreatedAt),
+			ExpiresAt: GetExpireIn7Days(i.UpdatedAt),
+			Expired:   IsExpired(i.UpdatedAt),
+			Sponsor:   i.IdentitySubject,
+			// SponsorDisplay is left empty; the caller fills it in.
+			// Code is explicitly not returned here.
 		})
 	}
 
