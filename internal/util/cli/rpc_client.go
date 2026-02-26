@@ -413,14 +413,15 @@ func loginWithDeviceFlow(
 		}
 		return nil, fmt.Errorf("failed to obtain device access token: %w", err)
 	}
-	if tokenResp.ExpiresIn >= maxLifetimeSec {
-		tokenResp.ExpiresIn = maxLifetimeSec
+	expiry := int64(maxLifetimeSec)
+	if tokenResp.ExpiresIn < maxLifetimeSec {
+		expiry = int64(tokenResp.ExpiresIn)
 	}
 
 	return &oauth2.Token{
 		AccessToken:  tokenResp.AccessToken,
 		TokenType:    tokenResp.TokenType,
 		RefreshToken: tokenResp.RefreshToken,
-		Expiry:       time.Now().Add(time.Duration(tokenResp.ExpiresIn) * time.Second),
+		Expiry:       time.Now().Add(time.Duration(expiry) * time.Second),
 	}, nil
 }
