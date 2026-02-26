@@ -1,0 +1,106 @@
+-- SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+-- SPDX-License-Identifier: Apache-2.0
+
+-- Postgres only needs to rewrite metadata (and not the column data) when altering
+-- a column from timezoneless when timezone='UTC' is set in the session.
+-- Ref: https://www.postgresql.org/docs/release/12.0/
+
+BEGIN;
+
+SET timezone = 'UTC';
+
+ALTER TABLE projects
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE users
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE providers
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE provider_access_tokens
+    ALTER COLUMN expiration_time TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE session_store
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE rule_type
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE profiles
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE entity_profiles
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE profile_status
+    ALTER COLUMN last_updated TYPE TIMESTAMPTZ,
+    ALTER COLUMN last_updated SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE features
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE entitlements
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE entity_execution_lock
+    ALTER COLUMN last_lock_time TYPE TIMESTAMPTZ;
+
+ALTER TABLE flush_cache
+    ALTER COLUMN queued_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN queued_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE provider_github_app_installations
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE rule_instances
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE user_invites
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ,
+    ALTER COLUMN updated_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN updated_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE remediation_events
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+ALTER TABLE alert_events
+    ALTER COLUMN created_at TYPE TIMESTAMPTZ,
+    ALTER COLUMN created_at SET DEFAULT NOW()::TIMESTAMPTZ;
+
+COMMIT;
