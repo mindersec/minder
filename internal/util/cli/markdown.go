@@ -4,7 +4,7 @@
 package cli
 
 import (
-	"syscall"
+	"os"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/glamour/styles"
@@ -15,7 +15,8 @@ import (
 // RenderMarkdown renders the given string as markdown.
 func RenderMarkdown(payload string, opts ...glamour.TermRendererOption) string {
 	style := styles.NoTTYStyleConfig
-	if term.IsTerminal(syscall.Stdout) {
+	//nolint:gosec  // This overflow doesn't actually happen, but windows doesn't like syscall.Stdout
+	if term.IsTerminal(int(os.Stdout.Fd())) {
 		if termenv.HasDarkBackground() {
 			style = styles.DarkStyleConfig
 		} else {
@@ -54,7 +55,8 @@ func RenderMarkdown(payload string, opts ...glamour.TermRendererOption) string {
 // WidthFraction sets the width of the markdown text to the fraction
 // of the terminal width (0.0 to 1.0).
 func WidthFraction(fraction float64) glamour.TermRendererOption {
-	w, _, err := term.GetSize(syscall.Stdout)
+	//nolint:gosec  // This overflow doesn't actually happen, but windows doesn't like syscall.Stdout
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil || w == 0 {
 		w = 80 // Default width if we can't determine terminal size
 	}

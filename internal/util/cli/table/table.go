@@ -6,7 +6,7 @@ package table
 
 import (
 	"fmt"
-	"syscall"
+	"os"
 
 	"github.com/charmbracelet/lipgloss"
 	lg "github.com/charmbracelet/lipgloss/table"
@@ -32,7 +32,8 @@ type Table interface {
 
 // New creates a new table
 func New(_ string, _ layouts.TableLayout, header []string) Table {
-	w, _, err := term.GetSize(syscall.Stdout)
+	//nolint:gosec  // This overflow doesn't actually happen, but windows doesn't like syscall.Stdout
+	w, _, err := term.GetSize(int(os.Stdout.Fd()))
 	if err != nil || w == 0 {
 		w = 80 // Default width if we can't determine terminal size
 	}
