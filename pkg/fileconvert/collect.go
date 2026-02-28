@@ -50,7 +50,7 @@ func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMe
 				}
 				if file.Expanded && i == 0 {
 					// Skip files expanded from directories where the contents aren't valid
-					printer("Skipping expanded file %s", file.Path)
+					printer("Skipping expanded file %s due to error %s\n", file.Path, err)
 					break
 				}
 				return nil, fmt.Errorf("error reading resource from file %s: %w", file.Path, err)
