@@ -595,11 +595,6 @@ func validateRule(r *Profile_Rule) error {
 		return fmt.Errorf("%w: rule type cannot be empty", ErrValidationFailed)
 	}
 
-	// TODO: can we omit this if the rule doesn't have values?
-	if r.GetDef() == nil {
-		return fmt.Errorf("%w: rule def cannot be nil", ErrValidationFailed)
-	}
-
 	return nil
 }
 
