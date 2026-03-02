@@ -11,7 +11,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0
 	github.com/mikefarah/yq/v4 v4.52.4
 	github.com/norwoodj/helm-docs v1.14.2
-	github.com/oapi-codegen/oapi-codegen/v2 v2.5.1
+	github.com/oapi-codegen/oapi-codegen/v2 v2.6.0
 	github.com/openfga/cli v0.7.10
 	github.com/pseudomuto/protoc-gen-doc v1.5.1
 	github.com/sqlc-dev/sqlc v1.30.0
