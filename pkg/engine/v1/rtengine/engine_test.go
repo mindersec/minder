@@ -75,6 +75,47 @@ allow {
 				require.NoError(t, err, "os.WriteFile() failed")
 			},
 		},
+		{
+			name: "nil ruleDef treated as empty map",
+			ent: &minderv1.Repository{
+				CloneUrl: "foo",
+			},
+			ruleType: &minderv1.RuleType{
+				Context: &minderv1.Context{
+					Project: ptr.Ptr("test"),
+				},
+				Def: &minderv1.RuleType_Definition{
+					InEntity:   minderv1.RepositoryEntity.String(),
+					RuleSchema: &structpb.Struct{},
+					Ingest: &minderv1.RuleType_Definition_Ingest{
+						Type: "git",
+					},
+					Eval: &minderv1.RuleType_Definition_Eval{
+						Type: "rego",
+						Rego: &minderv1.RuleType_Definition_Eval_Rego{
+							Type: "deny-by-default",
+							Def: `package minder
+default allow = false
+
+allow {
+	file.exists("README.md")
+}`,
+						},
+					},
+				},
+			},
+			ri: ruleInstance{
+				Def:    nil,
+				Params: nil,
+			},
+			wantErr: false,
+			dirSetup: func(t *testing.T, tdir string) {
+				t.Helper()
+
+				err := os.WriteFile(tdir+"/README.md", []byte("hello"), 0600)
+				require.NoError(t, err, "os.WriteFile() failed")
+			},
+		},
 	}
 
 	for _, tt := range tests {
