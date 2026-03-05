@@ -247,7 +247,7 @@ repository:
 			wantErr: true,
 		},
 		{
-			name: "invalid with no definition",
+			name: "valid with no definition (nil def treated as empty object)",
 			profile: `
 ---
 version: v1
@@ -258,8 +258,17 @@ context:
 repository:
   - type: secret_scanning
 `,
-			wantErr: true,
-			errIs:   minderv1.ErrValidationFailed,
+			want: &minderv1.Profile{
+				Name: "acme-github-profile",
+				Context: &minderv1.Context{
+					Provider: &defaultProvider,
+				},
+				Repository: []*minderv1.Profile_Rule{
+					{
+						Type: "secret_scanning",
+					},
+				},
+			},
 		},
 		{
 			name: "invalid with nil rule",
