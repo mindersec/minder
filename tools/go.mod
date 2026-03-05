@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/bufbuild/buf v1.65.0
-	github.com/daixiang0/gci v0.13.7
+	github.com/daixiang0/gci v0.14.0
 	github.com/go-critic/go-critic v0.14.3
 	github.com/golangci/golangci-lint/v2 v2.10.1
 	github.com/gotesttools/gotestfmt/v2 v2.5.0
