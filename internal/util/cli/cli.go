@@ -70,8 +70,8 @@ func GetAppContextWithTimeoutDuration(ctx context.Context, v *viper.Viper, tout 
 	v.SetDefault("cli.context_timeout", tout)
 	timeout := v.GetInt("cli.context_timeout")
 
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
-	return ctx, cancel
+	//nolint:gosec // See https://github.com/securego/gosec/pull/1585, should be fixed in next gosec
+	return context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
 }
 
 // GRPCClientWrapRunE is a wrapper for cobra commands that sets up the grpc client and context

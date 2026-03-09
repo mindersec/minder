@@ -102,6 +102,7 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 
 func (e *engine) EncryptOAuthToken(token *oauth2.Token) (EncryptedData, error) {
 	// Convert token to JSON.
+	//nolint:gosec // We're about to encrypt jsonData. It shouldn't be used beyond this function.
 	jsonData, err := json.Marshal(token)
 	if err != nil {
 		return EncryptedData{}, fmt.Errorf("unable to marshal token to json: %w", err)

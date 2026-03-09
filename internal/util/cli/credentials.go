@@ -132,6 +132,7 @@ func GetGrpcConnection(
 // SaveCredentials saves the credentials to a file
 func SaveCredentials(serverAddress string, tokens OpenIdCredentials) (string, error) {
 	// marshal the credentials to json
+	//nolint:gosec // Yes, we're storing credentials on disk.  This is intentional for usability.
 	credsJSON, err := json.Marshal(tokens)
 	if err != nil {
 		return "", fmt.Errorf("error marshaling credentials: %v", err)
