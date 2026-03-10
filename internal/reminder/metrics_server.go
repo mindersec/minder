@@ -67,6 +67,7 @@ func (r *reminder) startMetricServer(ctx context.Context) error {
 	}()
 
 	// Watch for context cancellation or stop signal to shutdown the metrics server
+	//nolint:gosec // We use context.Background() to limit the shutdown time after ctx has finished.
 	go func() {
 		select {
 		case <-ctx.Done():

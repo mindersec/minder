@@ -1,6 +1,6 @@
 module github.com/mindersec/minder
 
-go 1.25.5
+go 1.25.6
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
@@ -50,7 +50,7 @@ require (
 	github.com/motemen/go-loghttp v0.0.0-20231107055348-29ae44b293f4
 	github.com/nats-io/nats-server/v2 v2.12.4
 	github.com/nats-io/nats.go v1.48.0
-	github.com/oapi-codegen/runtime v1.1.2
+	github.com/oapi-codegen/runtime v1.2.0
 	github.com/open-feature/go-sdk v1.17.0
 	github.com/open-feature/go-sdk-contrib/providers/go-feature-flag-in-process v0.1.3
 	github.com/open-policy-agent/opa v1.11.0
@@ -227,7 +227,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect

@@ -7,6 +7,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 3
     groups:
       otel:
         patterns:
@@ -17,17 +19,29 @@ updates:
         patterns:
           - "buf.build/*"
   - package-ecosystem: "gomod"
+    # A lot of tools/ ends up generating files or otherwise causing CI breaks.
+    # Handle them as a batch at a lower frequency.
     directory: "tools"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    cooldown:
+      default-days: 7
+    groups:
+      tools:
+        patterns:
+          - "*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    # GitHub Actions doesn't support cooldown
   - package-ecosystem: "npm"
     directory: "docs"
     schedule:
       interval: "weekly"
+    cooldown:
+      # NPM churns a lot, but we don't need latest dependencies for serving docs.
+      default-days: 7
     groups:
       docusaurus:
         patterns:
@@ -42,3 +56,4 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    # Docker doesn't support cooldown

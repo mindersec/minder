@@ -94,6 +94,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
+	defer shutdownCancel()
 
 	e.lock.Lock()
 	e.cancels = append(e.cancels, &shutdownCancel)

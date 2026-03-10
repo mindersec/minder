@@ -177,8 +177,6 @@ func Int32FromString(v string) (int32, error) {
 	if asInt32 > math.MaxInt32 || asInt32 < math.MinInt32 {
 		return 0, fmt.Errorf("integer %d cannot fit into int32", asInt32)
 	}
-	// already validated overflow
-	// nolint:gosec
 	return int32(asInt32), nil
 }
 
