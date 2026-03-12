@@ -344,7 +344,7 @@ WITH helper AS(
 )
 SELECT
     profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
-    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.migrated, profiles_with_entity_profiles.profid,
     helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
@@ -391,6 +391,7 @@ func (q *Queries) GetProfileByProjectAndID(ctx context.Context, arg GetProfileBy
 			&i.ProfilesWithEntityProfile.ContextualRules,
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
+			&i.ProfilesWithEntityProfile.Migrated,
 			&i.ProfilesWithEntityProfile.Profid,
 			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
@@ -419,7 +420,7 @@ WITH helper AS(
 )
 SELECT
     profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
-    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+    profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.migrated, profiles_with_entity_profiles.profid,
     helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
@@ -466,6 +467,7 @@ func (q *Queries) GetProfileByProjectAndName(ctx context.Context, arg GetProfile
 			&i.ProfilesWithEntityProfile.ContextualRules,
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
+			&i.ProfilesWithEntityProfile.Migrated,
 			&i.ProfilesWithEntityProfile.Profid,
 			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
@@ -493,7 +495,7 @@ WITH helper AS(
       GROUP BY pr.id
 )
 SELECT profiles.id, profiles.name, profiles.provider, profiles.project_id, profiles.remediate, profiles.alert, profiles.created_at, profiles.updated_at, profiles.provider_id, profiles.subscription_id, profiles.display_name, profiles.labels,
-       profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.profid,
+       profiles_with_entity_profiles.id, profiles_with_entity_profiles.entity, profiles_with_entity_profiles.profile_id, profiles_with_entity_profiles.contextual_rules, profiles_with_entity_profiles.created_at, profiles_with_entity_profiles.updated_at, profiles_with_entity_profiles.migrated, profiles_with_entity_profiles.profid,
        helper.selectors::profile_selector[] AS profiles_with_selectors
 FROM profiles
 JOIN profiles_with_entity_profiles ON profiles.id = profiles_with_entity_profiles.profid
@@ -555,6 +557,7 @@ func (q *Queries) ListProfilesByProjectIDAndLabel(ctx context.Context, arg ListP
 			&i.ProfilesWithEntityProfile.ContextualRules,
 			&i.ProfilesWithEntityProfile.CreatedAt,
 			&i.ProfilesWithEntityProfile.UpdatedAt,
+			&i.ProfilesWithEntityProfile.Migrated,
 			&i.ProfilesWithEntityProfile.Profid,
 			pq.Array(&i.ProfilesWithSelectors),
 		); err != nil {
