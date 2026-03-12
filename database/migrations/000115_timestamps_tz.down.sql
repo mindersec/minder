@@ -46,11 +46,18 @@ ALTER TABLE profiles
     ALTER COLUMN updated_at TYPE TIMESTAMP,
     ALTER COLUMN updated_at SET DEFAULT NOW();
 
+-- profiles_with_entity_profiles depends on entity_profiles columns; drop and recreate after altering
+DROP VIEW IF EXISTS profiles_with_entity_profiles;
+
 ALTER TABLE entity_profiles
     ALTER COLUMN created_at TYPE TIMESTAMP,
     ALTER COLUMN created_at SET DEFAULT NOW(),
     ALTER COLUMN updated_at TYPE TIMESTAMP,
     ALTER COLUMN updated_at SET DEFAULT NOW();
+
+CREATE VIEW profiles_with_entity_profiles WITH (security_invoker = true) AS (
+    SELECT entity_profiles.*, profiles.id as profid FROM profiles LEFT JOIN entity_profiles ON profiles.id = entity_profiles.profile_id
+);
 
 ALTER TABLE profile_status
     ALTER COLUMN last_updated TYPE TIMESTAMP,
