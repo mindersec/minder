@@ -93,8 +93,8 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// We _do_ still want to cancel on shutdown, however.
 	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
+	//nolint:gosec // this is called when we iterate over e.cancels
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
-	defer shutdownCancel()
 
 	e.lock.Lock()
 	e.cancels = append(e.cancels, &shutdownCancel)
