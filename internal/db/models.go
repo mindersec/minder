@@ -614,6 +614,7 @@ type ProfilesWithEntityProfile struct {
 	ContextualRules pqtype.NullRawMessage `json:"contextual_rules"`
 	CreatedAt       sql.NullTime          `json:"created_at"`
 	UpdatedAt       sql.NullTime          `json:"updated_at"`
+	Migrated        sql.NullBool          `json:"migrated"`
 	Profid          uuid.UUID             `json:"profid"`
 }
 
