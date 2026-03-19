@@ -1,0 +1,48 @@
+# For more information on the Security Insights file, see https://security-insights.openssf.org/
+header:
+  last-reviewed: "2026-03-19"
+  last-updated: "2026-03-19"
+  schema-version: 2.2.0
+  url: https://raw.githubusercontent.com/mindersec/minder/main/.github/security-insights.yml
+project:
+  administrators:
+  - name: JAORMX
+    primary: false
+  - name: evankanderson
+    primary: false
+  - name: rdimitrov
+    primary: false
+  - name: thelinuxfoundation
+    primary: false
+  homepage: https://mindersec.dev/
+  name: minder
+  repositories:
+  - comment: Software Supply Chain Security Platform
+    name: minder
+    url: https://github.com/mindersec/minder
+  vulnerability-reporting:
+    bug-bounty-available: false
+    policy: https://github.com/mindersec/minder/blob/main/SECURITY.md
+    reports-accepted: true
+repository:
+  accepts-automated-change-request: true
+  accepts-change-request: true
+  core-team:
+  - name: JAORMX
+    primary: false
+  - name: evankanderson
+    primary: false
+  - name: rdimitrov
+    primary: false
+  - name: thelinuxfoundation
+    primary: false
+  documentation:
+    contributing-guide: https://github.com/mindersec/minder/blob/main/CONTRIBUTING.md
+    security-policy: https://github.com/mindersec/minder/blob/main/SECURITY.md
+  license:
+    expression: Apache-2.0
+    url: https://api.github.com/licenses/apache-2.0
+  security:
+    assessments: {}
+  status: active
+  url: https://github.com/mindersec/minder
