@@ -244,8 +244,8 @@ You can find more detailed information about the development process in the [Dev
 
 ## Minder API
 
-* [REST API documentation](https://mindersec.github.io/ref/api)
-* [Proto API documentation](https://mindersec.github.io/ref/proto)
+* [REST API documentation](https://docs.mindersec.dev/ref/api)
+* [Proto API documentation](https://docs.mindersec.dev/ref/proto)
 * [Protobuf](https://github.com/mindersec/minder/blob/main/proto/minder/v1/minder.proto)
 * [OpenAPI/swagger spec (JSON)](https://github.com/mindersec/minder/blob/main/pkg/api/openapi/minder/v1/minder.swagger.json)
 
