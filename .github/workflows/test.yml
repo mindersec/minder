@@ -23,7 +23,7 @@ jobs:
         with:
           go-version-file: 'go.mod'
       - name: Set up helm (test dependency)
-        uses: azure/setup-helm@1a275c3b69536ee54be43f2070a358922e12c8d4 # v4.3.1
+        uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       # Install gotestfmt and go-junit-report on the VM running the action.
       - name: Set up gotestfmt
         uses: GoTestTools/gotestfmt-action@8b4478c7019be847373babde9300210e7de34bfb # v2.2.0
