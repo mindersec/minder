@@ -3676,11 +3676,12 @@ message GitHubAppParams {
     // The GitHub organization slug where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
-    string organization = 2;
+    string organization = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
     // The GitHub organization ID where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
     int64 organization_id = 3 [
+        (google.api.field_behavior) = OUTPUT_ONLY,
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
         (buf.validate.field).int64 = {gt: 0}
     ];
@@ -3765,7 +3766,7 @@ message Provider {
 
     // credentials_state is the state of the credentials for the provider.
     // This is an output-only field. It may be: "set", "unset", "not_applicable".
-    string credentials_state = 9;
+    string credentials_state = 9 [(google.api.field_behavior) = OUTPUT_ONLY];
 
     // id is the unique identifier of the provider.
     string id = 10 [
