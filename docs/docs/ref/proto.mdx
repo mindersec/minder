@@ -1071,6 +1071,7 @@ This is only used in responses.
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+| output | <TypeLink type="string">string</TypeLink> |  | output contains the evaluation output, if requested. This is a JSON-structured string containing the evaluation output data and is only populated when with_output_detail is set to true in the request. |
 
 
 
@@ -1265,6 +1266,7 @@ GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory en
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| with_output_detail | <TypeLink type="bool">bool</TypeLink> |  | If true, include the full evaluation output in the response. Because the evaluation output may be large JSON-structured data, it is only returned when this flag is set. |
 
 
 
@@ -1774,6 +1776,7 @@ which is used for pagination.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. This is optional. |
+| with_output_detail | <TypeLink type="bool">bool</TypeLink> |  | If true, include the full evaluation output in the response. Because the evaluation output may be large JSON-structured data, it is only returned when this flag is set. |
 
 
 
@@ -1807,6 +1810,7 @@ the next and/or previous pages of data.
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
 | rule_name | <TypeLink type="string">string</TypeLink> | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+| with_output_detail | <TypeLink type="bool">bool</TypeLink> |  | If true, include the full evaluation output in the response. Because the evaluation output may be large JSON-structured data, it is only returned when this flag is set. |
 
 
 
@@ -2685,6 +2689,7 @@ get the status of the rules for a given profile
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the phase of the release |
+| output | <TypeLink type="string">string</TypeLink> |  | output contains the evaluation output, if requested. This is a JSON-structured string containing the evaluation output data and is only populated when with_output_detail is set to true in the request. |
 
 
 

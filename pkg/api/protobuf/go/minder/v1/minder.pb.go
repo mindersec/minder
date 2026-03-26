@@ -5526,7 +5526,12 @@ type RuleEvaluationStatus struct {
 	// rule_display_name captures the display name of the rule
 	RuleDisplayName string `protobuf:"bytes,19,opt,name=rule_display_name,json=ruleDisplayName,proto3" json:"rule_display_name,omitempty"`
 	// release_phase is the phase of the release
-	ReleasePhase  RuleTypeReleasePhase `protobuf:"varint,20,opt,name=release_phase,json=releasePhase,proto3,enum=minder.v1.RuleTypeReleasePhase" json:"release_phase,omitempty"`
+	ReleasePhase RuleTypeReleasePhase `protobuf:"varint,20,opt,name=release_phase,json=releasePhase,proto3,enum=minder.v1.RuleTypeReleasePhase" json:"release_phase,omitempty"`
+	// output contains the evaluation output, if requested.
+	// This is a JSON-structured string containing the evaluation
+	// output data and is only populated when with_output_detail
+	// is set to true in the request.
+	Output        string `protobuf:"bytes,21,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5700,6 +5705,13 @@ func (x *RuleEvaluationStatus) GetReleasePhase() RuleTypeReleasePhase {
 		return x.ReleasePhase
 	}
 	return RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED
+}
+
+func (x *RuleEvaluationStatus) GetOutput() string {
+	if x != nil {
+		return x.Output
+	}
+	return ""
 }
 
 // EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
@@ -7307,9 +7319,13 @@ type ListEvaluationResultsRequest struct {
 	Entity []*EntityTypedId `protobuf:"bytes,4,rep,name=entity,proto3" json:"entity,omitempty"`
 	// If set, only return evaluation results for the named rules.
 	// If empty, return evaluation results for all rules
-	RuleName      []string `protobuf:"bytes,5,rep,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	RuleName []string `protobuf:"bytes,5,rep,name=rule_name,json=ruleName,proto3" json:"rule_name,omitempty"`
+	// If true, include the full evaluation output in the response.
+	// Because the evaluation output may be large JSON-structured
+	// data, it is only returned when this flag is set.
+	WithOutputDetail bool `protobuf:"varint,6,opt,name=with_output_detail,json=withOutputDetail,proto3" json:"with_output_detail,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ListEvaluationResultsRequest) Reset() {
@@ -7386,6 +7402,13 @@ func (x *ListEvaluationResultsRequest) GetRuleName() []string {
 		return x.RuleName
 	}
 	return nil
+}
+
+func (x *ListEvaluationResultsRequest) GetWithOutputDetail() bool {
+	if x != nil {
+		return x.WithOutputDetail
+	}
+	return false
 }
 
 type isListEvaluationResultsRequest_ProfileSelector interface {
@@ -11061,11 +11084,15 @@ func (x *Provider) GetId() string {
 
 // GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory endpoint
 type GetEvaluationHistoryRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Context       *Context               `protobuf:"bytes,2,opt,name=context,proto3" json:"context,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Context *Context               `protobuf:"bytes,2,opt,name=context,proto3" json:"context,omitempty"`
+	// If true, include the full evaluation output in the response.
+	// Because the evaluation output may be large JSON-structured
+	// data, it is only returned when this flag is set.
+	WithOutputDetail bool `protobuf:"varint,3,opt,name=with_output_detail,json=withOutputDetail,proto3" json:"with_output_detail,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetEvaluationHistoryRequest) Reset() {
@@ -11112,6 +11139,13 @@ func (x *GetEvaluationHistoryRequest) GetContext() *Context {
 	return nil
 }
 
+func (x *GetEvaluationHistoryRequest) GetWithOutputDetail() bool {
+	if x != nil {
+		return x.WithOutputDetail
+	}
+	return false
+}
+
 // ListEvaluationHistoryRequest represents a request message for the
 // ListEvaluationHistory RPC.
 //
@@ -11143,9 +11177,13 @@ type ListEvaluationHistoryRequest struct {
 	// may be expanded in the future.
 	LabelFilter []string `protobuf:"bytes,11,rep,name=label_filter,json=labelFilter,proto3" json:"label_filter,omitempty"`
 	// Cursor object to select the "page" of data to retrieve. This is optional.
-	Cursor        *Cursor `protobuf:"bytes,10,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Cursor *Cursor `protobuf:"bytes,10,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	// If true, include the full evaluation output in the response.
+	// Because the evaluation output may be large JSON-structured
+	// data, it is only returned when this flag is set.
+	WithOutputDetail bool `protobuf:"varint,12,opt,name=with_output_detail,json=withOutputDetail,proto3" json:"with_output_detail,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ListEvaluationHistoryRequest) Reset() {
@@ -11253,6 +11291,13 @@ func (x *ListEvaluationHistoryRequest) GetCursor() *Cursor {
 		return x.Cursor
 	}
 	return nil
+}
+
+func (x *ListEvaluationHistoryRequest) GetWithOutputDetail() bool {
+	if x != nil {
+		return x.WithOutputDetail
+	}
+	return false
 }
 
 // GetEvaluationHistoryResponse represents a response message for the
@@ -11607,7 +11652,12 @@ type EvaluationHistoryStatus struct {
 	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	// details contains optional details about the evaluation.
 	// the structure and contents are rule type specific, and are subject to change.
-	Details       string `protobuf:"bytes,2,opt,name=details,proto3" json:"details,omitempty"`
+	Details string `protobuf:"bytes,2,opt,name=details,proto3" json:"details,omitempty"`
+	// output contains the evaluation output, if requested.
+	// This is a JSON-structured string containing the evaluation
+	// output data and is only populated when with_output_detail
+	// is set to true in the request.
+	Output        string `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11652,6 +11702,13 @@ func (x *EvaluationHistoryStatus) GetStatus() string {
 func (x *EvaluationHistoryStatus) GetDetails() string {
 	if x != nil {
 		return x.Details
+	}
+	return ""
+}
+
+func (x *EvaluationHistoryStatus) GetOutput() string {
+	if x != nil {
+		return x.Output
 	}
 	return ""
 }
@@ -15080,7 +15137,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12=\n" +
 	"\flast_updated\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vlastUpdated\x12\x18\n" +
 	"\adetails\x18\x03 \x01(\tR\adetails\x12\x10\n" +
-	"\x03url\x18\x04 \x01(\tR\x03url\"\x9c\b\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\"\xb4\b\n" +
 	"\x14RuleEvaluationStatus\x12\x1d\n" +
 	"\n" +
 	"profile_id\x18\x01 \x01(\tR\tprofileId\x12\x1c\n" +
@@ -15104,7 +15161,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12rule_evaluation_id\x18\x11 \x01(\tR\x10ruleEvaluationId\x12'\n" +
 	"\x0fremediation_url\x18\x12 \x01(\tR\x0eremediationUrl\x12*\n" +
 	"\x11rule_display_name\x18\x13 \x01(\tR\x0fruleDisplayName\x12I\n" +
-	"\rrelease_phase\x18\x14 \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseB\x03\xe0A\x02R\freleasePhase\x1a=\n" +
+	"\rrelease_phase\x18\x14 \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseB\x03\xe0A\x02R\freleasePhase\x12\x16\n" +
+	"\x06output\x18\x15 \x01(\tR\x06output\x1a=\n" +
 	"\x0fEntityInfoEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x1b\n" +
@@ -15208,13 +15266,14 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x15DeleteRuleTypeRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
 	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\"\x18\n" +
-	"\x16DeleteRuleTypeResponse\"\xe8\x02\n" +
+	"\x16DeleteRuleTypeResponse\"\x96\x03\n" +
 	"\x1cListEvaluationResultsRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12B\n" +
 	"\aprofile\x18\x02 \x01(\tB&\xbaH#r!\x18\xc8\x012\x1c^([[:alnum:]][-[:word:]]*)?$H\x00R\aprofile\x12K\n" +
 	"\flabel_filter\x18\x03 \x01(\tB&\xbaH#r!\x18\xc8\x012\x1c^(\\*|[a-zA-Z][a-zA-Z0-9_]*)$H\x00R\vlabelFilter\x120\n" +
 	"\x06entity\x18\x04 \x03(\v2\x18.minder.v1.EntityTypedIdR\x06entity\x12C\n" +
-	"\trule_name\x18\x05 \x03(\tB&\xbaH#\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\bruleNameB\x12\n" +
+	"\trule_name\x18\x05 \x03(\tB&\xbaH#\x92\x01 \"\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\bruleName\x12,\n" +
+	"\x12with_output_detail\x18\x06 \x01(\bR\x10withOutputDetailB\x12\n" +
 	"\x10profile_selector\"\xe2\x03\n" +
 	"\x1dListEvaluationResultsResponse\x12a\n" +
 	"\bentities\x18\x02 \x03(\v2@.minder.v1.ListEvaluationResultsResponse.EntityEvaluationResultsB\x03\xe0A\x02R\bentities\x1a\x9c\x01\n" +
@@ -15608,10 +15667,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"parameters\x12+\n" +
 	"\x11credentials_state\x18\t \x01(\tR\x10credentialsState\x12\x1b\n" +
 	"\x02id\x18\n" +
-	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"h\n" +
+	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"\x96\x01\n" +
 	"\x1bGetEvaluationHistoryRequest\x12\x1b\n" +
 	"\x02id\x18\x01 \x01(\tB\v\xe0A\x02\xbaH\x05r\x03\xb0\x01\x01R\x02id\x12,\n" +
-	"\acontext\x18\x02 \x01(\v2\x12.minder.v1.ContextR\acontext\"\x98\x05\n" +
+	"\acontext\x18\x02 \x01(\v2\x12.minder.v1.ContextR\acontext\x12,\n" +
+	"\x12with_output_detail\x18\x03 \x01(\bR\x10withOutputDetail\"\xc6\x05\n" +
 	"\x1cListEvaluationHistoryRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12>\n" +
 	"\ventity_type\x18\x02 \x03(\tB\x1d\xbaH\x1a\x92\x01\x17\"\x15r\x13\x18\xc8\x012\x0e^[,[:word:]]*$R\n" +
@@ -15626,7 +15686,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x02to\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12H\n" +
 	"\flabel_filter\x18\v \x03(\tB%\xbaH\"\x92\x01\x1f\"\x1dr\x1b\x18\xc8\x012\x16^(\\*|[a-z][a-z0-9_]*)$R\vlabelFilter\x12)\n" +
 	"\x06cursor\x18\n" +
-	" \x01(\v2\x11.minder.v1.CursorR\x06cursor\"a\n" +
+	" \x01(\v2\x11.minder.v1.CursorR\x06cursor\x12,\n" +
+	"\x12with_output_detail\x18\f \x01(\bR\x10withOutputDetail\"a\n" +
 	"\x1cGetEvaluationHistoryResponse\x12A\n" +
 	"\n" +
 	"evaluation\x18\x01 \x01(\v2\x1c.minder.v1.EvaluationHistoryB\x03\xe0A\x02R\n" +
@@ -15650,10 +15711,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12 \n" +
 	"\trule_type\x18\x02 \x01(\tB\x03\xe0A\x02R\bruleType\x12\x1d\n" +
 	"\aprofile\x18\x03 \x01(\tB\x03\xe0A\x02R\aprofile\x124\n" +
-	"\bseverity\x18\x04 \x01(\v2\x13.minder.v1.SeverityB\x03\xe0A\x02R\bseverity\"U\n" +
+	"\bseverity\x18\x04 \x01(\v2\x13.minder.v1.SeverityB\x03\xe0A\x02R\bseverity\"m\n" +
 	"\x17EvaluationHistoryStatus\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\x12\x1d\n" +
-	"\adetails\x18\x02 \x01(\tB\x03\xe0A\x02R\adetails\"U\n" +
+	"\adetails\x18\x02 \x01(\tB\x03\xe0A\x02R\adetails\x12\x16\n" +
+	"\x06output\x18\x03 \x01(\tR\x06output\"U\n" +
 	"\x1cEvaluationHistoryRemediation\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\x12\x18\n" +
 	"\adetails\x18\x02 \x01(\tR\adetails\"O\n" +

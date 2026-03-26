@@ -1881,6 +1881,11 @@ message RuleEvaluationStatus {
     RuleTypeReleasePhase release_phase = 20 [
         (google.api.field_behavior) = REQUIRED
     ];
+    // output contains the evaluation output, if requested.
+    // This is a JSON-structured string containing the evaluation
+    // output data and is only populated when with_output_detail
+    // is set to true in the request.
+    string output = 21;
 }
 
 // EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
@@ -2312,6 +2317,11 @@ message ListEvaluationResultsRequest {
             }
         }
     ];
+
+    // If true, include the full evaluation output in the response.
+    // Because the evaluation output may be large JSON-structured
+    // data, it is only returned when this flag is set.
+    bool with_output_detail = 6;
 }
 
 message ListEvaluationResultsResponse {
@@ -3782,6 +3792,11 @@ message GetEvaluationHistoryRequest {
     ];
 
     Context context = 2;
+
+    // If true, include the full evaluation output in the response.
+    // Because the evaluation output may be large JSON-structured
+    // data, it is only returned when this flag is set.
+    bool with_output_detail = 3;
 }
 
 // ListEvaluationHistoryRequest represents a request message for the
@@ -3881,6 +3896,11 @@ message ListEvaluationHistoryRequest {
 
     // Cursor object to select the "page" of data to retrieve. This is optional.
     Cursor cursor = 10;
+
+    // If true, include the full evaluation output in the response.
+    // Because the evaluation output may be large JSON-structured
+    // data, it is only returned when this flag is set.
+    bool with_output_detail = 12;
 }
 
 // GetEvaluationHistoryResponse represents a response message for the
@@ -3995,6 +4015,12 @@ message EvaluationHistoryStatus {
     string details = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
+
+    // output contains the evaluation output, if requested.
+    // This is a JSON-structured string containing the evaluation
+    // output data and is only populated when with_output_detail
+    // is set to true in the request.
+    string output = 3;
 }
 
 message EvaluationHistoryRemediation {
