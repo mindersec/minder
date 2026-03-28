@@ -1146,8 +1146,8 @@
             "format": "int64"
           },
           {
-            "name": "withOutputDetail",
-            "description": "If true, include the full evaluation output in the response.\nBecause the evaluation output may be large JSON-structured\ndata, it is only returned when this flag is set.",
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1197,8 +1197,8 @@
             "type": "string"
           },
           {
-            "name": "withOutputDetail",
-            "description": "If true, include the full evaluation output in the response.\nBecause the evaluation output may be large JSON-structured\ndata, it is only returned when this flag is set.",
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -3100,8 +3100,8 @@
             "collectionFormat": "multi"
           },
           {
-            "name": "withOutputDetail",
-            "description": "If true, include the full evaluation output in the response.\nBecause the evaluation output may be large JSON-structured\ndata, it is only returned when this flag is set.",
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -4728,8 +4728,8 @@
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
         },
         "output": {
-          "type": "string",
-          "description": "output contains the evaluation output, if requested.\nThis is a JSON-structured string containing the evaluation\noutput data and is only populated when with_output_detail\nis set to true in the request."
+          "type": "object",
+          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "required": [
@@ -6240,8 +6240,8 @@
           "title": "release_phase is the phase of the release"
         },
         "output": {
-          "type": "string",
-          "description": "output contains the evaluation output, if requested.\nThis is a JSON-structured string containing the evaluation\noutput data and is only populated when with_output_detail\nis set to true in the request."
+          "type": "object",
+          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "title": "get the status of the rules for a given profile",
