@@ -63,6 +63,7 @@ type Querier interface {
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
+	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -122,6 +123,7 @@ type Querier interface {
 	// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 	GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
+	GetEvaluationOutput(ctx context.Context, evaluationID uuid.UUID) (EvaluationOutput, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
@@ -191,6 +193,9 @@ type Querier interface {
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
 	InsertAlertEvent(ctx context.Context, arg InsertAlertEventParams) error
+	// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
+	InsertEvaluationOutput(ctx context.Context, arg InsertEvaluationOutputParams) error
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
