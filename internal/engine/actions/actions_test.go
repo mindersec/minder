@@ -66,7 +66,6 @@ func TestShouldRemediate(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got := shouldRemediate(tt.prevEvalFromDb, tt.evalErr)
@@ -145,7 +144,6 @@ func TestShouldAlert(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			got := shouldAlert(tt.prevEvalFromDb, tt.evalErr, tt.remErr, tt.remType)
