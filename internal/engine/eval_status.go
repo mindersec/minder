@@ -125,6 +125,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			params.EntityID,
 			params.GetEvalErr(),
 			chkpjs,
+			nil, // TODO: pass structured output from evaluation result
 		)
 		if err != nil {
 			return err

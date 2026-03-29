@@ -7,11 +7,13 @@ package history
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 
 	"github.com/mindersec/minder/internal/db"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -24,7 +26,8 @@ import (
 // EvaluationHistoryService contains methods to add/query data in the history table.
 type EvaluationHistoryService interface {
 	// StoreEvaluationStatus stores the result of this evaluation in the history table.
-	// Returns the UUID of the evaluation status, and the UUID of the rule-entity
+	// Returns the UUID of the evaluation status, and the UUID of the rule-entity.
+	// If output is non-nil, it is persisted in the evaluation_outputs table.
 	StoreEvaluationStatus(
 		ctx context.Context,
 		qtx db.Querier,
@@ -34,6 +37,7 @@ type EvaluationHistoryService interface {
 		entityID uuid.UUID,
 		evalError error,
 		marshaledCheckpoint []byte,
+		output json.RawMessage,
 	) (uuid.UUID, error)
 	// ListEvaluationHistory returns a list of evaluations stored
 	// in the history table.
@@ -83,6 +87,7 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityID uuid.UUID,
 	evalError error,
 	marshaledCheckpoint []byte,
+	output json.RawMessage,
 ) (uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
 	status := evalerrors.ErrorAsEvalStatus(evalError)
@@ -120,6 +125,20 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details, marshaledCheckpoint)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
+	}
+
+	// Persist structured output if provided
+	if len(output) > 0 {
+		if err := qtx.InsertEvaluationOutput(ctx, db.InsertEvaluationOutputParams{
+			EvaluationID: evaluationID,
+			Output: pqtype.NullRawMessage{
+				RawMessage: output,
+				Valid:      true,
+			},
+		}); err != nil {
+			// Non-fatal: log but don't fail the evaluation
+			_ = err
+		}
 	}
 
 	return evaluationID, nil
