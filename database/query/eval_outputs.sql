@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 -- SPDX-License-Identifier: Apache-2.0
 
--- name: InsertEvaluationOutput :exec
+-- name: UpsertEvaluationOutput :exec
 INSERT INTO evaluation_outputs(
     evaluation_id,
     output,
