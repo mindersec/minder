@@ -38,6 +38,20 @@ func TestGenerateCurlCommand(t *testing.T) {
  -d '{"title":"test"}'`,
 		},
 		{
+			name:       "escape single quotes",
+			method:     "POST",
+			apiBaseURL: "https://api.github.com",
+			endpoint:   "/repos/mindersec/minder/issues",
+			body:       `{"text": "can't do this; rm -rf *"}`,
+			wantError:  false,
+			wantString: `curl -L -X POST \
+ -H "Accept: application/vnd.github+json" \
+ -H "Authorization: Bearer $TOKEN" \
+ -H "X-GitHub-Api-Version: 2022-11-28" \
+ https://api.github.com/repos/mindersec/minder/issues \
+ -d '{"text": "can'\''t do this; rm -rf *"}'`,
+		},
+		{
 			name:       "empty method",
 			method:     "",
 			apiBaseURL: "https://api.github.com",
