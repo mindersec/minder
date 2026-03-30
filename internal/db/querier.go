@@ -193,9 +193,6 @@ type Querier interface {
 	GlobalListProviders(ctx context.Context) ([]Provider, error)
 	GlobalListProvidersByClass(ctx context.Context, class ProviderClass) ([]Provider, error)
 	InsertAlertEvent(ctx context.Context, arg InsertAlertEventParams) error
-	// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
-	// SPDX-License-Identifier: Apache-2.0
-	InsertEvaluationOutput(ctx context.Context, arg InsertEvaluationOutputParams) error
 	InsertEvaluationRuleEntity(ctx context.Context, arg InsertEvaluationRuleEntityParams) (uuid.UUID, error)
 	InsertEvaluationStatus(ctx context.Context, arg InsertEvaluationStatusParams) (uuid.UUID, error)
 	InsertRemediationEvent(ctx context.Context, arg InsertRemediationEventParams) error
@@ -283,6 +280,9 @@ type Querier interface {
 	// SPDX-License-Identifier: Apache-2.0
 	// Bundles --
 	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
+	// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
+	UpsertEvaluationOutput(ctx context.Context, arg UpsertEvaluationOutputParams) error
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)

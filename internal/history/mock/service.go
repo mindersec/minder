@@ -11,7 +11,6 @@ package mock_history
 
 import (
 	context "context"
-	json "encoding/json"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
@@ -60,7 +59,7 @@ func (mr *MockEvaluationHistoryServiceMockRecorder) ListEvaluationHistory(ctx, q
 }
 
 // StoreEvaluationStatus mocks base method.
-func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID, profileID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error, marshaledCheckpoint []byte, output json.RawMessage) (uuid.UUID, error) {
+func (m *MockEvaluationHistoryService) StoreEvaluationStatus(ctx context.Context, qtx db.Querier, ruleID, profileID uuid.UUID, entityType db.Entities, entityID uuid.UUID, evalError error, marshaledCheckpoint []byte, output any) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StoreEvaluationStatus", ctx, qtx, ruleID, profileID, entityType, entityID, evalError, marshaledCheckpoint, output)
 	ret0, _ := ret[0].(uuid.UUID)

@@ -3,7 +3,6 @@
 
 BEGIN;
 
-DROP INDEX IF EXISTS idx_evaluation_outputs_evaluation_id;
 DROP TABLE IF EXISTS evaluation_outputs;
 
 COMMIT;

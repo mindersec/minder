@@ -16,7 +16,7 @@ import (
 
 const deleteEvaluationOutputsByEvaluationIDs = `-- name: DeleteEvaluationOutputsByEvaluationIDs :execrows
 DELETE FROM evaluation_outputs
-WHERE evaluation_id = ANY($1::uuid[])
+WHERE id = ANY($1::uuid[])
 `
 
 func (q *Queries) DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error) {
@@ -28,26 +28,25 @@ func (q *Queries) DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, ev
 }
 
 const getEvaluationOutput = `-- name: GetEvaluationOutput :one
-SELECT id, evaluation_id, output, debug FROM evaluation_outputs
-WHERE evaluation_id = $1
+SELECT id, output, debug FROM evaluation_outputs
+WHERE id = $1
 `
 
-func (q *Queries) GetEvaluationOutput(ctx context.Context, evaluationID uuid.UUID) (EvaluationOutput, error) {
-	row := q.db.QueryRowContext(ctx, getEvaluationOutput, evaluationID)
+func (q *Queries) GetEvaluationOutput(ctx context.Context, id uuid.UUID) (EvaluationOutput, error) {
+	row := q.db.QueryRowContext(ctx, getEvaluationOutput, id)
 	var i EvaluationOutput
 	err := row.Scan(
 		&i.ID,
-		&i.EvaluationID,
 		&i.Output,
 		&i.Debug,
 	)
 	return i, err
 }
 
-const insertEvaluationOutput = `-- name: InsertEvaluationOutput :exec
+const upsertEvaluationOutput = `-- name: UpsertEvaluationOutput :exec
 
 INSERT INTO evaluation_outputs(
-    evaluation_id,
+    id,
     output,
     debug
 ) VALUES (
@@ -55,20 +54,20 @@ INSERT INTO evaluation_outputs(
     $2::jsonb,
     $3
 )
-ON CONFLICT (evaluation_id) DO UPDATE
+ON CONFLICT (id) DO UPDATE
 SET output = COALESCE($2::jsonb, evaluation_outputs.output),
     debug  = COALESCE($3, evaluation_outputs.debug)
 `
 
-type InsertEvaluationOutputParams struct {
-	EvaluationID uuid.UUID             `json:"evaluation_id"`
-	Output       pqtype.NullRawMessage `json:"output"`
-	Debug        sql.NullString        `json:"debug"`
+type UpsertEvaluationOutputParams struct {
+	ID     uuid.UUID             `json:"id"`
+	Output pqtype.NullRawMessage `json:"output"`
+	Debug  sql.NullString        `json:"debug"`
 }
 
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
-func (q *Queries) InsertEvaluationOutput(ctx context.Context, arg InsertEvaluationOutputParams) error {
-	_, err := q.db.ExecContext(ctx, insertEvaluationOutput, arg.EvaluationID, arg.Output, arg.Debug)
+func (q *Queries) UpsertEvaluationOutput(ctx context.Context, arg UpsertEvaluationOutputParams) error {
+	_, err := q.db.ExecContext(ctx, upsertEvaluationOutput, arg.ID, arg.Output, arg.Debug)
 	return err
 }

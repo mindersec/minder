@@ -8,14 +8,9 @@ BEGIN;
 -- output data can be retained/purged independently of the compact
 -- status rows.
 CREATE TABLE evaluation_outputs (
-    id                   UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    evaluation_id        UUID NOT NULL REFERENCES evaluation_statuses(id) ON DELETE CASCADE,
-    output               JSONB,
-    debug                TEXT,
-    UNIQUE(evaluation_id)
+    id     UUID NOT NULL REFERENCES evaluation_statuses(id) ON DELETE CASCADE PRIMARY KEY,
+    output JSONB,
+    debug  TEXT
 );
-
-CREATE INDEX idx_evaluation_outputs_evaluation_id
-    ON evaluation_outputs(evaluation_id);
 
 COMMIT;

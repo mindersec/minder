@@ -3,7 +3,7 @@
 
 -- name: UpsertEvaluationOutput :exec
 INSERT INTO evaluation_outputs(
-    evaluation_id,
+    id,
     output,
     debug
 ) VALUES (
@@ -11,14 +11,14 @@ INSERT INTO evaluation_outputs(
     sqlc.narg(output)::jsonb,
     sqlc.narg(debug)
 )
-ON CONFLICT (evaluation_id) DO UPDATE
+ON CONFLICT (id) DO UPDATE
 SET output = COALESCE(sqlc.narg(output)::jsonb, evaluation_outputs.output),
     debug  = COALESCE(sqlc.narg(debug), evaluation_outputs.debug);
 
 -- name: GetEvaluationOutput :one
 SELECT * FROM evaluation_outputs
-WHERE evaluation_id = $1;
+WHERE id = $1;
 
 -- name: DeleteEvaluationOutputsByEvaluationIDs :execrows
 DELETE FROM evaluation_outputs
-WHERE evaluation_id = ANY(sqlc.slice(evaluationIds)::uuid[]);
+WHERE id = ANY(sqlc.slice(evaluationIds)::uuid[]);

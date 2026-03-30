@@ -541,10 +541,9 @@ type EntityProfile struct {
 }
 
 type EvaluationOutput struct {
-	ID           uuid.UUID             `json:"id"`
-	EvaluationID uuid.UUID             `json:"evaluation_id"`
-	Output       pqtype.NullRawMessage `json:"output"`
-	Debug        sql.NullString        `json:"debug"`
+	ID     uuid.UUID             `json:"id"`
+	Output pqtype.NullRawMessage `json:"output"`
+	Debug  sql.NullString        `json:"debug"`
 }
 
 type EvaluationRuleEntity struct {
