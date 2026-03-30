@@ -35,11 +35,11 @@ func TestExtractContentShaAndReviewID(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:      "Double comment",
-			input:     `<!-- minder: pr-status-body: { "ContentSha": "abcdef", "ReviewID": "2" } -->` + "\n" + `<!-- minder: pr-status-body: { "ContentSha": "a1b2c3", "ReviewID": "5" } -->`,
-			wantSha:   "abcdef",
-			wantID:    2,
-			wantError: false, // Let's guess it matches the first one via standard regex ungreedy match. We will adjust based on test results.
+			name:    "Double comment",
+			input:   `<!-- minder: pr-status-body: { "ContentSha": "abcdef", "ReviewID": "2" } -->` + "\n" +
+				`<!-- minder: pr-status-body: { "ContentSha": "a1b2c3", "ReviewID": "5" } -->`,
+			wantSha: "abcdef",
+			wantID:  2,
 		},
 		{
 			name:      "No match",
