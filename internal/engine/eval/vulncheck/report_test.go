@@ -86,6 +86,7 @@ func TestVulnSummaryReportRender(t *testing.T) {
 	t.Parallel()
 
 	t.Run("Empty Dependencies", func(t *testing.T) {
+		t.Parallel()
 		r := &vulnSummaryReport{}
 		out, err := r.render()
 		require.NoError(t, err)
@@ -93,6 +94,7 @@ func TestVulnSummaryReportRender(t *testing.T) {
 	})
 
 	t.Run("With Dependencies", func(t *testing.T) {
+		t.Parallel()
 		r := &vulnSummaryReport{
 			TrackedDependencies: []dependencyVulnerabilities{
 				{
@@ -126,6 +128,7 @@ func TestStatusReportRender(t *testing.T) {
 	t.Parallel()
 
 	t.Run("No Dependencies", func(t *testing.T) {
+		t.Parallel()
 		s := &statusReport{
 			StatusText: "No vulns found",
 			CommitSHA:  "1234567890",
@@ -139,6 +142,7 @@ func TestStatusReportRender(t *testing.T) {
 	})
 
 	t.Run("With Dependencies", func(t *testing.T) {
+		t.Parallel()
 		s := &statusReport{
 			StatusText: "Vulns found!",
 			CommitSHA:  "1234567890",
