@@ -49,7 +49,7 @@ func TestGenerateCurlCommand(t *testing.T) {
  -H "Authorization: Bearer $TOKEN" \
  -H "X-GitHub-Api-Version: 2022-11-28" \
  https://api.github.com/repos/mindersec/minder/issues \
- -d '{"text": "can'\''t do this; rm -rf *"}'`,
+ -d '{"text": "can'"'"'t do this; rm -rf *"}'`,
 		},
 		{
 			name:       "empty method",

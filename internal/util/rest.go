@@ -50,7 +50,7 @@ func GenerateCurlCommand(ctx context.Context, method, apiBaseURL, endpoint, body
 	u = u.JoinPath(endpoint)
 
 	// Escape single quotes in the body so that it is safe to be enclosed in single quotes in a shell command
-	safeBody := strings.ReplaceAll(body, "'", `'\''`)
+	safeBody := strings.ReplaceAll(body, "'", `'"'"'`)
 
 	var buf bytes.Buffer
 	data := map[string]string{
