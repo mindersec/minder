@@ -142,7 +142,8 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 			commitStatus,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error setting commit status: %w, %w", err, enginerr.ErrActionFailed)
+			logger.Error().Err(err).Msg("error setting commit status")
+			return nil, enginerr.ErrActionFailed
 		}
 
 		now := time.Now()
@@ -172,7 +173,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 			commitStatus,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error dismissing commit status: %w, %w", err, enginerr.ErrActionFailed)
+			logger.Error().Err(err).Msg("error setting commit status")
 		}
 
 		logger.Info().Str("commit_sha", params.CommitSha).Msg("PR commit status updated to success")
@@ -236,7 +237,7 @@ func (alert *Alert) getParamsForCommitStatus(
 		CommitSha:  pr.GetCommitSha(),
 	}
 
-	if pr.Number > math.MaxInt {
+	if pr.Number > math.MaxInt32 {
 		return nil, fmt.Errorf("pr number is too large")
 	}
 	result.Number = int(pr.Number)
