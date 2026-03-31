@@ -2791,7 +2791,7 @@ message RuleType {
         message Remediate {
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["rest", "gh_branch_protection", "pull_request"],
+                    in: ["rest", "gh_branch_protection", "pull_request", "pull_request_comment"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
@@ -2894,13 +2894,14 @@ message RuleType {
             optional RestType rest = 2;
             optional GhBranchProtectionType gh_branch_protection = 3;
             optional PullRequestRemediation pull_request = 4;
+            optional Alert.AlertTypePRComment pull_request_comment = 5;
         }
         Remediate remediate = 6;
 
         message Alert {
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["security_advisory", "pull_request_comment"],
+                    in: ["security_advisory", "pull_request_comment", "commit_status"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
@@ -2924,6 +2925,9 @@ message RuleType {
                 ];
             }
             optional AlertTypePRComment pull_request_comment = 3;
+
+            message AlertTypeCommitStatus {}
+            optional AlertTypeCommitStatus commit_status = 4;
         }
         Alert alert = 7;
     }

@@ -3422,6 +3422,9 @@
     }
   },
   "definitions": {
+    "AlertAlertTypeCommitStatus": {
+      "type": "object"
+    },
     "AlertAlertTypePRComment": {
       "type": "object",
       "properties": {
@@ -3466,6 +3469,9 @@
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
+        },
+        "commitStatus": {
+          "$ref": "#/definitions/AlertAlertTypeCommitStatus"
         }
       }
     },
@@ -3565,6 +3571,9 @@
         },
         "pullRequest": {
           "$ref": "#/definitions/RemediatePullRequestRemediation"
+        },
+        "pullRequestComment": {
+          "$ref": "#/definitions/AlertAlertTypePRComment"
         }
       }
     },
