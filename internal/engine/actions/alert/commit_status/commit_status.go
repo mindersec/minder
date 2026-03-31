@@ -115,7 +115,12 @@ func (alert *Alert) Do(
 	return nil, enginerr.ErrActionSkipped
 }
 
-func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
+func (alert *Alert) run(
+	ctx context.Context,
+	params *paramsPR,
+	cmd interfaces.ActionCmd,
+	actionParams interfaces.ActionsParams,
+) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
 
 	// Context string for the commit status check (e.g. "minder/rule_name")
@@ -178,7 +183,7 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 
 		logger.Info().Str("commit_sha", params.CommitSha).Msg("PR commit status updated to success")
 		// Return ErrActionTurnedOff to indicate the action resolved appropriately
-		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
+		return nil, fmt.Errorf("%s: %w", alert.Class(), enginerr.ErrActionTurnedOff)
 
 	case interfaces.ActionCmdDoNothing:
 		// Return the previous alert status.
@@ -188,7 +193,12 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 }
 
 // runDry runs the commit status action in dry run mode, logging what it would do
-func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
+func (alert *Alert) runDry(
+	ctx context.Context,
+	params *paramsPR,
+	cmd interfaces.ActionCmd,
+	actionParams interfaces.ActionsParams,
+) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
 
 	contextStr := "minder"
@@ -204,6 +214,7 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 	case interfaces.ActionCmdOff:
 		logger.Info().Msgf("dry run: set commit status to success for context %s on PR %d in repo %s/%s",
 			contextStr, params.Number, params.Owner, params.Repo)
+		return nil, nil
 	case interfaces.ActionCmdDoNothing:
 		return alert.runDoNothing(ctx, params)
 	}
@@ -237,7 +248,7 @@ func (alert *Alert) getParamsForCommitStatus(
 		CommitSha:  pr.GetCommitSha(),
 	}
 
-	if pr.Number > math.MaxInt32 {
+	if pr.Number > int64(math.MaxInt32) {
 		return nil, fmt.Errorf("pr number is too large")
 	}
 	result.Number = int(pr.Number)
