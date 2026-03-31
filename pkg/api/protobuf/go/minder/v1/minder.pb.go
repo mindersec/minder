@@ -14854,7 +14854,7 @@ var File_minder_v1_minder_proto protoreflect.FileDescriptor
 
 const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
-	"\x16minder/v1/minder.proto\x12\tminder.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a google/protobuf/descriptor.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a google/protobuf/field_mask.proto\x1a\x1bbuf/validate/validate.proto\"\xb0\x01\n" +
+	"\x16minder/v1/minder.proto\x12\tminder.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a google/protobuf/descriptor.proto\x1a google/protobuf/field_mask.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb0\x01\n" +
 	"\n" +
 	"RpcOptions\x12\x15\n" +
 	"\x06no_log\x18\x02 \x01(\bR\x05noLog\x12B\n" +
