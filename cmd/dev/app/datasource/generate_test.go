@@ -22,6 +22,8 @@ import (
 var stdoutMu sync.Mutex
 
 func TestSwaggerToDataSource_Success(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		swagger *spec.Swagger
@@ -49,7 +51,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 		{
 			name: "endpoint with path parameter",
 			swagger: testSwagger(map[string]spec.PathItem{
-				"/users/{id}": pathItem("GET", op(param("id", "path", true))),
+				"/users/{id}": pathItem("GET", op(param("id", "path"))),
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
@@ -93,7 +95,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 			name: "multiple endpoints",
 			swagger: testSwagger(map[string]spec.PathItem{
 				"/users":      pathItem("GET", op()),
-				"/users/{id}": pathItem("PUT", op(param("id", "path", true))),
+				"/users/{id}": pathItem("PUT", op(param("id", "path"))),
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
@@ -125,7 +127,10 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ds, err := runSwaggerToDataSource(t, tt.swagger)
 			require.NoError(t, err)
 			tt.assert(t, ds)
@@ -134,6 +139,8 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 }
 
 func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		swagger *spec.Swagger
@@ -142,14 +149,14 @@ func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
 		{
 			name: "unsupported header parameter",
 			swagger: testSwagger(map[string]spec.PathItem{
-				"/users": pathItem("GET", op(param("X-Token", "header", true))),
+				"/users": pathItem("GET", op(param("X-Token", "header"))),
 			}),
 			wantErr: `GET /users: unsupported parameter "X-Token" in "header"`,
 		},
 		{
 			name: "unsupported body parameter",
 			swagger: testSwagger(map[string]spec.PathItem{
-				"/users": pathItem("POST", op(param("payload", "body", true))),
+				"/users": pathItem("POST", op(param("payload", "body"))),
 			}),
 			wantErr: `POST /users: unsupported parameter "payload" in "body"`,
 		},
@@ -157,7 +164,7 @@ func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
 			name: "duplicate generated operation names",
 			swagger: testSwagger(map[string]spec.PathItem{
 				"/users/id/":  pathItem("GET", op()),
-				"/users/{id}": pathItem("GET", op(param("id", "path", true))),
+				"/users/{id}": pathItem("GET", op(param("id", "path"))),
 			}),
 			wantErr: `duplicate generated operation name "get_users_id_"`,
 		},
@@ -169,7 +176,10 @@ func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			_, err := runSwaggerToDataSource(t, tt.swagger)
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.wantErr)
@@ -178,6 +188,8 @@ func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
 }
 
 func TestGenerateCmdRun_InvalidSwaggerDocuments(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		content []byte
@@ -196,7 +208,10 @@ func TestGenerateCmdRun_InvalidSwaggerDocuments(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			path := filepath.Join(t.TempDir(), "swagger.yaml")
 			require.NoError(t, os.WriteFile(path, tt.content, 0o600))
 
@@ -278,12 +293,12 @@ func op(params ...spec.Parameter) *spec.Operation {
 	}
 }
 
-func param(name, in string, required bool) spec.Parameter {
+func param(name, in string) spec.Parameter {
 	return spec.Parameter{
 		ParamProps: spec.ParamProps{
 			Name:     name,
 			In:       in,
-			Required: required,
+			Required: true,
 		},
 		SimpleSchema: spec.SimpleSchema{
 			Type: "string",
@@ -292,6 +307,8 @@ func param(name, in string, required bool) spec.Parameter {
 }
 
 func TestGenerateCmdRun_WithParsedSwaggerFixture(t *testing.T) {
+	t.Parallel()
+
 	swagger := testSwagger(map[string]spec.PathItem{
 		"/users": pathItem("GET", op()),
 	})
