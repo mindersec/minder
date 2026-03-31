@@ -34,6 +34,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
+				assert.Equal(t, "users-api", ds.GetName())
 				require.NotNil(t, ds.GetRest())
 				require.Len(t, ds.GetRest().GetDef(), 1)
 
@@ -52,6 +53,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
+				assert.Equal(t, "users-api", ds.GetName())
 				def := ds.GetRest().GetDef()["get_users_id_"]
 				require.NotNil(t, def)
 				assert.Equal(t, map[string]any{
@@ -72,6 +74,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
+				assert.Equal(t, "users-api", ds.GetName())
 				def := ds.GetRest().GetDef()["post_users"]
 				require.NotNil(t, def)
 				assert.Equal(t, "POST", def.GetMethod())
@@ -94,6 +97,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
 				t.Helper()
+				assert.Equal(t, "users-api", ds.GetName())
 				require.Len(t, ds.GetRest().GetDef(), 2)
 
 				getDef := ds.GetRest().GetDef()["get_users"]

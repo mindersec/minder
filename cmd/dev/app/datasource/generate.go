@@ -63,8 +63,18 @@ func initDriverStruct() *minderv1.RestDataSource {
 
 // conver the title to a valid datasource name. It should only contain alphanumeric characters and dashes.
 func swaggerTitleToDataSourceName(title string) string {
-	re := regexp.MustCompile("^[a-z][-_[:word:]]*$")
-	return re.ReplaceAllString(title, "-")
+	re := regexp.MustCompile(`[^a-z0-9_-]+`)
+	sanitized := strings.ToLower(strings.TrimSpace(title))
+	sanitized = re.ReplaceAllString(sanitized, "-")
+	sanitized = strings.Trim(sanitized, "-")
+	if sanitized == "" {
+		return "datasource"
+	}
+	if sanitized[0] < 'a' || sanitized[0] > 'z' {
+		sanitized = "ds-" + sanitized
+	}
+
+	return sanitized
 }
 
 // swaggerToDataSource generates datasource code from an OpenAPI specification.
