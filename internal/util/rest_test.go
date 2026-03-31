@@ -15,13 +15,13 @@ func TestGenerateCurlCommand(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		method      string
-		apiBaseURL  string
-		endpoint    string
-		body        string
-		wantError   bool
-		wantString  string
+		name       string
+		method     string
+		apiBaseURL string
+		endpoint   string
+		body       string
+		wantError  bool
+		wantString string
 	}{
 		{
 			name:       "valid curl command standard",
@@ -80,7 +80,7 @@ func TestGenerateCurlCommand(t *testing.T) {
 				require.Error(t, err)
 				return
 			}
-			
+
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantString, got)
 		})
