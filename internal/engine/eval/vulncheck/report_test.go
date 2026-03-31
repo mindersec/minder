@@ -35,8 +35,8 @@ func TestExtractContentShaAndReviewID(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:    "Double comment",
-			input:   `<!-- minder: pr-status-body: { "ContentSha": "abcdef", "ReviewID": "2" } -->` + "\n" +
+			name: "Double comment",
+			input: `<!-- minder: pr-status-body: { "ContentSha": "abcdef", "ReviewID": "2" } -->` + "\n" +
 				`<!-- minder: pr-status-body: { "ContentSha": "a1b2c3", "ReviewID": "5" } -->`,
 			wantSha: "abcdef",
 			wantID:  2,
