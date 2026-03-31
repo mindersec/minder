@@ -234,7 +234,7 @@ func (*Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessa
 }
 
 // getParamsForCommitStatus extracts the details from the entity
-func (alert *Alert) getParamsForCommitStatus(
+func (*Alert) getParamsForCommitStatus(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
 	params interfaces.ActionsParams,
