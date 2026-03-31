@@ -69,7 +69,16 @@ func swaggerTitleToDataSourceName(title string) string {
 
 // swaggerToDataSource generates datasource code from an OpenAPI specification.
 func swaggerToDataSource(cmd *cobra.Command, swagger *spec.Swagger) error {
-	_ = cmd
+	// Ensure the generator respects Cobra's configured output writer.
+	if out := cmd.OutOrStdout(); out != os.Stdout {
+		if f, ok := out.(*os.File); ok {
+			prev := os.Stdout
+			os.Stdout = f
+			defer func() {
+				os.Stdout = prev
+			}()
+		}
+	}
 
 	if swagger.Info == nil {
 		return fmt.Errorf("info section is required in OpenAPI spec")
