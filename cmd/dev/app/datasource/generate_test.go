@@ -23,9 +23,9 @@ var stdoutMu sync.Mutex
 
 func TestSwaggerToDataSource_Success(t *testing.T) {
 	tests := []struct {
-		name   string
+		name    string
 		swagger *spec.Swagger
-		assert func(t *testing.T, ds *minderv1.DataSource)
+		assert  func(t *testing.T, ds *minderv1.DataSource)
 	}{
 		{
 			name: "single endpoint without parameters",
@@ -89,7 +89,7 @@ func TestSwaggerToDataSource_Success(t *testing.T) {
 		{
 			name: "multiple endpoints",
 			swagger: testSwagger(map[string]spec.PathItem{
-				"/users": pathItem("GET", op()),
+				"/users":      pathItem("GET", op()),
 				"/users/{id}": pathItem("PUT", op(param("id", "path", true))),
 			}),
 			assert: func(t *testing.T, ds *minderv1.DataSource) {
@@ -152,7 +152,7 @@ func TestSwaggerToDataSource_ErrorCases(t *testing.T) {
 		{
 			name: "duplicate generated operation names",
 			swagger: testSwagger(map[string]spec.PathItem{
-				"/users/id/": pathItem("GET", op()),
+				"/users/id/":  pathItem("GET", op()),
 				"/users/{id}": pathItem("GET", op(param("id", "path", true))),
 			}),
 			wantErr: `duplicate generated operation name "get_users_id_"`,
