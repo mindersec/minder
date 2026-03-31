@@ -13,7 +13,7 @@ import (
 	"slices"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
+	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
 	evalerrors "github.com/mindersec/minder/internal/engine/errors"
@@ -131,17 +131,13 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	// Persist structured output if provided
 	if output != nil {
 		outputJSON, err := json.Marshal(output)
-		if err == nil {
-			if err := qtx.UpsertEvaluationOutput(ctx, db.UpsertEvaluationOutputParams{
-				ID: evaluationID,
-				Output: pqtype.NullRawMessage{
-					RawMessage: outputJSON,
-					Valid:      true,
-				},
-			}); err != nil {
-				// Non-fatal: log but don't fail the evaluation
-				_ = err
-			}
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert rule output to JSON")
+		} else if err := qtx.UpsertEvaluationOutput(ctx, db.UpsertEvaluationOutputParams{
+			ID:     evaluationID,
+			Output: outputJSON,
+		}); err != nil {
+			return evaluationID, fmt.Errorf("error storing extended output for rule/entity %s: %w", ruleEntityID, err)
 		}
 	}
 

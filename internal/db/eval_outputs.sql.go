@@ -8,10 +8,10 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const deleteEvaluationOutputsByEvaluationIDs = `-- name: DeleteEvaluationOutputsByEvaluationIDs :execrows
@@ -35,11 +35,7 @@ WHERE id = $1
 func (q *Queries) GetEvaluationOutput(ctx context.Context, id uuid.UUID) (EvaluationOutput, error) {
 	row := q.db.QueryRowContext(ctx, getEvaluationOutput, id)
 	var i EvaluationOutput
-	err := row.Scan(
-		&i.ID,
-		&i.Output,
-		&i.Debug,
-	)
+	err := row.Scan(&i.ID, &i.Output, &i.Debug)
 	return i, err
 }
 
@@ -60,9 +56,9 @@ SET output = COALESCE($2::jsonb, evaluation_outputs.output),
 `
 
 type UpsertEvaluationOutputParams struct {
-	ID     uuid.UUID             `json:"id"`
-	Output pqtype.NullRawMessage `json:"output"`
-	Debug  sql.NullString        `json:"debug"`
+	ID     uuid.UUID       `json:"id"`
+	Output json.RawMessage `json:"output"`
+	Debug  sql.NullString  `json:"debug"`
 }
 
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors

@@ -8,11 +8,11 @@ INSERT INTO evaluation_outputs(
     debug
 ) VALUES (
     $1,
-    sqlc.narg(output)::jsonb,
+    sqlc.arg(output)::jsonb,
     sqlc.narg(debug)
 )
 ON CONFLICT (id) DO UPDATE
-SET output = COALESCE(sqlc.narg(output)::jsonb, evaluation_outputs.output),
+SET output = COALESCE(sqlc.arg(output)::jsonb, evaluation_outputs.output),
     debug  = COALESCE(sqlc.narg(debug), evaluation_outputs.debug);
 
 -- name: GetEvaluationOutput :one
