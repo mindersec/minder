@@ -1144,13 +1144,6 @@
             "required": true,
             "type": "integer",
             "format": "int64"
-          },
-          {
-            "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "tags": [
@@ -1195,13 +1188,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "tags": [
@@ -3098,13 +3084,6 @@
               "type": "string"
             },
             "collectionFormat": "multi"
-          },
-          {
-            "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
-            "in": "query",
-            "required": false,
-            "type": "boolean"
           }
         ],
         "tags": [
@@ -4735,10 +4714,6 @@
         "details": {
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
-        },
-        "output": {
-          "type": "object",
-          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "required": [
@@ -6247,10 +6222,6 @@
         "releasePhase": {
           "$ref": "#/definitions/v1RuleTypeReleasePhase",
           "title": "release_phase is the phase of the release"
-        },
-        "output": {
-          "type": "object",
-          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "title": "get the status of the rules for a given profile",

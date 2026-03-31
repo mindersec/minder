@@ -1071,7 +1071,6 @@ This is only used in responses.
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -1266,7 +1265,6 @@ GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory en
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
-| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -1776,7 +1774,6 @@ which is used for pagination.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. This is optional. |
-| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -1810,7 +1807,6 @@ the next and/or previous pages of data.
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
 | rule_name | <TypeLink type="string">string</TypeLink> | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
-| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -2689,7 +2685,6 @@ get the status of the rules for a given profile
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the phase of the release |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
