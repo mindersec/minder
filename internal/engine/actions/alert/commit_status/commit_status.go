@@ -20,9 +20,12 @@ import (
 	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+
+	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 )
 
 const (
@@ -38,13 +41,28 @@ type Alert struct {
 	setting    models.ActionOpt
 }
 
+// CommitStatusTemplateParams is the parameters for the commit status templates
+type CommitStatusTemplateParams struct {
+	// EvalErrorDetails is the details of the error that occurred during evaluation, which may be empty
+	EvalErrorDetails string
+
+	// EvalResult is the output of the evaluation, which may be empty
+	EvalResultOutput any
+
+	// RuleName is the name of the rule
+	RuleName string
+}
+
 type paramsPR struct {
-	Owner      string
-	Repo       string
-	CommitSha  string
-	Number     int
-	Metadata   *alertMetadata
-	prevStatus *db.ListRuleEvaluationsByProfileIdRow
+	Owner       string
+	Repo        string
+	CommitSha   string
+	Number      int
+	Context     string
+	Description string
+	TargetURL   string
+	Metadata    *alertMetadata
+	prevStatus  *db.ListRuleEvaluationsByProfileIdRow
 }
 
 type alertMetadata struct {
@@ -115,28 +133,23 @@ func (alert *Alert) Do(
 	return nil, enginerr.ErrActionSkipped
 }
 
-func (alert *Alert) run(
-	ctx context.Context,
-	params *paramsPR,
-	cmd interfaces.ActionCmd,
-	actionParams interfaces.ActionsParams,
-) (json.RawMessage, error) {
+func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
-
-	// Context string for the commit status check (e.g. "minder/rule_name")
-	// If rule_name isn't available, we fallback to "minder"
-	contextStr := "minder"
-	if rule := actionParams.GetRule(); rule != nil {
-		contextStr = fmt.Sprintf("minder/%s", rule.Name)
-	}
 
 	switch cmd {
 	// ActionCmdOn: The evaluation failed. Set status to failure.
 	case interfaces.ActionCmdOn:
 		commitStatus := &github.RepoStatus{
-			Context:     github.String(contextStr),
-			State:       github.String("failure"),
-			Description: github.String("Minder evaluation failed"),
+			Context: github.String(params.Context),
+			State:   github.String("failure"),
+		}
+		if params.Description != "" {
+			commitStatus.Description = github.String(params.Description)
+		} else {
+			commitStatus.Description = github.String("Minder evaluation failed")
+		}
+		if params.TargetURL != "" {
+			commitStatus.TargetURL = github.String(params.TargetURL)
 		}
 
 		_, err := alert.gh.SetCommitStatus(
@@ -147,8 +160,7 @@ func (alert *Alert) run(
 			commitStatus,
 		)
 		if err != nil {
-			logger.Error().Err(err).Msg("error setting commit status")
-			return nil, enginerr.ErrActionFailed
+			return nil, fmt.Errorf("error setting commit status: %w, %w", err, enginerr.ErrActionFailed)
 		}
 
 		now := time.Now()
@@ -165,9 +177,16 @@ func (alert *Alert) run(
 	// ActionCmdOff: The evaluation succeeded (or alert turned off). Set status to success.
 	case interfaces.ActionCmdOff:
 		commitStatus := &github.RepoStatus{
-			Context:     github.String(contextStr),
-			State:       github.String("success"),
-			Description: github.String("Minder evaluation succeeded"),
+			Context: github.String(params.Context),
+			State:   github.String("success"),
+		}
+		if params.Description != "" {
+			commitStatus.Description = github.String(params.Description)
+		} else {
+			commitStatus.Description = github.String("Minder evaluation succeeded")
+		}
+		if params.TargetURL != "" {
+			commitStatus.TargetURL = github.String(params.TargetURL)
 		}
 
 		_, err := alert.gh.SetCommitStatus(
@@ -178,12 +197,12 @@ func (alert *Alert) run(
 			commitStatus,
 		)
 		if err != nil {
-			logger.Error().Err(err).Msg("error setting commit status")
+			return nil, fmt.Errorf("error dismissing commit status: %w, %w", err, enginerr.ErrActionFailed)
 		}
 
 		logger.Info().Str("commit_sha", params.CommitSha).Msg("PR commit status updated to success")
 		// Return ErrActionTurnedOff to indicate the action resolved appropriately
-		return nil, fmt.Errorf("%s: %w", alert.Class(), enginerr.ErrActionTurnedOff)
+		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
 
 	case interfaces.ActionCmdDoNothing:
 		// Return the previous alert status.
@@ -193,28 +212,17 @@ func (alert *Alert) run(
 }
 
 // runDry runs the commit status action in dry run mode, logging what it would do
-func (alert *Alert) runDry(
-	ctx context.Context,
-	params *paramsPR,
-	cmd interfaces.ActionCmd,
-	actionParams interfaces.ActionsParams,
-) (json.RawMessage, error) {
+func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
-
-	contextStr := "minder"
-	if rule := actionParams.GetRule(); rule != nil {
-		contextStr = fmt.Sprintf("minder/%s", rule.Name)
-	}
 
 	switch cmd {
 	case interfaces.ActionCmdOn:
 		logger.Info().Msgf("dry run: set commit status to failure for context %s on PR %d in repo %s/%s",
-			contextStr, params.Number, params.Owner, params.Repo)
+			params.Context, params.Number, params.Owner, params.Repo)
 		return nil, nil
 	case interfaces.ActionCmdOff:
 		logger.Info().Msgf("dry run: set commit status to success for context %s on PR %d in repo %s/%s",
-			contextStr, params.Number, params.Owner, params.Repo)
-		return nil, nil
+			params.Context, params.Number, params.Owner, params.Repo)
 	case interfaces.ActionCmdDoNothing:
 		return alert.runDoNothing(ctx, params)
 	}
@@ -234,7 +242,7 @@ func (*Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessa
 }
 
 // getParamsForCommitStatus extracts the details from the entity
-func (*Alert) getParamsForCommitStatus(
+func (alert *Alert) getParamsForCommitStatus(
 	ctx context.Context,
 	pr *pbinternal.PullRequest,
 	params interfaces.ActionsParams,
@@ -248,10 +256,62 @@ func (*Alert) getParamsForCommitStatus(
 		CommitSha:  pr.GetCommitSha(),
 	}
 
-	if pr.Number > int64(math.MaxInt32) {
+	if pr.Number > math.MaxInt {
 		return nil, fmt.Errorf("pr number is too large")
 	}
 	result.Number = int(pr.Number)
+
+	// Create template params
+	tmplParams := &CommitStatusTemplateParams{
+		EvalErrorDetails: enginerr.ErrorAsEvalDetails(params.GetEvalErr()),
+	}
+	if params.GetEvalResult() != nil {
+		tmplParams.EvalResultOutput = params.GetEvalResult().Output
+	}
+	if rule := params.GetRule(); rule != nil {
+		tmplParams.RuleName = rule.Name
+	}
+
+	// 1. Evaluate context
+	contextStr := "minder"
+	contextNameTmpl := alert.alertCfg.GetStatusName()
+	if contextNameTmpl != "" {
+		// No templating specified for status_name, use as-is
+		contextStr = contextNameTmpl
+	} else if tmplParams.RuleName != "" {
+		contextStr = fmt.Sprintf("minder/%s", tmplParams.RuleName)
+	}
+	result.Context = contextStr
+
+	// 2. Evaluate description, using text/template
+	descTmplStr := alert.alertCfg.GetDescription()
+	if descTmplStr != "" {
+		descTmpl, err := util.NewSafeHTMLTemplate(&descTmplStr, "description")
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse description template: %w", err)
+		}
+		descStr, err := descTmpl.Render(ctx, tmplParams, 1024)
+		if err != nil {
+			return nil, fmt.Errorf("cannot execute description template: %w", err)
+		}
+		result.Description = descStr
+	}
+
+	// 3. Evaluate target_url, using RFC6570
+	targetUrlTmplStr := alert.alertCfg.GetTargetUrl()
+	if targetUrlTmplStr != "" {
+		argsMap := map[string]any{
+			"owner":      result.Owner,
+			"repo":       result.Repo,
+			"commit_sha": result.CommitSha,
+			"rule_name":  tmplParams.RuleName,
+		}
+		expandedUrl, err := uritemplate.Expand(targetUrlTmplStr, argsMap)
+		if err != nil {
+			return nil, fmt.Errorf("cannot expand target_url template: %w", err)
+		}
+		result.TargetURL = expandedUrl
+	}
 
 	if metadata != nil {
 		meta := &alertMetadata{}

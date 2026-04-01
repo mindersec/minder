@@ -1071,6 +1071,7 @@ This is only used in responses.
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
+| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -1265,6 +1266,7 @@ GetEvaluationHistoryRequest represents a request for the GetEvaluationHistory en
 | ----- | ---- | ----- | ----------- |
 | id | <TypeLink type="string">string</TypeLink> |  |  |
 | context | <TypeLink type="minder-v1-Context">Context</TypeLink> |  |  |
+| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -1774,6 +1776,7 @@ which is used for pagination.
 
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | cursor | <TypeLink type="minder-v1-Cursor">Cursor</TypeLink> |  | Cursor object to select the "page" of data to retrieve. This is optional. |
+| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -1807,6 +1810,7 @@ the next and/or previous pages of data.
 The default is to return all user-created profiles; the string "*" can be used to select all profiles, including system profiles. This syntax may be expanded in the future. |
 | entity | <TypeLink type="minder-v1-EntityTypedId">EntityTypedId</TypeLink> | repeated | If set, only return evaluation results for the named entities. If empty, return evaluation results for all entities |
 | rule_name | <TypeLink type="string">string</TypeLink> | repeated | If set, only return evaluation results for the named rules. If empty, return evaluation results for all rules |
+| include_outputs | <TypeLink type="bool">bool</TypeLink> |  | If true, include structured rule output for the matched evaluations. Not all ruletypes may generate structured outputs. Because the evaluation output may be large, it is only returned when explicitly requested. |
 
 
 
@@ -2685,6 +2689,7 @@ get the status of the rules for a given profile
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the phase of the release |
+| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -2747,7 +2752,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the alert. * 'security_advisory' can only be used with the 'repository' entity type. * 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type. |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
 | commit_status | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeCommitStatus">RuleType.Definition.Alert.AlertTypeCommitStatus</TypeLink> | optional |  |
@@ -2757,6 +2762,13 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 <Message id="minder-v1-RuleType-Definition-Alert-AlertTypeCommitStatus">RuleType.Definition.Alert.AlertTypeCommitStatus</Message>
 
 
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status_name | <TypeLink type="string">string</TypeLink> |  | status_name is the name of the commit status check. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the commit status check, which can be Go templated. |
+| target_url | <TypeLink type="string">string</TypeLink> |  | target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template. |
 
 
 
@@ -2892,7 +2904,7 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' can only be used with the 'repository' entity type. * 'pull_request' and 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |

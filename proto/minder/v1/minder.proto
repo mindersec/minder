@@ -1881,6 +1881,11 @@ message RuleEvaluationStatus {
     RuleTypeReleasePhase release_phase = 20 [
         (google.api.field_behavior) = REQUIRED
     ];
+    // output optionally contains the structured rule evaluation output.
+    // Because output may be multiple KB, it is only returned
+    // if include_outputs is set. Historical evaluations may
+    // discard structured output sooner than status results.
+    google.protobuf.Struct output = 21;
 }
 
 // EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
@@ -2312,6 +2317,12 @@ message ListEvaluationResultsRequest {
             }
         }
     ];
+
+    // If true, include structured rule output for the matched evaluations.
+    // Not all ruletypes may generate structured outputs.
+    // Because the evaluation output may be large, it is only returned
+    // when explicitly requested.
+    bool include_outputs = 6;
 }
 
 message ListEvaluationResultsResponse {
@@ -2789,6 +2800,10 @@ message RuleType {
         ];
 
         message Remediate {
+            // type is the type of the remediation.
+            // * 'rest' can be used with any entity type.
+            // * 'gh_branch_protection' can only be used with the 'repository' entity type.
+            // * 'pull_request' and 'pull_request_comment' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
                     in: ["rest", "gh_branch_protection", "pull_request", "pull_request_comment"],
@@ -2899,6 +2914,9 @@ message RuleType {
         Remediate remediate = 6;
 
         message Alert {
+            // type is the type of the alert.
+            // * 'security_advisory' can only be used with the 'repository' entity type.
+            // * 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
                     in: ["security_advisory", "pull_request_comment", "commit_status"],
@@ -2926,7 +2944,31 @@ message RuleType {
             }
             optional AlertTypePRComment pull_request_comment = 3;
 
-            message AlertTypeCommitStatus {}
+            message AlertTypeCommitStatus {
+                // status_name is the name of the commit status check.
+                string status_name = 1 [
+                    (buf.validate.field).string = {
+                        max_len: 255,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                ];
+
+                // description is the description of the commit status check, which can be Go templated.
+                string description = 2 [
+                    (buf.validate.field).string = {
+                        max_len: 1024,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                ];
+
+                // target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template.
+                string target_url = 3 [
+                    (buf.validate.field).string = {
+                        max_len: 2048,
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                ];
+            }
             optional AlertTypeCommitStatus commit_status = 4;
         }
         Alert alert = 7;
@@ -3786,6 +3828,12 @@ message GetEvaluationHistoryRequest {
     ];
 
     Context context = 2;
+
+    // If true, include structured rule output for the matched evaluations.
+    // Not all ruletypes may generate structured outputs.
+    // Because the evaluation output may be large, it is only returned
+    // when explicitly requested.
+    bool include_outputs = 3;
 }
 
 // ListEvaluationHistoryRequest represents a request message for the
@@ -3885,6 +3933,12 @@ message ListEvaluationHistoryRequest {
 
     // Cursor object to select the "page" of data to retrieve. This is optional.
     Cursor cursor = 10;
+
+    // If true, include structured rule output for the matched evaluations.
+    // Not all ruletypes may generate structured outputs.
+    // Because the evaluation output may be large, it is only returned
+    // when explicitly requested.
+    bool include_outputs = 12;
 }
 
 // GetEvaluationHistoryResponse represents a response message for the
@@ -3999,6 +4053,12 @@ message EvaluationHistoryStatus {
     string details = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
+
+    // output optionally contains the structured rule evaluation output.
+    // Because output may be multiple KB, it is only returned
+    // if include_outputs is set. Historical evaluations may
+    // discard structured output sooner than status results.
+    google.protobuf.Struct output = 3;
 }
 
 message EvaluationHistoryRemediation {

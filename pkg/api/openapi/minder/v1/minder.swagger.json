@@ -1144,6 +1144,13 @@
             "required": true,
             "type": "integer",
             "format": "int64"
+          },
+          {
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -1188,6 +1195,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -3084,6 +3098,13 @@
               "type": "string"
             },
             "collectionFormat": "multi"
+          },
+          {
+            "name": "includeOutputs",
+            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -3423,7 +3444,21 @@
   },
   "definitions": {
     "AlertAlertTypeCommitStatus": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "statusName": {
+          "type": "string",
+          "description": "status_name is the name of the commit status check."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the commit status check, which can be Go templated."
+        },
+        "targetUrl": {
+          "type": "string",
+          "description": "target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template."
+        }
+      }
     },
     "AlertAlertTypePRComment": {
       "type": "object",
@@ -3462,7 +3497,8 @@
       "type": "object",
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "type is the type of the alert.\n* 'security_advisory' can only be used with the 'repository' entity type.\n* 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type."
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
@@ -3561,7 +3597,8 @@
       "type": "object",
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' can only be used with the 'repository' entity type.\n* 'pull_request' and 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
@@ -4714,6 +4751,10 @@
         "details": {
           "type": "string",
           "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
+        },
+        "output": {
+          "type": "object",
+          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "required": [
@@ -6222,6 +6263,10 @@
         "releasePhase": {
           "$ref": "#/definitions/v1RuleTypeReleasePhase",
           "title": "release_phase is the phase of the release"
+        },
+        "output": {
+          "type": "object",
+          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
         }
       },
       "title": "get the status of the rules for a given profile",
