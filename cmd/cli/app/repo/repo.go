@@ -13,8 +13,21 @@ import (
 // RepoCmd is the root command for the repo subcommands
 var RepoCmd = &cobra.Command{
 	Use:   "repo",
-	Short: "Manage repositories",
-	Long:  `The repo commands allow the management of repositories within Minder.`,
+	Short: "Manage repositories within a Minder project",
+	Long: `Manage repositories within a Minder project.
+
+This command allows you to list, add, and manage repositories
+connected to Minder for security analysis and policy enforcement.`,
+	Example: `
+  # List repositories
+  minder repo list
+
+  # Add a repository
+  minder repo add --name my-repo --provider github
+
+  # Delete a repository
+minder repo delete --name my-repo
+`,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
 	},
