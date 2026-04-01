@@ -16,6 +16,7 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	em "github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/labels"
 )
 
 var (
@@ -375,17 +376,22 @@ func (filter *listEvaluationFilter) ExcludedProfileNames() []string {
 }
 
 func (filter *listEvaluationFilter) AddLabel(label string) error {
-	if label == "!*" {
-		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+	inc, exc, err := labels.ParseLabel(label)
+	if err != nil {
+		if errors.Is(err, labels.ErrInvalidLabel) {
+			return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+		}
+		return err
 	}
-	if label == "*" && len(filter.includedLabels) != 0 {
-		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+
+	if inc != "" {
+		if inc == "*" && len(filter.includedLabels) != 0 {
+			return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+		}
+		filter.includedLabels = append(filter.includedLabels, inc)
 	}
-	if strings.HasPrefix(label, "!") {
-		label = strings.Split(label, "!")[1] // guaranteed to exist
-		filter.excludedLabels = append(filter.excludedLabels, label)
-	} else {
-		filter.includedLabels = append(filter.includedLabels, label)
+	if exc != "" {
+		filter.excludedLabels = append(filter.excludedLabels, exc)
 	}
 
 	return nil

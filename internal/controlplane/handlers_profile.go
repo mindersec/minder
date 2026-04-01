@@ -106,7 +106,9 @@ func (s *Server) ListProfiles(ctx context.Context,
 	listParams := db.ListProfilesByProjectIDAndLabelParams{
 		ProjectID: entityCtx.Project.ID,
 	}
-	listParams.LabelsFromFilter(req.GetLabelFilter())
+	if err := listParams.LabelsFromFilter(req.GetLabelFilter()); err != nil {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid label filter: %s", err)
+	}
 
 	zerolog.Ctx(ctx).Debug().Interface("listParams", listParams).Msg("profile list parameters")
 

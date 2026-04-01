@@ -379,7 +379,9 @@ func paramsFromLabelFilter(
 	if len(filter.IncludedLabels()) != 0 {
 		params.Labels = filter.IncludedLabels()
 	}
-	// We do not exclude based on labels
+	if len(filter.ExcludedLabels()) != 0 {
+		params.Notlabels = filter.ExcludedLabels()
+	}
 	return nil
 }
 
