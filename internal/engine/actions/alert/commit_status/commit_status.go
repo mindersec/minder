@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/go-github/v63/github"
 	"github.com/rs/zerolog"
+	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
@@ -24,8 +25,6 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
-
-	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 )
 
 const (
@@ -133,7 +132,10 @@ func (alert *Alert) Do(
 	return nil, enginerr.ErrActionSkipped
 }
 
-func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
+func (alert *Alert) run(
+	ctx context.Context, params *paramsPR,
+	cmd interfaces.ActionCmd, _ interfaces.ActionsParams,
+) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
 
 	switch cmd {
@@ -212,7 +214,10 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 }
 
 // runDry runs the commit status action in dry run mode, logging what it would do
-func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd, actionParams interfaces.ActionsParams) (json.RawMessage, error) {
+func (alert *Alert) runDry(
+	ctx context.Context, params *paramsPR,
+	cmd interfaces.ActionCmd, _ interfaces.ActionsParams,
+) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx)
 
 	switch cmd {
