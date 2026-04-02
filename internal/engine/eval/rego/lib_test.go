@@ -15,7 +15,7 @@ import (
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"

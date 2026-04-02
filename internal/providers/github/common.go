@@ -24,7 +24,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	gitclient "github.com/mindersec/minder/internal/providers/git"
 	"github.com/mindersec/minder/internal/providers/github/ghcr"
 	"github.com/mindersec/minder/internal/providers/github/properties"

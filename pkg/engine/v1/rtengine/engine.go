@@ -12,7 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/engine/ingester"

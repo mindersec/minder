@@ -19,7 +19,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"

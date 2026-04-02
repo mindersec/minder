@@ -18,7 +18,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	mindergh "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/util"

@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/pkg/profiles/models"

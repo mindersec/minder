@@ -13,7 +13,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/rego"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"

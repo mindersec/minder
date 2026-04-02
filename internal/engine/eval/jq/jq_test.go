@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/jq"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"

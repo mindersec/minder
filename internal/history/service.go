@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	propertiessvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 )

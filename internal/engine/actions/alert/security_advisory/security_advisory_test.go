@@ -16,7 +16,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/mindersec/minder/internal/db"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"

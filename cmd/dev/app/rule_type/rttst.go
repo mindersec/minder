@@ -21,7 +21,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/entities"
-	"github.com/mindersec/minder/internal/engine/errors"
+	"github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/engine/options"

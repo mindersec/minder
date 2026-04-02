@@ -17,7 +17,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/entities"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"

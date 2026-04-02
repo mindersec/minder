@@ -14,7 +14,7 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"google.golang.org/protobuf/proto"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
