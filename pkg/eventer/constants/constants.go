@@ -11,6 +11,23 @@ const (
 	ProviderSourceKey         = "source"
 	GithubWebhookEventTypeKey = "type"
 
+	// EntityTypeEventKey is the key for the entity type
+	EntityTypeEventKey = "entity_type"
+	// EntityIDEventKey is the key for the entity ID
+	EntityIDEventKey = "entity_id"
+	// ProviderIDEventKey is the key for the provider ID
+	ProviderIDEventKey = "provider_id"
+	// ProjectIDEventKey is the key for the project ID
+	ProjectIDEventKey = "project_id"
+	// RepositoryIDEventKey is the key for the repository ID
+	RepositoryIDEventKey = "repository_id"
+	// ArtifactIDEventKey is the key for the artifact ID
+	ArtifactIDEventKey = "artifact_id"
+	// PullRequestIDEventKey is the key for the pull request ID
+	PullRequestIDEventKey = "pull_request_id"
+	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
+	ExecutionIDKey = "execution_id"
+
 	GoChannelDriver = "go-channel"
 	SQLDriver       = "sql"
 	NATSDriver      = "cloudevents-nats"

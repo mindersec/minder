@@ -18,18 +18,10 @@ import (
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
 
-// EntityInfoWrapper is a helper struct to gather information
-// about entities from events.
-// It's able to build message.Message structures from
-// the information it gathers.
+// EntityInfoWrapper assumes the following metadata keys are present:
 //
-// It's also able to read the message.Message that contains a payload
-// with a protobuf message that's specific to the entity type.
-//
-// It also assumes the following metadata keys are present:
-//
-// - EntityTypeEventKey - entity_type
-// - EntityIDEventKey - entity_id
+// - constants.EntityTypeEventKey
+// - constants.EntityIDEventKey
 type EntityInfoWrapper struct {
 	ProviderID    uuid.UUID
 	ProjectID     uuid.UUID
@@ -41,33 +33,39 @@ type EntityInfoWrapper struct {
 	ActionEvent   string
 }
 
-const (
-	// EntityTypeEventKey is the key for the entity type
-	EntityTypeEventKey = "entity_type"
-	// EntityIDEventKey is the key for the entity ID
-	// Note that we'll be migrating to this key
-	// and deprecating the other entity ID keys
-	EntityIDEventKey = "entity_id"
-	// ProviderIDEventKey is the key for the provider ID
-	ProviderIDEventKey = "provider_id"
-	// ProjectIDEventKey is the key for the project ID
-	ProjectIDEventKey = "project_id"
-	// repositoryIDEventKey is the key for the repository ID
-	repositoryIDEventKey = "repository_id"
-	// artifactIDEventKey is the key for the artifact ID
-	artifactIDEventKey = "artifact_id"
-	// pullRequestIDEventKey is the key for the pull request ID
-	pullRequestIDEventKey = "pull_request_id"
-	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
-	ExecutionIDKey = "execution_id"
-)
-
 // NewEntityInfoWrapper creates a new EntityInfoWrapper
 func NewEntityInfoWrapper() *EntityInfoWrapper {
 	return &EntityInfoWrapper{
 		OwnershipData: make(map[string]string),
 	}
 }
+
+const (
+	// EntityTypeEventKey is the key for the entity type
+	// Deprecated: use constants.EntityTypeEventKey
+	EntityTypeEventKey = constants.EntityTypeEventKey
+	// EntityIDEventKey is the key for the entity ID
+	// Deprecated: use constants.EntityIDEventKey
+	EntityIDEventKey = constants.EntityIDEventKey
+	// ProviderIDEventKey is the key for the provider ID
+	// Deprecated: use constants.ProviderIDEventKey
+	ProviderIDEventKey = constants.ProviderIDEventKey
+	// ProjectIDEventKey is the key for the project ID
+	// Deprecated: use constants.ProjectIDEventKey
+	ProjectIDEventKey = constants.ProjectIDEventKey
+	// repositoryIDEventKey is the key for the repository ID
+	// Deprecated: use constants.RepositoryIDEventKey
+	repositoryIDEventKey = constants.RepositoryIDEventKey
+	// artifactIDEventKey is the key for the artifact ID
+	// Deprecated: use constants.ArtifactIDEventKey
+	artifactIDEventKey = constants.ArtifactIDEventKey
+	// pullRequestIDEventKey is the key for the pull request ID
+	// Deprecated: use constants.PullRequestIDEventKey
+	pullRequestIDEventKey = constants.PullRequestIDEventKey
+	// ExecutionIDKey is the key for the execution ID. This is set when acquiring a lock.
+	// Deprecated: use constants.ExecutionIDKey
+	ExecutionIDKey = constants.ExecutionIDKey
+)
 
 // WithProviderID sets the provider ID
 func (eiw *EntityInfoWrapper) WithProviderID(providerID uuid.UUID) *EntityInfoWrapper {
@@ -208,11 +206,11 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 	}
 
 	if eiw.EntityID != uuid.Nil {
-		msg.Metadata.Set(EntityIDEventKey, eiw.EntityID.String())
+		msg.Metadata.Set(constants.EntityIDEventKey, eiw.EntityID.String())
 	}
 
 	if eiw.ExecutionID != nil {
-		msg.Metadata.Set(ExecutionIDKey, eiw.ExecutionID.String())
+		msg.Metadata.Set(constants.ExecutionIDKey, eiw.ExecutionID.String())
 	}
 
 	if eiw.Type == minderv1.Entity_ENTITY_UNSPECIFIED {
@@ -223,9 +221,9 @@ func (eiw *EntityInfoWrapper) ToMessage(msg *message.Message) error {
 		return fmt.Errorf("no entity set")
 	}
 
-	msg.Metadata.Set(ProviderIDEventKey, eiw.ProviderID.String())
-	msg.Metadata.Set(EntityTypeEventKey, typ)
-	msg.Metadata.Set(ProjectIDEventKey, eiw.ProjectID.String())
+	msg.Metadata.Set(constants.ProviderIDEventKey, eiw.ProviderID.String())
+	msg.Metadata.Set(constants.EntityTypeEventKey, typ)
+	msg.Metadata.Set(constants.ProjectIDEventKey, eiw.ProjectID.String())
 	for k, v := range eiw.OwnershipData {
 		msg.Metadata.Set(k, v)
 	}
@@ -274,9 +272,9 @@ func (eiw *EntityInfoWrapper) getIDForEntityType(t minderv1.Entity) (uuid.UUID, 
 }
 
 func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) error {
-	rawID := msg.Metadata.Get(ProjectIDEventKey)
+	rawID := msg.Metadata.Get(constants.ProjectIDEventKey)
 	if rawID == "" {
-		return fmt.Errorf("%s not found in metadata", ProjectIDEventKey)
+		return fmt.Errorf("%s not found in metadata", constants.ProjectIDEventKey)
 	}
 
 	id, err := uuid.Parse(rawID)
@@ -289,9 +287,9 @@ func (eiw *EntityInfoWrapper) withProjectIDFromMessage(msg *message.Message) err
 }
 
 func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) error {
-	rawProviderID := msg.Metadata.Get(ProviderIDEventKey)
+	rawProviderID := msg.Metadata.Get(constants.ProviderIDEventKey)
 	if rawProviderID == "" {
-		return fmt.Errorf("%s not found in metadata", ProviderIDEventKey)
+		return fmt.Errorf("%s not found in metadata", constants.ProviderIDEventKey)
 	}
 
 	providerID, err := uuid.Parse(rawProviderID)
@@ -304,21 +302,21 @@ func (eiw *EntityInfoWrapper) withProviderIDFromMessage(msg *message.Message) er
 }
 
 func (eiw *EntityInfoWrapper) withRepositoryIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, repositoryIDEventKey)
+	return eiw.withIDFromMessage(msg, constants.RepositoryIDEventKey)
 }
 
 func (eiw *EntityInfoWrapper) withArtifactIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, artifactIDEventKey)
+	return eiw.withIDFromMessage(msg, constants.ArtifactIDEventKey)
 }
 
 func (eiw *EntityInfoWrapper) withPullRequestIDFromMessage(msg *message.Message) error {
-	return eiw.withIDFromMessage(msg, pullRequestIDEventKey)
+	return eiw.withIDFromMessage(msg, constants.PullRequestIDEventKey)
 }
 
 func (eiw *EntityInfoWrapper) withEntityInstanceIDFromMessage(msg *message.Message) error {
-	rawEntityID := msg.Metadata.Get(EntityIDEventKey)
+	rawEntityID := msg.Metadata.Get(constants.EntityIDEventKey)
 	if rawEntityID == "" {
-		return fmt.Errorf("%s not found in metadata", EntityIDEventKey)
+		return fmt.Errorf("%s not found in metadata", constants.EntityIDEventKey)
 	}
 
 	entityID, err := uuid.Parse(rawEntityID)
@@ -332,9 +330,9 @@ func (eiw *EntityInfoWrapper) withEntityInstanceIDFromMessage(msg *message.Messa
 
 // WithExecutionIDFromMessage sets the execution ID from the message
 func (eiw *EntityInfoWrapper) WithExecutionIDFromMessage(msg *message.Message) error {
-	executionID := msg.Metadata.Get(ExecutionIDKey)
+	executionID := msg.Metadata.Get(constants.ExecutionIDKey)
 	if executionID == "" {
-		return fmt.Errorf("%s not found in metadata", ExecutionIDKey)
+		return fmt.Errorf("%s not found in metadata", constants.ExecutionIDKey)
 	}
 
 	id, err := uuid.Parse(executionID)
@@ -366,11 +364,11 @@ func getEntityMetadataKey(t minderv1.Entity) (string, error) {
 	//nolint:exhaustive // We want to fail if it's not one of the explicit types
 	switch t {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		return repositoryIDEventKey, nil
+		return constants.RepositoryIDEventKey, nil
 	case minderv1.Entity_ENTITY_ARTIFACTS:
-		return artifactIDEventKey, nil
+		return constants.ArtifactIDEventKey, nil
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
-		return pullRequestIDEventKey, nil
+		return constants.PullRequestIDEventKey, nil
 	case minderv1.Entity_ENTITY_UNSPECIFIED:
 		return "", fmt.Errorf("entity type unspecified")
 	default:
@@ -413,7 +411,7 @@ func ParseEntityEvent(msg *message.Message) (*EntityInfoWrapper, error) {
 
 	// We don't always have repo ID (e.g. for artifacts)
 
-	typ := msg.Metadata.Get(EntityTypeEventKey)
+	typ := msg.Metadata.Get(constants.EntityTypeEventKey)
 	strtyp := minderv1.EntityFromString(typ)
 
 	//nolint:exhaustive // We have a default case

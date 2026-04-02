@@ -22,6 +22,7 @@ import (
 
 	"github.com/mindersec/minder/internal/events/common"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
 // BuildNatsChannelDriver creates a new event driver using
@@ -206,7 +207,21 @@ func sendEvent(
 	event.SetID(msg.UUID)
 	event.SetType(eventType)
 	event.SetSource("minder") // The system which generated the event.  The Minder URL would be nice here.
-	event.SetSubject("TODO")  // This *should* represent the entity, but we don't have a standard field for it yet.
+
+	// Try to get the entity ID to use as a subject
+	if entityID, ok := msg.Metadata[constants.EntityIDEventKey]; ok {
+		event.SetSubject(entityID)
+	} else if repoID, ok := msg.Metadata[constants.RepositoryIDEventKey]; ok {
+		event.SetSubject(repoID)
+	} else if artifactID, ok := msg.Metadata[constants.ArtifactIDEventKey]; ok {
+		event.SetSubject(artifactID)
+	} else if prID, ok := msg.Metadata[constants.PullRequestIDEventKey]; ok {
+		event.SetSubject(prID)
+	} else if projectID, ok := msg.Metadata[constants.ProjectIDEventKey]; ok {
+		event.SetSubject(projectID)
+	} else {
+		event.SetSubject("minder")
+	}
 
 	// All our current payloads are encoded JSON; we need to unmarshal
 	payload := map[string]any{}
