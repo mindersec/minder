@@ -4,19 +4,18 @@
 package labels
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestParseLabelFilter(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name          string
-		filter        string
-		expectedInc   []string
-		expectedExc   []string
-		expectedError error
+		name        string
+		filter      string
+		expectedInc []string
+		expectedExc []string
 	}{
 		{
 			name:        "empty",
@@ -43,9 +42,10 @@ func TestParseLabelFilter(t *testing.T) {
 			expectedExc: nil,
 		},
 		{
-			name:          "invalid star exclude",
-			filter:        "!*",
-			expectedError: ErrInvalidLabel,
+			name:        "star exclude",
+			filter:      "!*",
+			expectedInc: nil,
+			expectedExc: []string{"*"},
 		},
 		{
 			name:        "multiple includes",
@@ -60,14 +60,16 @@ func TestParseLabelFilter(t *testing.T) {
 			expectedExc: []string{"bar", "qux"},
 		},
 		{
-			name:          "star mixed with includes",
-			filter:        "foo,*",
-			expectedError: ErrInvalidLabel,
+			name:        "star mixed with includes",
+			filter:      "foo,*",
+			expectedInc: []string{"*"},
+			expectedExc: nil,
 		},
 		{
-			name:          "includes mixed with star",
-			filter:        "*,foo",
-			expectedError: ErrInvalidLabel,
+			name:        "includes mixed with star",
+			filter:      "*,foo",
+			expectedInc: []string{"*"},
+			expectedExc: nil,
 		},
 		{
 			name:        "star and excludes",
@@ -90,16 +92,13 @@ func TestParseLabelFilter(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			inc, exc, err := ParseLabelFilter(tt.filter)
-			if tt.expectedError != nil {
-				require.Error(t, err)
-				require.True(t, errors.Is(err, tt.expectedError))
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.expectedInc, inc)
-				require.Equal(t, tt.expectedExc, exc)
-			}
+			require.NoError(t, err)
+			require.Equal(t, tt.expectedInc, inc)
+			require.Equal(t, tt.expectedExc, exc)
 		})
 	}
 }

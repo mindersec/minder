@@ -376,18 +376,9 @@ func (filter *listEvaluationFilter) ExcludedProfileNames() []string {
 }
 
 func (filter *listEvaluationFilter) AddLabel(label string) error {
-	inc, exc, err := labels.ParseLabel(label)
-	if err != nil {
-		if errors.Is(err, labels.ErrInvalidLabel) {
-			return fmt.Errorf("%w: label", ErrInvalidIdentifier)
-		}
-		return err
-	}
+	inc, exc := labels.ParseLabel(label)
 
 	if inc != "" {
-		if inc == "*" && len(filter.includedLabels) != 0 {
-			return fmt.Errorf("%w: label", ErrInvalidIdentifier)
-		}
 		filter.includedLabels = append(filter.includedLabels, inc)
 	}
 	if exc != "" {
@@ -397,6 +388,9 @@ func (filter *listEvaluationFilter) AddLabel(label string) error {
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedLabels() []string {
+	if slices.Contains(filter.includedLabels, "*") {
+		return []string{"*"}
+	}
 	return filter.includedLabels
 }
 func (filter *listEvaluationFilter) ExcludedLabels() []string {

@@ -5,63 +5,50 @@
 package labels
 
 import (
-	"errors"
-	"fmt"
 	"strings"
 )
 
-var (
-	// ErrInvalidLabel represents an error when a label contains forbidden characters or patterns.
-	ErrInvalidLabel = errors.New("invalid label identifier")
-)
-
 // ParseLabelFilter parses a comma-separated label filter string into lists of
-// labels to include and exclude. It respects rules such as rejecting `!*` and
-// mixing `*` with other inclusion labels.
+// labels to include and exclude. It resolves wildcards so that if any inclusion
+// rule is `*`, the included labels list evaluates simply to `["*"]`.
 func ParseLabelFilter(filter string) (include []string, exclude []string, err error) {
 	if filter == "" {
 		return nil, nil, nil
 	}
 
+	var starMatched bool
 	for _, label := range strings.Split(filter, ",") {
 		label = strings.TrimSpace(label)
 		if label == "" {
 			continue
 		}
 
-		inc, exc, err := ParseLabel(label)
-		if err != nil {
-			return nil, nil, err
-		}
+		inc, exc := ParseLabel(label)
 
 		if inc != "" {
-			if inc == "*" && len(include) != 0 {
-				return nil, nil, fmt.Errorf("%w: cannot mix * with other labels", ErrInvalidLabel)
+			if inc == "*" {
+				starMatched = true
+			} else {
+				include = append(include, inc)
 			}
-			if inc != "*" && len(include) == 1 && include[0] == "*" {
-				return nil, nil, fmt.Errorf("%w: cannot mix * with other labels", ErrInvalidLabel)
-			}
-			include = append(include, inc)
 		}
 		if exc != "" {
 			exclude = append(exclude, exc)
 		}
 	}
 
+	if starMatched {
+		include = []string{"*"}
+	}
+
 	return include, exclude, nil
 }
 
 // ParseLabel parses a single label (without commas) into an include or exclude string.
-// Returns the include label (if any), the exclude label (if any), and an error if validation fails.
-func ParseLabel(label string) (include string, exclude string, err error) {
-	if label == "" {
-		return "", "", nil
-	}
-	if label == "!*" {
-		return "", "", fmt.Errorf("%w: !* is not allowed", ErrInvalidLabel)
-	}
+// Returns the include label (if any) and the exclude label (if any).
+func ParseLabel(label string) (include string, exclude string) {
 	if strings.HasPrefix(label, "!") {
-		return "", strings.TrimPrefix(label, "!"), nil
+		return "", strings.TrimPrefix(label, "!")
 	}
-	return label, "", nil
+	return label, ""
 }

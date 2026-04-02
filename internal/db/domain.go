@@ -7,8 +7,9 @@ package db
 import (
 	"slices"
 
-	"github.com/mindersec/minder/internal/labels"
 	"github.com/sqlc-dev/pqtype"
+
+	"github.com/mindersec/minder/internal/labels"
 )
 
 // This file contains domain-level methods for db structs
