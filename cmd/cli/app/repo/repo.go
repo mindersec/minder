@@ -20,13 +20,13 @@ This command allows you to list, add, and manage repositories
 connected to Minder for security analysis and policy enforcement.`,
 	Example: `
   # List repositories
-  minder repo list
+    minder repo list
 
-  # Add a repository
-  minder repo add --name my-repo --provider github
+  # Register a repository
+    minder repo register --name my-repo --provider github
 
   # Delete a repository
-minder repo delete --name my-repo
+    minder repo delete --name my-repo
 `,
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		return cmd.Usage()
