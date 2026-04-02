@@ -25,15 +25,23 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repository",
 	Long:  `The repo register subcommand is used to register a repo within Minder.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		// Validate BEFORE auth/login starts
-		if err := ValidateRepoInput(cmd, true); err != nil {
-			return err
+
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		inputRepoList := viper.GetStringSlice("name")
+		registerAll := viper.GetBool("all")
+
+		if len(inputRepoList) > 0 && registerAll {
+			return fmt.Errorf("cannot use --name and --all together")
 		}
 
-		// Then continue with normal flow
-		return cli.GRPCClientWrapRunE(RegisterCmd)(cmd, args)
+		if len(inputRepoList) == 0 && !registerAll {
+			return fmt.Errorf("must provide either --name or --all")
+		}
+
+		return nil
 	},
+
+	RunE: cli.GRPCClientWrapRunE(RegisterCmd),
 }
 
 // RegisterCmd represents the register command to register a repo with minder
@@ -50,10 +58,6 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
-
-	if err := ValidateRepoInput(cmd, true); err != nil {
-		return err
-	}
 
 	if registerAll {
 		if len(inputRepoList) > 0 {
