@@ -22,3 +22,7 @@ WHERE id = $1;
 -- name: DeleteEvaluationOutputsByEvaluationIDs :execrows
 DELETE FROM evaluation_outputs
 WHERE id = ANY(sqlc.slice(evaluationIds)::uuid[]);
+
+-- name: GetEvaluationOutputsByIDs :many
+SELECT * FROM evaluation_outputs
+WHERE id = ANY(sqlc.slice(evaluationIds)::uuid[]);

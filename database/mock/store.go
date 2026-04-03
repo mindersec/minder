@@ -1121,6 +1121,21 @@ func (mr *MockStoreMockRecorder) GetEvaluationOutput(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationOutput", reflect.TypeOf((*MockStore)(nil).GetEvaluationOutput), ctx, id)
 }
 
+// GetEvaluationOutputsByIDs mocks base method.
+func (m *MockStore) GetEvaluationOutputsByIDs(ctx context.Context, evaluationids []uuid.UUID) ([]db.EvaluationOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEvaluationOutputsByIDs", ctx, evaluationids)
+	ret0, _ := ret[0].([]db.EvaluationOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvaluationOutputsByIDs indicates an expected call of GetEvaluationOutputsByIDs.
+func (mr *MockStoreMockRecorder) GetEvaluationOutputsByIDs(ctx, evaluationids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationOutputsByIDs", reflect.TypeOf((*MockStore)(nil).GetEvaluationOutputsByIDs), ctx, evaluationids)
+}
+
 // GetFeatureInProject mocks base method.
 func (m *MockStore) GetFeatureInProject(ctx context.Context, arg db.GetFeatureInProjectParams) (json.RawMessage, error) {
 	m.ctrl.T.Helper()
