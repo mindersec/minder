@@ -110,7 +110,7 @@ func TestStoreEvaluationStatus(t *testing.T) {
 			// provider manager is not used by this function
 			service := NewEvaluationHistoryService(nil)
 			id, err := service.StoreEvaluationStatus(
-				ctx, store, ruleID, profileID, scenario.EntityType, entityID, errTest, []byte("{}"))
+				ctx, store, ruleID, profileID, scenario.EntityType, entityID, errTest, []byte("{}"), nil)
 			if scenario.ExpectedError == "" {
 				require.Equal(t, evaluationID, id)
 				require.NoError(t, err)
