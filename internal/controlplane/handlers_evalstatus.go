@@ -231,7 +231,13 @@ func fromEvaluationHistoryRows(
 		}
 
 		if out, ok := outputsByID[row.EvalHistoryRow.EvaluationID]; ok {
-			evalStatus.Output = rawJSONToProtobufStruct(out.Output.RawMessage)
+			if out.Output.Valid {
+				pbStruct, err := rawJSONToProtobufStruct(out.Output.RawMessage)
+				if err != nil {
+					return nil, fmt.Errorf("evaluation %s has invalid output: %w", row.EvalHistoryRow.EvaluationID, err)
+				}
+				evalStatus.Output = pbStruct
+			}
 		}
 
 		res[i] = &minderv1.EvaluationHistory{
@@ -800,21 +806,21 @@ func fetchOutputsIfRequested(
 }
 
 // rawJSONToProtobufStruct converts a JSON raw message to a protobuf Struct.
-// Returns nil if the input is nil or empty.
-func rawJSONToProtobufStruct(jsonData json.RawMessage) *structpb.Struct {
+// Returns nil, nil if the input is nil or empty.
+func rawJSONToProtobufStruct(jsonData json.RawMessage) (*structpb.Struct, error) {
 	if len(jsonData) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	var data map[string]any
 	if err := json.Unmarshal(jsonData, &data); err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to unmarshal output JSON: %w", err)
 	}
 
 	pbStruct, err := structpb.NewStruct(data)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("failed to convert output to protobuf Struct: %w", err)
 	}
 
-	return pbStruct
+	return pbStruct, nil
 }
