@@ -39,6 +39,34 @@ func (q *Queries) GetEvaluationOutput(ctx context.Context, id uuid.UUID) (Evalua
 	return i, err
 }
 
+const getEvaluationOutputsByIDs = `-- name: GetEvaluationOutputsByIDs :many
+SELECT id, output, debug FROM evaluation_outputs
+WHERE id = ANY($1::uuid[])
+`
+
+func (q *Queries) GetEvaluationOutputsByIDs(ctx context.Context, evaluationids []uuid.UUID) ([]EvaluationOutput, error) {
+	rows, err := q.db.QueryContext(ctx, getEvaluationOutputsByIDs, pq.Array(evaluationids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EvaluationOutput{}
+	for rows.Next() {
+		var i EvaluationOutput
+		if err := rows.Scan(&i.ID, &i.Output, &i.Debug); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertEvaluationOutput = `-- name: UpsertEvaluationOutput :exec
 
 INSERT INTO evaluation_outputs(
