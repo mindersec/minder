@@ -144,34 +144,38 @@ func NewNoopIdentityManager() *NoopIdentityManager {
 	return &NoopIdentityManager{}
 }
 
-func (n *NoopIdentityManager) String() string {
+// String returns the name of the identity manager
+func (*NoopIdentityManager) String() string {
 	return "noop"
 }
 
-func (n *NoopIdentityManager) URL() url.URL {
+// URL returns an empty URL
+func (*NoopIdentityManager) URL() url.URL {
 	return url.URL{}
 }
 
-func (n *NoopIdentityManager) Resolve(_ context.Context, _ string) (*Identity, error) {
+// Resolve always returns an error as noop manager cannot resolve identities
+func (*NoopIdentityManager) Resolve(_ context.Context, _ string) (*Identity, error) {
 	return nil, errors.New("noop identity manager cannot resolve identities")
 }
 
-func (n *NoopIdentityManager) Validate(_ context.Context, _ jwt.Token) (*Identity, error) {
+// Validate always returns an error as noop manager cannot validate tokens
+func (*NoopIdentityManager) Validate(_ context.Context, _ jwt.Token) (*Identity, error) {
 	return nil, errors.New("noop identity manager cannot validate tokens")
 }
 
 // DeleteUser is a no-op implementation of DeleteUser
-func (n *NoopIdentityManager) DeleteUser(_ context.Context, _ string) error {
+func (*NoopIdentityManager) DeleteUser(_ context.Context, _ string) error {
 	return nil
 }
 
 // GetEvents is a no-op implementation of GetEvents
-func (n *NoopIdentityManager) GetEvents(_ context.Context) ([]AccountEvent, error) {
+func (*NoopIdentityManager) GetEvents(_ context.Context) ([]AccountEvent, error) {
 	return nil, nil
 }
 
 // GetAdminEvents is a no-op implementation of GetAdminEvents
-func (n *NoopIdentityManager) GetAdminEvents(_ context.Context, _, _ []string) ([]AdminEvent, error) {
+func (*NoopIdentityManager) GetAdminEvents(_ context.Context, _, _ []string) ([]AdminEvent, error) {
 	return nil, nil
 }
 

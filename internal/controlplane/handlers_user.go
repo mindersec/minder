@@ -166,11 +166,6 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
-	err = DeleteUser(ctx, s.store, s.authzClient, s.projectDeleter, subject)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
-	}
-
 	err = s.idManager.DeleteUser(ctx, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
