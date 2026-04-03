@@ -42,23 +42,21 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 		return nil, err
 	}
 
-	issuerUrl, err := cfg.JwtUrl()
+	parsedIssuerUrl, err := url.Parse(cfg.IssuerClaim)
 	if err != nil {
-		return nil, err
-	}
-	if issuerUrl == nil {
-		return nil, errors.New("issuer URL is nil")
+		return nil, fmt.Errorf("failed to parse issuer claim: %w", err)
 	}
 
 	return &KeyCloak{
 		name:     name,
-		url:      *issuerUrl,
+		url:      *parsedIssuerUrl,
 		realm:    cfg.Realm,
 		cfg:      cfg,
 		kcClient: kcClient,
 	}, nil
 }
 
+var _ auth.IdentityManager = (*KeyCloak)(nil)
 var _ auth.IdentityProvider = (*KeyCloak)(nil)
 
 var errNotFound = errors.New("user not found in identity store")
@@ -77,7 +75,6 @@ func (k *KeyCloak) URL() url.URL {
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
 	remoteUser, err := k.lookupUser(ctx, id)
 	if err != nil {
-		// TODO: pass through to the next statements to try to create the user if not existing
 		return nil, fmt.Errorf("unable to resolve user: %w", err)
 	}
 	if remoteUser != nil {
@@ -88,8 +85,6 @@ func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, erro
 
 // Validate implements auth.IdentityProvider.
 func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
-	// TODO: implement validating the JWT against the jwks.
-
 	humanName, ok := token.Get("preferred_username")
 	if !ok {
 		return nil, errors.New("preferred_username not found in token")
@@ -103,6 +98,65 @@ func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity,
 		HumanName: humanStr,
 		Provider:  k,
 	}, nil
+}
+
+// DeleteUser deletes a user from Keycloak
+func (k *KeyCloak) DeleteUser(ctx context.Context, userID string) error {
+	resp, err := k.kcClient.DeleteAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+	if resp.StatusCode() != http.StatusNoContent && resp.StatusCode() != http.StatusNotFound {
+		return fmt.Errorf("unexpected status code when deleting user: %d", resp.StatusCode())
+	}
+	return nil
+}
+
+// GetEvents returns account events from Keycloak
+func (k *KeyCloak) GetEvents(ctx context.Context) ([]auth.AccountEvent, error) {
+	resp, err := k.kcClient.GetAdminRealmsRealmEventsWithResponse(ctx, k.realm, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get events: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code fetching events: %d", resp.StatusCode())
+	}
+
+	var events []auth.AccountEvent
+	for _, e := range *resp.JSON200 {
+		events = append(events, auth.AccountEvent{
+			Time:   ptr.ValueOrZero(e.Time),
+			Type:   ptr.ValueOrZero(e.Type),
+			UserId: ptr.ValueOrZero(e.UserId),
+		})
+	}
+	return events, nil
+}
+
+// GetAdminEvents returns administrative events from Keycloak
+func (k *KeyCloak) GetAdminEvents(ctx context.Context, operationTypes, resourceTypes []string) ([]auth.AdminEvent, error) {
+	params := &client.GetAdminRealmsRealmAdminEventsParams{
+		OperationTypes: &operationTypes,
+		ResourceTypes:  &resourceTypes,
+	}
+	resp, err := k.kcClient.GetAdminRealmsRealmAdminEventsWithResponse(ctx, k.realm, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get admin events: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code fetching admin events: %d", resp.StatusCode())
+	}
+
+	var events []auth.AdminEvent
+	for _, e := range *resp.JSON200 {
+		events = append(events, auth.AdminEvent{
+			Time:          ptr.ValueOrZero(e.Time),
+			OperationType: ptr.ValueOrZero(e.OperationType),
+			ResourceType:  ptr.ValueOrZero(e.ResourceType),
+			ResourcePath:  ptr.ValueOrZero(e.ResourcePath),
+		})
+	}
+	return events, nil
 }
 
 func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, error) {

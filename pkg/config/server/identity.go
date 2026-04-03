@@ -5,17 +5,23 @@ package server
 
 import (
 	"context"
-	"io"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/clientcredentials"
 
 	"github.com/mindersec/minder/pkg/config"
 )
+
+// OIDCConfig represents the openid-configuration response
+type OIDCConfig struct {
+	Issuer   string `json:"issuer"`
+	JWKSURI  string `json:"jwks_uri"`
+	TokenURI string `json:"token_endpoint"`
+}
 
 // IdentityConfigWrapper is the configuration for the identity provider
 type IdentityConfigWrapper struct {
@@ -58,86 +64,41 @@ func RegisterIdentityFlags(v *viper.Viper, flags *pflag.FlagSet) error {
 		"The base URL where the identity server is running", flags.String)
 }
 
-// JwtUrl returns the base `iss` claim as a URL.
-func (sic *IdentityConfig) JwtUrl(elem ...string) (*url.URL, error) {
-	parsedUrl, err := url.Parse(sic.IssuerClaim)
+// DiscoverOIDCEndpoints fetches the OIDC configuration from the well-known endpoint
+func (sic *IdentityConfig) DiscoverOIDCEndpoints(ctx context.Context) (*OIDCConfig, error) {
+	discoveryUrl, err := url.Parse(sic.IssuerUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse issuer URL: %w", err)
 	}
-	return parsedUrl.JoinPath(elem...), nil
-}
 
-// Path returns a URL for the given path on the identity server
-func (sic *IdentityConfig) Path(path ...string) (*url.URL, error) {
-	parsedUrl, err := url.Parse(sic.IssuerUrl)
+	// Keycloak specific path for discovery if realm is set
+	if sic.Realm != "" {
+		discoveryUrl = discoveryUrl.JoinPath("realms", sic.Realm, ".well-known/openid-configuration")
+	} else {
+		discoveryUrl = discoveryUrl.JoinPath(".well-known/openid-configuration")
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, discoveryUrl.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create discovery request: %w", err)
 	}
-	return parsedUrl.JoinPath(path...), nil
-}
 
-// GetRealmPath returns a URL for the given path on the realm
-func (sic *IdentityConfig) GetRealmPath(path string) (*url.URL, error) {
-	return sic.Path("realms", sic.Realm, path)
-}
-
-// GetRealmURL returns the URL for the WWW-Authenticate realm (used for OIDC discovery)
-// Clients should append "/.well-known/openid-configuration" to this URL, and use the
-// token_endpoint to get a token.
-func (sic *IdentityConfig) GetRealmURL() url.URL {
-	baseUrl, err := url.Parse(sic.IssuerClaim)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return url.URL{}
+		return nil, fmt.Errorf("failed to execute discovery request: %w", err)
 	}
-	return *baseUrl
-}
+	defer resp.Body.Close()
 
-func (sic *IdentityConfig) getClient(ctx context.Context) (*http.Client, error) {
-	tokenUrl, err := sic.GetRealmPath("protocol/openid-connect/token")
-	if err != nil {
-		return nil, err
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code from discovery: %d", resp.StatusCode)
 	}
 
-	clientSecret, err := sic.GetClientSecret()
-	if err != nil {
-		return nil, err
+	var cfg OIDCConfig
+	if err := json.NewDecoder(resp.Body).Decode(&cfg); err != nil {
+		return nil, fmt.Errorf("failed to decode OIDC configuration: %w", err)
 	}
 
-	clientCredentials := clientcredentials.Config{
-		ClientID:     sic.ClientId,
-		ClientSecret: clientSecret,
-		TokenURL:     tokenUrl.String(),
-	}
-
-	token, err := clientCredentials.Token(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return oauth2.NewClient(ctx, oauth2.StaticTokenSource(token)), nil
-}
-
-// AdminDo sends an HTTP request to the identity server, using the configured client credentials.
-func (sic *IdentityConfig) AdminDo(
-	ctx context.Context, method string, path string, query url.Values, body io.Reader,
-) (*http.Response, error) {
-	parsedUrl, err := sic.Path("admin/realms", sic.Realm, path)
-	if err != nil {
-		return nil, err
-	}
-	parsedUrl.RawQuery = query.Encode()
-
-	req, err := http.NewRequest(method, parsedUrl.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := sic.getClient(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.Do(req)
+	return &cfg, nil
 }
 
 // Issuer returns the URL of the identity server

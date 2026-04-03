@@ -80,23 +80,19 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Identity
-		// TODO: cfg.Identity.Server.IssuerUrl _should_ be a URL to an issuer that has an
-		// .../.well-known/jwks.json or .../.well-known/openid-configuration endpoint.  Right
-		// now it's just a hostname.  When we have this, we can consolidate the jwksUrl and issUrl,
-		// and remove the Keycloak-specific paths.
-		jwksUrl, err := cfg.Identity.Server.GetRealmPath("protocol/openid-connect/certs")
+		oidcCfg, err := cfg.Identity.Server.DiscoverOIDCEndpoints(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to create JWKS URL: %w", err)
+			return fmt.Errorf("failed to discover OIDC endpoints: %w", err)
 		}
-		issUrl, err := cfg.Identity.Server.JwtUrl()
-		if err != nil {
-			return fmt.Errorf("failed to create issuer URL: %w", err)
-		}
-		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
+
+		jwksUrl := oidcCfg.JWKSURI
+		issUrl := oidcCfg.Issuer
+
+		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl, issUrl, cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w", err)
 		}
-		allowedIssuers := []string{issUrl.String()}
+		allowedIssuers := []string{issUrl}
 		allowedIssuers = append(allowedIssuers, cfg.Identity.AdditionalIssuers...)
 		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience, allowedIssuers)
 		jwt := merged.Validator{Validators: []jwt.Validator{staticJwt, dynamicJwt}}
@@ -132,6 +128,7 @@ var serveCmd = &cobra.Command{
 			restClientCache,
 			authzc,
 			idClient,
+			kc,
 			cpmetrics.NewMetrics(),
 			providerMetrics,
 			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},

@@ -73,6 +73,7 @@ func AllInOneServerService(
 	restClientCache ratecache.RestClientCache,
 	authzClient authz.Client,
 	idClient auth.Resolver,
+	idManager auth.IdentityManager,
 	serverMetrics metrics.Metrics,
 	providerMetrics provtelemetry.ProviderMetrics,
 	executorMiddleware []message.HandlerMiddleware,
@@ -112,14 +113,12 @@ func AllInOneServerService(
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles, &cfg.Features)
 	propSvc := propService.NewPropertiesService(store)
 
-	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
-	// webhook handling to make this viable.
 	ghProviders := service.NewGithubProviderService(
 		store,
 		cryptoEngine,
 		serverMetrics,
 		&cfg.Provider,
-		makeProjectFactory(projectCreator, cfg.Identity),
+		makeProjectFactory(projectCreator, idClient),
 		ghClientFactory,
 	)
 	githubProviderManager := ghmanager.NewGitHubProviderClassManager(
@@ -218,17 +217,18 @@ func AllInOneServerService(
 		sessionsService,
 		projectDeleter,
 		projectCreator,
+		idManager,
 		entSvc,
 		entityCreator,
 		featureFlagClient,
 	)
 
 	// Subscribe to events from the identity server
-	err = controlplane.SubscribeToIdentityEvents(ctx, store, authzClient, cfg, projectDeleter)
+	err = controlplane.SubscribeToIdentityEvents(ctx, store, authzClient, idManager, projectDeleter)
 	if err != nil {
 		return fmt.Errorf("unable to subscribe to identity server events: %w", err)
 	}
-	err = controlplane.SubscribeToAdminEvents(ctx, store, authzClient, cfg, projectDeleter)
+	err = controlplane.SubscribeToAdminEvents(ctx, store, authzClient, idManager, projectDeleter)
 	if err != nil {
 		return fmt.Errorf("unable to subscribe to account events: %w", err)
 	}
@@ -360,7 +360,7 @@ func AllInOneServerService(
 // projectCreator and the like from the providers implementation.
 func makeProjectFactory(
 	projectCreator projects.ProjectCreator,
-	identity serverconfig.IdentityConfigWrapper,
+	idClient auth.Resolver,
 ) service.ProjectFactory {
 	return func(
 		ctx context.Context,
@@ -368,7 +368,7 @@ func makeProjectFactory(
 		name string,
 		ghUser int64,
 	) (*db.Project, error) {
-		user, err := auth.GetUserForGitHubId(ctx, identity, ghUser)
+		user, err := auth.GetUserForGitHubId(ctx, idClient, ghUser)
 		if err != nil {
 			return nil, fmt.Errorf("error getting user for GitHub ID: %w", err)
 		}

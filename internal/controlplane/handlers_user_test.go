@@ -28,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
+	mockauth "github.com/mindersec/minder/internal/auth/mock"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	mockcrypto "github.com/mindersec/minder/internal/crypto/mock"
@@ -294,6 +295,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	mockJwtValidator := mockjwt.NewMockValidator(ctrl)
+	mockIdManager := mockauth.NewMockIdentityManager(ctrl)
 
 	request := &pb.DeleteUserRequest{}
 
@@ -341,6 +343,8 @@ func TestDeleteUserDBMock(t *testing.T) {
 	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
 	mockStore.EXPECT().Rollback(gomock.Any())
 
+	mockIdManager.EXPECT().DeleteUser(gomock.Any(), "subject1").Return(nil)
+
 	crypeng := mockcrypto.NewMockEngine(ctrl)
 
 	server := &Server{
@@ -358,6 +362,7 @@ func TestDeleteUserDBMock(t *testing.T) {
 		jwt:          mockJwtValidator,
 		cryptoEngine: crypeng,
 		authzClient:  &mock.NoopClient{Authorized: true},
+		idManager:    mockIdManager,
 	}
 
 	response, err := server.DeleteUser(ctx, request)
@@ -372,14 +377,14 @@ func TestDeleteUser_gRPC(t *testing.T) {
 	testCases := []struct {
 		name               string
 		req                *pb.DeleteUserRequest
-		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockValidator)
+		buildStubs         func(store *mockdb.MockStore, jwt *mockjwt.MockValidator, idm *mockauth.MockIdentityManager)
 		checkResponse      func(t *testing.T, res *pb.DeleteUserResponse, err error)
 		expectedStatusCode codes.Code
 	}{
 		{
 			name: "Success",
 			req:  &pb.DeleteUserRequest{},
-			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockValidator) {
+			buildStubs: func(store *mockdb.MockStore, jwt *mockjwt.MockValidator, idm *mockauth.MockIdentityManager) {
 				tokenResult, _ := openid.NewBuilder().Subject("subject1").Build()
 				jwt.EXPECT().ParseAndValidate(gomock.Any()).Return(tokenResult, nil)
 
@@ -397,6 +402,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				store.EXPECT().Commit(gomock.Any())
 				// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
 				store.EXPECT().Rollback(gomock.Any())
+
+				idm.EXPECT().DeleteUser(gomock.Any(), "subject1").Return(nil)
 			},
 			checkResponse: func(t *testing.T, res *pb.DeleteUserResponse, err error) {
 				t.Helper()
@@ -426,7 +433,8 @@ func TestDeleteUser_gRPC(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockJwtValidator := mockjwt.NewMockValidator(ctrl)
-			tc.buildStubs(mockStore, mockJwtValidator)
+			mockIdManager := mockauth.NewMockIdentityManager(ctrl)
+			tc.buildStubs(mockStore, mockJwtValidator, mockIdManager)
 
 			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				switch r.URL.Path {
@@ -460,6 +468,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 				jwt:           mockJwtValidator,
 				providerStore: providers.NewProviderStore(mockStore),
 				authzClient:   &mock.SimpleClient{},
+				idManager:     mockIdManager,
 				cfg: &serverconfig.Config{
 					Auth: serverconfig.AuthConfig{
 						TokenKey: generateTokenKey(t),
