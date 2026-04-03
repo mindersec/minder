@@ -56,11 +56,26 @@ var MinderRegoLib = []func(res *interfaces.Ingested) func(*rego.Rego){
 	BaseFileRead,
 	BaseFileWalk,
 	BaseListGithubActions,
+<<<<<<< HEAD
 	DependencyExtract,
 	BaseDependencyExtract,
 }
 
 func instantiateRegoLib(res *interfaces.Ingested) []func(*rego.Rego) {
+=======
+}
+
+// MinderRegoLibExperiments contains Minder-specific functions which
+// should only be exposed when the given experiment is enabled.
+var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Ingested) func(*rego.Rego){
+	flags.DependencyExtract: {
+		DependencyExtract,
+		BaseDependencyExtract,
+	},
+}
+
+func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Ingested) []func(*rego.Rego) {
+>>>>>>> 10868b7ac (Remove git_pr_diffs flag (#6258))
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
