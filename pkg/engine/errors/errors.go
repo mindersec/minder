@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 

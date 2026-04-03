@@ -14,6 +14,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/interfaces"
+	"github.com/mindersec/minder/pkg/engine/errors"
 )
 
 type key int
