@@ -19,11 +19,11 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
-	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )

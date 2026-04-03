@@ -14,9 +14,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	propertiessvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE

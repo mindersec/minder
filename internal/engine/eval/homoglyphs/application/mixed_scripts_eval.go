@@ -9,10 +9,10 @@ import (
 
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/communication"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 

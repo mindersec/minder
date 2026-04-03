@@ -14,12 +14,12 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/fulcio/certificate"
 	"google.golang.org/protobuf/proto"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	artif "github.com/mindersec/minder/internal/providers/artifact"
 	"github.com/mindersec/minder/internal/verifier"
 	"github.com/mindersec/minder/internal/verifier/sigstore/container"
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"

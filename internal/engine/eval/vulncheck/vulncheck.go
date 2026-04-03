@@ -14,10 +14,10 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	pbinternal "github.com/mindersec/minder/internal/proto"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
 )

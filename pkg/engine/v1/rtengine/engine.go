@@ -12,11 +12,11 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	"github.com/mindersec/minder/internal/engine/ingester"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles"
 )

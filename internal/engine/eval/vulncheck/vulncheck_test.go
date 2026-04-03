@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 func TestEvaluationDetailRendering(t *testing.T) {

@@ -13,7 +13,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
@@ -23,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/verifier/verifyif"
 	mockverify "github.com/mindersec/minder/internal/verifier/verifyif/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 

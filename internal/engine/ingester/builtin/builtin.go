@@ -15,9 +15,9 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/entities/v1/checkpoints"
 	"github.com/mindersec/minder/pkg/rule_methods"
