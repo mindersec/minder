@@ -153,6 +153,54 @@ type ArtifactProvider interface {
 		filter GetArtifactVersionsFilter) ([]*minderv1.ArtifactVersion, error)
 }
 
+// CommitStatusState represents the state of a commit status check
+type CommitStatusState string
+
+const (
+	// CommitStatusSuccess marks a commit status as success
+	CommitStatusSuccess CommitStatusState = "success"
+	// CommitStatusFailure marks a commit status as failure
+	CommitStatusFailure CommitStatusState = "failure"
+	// CommitStatusError marks a commit status as error
+	CommitStatusError CommitStatusState = "error"
+	// CommitStatusPending marks a commit status as pending
+	CommitStatusPending CommitStatusState = "pending"
+)
+
+// CommitStatus is a provider-agnostic commit status payload
+type CommitStatus struct {
+	// State is the state of the commit status (success, failure, error, pending)
+	State CommitStatusState
+	// Description is a short description of the commit status
+	Description string
+	// Context is the label used to differentiate this from other checks
+	Context string
+	// TargetURL is the URL that the details button points to
+	TargetURL string
+}
+
+// Review is a provider-agnostic pull request review payload
+type Review struct {
+	// Body is the content of the PR review comment
+	Body string
+}
+
+// CommitStatusPublisher is the interface for providers that can publish commit statuses
+type CommitStatusPublisher interface {
+	Provider
+	// PublishCommitStatus creates or updates a commit status
+	PublishCommitStatus(ctx context.Context, owner, repo, ref string, status *CommitStatus) error
+}
+
+// ReviewPublisher is the interface for providers that can publish PR reviews
+type ReviewPublisher interface {
+	Provider
+	// PublishReview creates a review on the given pull request
+	PublishReview(ctx context.Context, owner, repo string, prNumber int, review *Review) error
+	// DismissPublishedReview dismisses an existing review on the given pull request
+	DismissPublishedReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64, message string) error
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {

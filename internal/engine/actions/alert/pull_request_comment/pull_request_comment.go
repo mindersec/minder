@@ -39,7 +39,7 @@ const (
 // Alert is the structure backing the noop alert
 type Alert struct {
 	actionType interfaces.ActionType
-	gh         provifv1.GitHub
+	gh         provifv1.ReviewPublisher
 	reviewCfg  *pb.RuleType_Definition_Alert_AlertTypePRComment
 	setting    models.ActionOpt
 }
@@ -73,7 +73,7 @@ type alertMetadata struct {
 func NewPullRequestCommentAlert(
 	actionType interfaces.ActionType,
 	reviewCfg *pb.RuleType_Definition_Alert_AlertTypePRComment,
-	gh provifv1.GitHub,
+	gh provifv1.ReviewPublisher,
 	setting models.ActionOpt,
 ) (*Alert, error) {
 	if actionType == "" {
@@ -140,33 +140,20 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 	switch cmd {
 	// Create a review
 	case interfaces.ActionCmdOn:
-		review := &github.PullRequestReviewRequest{
-			CommitID: github.String(params.CommitSha),
-			Event:    github.String("COMMENT"),
-			Body:     github.String(params.Comment),
-		}
-
-		r, err := alert.gh.CreateReview(
-			ctx,
-			params.Owner,
-			params.Repo,
-			params.Number,
-			review,
-		)
-		if err != nil {
+		if err := alert.gh.PublishReview(ctx, params.Owner, params.Repo, params.Number,
+			&provifv1.Review{Body: params.Comment}); err != nil {
 			return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
 		}
 
+		now := time.Now()
 		newMeta, err := json.Marshal(alertMetadata{
-			ReviewID:       strconv.FormatInt(r.GetID(), 10),
-			SubmittedAt:    r.SubmittedAt.GetTime(),
-			PullRequestUrl: r.PullRequestURL,
+			SubmittedAt: &now,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
 		}
 
-		logger.Info().Int64("review_id", *r.ID).Msg("PR review created")
+		logger.Info().Msg("PR review created")
 		return newMeta, nil
 	// Dismiss the review
 	case interfaces.ActionCmdOff:
@@ -181,11 +168,8 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 			return nil, fmt.Errorf("no PR comment ID provided: %w, %w", err, enginerr.ErrActionTurnedOff)
 		}
 
-		_, err = alert.gh.DismissReview(ctx, params.Owner, params.Repo, params.Number, reviewID,
-			&github.PullRequestReviewDismissalRequest{
-				Message: github.String("Dismissed due to alert being turned off"),
-			})
-		if err != nil {
+		if err := alert.gh.DismissPublishedReview(ctx, params.Owner, params.Repo, params.Number, reviewID,
+			"Dismissed due to alert being turned off"); err != nil {
 			if errors.Is(err, enginerr.ErrNotFound) {
 				// There's no PR review with that ID anymore.
 				// We exit by stating that the action was turned off.

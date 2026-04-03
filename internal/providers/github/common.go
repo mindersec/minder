@@ -78,6 +78,12 @@ type GitHub struct {
 // Ensure that the GitHub client implements the GitHub interface
 var _ provifv1.GitHub = (*GitHub)(nil)
 
+// Ensure that the GitHub client implements the CommitStatusPublisher interface
+var _ provifv1.CommitStatusPublisher = (*GitHub)(nil)
+
+// Ensure that the GitHub client implements the ReviewPublisher interface
+var _ provifv1.ReviewPublisher = (*GitHub)(nil)
+
 // ClientService is an interface for GitHub operations
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
@@ -490,6 +496,51 @@ func (c *GitHub) SetCommitStatus(
 		return nil, fmt.Errorf("error creating commit status: %w", err)
 	}
 	return status, nil
+}
+
+// PublishCommitStatus implements CommitStatusPublisher by translating the generic
+// CommitStatus DTO to a GitHub-native RepoStatus and calling the GitHub API.
+func (c *GitHub) PublishCommitStatus(
+	ctx context.Context, owner, repo, ref string, status *provifv1.CommitStatus,
+) error {
+	ghStatus := &github.RepoStatus{
+		State:       github.String(string(status.State)),
+		Description: github.String(status.Description),
+		Context:     github.String(status.Context),
+	}
+	if status.TargetURL != "" {
+		ghStatus.TargetURL = github.String(status.TargetURL)
+	}
+	_, err := c.SetCommitStatus(ctx, owner, repo, ref, ghStatus)
+	return err
+}
+
+// PublishReview implements ReviewPublisher by translating the generic Review DTO
+// to a GitHub-native PullRequestReviewRequest and calling the GitHub API.
+func (c *GitHub) PublishReview(
+	ctx context.Context, owner, repo string, prNumber int, review *provifv1.Review,
+) error {
+	req := &github.PullRequestReviewRequest{
+		Body:  github.String(review.Body),
+		Event: github.String("COMMENT"),
+	}
+	_, err := c.CreateReview(ctx, owner, repo, prNumber, req)
+	return err
+}
+
+// DismissPublishedReview implements ReviewPublisher by translating the generic dismiss call
+// to a GitHub-native PullRequestReviewDismissalRequest.
+func (c *GitHub) DismissPublishedReview(
+	ctx context.Context, owner, repo string, prNumber int, reviewID int64, message string,
+) error {
+	_, _, err := c.client.PullRequests.DismissReview(ctx, owner, repo, prNumber, reviewID,
+		&github.PullRequestReviewDismissalRequest{
+			Message: github.String(message),
+		})
+	if err != nil {
+		return fmt.Errorf("error dismissing review %d for PR %s/%s/%d: %w", reviewID, owner, repo, prNumber, err)
+	}
+	return nil
 }
 
 // GetRepository returns a single repository for the authenticated user
