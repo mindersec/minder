@@ -337,16 +337,13 @@ func (s *Server) ListEvaluationResults(
 	// Do the final sort of all the data
 	entities, profileStatuses, statusByEntity, err := s.sortEntitiesEvaluationStatus(
 		ctx, s.store, profileList, profileStatusList, rtIndex, entIdIndex, entTypeIndex,
+		in.GetIncludeOutputs(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("sorting rule evaluations: %w", err)
 	}
 
 	resp := buildListEvaluationResponse(entities, profileStatuses, statusByEntity)
-
-	if in.GetIncludeOutputs() {
-		populateEvalResultsOutputs(ctx, s.store, resp)
-	}
 
 	return resp, nil
 }
@@ -362,6 +359,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 	profileList []db.ListProfilesByProjectIDAndLabelRow,
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
 	rtIndex, entIdIndex, entTypeIndex map[string]struct{},
+	includeOutputs bool,
 ) (
 	entities map[string]*minderv1.EntityTypedId,
 	profileStatuses map[uuid.UUID]*minderv1.ProfileStatus,
@@ -432,7 +430,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				profileStatuses[p.Profile.ID] = buildProfileStatus(&p, profileStatusList)
 			}
 
-			stat, err := s.buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e, efp)
+			stat, err := s.buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e, efp, includeOutputs)
 			if err != nil {
 				// A failure parsing the PR metadata points to a corrupt record. Log but don't err.
 				zerolog.Ctx(ctx).Error().Err(err).Msg("error building rule evaluation status")
@@ -582,6 +580,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
 	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
 	efp *entmodels.EntityWithProperties,
+	includeOutputs bool,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
 	// Only return the rule type guidance text when there is a problem
@@ -669,6 +668,14 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		Alert:                  buildEvalResultAlertFromLRERow(&eval, efp),
 		Severity:               sev,
 		ReleasePhase:           rp,
+	}
+
+	if includeOutputs && eval.EvalOutput.Valid {
+		pbStruct, err := rawJSONToProtobufStruct(eval.EvalOutput.RawMessage)
+		if err != nil {
+			return nil, fmt.Errorf("evaluation %s has invalid output: %w", eval.RuleEvaluationID, err)
+		}
+		res.Output = pbStruct
 	}
 
 	return res, nil
@@ -767,68 +774,22 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	return severity, nil
 }
 
-// populateEvalResultsOutputs batch-fetches evaluation outputs and sets
-// them on the corresponding RuleEvaluationStatus entries in the response.
-func populateEvalResultsOutputs(
-	ctx context.Context,
-	store db.Store,
-	resp *minderv1.ListEvaluationResultsResponse,
-) {
-	// Collect all evaluation IDs and build an index
-	var evalIDs []uuid.UUID
-	type statusRef struct {
-		status *minderv1.RuleEvaluationStatus
-	}
-	index := map[uuid.UUID]*statusRef{}
-
-	for _, entity := range resp.GetEntities() {
-		for _, profile := range entity.GetProfiles() {
-			for _, result := range profile.GetResults() {
-				id, err := uuid.Parse(result.GetRuleEvaluationId())
-				if err != nil {
-					continue
-				}
-				evalIDs = append(evalIDs, id)
-				index[id] = &statusRef{status: result}
-			}
-		}
-	}
-
-	if len(evalIDs) == 0 {
-		return
-	}
-
-	outputs, err := store.GetEvaluationOutputsByIDs(ctx, evalIDs)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error batch-fetching evaluation outputs")
-		return
-	}
-
-	for _, out := range outputs {
-		if ref, ok := index[out.ID]; ok {
-			ref.status.Output = rawJSONToProtobufStruct(ctx, out.Output.RawMessage)
-		}
-	}
-}
-
 // rawJSONToProtobufStruct converts a JSON raw message to a protobuf Struct.
-// Returns nil if the input is nil or empty.
-func rawJSONToProtobufStruct(ctx context.Context, jsonData json.RawMessage) *structpb.Struct {
+// Returns nil, nil if the input is nil or empty.
+func rawJSONToProtobufStruct(jsonData json.RawMessage) (*structpb.Struct, error) {
 	if len(jsonData) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	var data map[string]any
 	if err := json.Unmarshal(jsonData, &data); err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to unmarshal output JSON")
-		return nil
+		return nil, fmt.Errorf("failed to unmarshal output JSON: %w", err)
 	}
 
 	pbStruct, err := structpb.NewStruct(data)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert output to protobuf Struct")
-		return nil
+		return nil, fmt.Errorf("failed to convert output to protobuf Struct: %w", err)
 	}
 
-	return pbStruct
+	return pbStruct, nil
 }

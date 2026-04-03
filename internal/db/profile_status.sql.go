@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const getProfileStatusByIdAndProject = `-- name: GetProfileStatusByIdAndProject :one
@@ -251,7 +252,8 @@ SELECT
     ere.entity_instance_id as entity_id,
     ei.name as entity_name,
     ei.project_id as project_id,
-    rt.release_phase as rule_type_release_phase
+    rt.release_phase as rule_type_release_phase,
+    eo.output AS eval_output
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
@@ -261,6 +263,7 @@ FROM latest_evaluation_statuses les
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
          INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN providers prov ON prov.id = ei.provider_id
+         LEFT JOIN evaluation_outputs eo ON eo.id = les.evaluation_history_id
 WHERE les.profile_id = $1
     AND (ere.entity_instance_id = $2::UUID OR $2::UUID IS NULL)
     AND (ei.name = $3 OR $3 IS NULL)
@@ -301,6 +304,7 @@ type ListRuleEvaluationsByProfileIdRow struct {
 	EntityName            string                 `json:"entity_name"`
 	ProjectID             uuid.UUID              `json:"project_id"`
 	RuleTypeReleasePhase  ReleaseStatus          `json:"rule_type_release_phase"`
+	EvalOutput            pqtype.NullRawMessage  `json:"eval_output"`
 }
 
 func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRuleEvaluationsByProfileIdParams) ([]ListRuleEvaluationsByProfileIdRow, error) {
@@ -343,6 +347,7 @@ func (q *Queries) ListRuleEvaluationsByProfileId(ctx context.Context, arg ListRu
 			&i.EntityName,
 			&i.ProjectID,
 			&i.RuleTypeReleasePhase,
+			&i.EvalOutput,
 		); err != nil {
 			return nil, err
 		}
