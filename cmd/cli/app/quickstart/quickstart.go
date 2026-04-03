@@ -395,7 +395,7 @@ func getQuickstartContext(ctx context.Context, v *viper.Viper) (context.Context,
 
 func loginPromptErrWrapper(
 	cmnd *cobra.Command,
-	_ *grpc.ClientConn,
+	conn *grpc.ClientConn,
 	inErr error,
 ) error {
 	// Check if the error is unauthenticated, if so, prompt the user to log in
@@ -418,6 +418,19 @@ func loginPromptErrWrapper(
 			}
 			// User chose not to log in, return the original error
 			return inErr
+		}
+		if rpcStatus.Code() == codes.NotFound {
+			// The user is authenticated but not yet registered in the Minder database.
+			// This can happen when `minder quickstart` is run for the first time without
+			// having previously run `minder login` (which normally handles registration).
+			// Silently register the user now so the quickstart can proceed.
+			userClient := minderv1.NewUserServiceClient(conn)
+			if _, err := userClient.CreateUser(cmnd.Context(), &minderv1.CreateUserRequest{}); err != nil {
+				return cli.MessageAndError("Error registering user", err)
+			}
+			cmnd.Println(cli.SuccessBanner.Render("You have been successfully registered. Welcome!"))
+			// Return nil so quickstart continues normally
+			return nil
 		}
 	}
 	// Not a grpc status error, return the original error
