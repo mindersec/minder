@@ -114,6 +114,11 @@ func (e *executor) createOrUpdateEvalStatus(
 		logger.Err(err).Msg("error marshalling checkpoint")
 	}
 
+	var evalOutput any
+	if res := params.GetEvalResult(); res != nil {
+		evalOutput = res.Output
+	}
+
 	// Log result in the evaluation history tables
 	err = e.querier.WithTransactionErr(func(qtx db.ExtendQuerier) error {
 		evalID, err := e.historyService.StoreEvaluationStatus(
@@ -125,6 +130,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			params.EntityID,
 			params.GetEvalErr(),
 			chkpjs,
+			evalOutput,
 		)
 		if err != nil {
 			return err
