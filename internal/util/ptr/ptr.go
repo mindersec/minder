@@ -11,8 +11,8 @@ func Ptr[T any](val T) *T {
 	return &val
 }
 
-// PtrValueOrZero returns the value of a pointer or the zero value if nil
-func PtrValueOrZero[T any](ptr *T) T {
+// ValueOrZero returns the value of a pointer or the zero value if nil
+func ValueOrZero[T any](ptr *T) T {
 	if ptr == nil {
 		var zero T
 		return zero

@@ -125,9 +125,9 @@ func (k *KeyCloak) GetEvents(ctx context.Context) ([]auth.AccountEvent, error) {
 	var events []auth.AccountEvent
 	for _, e := range *resp.JSON200 {
 		events = append(events, auth.AccountEvent{
-			Time:   ptr.PtrValueOrZero(e.Time),
-			Type:   ptr.PtrValueOrZero(e.Type),
-			UserId: ptr.PtrValueOrZero(e.UserId),
+			Time:   ptr.ValueOrZero(e.Time),
+			Type:   ptr.ValueOrZero(e.Type),
+			UserId: ptr.ValueOrZero(e.UserId),
 		})
 	}
 	return events, nil
@@ -150,10 +150,10 @@ func (k *KeyCloak) GetAdminEvents(ctx context.Context, operationTypes, resourceT
 	var events []auth.AdminEvent
 	for _, e := range *resp.JSON200 {
 		events = append(events, auth.AdminEvent{
-			Time:          ptr.PtrValueOrZero(e.Time),
-			OperationType: ptr.PtrValueOrZero(e.OperationType),
-			ResourceType:  ptr.PtrValueOrZero(e.ResourceType),
-			ResourcePath:  ptr.PtrValueOrZero(e.ResourcePath),
+			Time:          ptr.ValueOrZero(e.Time),
+			OperationType: ptr.ValueOrZero(e.OperationType),
+			ResourceType:  ptr.ValueOrZero(e.ResourceType),
+			ResourcePath:  ptr.ValueOrZero(e.ResourcePath),
 		})
 	}
 	return events, nil
