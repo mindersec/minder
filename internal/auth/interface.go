@@ -104,6 +104,77 @@ type IdentityProvider interface {
 	URL() url.URL
 }
 
+// AccountEvent is a generic user account event
+type AccountEvent struct {
+	Time   int64
+	Type   string
+	UserId string
+}
+
+const (
+	// DeleteAccountEvent represents a user deletion event
+	DeleteAccountEvent = "DELETE_ACCOUNT"
+)
+
+// AdminEvent is a generic administrative event
+type AdminEvent struct {
+	Time          int64
+	OperationType string
+	ResourceType  string
+	ResourcePath  string
+}
+
+// IdentityManager provides an abstract interface for administrative identity operations.
+type IdentityManager interface {
+	IdentityProvider
+
+	// DeleteUser deletes a user from the identity provider
+	DeleteUser(ctx context.Context, userID string) error
+	// GetEvents returns account events from the identity provider
+	GetEvents(ctx context.Context) ([]AccountEvent, error)
+	// GetAdminEvents returns administrative events from the identity provider
+	GetAdminEvents(ctx context.Context, operationTypes, resourceTypes []string) ([]AdminEvent, error)
+}
+
+// NoopIdentityManager is a no-op implementation of the IdentityManager interface
+type NoopIdentityManager struct{}
+
+// NewNoopIdentityManager creates a new NoopIdentityManager
+func NewNoopIdentityManager() *NoopIdentityManager {
+	return &NoopIdentityManager{}
+}
+
+func (n *NoopIdentityManager) String() string {
+	return "noop"
+}
+
+func (n *NoopIdentityManager) URL() url.URL {
+	return url.URL{}
+}
+
+func (n *NoopIdentityManager) Resolve(_ context.Context, _ string) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot resolve identities")
+}
+
+func (n *NoopIdentityManager) Validate(_ context.Context, _ jwt.Token) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot validate tokens")
+}
+
+// DeleteUser is a no-op implementation of DeleteUser
+func (n *NoopIdentityManager) DeleteUser(_ context.Context, _ string) error {
+	return nil
+}
+
+// GetEvents is a no-op implementation of GetEvents
+func (n *NoopIdentityManager) GetEvents(_ context.Context) ([]AccountEvent, error) {
+	return nil, nil
+}
+
+// GetAdminEvents is a no-op implementation of GetAdminEvents
+func (n *NoopIdentityManager) GetAdminEvents(_ context.Context, _, _ []string) ([]AdminEvent, error) {
+	return nil, nil
+}
+
 // IdentityClient supports the ability to look up identities in one or more
 // IdentityProviders.
 type IdentityClient struct {

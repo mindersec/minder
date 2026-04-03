@@ -9,8 +9,6 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"errors"
-	"net/http"
-	"path"
 	"strconv"
 
 	"github.com/google/uuid"
@@ -168,14 +166,14 @@ func (s *Server) DeleteUser(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
 	}
 
-	resp, err := s.cfg.Identity.Server.AdminDo(ctx, "DELETE", path.Join("users", subject), nil, nil)
+	err = DeleteUser(ctx, s.store, s.authzClient, s.projectDeleter, subject)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to delete user from database: %v", err)
+	}
+
+	err = s.idManager.DeleteUser(ctx, subject)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete account on IdP: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusNoContent {
-		return nil, status.Errorf(codes.Internal, "unexpected status code when deleting account: %d", resp.StatusCode)
 	}
 
 	return &pb.DeleteUserResponse{}, nil
