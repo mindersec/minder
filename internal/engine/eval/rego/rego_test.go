@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util/ptr"
@@ -634,7 +635,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	var errDetails []struct {
 		ActionsNotAllowed []string `json:"actions_not_allowed"`
 	}
@@ -684,7 +685,7 @@ violations[{"msg": msg}] {
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	var errDetails []struct {
 		Msg string `json:"msg"`
 	}
@@ -720,7 +721,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 	require.Error(t, err, "should have failed the evaluation")
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
 	assert.Contains(t, errmsg, "three", "should have the expected content")
 	assert.Equal(t, []any{`extra actions found in workflows but not allowed in the profile: ["three"]`}, res.Output)

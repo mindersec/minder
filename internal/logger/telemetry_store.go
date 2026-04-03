@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/interfaces"
-	"github.com/mindersec/minder/pkg/engine/errors"
 )
 
 type key int
@@ -131,7 +131,7 @@ func (ts *TelemetryStore) AddRuleEval(
 	red := RuleEvalData{
 		RuleType:   RuleType{Name: ruleTypeName, ID: evalInfo.GetRule().RuleTypeID},
 		Profile:    Profile{Name: evalInfo.GetProfile().Name, ID: evalInfo.GetProfile().ID},
-		EvalResult: errors.EvalErrorAsString(evalInfo.GetEvalErr()),
+		EvalResult: dbadapter.EvalErrorAsString(evalInfo.GetEvalErr()),
 		Actions:    map[interfaces.ActionType]ActionEvalData{},
 	}
 
@@ -139,11 +139,11 @@ func (ts *TelemetryStore) AddRuleEval(
 		actionCfg := p.ActionConfig
 		red.Actions[remediate.ActionType] = ActionEvalData{
 			State:  actionCfg.Remediate.String(),
-			Result: errors.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
+			Result: dbadapter.RemediationErrorAsString(evalInfo.GetActionsErr().RemediateErr),
 		}
 		red.Actions[alert.ActionType] = ActionEvalData{
 			State:  actionCfg.Alert.String(),
-			Result: errors.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
+			Result: dbadapter.AlertErrorAsString(evalInfo.GetActionsErr().AlertErr),
 		}
 	}
 

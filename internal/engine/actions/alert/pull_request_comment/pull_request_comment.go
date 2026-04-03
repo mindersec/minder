@@ -18,6 +18,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
@@ -236,7 +237,7 @@ func (*Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessa
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous alert status.
-	err := enginerr.AlertStatusAsError(params.prevStatus)
+	err := dbadapter.AlertStatusAsError(params.prevStatus)
 	// If there is a valid alert metadata, return it too
 	if params.prevStatus != nil {
 		return params.prevStatus.AlertMetadata, err
@@ -273,7 +274,7 @@ func (alert *Alert) getParamsForPRComment(
 	}
 
 	tmplParams := &PrCommentTemplateParams{
-		EvalErrorDetails: enginerr.ErrorAsEvalDetails(params.GetEvalErr()),
+		EvalErrorDetails: dbadapter.ErrorAsEvalDetails(params.GetEvalErr()),
 	}
 
 	if params.GetEvalResult() != nil {
