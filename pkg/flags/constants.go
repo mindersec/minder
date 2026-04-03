@@ -10,8 +10,6 @@ const (
 	GitLabProvider Experiment = "gitlab_provider"
 	// AlternateMessageDriver enables an an alternate message driver.
 	AlternateMessageDriver Experiment = "alternate_message_driver"
-	// DependencyExtract enables functions to perform dependency extraction.
-	DependencyExtract Experiment = "dependency_extract"
 	// ProjectCreateDelete enables creating top-level projects and deleting them.
 	ProjectCreateDelete Experiment = "project_create_delete"
 	// AuthenticatedDataSources enables provider authentication for data sources.
