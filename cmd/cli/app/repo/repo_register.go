@@ -25,7 +25,23 @@ var repoRegisterCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Register a repository",
 	Long:  `The repo register subcommand is used to register a repo within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(RegisterCmd),
+
+	PreRunE: func(_ *cobra.Command, _ []string) error {
+		inputRepoList := viper.GetStringSlice("name")
+		registerAll := viper.GetBool("all")
+
+		if len(inputRepoList) > 0 && registerAll {
+			return fmt.Errorf("cannot use --name and --all together")
+		}
+
+		if len(inputRepoList) == 0 && !registerAll {
+			return fmt.Errorf("must provide either --name or --all")
+		}
+
+		return nil
+	},
+
+	RunE: cli.GRPCClientWrapRunE(RegisterCmd),
 }
 
 // RegisterCmd represents the register command to register a repo with minder
