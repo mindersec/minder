@@ -63,6 +63,7 @@ type Querier interface {
 	// DeleteEntity removes an entity from the entity_instances table for a project.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
+	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteExpiredSessionStates(ctx context.Context) (int64, error)
 	DeleteInstallationIDByAppID(ctx context.Context, appInstallationID int64) error
 	// DeleteInvitation deletes an invitation by its code. This is intended to be
@@ -122,6 +123,7 @@ type Querier interface {
 	// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
 	GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
+	GetEvaluationOutput(ctx context.Context, id uuid.UUID) (EvaluationOutput, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)
@@ -278,6 +280,9 @@ type Querier interface {
 	// SPDX-License-Identifier: Apache-2.0
 	// Bundles --
 	UpsertBundle(ctx context.Context, arg UpsertBundleParams) error
+	// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+	// SPDX-License-Identifier: Apache-2.0
+	UpsertEvaluationOutput(ctx context.Context, arg UpsertEvaluationOutputParams) error
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
