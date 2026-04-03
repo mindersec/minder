@@ -33,7 +33,6 @@ import (
 	"github.com/mindersec/minder/internal/deps/scalibr"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	"github.com/mindersec/minder/pkg/flags"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego
@@ -61,7 +60,7 @@ var MinderRegoLib = []func(res *interfaces.Ingested) func(*rego.Rego){
 	BaseDependencyExtract,
 }
 
-func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Ingested) []func(*rego.Rego) {
+func instantiateRegoLib(res *interfaces.Ingested) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
