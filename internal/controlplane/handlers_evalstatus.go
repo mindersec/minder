@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -340,7 +342,13 @@ func (s *Server) ListEvaluationResults(
 		return nil, fmt.Errorf("sorting rule evaluations: %w", err)
 	}
 
-	return buildListEvaluationResponse(entities, profileStatuses, statusByEntity), nil
+	resp := buildListEvaluationResponse(entities, profileStatuses, statusByEntity)
+
+	if in.GetIncludeOutputs() {
+		populateEvalResultsOutputs(ctx, s.store, resp)
+	}
+
+	return resp, nil
 }
 
 // sortEntitiesEvaluationStatus queries the database from the filtered lists
@@ -757,4 +765,70 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	}
 
 	return severity, nil
+}
+
+// populateEvalResultsOutputs batch-fetches evaluation outputs and sets
+// them on the corresponding RuleEvaluationStatus entries in the response.
+func populateEvalResultsOutputs(
+	ctx context.Context,
+	store db.Store,
+	resp *minderv1.ListEvaluationResultsResponse,
+) {
+	// Collect all evaluation IDs and build an index
+	var evalIDs []uuid.UUID
+	type statusRef struct {
+		status *minderv1.RuleEvaluationStatus
+	}
+	index := map[uuid.UUID]*statusRef{}
+
+	for _, entity := range resp.GetEntities() {
+		for _, profile := range entity.GetProfiles() {
+			for _, result := range profile.GetResults() {
+				id, err := uuid.Parse(result.GetRuleEvaluationId())
+				if err != nil {
+					continue
+				}
+				evalIDs = append(evalIDs, id)
+				index[id] = &statusRef{status: result}
+			}
+		}
+	}
+
+	if len(evalIDs) == 0 {
+		return
+	}
+
+	outputs, err := store.GetEvaluationOutputsByIDs(ctx, evalIDs)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error batch-fetching evaluation outputs")
+		return
+	}
+
+	for _, out := range outputs {
+		if ref, ok := index[out.ID]; ok {
+			ref.status.Output = rawJSONToProtobufStruct(ctx, out.Output.RawMessage)
+		}
+	}
+}
+
+// rawJSONToProtobufStruct converts a JSON raw message to a protobuf Struct.
+// Returns nil if the input is nil or empty.
+func rawJSONToProtobufStruct(ctx context.Context, jsonData json.RawMessage) *structpb.Struct {
+	if len(jsonData) == 0 {
+		return nil
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(jsonData, &data); err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to unmarshal output JSON")
+		return nil
+	}
+
+	pbStruct, err := structpb.NewStruct(data)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert output to protobuf Struct")
+		return nil
+	}
+
+	return pbStruct
 }
