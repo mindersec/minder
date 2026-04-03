@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -175,8 +177,11 @@ func (s *Server) ListEvaluationHistory(
 		return nil, status.Error(codes.Internal, evalErrMsg)
 	}
 
+	// Batch-fetch outputs if requested
+	outputsByID := fetchOutputsIfRequested(ctx, s.store, in.GetIncludeOutputs(), result.Data)
+
 	// convert data set to proto
-	data, err := fromEvaluationHistoryRows(result.Data)
+	data, err := fromEvaluationHistoryRows(result.Data, outputsByID)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +212,7 @@ func (s *Server) ListEvaluationHistory(
 
 func fromEvaluationHistoryRows(
 	rows []*history.OneEvalHistoryAndEntity,
+	outputsByID map[uuid.UUID]db.EvaluationOutput,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := make([]*minderv1.EvaluationHistory, len(rows))
 
@@ -222,6 +228,10 @@ func fromEvaluationHistoryRows(
 		evalStatus := &minderv1.EvaluationHistoryStatus{
 			Status:  string(row.EvalHistoryRow.EvaluationStatus),
 			Details: row.EvalHistoryRow.EvaluationDetails,
+		}
+
+		if out, ok := outputsByID[row.EvalHistoryRow.EvaluationID]; ok {
+			evalStatus.Output = rawJSONToProtobufStruct(out.Output.RawMessage)
 		}
 
 		res[i] = &minderv1.EvaluationHistory{
@@ -757,4 +767,54 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	}
 
 	return severity, nil
+}
+
+// fetchOutputsIfRequested batch-fetches evaluation outputs when
+// includeOutputs is true and there are rows to fetch for.
+func fetchOutputsIfRequested(
+	ctx context.Context,
+	store db.Store,
+	includeOutputs bool,
+	rows []*history.OneEvalHistoryAndEntity,
+) map[uuid.UUID]db.EvaluationOutput {
+	if !includeOutputs || len(rows) == 0 {
+		return nil
+	}
+
+	evalIDs := make([]uuid.UUID, len(rows))
+	for i, row := range rows {
+		evalIDs[i] = row.EvalHistoryRow.EvaluationID
+	}
+
+	outputs, err := store.GetEvaluationOutputsByIDs(ctx, evalIDs)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error batch-fetching evaluation outputs")
+		return nil
+	}
+
+	result := make(map[uuid.UUID]db.EvaluationOutput, len(outputs))
+	for _, out := range outputs {
+		result[out.ID] = out
+	}
+	return result
+}
+
+// rawJSONToProtobufStruct converts a JSON raw message to a protobuf Struct.
+// Returns nil if the input is nil or empty.
+func rawJSONToProtobufStruct(jsonData json.RawMessage) *structpb.Struct {
+	if len(jsonData) == 0 {
+		return nil
+	}
+
+	var data map[string]any
+	if err := json.Unmarshal(jsonData, &data); err != nil {
+		return nil
+	}
+
+	pbStruct, err := structpb.NewStruct(data)
+	if err != nil {
+		return nil
+	}
+
+	return pbStruct
 }

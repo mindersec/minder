@@ -124,6 +124,7 @@ type Querier interface {
 	GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
 	GetEvaluationOutput(ctx context.Context, id uuid.UUID) (EvaluationOutput, error)
+	GetEvaluationOutputsByIDs(ctx context.Context, evaluationids []uuid.UUID) ([]EvaluationOutput, error)
 	// GetFeatureInProject verifies if a feature is available for a specific project.
 	// It returns the settings for the feature if it is available.
 	GetFeatureInProject(ctx context.Context, arg GetFeatureInProjectParams) (json.RawMessage, error)

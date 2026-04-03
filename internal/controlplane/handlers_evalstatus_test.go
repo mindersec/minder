@@ -306,7 +306,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			res, err := fromEvaluationHistoryRows(tt.rows)
+			res, err := fromEvaluationHistoryRows(tt.rows, nil)
 
 			if tt.err {
 				require.Error(t, err)
