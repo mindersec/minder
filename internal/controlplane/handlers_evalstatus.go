@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -89,6 +91,15 @@ func (s *Server) GetEvaluationHistory(
 		},
 		Alert:       getAlert(eval.AlertStatus, eval.AlertDetails.String),
 		Remediation: getRemediation(eval.RemediationStatus, eval.RemediationDetails.String),
+	}
+
+	if in.GetIncludeOutputs() {
+		output, err := s.store.GetEvaluationOutput(ctx, eval.EvaluationID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluation output")
+		} else if err == nil {
+			pbEval.Status.Output = rawJSONToProtobufValue(ctx, output.Output.RawMessage)
+		}
 	}
 
 	return &minderv1.GetEvaluationHistoryResponse{Evaluation: pbEval}, nil
@@ -757,4 +768,26 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	}
 
 	return severity, nil
+}
+
+// rawJSONToProtobufValue converts a JSON raw message to a protobuf Value.
+// Returns nil if the input is nil or empty.
+func rawJSONToProtobufValue(ctx context.Context, jsonData json.RawMessage) *structpb.Value {
+	if len(jsonData) == 0 {
+		return nil
+	}
+
+	var raw any
+	if err := json.Unmarshal(jsonData, &raw); err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to unmarshal output JSON")
+		return nil
+	}
+
+	pbVal, err := structpb.NewValue(raw)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert output to protobuf Value")
+		return nil
+	}
+
+	return pbVal
 }
