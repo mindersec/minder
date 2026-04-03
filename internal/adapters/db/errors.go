@@ -1,4 +1,8 @@
-// Package dbadapter provides database-specific error mappings...
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
+// Package dbadapter provides database-specific error mappings between
+// engine errors and database status types.
 package dbadapter
 
 import (
