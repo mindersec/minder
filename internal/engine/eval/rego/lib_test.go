@@ -64,8 +64,6 @@ func TestFileExistsInBase(t *testing.T) {
 	_, err := fs.Create("foo")
 	require.NoError(t, err, "could not create file")
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"git_pr_diffs": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
@@ -78,7 +76,6 @@ allow {
     base_file.exists("foo")
 }`,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
