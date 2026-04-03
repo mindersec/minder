@@ -3,14 +3,32 @@ title: minder repo
 ---
 ## minder repo
 
-Manage repositories
+Manage repositories within a Minder project
 
 ### Synopsis
 
-The repo commands allow the management of repositories within Minder.
+Manage repositories within a Minder project.
+
+This command allows you to list, add, and manage repositories
+connected to Minder for security analysis and policy enforcement.
 
 ```
 minder repo [flags]
+```
+
+### Examples
+
+```
+
+  # List repositories
+    minder repo list
+
+  # Register a repository
+    minder repo register --name my-repo --provider github
+
+  # Delete a repository
+    minder repo delete --name my-repo
+
 ```
 
 ### Options
