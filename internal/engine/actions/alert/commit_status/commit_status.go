@@ -6,6 +6,7 @@
 package commit_status
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -30,6 +31,8 @@ import (
 const (
 	// AlertType is the type of the commit status alert engine
 	AlertType = "commit_status"
+	// DescriptionMaxLength is the maximum length of the commit status description
+	DescriptionMaxLength = 1024
 )
 
 // Alert is the structure backing the commit status alert
@@ -279,23 +282,19 @@ func (alert *Alert) getParamsForCommitStatus(
 
 	// 1. Evaluate context
 	contextStr := "minder"
-	contextNameTmpl := alert.alertCfg.GetStatusName()
-	if contextNameTmpl != "" {
-		// No templating specified for status_name, use as-is
-		contextStr = contextNameTmpl
-	} else if tmplParams.RuleName != "" {
-		contextStr = fmt.Sprintf("minder/%s", tmplParams.RuleName)
+	if tmplParams.RuleName != "" {
+		contextStr = fmt.Sprintf("%s/%s", contextStr, tmplParams.RuleName)
 	}
-	result.Context = contextStr
+	result.Context = cmp.Or(alert.alertCfg.GetStatusName(), contextStr)
 
 	// 2. Evaluate description, using text/template
 	descTmplStr := alert.alertCfg.GetDescription()
 	if descTmplStr != "" {
-		descTmpl, err := util.NewSafeHTMLTemplate(&descTmplStr, "description")
+		descTmpl, err := util.NewSafeTextTemplate(&descTmplStr, "description")
 		if err != nil {
 			return nil, fmt.Errorf("cannot parse description template: %w", err)
 		}
-		descStr, err := descTmpl.Render(ctx, tmplParams, 1024)
+		descStr, err := descTmpl.Render(ctx, tmplParams, DescriptionMaxLength)
 		if err != nil {
 			return nil, fmt.Errorf("cannot execute description template: %w", err)
 		}
@@ -310,6 +309,7 @@ func (alert *Alert) getParamsForCommitStatus(
 			"repo":       result.Repo,
 			"commit_sha": result.CommitSha,
 			"rule_name":  tmplParams.RuleName,
+			"output":     tmplParams.EvalResultOutput,
 		}
 		expandedUrl, err := uritemplate.Expand(targetUrlTmplStr, argsMap)
 		if err != nil {

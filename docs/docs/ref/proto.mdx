@@ -2904,7 +2904,7 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' can only be used with the 'repository' entity type. * 'pull_request' and 'pull_request_comment' can only be used with the 'pull_request' entity type. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |

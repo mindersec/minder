@@ -469,5 +469,3 @@ require (
 // Pin this to 1.2.1 until using containerd/v2; 1.3.0 has a backwards incompatible change
 // https://github.com/opencontainers/runtime-spec/pull/1279
 replace github.com/opencontainers/runtime-spec => github.com/opencontainers/runtime-spec v1.2.1
-
-replace github.com/docker/docker => github.com/docker/docker v28.0.0+incompatible

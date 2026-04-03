@@ -13502,8 +13502,8 @@ type RuleType_Definition_Remediate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// type is the type of the remediation.
 	// * 'rest' can be used with any entity type.
-	// * 'gh_branch_protection' can only be used with the 'repository' entity type.
-	// * 'pull_request' and 'pull_request_comment' can only be used with the 'pull_request' entity type.
+	// * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.
+	// * 'pull_request_comment' can only be used with the 'pull_request' entity type.
 	Type               string                                                `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	Rest               *RestType                                             `protobuf:"bytes,2,opt,name=rest,proto3,oneof" json:"rest,omitempty"`
 	GhBranchProtection *RuleType_Definition_Remediate_GhBranchProtectionType `protobuf:"bytes,3,opt,name=gh_branch_protection,json=ghBranchProtection,proto3,oneof" json:"gh_branch_protection,omitempty"`
