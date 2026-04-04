@@ -11,9 +11,9 @@ import (
 // ParseLabelFilter parses a comma-separated label filter string into lists of
 // labels to include and exclude. It resolves wildcards so that if any inclusion
 // rule is `*`, the included labels list evaluates simply to `["*"]`.
-func ParseLabelFilter(filter string) (include []string, exclude []string, err error) {
+func ParseLabelFilter(filter string) (include []string, exclude []string) {
 	if filter == "" {
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	var starMatched bool
@@ -41,7 +41,7 @@ func ParseLabelFilter(filter string) (include []string, exclude []string, err er
 		include = []string{"*"}
 	}
 
-	return include, exclude, nil
+	return include, exclude
 }
 
 // ParseLabel parses a single label (without commas) into an include or exclude string.

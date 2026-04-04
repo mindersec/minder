@@ -18,40 +18,33 @@ func TestParseLabelFilter(t *testing.T) {
 		expectedExc []string
 	}{
 		{
-			name:        "empty",
-			filter:      "",
-			expectedInc: nil,
-			expectedExc: nil,
+			name:   "empty",
+			filter: "",
 		},
 		{
 			name:        "single include",
 			filter:      "foo",
 			expectedInc: []string{"foo"},
-			expectedExc: nil,
 		},
 		{
 			name:        "single exclude",
 			filter:      "!foo",
-			expectedInc: nil,
 			expectedExc: []string{"foo"},
 		},
 		{
 			name:        "star include",
 			filter:      "*",
 			expectedInc: []string{"*"},
-			expectedExc: nil,
 		},
 		{
 			name:        "star exclude",
 			filter:      "!*",
-			expectedInc: nil,
 			expectedExc: []string{"*"},
 		},
 		{
 			name:        "multiple includes",
 			filter:      "foo,bar",
 			expectedInc: []string{"foo", "bar"},
-			expectedExc: nil,
 		},
 		{
 			name:        "includes and excludes",
@@ -63,13 +56,11 @@ func TestParseLabelFilter(t *testing.T) {
 			name:        "star mixed with includes",
 			filter:      "foo,*",
 			expectedInc: []string{"*"},
-			expectedExc: nil,
 		},
 		{
 			name:        "includes mixed with star",
 			filter:      "*,foo",
 			expectedInc: []string{"*"},
-			expectedExc: nil,
 		},
 		{
 			name:        "star and excludes",
@@ -95,8 +86,7 @@ func TestParseLabelFilter(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			inc, exc, err := ParseLabelFilter(tt.filter)
-			require.NoError(t, err)
+			inc, exc := ParseLabelFilter(tt.filter)
 			require.Equal(t, tt.expectedInc, inc)
 			require.Equal(t, tt.expectedExc, exc)
 		})

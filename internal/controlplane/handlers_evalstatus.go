@@ -526,9 +526,7 @@ func buildProjectsProfileList(
 	profileList := []db.ListProfilesByProjectIDAndLabelRow{}
 
 	listParams := db.ListProfilesByProjectIDAndLabelParams{}
-	if err := listParams.LabelsFromFilter(filter); err != nil {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid label filter: %s", err)
-	}
+	listParams.LabelsFromFilter(filter)
 
 	for _, projectID := range projects {
 		listParams.ProjectID = projectID

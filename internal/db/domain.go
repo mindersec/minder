@@ -48,13 +48,9 @@ func (r ListProfilesByProjectIDAndLabelRow) GetSelectors() []ProfileSelector {
 }
 
 // LabelsFromFilter parses the filter string and populates the IncludeLabels and ExcludeLabels fields
-func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string) error {
-	inc, exc, err := labels.ParseLabelFilter(filter)
-	if err != nil {
-		return err
-	}
-
+func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string) {
+	inc, exc := labels.ParseLabelFilter(filter)
 	lp.IncludeLabels = inc
 	lp.ExcludeLabels = exc
-	return nil
 }
+
