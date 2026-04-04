@@ -2909,7 +2909,8 @@ message RuleType {
             optional RestType rest = 2;
             optional GhBranchProtectionType gh_branch_protection = 3;
             optional PullRequestRemediation pull_request = 4;
-            optional Alert.AlertTypePRComment pull_request_comment = 5;
+            reserved 5;
+            optional Alert.AlertTypePRComment pull_request_comment = 6;
         }
         Remediate remediate = 6;
 
@@ -2935,6 +2936,7 @@ message RuleType {
             optional AlertTypeSA security_advisory = 2;
 
             message AlertTypePRComment {
+                // review_message is the message to post in the PR review.
                 string review_message = 1 [
                     (buf.validate.field).string = {
                         max_len: 65536,
@@ -2950,7 +2952,8 @@ message RuleType {
                     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
-            optional AlertTypePRComment pull_request_comment = 3;
+            reserved 3;
+            optional AlertTypePRComment pull_request_comment = 4;
 
         }
         Alert alert = 7;
