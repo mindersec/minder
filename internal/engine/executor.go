@@ -11,13 +11,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	datasourceservice "github.com/mindersec/minder/internal/datasources/service"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/entities"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/ingestcache"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	eoptions "github.com/mindersec/minder/internal/engine/options"
@@ -28,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	provsel "github.com/mindersec/minder/internal/providers/selectors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/selectors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
@@ -312,16 +313,16 @@ func logEval(
 ) {
 	evalLog := params.DecorateLogger(
 		zerolog.Ctx(ctx).With().
-			Str("eval_status", string(evalerrors.ErrorAsEvalStatus(params.GetEvalErr()))).
+			Str("eval_status", string(dbadapter.ErrorAsEvalStatus(params.GetEvalErr()))).
 			Str("project_id", inf.ProjectID.String()).
 			Logger())
 
 	// log evaluation result and actions status
 	evalLog.Info().
 		Str("action", string(remediate.ActionType)).
-		Str("action_status", string(evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
+		Str("action_status", string(dbadapter.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
 		Str("action", string(alert.ActionType)).
-		Str("action_status", string(evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
+		Str("action_status", string(dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
 		Msg("entity evaluation - completed")
 
 	// log business logic
