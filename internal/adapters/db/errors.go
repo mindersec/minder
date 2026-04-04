@@ -141,29 +141,32 @@ func AlertErrorAsString(err error) string {
 	return string(ErrorAsAlertStatus(err))
 }
 
-// Eval status helpers
+// IsEvalFailure returns true if evaluation status is failure.
 func IsEvalFailure(s db.EvalStatusTypes) bool {
 	return s == db.EvalStatusTypesFailure
 }
 
+// IsEvalSuccess returns true if evaluation status is success.
 func IsEvalSuccess(s db.EvalStatusTypes) bool {
 	return s == db.EvalStatusTypesSuccess
 }
 
+// IsEvalError returns true if evaluation status is error.
 func IsEvalError(s db.EvalStatusTypes) bool {
 	return s == db.EvalStatusTypesError
 }
 
-// Remediation helpers
+// IsRemediationSkipped returns true if remediation status is skipped.
 func IsRemediationSkipped(s db.RemediationStatusTypes) bool {
 	return s == db.RemediationStatusTypesSkipped
 }
 
-// Alert helpers
+// IsAlertOn returns true if alert status is on.
 func IsAlertOn(s db.AlertStatusTypes) bool {
 	return s == db.AlertStatusTypesOn
 }
 
+// IsAlertOff returns true if alert status is off.
 func IsAlertOff(s db.AlertStatusTypes) bool {
 	return s == db.AlertStatusTypesOff
 }
