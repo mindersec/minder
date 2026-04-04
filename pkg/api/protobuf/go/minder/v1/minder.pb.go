@@ -15647,13 +15647,12 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"github_app\x18\x01 \x01(\v2\x1a.minder.v1.GitHubAppParamsH\x00R\tgithubAppB\f\n" +
 	"\n" +
-	"parameters\"\x9f\x01\n" +
+	"parameters\"\xa7\x01\n" +
 	"\x0fGitHubAppParams\x123\n" +
 	"\x0finstallation_id\x18\x01 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12\"\n" +
-	"\forganization\x18\x02 \x01(\tR\forganization\x123\n" +
-	"\x0forganization_id\x18\x03 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xeb\x03\n" +
+	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12'\n" +
+	"\forganization\x18\x02 \x01(\tB\x03\xe0A\x03R\forganization\x126\n" +
+	"\x0forganization_id\x18\x03 \x01(\x03B\r\xe0A\x03\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xf0\x03\n" +
 	"\bProvider\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\x04name\x125\n" +
 	"\x05class\x18\a \x01(\tB\x1f\xbaH\x1c\xd8\x01\x01r\x17\x18\xc8\x012\x12^[a-z][a-z0-9_-]*$R\x05class\x12\x18\n" +
@@ -15667,8 +15666,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"auth_flows\x18\x06 \x03(\x0e2\x1c.minder.v1.AuthorizationFlowR\tauthFlows\x12<\n" +
 	"\n" +
 	"parameters\x18\b \x01(\v2\x1c.minder.v1.ProviderParameterR\n" +
-	"parameters\x12+\n" +
-	"\x11credentials_state\x18\t \x01(\tR\x10credentialsState\x12\x1b\n" +
+	"parameters\x120\n" +
+	"\x11credentials_state\x18\t \x01(\tB\x03\xe0A\x03R\x10credentialsState\x12\x1b\n" +
 	"\x02id\x18\n" +
 	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"\x91\x01\n" +
 	"\x1bGetEvaluationHistoryRequest\x12\x1b\n" +
