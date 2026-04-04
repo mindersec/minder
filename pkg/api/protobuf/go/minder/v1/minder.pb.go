@@ -14858,7 +14858,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x19GetArtifactByNameResponse\x124\n" +
 	"\bartifact\x18\x01 \x01(\v2\x13.minder.v1.ArtifactB\x03\xe0A\x02R\bartifact\x126\n" +
 	"\bversions\x18\x02 \x03(\v2\x1a.minder.v1.ArtifactVersionR\bversions\"\t\n" +
-	"\aRelease\"\r\n" +
+	"\aRelease\"\n" +
 	"\vPipelineRun\"\t\n" +
 	"\aTaskRun\"\a\n" +
 	"\x05Build\"[\n" +
@@ -14914,15 +14914,14 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x06entity\x18\x01 \x01(\v2\x1c.minder.v1.UpstreamEntityRefB\x03\xe0A\x02R\x06entity\x12\x1e\n" +
 	"\n" +
 	"registered\x18\x02 \x01(\bR\n" +
-	"registered\"\xfc\x01\n" +
+	"registered\"\x84\x02\n" +
 	"\x15UpstreamRepositoryRef\x129\n" +
 	"\x05owner\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\x05owner\x125\n" +
-	"\x04name\x18\x02 \x01(\tB!\xe0A\x02\xbaH\x1b\xd8\x01\x01r\x16\x18\xc8\x012\x11^[-.[:alnum:]_]+$R\x04name\x12#\n" +
-	"\arepo_id\x18\x03 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02(\x01R\x06repoId\x12,\n" +
-	"\acontext\x18\x04 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1e\n" +
+	"\x04name\x18\x02 \x01(\tB!\xe0A\x02\xbaH\x1b\xd8\x01\x01r\x16\x18\xc8\x012\x11^[-.[:alnum:]_]+$R\x04name\x12&\n" +
+	"\arepo_id\x18\x03 \x01(\x03B\r\xe0A\x03\xbaH\a\xd8\x01\x01\"\x02(\x01R\x06repoId\x12,\n" +
+	"\acontext\x18\x04 \x01(\v2\x12.minder.v1.ContextR\acontext\x12#\n" +
 	"\n" +
-	"registered\x18\x05 \x01(\bR\n" +
+	"registered\x18\x05 \x01(\bB\x03\xe0A\x03R\n" +
 	"registered\"\xc4\x05\n" +
 	"\n" +
 	"Repository\x12\x18\n" +
@@ -15319,7 +15318,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vRepoConfigs\x125\n" +
 	"\x06branch\x18\x01 \x01(\tB\x1d\xbaH\x1a\xd8\x01\x01r\x15\x18\xc8\x012\x10^[[:word:]./-]+$R\x06branch\x1aQ\n" +
 	"\x12PullRequestConfigs\x12;\n" +
-	"\x06filter\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1bR\x0fNEW_AND_UPDATEDR\bNEW_ONLYR\x06filterB\r\n" +
+	"\x06filter\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1bR\x0fNEW_AND_UPDATEDR\bNEW_ONLYR\x06filterB\n" +
 	"\ventity_type\"\x88\x02\n" +
 	"\bSeverity\x12/\n" +
 	"\x05value\x18\x01 \x01(\x0e2\x19.minder.v1.Severity.ValueR\x05value\"\xca\x01\n" +
@@ -15333,11 +15332,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x81$\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\x84$\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
-	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12\x1d\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
+	"\x02id\x18\x01 \x01(\tB\v\xe0A\x03\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
 	"\x04name\x18\x02 \x01(\tB$\xe0A\x02\xbaH\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12L\n" +
 	"\fdisplay_name\x18\b \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12?\n" +
 	"\x15short_failure_message\x18\n" +
@@ -15404,7 +15403,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x05_regoB\f\n" +
 	"\n" +
 	"_vulncheckB\t\n" +
-	"\a_trustyB\r\n" +
+	"\a_trustyB\n" +
 	"\v_homoglyphs\x1a\x99\n" +
 	"\n" +
 	"\tRemediate\x12F\n" +
@@ -15445,10 +15444,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12_security_advisoryB\x17\n" +
 	"\x15_pull_request_commentB\x0f\n" +
 	"\r_param_schemaB\x05\n" +
-	"\x03_id\"\xff\v\n" +
+	"\x03_id\"\x82\f\n" +
 	"\aProfile\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1d\n" +
-	"\x02id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12 \n" +
+	"\x02id\x18\x02 \x01(\tB\v\xe0A\x03\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
 	"\x04name\x18\x03 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12\x88\x01\n" +
 	"\x06labels\x18\f \x03(\tBp\xbaHm\x92\x01j\x18\x01\"frd2b^([a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?:)?[a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?$R\x06labels\x127\n" +
 	"\n" +
@@ -15647,17 +15646,16 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"github_app\x18\x01 \x01(\v2\x1a.minder.v1.GitHubAppParamsH\x00R\tgithubAppB\f\n" +
 	"\n" +
-	"parameters\"\x9f\x01\n" +
+	"parameters\"\xa7\x01\n" +
 	"\x0fGitHubAppParams\x123\n" +
 	"\x0finstallation_id\x18\x01 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12\"\n" +
-	"\forganization\x18\x02 \x01(\tR\forganization\x123\n" +
-	"\x0forganization_id\x18\x03 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xeb\x03\n" +
+	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12'\n" +
+	"\forganization\x18\x02 \x01(\tB\x03\xe0A\x03R\forganization\x126\n" +
+	"\x0forganization_id\x18\x03 \x01(\x03B\r\xe0A\x03\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xf5\x03\n" +
 	"\bProvider\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\x04name\x125\n" +
-	"\x05class\x18\a \x01(\tB\x1f\xbaH\x1c\xd8\x01\x01r\x17\x18\xc8\x012\x12^[a-z][a-z0-9_-]*$R\x05class\x12\x18\n" +
-	"\aproject\x18\x02 \x01(\tR\aproject\x12&\n" +
+	"\x05class\x18\a \x01(\tB\x1f\xbaH\x1c\xd8\x01\x01r\x17\x18\xc8\x012\x12^[a-z][a-z0-9_-]*$R\x05class\x12\x1d\n" +
+	"\aproject\x18\x02 \x01(\tB\x03\xe0A\x03R\aproject\x12&\n" +
 	"\aversion\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x042\x02v1R\aversion\x127\n" +
 	"\n" +
 	"implements\x18\x04 \x03(\x0e2\x17.minder.v1.ProviderTypeR\n" +
@@ -15667,8 +15665,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"auth_flows\x18\x06 \x03(\x0e2\x1c.minder.v1.AuthorizationFlowR\tauthFlows\x12<\n" +
 	"\n" +
 	"parameters\x18\b \x01(\v2\x1c.minder.v1.ProviderParameterR\n" +
-	"parameters\x12+\n" +
-	"\x11credentials_state\x18\t \x01(\tR\x10credentialsState\x12\x1b\n" +
+	"parameters\x120\n" +
+	"\x11credentials_state\x18\t \x01(\tB\x03\xe0A\x03R\x10credentialsState\x12\x1b\n" +
 	"\x02id\x18\n" +
 	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"\x91\x01\n" +
 	"\x1bGetEvaluationHistoryRequest\x12\x1b\n" +
