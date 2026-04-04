@@ -221,6 +221,6 @@ func (ts *TelemetryStore) Record(e *zerolog.Event) *zerolog.Event {
 	}
 	e.Str("telemetry", "true")
 	// Note: we explicitly don't call e.Send() here so that Send() occurs in the
-	// same scope as the event is created.
+	// same scope as the event is created.0
 	return e
 }
