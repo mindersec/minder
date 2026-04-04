@@ -14,7 +14,7 @@ import (
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
-// ErrorAsEvalStatus returns the evaluation status for a given error
+// ErrorAsEvalStatus returns the evaluation status for a given error.
 func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
 	if errors.Is(err, interfaces.ErrEvaluationFailed) {
 		return db.EvalStatusTypesFailure
@@ -26,7 +26,7 @@ func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
 	return db.EvalStatusTypesSuccess
 }
 
-// ErrorAsEvalDetails returns the evaluation details for a given error
+// ErrorAsEvalDetails returns the evaluation details for a given error.
 func ErrorAsEvalDetails(err error) string {
 	var evalErr *engineerrors.EvaluationError
 	if errors.As(err, &evalErr) && evalErr.Template != "" {
@@ -41,7 +41,7 @@ func ErrorAsEvalDetails(err error) string {
 	return ""
 }
 
-// ErrorAsRemediationStatus returns the remediation status for a given error
+// ErrorAsRemediationStatus returns the remediation status for a given error.
 func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 	if err == nil {
 		return db.RemediationStatusTypesSuccess
@@ -60,7 +60,7 @@ func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
 	return db.RemediationStatusTypesError
 }
 
-// RemediationStatusAsError returns the remediation status for a given error
+// RemediationStatusAsError returns an error corresponding to the remediation status.
 func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
 	if prevStatus == nil {
 		return engineerrors.ErrActionSkipped
@@ -84,7 +84,7 @@ func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) 
 	return fmt.Errorf("generic remediation error status: %s", s)
 }
 
-// ErrorAsAlertStatus returns the alert status for a given error
+// ErrorAsAlertStatus returns the alert status for a given error.
 func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 	if err == nil {
 		return db.AlertStatusTypesOn
@@ -103,7 +103,7 @@ func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
 	return db.AlertStatusTypesError
 }
 
-// AlertStatusAsError returns the error for a given alert status
+// AlertStatusAsError returns an error corresponding to the alert status.
 func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
 	if prevStatus == nil {
 		return errors.New("no previous alert state")
@@ -126,17 +126,17 @@ func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error 
 	return fmt.Errorf("unknown alert status: %s", s)
 }
 
-// EvalErrorAsString returns the evaluation error as a string
+// EvalErrorAsString returns the evaluation error as a string.
 func EvalErrorAsString(err error) string {
 	return string(ErrorAsEvalStatus(err))
 }
 
-// RemediationErrorAsString returns the remediation error as a string
+// RemediationErrorAsString returns the remediation error as a string.
 func RemediationErrorAsString(err error) string {
 	return string(ErrorAsRemediationStatus(err))
 }
 
-// AlertErrorAsString returns the alert error as a string
+// AlertErrorAsString returns the alert error as a string.
 func AlertErrorAsString(err error) string {
 	return string(ErrorAsAlertStatus(err))
 }
