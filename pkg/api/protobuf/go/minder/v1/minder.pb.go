@@ -13584,10 +13584,9 @@ type RuleType_Definition_Alert struct {
 	// type is the type of the alert.
 	// * 'security_advisory' can only be used with the 'repository' entity type.
 	// * 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type.
-	Type               string                                           `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	SecurityAdvisory   *RuleType_Definition_Alert_AlertTypeSA           `protobuf:"bytes,2,opt,name=security_advisory,json=securityAdvisory,proto3,oneof" json:"security_advisory,omitempty"`
-	PullRequestComment *RuleType_Definition_Alert_AlertTypePRComment    `protobuf:"bytes,3,opt,name=pull_request_comment,json=pullRequestComment,proto3,oneof" json:"pull_request_comment,omitempty"`
-	CommitStatus       *RuleType_Definition_Alert_AlertTypeCommitStatus `protobuf:"bytes,4,opt,name=commit_status,json=commitStatus,proto3,oneof" json:"commit_status,omitempty"`
+	Type               string                                        `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	SecurityAdvisory   *RuleType_Definition_Alert_AlertTypeSA        `protobuf:"bytes,2,opt,name=security_advisory,json=securityAdvisory,proto3,oneof" json:"security_advisory,omitempty"`
+	PullRequestComment *RuleType_Definition_Alert_AlertTypePRComment `protobuf:"bytes,3,opt,name=pull_request_comment,json=pullRequestComment,proto3,oneof" json:"pull_request_comment,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -13639,13 +13638,6 @@ func (x *RuleType_Definition_Alert) GetSecurityAdvisory() *RuleType_Definition_A
 func (x *RuleType_Definition_Alert) GetPullRequestComment() *RuleType_Definition_Alert_AlertTypePRComment {
 	if x != nil {
 		return x.PullRequestComment
-	}
-	return nil
-}
-
-func (x *RuleType_Definition_Alert) GetCommitStatus() *RuleType_Definition_Alert_AlertTypeCommitStatus {
-	if x != nil {
-		return x.CommitStatus
 	}
 	return nil
 }
