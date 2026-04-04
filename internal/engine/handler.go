@@ -37,6 +37,7 @@ type ExecutorEventHandler struct {
 	handlerMiddleware      []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
 	executor               Executor
+	executionTimeout       time.Duration
 	// cancels are a set of cancel functions for current entity events in flight.
 	// This allows us to cancel rule evaluation directly when terminationContext
 	// is cancelled.
@@ -56,6 +57,7 @@ func NewExecutorEventHandler(
 		wgEntityEventExecution: &sync.WaitGroup{},
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
+		executionTimeout:       DefaultExecutionTimeout,
 	}
 	go func() {
 		<-ctx.Done()
@@ -115,7 +117,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
+		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
 		defer func() {
 			e.lock.Lock()
