@@ -3443,6 +3443,23 @@
     }
   },
   "definitions": {
+    "AlertAlertTypeCommitStatus": {
+      "type": "object",
+      "properties": {
+        "statusName": {
+          "type": "string",
+          "description": "status_name is the name of the commit status check."
+        },
+        "description": {
+          "type": "string",
+          "description": "description is the description of the commit status check, which can be Go templated."
+        },
+        "targetUrl": {
+          "type": "string",
+          "description": "target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template."
+        }
+      }
+    },
     "AlertAlertTypePRComment": {
       "type": "object",
       "properties": {
@@ -3480,13 +3497,17 @@
       "type": "object",
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "type is the type of the alert.\n* 'security_advisory' can only be used with the 'repository' entity type.\n* 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type."
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
+        },
+        "commitStatus": {
+          "$ref": "#/definitions/AlertAlertTypeCommitStatus"
         }
       }
     },
@@ -3576,7 +3597,8 @@
       "type": "object",
       "properties": {
         "type": {
-          "type": "string"
+          "type": "string",
+          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
@@ -3586,6 +3608,9 @@
         },
         "pullRequest": {
           "$ref": "#/definitions/RemediatePullRequestRemediation"
+        },
+        "pullRequestComment": {
+          "$ref": "#/definitions/AlertAlertTypePRComment"
         }
       }
     },
