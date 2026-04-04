@@ -420,16 +420,14 @@ func loginPromptErrWrapper(
 			return inErr
 		}
 		if rpcStatus.Code() == codes.NotFound {
-			// The user is authenticated but not yet registered in the Minder database.
-			// This can happen when `minder quickstart` is run for the first time without
-			// having previously run `minder login` (which normally handles registration).
-			// Silently register the user now so the quickstart can proceed.
+			// User is authenticated but not yet registered; auto-register so quickstart can proceed.
 			userClient := minderv1.NewUserServiceClient(conn)
-			if _, err := userClient.CreateUser(cmnd.Context(), &minderv1.CreateUserRequest{}); err != nil {
+			quickstartCtx, cancel := getQuickstartContext(cmnd.Context(), viper.GetViper())
+			defer cancel()
+			if _, err := userClient.CreateUser(quickstartCtx, &minderv1.CreateUserRequest{}); err != nil {
 				return cli.MessageAndError("Error registering user", err)
 			}
 			cmnd.Println(cli.SuccessBanner.Render("You have been successfully registered. Welcome!"))
-			// Return nil so quickstart continues normally
 			return nil
 		}
 	}
