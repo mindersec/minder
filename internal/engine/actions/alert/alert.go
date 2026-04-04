@@ -11,7 +11,6 @@ import (
 
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/engine/actions/alert/commit_status"
 	"github.com/mindersec/minder/internal/engine/actions/alert/noop"
 	"github.com/mindersec/minder/internal/engine/actions/alert/pull_request_comment"
 	"github.com/mindersec/minder/internal/engine/actions/alert/security_advisory"
@@ -62,18 +61,6 @@ func NewRuleAlert(
 		}
 		return pull_request_comment.NewPullRequestCommentAlert(
 			ActionType, alertCfg.GetPullRequestComment(), client, setting)
-	case commit_status.AlertType:
-		if alertCfg.GetCommitStatus() == nil {
-			return nil, fmt.Errorf("alert engine missing commit_status configuration")
-		}
-		client, err := provinfv1.As[provinfv1.CommitStatusPublisher](provider)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().Str("rule-type", ruletype.GetName()).
-				Msg("provider does not support publishing commit statuses. Silently skipping alerts.")
-			return noop.NewNoopAlert(ActionType)
-		}
-		return commit_status.NewCommitStatusAlert(
-			ActionType, alertCfg.GetCommitStatus(), client, setting)
 	}
 
 	return nil, fmt.Errorf("unknown alert type: %s", alertCfg.GetType())

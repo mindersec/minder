@@ -10,6 +10,10 @@
 package v1
 
 import (
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -18,9 +22,6 @@ import (
 	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
-	reflect "reflect"
-	sync "sync"
-	unsafe "unsafe"
 )
 
 const (
@@ -14276,6 +14277,7 @@ func (x *RuleType_Definition_Alert_AlertTypeSA) GetSeverity() string {
 type RuleType_Definition_Alert_AlertTypePRComment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReviewMessage string                 `protobuf:"bytes,1,opt,name=review_message,json=reviewMessage,proto3" json:"review_message,omitempty"`
+	ReviewEvent   *string                `protobuf:"bytes,2,opt,name=review_event,json=reviewEvent,proto3,oneof" json:"review_event,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14313,6 +14315,13 @@ func (*RuleType_Definition_Alert_AlertTypePRComment) Descriptor() ([]byte, []int
 func (x *RuleType_Definition_Alert_AlertTypePRComment) GetReviewMessage() string {
 	if x != nil {
 		return x.ReviewMessage
+	}
+	return ""
+}
+
+func (x *RuleType_Definition_Alert_AlertTypePRComment) GetReviewEvent() string {
+	if x != nil && x.ReviewEvent != nil {
+		return *x.ReviewEvent
 	}
 	return ""
 }

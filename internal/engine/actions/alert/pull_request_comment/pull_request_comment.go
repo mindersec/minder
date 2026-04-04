@@ -6,12 +6,14 @@
 package pull_request_comment
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-github/v63/github"
@@ -59,6 +61,8 @@ type paramsPR struct {
 	CommitSha  string
 	Number     int
 	Comment    string
+	RuleName   string
+	Event      string
 	Metadata   *alertMetadata
 	prevStatus *db.ListRuleEvaluationsByProfileIdRow
 }
@@ -134,57 +138,95 @@ func (alert *Alert) Do(
 }
 
 func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx)
+	logger := zerolog.Ctx(ctx).With().
+		Str("owner", params.Owner).
+		Str("repo", params.Repo).
+		Int("pr", params.Number).
+		Logger()
 
 	// Process the command
 	switch cmd {
-	// Create a review
+	// Create or update a review
 	case interfaces.ActionCmdOn:
-		if err := alert.gh.PublishReview(ctx, params.Owner, params.Repo, params.Number,
-			&provifv1.Review{Body: params.Comment}); err != nil {
-			return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
+		existingReview, err := alert.findExistingReview(ctx, params)
+		if err != nil {
+			return nil, fmt.Errorf("error searching for existing PR review: %w", err)
+		}
+
+		var reviewID int64
+		if existingReview != nil {
+			reviewID = existingReview.GetID()
+			if _, err := alert.gh.UpdateReview(ctx, params.Owner, params.Repo, params.Number, reviewID, params.Comment); err != nil {
+				return nil, fmt.Errorf("error updating PR review: %w, %w", err, enginerr.ErrActionFailed)
+			}
+			logger.Info().Int64("review_id", reviewID).Msg("PR review updated")
+		} else {
+			req := &github.PullRequestReviewRequest{
+				Body:  github.String(params.Comment),
+				Event: github.String(params.Event),
+			}
+			review, err := alert.gh.CreateReview(ctx, params.Owner, params.Repo, params.Number, req)
+			if err != nil {
+				return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
+			}
+			reviewID = review.GetID()
+			logger.Info().Int64("review_id", reviewID).Msg("PR review created")
 		}
 
 		now := time.Now()
 		newMeta, err := json.Marshal(alertMetadata{
+			ReviewID:    strconv.FormatInt(reviewID, 10),
 			SubmittedAt: &now,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
 		}
 
-		logger.Info().Msg("PR review created")
 		return newMeta, nil
 	// Dismiss the review
 	case interfaces.ActionCmdOff:
-		if params.Metadata == nil || params.Metadata.ReviewID == "" {
-			// We cannot do anything without the PR review ID, so we assume that turning the alert off is a success
-			return nil, fmt.Errorf("no PR comment ID provided: %w", enginerr.ErrActionTurnedOff)
-		}
-
-		reviewID, err := strconv.ParseInt(params.Metadata.ReviewID, 10, 64)
+		existingReview, err := alert.findExistingReview(ctx, params)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Str("review_id", params.Metadata.ReviewID).Msg("failed to parse review_id")
-			return nil, fmt.Errorf("no PR comment ID provided: %w, %w", err, enginerr.ErrActionTurnedOff)
+			return nil, fmt.Errorf("error searching for existing PR review: %w", err)
 		}
 
-		if err := alert.gh.DismissPublishedReview(ctx, params.Owner, params.Repo, params.Number, reviewID,
-			"Dismissed due to alert being turned off"); err != nil {
-			if errors.Is(err, enginerr.ErrNotFound) {
-				// There's no PR review with that ID anymore.
-				// We exit by stating that the action was turned off.
-				return nil, fmt.Errorf("PR comment already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
-			}
-			return nil, fmt.Errorf("error dismissing PR comment: %w, %w", err, enginerr.ErrActionFailed)
+		if existingReview == nil {
+			logger.Debug().Msg("No PR review to dismiss")
+			return nil, enginerr.ErrActionTurnedOff
 		}
-		logger.Info().Str("review_id", params.Metadata.ReviewID).Msg("PR comment dismissed")
-		// Success - return ErrActionTurnedOff to indicate the action was successful
-		return nil, fmt.Errorf("%s : %w", alert.Class(), enginerr.ErrActionTurnedOff)
+
+		reviewID := existingReview.GetID()
+		if _, err := alert.gh.DismissReview(ctx, params.Owner, params.Repo, params.Number, reviewID, &github.PullRequestReviewDismissalRequest{
+			Message: github.String("Dismissed due to alert being turned off"),
+		}); err != nil {
+			if errors.Is(err, enginerr.ErrNotFound) {
+				return nil, fmt.Errorf("PR review already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
+			}
+			return nil, fmt.Errorf("error dismissing PR review: %w, %w", err, enginerr.ErrActionFailed)
+		}
+		logger.Info().Int64("review_id", reviewID).Msg("PR review dismissed")
+		return nil, enginerr.ErrActionTurnedOff
 	case interfaces.ActionCmdDoNothing:
 		// Return the previous alert status.
 		return alert.runDoNothing(ctx, params)
 	}
 	return nil, enginerr.ErrActionSkipped
+}
+
+func (alert *Alert) findExistingReview(ctx context.Context, params *paramsPR) (*github.PullRequestReview, error) {
+	// List reviews
+	reviews, err := alert.gh.ListReviews(ctx, params.Owner, params.Repo, params.Number, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	magicComment := fmt.Sprintf("<!-- minder-rule: %s -->", params.RuleName)
+	for _, r := range reviews {
+		if r.GetBody() != "" && strings.Contains(r.GetBody(), magicComment) {
+			return r, nil
+		}
+	}
+	return nil, nil
 }
 
 // runDry runs the pull request comment action in dry run mode, which logs the comment that would be made
@@ -269,7 +311,11 @@ func (alert *Alert) getParamsForPRComment(
 		return nil, fmt.Errorf("cannot execute title template: %w", err)
 	}
 
-	result.Comment = comment
+	result.RuleName = params.GetRule().Name
+	result.Event = cmp.Or(alert.reviewCfg.GetReviewEvent(), "COMMENT")
+
+	// Add magic comment to identify Minder reviews for this rule
+	result.Comment = fmt.Sprintf("%s\n\n<!-- minder-rule: %s -->", comment, result.RuleName)
 
 	// Unmarshal the existing alert metadata, if any
 	if metadata != nil {

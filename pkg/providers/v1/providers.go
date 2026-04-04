@@ -167,38 +167,29 @@ const (
 	CommitStatusPending CommitStatusState = "pending"
 )
 
-// CommitStatus is a provider-agnostic commit status payload
-type CommitStatus struct {
-	// State is the state of the commit status (success, failure, error, pending)
-	State CommitStatusState
-	// Description is a short description of the commit status
-	Description string
-	// Context is the label used to differentiate this from other checks
-	Context string
-	// TargetURL is the URL that the details button points to
-	TargetURL string
-}
-
-// Review is a provider-agnostic pull request review payload
-type Review struct {
-	// Body is the content of the PR review comment
-	Body string
-}
-
-// CommitStatusPublisher is the interface for providers that can publish commit statuses
 type CommitStatusPublisher interface {
 	Provider
-	// PublishCommitStatus creates or updates a commit status
-	PublishCommitStatus(ctx context.Context, owner, repo, ref string, status *CommitStatus) error
+	// SetCommitStatus creates or updates a commit status.
+	//
+	// This mirrors the GitHub API, and should be common across other Git
+	// providers.
+	SetCommitStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, error)
 }
 
 // ReviewPublisher is the interface for providers that can publish PR reviews
 type ReviewPublisher interface {
 	Provider
-	// PublishReview creates a review on the given pull request
-	PublishReview(ctx context.Context, owner, repo string, prNumber int, review *Review) error
-	// DismissPublishedReview dismisses an existing review on the given pull request
-	DismissPublishedReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64, message string) error
+	// CreateReview creates a review on the given pull request
+	CreateReview(ctx context.Context, owner, repo string, prNumber int, req *github.PullRequestReviewRequest) (*github.PullRequestReview, error)
+	// UpdateReview updates an existing review on the given pull request
+	UpdateReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64, body string) (*github.PullRequestReview, error)
+	// ListReviews lists reviews on the given pull request
+	ListReviews(ctx context.Context, owner, repo string, prNumber int, opt *github.ListOptions) ([]*github.PullRequestReview, error)
+	// DismissReview dismisses an existing review on the given pull request
+	DismissReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64,
+		req *github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
+	// GetPullRequest gets a pull request
+	GetPullRequest(ctx context.Context, owner, repo string, prNumber int) (*github.PullRequest, error)
 }
 
 // GitHub is the interface for interacting with the GitHub REST API

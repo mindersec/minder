@@ -2916,10 +2916,10 @@ message RuleType {
         message Alert {
             // type is the type of the alert.
             // * 'security_advisory' can only be used with the 'repository' entity type.
-            // * 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type.
+            // * 'pull_request_comment' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["security_advisory", "pull_request_comment", "commit_status"],
+                    in: ["security_advisory", "pull_request_comment"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
@@ -2941,35 +2941,17 @@ message RuleType {
                     },
                     (google.api.field_behavior) = REQUIRED
                 ];
+                // review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES).
+                // Default is COMMENT.
+                optional string review_event = 2 [
+                    (buf.validate.field).string = {
+                        in: ["COMMENT", "REQUEST_CHANGES"],
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                ];
             }
             optional AlertTypePRComment pull_request_comment = 3;
 
-            message AlertTypeCommitStatus {
-                // status_name is the name of the commit status check.
-                string status_name = 1 [
-                    (buf.validate.field).string = {
-                        max_len: 255,
-                    },
-                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-                ];
-
-                // description is the description of the commit status check, which can be Go templated.
-                string description = 2 [
-                    (buf.validate.field).string = {
-                        max_len: 1024,
-                    },
-                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-                ];
-
-                // target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template.
-                string target_url = 3 [
-                    (buf.validate.field).string = {
-                        max_len: 2048,
-                    },
-                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
-                ];
-            }
-            optional AlertTypeCommitStatus commit_status = 4;
         }
         Alert alert = 7;
     }
