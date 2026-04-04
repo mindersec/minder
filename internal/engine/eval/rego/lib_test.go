@@ -1231,8 +1231,6 @@ require (
 	require.NoError(t, billyutil.WriteFile(fs, "foo/go.mod", []byte(goMod), 0644))
 	require.NoError(t, billyutil.WriteFile(fs, "requirements.txt", []byte("PyYAML>=5.3.1"), 0644))
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"dependency_extract": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
@@ -1253,7 +1251,6 @@ allow if {
 }
 `,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
