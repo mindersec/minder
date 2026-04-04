@@ -152,27 +152,17 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	// Case 1 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
-	switch newEval {
-	case db.EvalStatusTypesError:
-	case db.EvalStatusTypesSuccess:
-		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
-		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
-		// The Remediation should be OFF (if it wasn't already)
-		if db.RemediationStatusTypesSkipped != prevRemediation {
+	if dbadapter.IsEvalSuccess(newEval) || dbadapter.IsEvalError(newEval) {
+		if !dbadapter.IsRemediationSkipped(prevRemediation) {
 			return engif.ActionCmdOff
 		}
-		// We should do nothing if remediation was already skipped
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesFailure:
-		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
-		if db.RemediationStatusTypesSkipped == prevRemediation {
+	}
+
+	if dbadapter.IsEvalFailure(newEval) {
+		if dbadapter.IsRemediationSkipped(prevRemediation) {
 			return engif.ActionCmdOn
 		}
-		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
-		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSkipped:
-	case db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
 	}
 
@@ -201,7 +191,7 @@ func shouldAlert(
 	// Case 1 - Successful remediation of a type that is not PR is considered instant.
 	if remType != pull_request.RemediateType && remErr == nil {
 		// If this is the case either skip alerting or turn it off if it was on
-		if prevAlert != db.AlertStatusTypesOff {
+		if !dbadapter.IsAlertOff(prevAlert) {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
@@ -210,27 +200,17 @@ func shouldAlert(
 	// Case 2 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
-	switch newEval {
-	case db.EvalStatusTypesError:
-	case db.EvalStatusTypesFailure:
-		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
-		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
-		// The Alert should be on (if it wasn't already)
-		if db.AlertStatusTypesOn != prevAlert {
+	if dbadapter.IsEvalError(newEval) || dbadapter.IsEvalFailure(newEval) {
+		if !dbadapter.IsAlertOn(prevAlert) {
 			return engif.ActionCmdOn
 		}
-		// We should do nothing if alert was already turned on
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSuccess:
-		// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
-		// The Alert should be turned OFF (if it wasn't already)
-		if db.AlertStatusTypesOff != prevAlert {
+	}
+
+	if dbadapter.IsEvalSuccess(newEval) {
+		if !dbadapter.IsAlertOff(prevAlert) {
 			return engif.ActionCmdOff
 		}
-		// We should do nothing if the Alert is already OFF
-		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSkipped:
-	case db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
 	}
 

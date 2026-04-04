@@ -140,3 +140,30 @@ func RemediationErrorAsString(err error) string {
 func AlertErrorAsString(err error) string {
 	return string(ErrorAsAlertStatus(err))
 }
+
+// Eval status helpers
+func IsEvalFailure(s db.EvalStatusTypes) bool {
+	return s == db.EvalStatusTypesFailure
+}
+
+func IsEvalSuccess(s db.EvalStatusTypes) bool {
+	return s == db.EvalStatusTypesSuccess
+}
+
+func IsEvalError(s db.EvalStatusTypes) bool {
+	return s == db.EvalStatusTypesError
+}
+
+// Remediation helpers
+func IsRemediationSkipped(s db.RemediationStatusTypes) bool {
+	return s == db.RemediationStatusTypesSkipped
+}
+
+// Alert helpers
+func IsAlertOn(s db.AlertStatusTypes) bool {
+	return s == db.AlertStatusTypesOn
+}
+
+func IsAlertOff(s db.AlertStatusTypes) bool {
+	return s == db.AlertStatusTypesOff
+}
