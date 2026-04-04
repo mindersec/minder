@@ -5,6 +5,7 @@ package ruletype
 
 import (
 	"context"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,11 @@ import (
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+type ruleTypeBlock struct {
+	Name     string
+	Profiles []string
+}
 
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
@@ -72,10 +78,10 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes, ruleTypeToProfiles := deleteRuleTypes(ctx, client, rulesToDelete, project)
+	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
-	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes, ruleTypeToProfiles)
+	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
 
 	return nil
 }
@@ -85,38 +91,34 @@ func deleteRuleTypes(
 	client minderv1.RuleTypeServiceClient,
 	rulesToDelete []*minderv1.RuleType,
 	project string,
-) ([]string, []string, map[string][]string) {
+) ([]string, []ruleTypeBlock) {
+
 	var deletedRuleTypes []string
-	var remainingRuleTypes []string
-	var ruleTypeToProfiles = make(map[string][]string)
+	var remainingRuleTypes []ruleTypeBlock
+
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
 			Context: &minderv1.Context{Project: &project},
 			Id:      ruleType.GetId(),
 		})
 		if err != nil {
-			remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
+			profiles := extractProfiles(err.Error())
 
-			errMsg := err.Error()
-			if strings.Contains(strings.ToLower(errMsg), "used by profiles") {
-				profiles := extractProfiles(errMsg)
-				if len(profiles) > 0 {
-					ruleTypeToProfiles[ruleType.GetName()] = profiles
-				}
-			}
-
+			remainingRuleTypes = append(remainingRuleTypes, ruleTypeBlock{
+				Name:     ruleType.GetName(),
+				Profiles: profiles,
+			})
 			continue
 		}
 		deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
 	}
-	return deletedRuleTypes, remainingRuleTypes, ruleTypeToProfiles
+	return deletedRuleTypes, remainingRuleTypes
 }
 
 func printDeleteResults(
 	cmd *cobra.Command,
 	deletedRuleTypes []string,
-	remainingRuleTypes []string,
-	ruleTypeToProfiles map[string][]string,
+	remainingRuleTypes []ruleTypeBlock,
 ) {
 	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
 		cmd.Println("There are no rule types to delete")
@@ -133,38 +135,39 @@ func printDeleteResults(
 	if len(remainingRuleTypes) > 0 {
 		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
 		for _, ruleType := range remainingRuleTypes {
-			cmd.Println(ruleType)
+			cmd.Println(ruleType.Name)
 		}
 
-		if len(ruleTypeToProfiles) > 0 {
-			cmd.Println("\nThey are referenced by profiles:")
+		cmd.Println("\nThey are referenced by profiles:")
 
-			seen := map[string]bool{}
-			for _, rt := range remainingRuleTypes {
-				for _, p := range ruleTypeToProfiles[rt] {
-					if !seen[p] {
-						cmd.Println(p)
-						seen[p] = true
-					}
+		seen := map[string]bool{}
+		for _, b := range remainingRuleTypes {
+			for _, p := range b.Profiles {
+				if !seen[p] {
+					cmd.Println(p)
+					seen[p] = true
 				}
 			}
 		}
+
 	}
 }
 
 func extractProfiles(errMsg string) []string {
-	errMsg = strings.ToLower(errMsg)
-
-	idx := strings.Index(errMsg, "used by profiles ")
-	if idx == -1 {
-		return nil
+	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
+	if len(match) < 2 {
+		return []string{}
 	}
 
-	profilesPart := errMsg[idx+len("used by profiles "):]
-	profilesPart = strings.TrimSpace(profilesPart)
-	profilesPart = strings.TrimSuffix(profilesPart, ".")
+	profilesPart := strings.TrimSpace(match[1])
 
-	return strings.Split(profilesPart, ", ")
+	parts := strings.Split(profilesPart, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+
+	return parts
 }
 
 func init() {
