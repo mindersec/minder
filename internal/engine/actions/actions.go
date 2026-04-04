@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
@@ -138,7 +139,7 @@ func (rae *RuleActionsEngine) processAction(
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
 func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
 	// Get current evaluation status
-	newEval := enginerr.ErrorAsEvalStatus(evalErr)
+	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Remediation status
 	prevRemediation := db.RemediationStatusTypesSkipped
@@ -187,7 +188,7 @@ func shouldAlert(
 	remType string,
 ) engif.ActionCmd {
 	// Get current evaluation status
-	newEval := enginerr.ErrorAsEvalStatus(evalErr)
+	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
 
 	// Get previous Alert status
 	prevAlert := db.AlertStatusTypesSkipped
@@ -242,7 +243,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	var skipAction bool
 
 	logger := zerolog.Ctx(ctx).Info().
-		Str("eval_status", string(enginerr.ErrorAsEvalStatus(evalErr))).
+		Str("eval_status", string(dbadapter.ErrorAsEvalStatus(evalErr))).
 		Str("action", string(actionType))
 
 	// Get the profile option set for this action type
