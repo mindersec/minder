@@ -15,10 +15,10 @@ import (
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
 )
@@ -64,8 +64,6 @@ func TestFileExistsInBase(t *testing.T) {
 	_, err := fs.Create("foo")
 	require.NoError(t, err, "could not create file")
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"git_pr_diffs": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
@@ -78,7 +76,6 @@ allow {
     base_file.exists("foo")
 }`,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -1234,8 +1231,6 @@ require (
 	require.NoError(t, billyutil.WriteFile(fs, "foo/go.mod", []byte(goMod), 0644))
 	require.NoError(t, billyutil.WriteFile(fs, "requirements.txt", []byte("PyYAML>=5.3.1"), 0644))
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"dependency_extract": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
@@ -1256,7 +1251,6 @@ allow if {
 }
 `,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 

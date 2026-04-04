@@ -549,6 +549,21 @@ func (mr *MockStoreMockRecorder) DeleteEvaluationHistoryByIDs(ctx, evaluationids
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvaluationHistoryByIDs", reflect.TypeOf((*MockStore)(nil).DeleteEvaluationHistoryByIDs), ctx, evaluationids)
 }
 
+// DeleteEvaluationOutputsByEvaluationIDs mocks base method.
+func (m *MockStore) DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEvaluationOutputsByEvaluationIDs", ctx, evaluationids)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteEvaluationOutputsByEvaluationIDs indicates an expected call of DeleteEvaluationOutputsByEvaluationIDs.
+func (mr *MockStoreMockRecorder) DeleteEvaluationOutputsByEvaluationIDs(ctx, evaluationids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEvaluationOutputsByEvaluationIDs", reflect.TypeOf((*MockStore)(nil).DeleteEvaluationOutputsByEvaluationIDs), ctx, evaluationids)
+}
+
 // DeleteExpiredSessionStates mocks base method.
 func (m *MockStore) DeleteExpiredSessionStates(ctx context.Context) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1089,6 +1104,21 @@ func (m *MockStore) GetEvaluationHistory(ctx context.Context, arg db.GetEvaluati
 func (mr *MockStoreMockRecorder) GetEvaluationHistory(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationHistory", reflect.TypeOf((*MockStore)(nil).GetEvaluationHistory), ctx, arg)
+}
+
+// GetEvaluationOutput mocks base method.
+func (m *MockStore) GetEvaluationOutput(ctx context.Context, id uuid.UUID) (db.EvaluationOutput, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEvaluationOutput", ctx, id)
+	ret0, _ := ret[0].(db.EvaluationOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvaluationOutput indicates an expected call of GetEvaluationOutput.
+func (mr *MockStoreMockRecorder) GetEvaluationOutput(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluationOutput", reflect.TypeOf((*MockStore)(nil).GetEvaluationOutput), ctx, id)
 }
 
 // GetFeatureInProject mocks base method.
@@ -2384,6 +2414,20 @@ func (m *MockStore) UpsertBundle(ctx context.Context, arg db.UpsertBundleParams)
 func (mr *MockStoreMockRecorder) UpsertBundle(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertBundle", reflect.TypeOf((*MockStore)(nil).UpsertBundle), ctx, arg)
+}
+
+// UpsertEvaluationOutput mocks base method.
+func (m *MockStore) UpsertEvaluationOutput(ctx context.Context, arg db.UpsertEvaluationOutputParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertEvaluationOutput", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertEvaluationOutput indicates an expected call of UpsertEvaluationOutput.
+func (mr *MockStoreMockRecorder) UpsertEvaluationOutput(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertEvaluationOutput", reflect.TypeOf((*MockStore)(nil).UpsertEvaluationOutput), ctx, arg)
 }
 
 // UpsertInstallationID mocks base method.
