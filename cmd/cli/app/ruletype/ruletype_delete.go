@@ -5,6 +5,7 @@ package ruletype
 
 import (
 	"context"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -71,7 +72,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
+	deletedRuleTypes, remainingRuleTypes, ruleTypeToProfiles := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
 	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
@@ -89,6 +90,21 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		for _, ruleType := range remainingRuleTypes {
 			cmd.Println(ruleType)
 		}
+
+		if len(ruleTypeToProfiles) > 0 {
+			cmd.Println("\nThey are referenced by profiles:")
+
+			seen := map[string]bool{}
+			for _, rt := range remainingRuleTypes {
+				for _, p := range ruleTypeToProfiles[rt] {
+					if !seen[p] {
+						cmd.Println(p)
+						seen[p] = true
+					}
+				}
+			}
+		}
+
 	}
 
 	return nil
@@ -99,9 +115,10 @@ func deleteRuleTypes(
 	client minderv1.RuleTypeServiceClient,
 	rulesToDelete []*minderv1.RuleType,
 	project string,
-) ([]string, []string) {
+) ([]string, []string, map[string][]string) {
 	var deletedRuleTypes []string
 	var remainingRuleTypes []string
+	var ruleTypeToProfiles = make(map[string][]string)
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
 			Context: &minderv1.Context{Project: &project},
@@ -109,11 +126,35 @@ func deleteRuleTypes(
 		})
 		if err != nil {
 			remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
+
+			errMsg := err.Error()
+			if strings.Contains(strings.ToLower(errMsg), "used by profiles") {
+				profiles := extractProfiles(errMsg)
+				if len(profiles) > 0 {
+					ruleTypeToProfiles[ruleType.GetName()] = profiles
+				}
+			}
+
 			continue
 		}
 		deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
 	}
-	return deletedRuleTypes, remainingRuleTypes
+	return deletedRuleTypes, remainingRuleTypes, ruleTypeToProfiles
+}
+
+func extractProfiles(errMsg string) []string {
+	errMsg = strings.ToLower(errMsg)
+
+	idx := strings.Index(errMsg, "used by profiles ")
+	if idx == -1 {
+		return nil
+	}
+
+	profilesPart := errMsg[idx+len("used by profiles "):]
+	profilesPart = strings.TrimSpace(profilesPart)
+	profilesPart = strings.TrimSuffix(profilesPart, ".")
+
+	return strings.Split(profilesPart, ", ")
 }
 
 func init() {
