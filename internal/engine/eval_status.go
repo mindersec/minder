@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
@@ -99,13 +100,13 @@ func (e *executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
+	status := dbadapter.ErrorAsEvalStatus(params.GetEvalErr())
 	e.metrics.CountEvalStatus(ctx, status, params.EntityType)
 
-	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
+	remediationStatus := dbadapter.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
 	e.metrics.CountRemediationStatus(ctx, remediationStatus)
 
-	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
+	alertStatus := dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
 	e.metrics.CountAlertStatus(ctx, alertStatus)
 
 	chckpoint := params.GetIngestResult().GetCheckpoint()

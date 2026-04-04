@@ -15,10 +15,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	propertiessvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
-	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -91,8 +91,8 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	output any,
 ) (uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
-	status := evalerrors.ErrorAsEvalStatus(evalError)
-	details := evalerrors.ErrorAsEvalDetails(evalError)
+	status := dbadapter.ErrorAsEvalStatus(evalError)
+	details := dbadapter.ErrorAsEvalDetails(evalError)
 
 	params := paramsFromEntity(ruleID, entityID)
 

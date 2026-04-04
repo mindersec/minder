@@ -17,6 +17,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
@@ -367,7 +368,7 @@ func (alert *Alert) getParamsForSecurityAdvisory(
 	}
 	result.Summary = summaryStr.String()
 
-	result.Template.EvaluationError = enginerr.ErrorAsEvalDetails(params.GetEvalErr())
+	result.Template.EvaluationError = dbadapter.ErrorAsEvalDetails(params.GetEvalErr())
 
 	var descriptionStr strings.Builder
 	// Get the description template depending if remediation is available
@@ -402,7 +403,7 @@ func (*Alert) runDoNothing(ctx context.Context, params *paramsSA) (json.RawMessa
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous alert status.
-	err := enginerr.AlertStatusAsError(params.prevStatus)
+	err := dbadapter.AlertStatusAsError(params.prevStatus)
 	// If there is a valid alert metadata, return it too
 	if params.prevStatus != nil {
 		return params.prevStatus.AlertMetadata, err

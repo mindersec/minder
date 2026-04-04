@@ -23,6 +23,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/util"
@@ -577,7 +578,7 @@ func (*Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessa
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous remediation status.
-	err := enginerr.RemediationStatusAsError(p.prevStatus)
+	err := dbadapter.RemediationStatusAsError(p.prevStatus)
 	// If there is a valid remediation metadata, return it too
 	if p.prevStatus != nil {
 		return p.prevStatus.RemMetadata, err
