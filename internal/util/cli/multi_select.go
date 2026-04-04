@@ -133,7 +133,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
-			// use absolute index to update the item
+			// use absolute index to update item
 			cmd := m.list.SetItem(absoluteIdx, item{
 				title:   oldItem.title,
 				checked: !oldItem.checked,
