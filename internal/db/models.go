@@ -540,6 +540,12 @@ type EntityProfile struct {
 	Migrated        bool            `json:"migrated"`
 }
 
+type EvaluationOutput struct {
+	ID     uuid.UUID             `json:"id"`
+	Output pqtype.NullRawMessage `json:"output"`
+	Debug  sql.NullString        `json:"debug"`
+}
+
 type EvaluationRuleEntity struct {
 	ID               uuid.UUID `json:"id"`
 	RuleID           uuid.UUID `json:"rule_id"`

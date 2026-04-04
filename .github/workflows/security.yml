@@ -11,6 +11,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Make results directory
+        run: mkdir -p ../results
+
       - name: Code Security Scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
@@ -19,21 +22,40 @@ jobs:
           trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
+          trivyignores: .trivyignore.yaml
+          format: sarif
+          output: code-results.sarif
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: code-results.sarif
+          category: code-scan
+  
       - name: Helm Security Scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         if: always()
         with:
+          skip-setup-trivy: true
           scan-type: 'config'
           trivy-config: .trivy.yml
           exit-code: 1
           ignore-unfixed: true
           scan-ref: ./deployment/helm
+          format: sarif
+          output: helm-results.sarif
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db,public.ecr.aws/aquasecurity/trivy-db
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: helm-results.sarif
+          category: infra-scan
+      
