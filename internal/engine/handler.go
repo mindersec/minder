@@ -130,11 +130,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		}
 
 		ctx := msgCtx
-		var cancel context.CancelFunc = func() {}
-
-		if _, ok := msgCtx.Deadline(); !ok {
-			ctx, cancel = context.WithTimeout(msgCtx, e.executionTimeout)
-		}
+		cancel := func() {}
 		defer cancel()
 		defer func() {
 			e.lock.Lock()
