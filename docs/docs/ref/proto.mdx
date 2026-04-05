@@ -2752,23 +2752,9 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the alert. * 'security_advisory' can only be used with the 'repository' entity type. * 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the alert. * 'security_advisory' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
-| commit_status | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeCommitStatus">RuleType.Definition.Alert.AlertTypeCommitStatus</TypeLink> | optional |  |
-
-
-
-<Message id="minder-v1-RuleType-Definition-Alert-AlertTypeCommitStatus">RuleType.Definition.Alert.AlertTypeCommitStatus</Message>
-
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| status_name | <TypeLink type="string">string</TypeLink> |  | status_name is the name of the commit status check. |
-| description | <TypeLink type="string">string</TypeLink> |  | description is the description of the commit status check, which can be Go templated. |
-| target_url | <TypeLink type="string">string</TypeLink> |  | target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template. |
 
 
 
@@ -2779,7 +2765,8 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| review_message | <TypeLink type="string">string</TypeLink> |  |  |
+| review_message | <TypeLink type="string">string</TypeLink> |  | review_message is the message to post in the PR review. |
+| review_event | <TypeLink type="string">string</TypeLink> | optional | review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES). Default is COMMENT. |
 
 
 

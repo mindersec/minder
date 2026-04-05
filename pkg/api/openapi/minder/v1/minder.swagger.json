@@ -3443,28 +3443,16 @@
     }
   },
   "definitions": {
-    "AlertAlertTypeCommitStatus": {
-      "type": "object",
-      "properties": {
-        "statusName": {
-          "type": "string",
-          "description": "status_name is the name of the commit status check."
-        },
-        "description": {
-          "type": "string",
-          "description": "description is the description of the commit status check, which can be Go templated."
-        },
-        "targetUrl": {
-          "type": "string",
-          "description": "target_url is the URL to set as the target_url in the commit status. It can be an RFC6570 template."
-        }
-      }
-    },
     "AlertAlertTypePRComment": {
       "type": "object",
       "properties": {
         "reviewMessage": {
-          "type": "string"
+          "type": "string",
+          "description": "review_message is the message to post in the PR review."
+        },
+        "reviewEvent": {
+          "type": "string",
+          "description": "review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES).\nDefault is COMMENT."
         }
       },
       "required": [
@@ -3498,16 +3486,13 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the alert.\n* 'security_advisory' can only be used with the 'repository' entity type.\n* 'pull_request_comment' and 'commit_status' can only be used with the 'pull_request' entity type."
+          "description": "type is the type of the alert.\n* 'security_advisory' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
-        },
-        "commitStatus": {
-          "$ref": "#/definitions/AlertAlertTypeCommitStatus"
         }
       }
     },
