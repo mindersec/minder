@@ -127,7 +127,9 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
-			// TODO: extract Provider name from ProviderID?
+			Provider: engcontext.Provider{
+				Name: inf.ProviderID.String(), // fallback until provider lookup is available
+			},
 		})
 
 		ts := minderlogger.BusinessRecord(ctx)
