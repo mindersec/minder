@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 func TestBuiltInWorks(t *testing.T) {

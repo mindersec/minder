@@ -145,7 +145,7 @@ func (e *Evaluator) Eval(
 	}
 
 	// Initialize the built-in minder library rego functions
-	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(ctx, e.featureFlags, res)...)
+	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
 
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)

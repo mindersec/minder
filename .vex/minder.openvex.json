@@ -1,0 +1,36 @@
+{
+    "@context": "https://openvex.dev/ns/v0.2.0",
+    "@id": "pkg:golang/github.com/mindersec/minder",
+    "author": "Evan Anderson",
+    "created": "2026-04-01T18:43:05Z",
+    "version": 1,
+    "statements": [
+        {
+            "vulnerability": {
+                "name": "CVE-2026-34040",
+                "description": "Moby has AuthZ plugin bypass when provided oversized request bodies.",
+                "aliases": [
+                    "GHSA-x744-4wpc-v9h2",
+                    "CVE-2026-34040"
+                ]
+            },
+            "status": "not_affected",
+            "justification": "vulnerable_code_not_in_execute_path",
+            "impact_statement": "Minder does not build or use Docker API Authz plugins.",
+            "products": [
+                {
+                    "@id": "pkg:golang/github.com/mindersec/minder",
+                    "identifiers": {
+                        "purl": "pkg:golang/github.com/mindersec/minder"
+                    }
+                },
+                {
+                    "@id": "pkg:golang/github.com/mindersec/minder/tools",
+                    "identifiers": {
+                        "purl": "pkg:golang/github.com/mindersec/minder/tools"
+                    }
+                }
+            ]
+        }
+    ]
+}
