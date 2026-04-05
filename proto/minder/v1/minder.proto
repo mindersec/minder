@@ -2800,9 +2800,13 @@ message RuleType {
         ];
 
         message Remediate {
+            // type is the type of the remediation.
+            // * 'rest' can be used with any entity type.
+            // * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.
+            // * 'pull_request_comment' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["rest", "gh_branch_protection", "pull_request"],
+                    in: ["rest", "gh_branch_protection", "pull_request", "pull_request_comment"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
@@ -2905,10 +2909,14 @@ message RuleType {
             optional RestType rest = 2;
             optional GhBranchProtectionType gh_branch_protection = 3;
             optional PullRequestRemediation pull_request = 4;
+            optional Alert.AlertTypePRComment pull_request_comment = 5;
         }
         Remediate remediate = 6;
 
         message Alert {
+            // type is the type of the alert.
+            // * 'security_advisory' can only be used with the 'repository' entity type.
+            // * 'pull_request_comment' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
                     in: ["security_advisory", "pull_request_comment"],
@@ -2927,11 +2935,20 @@ message RuleType {
             optional AlertTypeSA security_advisory = 2;
 
             message AlertTypePRComment {
+                // review_message is the message to post in the PR review.
                 string review_message = 1 [
                     (buf.validate.field).string = {
                         max_len: 65536,
                     },
                     (google.api.field_behavior) = REQUIRED
+                ];
+                // review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES).
+                // Default is COMMENT.
+                optional string review_event = 2 [
+                    (buf.validate.field).string = {
+                        in: ["COMMENT", "REQUEST_CHANGES"],
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
                 ];
             }
             optional AlertTypePRComment pull_request_comment = 3;

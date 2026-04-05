@@ -153,6 +153,50 @@ type ArtifactProvider interface {
 		filter GetArtifactVersionsFilter) ([]*minderv1.ArtifactVersion, error)
 }
 
+// CommitStatusState represents the state of a commit status check
+type CommitStatusState string
+
+const (
+	// CommitStatusSuccess marks a commit status as success
+	CommitStatusSuccess CommitStatusState = "success"
+	// CommitStatusFailure marks a commit status as failure
+	CommitStatusFailure CommitStatusState = "failure"
+	// CommitStatusError marks a commit status as error
+	CommitStatusError CommitStatusState = "error"
+	// CommitStatusPending marks a commit status as pending
+	CommitStatusPending CommitStatusState = "pending"
+)
+
+// CommitStatusPublisher is the interface for providers that can publish commit statuses
+type CommitStatusPublisher interface {
+	Provider
+	// SetCommitStatus creates or updates a commit status.
+	//
+	// This mirrors the GitHub API, and should be common across other Git
+	// providers.
+	SetCommitStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, error)
+}
+
+// ReviewPublisher is the interface for providers that can publish PR reviews
+type ReviewPublisher interface {
+	Provider
+	// CreateReview creates a review on the given pull request
+	CreateReview(
+		ctx context.Context, owner, repo string, prNumber int, req *github.PullRequestReviewRequest,
+	) (*github.PullRequestReview, error)
+	// UpdateReview updates an existing review on the given pull request
+	UpdateReview(
+		ctx context.Context, owner, repo string, prNumber int, reviewID int64, body string,
+	) (*github.PullRequestReview, error)
+	// ListReviews lists reviews on the given pull request
+	ListReviews(ctx context.Context, owner, repo string, prNumber int, opt *github.ListOptions) ([]*github.PullRequestReview, error)
+	// DismissReview dismisses an existing review on the given pull request
+	DismissReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64,
+		req *github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
+	// GetPullRequest gets a pull request
+	GetPullRequest(ctx context.Context, owner, repo string, prNumber int) (*github.PullRequest, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
