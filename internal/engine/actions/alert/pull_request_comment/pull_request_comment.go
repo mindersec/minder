@@ -197,9 +197,11 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 		}
 
 		reviewID := existingReview.GetID()
-		if _, err := alert.gh.DismissReview(ctx, params.Owner, params.Repo, params.Number, reviewID, &github.PullRequestReviewDismissalRequest{
-			Message: github.String("Dismissed due to alert being turned off"),
-		}); err != nil {
+		if _, err := alert.gh.DismissReview(
+			ctx, params.Owner, params.Repo, params.Number, reviewID, &github.PullRequestReviewDismissalRequest{
+				Message: github.String("Dismissed due to alert being turned off"),
+			},
+		); err != nil {
 			if errors.Is(err, enginerr.ErrNotFound) {
 				return nil, fmt.Errorf("PR review already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
 			}
