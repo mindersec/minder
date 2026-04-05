@@ -498,7 +498,7 @@ func TestProfileLabels(t *testing.T) {
 }
 
 func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 
 	tests := []struct {
 		name                      string
@@ -633,7 +633,7 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			// t.Parallel()
 
 			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 			ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
