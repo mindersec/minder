@@ -37,6 +37,7 @@ type ExecutorEventHandler struct {
 	handlerMiddleware      []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
 	executor               Executor
+	executionTimeout       time.Duration
 	// cancels are a set of cancel functions for current entity events in flight.
 	// This allows us to cancel rule evaluation directly when terminationContext
 	// is cancelled.
@@ -50,13 +51,21 @@ func NewExecutorEventHandler(
 	evt interfaces.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
 	executor Executor,
+	executionTimeout time.Duration,
 ) *ExecutorEventHandler {
+	if executionTimeout <= 0 {
+		executionTimeout = DefaultExecutionTimeout
+	}
 	eh := &ExecutorEventHandler{
 		evt:                    evt,
 		wgEntityEventExecution: &sync.WaitGroup{},
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
+		executionTimeout:       executionTimeout,
 	}
+	zerolog.Ctx(ctx).Info().
+		Dur("execution_timeout", executionTimeout).
+		Msg("executor event handler initialized")
 	go func() {
 		<-ctx.Done()
 		eh.lock.Lock()
@@ -78,6 +87,11 @@ func (e *ExecutorEventHandler) Register(r interfaces.Registrar) {
 // Wait waits for all the entity executions to finish.
 func (e *ExecutorEventHandler) Wait() {
 	e.wgEntityEventExecution.Wait()
+}
+
+// ExecutionTimeout returns the configured execution timeout for the handler.
+func (e *ExecutorEventHandler) ExecutionTimeout() time.Duration {
+	return e.executionTimeout
 }
 
 // HandleEntityEvent handles events coming from webhooks/signals
@@ -115,7 +129,8 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
+		ctx := msgCtx
+		cancel := func() {}
 		defer cancel()
 		defer func() {
 			e.lock.Lock()

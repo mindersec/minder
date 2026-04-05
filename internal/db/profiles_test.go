@@ -497,8 +497,8 @@ func TestProfileLabels(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest // DB test uses shared state, cannot run in parallel
 func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name                      string
@@ -631,9 +631,10 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
+		tt := tt // capture range variable
 
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			//nolint:paralleltest // DB test, must not run in parallel
 
 			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 			ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)
