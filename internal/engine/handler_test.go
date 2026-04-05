@@ -83,6 +83,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
 	)
 
 	t.Log("waiting for eventer to start")
@@ -113,4 +114,36 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	t.Log("waiting for executor to finish")
 	handler.Wait()
+}
+
+func TestExecutorEventHandler_CustomTimeout(t *testing.T) {
+	t.Parallel()
+
+	handler := engine.NewExecutorEventHandler(
+		context.Background(),
+		nil,
+		nil,
+		nil,
+		10*time.Second,
+	)
+
+	if handler.ExecutionTimeout() != 10*time.Second {
+		t.Fatalf("expected 10s, got %v", handler.ExecutionTimeout())
+	}
+}
+
+func TestExecutorEventHandler_DefaultTimeoutFallback(t *testing.T) {
+	t.Parallel()
+
+	handler := engine.NewExecutorEventHandler(
+		context.Background(),
+		nil,
+		nil,
+		nil,
+		0,
+	)
+
+	if handler.ExecutionTimeout() != engine.DefaultExecutionTimeout {
+		t.Fatalf("expected default timeout, got %v", handler.ExecutionTimeout())
+	}
 }
