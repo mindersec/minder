@@ -129,7 +129,12 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
+		ctx := msgCtx
+		var cancel context.CancelFunc = func() {}
+
+		if _, ok := msgCtx.Deadline(); !ok {
+			ctx, cancel = context.WithTimeout(msgCtx, e.executionTimeout)
+		}
 		defer cancel()
 		defer func() {
 			e.lock.Lock()
