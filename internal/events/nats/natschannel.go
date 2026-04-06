@@ -207,13 +207,8 @@ func sendEvent(
 	event.SetType(eventType)
 	event.SetSource("minder") // The system which generated the event.  The Minder URL would be nice here.
 	subject := ""
+
 	if val, ok := msg.Metadata["entity_id"]; ok && val != "" {
-		subject = val
-	} else if val, ok := msg.Metadata["repository_id"]; ok && val != "" {
-		subject = val
-	} else if val, ok := msg.Metadata["artifact_id"]; ok && val != "" {
-		subject = val
-	} else if val, ok := msg.Metadata["project_id"]; ok && val != "" {
 		subject = val
 	} else {
 		subject = "minder"
