@@ -497,7 +497,7 @@ func TestProfileLabels(t *testing.T) {
 	}
 }
 
-//nolint:paralleltest // DB test uses shared state, cannot run in parallel
+//nolint:paralleltest,tparallel // top-level parallel causes interference with other tests (gomock/shared state)
 func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 
 	tests := []struct {
@@ -631,10 +631,9 @@ func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
 	randomEntities := createTestRandomEntities(t)
 
 	for _, tt := range tests {
-		tt := tt // capture range variable
 
 		t.Run(tt.name, func(t *testing.T) {
-			//nolint:paralleltest // DB test, must not run in parallel
+			t.Parallel()
 
 			profile := createRandomProfile(t, randomEntities.proj.ID, []string{})
 			ruleID := createRuleInstance(t, profile.ID, randomEntities.ruleType1.ID, profile.ProjectID)

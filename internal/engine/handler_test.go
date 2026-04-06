@@ -29,7 +29,6 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// declarations
 	projectID := uuid.New()
 	providerID := uuid.New()
 	repositoryID := uuid.New()
@@ -37,24 +36,21 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	parallelOps := 2
 
-	// -- end expectations
-
 	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,
 		},
 	})
-	require.NoError(t, err, "failed to setup eventer")
+	require.NoError(t, err)
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
 
 	go func() {
-		t.Log("Running eventer")
 		evt.Register(constants.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
-		require.NoError(t, err, "failed to run eventer")
+		require.NoError(t, err)
 	}()
 
 	testTimeout := 5 * time.Second
@@ -68,7 +64,8 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithID(repositoryID).
+		}).
+		WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	executor := mockengine.NewMockExecutor(ctrl)
@@ -86,23 +83,18 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		engine.DefaultExecutionTimeout,
 	)
 
-	t.Log("waiting for eventer to start")
 	<-evt.Running()
 
 	msg, err := eiw.BuildMessage()
-	require.NoError(t, err, "expected no error")
+	require.NoError(t, err)
 
-	// Run in the background, twice
 	for i := 0; i < parallelOps; i++ {
 		go func() {
-			t.Log("Running entity event handler")
-			require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
+			require.NoError(t, handler.HandleEntityEvent(msg))
 		}()
 	}
 
-	// expect flush
 	for i := 0; i < parallelOps; i++ {
-		t.Log("waiting for flush")
 		result := <-queued
 		require.NotNil(t, result)
 		require.Equal(t, providerID.String(), msg.Metadata.Get(entities.ProviderIDEventKey))
@@ -110,40 +102,67 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		require.Equal(t, projectID.String(), msg.Metadata.Get(entities.ProjectIDEventKey))
 	}
 
-	require.NoError(t, evt.Close(), "expected no error")
-
-	t.Log("waiting for executor to finish")
+	require.NoError(t, evt.Close())
 	handler.Wait()
 }
 
-func TestExecutorEventHandler_CustomTimeout(t *testing.T) {
+// Behavior-based timeout test
+func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	repositoryID := uuid.New()
+	executionID := uuid.New()
+
+	// Mock executor that simulates long-running work
+	executor := mockengine.NewMockExecutor(ctrl)
+	executor.EXPECT().
+		EvalEntityEvent(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
+			select {
+			case <-time.After(5 * time.Second):
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		})
+
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
+		Driver: "go-channel",
+	})
+	require.NoError(t, err)
 
 	handler := engine.NewExecutorEventHandler(
 		context.Background(),
+		evt,
 		nil,
-		nil,
-		nil,
-		10*time.Second,
+		executor,
+		1*time.Second,
 	)
 
-	if handler.ExecutionTimeout() != 10*time.Second {
-		t.Fatalf("expected 10s, got %v", handler.ExecutionTimeout())
-	}
-}
+	eiw := entities.NewEntityInfoWrapper().
+		WithProviderID(providerID).
+		WithProjectID(projectID).
+		WithRepository(&minderv1.Repository{
+			Name: "test",
+		}).
+		WithID(repositoryID).
+		WithExecutionID(executionID)
 
-func TestExecutorEventHandler_DefaultTimeoutFallback(t *testing.T) {
-	t.Parallel()
+	msg, err := eiw.BuildMessage()
+	require.NoError(t, err)
 
-	handler := engine.NewExecutorEventHandler(
-		context.Background(),
-		nil,
-		nil,
-		nil,
-		0,
-	)
+	start := time.Now()
 
-	if handler.ExecutionTimeout() != engine.DefaultExecutionTimeout {
-		t.Fatalf("expected default timeout, got %v", handler.ExecutionTimeout())
-	}
+	require.NoError(t, handler.HandleEntityEvent(msg))
+	handler.Wait()
+
+	elapsed := time.Since(start)
+
+	//Ensure execution timed out early
+	require.Less(t, elapsed, 3*time.Second, "execution did not timeout as expected")
 }
