@@ -12,14 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	dbadapter "github.com/mindersec/minder/internal/adapters/db"
-=======
->>>>>>> 0cbed8ad3 (Move internal/engine/errors to pkg/engine/errors to reduce coupling (#6252))
-=======
-	dbadapter "github.com/mindersec/minder/internal/adapters/db"
->>>>>>> 63a6a8e5f (Decouple pkg/engine/errors from internal/db using adapter layer (#6266))
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util/ptr"
