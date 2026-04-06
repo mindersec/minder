@@ -7,7 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -16,6 +15,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -98,7 +98,10 @@ func (s *Server) GetEvaluationHistory(
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluation output")
 		} else if err == nil {
-			pbEval.Status.Output = rawJSONToProtobufValue(ctx, output.Output.RawMessage)
+			pbEval.Status.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(output.Output.RawMessage, pbEval.Status.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+			}
 		}
 	}
 
@@ -768,26 +771,4 @@ func dbSeverityToSeverity(dbSev db.Severity) (*minderv1.Severity, error) {
 	}
 
 	return severity, nil
-}
-
-// rawJSONToProtobufValue converts a JSON raw message to a protobuf Value.
-// Returns nil if the input is nil or empty.
-func rawJSONToProtobufValue(ctx context.Context, jsonData json.RawMessage) *structpb.Value {
-	if len(jsonData) == 0 {
-		return nil
-	}
-
-	var raw any
-	if err := json.Unmarshal(jsonData, &raw); err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to unmarshal output JSON")
-		return nil
-	}
-
-	pbVal, err := structpb.NewValue(raw)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert output to protobuf Value")
-		return nil
-	}
-
-	return pbVal
 }
