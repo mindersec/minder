@@ -6,7 +6,6 @@ package ruletype
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -15,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
@@ -71,7 +72,7 @@ func TestDeleteCommand(t *testing.T) {
 					Return(mockResp, nil)
 
 				// command loops through and deletes each one
-				// since fixture has 3 rules,we expect 3 calls
+				// since fixture has 3 rules, we expect 3 calls
 				client.EXPECT().
 					DeleteRuleType(gomock.Any(), gomock.Any()).
 					Return(&minderv1.DeleteRuleTypeResponse{}, nil).
@@ -93,10 +94,10 @@ func TestDeleteCommand(t *testing.T) {
 						RuleType: mockResp.RuleTypes[1],
 					}, nil)
 
-				// simulate a failure (rule is in use)
+				// simulate a failure (rule is in use) using the exact regex pattern the CLI expects
 				client.EXPECT().
 					DeleteRuleType(gomock.Any(), gomock.Any()).
-					Return(nil, fmt.Errorf("referenced by profile"))
+					Return(nil, status.Error(codes.FailedPrecondition, "cannot delete: used by profiles my-security-profile"))
 			},
 			goldenFileName: "delete_partial_failure.txt",
 		},
