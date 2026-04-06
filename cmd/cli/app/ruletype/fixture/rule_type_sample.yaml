@@ -8,7 +8,7 @@ context:
   project: 00000000-0000-0000-0000-000000000000
 description: 'Ensures that branch protection requires at least two approved reviews.'
 displayName: 'Require Branch Protection Reviews'
-releasePhase: RULE_TYPE_RELEASE_PHASE_BETA
+releasePhase: beta
 severity:
   value: high
 guidance: |

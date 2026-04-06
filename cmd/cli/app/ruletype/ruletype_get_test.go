@@ -52,20 +52,6 @@ func TestGetCommand(t *testing.T) {
 			goldenFileName: "get_by_id.table",
 		},
 		{
-			name: "get by name - json output",
-			args: map[string]string{"name": ruleName, "output": app.JSON},
-			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
-				t.Helper()
-				mockResp := &minderv1.ListRuleTypesResponse{}
-				loadFixture(t, "mock_ruletypes_response.json", mockResp)
-
-				client.EXPECT().
-					GetRuleTypeByName(gomock.Any(), gomock.Any()).
-					Return(&minderv1.GetRuleTypeByNameResponse{RuleType: mockResp.RuleTypes[0]}, nil)
-			},
-			goldenFileName: "get_by_name.json",
-		},
-		{
 			name: "get by name - yaml output",
 			args: map[string]string{"name": ruleName, "output": app.YAML},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {

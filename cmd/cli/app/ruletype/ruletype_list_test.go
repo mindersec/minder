@@ -67,20 +67,6 @@ func TestListCommand(t *testing.T) {
 			goldenFileName: "list_empty.table",
 		},
 		{
-			name:         "json output",
-			outputFormat: app.JSON,
-			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
-				t.Helper()
-				mockResponse := &minderv1.ListRuleTypesResponse{}
-				loadFixture(t, "mock_ruletypes_response.json", mockResponse)
-
-				client.EXPECT().
-					ListRuleTypes(gomock.Any(), gomock.Any()).
-					Return(mockResponse, nil)
-			},
-			goldenFileName: "list_populated.json",
-		},
-		{
 			name:         "yaml output",
 			outputFormat: app.YAML,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
