@@ -29,13 +29,11 @@ import (
 )
 
 // RuleActionsEngine is responsible for executing remediation and alert actions
-// based on rule evaluation results.
 type RuleActionsEngine struct {
 	actions map[engif.ActionType]engif.Action
 }
 
-// NewRuleActions creates a new RuleActionsEngine with configured remediation
-// and alert action handlers.
+// NewRuleActions creates a new RuleActionsEngine
 func NewRuleActions(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
@@ -61,8 +59,7 @@ func NewRuleActions(
 	}, nil
 }
 
-// DoActions executes remediation and alert actions based on evaluation results
-// and returns the outcome of those actions.
+// DoActions executes remediation and alert actions
 func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
@@ -124,6 +121,7 @@ func (rae *RuleActionsEngine) DoActions(
 	return result
 }
 
+// processAction safely executes an action
 func (rae *RuleActionsEngine) processAction(
 	ctx context.Context,
 	actionType engif.ActionType,
@@ -131,7 +129,7 @@ func (rae *RuleActionsEngine) processAction(
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
-) (jmsg json.RawMessage, finalErr error) {
+) (json.RawMessage, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -139,53 +137,54 @@ func (rae *RuleActionsEngine) processAction(
 				Interface("recovered", r).
 				Bytes("stack", debug.Stack()).
 				Msg("panic in action execution")
-			finalErr = enginerr.ErrInternal
 		}
 	}()
-
-	zerolog.Ctx(ctx).Debug().
-		Str("action", string(actionType)).
-		Str("cmd", string(cmd)).
-		Msg("invoking action")
 
 	action := rae.actions[actionType]
 	return action.Do(ctx, cmd, ent, params, metadata)
 }
 
-// ✅ FIXED (uses adapter + enum comparisons)
-func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
+// shouldRemediate returns the action command for remediation,
+// taking into account the current evaluation result and the
+// previous remediation state.
+func shouldRemediate(prev *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
 
 	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
 
+	// Default to skipped if no previous evaluation exists
 	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb != nil {
-		prevRemediation = prevEvalFromDb.RemStatus
+	if prev != nil {
+		prevRemediation = prev.RemStatus
 	}
 
-	if newEval == db.EvalStatusTypesSuccess {
+	switch newEval {
+	case db.EvalStatusTypesError:
+		return engif.ActionCmdDoNothing
+
+	case db.EvalStatusTypesSuccess:
 		if prevRemediation != db.RemediationStatusTypesSkipped {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
-	}
 
-	if newEval == db.EvalStatusTypesError {
-		return engif.ActionCmdDoNothing
-	}
-
-	if newEval == db.EvalStatusTypesFailure {
+	case db.EvalStatusTypesFailure:
 		if prevRemediation == db.RemediationStatusTypesSkipped {
 			return engif.ActionCmdOn
 		}
+		return engif.ActionCmdDoNothing
+
+	case db.EvalStatusTypesSkipped, db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
 	}
 
 	return engif.ActionCmdDoNothing
 }
 
-// ✅ FIXED
+// shouldAlert returns the action command for alerting,
+// based on the current evaluation result, previous alert state,
+// and remediation outcome.
 func shouldAlert(
-	prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow,
+	prev *db.ListRuleEvaluationsByProfileIdRow,
 	evalErr error,
 	remErr error,
 	remType string,
@@ -193,9 +192,10 @@ func shouldAlert(
 
 	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
 
+	// Default to skipped if no previous evaluation exists
 	prevAlert := db.AlertStatusTypesSkipped
-	if prevEvalFromDb != nil {
-		prevAlert = prevEvalFromDb.AlertStatus
+	if prev != nil {
+		prevAlert = prev.AlertStatus
 	}
 
 	if remType != pull_request.RemediateType && remErr == nil {
@@ -205,28 +205,30 @@ func shouldAlert(
 		return engif.ActionCmdDoNothing
 	}
 
-	if newEval == db.EvalStatusTypesError {
+	switch newEval {
+	case db.EvalStatusTypesError:
 		return engif.ActionCmdDoNothing
-	}
 
-	if newEval == db.EvalStatusTypesFailure {
+	case db.EvalStatusTypesFailure:
 		if prevAlert != db.AlertStatusTypesOn {
 			return engif.ActionCmdOn
 		}
 		return engif.ActionCmdDoNothing
-	}
 
-	if newEval == db.EvalStatusTypesSuccess {
+	case db.EvalStatusTypesSuccess:
 		if prevAlert != db.AlertStatusTypesOff {
 			return engif.ActionCmdOff
 		}
+		return engif.ActionCmdDoNothing
+
+	case db.EvalStatusTypesSkipped, db.EvalStatusTypesPending:
 		return engif.ActionCmdDoNothing
 	}
 
 	return engif.ActionCmdDoNothing
 }
 
-// ✅ FIXED
+// isSkippable checks if action should be skipped
 func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
 
 	logger := zerolog.Ctx(ctx).Info().
@@ -241,10 +243,8 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 
 	switch action.GetOnOffState() {
 	case models.ActionOptOff:
-		logger.Msg("action is off, skipping")
 		return true
 	case models.ActionOptUnknown:
-		logger.Msg("unknown action option, skipping")
 		return true
 	case models.ActionOptDryRun, models.ActionOptOn:
 		return errors.Is(evalErr, interfaces.ErrEvaluationSkipped) ||
@@ -254,27 +254,27 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	return false
 }
 
-func getRemediationMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil {
-		return &prevEvalFromDb.RemMetadata
+// helpers
+func getRemediationMeta(prev *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prev != nil {
+		return &prev.RemMetadata
 	}
 	return nil
 }
 
-func getAlertMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil {
-		return &prevEvalFromDb.AlertMetadata
+func getAlertMeta(prev *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
+	if prev != nil {
+		return &prev.AlertMetadata
 	}
 	return nil
 }
 
 func getDefaultResult(ctx context.Context) enginerr.ActionsError {
-
 	logger := zerolog.Ctx(ctx)
 
 	m, err := json.Marshal(&map[string]any{})
 	if err != nil {
-		logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
+		logger.Error().Err(err).Msg("error marshaling empty json")
 	}
 
 	return enginerr.ActionsError{
