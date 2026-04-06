@@ -34,10 +34,6 @@ var repoRegisterCmd = &cobra.Command{
 			return fmt.Errorf("cannot use --name and --all together")
 		}
 
-		if len(inputRepoList) == 0 && !registerAll {
-			return fmt.Errorf("must provide either --name or --all")
-		}
-
 		return nil
 	},
 
