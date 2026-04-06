@@ -19,8 +19,6 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-var getRuleTypeClient = minderv1.NewRuleTypeServiceClient
-
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List rule types",

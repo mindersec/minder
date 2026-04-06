@@ -1,0 +1,56 @@
+{
+  "ruleType":  {
+    "id":  "00000000-0000-0000-0000-000000000001",
+    "name":  "secret_push_protection",
+    "displayName":  "Enable secret push protection to avoid pushing hardcoded secrets",
+    "shortFailureMessage":  "Secret push protection is not enabled",
+    "context":  {
+      "provider":  "",
+      "project":  "00000000-0000-0000-0000-000000000000"
+    },
+    "def":  {
+      "inEntity":  "repository",
+      "ruleSchema":  {
+        "properties":  {
+          "skip_private_repos":  {
+            "default":  true,
+            "description":  "If true, this rule will be marked as skipped for private repositories\n",
+            "type":  "boolean"
+          }
+        }
+      },
+      "ingest":  {
+        "type":  "rest",
+        "rest":  {
+          "endpoint":  "/repos/{{.Entity.Owner}}/{{.Entity.Name}}",
+          "parse":  "json"
+        }
+      },
+      "eval":  {
+        "type":  "rego",
+        "rego":  {
+          "type":  "deny-by-default",
+          "def":  "package minder\n\nimport future.keywords.if\n\ndefault allow := false\ndefault skip := false\ndefault message := \"Secret push protection is disabled\"\n\nallow if {\n  input.ingested.security_and_analysis.secret_scanning_push_protection.status == \"enabled\"\n}\n\nskip if {\n  input.profile.skip_private_repos == true\n  input.ingested.private == true\n}\n"
+        }
+      },
+      "remediate":  {
+        "type":  "rest",
+        "rest":  {
+          "endpoint":  "/repos/{{.Entity.Owner}}/{{.Entity.Name}}",
+          "method":  "PATCH",
+          "body":  "{ \"security_and_analysis\": {\"secret_scanning_push_protection\": { \"status\": \"enabled\" } } }\n"
+        }
+      },
+      "alert":  {
+        "type":  "security_advisory",
+        "securityAdvisory":  {}
+      }
+    },
+    "description":  "Verifies that secret push protection is enabled for a given repository.\nNote that this will will not work as expected for private repositories\nunless you have GitHub Advanced Security enabled. If you still want to use\nthis rule because you have a mixture of private and public repositories,\nenable the `skip_private_repos` flag.\n",
+    "guidance":  "Ensure that secret scanning push protection is enabled for the\nrepository.\n\nYou can use secret scanning to prevent supported secrets from being\npushed into your repository by enabling secret scanning push\nprotection.\n\nFor more information, see [GitHub's\ndocumentation](https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations#enabling-secret-scanning-as-a-push-protection-for-a-repository).\n",
+    "severity":  {
+      "value":  "VALUE_HIGH"
+    },
+    "releasePhase":  "RULE_TYPE_RELEASE_PHASE_BETA"
+  }
+}

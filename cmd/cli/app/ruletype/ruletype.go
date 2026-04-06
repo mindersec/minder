@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 // ruleTypeCmd is the root command for the rule subcommands
@@ -19,6 +20,8 @@ var ruleTypeCmd = &cobra.Command{
 		return cmd.Usage()
 	},
 }
+
+var getRuleTypeClient = minderv1.NewRuleTypeServiceClient
 
 func init() {
 	app.RootCmd.AddCommand(ruleTypeCmd)
