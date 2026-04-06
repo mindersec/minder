@@ -1,0 +1,34 @@
+version: v1
+type: rule-type
+name: branch_protection_reviews
+context:
+  project: 00000000-0000-0000-0000-000000000000
+description: 'Ensures that branch protection requires at least two approved reviews.'
+guidance: |
+  To comply with this rule, you must enable branch protection on your main branch 
+  and set the 'Required approving reviews' count to 2 or higher.
+def:
+  in_entity: repository
+  rule_schema:
+    properties:
+      required_reviews:
+        type: integer
+        default: 2
+  ingest:
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/main/protection'
+      parse: 'json'
+  eval:
+    type: rego
+    rego:
+      type: 'deny-by-default'
+      def: |
+        package minder
+
+        default allow := false
+
+        allow {
+            # Check if the required review count meets our minimum
+            input.ingested.required_pull_request_reviews.required_approving_review_count >= input.profile.required_reviews
+        }
