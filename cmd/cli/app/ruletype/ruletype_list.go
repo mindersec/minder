@@ -19,6 +19,8 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+var getRuleTypeClient = minderv1.NewRuleTypeServiceClient
+
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List rule types",
@@ -28,7 +30,7 @@ var listCmd = &cobra.Command{
 
 // listCommand is the ruletype list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
+	client := getRuleTypeClient(conn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
