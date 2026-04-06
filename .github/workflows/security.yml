@@ -3,6 +3,11 @@
 
 on:
   workflow_call:
+
+permissions:
+  security-events: write
+  contents: read
+
 jobs:
   security-scan:
     runs-on: ubuntu-latest

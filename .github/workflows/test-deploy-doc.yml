@@ -7,6 +7,10 @@ on:
   pull_request:
     paths:
       - "docs/**"
+
+permissions:
+  contents: read
+
 jobs:
   test-deploy:
     name: Test doc deployment

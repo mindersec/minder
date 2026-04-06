@@ -6,6 +6,10 @@
 name: Compose Migrate test
 on:
   workflow_call:
+
+permissions:
+  contents: read
+
 jobs:
   docker:
     timeout-minutes: 10
