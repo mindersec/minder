@@ -31,8 +31,8 @@ const (
 	ArtifactSignatureWaitPeriod = 10 * time.Second
 )
 
-// ExecutorEventHandler is responsible for consuming entity events, passing
-// entities to the executor, and then publishing the results.
+// ExecutorEventHandler handles entity events, executes evaluations,
+// and publishes the results.
 type ExecutorEventHandler struct {
 	evt                    interfaces.Publisher
 	handlerMiddleware      []message.HandlerMiddleware
@@ -41,12 +41,12 @@ type ExecutorEventHandler struct {
 
 	executionTimeout time.Duration
 
-	// cancels are a set of cancel functions for current entity events in flight.
 	cancels []*context.CancelFunc
 	lock    sync.Mutex
 }
 
-// NewExecutorEventHandler creates the event handler for the executor
+// NewExecutorEventHandler creates a new ExecutorEventHandler with
+// configurable execution timeout.
 func NewExecutorEventHandler(
 	ctx context.Context,
 	evt interfaces.Publisher,
@@ -67,7 +67,6 @@ func NewExecutorEventHandler(
 		executionTimeout:       executionTimeout,
 	}
 
-	// Debug-level log (not noisy in production)
 	zerolog.Ctx(ctx).Debug().
 		Dur("execution_timeout", executionTimeout).
 		Msg("executor event handler initialized")
@@ -85,23 +84,30 @@ func NewExecutorEventHandler(
 	return eh
 }
 
-// Register implements the Consumer interface.
+// Register registers the handler for entity evaluation events.
 func (e *ExecutorEventHandler) Register(r interfaces.Registrar) {
 	r.Register(constants.TopicQueueEntityEvaluate, e.HandleEntityEvent, e.handlerMiddleware...)
 }
 
-// Wait waits for all the entity executions to finish.
+// Wait blocks until all entity event executions are complete.
 func (e *ExecutorEventHandler) Wait() {
 	e.wgEntityEventExecution.Wait()
 }
 
-// HandleEntityEvent handles events coming from webhooks/signals
-// as well as the init event.
+// HandleEntityEvent processes incoming entity events and triggers evaluation.
 func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
-	// Escape parent cancellation but still support shutdown cancellation
+	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
+	// completion, because the default watermill behavior for both Go channels and
+	// SQL is to process messages sequentially, but we need additional parallelism
+	// beyond that. When we switch to a different message processing system, we
+	// should aim to remove this goroutine altogether and have the messaging system
+	// provide the parallelism.
+	// We _do_ still want to cancel on shutdown, however.
 	msgCtx := context.WithoutCancel(msg.Context())
 
+	// This allows us to cancel rule evaluation directly when terminationContext
+	// is cancelled.
 	//nolint:gosec
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
@@ -109,7 +115,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
 
-	// Copy message to avoid shared memory issues
 	msg = msg.Copy()
 
 	inf, err := entities.ParseEntityEvent(msg)
@@ -126,7 +131,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
 
-		// ✅ FIX: Proper configurable timeout
+		// use configurable timeout
 		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
 
@@ -141,7 +146,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
 			Provider: engcontext.Provider{
-				Name: inf.ProviderID.String(),
+				Name: inf.ProviderID.String(), // unchanged
 			},
 		})
 
@@ -164,6 +169,11 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			logMsg = logger.Error()
 		}
 		ts.Record(logMsg).Send()
+
+		// record telemetry regardless of error. We explicitly record telemetry
+		// here even though we also record it in the middleware because the evaluation
+		// is done in a separate goroutine which usually still runs after the middleware
+		// had already recorded the telemetry.
 
 		if err != nil {
 			logger.Info().
