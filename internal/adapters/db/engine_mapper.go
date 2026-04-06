@@ -1,5 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
+
+// Package dbadapter provides adapter utilities for converting database models
+// into engine domain types.
 package dbadapter
 
 import (
