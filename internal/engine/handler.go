@@ -13,7 +13,6 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	minderlogger "github.com/mindersec/minder/internal/logger"
@@ -38,7 +37,6 @@ type ExecutorEventHandler struct {
 	executor               Executor
 
 	executionTimeout time.Duration
-	store            db.Store
 
 	cancels []*context.CancelFunc
 	lock    sync.Mutex
@@ -51,7 +49,6 @@ func NewExecutorEventHandler(
 	handlerMiddleware []message.HandlerMiddleware,
 	executor Executor,
 	executionTimeout time.Duration,
-	store db.Store,
 ) *ExecutorEventHandler {
 
 	if executionTimeout <= 0 {
@@ -64,7 +61,6 @@ func NewExecutorEventHandler(
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
 		executionTimeout:       executionTimeout,
-		store:                  store,
 	}
 
 	zerolog.Ctx(ctx).Debug().
@@ -96,9 +92,20 @@ func (e *ExecutorEventHandler) Wait() {
 
 // HandleEntityEvent processes incoming entity events.
 func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
+
+	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
+	// completion, because the default watermill behavior for both Go channels and
+	// SQL is to process messages sequentially, but we need additional parallelism
+	// beyond that. When we switch to a different message processing system, we
+	// should aim to remove this goroutine altogether and have the messaging system
+	// provide the parallelism.
+	// We _do_ still want to cancel on shutdown, however.
 	msgCtx := context.WithoutCancel(msg.Context())
 
-	msgCtx, shutdownCancel := context.WithCancel(msgCtx) //nolint:gosec
+	// This allows us to cancel rule evaluation directly when terminationContext
+	// is cancelled.
+	//nolint:gosec
+	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
 	e.lock.Lock()
 	e.cancels = append(e.cancels, &shutdownCancel)
@@ -131,22 +138,10 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			e.lock.Unlock()
 		}()
 
-		providerName := ""
-
-		provider, err := e.store.GetProviderByID(ctx, inf.ProviderID)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().
-				Err(err).
-				Str("provider_id", inf.ProviderID.String()).
-				Msg("failed to resolve provider name")
-		} else if provider.Name != "" {
-			providerName = provider.Name
-		}
-
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
 			Provider: engcontext.Provider{
-				Name: providerName,
+				Name: inf.ProviderID.String(),
 			},
 		})
 
@@ -162,13 +157,18 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			return
 		}
 
-		err = e.executor.EvalEntityEvent(ctx, inf)
+		err := e.executor.EvalEntityEvent(ctx, inf)
 
 		logMsg := logger.Info()
 		if err != nil {
 			logMsg = logger.Error()
 		}
 		ts.Record(logMsg).Send()
+
+		// record telemetry regardless of error. We explicitly record telemetry
+		// here even though we also record it in the middleware because the evaluation
+		// is done in a separate goroutine which usually still runs after the middleware
+		// had already recorded the telemetry.
 
 		if err != nil {
 			logger.Info().
