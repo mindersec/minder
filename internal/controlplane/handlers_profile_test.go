@@ -1054,10 +1054,6 @@ func TestPatchProfile(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error getting profile: %v", err)
 			}
-
-			if err != nil {
-				t.Fatalf("Error getting profile: %v", err)
-			}
 			if tc.result.GetProfile().GetId() == "" {
 				tc.result.GetProfile().Id = proto.String(profile.ID.String())
 			}
