@@ -26,6 +26,9 @@ type EventConfig struct {
 	Aggregator AggregatorConfig `mapstructure:"aggregator"`
 	// Nats is the configuration when using NATS as the event driver
 	Nats NatsConfig `mapstructure:"nats"`
+	// ExecutionTimeout is the timeout for execution of a set of profiles on an entity.
+	// If not set or <= 0, defaults to 5 minutes.
+	ExecutionTimeout time.Duration `mapstructure:"execution_timeout" default:"5m"`
 }
 
 // GoChannelEventConfig is the configuration for the go channel event driver

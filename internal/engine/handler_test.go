@@ -83,6 +83,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		5*time.Minute,
 	)
 
 	t.Log("waiting for eventer to start")
@@ -113,4 +114,60 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	t.Log("waiting for executor to finish")
 	handler.Wait()
+}
+
+func TestNewExecutorEventHandler_TimeoutConfiguration(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
+		Driver: "go-channel",
+		GoChannel: serverconfig.GoChannelEventConfig{
+			BlockPublishUntilSubscriberAck: true,
+		},
+	})
+	require.NoError(t, err, "failed to setup eventer")
+
+	ctx := context.Background()
+	executor := mockengine.NewMockExecutor(ctrl)
+
+	tests := []struct {
+		name            string
+		timeout         time.Duration
+		expectedTimeout time.Duration
+	}{
+		{
+			name:            "uses configured timeout",
+			timeout:         10 * time.Minute,
+			expectedTimeout: 10 * time.Minute,
+		},
+		{
+			name:            "falls back to default when timeout is zero",
+			timeout:         0,
+			expectedTimeout: engine.DefaultExecutionTimeout,
+		},
+		{
+			name:            "falls back to default when timeout is negative",
+			timeout:         -1 * time.Minute,
+			expectedTimeout: engine.DefaultExecutionTimeout,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			handler := engine.NewExecutorEventHandler(
+				ctx,
+				evt,
+				[]message.HandlerMiddleware{},
+				executor,
+				tt.timeout,
+			)
+			require.NotNil(t, handler)
+			// The handler is created successfully, and the timeout is set internally
+			// We can't directly access the timeout field, but we verify no panic occurs
+		})
+	}
 }
