@@ -29,7 +29,7 @@ var applyCmd = &cobra.Command{
 
 // applyCommand is the "rule type" apply subcommand
 func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
+	client := getRuleTypeClient(conn)
 
 	project := viper.GetString("project")
 

@@ -1,0 +1,37 @@
+ Name             │ Entity Type       │ Description       │                   
+──────────────────┼───────────────────┼───────────────────┼───────────────────
+ 00000000-0000-   │ 00000000-0000-    │ secret_push_prote │ Verifies that     
+ 0000-0000-       │ 0000-0000-        │ ction             │ secret-           
+ 000000000000     │ 000000000001      │ (release_phase:   │  push protection  
+                  │                   │ beta)             │ is                
+                  │                   │                   │ enabled for a     
+                  │                   │                   │ given             
+                  │                   │                   │ repository.       
+                  │                   │                   │ Note tha-         
+                  │                   │                   │ t this will will  
+                  │                   │                   │ not-              
+                  │                   │                   │  work as expected 
+                  │                   │                   │ fo-               
+                  │                   │                   │ r private         
+                  │                   │                   │ repositori-       
+                  │                   │                   │ es                
+                  │                   │                   │ unless you have   
+                  │                   │                   │ G-                
+                  │                   │                   │ itHub Advanced    
+                  │                   │                   │ Secur-            
+                  │                   │                   │ ity enabled. If   
+                  │                   │                   │ you               
+                  │                   │                   │ still want to use 
+                  │                   │                   │ th-               
+                  │                   │                   │ is rule because   
+                  │                   │                   │ you               
+                  │                   │                   │ have a mixture of 
+                  │                   │                   │ pr-               
+                  │                   │                   │ ivate and public  
+                  │                   │                   │ rep-              
+                  │                   │                   │ ositories,        
+                  │                   │                   │ enable th-        
+                  │                   │                   │ e                 
+                  │                   │                   │ `skip_private_rep 
+                  │                   │                   │ o-                
+                  │                   │                   │ s` flag.          
