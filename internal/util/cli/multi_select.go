@@ -122,9 +122,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "enter":
 			return m, tea.Quit
 		case " ":
-			idx := m.list.Index()
 			oldItem := m.list.SelectedItem().(item)
-			cmd := m.list.SetItem(idx, item{
+
+			// find absolute index in the underlying list
+			var absoluteIdx int
+			for i, listItem := range m.list.Items() {
+				if listItem.(item).title == oldItem.title {
+					absoluteIdx = i
+					break
+				}
+			}
+
+			// use absolute index to update item
+			cmd := m.list.SetItem(absoluteIdx, item{
 				title:   oldItem.title,
 				checked: !oldItem.checked,
 			})
