@@ -1,15 +1,22 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 version: v1
 type: rule-type
 name: branch_protection_reviews
 context:
   project: 00000000-0000-0000-0000-000000000000
 description: 'Ensures that branch protection requires at least two approved reviews.'
+displayName: 'Require Branch Protection Reviews'
+releasePhase: RULE_TYPE_RELEASE_PHASE_BETA
+severity:
+  value: high
 guidance: |
   To comply with this rule, you must enable branch protection on your main branch 
   and set the 'Required approving reviews' count to 2 or higher.
 def:
-  in_entity: repository
-  rule_schema:
+  inEntity: repository
+  ruleSchema:
     properties:
       required_reviews:
         type: integer

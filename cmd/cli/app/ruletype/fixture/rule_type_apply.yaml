@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: Copyright [YEAR] The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
 version: v1
 type: rule-type
 name: applied_rule
