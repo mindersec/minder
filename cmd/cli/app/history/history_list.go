@@ -150,7 +150,8 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji bool) {
 	historyTable := table.New(table.Simple, layouts.Default,
 		[]string{"Time", "Entity", "Rule", "Status"})
-	// TODO: add automerge common cells
+
+	historyTable.SetAutoMerge(true)
 	renderRuleEvaluationStatusTable(resp.Data, historyTable, emoji)
 	historyTable.Render()
 	fmt.Println("")

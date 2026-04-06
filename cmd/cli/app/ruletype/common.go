@@ -61,11 +61,11 @@ func execOnOneRuleType(
 
 	// add the rule type to the table rows
 	name := appendRuleTypePropertiesToName(rt)
+
 	t.AddRow(
-		*rt.Context.Project,
-		*rt.Id,
 		name,
-		cli.ConcatenateAndWrap(rt.Description, 20),
+		rt.Def.InEntity,
+		rt.Description,
 	)
 
 	return nil
@@ -102,12 +102,16 @@ func shouldSkipFile(f string) bool {
 
 // initializeTableForList initializes the table for the rule type
 func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default,
+	t := table.New(table.Simple, layouts.Default,
 		[]string{"Name", "Entity Type", "Description"})
-	// TODO: set automerge common cells
+
+	t.SetAutoMerge(true)
+	t.SeparateRows()
+
+	return t
 }
 
-// initializeTableForList initializes the table for the rule type
+// initializeTableForOne initializes the table for the rule type
 func initializeTableForOne() table.Table {
 	return table.New(table.Simple, layouts.Default,
 		[]string{"Rule Type", "Details"})

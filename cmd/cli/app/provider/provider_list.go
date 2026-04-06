@@ -84,10 +84,11 @@ func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, co
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default,
 			[]string{"Name", "Version", "Implements"})
-		// TODO: set automerge common cells
+
+		t.SetAutoMerge(true)
+
 		for _, v := range out.Providers {
 			impls := getImplementsAsStrings(v)
-
 			t.AddRow(v.GetName(), v.GetVersion(), strings.Join(impls, ", "))
 		}
 		t.Render()

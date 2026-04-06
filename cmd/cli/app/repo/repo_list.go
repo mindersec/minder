@@ -27,7 +27,6 @@ var listCmd = &cobra.Command{
 	RunE:  cli.GRPCClientWrapRunE(listCommand),
 }
 
-// listCommand is the repo list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
@@ -55,6 +54,9 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	case app.Table:
 		t := table.New(table.Simple, layouts.Default,
 			[]string{"Owner", "Name", "Provider", "Upstream ID"})
+
+		t.SetAutoMerge(true)
+
 		for _, v := range resp.Results {
 			t.AddRow(
 				v.GetOwner(),
