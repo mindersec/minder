@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/engine/entities"
 	mockengine "github.com/mindersec/minder/internal/engine/mock"
@@ -22,6 +23,16 @@ import (
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
+
+type fakeStore struct {
+	db.Store
+}
+
+func (*fakeStore) GetProviderByID(_ context.Context, _ uuid.UUID) (db.Provider, error) {
+	return db.Provider{
+		Name: "test-provider",
+	}, nil
+}
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	t.Parallel()
@@ -36,8 +47,6 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	executionID := uuid.New()
 
 	parallelOps := 2
-
-	// -- end expectations
 
 	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
@@ -68,9 +77,11 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithID(repositoryID).
+		}).
+		WithID(repositoryID).
 		WithExecutionID(executionID)
 
+	// Mock executor
 	executor := mockengine.NewMockExecutor(ctrl)
 	for i := 0; i < parallelOps; i++ {
 		executor.EXPECT().
@@ -78,11 +89,17 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Return(nil)
 	}
 
+	// Use fake store instead of mockdb
+	store := &fakeStore{}
+
+	// Updated handler with store + timeout
 	handler := engine.NewExecutorEventHandler(
 		ctx,
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
+		store,
 	)
 
 	t.Log("waiting for eventer to start")
