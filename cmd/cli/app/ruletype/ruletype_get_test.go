@@ -23,7 +23,6 @@ import (
 )
 
 func TestGetCommand(t *testing.T) {
-	// Serial execution required due to global getRuleTypeClient and os.Stdout hijacking
 	const (
 		zeroUUID = "00000000-0000-0000-0000-000000000000"
 		ruleID   = "00000000-0000-0000-0000-000000000001"
@@ -44,7 +43,6 @@ func TestGetCommand(t *testing.T) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
-				// Wrap in the specific ByIdResponse type
 				client.EXPECT().
 					GetRuleTypeById(gomock.Any(), gomock.Any()).
 					Return(&minderv1.GetRuleTypeByIdResponse{RuleType: mockResp.RuleTypes[0]}, nil)
@@ -58,7 +56,6 @@ func TestGetCommand(t *testing.T) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
-				// Wrap in the specific ByNameResponse type
 				client.EXPECT().
 					GetRuleTypeByName(gomock.Any(), gomock.Any()).
 					Return(&minderv1.GetRuleTypeByNameResponse{RuleType: mockResp.RuleTypes[0]}, nil)
@@ -115,13 +112,13 @@ func TestGetCommand(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			// Validate flags BEFORE calling the command logic
-			// This prevents unexpected gRPC calls when flags are missing
+			// validate flags before calling the command logic
+			// this prevents unexpected grpc calls when flags are missing
 			if tt.expectedError != "" {
 				valErr := getCmd.ValidateFlagGroups()
 				if valErr != nil {
 					assert.Contains(t, valErr.Error(), tt.expectedError)
-					return // Success for this test case
+					return
 				}
 			}
 

@@ -25,20 +25,7 @@ import (
 func TestCreateCommand(t *testing.T) {
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 
-	// 1. Create a real temporary YAML file for testing
-	tmpDir := t.TempDir()
-	tmpFilePath := filepath.Join(tmpDir, "rule.yaml")
-	yamlContent := `
-version: v1
-type: rule-type
-name: branch_protection_reviews
-context:
-  project: 00000000-0000-0000-0000-000000000000
-def:
-  in_entity: repository
-`
-	err := os.WriteFile(tmpFilePath, []byte(yamlContent), 0644)
-	require.NoError(t, err)
+	sampleFile := filepath.Join("fixture", "rule_type_sample.yaml")
 
 	tests := []struct {
 		name           string
@@ -49,7 +36,7 @@ def:
 	}{
 		{
 			name:     "create rule type from file",
-			fileArgs: []string{tmpFilePath},
+			fileArgs: []string{sampleFile},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
@@ -78,51 +65,48 @@ def:
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(mockClient)
 
-			// 2. Inject Mock
+			// mock Injection
 			originalClientCreator := getRuleTypeClient
 			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
 			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
 				return mockClient
 			}
 
-			// 3. Create a FRESH command and context
+			// create a fresh command and context
 			ctx := context.Background()
 			cmd := &cobra.Command{}
 			cmd.SetContext(ctx)
 
-			// Define flags and mark as required to match production init()
+			// define flags
 			cmd.Flags().StringArrayP("file", "f", []string{}, "file flag")
 			_ = cmd.MarkFlagRequired("file")
 
 			viper.Reset()
 			viper.Set("project", zeroUUID)
 
-			// 4. Set flags
+			// set flags
 			for _, f := range tt.fileArgs {
 				err := cmd.Flags().Set("file", f)
 				require.NoError(t, err)
 			}
 
-			// --- CHECK FOR REQUIRED FLAGS ---
-			// This manually triggers the validation Cobra usually does automatically
+			// check for required flags (manual trigger for test)
 			if tt.expectedError != "" {
 				err := cmd.ValidateRequiredFlags()
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
-				return // Success: we caught the missing flag!
+				return
 			}
 
 			buf := new(bytes.Buffer)
 			cmd.SetOut(buf)
 			cmd.SetErr(buf)
 
-			// --- THE INTERCEPTOR ---
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			// 5. Execute
-			err = createCommand(ctx, cmd, []string{}, nil)
+			err := createCommand(ctx, cmd, []string{}, nil)
 
 			w.Close()
 			os.Stdout = oldStdout

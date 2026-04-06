@@ -113,7 +113,7 @@ func TestListCommand(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			// Setup Mock Client
+			// setup Mock Client
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(t, mockClient)
 

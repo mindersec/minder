@@ -27,20 +27,7 @@ import (
 func TestApplyCommand(t *testing.T) {
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 
-	// Create a temporary YAML file for testing
-	tmpDir := t.TempDir()
-	tmpFilePath := filepath.Join(tmpDir, "rule_to_apply.yaml")
-	yamlContent := `
-version: v1
-type: rule-type
-name: applied_rule
-context:
-  project: 00000000-0000-0000-0000-000000000000
-def:
-  in_entity: repository
-`
-	err := os.WriteFile(tmpFilePath, []byte(yamlContent), 0644)
-	require.NoError(t, err)
+	applyFixture := filepath.Join("fixture", "rule_type_apply.yaml")
 
 	tests := []struct {
 		name           string
@@ -52,7 +39,7 @@ def:
 	}{
 		{
 			name:     "apply - create new rule type",
-			fileArgs: []string{tmpFilePath},
+			fileArgs: []string{applyFixture},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
@@ -65,17 +52,15 @@ def:
 		},
 		{
 			name:    "apply - update existing rule type (UPSERT)",
-			posArgs: []string{tmpFilePath}, // Testing positional argument path
+			posArgs: []string{applyFixture},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
-				// 1. Try to create, fail with AlreadyExists
 				client.EXPECT().
 					CreateRuleType(gomock.Any(), gomock.Any()).
 					Return(nil, status.Error(codes.AlreadyExists, "already exists"))
 
-				// 2. Automatically switch to update
 				client.EXPECT().
 					UpdateRuleType(gomock.Any(), gomock.Any()).
 					Return(&minderv1.UpdateRuleTypeResponse{RuleType: mockResp.RuleTypes[0]}, nil)
@@ -99,14 +84,13 @@ def:
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(mockClient)
 
-			// Mock Injection
 			originalClientCreator := getRuleTypeClient
 			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
 			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
 				return mockClient
 			}
 
-			// Fresh command and context
+			// fresh command and context
 			ctx := context.Background()
 			cmd := &cobra.Command{}
 			cmd.SetContext(ctx)
@@ -124,13 +108,11 @@ def:
 			cmd.SetOut(buf)
 			cmd.SetErr(buf)
 
-			// Interceptor
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			// Execute
-			err = applyCommand(ctx, cmd, tt.posArgs, nil)
+			err := applyCommand(ctx, cmd, tt.posArgs, nil)
 
 			w.Close()
 			os.Stdout = oldStdout
