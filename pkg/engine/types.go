@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
 // Package engine defines domain-level types used by the engine layer,
 // decoupled from database representations.
 package engine
