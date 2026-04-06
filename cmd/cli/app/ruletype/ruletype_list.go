@@ -6,6 +6,7 @@ package ruletype
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -66,13 +67,22 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			cmd.Println(out)
 		}
 	case app.Table:
+		// Sort by Entity Type first to ensure AutoMerge works correctly,
+		// then by Name within those groups.
+		slices.SortFunc(resp.RuleTypes, func(a, b *minderv1.RuleType) int {
+			if a.GetDef().GetInEntity() != b.GetDef().GetInEntity() {
+				return strings.Compare(a.GetDef().GetInEntity(), b.GetDef().GetInEntity())
+			}
+			return strings.Compare(a.GetName(), b.GetName())
+		})
+
 		table := initializeTableForList()
-		table.SeparateRows()
+
 		for _, rt := range resp.RuleTypes {
 			table.AddRow(
 				appendRuleTypePropertiesToName(rt),
 				rt.GetDef().GetInEntity(),
-				cli.RenderMarkdown(rt.Description, cli.WidthFraction(0.5)),
+				rt.Description,
 			)
 		}
 		table.Render()

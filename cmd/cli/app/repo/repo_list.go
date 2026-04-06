@@ -6,6 +6,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -56,6 +57,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			[]string{"Owner", "Name", "Provider", "Upstream ID"})
 
 		t.SetAutoMerge(true)
+
+		slices.SortFunc(resp.Results, func(a, b *minderv1.Repository) int {
+			if a.GetOwner() != b.GetOwner() {
+				return strings.Compare(a.GetOwner(), b.GetOwner())
+			}
+			return strings.Compare(a.GetContext().GetProvider(), b.GetContext().GetProvider())
+		})
 
 		for _, v := range resp.Results {
 			t.AddRow(

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package table contains utilities for rendering tables
 package table
 
 import (
@@ -16,18 +15,46 @@ import (
 )
 
 const (
-	// Simple is a simple table
+	// Simple defines the standard table layout used across the Minder CLI.
 	Simple               = "simple"
 	defaultTerminalWidth = 80
 )
+
+// ColumnSpec defines how a specific column should be rendered universally.
+type ColumnSpec struct {
+	FixedWidth int
+	WidthPct   float64
+	AutoMerge  bool
+}
+
+var columnSpecs = map[string]ColumnSpec{
+	// High-level grouping columns (AutoMerge: true)
+	"Owner":       {WidthPct: 0.20, AutoMerge: true},
+	"Provider":    {WidthPct: 0.25, AutoMerge: true},
+	"Entity":      {WidthPct: 0.25, AutoMerge: true},
+	"Time":        {FixedWidth: 20, AutoMerge: true},
+	"Entity Type": {FixedWidth: 15, AutoMerge: true},
+	"Rule":        {WidthPct: 0.25, AutoMerge: true},
+	"Status":      {FixedWidth: 12, AutoMerge: true},
+
+	// Identifying / Data Columns (AutoMerge: false)
+	"Name":            {WidthPct: 0.35, AutoMerge: false},
+	"Upstream ID":     {FixedWidth: 15, AutoMerge: false},
+	"Rule Name":       {WidthPct: 0.25, AutoMerge: false},
+	"Description":     {WidthPct: 0.60, AutoMerge: false},
+	"Rule Params":     {WidthPct: 0.25, AutoMerge: false},
+	"Rule Definition": {WidthPct: 0.50, AutoMerge: false},
+	"Alert":           {FixedWidth: 10, AutoMerge: false},
+	"Remediate":       {FixedWidth: 10, AutoMerge: false},
+	"Details":         {WidthPct: 0.50, AutoMerge: false},
+	"Evaluated At":    {FixedWidth: 25, AutoMerge: false},
+}
 
 // Table is an interface for rendering tables
 type Table interface {
 	AddRow(row ...string)
 	AddRowWithColor(row ...layouts.ColoredColumn)
-	// Render outputs the table to stdout (TODO: make output configurable)
 	Render()
-	// SeparateRows ensures each row is clearly separated
 	SeparateRows()
 	SetAutoMerge(merge bool)
 }
@@ -43,15 +70,17 @@ func New(_ string, _ layouts.TableLayout, header []string) Table {
 	}
 	t.AppendHeader(headerRow)
 
-	// Rounded style is the Minder standard.
-	// SeparateRows is disabled to allow AutoMerge to create clean visual blocks.
 	t.SetStyle(table.StyleRounded)
 	t.Style().Options.SeparateRows = false
 	t.Style().Format.Header = text.FormatDefault
 
+	t.Style().Box.PaddingLeft = " "
+	t.Style().Box.PaddingRight = " "
+
 	return &goPrettyTable{
 		t:       t,
 		numCols: len(header),
+		headers: header,
 	}
 }
 
@@ -59,75 +88,78 @@ type goPrettyTable struct {
 	t         table.Writer
 	autoMerge bool
 	numCols   int
+	headers   []string
 }
 
+// SetAutoMerge dynamically distributes column widths and assigns merge behavior
+// based on the columnSpecs configuration.
 func (l *goPrettyTable) SetAutoMerge(merge bool) {
 	l.autoMerge = merge
-
 	w := getTerminalWidth()
-	usableWidth := w - 10
+	usableWidth := w - 15
+
+	fixedWidths := 0
+	percentTotal := 0.0
+
+	// Tally up fixed widths and percent weights based on headers
+	for _, h := range l.headers {
+		if spec, exists := columnSpecs[h]; exists {
+			if spec.FixedWidth > 0 {
+				fixedWidths += spec.FixedWidth
+			} else if spec.WidthPct > 0 {
+				percentTotal += spec.WidthPct
+			}
+		} else {
+			// Unknown columns get a generic default weight
+			percentTotal += 1.0
+		}
+	}
+
+	remainingWidth := usableWidth - fixedWidths
+	if remainingWidth < 10 {
+		remainingWidth = 10 // Prevent negative widths on extremely small terminals
+	}
 
 	var configs []table.ColumnConfig
-	for i := 1; i <= l.numCols; i++ {
+	// Generate the configuration for each column dynamically
+	for i, h := range l.headers {
 		cfg := table.ColumnConfig{
-			Number:           i,
-			WidthMaxEnforcer: text.WrapSoft,
+			Number:           i + 1,
+			WidthMaxEnforcer: text.WrapText,
 		}
 
-		cfg.WidthMax = l.getColumnWidth(i, usableWidth)
+		spec, known := columnSpecs[h]
+		if known {
+			// Assign width
+			if spec.FixedWidth > 0 {
+				cfg.WidthMax = spec.FixedWidth
+			} else {
+				weight := spec.WidthPct
+				if percentTotal > 0 {
+					weight = weight / percentTotal // Normalize percentages
+				}
+				cfg.WidthMax = int(float64(remainingWidth) * weight)
+			}
+			// Assign merge capability
+			cfg.AutoMerge = merge && spec.AutoMerge
+		} else {
+			// Fallback for completely unknown columns
+			weight := 1.0 / percentTotal
+			cfg.WidthMax = int(float64(remainingWidth) * weight)
+			cfg.AutoMerge = false
+		}
 
-		if i == 1 || i == 2 {
-			cfg.AutoMerge = merge
+		if cfg.AutoMerge {
 			cfg.VAlign = text.VAlignTop
 		}
+
 		configs = append(configs, cfg)
 	}
 	l.t.SetColumnConfigs(configs)
 }
 
-func (l *goPrettyTable) getColumnWidth(colIdx int, totalWidth int) int {
-	switch l.numCols {
-	case 4:
-		return getFourColWidth(colIdx, totalWidth)
-	case 3:
-		return getThreeColWidth(colIdx, totalWidth)
-	default:
-		return totalWidth / l.numCols
-	}
-}
-
-func getFourColWidth(colIdx int, totalWidth int) int {
-	// We use a mix of fixed widths for small data and percentages for large data.
-	switch colIdx {
-	case 1:
-		return 20
-	case 4:
-		return 12
-	case 2:
-		return int(float64(totalWidth-32) * 0.40)
-	case 3:
-		return int(float64(totalWidth-32) * 0.60)
-	default:
-		return totalWidth / 4
-	}
-}
-
-func getThreeColWidth(colIdx int, totalWidth int) int {
-	switch colIdx {
-	case 1:
-		return int(float64(totalWidth) * 0.30)
-	case 2:
-		return int(float64(totalWidth) * 0.20)
-	case 3:
-		return int(float64(totalWidth) * 0.50)
-	default:
-		return totalWidth / 3
-	}
-}
-
 func getTerminalWidth() int {
 	fdPtr := os.Stdout.Fd()
-	// G115 fix: safety check for uintptr to int conversion
 	if fdPtr <= math.MaxInt {
 		if w, _, err := term.GetSize(int(fdPtr)); err == nil && w > 0 {
 			return w
@@ -142,7 +174,6 @@ func (l *goPrettyTable) AddRow(row ...string) {
 		r[i] = val
 	}
 	l.t.AppendRow(r)
-	// Append a horizontal line between blocks if merging is active
 	if l.autoMerge {
 		l.t.AppendSeparator()
 	}
@@ -168,13 +199,13 @@ func (l *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 	}
 }
 
+// SeparateRows ensures each row is clearly separated
 func (l *goPrettyTable) SeparateRows() {
 	l.t.Style().Options.SeparateRows = true
 }
 
 func (l *goPrettyTable) Render() {
 	w := getTerminalWidth()
-	// Forces the right-hand boundary line to snap to the terminal edge
-	l.t.SetAllowedRowLength(w)
+	l.t.SetAllowedRowLength(w - 5)
 	l.t.Render()
 }

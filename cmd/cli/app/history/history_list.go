@@ -203,6 +203,25 @@ func renderRuleEvaluationStatusTable(
 	t table.Table,
 	emoji bool,
 ) {
+	//Multi level sort to guarantee perfect AutoMerge blocks
+	slices.SortFunc(statuses, func(a, b *minderv1.EvaluationHistory) int {
+		timeA := a.EvaluatedAt.AsTime().Format(time.DateTime)
+		timeB := b.EvaluatedAt.AsTime().Format(time.DateTime)
+
+		//Sort by Time (Descending - newest at top)
+		if timeA != timeB {
+			return strings.Compare(timeB, timeA)
+		}
+
+		//Sort by Rule Name (Ascending) -> Groups identical rules together
+		if a.Rule.Name != b.Rule.Name {
+			return strings.Compare(a.Rule.Name, b.Rule.Name)
+		}
+
+		//Sort by Entity Name (Ascending)
+		return strings.Compare(a.Entity.Name, b.Entity.Name)
+	})
+
 	for _, eval := range statuses {
 		t.AddRowWithColor(
 			layouts.NoColor(eval.EvaluatedAt.AsTime().Format(time.DateTime)),

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package table provides utilities for formatting and rendering CLI output as tables.
 package table
 
 import (
