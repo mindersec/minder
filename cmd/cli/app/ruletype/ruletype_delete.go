@@ -5,6 +5,8 @@ package ruletype
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,6 +15,11 @@ import (
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+type ruleTypeBlock struct {
+	Name     string
+	Profiles []string
+}
 
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
@@ -74,22 +81,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
-	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
-		cmd.Println("There are no rule types to delete")
-		return nil
-	}
-	if len(deletedRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) were successfully deleted:")
-		for _, ruleType := range deletedRuleTypes {
-			cmd.Println(ruleType)
-		}
-	}
-	if len(remainingRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
-		for _, ruleType := range remainingRuleTypes {
-			cmd.Println(ruleType)
-		}
-	}
+	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
 
 	return nil
 }
@@ -99,21 +91,83 @@ func deleteRuleTypes(
 	client minderv1.RuleTypeServiceClient,
 	rulesToDelete []*minderv1.RuleType,
 	project string,
-) ([]string, []string) {
+) ([]string, []ruleTypeBlock) {
+
 	var deletedRuleTypes []string
-	var remainingRuleTypes []string
+	var remainingRuleTypes []ruleTypeBlock
+
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
 			Context: &minderv1.Context{Project: &project},
 			Id:      ruleType.GetId(),
 		})
 		if err != nil {
-			remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
+			profiles := extractProfiles(err.Error())
+
+			remainingRuleTypes = append(remainingRuleTypes, ruleTypeBlock{
+				Name:     ruleType.GetName(),
+				Profiles: profiles,
+			})
 			continue
 		}
 		deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
 	}
 	return deletedRuleTypes, remainingRuleTypes
+}
+
+func printDeleteResults(
+	cmd *cobra.Command,
+	deletedRuleTypes []string,
+	remainingRuleTypes []ruleTypeBlock,
+) {
+	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
+		cmd.Println("There are no rule types to delete")
+		return
+	}
+
+	if len(deletedRuleTypes) > 0 {
+		cmd.Println("\nThe following rule type(s) were successfully deleted:")
+		for _, ruleType := range deletedRuleTypes {
+			cmd.Println(ruleType)
+		}
+	}
+
+	if len(remainingRuleTypes) > 0 {
+		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
+		for _, ruleType := range remainingRuleTypes {
+			cmd.Println(ruleType.Name)
+		}
+
+		cmd.Println("\nThey are referenced by profiles:")
+
+		seen := map[string]bool{}
+		for _, b := range remainingRuleTypes {
+			for _, p := range b.Profiles {
+				if !seen[p] {
+					cmd.Println(p)
+					seen[p] = true
+				}
+			}
+		}
+
+	}
+}
+
+func extractProfiles(errMsg string) []string {
+	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
+	if len(match) < 2 {
+		return []string{}
+	}
+
+	profilesPart := strings.TrimSpace(match[1])
+
+	parts := strings.Split(profilesPart, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+
+	return parts
 }
 
 func init() {

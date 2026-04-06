@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/db"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )
