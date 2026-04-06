@@ -44,7 +44,7 @@ func TestServer_RegisterEntity(t *testing.T) {
 	projectID := uuid.New()
 	providerID := uuid.New()
 	entityID := uuid.New()
-	providerName := "github"
+	providerName := "githubapp-testing"
 
 	tests := []struct {
 		name         string
