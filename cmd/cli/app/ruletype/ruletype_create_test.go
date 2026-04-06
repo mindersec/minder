@@ -22,6 +22,7 @@ import (
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
+//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
 func TestCreateCommand(t *testing.T) {
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 

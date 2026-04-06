@@ -20,6 +20,7 @@ import (
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
+//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
 func TestDeleteCommand(t *testing.T) {
 	const (
 		zeroUUID = "00000000-0000-0000-0000-000000000000"
@@ -38,6 +39,7 @@ func TestDeleteCommand(t *testing.T) {
 			name: "delete single rule type by id",
 			args: map[string]string{"id": ruleID1},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -59,6 +61,7 @@ func TestDeleteCommand(t *testing.T) {
 			name: "delete all rule types",
 			args: map[string]string{"all": "true", "yes": "true"},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -80,6 +83,7 @@ func TestDeleteCommand(t *testing.T) {
 			name: "partial failure - profile reference",
 			args: map[string]string{"id": ruleID2}, //secret_scanning
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 

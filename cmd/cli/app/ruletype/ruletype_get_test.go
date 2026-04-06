@@ -22,6 +22,7 @@ import (
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
+//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
 func TestGetCommand(t *testing.T) {
 	const (
 		zeroUUID = "00000000-0000-0000-0000-000000000000"
@@ -40,6 +41,7 @@ func TestGetCommand(t *testing.T) {
 			name: "get by id - table output",
 			args: map[string]string{"id": ruleID, "output": app.Table},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -53,6 +55,7 @@ func TestGetCommand(t *testing.T) {
 			name: "get by name - json output",
 			args: map[string]string{"name": ruleName, "output": app.JSON},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -66,6 +69,7 @@ func TestGetCommand(t *testing.T) {
 			name: "get by name - yaml output",
 			args: map[string]string{"name": ruleName, "output": app.YAML},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
 

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
 func TestRuleTypeRootCommand(t *testing.T) {
 	// setup the command buffer
 	buf := new(bytes.Buffer)

@@ -29,6 +29,7 @@ import (
 
 var update = flag.Bool("update", false, "update .golden files")
 
+//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
 func TestListCommand(t *testing.T) {
 
 	tests := []struct {
@@ -42,6 +43,7 @@ func TestListCommand(t *testing.T) {
 			name:         "table output with data",
 			outputFormat: app.Table,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResponse := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResponse)
 
@@ -55,6 +57,7 @@ func TestListCommand(t *testing.T) {
 			name:         "table output empty",
 			outputFormat: app.Table,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(&minderv1.ListRuleTypesResponse{
@@ -67,6 +70,7 @@ func TestListCommand(t *testing.T) {
 			name:         "json output",
 			outputFormat: app.JSON,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResponse := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResponse)
 
@@ -80,6 +84,7 @@ func TestListCommand(t *testing.T) {
 			name:         "yaml output",
 			outputFormat: app.YAML,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				mockResponse := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResponse)
 
@@ -93,6 +98,7 @@ func TestListCommand(t *testing.T) {
 			name:         "grpc error handling",
 			outputFormat: app.Table,
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+				t.Helper()
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(nil, status.Error(codes.DeadlineExceeded, "request timed out"))
@@ -102,7 +108,7 @@ func TestListCommand(t *testing.T) {
 		{
 			name:          "invalid output format",
 			outputFormat:  "csv",
-			mockSetup:     func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {},
+			mockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
 			expectedError: "invalid argument",
 		},
 	}
@@ -184,6 +190,7 @@ func checkGoldenFile(t *testing.T, filename string, actual string) {
 	assert.Equal(t, string(expected), actual, "Output does not match golden file")
 }
 
+//nolint:unparam // filename is currently always the same, but kept generic for architectural consistency
 func loadFixture(t *testing.T, filename string, target protoreflect.ProtoMessage) {
 	t.Helper()
 
