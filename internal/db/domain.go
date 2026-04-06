@@ -53,4 +53,3 @@ func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string)
 	lp.IncludeLabels = inc
 	lp.ExcludeLabels = exc
 }
-
