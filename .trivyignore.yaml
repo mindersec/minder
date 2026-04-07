@@ -2,3 +2,4 @@ vulnerabilities:
   # Fixed only in github.com/moby/moby, but requires a migration from github.com/docker/docker.
   # The actual vulnerability is in AuthZ plugins, which Minder does not implement or build.
   - id: CVE-2026-34040
+  - id: CVE-2026-33997
