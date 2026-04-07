@@ -4346,7 +4346,6 @@ definitions:
           the structure and contents are rule type specific, and are subject to
           change.
       output:
-        type: object
         description: |-
           output optionally contains the structured rule evaluation output.
           Because output may be multiple KB, it is only returned
@@ -5606,7 +5605,6 @@ definitions:
         $ref: '#/definitions/v1RuleTypeReleasePhase'
         title: release_phase is the phase of the release
       output:
-        type: object
         description: |-
           output optionally contains the structured rule evaluation output.
           Because output may be multiple KB, it is only returned
