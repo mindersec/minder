@@ -6513,6 +6513,7 @@ func (x *GitLabProviderConfig) GetGroup() string {
 // DockerHubProviderConfig contains the configuration for the DockerHub provider.
 //
 // Namespace: is the namespace for the DockerHub provider.
+//
 type DockerHubProviderConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// namespace is the namespace for the DockerHub provider.
@@ -6561,6 +6562,7 @@ func (x *DockerHubProviderConfig) GetNamespace() string {
 // GHCRProviderConfig contains the configuration for the GHCR provider.
 //
 // Namespace: is the namespace for the GHCR provider.
+//
 type GHCRProviderConfig struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// namespace is the namespace for the GHCR provider.
@@ -13822,14 +13824,14 @@ type RuleType_Definition_Eval_Rego struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// type is the type of evaluation engine to use
 	// for rego. We currently have two modes of operation:
-	//   - deny-by-default: this is the default mode of operation
-	//     where we deny access by default and allow access only
-	//     if the profile explicitly allows it. It expects the
-	//     profile to set an `allow` variable to true or false.
-	//   - constraints: this is the mode of operation where we
-	//     allow access by default and deny access only if a
-	//     violation is found. It expects the profile to set a
-	//     `violations` variable with a "msg" field.
+	// - deny-by-default: this is the default mode of operation
+	//   where we deny access by default and allow access only
+	//   if the profile explicitly allows it. It expects the
+	//   profile to set an `allow` variable to true or false.
+	// - constraints: this is the mode of operation where we
+	//   allow access by default and deny access only if a
+	//   violation is found. It expects the profile to set a
+	//   `violations` variable with a "msg" field.
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	// def is the definition of the rego profile.
 	Def string `protobuf:"bytes,2,opt,name=def,proto3" json:"def,omitempty"`
@@ -14121,13 +14123,9 @@ type RuleType_Definition_Remediate_PullRequestRemediation struct {
 	Contents []*RuleType_Definition_Remediate_PullRequestRemediation_Content `protobuf:"bytes,3,rep,name=contents,proto3" json:"contents,omitempty"`
 	// the method to use to create the PR. For now, these are supported:
 	// -- minder.content - ensures that the content of the file is exactly as specified
-	//
-	//	refer to the Content message for more details
-	//
+	//                     refer to the Content message for more details
 	// -- minder.actions.replace_tags_with_sha - finds any github actions within a workflow
-	//
-	//	file and replaces the tag with the SHA
-	//
+	//                                           file and replaces the tag with the SHA
 	// -- minder.yq.evaluate - evaluates a yq expression on a file
 	Method string `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
 	// params are unstructured parameters passed to the method. These are optional
@@ -15052,15 +15050,14 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x06entity\x18\x01 \x01(\v2\x1c.minder.v1.UpstreamEntityRefB\x03\xe0A\x02R\x06entity\x12\x1e\n" +
 	"\n" +
 	"registered\x18\x02 \x01(\bR\n" +
-	"registered\"\xfc\x01\n" +
+	"registered\"\x84\x02\n" +
 	"\x15UpstreamRepositoryRef\x129\n" +
 	"\x05owner\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\x05owner\x125\n" +
-	"\x04name\x18\x02 \x01(\tB!\xe0A\x02\xbaH\x1b\xd8\x01\x01r\x16\x18\xc8\x012\x11^[-.[:alnum:]_]+$R\x04name\x12#\n" +
-	"\arepo_id\x18\x03 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02(\x01R\x06repoId\x12,\n" +
-	"\acontext\x18\x04 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1e\n" +
+	"\x04name\x18\x02 \x01(\tB!\xe0A\x02\xbaH\x1b\xd8\x01\x01r\x16\x18\xc8\x012\x11^[-.[:alnum:]_]+$R\x04name\x12&\n" +
+	"\arepo_id\x18\x03 \x01(\x03B\r\xe0A\x03\xbaH\a\xd8\x01\x01\"\x02(\x01R\x06repoId\x12,\n" +
+	"\acontext\x18\x04 \x01(\v2\x12.minder.v1.ContextR\acontext\x12#\n" +
 	"\n" +
-	"registered\x18\x05 \x01(\bR\n" +
+	"registered\x18\x05 \x01(\bB\x03\xe0A\x03R\n" +
 	"registered\"\xc4\x05\n" +
 	"\n" +
 	"Repository\x12\x18\n" +
@@ -15471,11 +15468,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xea%\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xed%\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
-	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12\x1d\n" +
-	"\x02id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
+	"\x02id\x18\x01 \x01(\tB\v\xe0A\x03\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
 	"\x04name\x18\x02 \x01(\tB$\xe0A\x02\xbaH\x1er\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12L\n" +
 	"\fdisplay_name\x18\b \x01(\tB)\xbaH&\xd8\x01\x01r!\x18\xc8\x012\x1c^[A-Za-z][-/'()[:word:] :]*$R\vdisplayName\x12?\n" +
 	"\x15short_failure_message\x18\n" +
@@ -15586,10 +15583,10 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12_security_advisoryB\x17\n" +
 	"\x15_pull_request_commentB\x0f\n" +
 	"\r_param_schemaB\x05\n" +
-	"\x03_id\"\xff\v\n" +
+	"\x03_id\"\x82\f\n" +
 	"\aProfile\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12\x1d\n" +
-	"\x02id\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x12 \n" +
+	"\x02id\x18\x02 \x01(\tB\v\xe0A\x03\xbaH\x05r\x03\xb0\x01\x01H\x00R\x02id\x88\x01\x01\x128\n" +
 	"\x04name\x18\x03 \x01(\tB$\xbaH!\xd8\x01\x01r\x1c\x18\xc8\x012\x17^[A-Za-z][-/[:word:]]*$R\x04name\x12\x88\x01\n" +
 	"\x06labels\x18\f \x03(\tBp\xbaHm\x92\x01j\x18\x01\"frd2b^([a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?:)?[a-zA-Z0-9_]([-a-zA-Z0-9_]{0,61}[a-zA-Z0-9_])?$R\x06labels\x127\n" +
 	"\n" +
@@ -15797,17 +15794,16 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"github_app\x18\x01 \x01(\v2\x1a.minder.v1.GitHubAppParamsH\x00R\tgithubAppB\f\n" +
 	"\n" +
-	"parameters\"\x9f\x01\n" +
+	"parameters\"\xa7\x01\n" +
 	"\x0fGitHubAppParams\x123\n" +
 	"\x0finstallation_id\x18\x01 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12\"\n" +
-	"\forganization\x18\x02 \x01(\tR\forganization\x123\n" +
-	"\x0forganization_id\x18\x03 \x01(\x03B\n" +
-	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xeb\x03\n" +
+	"\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0einstallationId\x12'\n" +
+	"\forganization\x18\x02 \x01(\tB\x03\xe0A\x03R\forganization\x126\n" +
+	"\x0forganization_id\x18\x03 \x01(\x03B\r\xe0A\x03\xbaH\a\xd8\x01\x01\"\x02 \x00R\x0eorganizationId\"\xf5\x03\n" +
 	"\bProvider\x127\n" +
 	"\x04name\x18\x01 \x01(\tB#\xbaH \xd8\x01\x01r\x1b\x18\xc8\x012\x16^[A-Za-z][-[:word:]]*$R\x04name\x125\n" +
-	"\x05class\x18\a \x01(\tB\x1f\xbaH\x1c\xd8\x01\x01r\x17\x18\xc8\x012\x12^[a-z][a-z0-9_-]*$R\x05class\x12\x18\n" +
-	"\aproject\x18\x02 \x01(\tR\aproject\x12&\n" +
+	"\x05class\x18\a \x01(\tB\x1f\xbaH\x1c\xd8\x01\x01r\x17\x18\xc8\x012\x12^[a-z][a-z0-9_-]*$R\x05class\x12\x1d\n" +
+	"\aproject\x18\x02 \x01(\tB\x03\xe0A\x03R\aproject\x12&\n" +
 	"\aversion\x18\x03 \x01(\tB\f\xbaH\t\xd8\x01\x01r\x042\x02v1R\aversion\x127\n" +
 	"\n" +
 	"implements\x18\x04 \x03(\x0e2\x17.minder.v1.ProviderTypeR\n" +
@@ -15817,8 +15813,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"auth_flows\x18\x06 \x03(\x0e2\x1c.minder.v1.AuthorizationFlowR\tauthFlows\x12<\n" +
 	"\n" +
 	"parameters\x18\b \x01(\v2\x1c.minder.v1.ProviderParameterR\n" +
-	"parameters\x12+\n" +
-	"\x11credentials_state\x18\t \x01(\tR\x10credentialsState\x12\x1b\n" +
+	"parameters\x120\n" +
+	"\x11credentials_state\x18\t \x01(\tB\x03\xe0A\x03R\x10credentialsState\x12\x1b\n" +
 	"\x02id\x18\n" +
 	" \x01(\tB\v\xbaH\b\xd8\x01\x01r\x03\xb0\x01\x01R\x02id\"\x91\x01\n" +
 	"\x1bGetEvaluationHistoryRequest\x12\x1b\n" +

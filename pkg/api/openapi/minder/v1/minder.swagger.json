@@ -76,14 +76,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -120,14 +120,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -164,14 +164,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -184,7 +184,7 @@
           },
           {
             "name": "from",
-            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
+            "description": "from is the filter to apply to the list of artifacts.\r\nAn example is \"repository=org1/repo1,org2/repo2\"\r\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -215,14 +215,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -235,7 +235,7 @@
           },
           {
             "name": "from",
-            "description": "from is the filter to apply to the list of artifacts.\nAn example is \"repository=org1/repo1,org2/repo2\"\nto filter by repository names. This is optional.",
+            "description": "from is the filter to apply to the list of artifacts.\r\nAn example is \"repository=org1/repo1,org2/repo2\"\r\nto filter by repository names. This is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -293,21 +293,21 @@
           },
           {
             "name": "owner",
-            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional; we allow empty string because the client may set the\nfield unconditionally, even though the field is marked as `optional`.",
+            "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\r\nThis is optional; we allow empty string because the client may set the\r\nfield unconditionally, even though the field is marked as `optional`.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -359,14 +359,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -418,14 +418,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -470,14 +470,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -597,7 +597,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -634,7 +634,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -672,7 +672,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -708,7 +708,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -740,7 +740,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -773,7 +773,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -806,14 +806,14 @@
           },
           {
             "name": "cursor.cursor",
-            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection.",
+            "description": "cursor is the index to start from within the collection being\r\nretrieved. It's an opaque payload specified and interpreted on\r\nan per-rpc basis. An empty string is used to indicate the first\r\nitem in the collection.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "cursor.size",
-            "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default.",
+            "description": "size is the number of items to retrieve from the collection.\r\n0 uses a server-defined default.",
             "in": "query",
             "required": true,
             "type": "integer",
@@ -874,7 +874,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -912,7 +912,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -971,7 +971,7 @@
           },
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1019,14 +1019,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1121,7 +1121,7 @@
           },
           {
             "name": "labelFilter",
-            "description": "Filter evaluation history to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "description": "Filter evaluation history to only those matching the specified labels.\r\n\r\nThe default is to return all user-created profiles; the string \"*\" can\r\nbe used to select all profiles, including system profiles.  This syntax\r\nmay be expanded in the future.",
             "in": "query",
             "required": false,
             "type": "array",
@@ -1132,14 +1132,14 @@
           },
           {
             "name": "cursor.cursor",
-            "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection.",
+            "description": "cursor is the index to start from within the collection being\r\nretrieved. It's an opaque payload specified and interpreted on\r\nan per-rpc basis. An empty string is used to indicate the first\r\nitem in the collection.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "cursor.size",
-            "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default.",
+            "description": "size is the number of items to retrieve from the collection.\r\n0 uses a server-defined default.",
             "in": "query",
             "required": true,
             "type": "integer",
@@ -1147,7 +1147,7 @@
           },
           {
             "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "description": "If true, include structured rule output for the matched evaluations.\r\nNot all ruletypes may generate structured outputs.\r\nBecause the evaluation output may be large, it is only returned\r\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1178,14 +1178,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1198,7 +1198,7 @@
           },
           {
             "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "description": "If true, include structured rule output for the matched evaluations.\r\nNot all ruletypes may generate structured outputs.\r\nBecause the evaluation output may be large, it is only returned\r\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1274,14 +1274,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1312,14 +1312,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1339,7 +1339,7 @@
           },
           {
             "name": "roleAssignment.subject",
-            "description": "subject is the subject to which the role is assigned.\nCan be either a UUID or a providername/subject string.",
+            "description": "subject is the subject to which the role is assigned.\r\nCan be either a UUID or a providername/subject string.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1399,14 +1399,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1521,14 +1521,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1567,14 +1567,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1587,7 +1587,7 @@
           },
           {
             "name": "entity.type",
-            "description": "entity is the entity to get status for. Incompatible with `all`\n\nOn input, at least one of id and name must be set.  If both are set, they must both match.\n On output, both id and name will be set.",
+            "description": "entity is the entity to get status for. Incompatible with `all`\n\nOn input, at least one of id and name must be set.  If both are set, they must both match.\r\n On output, both id and name will be set.",
             "in": "query",
             "required": true,
             "type": "string",
@@ -1620,7 +1620,7 @@
           },
           {
             "name": "all",
-            "description": "all is true if the status of all entities should be returned.\nIncompatible with `entity`. This is optional.",
+            "description": "all is true if the status of all entities should be returned.\r\nIncompatible with `entity`. This is optional.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -1634,14 +1634,14 @@
           },
           {
             "name": "ruleType",
-            "description": "rule_type is the type of the rule to filter on.\nThis is optional.",
+            "description": "rule_type is the type of the rule to filter on.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "ruleName",
-            "description": "rule_name is the name of the rule to filter on.\nThis is optional.",
+            "description": "rule_name is the name of the rule to filter on.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1673,14 +1673,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1716,14 +1716,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1752,7 +1752,7 @@
         "parameters": [
           {
             "name": "id",
-            "description": "The id or name of the profile to patch. Same explanation about explicitness\nas for the context",
+            "description": "The id or name of the profile to patch. Same explanation about explicitness\r\nas for the context",
             "in": "path",
             "required": true,
             "type": "string"
@@ -1768,14 +1768,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1813,14 +1813,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1833,7 +1833,7 @@
           },
           {
             "name": "entity.type",
-            "description": "entity is the entity to get status for. Incompatible with `all`\n\nOn input, at least one of id and name must be set.  If both are set, they must both match.\n On output, both id and name will be set.",
+            "description": "entity is the entity to get status for. Incompatible with `all`\n\nOn input, at least one of id and name must be set.  If both are set, they must both match.\r\n On output, both id and name will be set.",
             "in": "query",
             "required": true,
             "type": "string",
@@ -1902,14 +1902,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1940,14 +1940,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1960,7 +1960,7 @@
           },
           {
             "name": "labelFilter",
-            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "description": "Filter profiles to only those matching the specified labels.\r\n\r\nThe default is to return all user-created profiles; the string \"*\" can\r\nbe used to select all profiles, including system profiles.  This syntax\r\nmay be expanded in the future.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1999,14 +1999,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2092,14 +2092,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2156,7 +2156,7 @@
         "parameters": [
           {
             "name": "context.projectId",
-            "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project.",
+            "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -2221,14 +2221,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2259,14 +2259,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2279,7 +2279,7 @@
           },
           {
             "name": "limit",
-            "description": "limit is the maximum number of providers to return.\n0 uses a server-defined default.",
+            "description": "limit is the maximum number of providers to return.\r\n0 uses a server-defined default.",
             "in": "query",
             "required": true,
             "type": "integer",
@@ -2310,14 +2310,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2378,14 +2378,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2423,14 +2423,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2468,14 +2468,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2512,7 +2512,7 @@
           },
           {
             "name": "limit",
-            "description": "limit is the maximum number of results to return.\nThis is optional.",
+            "description": "limit is the maximum number of results to return.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -2520,14 +2520,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2540,7 +2540,7 @@
           },
           {
             "name": "cursor",
-            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
+            "description": "cursor is the cursor to use for the next page of results.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2571,7 +2571,7 @@
           },
           {
             "name": "limit",
-            "description": "limit is the maximum number of results to return.\nThis is optional.",
+            "description": "limit is the maximum number of results to return.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string",
@@ -2579,14 +2579,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2599,7 +2599,7 @@
           },
           {
             "name": "cursor",
-            "description": "cursor is the cursor to use for the next page of results.\nThis is optional.",
+            "description": "cursor is the cursor to use for the next page of results.\r\nThis is optional.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2630,14 +2630,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2674,14 +2674,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2718,14 +2718,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2760,14 +2760,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2811,14 +2811,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2860,14 +2860,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2911,14 +2911,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -2960,14 +2960,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3056,14 +3056,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3083,14 +3083,14 @@
           },
           {
             "name": "labelFilter",
-            "description": "Filter profiles to only those matching the specified labels.\n\nThe default is to return all user-created profiles; the string \"*\" can\nbe used to select all profiles, including system profiles.  This syntax\nmay be expanded in the future.",
+            "description": "Filter profiles to only those matching the specified labels.\r\n\r\nThe default is to return all user-created profiles; the string \"*\" can\r\nbe used to select all profiles, including system profiles.  This syntax\r\nmay be expanded in the future.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "ruleName",
-            "description": "If set, only return evaluation results for the named rules.\nIf empty, return evaluation results for all rules",
+            "description": "If set, only return evaluation results for the named rules.\r\nIf empty, return evaluation results for all rules",
             "in": "query",
             "required": false,
             "type": "array",
@@ -3101,7 +3101,7 @@
           },
           {
             "name": "includeOutputs",
-            "description": "If true, include structured rule output for the matched evaluations.\nNot all ruletypes may generate structured outputs.\nBecause the evaluation output may be large, it is only returned\nwhen explicitly requested.",
+            "description": "If true, include structured rule output for the matched evaluations.\r\nNot all ruletypes may generate structured outputs.\r\nBecause the evaluation output may be large, it is only returned\r\nwhen explicitly requested.",
             "in": "query",
             "required": false,
             "type": "boolean"
@@ -3186,14 +3186,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3231,14 +3231,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3274,14 +3274,14 @@
           },
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3312,14 +3312,14 @@
         "parameters": [
           {
             "name": "context.provider",
-            "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value.",
+            "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value.",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "context.project",
-            "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset.",
+            "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -3392,7 +3392,7 @@
     },
     "/api/v1/user/invitation/{code}": {
       "post": {
-        "summary": "ResolveInvitation allows a user to accept or decline an\ninvitation to a project given the code for the invitation.\nA user may call ResolveInvitation to accept or decline an\ninvitation even if they have not called CreateUser.  If a\nuser accepts an invitation via this call before calling\nCreateUser, a Minder user record will be created, but no\nadditional projects will be created (unlike CreateUser,\nwhich will also create a default project).",
+        "summary": "ResolveInvitation allows a user to accept or decline an\r\ninvitation to a project given the code for the invitation.\r\nA user may call ResolveInvitation to accept or decline an\r\ninvitation even if they have not called CreateUser.  If a\r\nuser accepts an invitation via this call before calling\r\nCreateUser, a Minder user record will be created, but no\r\nadditional projects will be created (unlike CreateUser,\r\nwhich will also create a default project).",
         "operationId": "UserService_ResolveInvitation",
         "responses": {
           "200": {
@@ -3425,8 +3425,7 @@
     },
     "/api/v1/user/invitations": {
       "get": {
-        "summary": "ListInvitations returns a list of invitations for the user\nbased on the user's registered email address.  Note that a\nuser who receives an invitation code may still accept the\ninvitation even if the code was directed to a different\nemail address.  This is because understanding the routing of\nemail messages is beyond the scope of Minder.",
-        "description": "This API endpoint may be called without the logged-in user\npreviously having called `CreateUser`.",
+        "summary": "ListInvitations returns a list of invitations for the user\r\nbased on the user's registered email address.  Note that a\r\nuser who receives an invitation code may still accept the\r\ninvitation even if the code was directed to a different\r\nemail address.  This is because understanding the routing of\r\nemail messages is beyond the scope of Minder.\r\n\r\nThis API endpoint may be called without the logged-in user\r\npreviously having called `CreateUser`.",
         "operationId": "UserService_ListInvitations",
         "responses": {
           "200": {
@@ -3452,7 +3451,7 @@
         },
         "action": {
           "type": "string",
-          "description": "action is the action to use for the PR review (comment or request_changes).\nDefault is comment."
+          "description": "action is the action to use for the PR review (comment or request_changes).\r\nDefault is comment."
         }
       },
       "required": [
@@ -3486,7 +3485,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the alert.\n* 'security_advisory' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
+          "description": "type is the type of the alert.\r\n* 'security_advisory' can only be used with the 'repository' entity type.\r\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "securityAdvisory": {
           "$ref": "#/definitions/AlertAlertTypeSA"
@@ -3509,7 +3508,7 @@
             "type": "object",
             "$ref": "#/definitions/EvalJQComparison"
           },
-          "description": "jq is only used if the `jq` type is selected.\nIt defines the comparisons that are made between\nthe ingested data and the profile rule."
+          "description": "jq is only used if the `jq` type is selected.\r\nIt defines the comparisons that are made between\r\nthe ingested data and the profile rule."
         },
         "rego": {
           "$ref": "#/definitions/EvalRego",
@@ -3521,7 +3520,7 @@
         },
         "trusty": {
           "$ref": "#/definitions/EvalTrusty",
-          "title": "The trusty type is no longer used, but is still here for backwards\ncompatibility with existing stored rules"
+          "title": "The trusty type is no longer used, but is still here for backwards\r\ncompatibility with existing stored rules"
         },
         "homoglyphs": {
           "$ref": "#/definitions/EvalHomoglyphs",
@@ -3533,10 +3532,10 @@
             "type": "object",
             "$ref": "#/definitions/v1DataSourceReference"
           },
-          "description": "Data sources that the rule refers to. These are used to\ninstantiate the relevant data sources for the rule and keep\ntrack of them as dependencies.\n\nNote that the data source must exist in the project hierarchy\nin order to be used in the rule."
+          "description": "Data sources that the rule refers to. These are used to\r\ninstantiate the relevant data sources for the rule and keep\r\ntrack of them as dependencies.\r\n\r\nNote that the data source must exist in the project hierarchy\r\nin order to be used in the rule."
         }
       },
-      "description": "Eval defines the data evaluation definition.\nThis pertains to the way we traverse data from the upstream\nendpoint and how we compare it to the rule.",
+      "description": "Eval defines the data evaluation definition.\r\nThis pertains to the way we traverse data from the upstream\r\nendpoint and how we compare it to the rule.",
       "required": [
         "type"
       ]
@@ -3546,11 +3545,11 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the data ingestion.\nwe currently support rest, artifact and builtin."
+          "description": "type is the type of the data ingestion.\r\nwe currently support rest, artifact and builtin."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType",
-          "description": "rest is the rest data ingestion.\nthis is only used if the type is rest."
+          "description": "rest is the rest data ingestion.\r\nthis is only used if the type is rest."
         },
         "builtin": {
           "$ref": "#/definitions/v1BuiltinType",
@@ -3558,19 +3557,19 @@
         },
         "artifact": {
           "$ref": "#/definitions/v1ArtifactType",
-          "description": "artifact is the artifact data ingestion.\nartifact currently only applies to artifacts."
+          "description": "artifact is the artifact data ingestion.\r\nartifact currently only applies to artifacts."
         },
         "git": {
           "$ref": "#/definitions/v1GitType",
-          "description": "git is the git data ingestion.\ngit currently only applies to repositories."
+          "description": "git is the git data ingestion.\r\ngit currently only applies to repositories."
         },
         "diff": {
           "$ref": "#/definitions/v1DiffType",
-          "description": "diff is the diff data ingestion.\ndiff currently only applies to pull_requests."
+          "description": "diff is the diff data ingestion.\r\ndiff currently only applies to pull_requests."
         },
         "deps": {
           "$ref": "#/definitions/v1DepsType",
-          "description": "deps is the deps data ingestion.\ndeps currently only applies to repositories."
+          "description": "deps is the deps data ingestion.\r\ndeps currently only applies to repositories."
         }
       },
       "description": "Ingest defines how the data is ingested.",
@@ -3583,7 +3582,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
+          "description": "type is the type of the remediation.\r\n* 'rest' can be used with any entity type.\r\n* 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.\r\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
@@ -3615,7 +3614,7 @@
           "type": "string"
         }
       },
-      "description": "branch is the branch of the git repository, when applied to repository entities.\nHas no meaning or effect on other entity types."
+      "description": "branch is the branch of the git repository, when applied to repository entities.\r\nHas no meaning or effect on other entity types."
     },
     "DiffTypeEcosystem": {
       "type": "object",
@@ -3647,10 +3646,10 @@
         },
         "profile": {
           "$ref": "#/definitions/JQComparisonOperator",
-          "description": "Profile points to the profile itself.\nThis is mutually exclusive with the `constant` field."
+          "description": "Profile points to the profile itself.\r\nThis is mutually exclusive with the `constant` field."
         },
         "constant": {
-          "description": "Constant points to a constant value.\nThis is mutually exclusive with the `profile` field."
+          "description": "Constant points to a constant value.\r\nThis is mutually exclusive with the `profile` field."
         }
       },
       "required": [
@@ -3662,7 +3661,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of evaluation engine to use\nfor rego. We currently have two modes of operation:\n- deny-by-default: this is the default mode of operation\n  where we deny access by default and allow access only\n  if the profile explicitly allows it. It expects the\n  profile to set an `allow` variable to true or false.\n- constraints: this is the mode of operation where we\n  allow access by default and deny access only if a\n  violation is found. It expects the profile to set a\n  `violations` variable with a \"msg\" field."
+          "description": "type is the type of evaluation engine to use\r\nfor rego. We currently have two modes of operation:\r\n- deny-by-default: this is the default mode of operation\r\n  where we deny access by default and allow access only\r\n  if the profile explicitly allows it. It expects the\r\n  profile to set an `allow` variable to true or false.\r\n- constraints: this is the mode of operation where we\r\n  allow access by default and deny access only if a\r\n  violation is found. It expects the profile to set a\r\n  `violations` variable with a \"msg\" field."
         },
         "def": {
           "type": "string",
@@ -3670,7 +3669,7 @@
         },
         "violationFormat": {
           "type": "string",
-          "description": "how are violations reported. This is only used if the\n`constraints` type is selected. The default is `text`\nwhich returns human-readable text. The other option is\n`json` which returns a JSON array containing the violations."
+          "description": "how are violations reported. This is only used if the\r\n`constraints` type is selected. The default is `text`\r\nwhich returns human-readable text. The other option is\r\n`json` which returns a JSON array containing the violations."
         }
       },
       "required": [
@@ -3682,7 +3681,7 @@
       "properties": {
         "endpoint": {
           "type": "string",
-          "title": "This is no longer used, but is still here for backwards\ncompatibility with existing stored rules"
+          "title": "This is no longer used, but is still here for backwards\r\ncompatibility with existing stored rules"
         }
       }
     },
@@ -3729,7 +3728,7 @@
             "type": "object",
             "$ref": "#/definitions/v1RuleEvaluationStatus"
           },
-          "title": "Note that some fields like profile_id and entity might be empty\nEventually we might replace this type with another one that fits the API better"
+          "title": "Note that some fields like profile_id and entity might be empty\r\nEventually we might replace this type with another one that fits the API better"
         }
       }
     },
@@ -3742,7 +3741,7 @@
         },
         "owner": {
           "type": "string",
-          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional, but an empty string is allowed as existing clients may\nset the field unconditionally."
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\r\nThis is optional, but an empty string is allowed as existing clients may\r\nset the field unconditionally."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -3761,11 +3760,11 @@
         },
         "params": {
           "type": "object",
-          "description": "params are the parameters that are passed to the rule.\nThis is optional and depends on the rule type."
+          "description": "params are the parameters that are passed to the rule.\r\nThis is optional and depends on the rule type."
         },
         "def": {
           "type": "object",
-          "description": "def is the definition of the rule.\nThis depends on the rule type."
+          "description": "def is the definition of the rule.\r\nThis depends on the rule type."
         },
         "name": {
           "type": "string",
@@ -3824,7 +3823,7 @@
         },
         "mode": {
           "type": "string",
-          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\nthe usual modes are: 100644 for regular files, 100755 for executable files and\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)\nsee e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16"
+          "title": "the GIT mode of the file. Not UNIX mode! String because the GH API also uses strings\r\nthe usual modes are: 100644 for regular files, 100755 for executable files and\r\n040000 for submodules (which we don't use but now you know the meaning of the 1 in 100644)\r\nsee e.g. https://github.com/go-git/go-git/blob/32e0172851c35ae2fac495069c923330040903d2/plumbing/filemode/filemode.go#L16"
         }
       }
     },
@@ -3841,11 +3840,11 @@
       "properties": {
         "title": {
           "type": "string",
-          "description": "the title of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
+          "description": "the title of the PR\r\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\r\ncreation of the PR."
         },
         "body": {
           "type": "string",
-          "description": "the body of the PR\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the PR."
+          "description": "the body of the PR\r\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\r\ncreation of the PR."
         },
         "contents": {
           "type": "array",
@@ -3856,15 +3855,15 @@
         },
         "method": {
           "type": "string",
-          "title": "the method to use to create the PR. For now, these are supported:\n-- minder.content - ensures that the content of the file is exactly as specified\n                    refer to the Content message for more details\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\n                                          file and replaces the tag with the SHA\n-- minder.yq.evaluate - evaluates a yq expression on a file"
+          "title": "the method to use to create the PR. For now, these are supported:\r\n-- minder.content - ensures that the content of the file is exactly as specified\r\n                    refer to the Content message for more details\r\n-- minder.actions.replace_tags_with_sha - finds any github actions within a workflow\r\n                                          file and replaces the tag with the SHA\r\n-- minder.yq.evaluate - evaluates a yq expression on a file"
         },
         "params": {
           "type": "object",
-          "description": "params are unstructured parameters passed to the method. These are optional\nand evaluated by the method."
+          "description": "params are unstructured parameters passed to the method. These are optional\r\nand evaluated by the method."
         },
         "actionsReplaceTagsWithSha": {
           "$ref": "#/definitions/PullRequestRemediationActionsReplaceTagsWithSha",
-          "title": "If the method is minder.actions.replace_tags_with_sha, this is the configuration\nfor that method"
+          "title": "If the method is minder.actions.replace_tags_with_sha, this is the configuration\r\nfor that method"
         }
       },
       "title": "the name stutters a bit but we already use a PullRequest message for handling PR entities"
@@ -3874,14 +3873,14 @@
       "properties": {
         "repository": {
           "$ref": "#/definitions/v1UpstreamRepositoryRef",
-          "description": "repository is the repository to register. This is optional if entity\nis set."
+          "description": "repository is the repository to register. This is optional if entity\r\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
+          "description": "entity is the entity to register. This is the same as the repository\r\nfield, but uses the new UpstreamEntityRef message. This is what we'll\r\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
@@ -3902,7 +3901,7 @@
       "properties": {
         "inEntity": {
           "type": "string",
-          "description": "in_entity is the entity in which the rule is evaluated.\nThis can be repository, build_environment or artifact."
+          "description": "in_entity is the entity in which the rule is evaluated.\r\nThis can be repository, build_environment or artifact."
         },
         "ruleSchema": {
           "type": "object",
@@ -3910,7 +3909,7 @@
         },
         "paramSchema": {
           "type": "object",
-          "description": "param_schema is the schema of the parameters that are passed to the rule.\nThis is expressed in JSON Schema."
+          "description": "param_schema is the schema of the parameters that are passed to the rule.\r\nThis is expressed in JSON Schema."
         },
         "ingest": {
           "$ref": "#/definitions/DefinitionIngest"
@@ -3960,7 +3959,7 @@
         },
         "repository": {
           "type": "string",
-          "description": "repository is the repository the artifact originated from.\nThis is optional."
+          "description": "repository is the repository the artifact originated from.\r\nThis is optional."
         },
         "versions": {
           "type": "array",
@@ -4010,7 +4009,7 @@
           "format": "date-time"
         }
       },
-      "description": "ArtifactVersion is a version of an artifact.\nThis is currently not populated in any requests or responses."
+      "description": "ArtifactVersion is a version of an artifact.\r\nThis is currently not populated in any requests or responses."
     },
     "v1AssignRoleRequest": {
       "type": "object",
@@ -4033,11 +4032,11 @@
       "properties": {
         "roleAssignment": {
           "$ref": "#/definitions/v1RoleAssignment",
-          "description": "role_assignment is the role assignment that was created.\nThis is optional."
+          "description": "role_assignment is the role assignment that was created.\r\nThis is optional."
         },
         "invitation": {
           "$ref": "#/definitions/v1Invitation",
-          "description": "invitation contains the details of the invitation for the\nassigned user to join the project if the user is not already\na member. This is optional."
+          "description": "invitation contains the details of the invitation for the\r\nassigned user to join the project if the user is not already\r\na member. This is optional."
         }
       }
     },
@@ -4086,24 +4085,24 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "name of the provider\nThis is optional, but some existing clients may set the field unconditionally,\nso an empty string is also an allowed value."
+          "description": "name of the provider\r\nThis is optional, but some existing clients may set the field unconditionally,\r\nso an empty string is also an allowed value."
         },
         "project": {
           "type": "string",
-          "description": "ID or name of the project.  If empty or unset, will select the user's default\nproject if they only have one project.  Existing clients may unconditionally set\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\nalias for unset."
+          "description": "ID or name of the project.  If empty or unset, will select the user's default\r\nproject if they only have one project.  Existing clients may unconditionally set\r\nthis to the empty string rather than leaving this unset, so we allow \"\" as an\r\nalias for unset."
         },
         "retiredOrganization": {
           "type": "string"
         }
       },
-      "description": "Context defines the context in which a rule is evaluated.\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\n buf compatibility checks."
+      "description": "Context defines the context in which a rule is evaluated.\r\nthis normally refers to a combination of the provider, organization and project.\n\nRemoving the 'optional' keyword from the following two fields below will break\r\n buf compatibility checks."
     },
     "v1ContextV2": {
       "type": "object",
       "properties": {
         "projectId": {
           "type": "string",
-          "description": "project is the project ID or name.  If empty or unset, will select the user's\ndefault project if they only have one project."
+          "description": "project is the project ID or name.  If empty or unset, will select the user's\r\ndefault project if they only have one project."
         },
         "provider": {
           "type": "string",
@@ -4224,7 +4223,7 @@
         },
         "authorization": {
           "$ref": "#/definitions/v1AuthorizationParams",
-          "description": "authorization provides additional authorization information needed\nto complete the initialization of the provider."
+          "description": "authorization provides additional authorization information needed\r\nto complete the initialization of the provider."
         }
       },
       "required": [
@@ -4304,15 +4303,15 @@
       "properties": {
         "cursor": {
           "type": "string",
-          "description": "cursor is the index to start from within the collection being\nretrieved. It's an opaque payload specified and interpreted on\nan per-rpc basis. An empty string is used to indicate the first\nitem in the collection."
+          "description": "cursor is the index to start from within the collection being\r\nretrieved. It's an opaque payload specified and interpreted on\r\nan per-rpc basis. An empty string is used to indicate the first\r\nitem in the collection."
         },
         "size": {
           "type": "integer",
           "format": "int64",
-          "description": "size is the number of items to retrieve from the collection.\n0 uses a server-defined default."
+          "description": "size is the number of items to retrieve from the collection.\r\n0 uses a server-defined default."
         }
       },
-      "description": "Cursor message to be used in request messages. Its purpose is to\nallow clients to specify the subset of records to retrieve by means\nof index within a collection, along with the number of items to\nretrieve.",
+      "description": "Cursor message to be used in request messages. Its purpose is to\r\nallow clients to specify the subset of records to retrieve by means\r\nof index within a collection, along with the number of items to\r\nretrieve.",
       "required": [
         "size"
       ]
@@ -4327,14 +4326,14 @@
         },
         "next": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed after the\nones shipped with the message containing this struct. This is optional."
+          "description": "Cursor pointing to retrieve results logically placed after the\r\nones shipped with the message containing this struct. This is optional."
         },
         "prev": {
           "$ref": "#/definitions/v1Cursor",
-          "description": "Cursor pointing to retrieve results logically placed before the\nones shipped with the message containing this struct. This is optional."
+          "description": "Cursor pointing to retrieve results logically placed before the\r\nones shipped with the message containing this struct. This is optional."
         }
       },
-      "description": "CursorPage message used in response messages. Its purpose is to\nsend to clients links pointing to next and/or previous collection\nsubsets with respect to the one containing this struct."
+      "description": "CursorPage message used in response messages. Its purpose is to\r\nsend to clients links pointing to next and/or previous collection\r\nsubsets with respect to the one containing this struct."
     },
     "v1DataSource": {
       "type": "object",
@@ -4349,11 +4348,11 @@
         },
         "context": {
           "$ref": "#/definitions/v1ContextV2",
-          "description": "context is the context in which the data source is evaluated.\nNote that in this case we only need the project in the\ncontext, since data sources are not provider-specific."
+          "description": "context is the context in which the data source is evaluated.\r\nNote that in this case we only need the project in the\r\ncontext, since data sources are not provider-specific."
         },
         "name": {
           "type": "string",
-          "description": "name is the name of the data source.\nNote that this is unique within a project hierarchy.\nNames must be lowercase and can only contain letters, numbers,\nhyphens, and underscores."
+          "description": "name is the name of the data source.\r\nNote that this is unique within a project hierarchy.\r\nNames must be lowercase and can only contain letters, numbers,\r\nhyphens, and underscores."
         },
         "id": {
           "type": "string",
@@ -4369,7 +4368,7 @@
           "description": "rest is the REST data source driver."
         }
       },
-      "description": "DataSource is a Data source instance. Data sources represent\nexternal integrations that enrich the data in Minder, but do not\nhave explicit lifecycle objects (entities).  Integrations which\ncreate entities are called Providers.",
+      "description": "DataSource is a Data source instance. Data sources represent\r\nexternal integrations that enrich the data in Minder, but do not\r\nhave explicit lifecycle objects (entities).  Integrations which\r\ncreate entities are called Providers.",
       "required": [
         "version",
         "name"
@@ -4384,10 +4383,10 @@
         },
         "alias": {
           "type": "string",
-          "description": "alias is the alias used to refer to the data source in the rule\ndefinition.\nIf left unset, it will default to the name of the data source."
+          "description": "alias is the alias used to refer to the data source in the rule\r\ndefinition.\r\nIf left unset, it will default to the name of the data source."
         }
       },
-      "description": "DataSourceReference is a reference to a data source.\nNote that for a resource to refer to a data source the data source must\nbe available in the same project hierarchy."
+      "description": "DataSourceReference is a reference to a data source.\r\nNote that for a resource to refer to a data source the data source must\r\nbe available in the same project hierarchy."
     },
     "v1DeleteDataSourceByIdResponse": {
       "type": "object",
@@ -4496,7 +4495,7 @@
           "$ref": "#/definitions/DepsTypePullRequestConfigs"
         }
       },
-      "description": "DepsType defines the \"deps\" ingester which can extract depndencies in protobom\nformat for rule evaluation."
+      "description": "DepsType defines the \"deps\" ingester which can extract depndencies in protobom\r\nformat for rule evaluation."
     },
     "v1DiffType": {
       "type": "object",
@@ -4507,11 +4506,11 @@
             "type": "object",
             "$ref": "#/definitions/DiffTypeEcosystem"
           },
-          "description": "ecosystems is the list of ecosystems to be used\nfor the \"dep\" diff type."
+          "description": "ecosystems is the list of ecosystems to be used\r\nfor the \"dep\" diff type."
         },
         "type": {
           "type": "string",
-          "description": "type is the type of diff ingestor to use.\nThe default is \"dep\" which will leverage\nthe ecosystems array."
+          "description": "type is the type of diff ingestor to use.\r\nThe default is \"dep\" which will leverage\r\nthe ecosystems array."
         }
       },
       "description": "DiffType defines the diff data ingester."
@@ -4549,7 +4548,7 @@
         },
         "type": {
           "$ref": "#/definitions/v1Entity",
-          "description": "type is the type of the entity.\nDISCUSSION: If we're aiming for a BYO entity type, we should probably\nhave this be a string, and have the user provide the type."
+          "description": "type is the type of the entity.\r\nDISCUSSION: If we're aiming for a BYO entity type, we should probably\r\nhave this be a string, and have the user provide the type."
         },
         "properties": {
           "type": "object",
@@ -4563,7 +4562,7 @@
       "properties": {
         "type": {
           "$ref": "#/definitions/v1Entity",
-          "description": "On input, at least one of id and name must be set.  If both are set, they must both match.\n On output, both id and name will be set.",
+          "description": "On input, at least one of id and name must be set.  If both are set, they must both match.\r\n On output, both id and name will be set.",
           "title": "entity is the entity to get status for. Incompatible with `all`"
         },
         "id": {
@@ -4575,7 +4574,7 @@
           "description": "name is the name of the entity.  This name is unique within a given project, type, and provider, but may not be globally unique."
         }
       },
-      "description": "EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity\nsuch as (repo, 1), (artifact, 2), ...",
+      "description": "EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity\r\nsuch as (repo, 1), (artifact, 2), ...",
       "required": [
         "type"
       ]
@@ -4620,11 +4619,11 @@
         },
         "alert": {
           "$ref": "#/definitions/v1EvaluationHistoryAlert",
-          "description": "alert contains details of the alerts for this evaluation.\nThis is optional."
+          "description": "alert contains details of the alerts for this evaluation.\r\nThis is optional."
         },
         "remediation": {
           "$ref": "#/definitions/v1EvaluationHistoryRemediation",
-          "description": "remediation contains details of the remediation for this evaluation.\nThis is optional."
+          "description": "remediation contains details of the remediation for this evaluation.\r\nThis is optional."
         },
         "evaluatedAt": {
           "type": "string",
@@ -4636,7 +4635,7 @@
           "description": "id is the unique identifier of the evaluation."
         }
       },
-      "description": "EvaluationHistory represents the history of an entity evaluation.\nThis is only used in responses.",
+      "description": "EvaluationHistory represents the history of an entity evaluation.\r\nThis is only used in responses.",
       "required": [
         "entity",
         "rule",
@@ -4650,11 +4649,11 @@
       "properties": {
         "status": {
           "type": "string",
-          "description": "status is one of (on, off, error, skipped, not available)\nnot using enums to mirror the behaviour of the existing API contracts."
+          "description": "status is one of (on, off, error, skipped, not available)\r\nnot using enums to mirror the behaviour of the existing API contracts."
         },
         "details": {
           "type": "string",
-          "description": "details contains optional details about the alert.\nthe structure and contents are alert specific, and are subject to change."
+          "description": "details contains optional details about the alert.\r\nthe structure and contents are alert specific, and are subject to change."
         }
       },
       "required": [
@@ -4688,11 +4687,11 @@
       "properties": {
         "status": {
           "type": "string",
-          "description": "status is one of (success, error, failure, skipped, not available)\nnot using enums to mirror the behaviour of the existing API contracts."
+          "description": "status is one of (success, error, failure, skipped, not available)\r\nnot using enums to mirror the behaviour of the existing API contracts."
         },
         "details": {
           "type": "string",
-          "description": "details contains optional details about the remediation.\nthe structure and contents are remediation specific, and are subject to change."
+          "description": "details contains optional details about the remediation.\r\nthe structure and contents are remediation specific, and are subject to change."
         }
       },
       "required": [
@@ -4731,14 +4730,14 @@
       "properties": {
         "status": {
           "type": "string",
-          "description": "status is one of (success, error, failure, skipped)\nnot using enums to mirror the behaviour of the existing API contracts."
+          "description": "status is one of (success, error, failure, skipped)\r\nnot using enums to mirror the behaviour of the existing API contracts."
         },
         "details": {
           "type": "string",
-          "description": "details contains optional details about the evaluation.\nthe structure and contents are rule type specific, and are subject to change."
+          "description": "details contains optional details about the evaluation.\r\nthe structure and contents are rule type specific, and are subject to change."
         },
         "output": {
-          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
+          "description": "output optionally contains the structured rule evaluation output.\r\nBecause output may be multiple KB, it is only returned\r\nif include_outputs is set. Historical evaluations may\r\ndiscard structured output sooner than status results."
         }
       },
       "required": [
@@ -4849,7 +4848,7 @@
           "title": "The requested record"
         }
       },
-      "description": "GetEvaluationHistoryResponse represents a response message for the\nGetEvaluationHistory RPC.",
+      "description": "GetEvaluationHistoryResponse represents a response message for the\r\nGetEvaluationHistory RPC.",
       "required": [
         "evaluation"
       ]
@@ -5053,16 +5052,18 @@
         "installationId": {
           "type": "string",
           "format": "int64",
-          "description": "The GitHub installation ID for the app.  On create, this is the only\nparameter used; the organization parameters are ignored."
+          "description": "The GitHub installation ID for the app.  On create, this is the only\r\nparameter used; the organization parameters are ignored."
         },
         "organization": {
           "type": "string",
-          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization slug where the app is installed.  This is an\r\noutput-only parameter, and is validated on input if set (i.e. the value\r\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         },
         "organizationId": {
           "type": "string",
           "format": "int64",
-          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization ID where the app is installed.  This is an\r\noutput-only parameter, and is validated on input if set (i.e. the value\r\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         }
       },
       "description": "GitHubAppParams is the parameters for a GitHub App provider."
@@ -5086,11 +5087,11 @@
       "properties": {
         "role": {
           "type": "string",
-          "description": "role is the role that would be assigned if the user\naccepts the invitation."
+          "description": "role is the role that would be assigned if the user\r\naccepts the invitation."
         },
         "email": {
           "type": "string",
-          "description": "email is the email address of the invited user.  This is\npresented as a convenience for display purposes, and does\nnot affect who can accept the invitation using the code."
+          "description": "email is the email address of the invited user.  This is\r\npresented as a convenience for display purposes, and does\r\nnot affect who can accept the invitation using the code."
         },
         "project": {
           "type": "string",
@@ -5098,7 +5099,7 @@
         },
         "code": {
           "type": "string",
-          "description": "code is a unique identifier for the invitation, which can\nbe used by the recipient to accept or reject the invitation.\nThe code is only transmitted in response to AssignRole or\nListInvitations RPCs, and not transmitted in\nListRoleAssignments or other calls."
+          "description": "code is a unique identifier for the invitation, which can\r\nbe used by the recipient to accept or reject the invitation.\r\nThe code is only transmitted in response to AssignRole or\r\nListInvitations RPCs, and not transmitted in\r\nListRoleAssignments or other calls."
         },
         "createdAt": {
           "type": "string",
@@ -5120,11 +5121,11 @@
         },
         "sponsorDisplay": {
           "type": "string",
-          "description": "sponsor_display is the display name of the user who created the\ninvitation."
+          "description": "sponsor_display is the display name of the user who created the\r\ninvitation."
         },
         "projectDisplay": {
           "type": "string",
-          "description": "project_display is the display name of the project to which the user\nis invited."
+          "description": "project_display is the display name of the project to which the user\r\nis invited."
         },
         "inviteUrl": {
           "type": "string",
@@ -5217,10 +5218,10 @@
         },
         "page": {
           "$ref": "#/definitions/v1CursorPage",
-          "description": "Metadata of the current page and pointers to next and/or\nprevious pages."
+          "description": "Metadata of the current page and pointers to next and/or\r\nprevious pages."
         }
       },
-      "description": "ListEvaluationHistoryResponse represents a response message for the\nListEvaluationHistory RPC.\n\nIt ships a collection of records retrieved and pointers to get to\nthe next and/or previous pages of data.",
+      "description": "ListEvaluationHistoryResponse represents a response message for the\r\nListEvaluationHistory RPC.\r\n\r\nIt ships a collection of records retrieved and pointers to get to\r\nthe next and/or previous pages of data.",
       "required": [
         "data"
       ]
@@ -5294,7 +5295,7 @@
           "items": {
             "type": "string"
           },
-          "description": "provider_classes is the legacy list of provider class names.\nDeprecated: use provider_class_infos for rich metadata."
+          "description": "provider_classes is the legacy list of provider class names.\r\nDeprecated: use provider_class_infos for rich metadata."
         },
         "providerClassInfos": {
           "type": "array",
@@ -5345,7 +5346,7 @@
             "type": "object",
             "$ref": "#/definitions/v1RegistrableUpstreamEntityRef"
           },
-          "description": "entities is the same list as the repositories, but it\nuses the new UpstreamEntityRef message. This is what\nwe'll migrate to eventually."
+          "description": "entities is the same list as the repositories, but it\r\nuses the new UpstreamEntityRef message. This is what\r\nwe'll migrate to eventually."
         }
       },
       "required": [
@@ -5381,7 +5382,7 @@
             "type": "object",
             "$ref": "#/definitions/v1RoleAssignment"
           },
-          "description": "role_assignments contains permission grants which have been accepted\nby a user."
+          "description": "role_assignments contains permission grants which have been accepted\r\nby a user."
         },
         "invitations": {
           "type": "array",
@@ -5389,7 +5390,7 @@
             "type": "object",
             "$ref": "#/definitions/v1Invitation"
           },
-          "description": "invitations contains outstanding role invitations which have not yet\nbeen accepted by a user."
+          "description": "invitations contains outstanding role invitations which have not yet\r\nbeen accepted by a user."
         }
       },
       "required": [
@@ -5472,7 +5473,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the profile.\nThis is optional and is set by the system."
+          "description": "id is the id of the profile.\r\nThis is optional and is set by the system.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -5483,7 +5485,7 @@
           "items": {
             "type": "string"
           },
-          "description": "labels are a set of system-provided attributes which can be used to\nfilter profiles and status results.  Labels cannot be set by the user,\nbut are returned in ListProfiles.\n\nLabels use DNS label constraints, with a possible namespace prefix\nseparated by a colon (:).  They are intended to allow filtering, but\nnot to store arbitrary metadata.\nDNS labels are 1-63 character alphanumeric strings with internal hyphens.\nAn RE2-style validation regex would be:\n\nDNS_STR = \"[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?\"\n($DNS_STR:)?$DNS_STR"
+          "title": "labels are a set of system-provided attributes which can be used to\r\nfilter profiles and status results.  Labels cannot be set by the user,\r\nbut are returned in ListProfiles.\r\n\r\nLabels use DNS label constraints, with a possible namespace prefix\r\nseparated by a colon (:).  They are intended to allow filtering, but\r\nnot to store arbitrary metadata.\r\nDNS labels are 1-63 character alphanumeric strings with internal hyphens.\r\nAn RE2-style validation regex would be:\r\n\r\nDNS_STR = \"[a-zA-Z0-9](?[-a-zA-Z0-9]{0,61}[a-zA-Z0-9])?\"\r\n($DNS_STR:)?$DNS_STR"
         },
         "repository": {
           "type": "array",
@@ -5551,11 +5553,11 @@
         },
         "remediate": {
           "type": "string",
-          "title": "whether and how to remediate (on,off,dry_run)\nthis is optional and defaults to \"off\""
+          "title": "whether and how to remediate (on,off,dry_run)\r\nthis is optional and defaults to \"off\""
         },
         "alert": {
           "type": "string",
-          "title": "whether and how to alert (on,off,dry_run)\nthis is optional and defaults to \"on\""
+          "title": "whether and how to alert (on,off,dry_run)\r\nthis is optional and defaults to \"on\""
         },
         "type": {
           "type": "string",
@@ -5570,7 +5572,7 @@
           "description": "display_name is the display name of the profile."
         }
       },
-      "description": "Profile defines a profile that is user defined.\nAll fields are optional because we want to allow partial updates."
+      "description": "Profile defines a profile that is user defined.\r\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProfileStatus": {
       "type": "object",
@@ -5613,7 +5615,7 @@
         },
         "description": {
           "type": "string",
-          "description": "description is a human-readable description of the project.\nThis is optional."
+          "description": "description is a human-readable description of the project.\r\nThis is optional."
         },
         "createdAt": {
           "type": "string",
@@ -5625,7 +5627,7 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name allows for a human-readable name to be used.\ndisplay_names are short *non-unique* strings to provide\na user-friendly name for presentation in lists, etc.\nThis is optional."
+          "description": "display_name allows for a human-readable name to be used.\r\ndisplay_names are short *non-unique* strings to provide\r\na user-friendly name for presentation in lists, etc.\r\nThis is optional."
         }
       },
       "description": "Project API Objects. This is only used in responses.",
@@ -5678,11 +5680,12 @@
         },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
+          "description": "project is the project where the provider is.  This is ignored on input\r\nin favor of the context field in CreateProviderRequest.",
+          "readOnly": true
         },
         "version": {
           "type": "string",
-          "description": "version is the version of the provider.\nif unset, \"v1\" is assumed."
+          "description": "version is the version of the provider.\r\nif unset, \"v1\" is assumed."
         },
         "implements": {
           "type": "array",
@@ -5708,14 +5711,15 @@
         },
         "credentialsState": {
           "type": "string",
-          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+          "description": "credentials_state is the state of the credentials for the provider.\r\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\".",
+          "readOnly": true
         },
         "id": {
           "type": "string",
           "description": "id is the unique identifier of the provider."
         }
       },
-      "description": "Provider represents a provider that is used to interact with external systems.\nAll fields are optional because we want to allow partial updates."
+      "description": "Provider represents a provider that is used to interact with external systems.\r\nAll fields are optional because we want to allow partial updates."
     },
     "v1ProviderClassInfo": {
       "type": "object",
@@ -5819,7 +5823,7 @@
         "identifyingProperties": {
           "type": "object",
           "additionalProperties": {},
-          "description": "identifying_properties uniquely identifies the entity in the provider.\nFor example, for a GitHub repository use github/repo_owner and github/repo_name,\nor use upstream_id to identify by provider's internal ID.\nEach key maps to a value that can be a string, number, boolean, or nested structure."
+          "description": "identifying_properties uniquely identifies the entity in the provider.\r\nFor example, for a GitHub repository use github/repo_owner and github/repo_name,\r\nor use upstream_id to identify by provider's internal ID.\r\nEach key maps to a value that can be a string, number, boolean, or nested structure."
         }
       },
       "title": "RegisterEntityRequest is the request message for the RegisterEntity method",
@@ -5874,14 +5878,14 @@
         },
         "repository": {
           "$ref": "#/definitions/v1UpstreamRepositoryRef",
-          "description": "repository is the repository to register. This is optional if entity\nis set."
+          "description": "repository is the repository to register. This is optional if entity\r\nis set."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "entity": {
           "$ref": "#/definitions/v1UpstreamEntityRef",
-          "description": "entity is the entity to register. This is the same as the repository\nfield, but uses the new UpstreamEntityRef message. This is what we'll\nmigrate to eventually. This is optional if repository is set."
+          "description": "entity is the entity to register. This is the same as the repository\r\nfield, but uses the new UpstreamEntityRef message. This is what we'll\r\nmigrate to eventually. This is optional if repository is set."
         }
       }
     },
@@ -5929,7 +5933,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "description": "id is the unique identifier of the repository within Minder.\nIt is always populated, but the optional keyword is used for\nbackwards compatibility."
+          "description": "id is the unique identifier of the repository within Minder.\r\nIt is always populated, but the optional keyword is used for\r\nbackwards compatibility."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -6005,7 +6009,7 @@
       "properties": {
         "role": {
           "type": "string",
-          "description": "role is the role that would be assigned if the user\naccepts the invitation."
+          "description": "role is the role that would be assigned if the user\r\naccepts the invitation."
         },
         "email": {
           "type": "string",
@@ -6021,7 +6025,7 @@
         },
         "projectDisplay": {
           "type": "string",
-          "description": "project_display is the display name of the project to which the user\nis invited."
+          "description": "project_display is the display name of the project to which the user\r\nis invited."
         }
       },
       "required": [
@@ -6042,7 +6046,7 @@
         },
         "providerAuth": {
           "type": "boolean",
-          "description": "provider_auth enables provider authentication for this data source.\nWhen enabled, the data source will use the provider's authentication\ncredentials to make requests."
+          "description": "provider_auth enables provider authentication for this data source.\r\nWhen enabled, the data source will use the provider's authentication\r\ncredentials to make requests."
         }
       },
       "description": "RestDataSource is the REST data source driver."
@@ -6052,11 +6056,11 @@
       "properties": {
         "endpoint": {
           "type": "string",
-          "description": "endpoint is the URL of the REST API. Note that endpoints are\ntemplates that can be parameterized with variables. Parametrization\nis done using RFC 6570."
+          "description": "endpoint is the URL of the REST API. Note that endpoints are\r\ntemplates that can be parameterized with variables. Parametrization\r\nis done using RFC 6570."
         },
         "method": {
           "type": "string",
-          "description": "method is the HTTP method to use for the request.\nIf left unset, it will default to \"GET\"."
+          "description": "method is the HTTP method to use for the request.\r\nIf left unset, it will default to \"GET\"."
         },
         "headers": {
           "type": "object",
@@ -6075,11 +6079,11 @@
         },
         "bodyFromField": {
           "type": "string",
-          "description": "body_from_field is the field in the input to use as the body.\nIf the value is an string, it will be used as the body, as is.\nIf the value is an object, it will be serialized as JSON.\nIf the value is not found in the input, the request will fail."
+          "description": "body_from_field is the field in the input to use as the body.\r\nIf the value is an string, it will be used as the body, as is.\r\nIf the value is an object, it will be serialized as JSON.\r\nIf the value is not found in the input, the request will fail."
         },
         "parse": {
           "type": "string",
-          "description": "parse is the parse configuration for the response.\nThis allows us to serialize the response into a structured format,\nor not.\nIf left unset, the response will be treated as a string.\nIf set to \"json\", the response will be parsed as JSON."
+          "description": "parse is the parse configuration for the response.\r\nThis allows us to serialize the response into a structured format,\r\nor not.\r\nIf left unset, the response will be treated as a string.\r\nIf set to \"json\", the response will be parsed as JSON."
         },
         "fallback": {
           "type": "array",
@@ -6087,7 +6091,7 @@
             "type": "object",
             "$ref": "#/definitions/RestDataSourceDefFallback"
           },
-          "description": "fallback is the fallback configuration for the response in case\nof an unexpected status code."
+          "description": "fallback is the fallback configuration for the response in case\r\nof an unexpected status code."
         },
         "expectedStatus": {
           "type": "array",
@@ -6095,7 +6099,7 @@
             "type": "integer",
             "format": "int32"
           },
-          "description": "expected_status is the expected status code for the response.\nThis may be repeated to allow for multiple expected status codes.\nIf left unset, it will default to 200."
+          "description": "expected_status is the expected status code for the response.\r\nThis may be repeated to allow for multiple expected status codes.\r\nIf left unset, it will default to 200."
         },
         "inputSchema": {
           "type": "object",
@@ -6111,11 +6115,11 @@
       "properties": {
         "endpoint": {
           "type": "string",
-          "description": "endpoint is the endpoint to fetch data from.\nThis can be a URL or path on the API.\nThis is a required field and must be set.\nThis is also evaluated via a template which allows\nus dynamically fill in the values."
+          "description": "endpoint is the endpoint to fetch data from.\r\nThis can be a URL or path on the API.\r\nThis is a required field and must be set.\r\nThis is also evaluated via a template which allows\r\nus dynamically fill in the values."
         },
         "method": {
           "type": "string",
-          "description": "method is the method to use to fetch data.\nGo templates may be used to vary the method using the same parameters\nas the endpoint."
+          "description": "method is the method to use to fetch data.\r\nGo templates may be used to vary the method using the same parameters\r\nas the endpoint."
         },
         "headers": {
           "type": "array",
@@ -6126,7 +6130,7 @@
         },
         "body": {
           "type": "string",
-          "description": "body is the body to be sent to the endpoint, which must be valid JSON\nGo templates may be used to vary the method using the same parameters\nas the endpoint."
+          "description": "body is the body to be sent to the endpoint, which must be valid JSON\r\nGo templates may be used to vary the method using the same parameters\r\nas the endpoint."
         },
         "parse": {
           "type": "string",
@@ -6138,10 +6142,10 @@
             "type": "object",
             "$ref": "#/definitions/v1RestTypeFallback"
           },
-          "description": "fallback provides a body that the ingester would return in case\nthe REST call returns a non-200 status code."
+          "description": "fallback provides a body that the ingester would return in case\r\nthe REST call returns a non-200 status code."
         }
       },
-      "description": "RestType defines the rest data evaluation.\nThis is used to fetch data from a REST endpoint.",
+      "description": "RestType defines the rest data evaluation.\r\nThis is used to fetch data from a REST endpoint.",
       "required": [
         "endpoint"
       ]
@@ -6190,7 +6194,7 @@
         },
         "subject": {
           "type": "string",
-          "description": "subject is the subject to which the role is assigned.\nCan be either a UUID or a providername/subject string."
+          "description": "subject is the subject to which the role is assigned.\r\nCan be either a UUID or a providername/subject string."
         },
         "displayName": {
           "type": "string",
@@ -6306,7 +6310,7 @@
           "title": "release_phase is the phase of the release"
         },
         "output": {
-          "description": "output optionally contains the structured rule evaluation output.\nBecause output may be multiple KB, it is only returned\nif include_outputs is set. Historical evaluations may\ndiscard structured output sooner than status results."
+          "description": "output optionally contains the structured rule evaluation output.\r\nBecause output may be multiple KB, it is only returned\r\nif include_outputs is set. Historical evaluations may\r\ndiscard structured output sooner than status results."
         }
       },
       "title": "get the status of the rules for a given profile",
@@ -6331,7 +6335,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
+          "description": "id is the id of the rule type.\r\nThis is mostly optional and is set by the server.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -6355,11 +6360,11 @@
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the rule type.\nThis is expected to be a valid markdown formatted string."
+          "description": "description is the description of the rule type.\r\nThis is expected to be a valid markdown formatted string."
         },
         "guidance": {
           "type": "string",
-          "description": "guidance are instructions we give the user in case a rule fails.\nThis is expected to be a valid markdown formatted string."
+          "description": "guidance are instructions we give the user in case a rule fails.\r\nThis is expected to be a valid markdown formatted string."
         },
         "severity": {
           "$ref": "#/definitions/v1Severity",
@@ -6370,7 +6375,7 @@
           "description": "release_phase is the release phase of the rule type, i.e. alpha, beta, ga, deprecated."
         }
       },
-      "description": "RuleType defines rules that may or may not be user defined.\nThe version is assumed from the folder's version.",
+      "description": "RuleType defines rules that may or may not be user defined.\r\nThe version is assumed from the folder's version.",
       "required": [
         "name",
         "def",
@@ -6412,7 +6417,7 @@
         "VALUE_CRITICAL"
       ],
       "default": "VALUE_UNSPECIFIED",
-      "description": "Value enumerates the severity values.\n\n - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't\nbeen set.\n - VALUE_INFO: info severity means that the severity is informational and\ndoes not incur risk.\n - VALUE_LOW: low severity means that the severity is low and does not\nincur significant risk.\n - VALUE_MEDIUM: medium severity means that the severity is medium and may\nincur some risk.\n - VALUE_HIGH: high severity means that the severity is high and may incur\nsignificant risk.\n - VALUE_CRITICAL: critical severity means that the severity is critical and\nrequires immediate attention."
+      "description": "Value enumerates the severity values.\n\n - VALUE_UNKNOWN: unknown severity means that the severity is unknown or hasn't\r\nbeen set.\n - VALUE_INFO: info severity means that the severity is informational and\r\ndoes not incur risk.\n - VALUE_LOW: low severity means that the severity is low and does not\r\nincur significant risk.\n - VALUE_MEDIUM: medium severity means that the severity is medium and may\r\nincur some risk.\n - VALUE_HIGH: high severity means that the severity is high and may incur\r\nsignificant risk.\n - VALUE_CRITICAL: critical severity means that the severity is critical and\r\nrequires immediate attention."
     },
     "v1StoreProviderTokenRequest": {
       "type": "object",
@@ -6426,7 +6431,7 @@
         },
         "owner": {
           "type": "string",
-          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional, but an empty string is allowed as existing clients may\nset the field unconditionally."
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\r\nThis is optional, but an empty string is allowed as existing clients may\r\nset the field unconditionally."
         },
         "context": {
           "$ref": "#/definitions/v1Context"
@@ -6511,11 +6516,11 @@
         },
         "displayName": {
           "type": "string",
-          "description": "display_name is the display name of the project to update.\nThis is optional."
+          "description": "display_name is the display name of the project to update.\r\nThis is optional."
         },
         "description": {
           "type": "string",
-          "description": "description is the description of the project to update.\nThis is optional."
+          "description": "description is the description of the project to update.\r\nThis is optional."
         }
       }
     },
@@ -6540,14 +6545,14 @@
         },
         "subject": {
           "type": "string",
-          "title": "subject is the account to change permissions for.\nThe account must already have permissions on the project"
+          "title": "subject is the account to change permissions for.\r\nThe account must already have permissions on the project"
         },
         "roles": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "All subject roles are _replaced_ with the following role assignments.  Must be non-empty,\nuse RemoveRole to remove permissions entirely from the project."
+          "description": "All subject roles are _replaced_ with the following role assignments.  Must be non-empty,\r\nuse RemoveRole to remove permissions entirely from the project."
         },
         "email": {
           "type": "string",
@@ -6610,7 +6615,7 @@
       "properties": {
         "context": {
           "$ref": "#/definitions/v1ContextV2",
-          "title": "context is the context in which the entity is evaluated.\nNote that the context is included here since users of\nthis message may return upstream references from\nmultiple providers"
+          "title": "context is the context in which the entity is evaluated.\r\nNote that the context is included here since users of\r\nthis message may return upstream references from\r\nmultiple providers"
         },
         "type": {
           "$ref": "#/definitions/v1Entity",
@@ -6618,17 +6623,17 @@
         },
         "properties": {
           "type": "object",
-          "description": "properties is a map of properties of the entity.\nThis will be used to identify the entity in the upstream system\nand will be a subset of the properties of the entity that will\nbe stored in Minder."
+          "description": "properties is a map of properties of the entity.\r\nThis will be used to identify the entity in the upstream system\r\nand will be a subset of the properties of the entity that will\r\nbe stored in Minder."
         }
       },
-      "description": "UpstreamEntityRef providers enough information for the\nprovider to identify the entity in the upstream system."
+      "description": "UpstreamEntityRef providers enough information for the\r\nprovider to identify the entity in the upstream system."
     },
     "v1UpstreamRepositoryRef": {
       "type": "object",
       "properties": {
         "owner": {
           "type": "string",
-          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\nThis is optional."
+          "description": "owner is the owner (e.g GitHub org) that the provider is associated with.\r\nThis is optional."
         },
         "name": {
           "type": "string"
@@ -6636,14 +6641,16 @@
         "repoId": {
           "type": "string",
           "format": "int64",
-          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
+          "description": "The upstream identity of the repository, as an integer.\r\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "registered": {
           "type": "boolean",
-          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
+          "description": "True if the repository is already registered in Minder.\r\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         }
       },
       "required": [
@@ -6686,10 +6693,10 @@
         },
         "providerName": {
           "type": "string",
-          "description": "provider_name is the name of the provider that was created.\nThis is populated if creation was successful."
+          "description": "provider_name is the name of the provider that was created.\r\nThis is populated if creation was successful."
         }
       },
-      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\nname, if it has been created",
+      "title": "VerifyProviderCredentialRequest responds with a boolean indicating if the provider has been created and the provider\r\nname, if it has been created",
       "required": [
         "created"
       ]
