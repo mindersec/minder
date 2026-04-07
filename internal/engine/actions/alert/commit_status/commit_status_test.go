@@ -14,11 +14,11 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/mindersec/minder/internal/db"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mockghclient "github.com/mindersec/minder/internal/providers/github/mock"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )
 

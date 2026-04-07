@@ -18,12 +18,13 @@ import (
 	uritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -242,7 +243,7 @@ func (*Alert) runDoNothing(ctx context.Context, params *paramsPR) (json.RawMessa
 	logger := zerolog.Ctx(ctx).With().Str("repo", params.Repo).Logger()
 	logger.Debug().Msg("Running do nothing")
 
-	err := enginerr.AlertStatusAsError(params.prevStatus)
+	err := dbadapter.AlertStatusAsError(params.prevStatus)
 	if params.prevStatus != nil {
 		return params.prevStatus.AlertMetadata, err
 	}
@@ -271,7 +272,7 @@ func (alert *Alert) getParamsForCommitStatus(
 
 	// Create template params
 	tmplParams := &CommitStatusTemplateParams{
-		EvalErrorDetails: enginerr.ErrorAsEvalDetails(params.GetEvalErr()),
+		EvalErrorDetails: dbadapter.ErrorAsEvalDetails(params.GetEvalErr()),
 	}
 	if params.GetEvalResult() != nil {
 		tmplParams.EvalResultOutput = params.GetEvalResult().Output
