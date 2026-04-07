@@ -15359,7 +15359,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xfe%\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xfb%\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
 	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12\x1d\n" +
@@ -15373,7 +15373,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xfc \n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xf9 \n" +
 	"\n" +
 	"Definition\x12;\n" +
 	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x128\n" +
@@ -15460,16 +15460,16 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x05_restB\x17\n" +
 	"\x15_gh_branch_protectionB\x0f\n" +
 	"\r_pull_requestB\x17\n" +
-	"\x15_pull_request_comment\x1a\xdb\x04\n" +
+	"\x15_pull_request_comment\x1a\xd8\x04\n" +
 	"\x05Alert\x12E\n" +
 	"\x04type\x18\x01 \x01(\tB1\xbaH.\xd8\x01\x01r)R\x11security_advisoryR\x14pull_request_commentR\x04type\x12b\n" +
 	"\x11security_advisory\x18\x02 \x01(\v20.minder.v1.RuleType.Definition.Alert.AlertTypeSAH\x00R\x10securityAdvisory\x88\x01\x01\x12n\n" +
 	"\x14pull_request_comment\x18\x03 \x01(\v27.minder.v1.RuleType.Definition.Alert.AlertTypePRCommentH\x01R\x12pullRequestComment\x88\x01\x01\x1a_\n" +
 	"\vAlertTypeSA\x12P\n" +
-	"\bseverity\x18\x01 \x01(\tB4\xbaH1\xd8\x01\x01r,R\aunknownR\x04infoR\x03lowR\x06mediumR\x04highR\bcriticalR\bseverity\x1a\xa6\x01\n" +
+	"\bseverity\x18\x01 \x01(\tB4\xbaH1\xd8\x01\x01r,R\aunknownR\x04infoR\x03lowR\x06mediumR\x04highR\bcriticalR\bseverity\x1a\xa3\x01\n" +
 	"\x12AlertTypePRComment\x123\n" +
-	"\x0ereview_message\x18\x01 \x01(\tB\f\xe0A\x02\xbaH\x06r\x04\x18\x80\x80\x04R\rreviewMessage\x12J\n" +
-	"\freview_event\x18\x02 \x01(\tB\"\xbaH\x1f\xd8\x01\x01r\x1aR\aCOMMENTR\x0fREQUEST_CHANGESH\x00R\vreviewEvent\x88\x01\x01B\x0f\n" +
+	"\x0ereview_message\x18\x01 \x01(\tB\f\xe0A\x02\xbaH\x06r\x04\x18\x80\x80\x04R\rreviewMessage\x12G\n" +
+	"\freview_event\x18\x02 \x01(\tB\x1f\xbaH\x1cr\x1aR\aCOMMENTR\x0fREQUEST_CHANGESH\x00R\vreviewEvent\x88\x01\x01B\x0f\n" +
 	"\r_review_eventB\x14\n" +
 	"\x12_security_advisoryB\x17\n" +
 	"\x15_pull_request_commentB\x0f\n" +

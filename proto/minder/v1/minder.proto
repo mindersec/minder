@@ -2947,8 +2947,7 @@ message RuleType {
                 optional string review_event = 2 [
                     (buf.validate.field).string = {
                         in: ["COMMENT", "REQUEST_CHANGES"],
-                    },
-                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                    }
                 ];
             }
             optional AlertTypePRComment pull_request_comment = 3;
