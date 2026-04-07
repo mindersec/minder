@@ -34,6 +34,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
+	name := viper.GetString("name")
 	deleteAll := viper.GetBool("all")
 	yesFlag := viper.GetBool("yes")
 
@@ -55,17 +56,31 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// List of rule types to delete
 	var rulesToDelete []*minderv1.RuleType
+
 	if !deleteAll {
-		// Fetch the rule type from the DB, so we can get its name
-		rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
-			Context: &minderv1.Context{Project: &project},
-			Id:      id,
-		})
-		if err != nil {
-			return cli.MessageAndError("Error getting rule type", err)
+		// Fetch the rule type from the DB by either ID or Name
+		if id != "" {
+			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+				Context: &minderv1.Context{Project: &project},
+				Id:      id,
+			})
+			if err != nil {
+				return cli.MessageAndError("Error getting rule type by id", err)
+			}
+			rulesToDelete = append(rulesToDelete, rtype.RuleType)
 		}
-		// Add the rule type for deletion
-		rulesToDelete = append(rulesToDelete, rtype.RuleType)
+
+		if name != "" {
+			rtype, err := client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+				Context: &minderv1.Context{Project: &project},
+				Name:    name,
+			})
+			if err != nil {
+				return cli.MessageAndError("Error getting rule type by name", err)
+			}
+			rulesToDelete = append(rulesToDelete, rtype.RuleType)
+		}
+
 	} else {
 		// List all rule types
 		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
@@ -174,11 +189,10 @@ func init() {
 	ruleTypeCmd.AddCommand(deleteCmd)
 	// Flags
 	deleteCmd.Flags().StringP("id", "i", "", "ID of rule type to delete")
+	deleteCmd.Flags().StringP("name", "n", "", "Name of rule type to delete")
 	deleteCmd.Flags().BoolP("all", "a", false, "Warning: Deletes all rule types")
 	deleteCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when deleting all rule types")
-	// TODO: add a flag for the rule type name
 	// Exclusive
-	deleteCmd.MarkFlagsOneRequired("id", "all")
-	deleteCmd.MarkFlagsMutuallyExclusive("id", "all")
-
+	deleteCmd.MarkFlagsOneRequired("id", "name", "all")
+	deleteCmd.MarkFlagsMutuallyExclusive("id", "name", "all")
 }
