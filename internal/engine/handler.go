@@ -127,7 +127,11 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			time.Sleep(ArtifactSignatureWaitPeriod)
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
+		timeout := e.executionTimeout
+		if timeout <= 0 {
+			timeout = DefaultExecutionTimeout
+		}
+		ctx, cancel := context.WithTimeout(msgCtx, timeout)
 		defer cancel()
 
 		defer func() {
