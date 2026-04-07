@@ -149,9 +149,9 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 
 func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji bool) {
 	historyTable := table.New(table.Simple, layouts.Default,
-		[]string{"Time", "Entity", "Rule", "Status"})
+		[]string{"Time", "Entity", "Rule", "Status"}).
+		SetAutoMerge(true)
 
-	historyTable.SetAutoMerge(true)
 	renderRuleEvaluationStatusTable(resp.Data, historyTable, emoji)
 	historyTable.Render()
 	fmt.Println("")
@@ -209,13 +209,13 @@ func renderRuleEvaluationStatusTable(
 		timeB := b.EvaluatedAt.AsTime().Format(time.DateTime)
 
 		//Sort by Time (Descending - newest at top)
-		if timeA != timeB {
-			return strings.Compare(timeB, timeA)
+		if sort := strings.Compare(timeB, timeA); sort != 0 {
+			return sort
 		}
 
 		//Sort by Rule Name (Ascending) -> Groups identical rules together
-		if a.Rule.Name != b.Rule.Name {
-			return strings.Compare(a.Rule.Name, b.Rule.Name)
+		if sort := strings.Compare(a.Rule.Name, b.Rule.Name); sort != 0 {
+			return sort
 		}
 
 		//Sort by Entity Name (Ascending)

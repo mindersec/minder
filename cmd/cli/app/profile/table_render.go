@@ -19,7 +19,7 @@ import (
 )
 
 func marshalStructOrEmpty(v *structpb.Struct) string {
-	if v == nil || len(v.AsMap()) == 0 {
+	if len(v.AsMap()) == 0 {
 		return ""
 	}
 	out, err := yaml.Marshal(v.AsMap())
@@ -31,10 +31,10 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable() table.Table {
-	t := table.New(table.Simple, layouts.Default,
-		[]string{"Name", "Description", "Alert", "Remediate"})
-	t.SetAutoMerge(true)
-	return t
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Name", "Description", "Alert", "Remediate"}).
+		SetAutoMerge(true).
+		SetEqualColumns(true) // Divided equally across terminal width
 }
 
 // RenderProfileSettingsTable renders the profile settings table
@@ -44,10 +44,10 @@ func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
 
 // NewProfileRulesTable creates a new table for rendering profiles
 func NewProfileRulesTable() table.Table {
-	t := table.New(table.Simple, layouts.Default,
-		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"})
-	t.SetAutoMerge(true)
-	return t
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"}).
+		SetAutoMerge(true).
+		SetEqualColumns(true) // Divided equally across terminal width
 }
 
 // RenderProfileRulesTable renders the profile table
@@ -72,14 +72,15 @@ func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, 
 
 // NewProfileStatusTable creates a new table for rendering profile status
 func NewProfileStatusTable() table.Table {
-	t := table.New(table.Simple, layouts.Default, []string{"Name", "Status", "Evaluated At"})
-	t.SetAutoMerge(true)
-	return t
+	// Status tables are usually better "Compact" (default) because they have short fields
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Name", "Status", "Evaluated At"}).
+		SetAutoMerge(true).
+		SetEqualColumns(true)
 }
 
 // RenderProfileStatusTable renders the profile status table
 func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji bool) {
-	// Line broken to satisfy lll (line length limit)
 	t.AddRowWithColor(
 		layouts.NoColor(ps.ProfileName),
 		table.GetStatusIcon(types.ProfileStatus(ps), emoji),
@@ -89,10 +90,10 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable() table.Table {
-	t := table.New(table.Simple, layouts.Default,
-		[]string{"Entity", "Rule Name", "Status", "Details"})
-	t.SetAutoMerge(true)
-	return t
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Entity", "Rule Name", "Status", "Details"}).
+		SetAutoMerge(true).
+		SetEqualColumns(true)
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.
@@ -101,9 +102,13 @@ func RenderRuleEvaluationStatusTable(
 	t table.Table,
 	emoji bool,
 ) {
-	slices.SortFunc(statuses, func(a *minderv1.RuleEvaluationStatus, b *minderv1.RuleEvaluationStatus) int {
-		return strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"])
+	slices.SortFunc(statuses, func(a, b *minderv1.RuleEvaluationStatus) int {
+		if sort := strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"]); sort != 0 {
+			return sort
+		}
+		return strings.Compare(a.Entity, b.Entity)
 	})
+
 	for _, eval := range statuses {
 		evalInfo := types.RuleEvalStatus(eval)
 		t.AddRowWithColor(

@@ -4,8 +4,10 @@
 package table
 
 import (
-	"math"
 	"os"
+	"strconv"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
@@ -17,155 +19,95 @@ import (
 const (
 	// Simple defines the standard table layout used across the Minder CLI.
 	Simple               = "simple"
-	defaultTerminalWidth = 80
+	defaultTerminalWidth = 100
 )
 
-// ColumnSpec defines how a specific column should be rendered universally.
-type ColumnSpec struct {
-	FixedWidth int
-	WidthPct   float64
-	AutoMerge  bool
-}
-
-var columnSpecs = map[string]ColumnSpec{
-	// High-level grouping columns (AutoMerge: true)
-	"Owner":       {WidthPct: 0.20, AutoMerge: true},
-	"Provider":    {WidthPct: 0.25, AutoMerge: true},
-	"Entity":      {WidthPct: 0.25, AutoMerge: true},
-	"Time":        {FixedWidth: 20, AutoMerge: true},
-	"Entity Type": {FixedWidth: 15, AutoMerge: true},
-	"Rule":        {WidthPct: 0.25, AutoMerge: true},
-	"Status":      {FixedWidth: 12, AutoMerge: true},
-
-	// Identifying / Data Columns (AutoMerge: false)
-	"Name":            {WidthPct: 0.35, AutoMerge: false},
-	"Upstream ID":     {FixedWidth: 15, AutoMerge: false},
-	"Rule Name":       {WidthPct: 0.25, AutoMerge: false},
-	"Description":     {WidthPct: 0.60, AutoMerge: false},
-	"Rule Params":     {WidthPct: 0.25, AutoMerge: false},
-	"Rule Definition": {WidthPct: 0.50, AutoMerge: false},
-	"Alert":           {FixedWidth: 10, AutoMerge: false},
-	"Remediate":       {FixedWidth: 10, AutoMerge: false},
-	"Details":         {WidthPct: 0.50, AutoMerge: false},
-	"Evaluated At":    {FixedWidth: 25, AutoMerge: false},
-}
-
-// Table is an interface for rendering tables
+// Table is the interface for rendering CLI tables using the go-pretty engine.
 type Table interface {
 	AddRow(row ...string)
 	AddRowWithColor(row ...layouts.ColoredColumn)
 	Render()
-	SeparateRows()
-	SetAutoMerge(merge bool)
+	SeparateRows() Table
+	SetAutoMerge(merge bool) Table
+	SetEqualColumns(equal bool) Table
 }
 
-// New creates a new table using the go-pretty engine
-func New(_ string, _ layouts.TableLayout, header []string) Table {
+// New creates a new table.
+func New(_ string, layout layouts.TableLayout, header []string) Table {
 	t := table.NewWriter()
+
+	switch layout {
+	case layouts.Condensed:
+		t.SetStyle(table.StyleLight) // Thin lines for tight spaces
+	case layouts.Heavy:
+		t.SetStyle(table.StyleBold) // Thick lines for importance
+	case layouts.Default:
+		t.SetStyle(table.StyleRounded)
+	default:
+		t.SetStyle(table.StyleRounded) // The standard Minder look
+	}
+
 	t.SetOutputMirror(os.Stdout)
 
 	headerRow := make(table.Row, len(header))
+	maxColWidths := make([]int, len(header))
+
 	for i, h := range header {
 		headerRow[i] = h
+		maxColWidths[i] = utf8.RuneCountInString(h)
 	}
 	t.AppendHeader(headerRow)
 
-	t.SetStyle(table.StyleRounded)
-	t.Style().Options.SeparateRows = false
-	t.Style().Format.Header = text.FormatDefault
-
+	t.Style().Options.DrawBorder = false
+	t.Style().Options.SeparateColumns = true
+	t.Style().Options.SeparateHeader = true
+	t.Style().Options.SeparateRows = true
 	t.Style().Box.PaddingLeft = " "
 	t.Style().Box.PaddingRight = " "
 
 	return &goPrettyTable{
-		t:       t,
-		numCols: len(header),
-		headers: header,
+		t:            t,
+		numCols:      len(header),
+		headers:      header,
+		maxColWidths: maxColWidths,
 	}
 }
 
 type goPrettyTable struct {
-	t         table.Writer
-	autoMerge bool
-	numCols   int
-	headers   []string
+	t            table.Writer
+	autoMerge    bool
+	equalColumns bool
+	numCols      int
+	headers      []string
+	maxColWidths []int
 }
 
-// SetAutoMerge dynamically distributes column widths and assigns merge behavior
-// based on the columnSpecs configuration.
-func (l *goPrettyTable) SetAutoMerge(merge bool) {
+func (l *goPrettyTable) SetAutoMerge(merge bool) Table {
 	l.autoMerge = merge
-	w := getTerminalWidth()
-	usableWidth := w - 15
-
-	fixedWidths := 0
-	percentTotal := 0.0
-
-	// Tally up fixed widths and percent weights based on headers
-	for _, h := range l.headers {
-		if spec, exists := columnSpecs[h]; exists {
-			if spec.FixedWidth > 0 {
-				fixedWidths += spec.FixedWidth
-			} else if spec.WidthPct > 0 {
-				percentTotal += spec.WidthPct
-			}
-		} else {
-			// Unknown columns get a generic default weight
-			percentTotal += 1.0
-		}
-	}
-
-	remainingWidth := usableWidth - fixedWidths
-	if remainingWidth < 10 {
-		remainingWidth = 10 // Prevent negative widths on extremely small terminals
-	}
-
-	var configs []table.ColumnConfig
-	// Generate the configuration for each column dynamically
-	for i, h := range l.headers {
-		cfg := table.ColumnConfig{
-			Number:           i + 1,
-			WidthMaxEnforcer: text.WrapText,
-		}
-
-		spec, known := columnSpecs[h]
-		if known {
-			// Assign width
-			if spec.FixedWidth > 0 {
-				cfg.WidthMax = spec.FixedWidth
-			} else {
-				weight := spec.WidthPct
-				if percentTotal > 0 {
-					weight = weight / percentTotal // Normalize percentages
-				}
-				cfg.WidthMax = int(float64(remainingWidth) * weight)
-			}
-			// Assign merge capability
-			cfg.AutoMerge = merge && spec.AutoMerge
-		} else {
-			// Fallback for completely unknown columns
-			weight := 1.0 / percentTotal
-			cfg.WidthMax = int(float64(remainingWidth) * weight)
-			cfg.AutoMerge = false
-		}
-
-		if cfg.AutoMerge {
-			cfg.VAlign = text.VAlignTop
-		}
-
-		configs = append(configs, cfg)
-	}
-	l.t.SetColumnConfigs(configs)
+	return l
 }
 
-func getTerminalWidth() int {
-	fdPtr := os.Stdout.Fd()
-	if fdPtr <= math.MaxInt {
-		if w, _, err := term.GetSize(int(fdPtr)); err == nil && w > 0 {
-			return w
+func (l *goPrettyTable) SetEqualColumns(equal bool) Table {
+	l.equalColumns = equal
+	return l
+}
+
+func (l *goPrettyTable) updateWidths(row []string) {
+	for i, val := range row {
+		if i >= l.numCols {
+			break
+		}
+		w := 0
+		for _, line := range strings.Split(val, "\n") {
+			lw := utf8.RuneCountInString(line)
+			if lw > w {
+				w = lw
+			}
+		}
+		if w > l.maxColWidths[i] {
+			l.maxColWidths[i] = w
 		}
 	}
-	return defaultTerminalWidth
 }
 
 func (l *goPrettyTable) AddRow(row ...string) {
@@ -173,16 +115,18 @@ func (l *goPrettyTable) AddRow(row ...string) {
 	for i, val := range row {
 		r[i] = val
 	}
+	l.updateWidths(row)
 	l.t.AppendRow(r)
-	if l.autoMerge {
-		l.t.AppendSeparator()
-	}
 }
 
 func (l *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 	r := make(table.Row, len(row))
+	rawRow := make([]string, len(row))
+
 	for i, cell := range row {
 		val := cell.Column
+		rawRow[i] = val
+
 		switch cell.Color {
 		case layouts.ColorRed:
 			val = text.FgRed.Sprint(val)
@@ -193,19 +137,101 @@ func (l *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 		}
 		r[i] = val
 	}
+
+	l.updateWidths(rawRow)
 	l.t.AppendRow(r)
-	if l.autoMerge {
-		l.t.AppendSeparator()
-	}
 }
 
-// SeparateRows ensures each row is clearly separated
-func (l *goPrettyTable) SeparateRows() {
+func (l *goPrettyTable) SeparateRows() Table {
 	l.t.Style().Options.SeparateRows = true
+	return l
 }
 
 func (l *goPrettyTable) Render() {
 	w := getTerminalWidth()
-	l.t.SetAllowedRowLength(w - 5)
+
+	// With DrawBorder = false and SeparateColumns = true:
+	barsAndPadding := (l.numCols - 1) + (l.numCols * 2)
+	usableWidth := w - barsAndPadding
+	if usableWidth < 10 {
+		usableWidth = 10
+	}
+
+	assignedWidths := make([]int, l.numCols)
+
+	if l.equalColumns && l.numCols > 0 {
+		equalWidth := usableWidth / l.numCols
+		for i := range assignedWidths {
+			assignedWidths[i] = equalWidth
+		}
+		assignedWidths[l.numCols-1] += (usableWidth % l.numCols)
+	} else {
+		totalRequested := 0
+		for _, req := range l.maxColWidths {
+			totalRequested += req
+		}
+
+		if totalRequested > 0 {
+			currentTotal := 0
+			for i, req := range l.maxColWidths {
+				// Calculate share: (column_req / total_req) * usable_width
+				share := int(float64(req) / float64(totalRequested) * float64(usableWidth))
+
+				// Ensure a minimum width so columns don't disappear
+				if share < 5 {
+					share = 5
+				}
+				assignedWidths[i] = share
+				currentTotal += share
+			}
+
+			// Adjust for rounding errors to ensure we hit EXACTLY the terminal width
+			diff := usableWidth - currentTotal
+			if l.numCols > 0 {
+				// If we have a deficit or surplus due to integer rounding,
+				// adjust the last column to snap to the edge.
+				if assignedWidths[l.numCols-1]+diff > 0 {
+					assignedWidths[l.numCols-1] += diff
+				}
+			}
+		} else {
+			// Fallback if no rows were added: default to equal
+			equalWidth := usableWidth / l.numCols
+			for i := range assignedWidths {
+				assignedWidths[i] = equalWidth
+			}
+		}
+	}
+
+	configs := make([]table.ColumnConfig, len(l.headers))
+	for i := range l.headers {
+		configs[i] = table.ColumnConfig{
+			Number:           i + 1,
+			WidthMax:         assignedWidths[i],
+			WidthMin:         assignedWidths[i], // Forcing Min to match Max ensures full stretch
+			WidthMaxEnforcer: text.WrapSoft,
+			AutoMerge:        l.autoMerge,
+			VAlign:           text.VAlignTop,
+		}
+	}
+
+	l.t.SetColumnConfigs(configs)
+
+	l.t.SetAllowedRowLength(w)
+
 	l.t.Render()
+}
+
+func getTerminalWidth() int {
+	if cols := os.Getenv("COLUMNS"); cols != "" {
+		if w, err := strconv.Atoi(cols); err == nil && w > 0 {
+			return w
+		}
+	}
+
+	//nolint:gosec // G115
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		return w
+	}
+	return defaultTerminalWidth
 }

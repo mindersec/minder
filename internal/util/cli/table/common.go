@@ -15,7 +15,6 @@ const (
 	failureStatus      = "failure"
 	errorStatus        = "error"
 	skippedStatus      = "skipped"
-	pendingStatus      = "pending"
 	notAvailableStatus = "not_available"
 	onStatus           = "on"
 	offStatus          = "off"

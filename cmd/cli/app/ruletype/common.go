@@ -102,13 +102,10 @@ func shouldSkipFile(f string) bool {
 
 // initializeTableForList initializes the table for the rule type
 func initializeTableForList() table.Table {
-	t := table.New(table.Simple, layouts.Default,
-		[]string{"Name", "Entity Type", "Description"})
-
-	t.SetAutoMerge(true)
-	t.SeparateRows()
-
-	return t
+	return table.New(table.Simple, layouts.Default,
+		[]string{"Name", "Entity Type", "Description"}).
+		SetAutoMerge(true).
+		SeparateRows()
 }
 
 // initializeTableForOne initializes the table for the rule type
