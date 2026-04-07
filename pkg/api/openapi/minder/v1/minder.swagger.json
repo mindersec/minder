@@ -5048,12 +5048,14 @@
         },
         "organization": {
           "type": "string",
-          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         },
         "organizationId": {
           "type": "string",
           "format": "int64",
-          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         }
       },
       "description": "GitHubAppParams is the parameters for a GitHub App provider."
@@ -5454,7 +5456,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the profile.\nThis is optional and is set by the system."
+          "description": "id is the id of the profile.\nThis is optional and is set by the system.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -5660,7 +5663,8 @@
         },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
+          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest.",
+          "readOnly": true
         },
         "version": {
           "type": "string",
@@ -5690,7 +5694,8 @@
         },
         "credentialsState": {
           "type": "string",
-          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\".",
+          "readOnly": true
         },
         "id": {
           "type": "string",
@@ -6266,7 +6271,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
+          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -6571,14 +6577,16 @@
         "repoId": {
           "type": "string",
           "format": "int64",
-          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
+          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "registered": {
           "type": "boolean",
-          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
+          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         }
       },
       "required": [
