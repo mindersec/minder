@@ -129,7 +129,7 @@ func (rae *RuleActionsEngine) processAction(
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
-) (json.RawMessage, error) {
+) (res json.RawMessage, err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -137,6 +137,8 @@ func (rae *RuleActionsEngine) processAction(
 				Interface("recovered", r).
 				Bytes("stack", debug.Stack()).
 				Msg("panic in action execution")
+
+			err = enginerr.ErrInternal // restore behavior
 		}
 	}()
 
@@ -231,13 +233,12 @@ func shouldAlert(
 // isSkippable checks if action should be skipped
 func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
 
-	logger := zerolog.Ctx(ctx).Info().
-		Str("eval_status", string(dbadapter.ErrorAsEvalStatus(evalErr))).
-		Str("action", string(actionType))
-
 	action, ok := rae.actions[actionType]
 	if !ok {
-		logger.Msg("action type not found, skipping")
+		zerolog.Ctx(ctx).Info().
+			Str("eval_status", string(dbadapter.ErrorAsEvalStatus(evalErr))).
+			Str("action", string(actionType)).
+			Msg("action type not found, skipping")
 		return true
 	}
 
