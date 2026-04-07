@@ -11,8 +11,8 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 func TestShouldRemediate(t *testing.T) {

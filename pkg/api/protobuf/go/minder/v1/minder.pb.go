@@ -5531,7 +5531,7 @@ type RuleEvaluationStatus struct {
 	// Because output may be multiple KB, it is only returned
 	// if include_outputs is set. Historical evaluations may
 	// discard structured output sooner than status results.
-	Output        *structpb.Struct `protobuf:"bytes,21,opt,name=output,proto3" json:"output,omitempty"`
+	Output        *structpb.Value `protobuf:"bytes,21,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -5707,7 +5707,7 @@ func (x *RuleEvaluationStatus) GetReleasePhase() RuleTypeReleasePhase {
 	return RuleTypeReleasePhase_RULE_TYPE_RELEASE_PHASE_UNSPECIFIED
 }
 
-func (x *RuleEvaluationStatus) GetOutput() *structpb.Struct {
+func (x *RuleEvaluationStatus) GetOutput() *structpb.Value {
 	if x != nil {
 		return x.Output
 	}
@@ -11660,7 +11660,7 @@ type EvaluationHistoryStatus struct {
 	// Because output may be multiple KB, it is only returned
 	// if include_outputs is set. Historical evaluations may
 	// discard structured output sooner than status results.
-	Output        *structpb.Struct `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	Output        *structpb.Value `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -11709,7 +11709,7 @@ func (x *EvaluationHistoryStatus) GetDetails() string {
 	return ""
 }
 
-func (x *EvaluationHistoryStatus) GetOutput() *structpb.Struct {
+func (x *EvaluationHistoryStatus) GetOutput() *structpb.Value {
 	if x != nil {
 		return x.Output
 	}
@@ -15140,7 +15140,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12=\n" +
 	"\flast_updated\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vlastUpdated\x12\x18\n" +
 	"\adetails\x18\x03 \x01(\tR\adetails\x12\x10\n" +
-	"\x03url\x18\x04 \x01(\tR\x03url\"\xcd\b\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\"\xcc\b\n" +
 	"\x14RuleEvaluationStatus\x12\x1d\n" +
 	"\n" +
 	"profile_id\x18\x01 \x01(\tR\tprofileId\x12\x1c\n" +
@@ -15164,8 +15164,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x12rule_evaluation_id\x18\x11 \x01(\tR\x10ruleEvaluationId\x12'\n" +
 	"\x0fremediation_url\x18\x12 \x01(\tR\x0eremediationUrl\x12*\n" +
 	"\x11rule_display_name\x18\x13 \x01(\tR\x0fruleDisplayName\x12I\n" +
-	"\rrelease_phase\x18\x14 \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseB\x03\xe0A\x02R\freleasePhase\x12/\n" +
-	"\x06output\x18\x15 \x01(\v2\x17.google.protobuf.StructR\x06output\x1a=\n" +
+	"\rrelease_phase\x18\x14 \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseB\x03\xe0A\x02R\freleasePhase\x12.\n" +
+	"\x06output\x18\x15 \x01(\v2\x16.google.protobuf.ValueR\x06output\x1a=\n" +
 	"\x0fEntityInfoEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x1b\n" +
@@ -15714,11 +15714,11 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12 \n" +
 	"\trule_type\x18\x02 \x01(\tB\x03\xe0A\x02R\bruleType\x12\x1d\n" +
 	"\aprofile\x18\x03 \x01(\tB\x03\xe0A\x02R\aprofile\x124\n" +
-	"\bseverity\x18\x04 \x01(\v2\x13.minder.v1.SeverityB\x03\xe0A\x02R\bseverity\"\x86\x01\n" +
+	"\bseverity\x18\x04 \x01(\v2\x13.minder.v1.SeverityB\x03\xe0A\x02R\bseverity\"\x85\x01\n" +
 	"\x17EvaluationHistoryStatus\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\x12\x1d\n" +
-	"\adetails\x18\x02 \x01(\tB\x03\xe0A\x02R\adetails\x12/\n" +
-	"\x06output\x18\x03 \x01(\v2\x17.google.protobuf.StructR\x06output\"U\n" +
+	"\adetails\x18\x02 \x01(\tB\x03\xe0A\x02R\adetails\x12.\n" +
+	"\x06output\x18\x03 \x01(\v2\x16.google.protobuf.ValueR\x06output\"U\n" +
 	"\x1cEvaluationHistoryRemediation\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\x12\x18\n" +
 	"\adetails\x18\x02 \x01(\tR\adetails\"O\n" +
@@ -16398,7 +16398,7 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	95,  // 90: minder.v1.RuleEvaluationStatus.alert:type_name -> minder.v1.EvalResultAlert
 	135, // 91: minder.v1.RuleEvaluationStatus.severity:type_name -> minder.v1.Severity
 	4,   // 92: minder.v1.RuleEvaluationStatus.release_phase:type_name -> minder.v1.RuleTypeReleasePhase
-	251, // 93: minder.v1.RuleEvaluationStatus.output:type_name -> google.protobuf.Struct
+	253, // 93: minder.v1.RuleEvaluationStatus.output:type_name -> google.protobuf.Value
 	3,   // 94: minder.v1.EntityTypedId.type:type_name -> minder.v1.Entity
 	113, // 95: minder.v1.GetProfileStatusByNameRequest.context:type_name -> minder.v1.Context
 	97,  // 96: minder.v1.GetProfileStatusByNameRequest.entity:type_name -> minder.v1.EntityTypedId
@@ -16514,7 +16514,7 @@ var file_minder_v1_minder_proto_depIdxs = []int32{
 	250, // 206: minder.v1.EvaluationHistory.evaluated_at:type_name -> google.protobuf.Timestamp
 	3,   // 207: minder.v1.EvaluationHistoryEntity.type:type_name -> minder.v1.Entity
 	135, // 208: minder.v1.EvaluationHistoryRule.severity:type_name -> minder.v1.Severity
-	251, // 209: minder.v1.EvaluationHistoryStatus.output:type_name -> google.protobuf.Struct
+	253, // 209: minder.v1.EvaluationHistoryStatus.output:type_name -> google.protobuf.Value
 	114, // 210: minder.v1.EntityInstance.context:type_name -> minder.v1.ContextV2
 	3,   // 211: minder.v1.EntityInstance.type:type_name -> minder.v1.Entity
 	251, // 212: minder.v1.EntityInstance.properties:type_name -> google.protobuf.Struct

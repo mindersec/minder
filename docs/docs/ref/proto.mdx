@@ -1071,7 +1071,7 @@ This is only used in responses.
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
+| output | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -2689,7 +2689,7 @@ get the status of the rules for a given profile
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the phase of the release |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
+| output | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
