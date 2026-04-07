@@ -28,9 +28,8 @@ var applyCmd = &cobra.Command{
 }
 
 // applyCommand is the "rule type" apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(conn)
-
+func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
+	client := getRuleTypeClient(ctx, conn)
 	project := viper.GetString("project")
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")

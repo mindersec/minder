@@ -11,20 +11,20 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestApplyCommand(t *testing.T) {
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 
@@ -32,15 +32,14 @@ func TestApplyCommand(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		fileArgs       []string
-		posArgs        []string
+		args           []string
 		mockSetup      func(client *mockv1.MockRuleTypeServiceClient)
 		goldenFileName string
 		expectedError  string
 	}{
 		{
-			name:     "apply - create new rule type",
-			fileArgs: []string{applyFixture},
+			name: "apply - create new rule type via flag",
+			args: []string{"-f", applyFixture},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
@@ -52,8 +51,8 @@ func TestApplyCommand(t *testing.T) {
 			goldenFileName: "apply_create.table",
 		},
 		{
-			name:    "apply - update existing rule type (UPSERT)",
-			posArgs: []string{applyFixture},
+			name: "apply - update existing rule type via positional arg",
+			args: []string{applyFixture},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
@@ -70,8 +69,7 @@ func TestApplyCommand(t *testing.T) {
 		},
 		{
 			name:          "no files specified",
-			fileArgs:      []string{},
-			posArgs:       []string{},
+			args:          []string{},
 			mockSetup:     func(_ *mockv1.MockRuleTypeServiceClient) {},
 			expectedError: "no files specified",
 		},
@@ -79,31 +77,35 @@ func TestApplyCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+
+			// reset slice flags
+			applyCmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if slice, ok := f.Value.(pflag.SliceValue); ok {
+					_ = slice.Replace([]string{}) // empty the array
+				} else {
+					_ = f.Value.Set(f.DefValue)
+				}
+				f.Changed = false
+			})
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(mockClient)
 
-			originalClientCreator := getRuleTypeClient
-			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
-			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-				return mockClient
-			}
+			ctx := cli.WithRPCClient(context.Background(), mockClient)
 
-			// fresh command and context
-			ctx := context.Background()
-			cmd := &cobra.Command{}
+			cmd := applyCmd
 			cmd.SetContext(ctx)
-			cmd.Flags().StringArrayP("file", "f", []string{}, "file flag")
 
-			viper.Reset()
+			// parse raw args
+			err := cmd.Flags().Parse(tt.args)
+			require.NoError(t, err)
+
+			_ = viper.BindPFlags(cmd.Flags())
 			viper.Set("project", zeroUUID)
-
-			for _, f := range tt.fileArgs {
-				err := cmd.Flags().Set("file", f)
-				require.NoError(t, err)
-			}
 
 			buf := new(bytes.Buffer)
 			cmd.SetOut(buf)
@@ -113,7 +115,8 @@ func TestApplyCommand(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			err := applyCommand(ctx, cmd, tt.posArgs, nil)
+			// execute
+			err = applyCommand(ctx, cmd, cmd.Flags().Args(), nil)
 
 			w.Close()
 			os.Stdout = oldStdout
@@ -121,6 +124,7 @@ func TestApplyCommand(t *testing.T) {
 			_, _ = io.Copy(&capturedStdout, r)
 			r.Close()
 
+			// assertions
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError)
@@ -128,7 +132,10 @@ func TestApplyCommand(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			checkGoldenFile(t, tt.goldenFileName, buf.String()+capturedStdout.String())
+
+			finalOutput := buf.String() + capturedStdout.String()
+			checkGoldenFile(t, tt.goldenFileName, finalOutput)
 		})
+
 	}
 }

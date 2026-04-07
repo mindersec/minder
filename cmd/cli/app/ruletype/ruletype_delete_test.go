@@ -6,6 +6,8 @@ package ruletype
 import (
 	"bytes"
 	"context"
+	"io"
+	"os"
 	"testing"
 
 	"github.com/spf13/pflag"
@@ -13,15 +15,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestDeleteCommand(t *testing.T) {
 	const (
 		zeroUUID = "00000000-0000-0000-0000-000000000000"
@@ -31,14 +33,14 @@ func TestDeleteCommand(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		args           map[string]string
+		args           []string
 		mockSetup      func(t *testing.T, client *mockv1.MockRuleTypeServiceClient)
 		goldenFileName string
 		expectedError  string
 	}{
 		{
 			name: "delete single rule type by id",
-			args: map[string]string{"id": ruleID1},
+			args: []string{"--id", ruleID1},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
@@ -60,7 +62,7 @@ func TestDeleteCommand(t *testing.T) {
 		},
 		{
 			name: "delete all rule types",
-			args: map[string]string{"all": "true", "yes": "true"},
+			args: []string{"--all", "--yes"},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
@@ -82,7 +84,7 @@ func TestDeleteCommand(t *testing.T) {
 		},
 		{
 			name: "partial failure - profile reference",
-			args: map[string]string{"id": ruleID2}, //secret_scanning
+			args: []string{"--id", ruleID2},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
@@ -94,7 +96,6 @@ func TestDeleteCommand(t *testing.T) {
 						RuleType: mockResp.RuleTypes[1],
 					}, nil)
 
-				// simulate a failure (rule is in use) using the exact regex pattern the CLI expects
 				client.EXPECT().
 					DeleteRuleType(gomock.Any(), gomock.Any()).
 					Return(nil, status.Error(codes.FailedPrecondition, "cannot delete: used by profiles my-security-profile"))
@@ -103,55 +104,74 @@ func TestDeleteCommand(t *testing.T) {
 		},
 		{
 			name:          "missing required flags",
-			args:          map[string]string{},
+			args:          []string{},
 			mockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
-			expectedError: "at least one of the flags in the group [id all] is required",
+			expectedError: "at least one of the flags in the group [id name all] is required",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+
+			deleteCmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if slice, ok := f.Value.(pflag.SliceValue); ok {
+					_ = slice.Replace([]string{})
+				} else {
+					_ = f.Value.Set(f.DefValue)
+				}
+				f.Changed = false
+			})
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(t, mockClient)
 
-			// Mock Injection
-			originalClientCreator := getRuleTypeClient
-			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
-			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-				return mockClient
-			}
+			ctx := cli.WithRPCClient(context.Background(), mockClient)
 
-			// State Reset
-			viper.Reset()
+			cmd := deleteCmd
+			cmd.SetContext(ctx)
+
+			err := cmd.Flags().Parse(tt.args)
+			require.NoError(t, err)
+
+			_ = viper.BindPFlags(cmd.Flags())
 			viper.Set("project", zeroUUID)
-			deleteCmd.Flags().VisitAll(func(f *pflag.Flag) {
-				_ = f.Value.Set(f.DefValue)
-				f.Changed = false
-			})
 
-			for k, v := range tt.args {
-				viper.Set(k, v)
-				_ = deleteCmd.Flags().Set(k, v)
+			buf := new(bytes.Buffer)
+			cmd.SetOut(buf)
+			cmd.SetErr(buf)
+
+			oldStdout := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			valErr := cmd.ValidateFlagGroups()
+			var execErr error
+			if valErr == nil {
+				execErr = deleteCommand(ctx, cmd, cmd.Flags().Args(), nil)
+			} else {
+				execErr = valErr
 			}
+
+			w.Close()
+			os.Stdout = oldStdout
+			var capturedStdout bytes.Buffer
+			_, _ = io.Copy(&capturedStdout, r)
+			r.Close()
 
 			if tt.expectedError != "" {
-				err := deleteCmd.ValidateFlagGroups()
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				require.Error(t, execErr)
+				assert.Contains(t, execErr.Error(), tt.expectedError)
 				return
 			}
 
-			buf := new(bytes.Buffer)
-			deleteCmd.SetOut(buf)
-			deleteCmd.SetErr(buf)
+			require.NoError(t, execErr)
 
-			err := deleteCommand(context.Background(), deleteCmd, []string{}, nil)
-
-			require.NoError(t, err)
-			checkGoldenFile(t, tt.goldenFileName, buf.String())
+			finalOutput := buf.String() + capturedStdout.String()
+			checkGoldenFile(t, tt.goldenFileName, finalOutput)
 		})
 	}
 }

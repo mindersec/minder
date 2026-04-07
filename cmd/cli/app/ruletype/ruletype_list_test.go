@@ -9,39 +9,38 @@ import (
 	"flag"
 	"io"
 	"os"
-	"path/filepath"
 	"testing"
 
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
 var update = flag.Bool("update", false, "update .golden files")
 
-//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestListCommand(t *testing.T) {
+	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 
 	tests := []struct {
 		name           string
-		outputFormat   string
+		args           []string // Meshery style: raw CLI argument
 		mockSetup      func(t *testing.T, client *mockv1.MockRuleTypeServiceClient)
 		expectedError  string
 		goldenFileName string
 	}{
 		{
-			name:         "table output with data",
-			outputFormat: app.Table,
+			name: "table output with data",
+			args: []string{"-o", app.Table},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResponse := &minderv1.ListRuleTypesResponse{}
@@ -54,8 +53,8 @@ func TestListCommand(t *testing.T) {
 			goldenFileName: "list_populated.table",
 		},
 		{
-			name:         "table output empty",
-			outputFormat: app.Table,
+			name: "table output empty",
+			args: []string{"-o", app.Table},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				client.EXPECT().
@@ -67,8 +66,8 @@ func TestListCommand(t *testing.T) {
 			goldenFileName: "list_empty.table",
 		},
 		{
-			name:         "yaml output",
-			outputFormat: app.YAML,
+			name: "yaml output",
+			args: []string{"-o", app.YAML},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResponse := &minderv1.ListRuleTypesResponse{}
@@ -81,8 +80,8 @@ func TestListCommand(t *testing.T) {
 			goldenFileName: "list_populated.yaml",
 		},
 		{
-			name:         "grpc error handling",
-			outputFormat: app.Table,
+			name: "grpc error handling",
+			args: []string{"-o", app.Table},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				client.EXPECT().
@@ -93,96 +92,68 @@ func TestListCommand(t *testing.T) {
 		},
 		{
 			name:          "invalid output format",
-			outputFormat:  "csv",
+			args:          []string{"-o", "csv"},
 			mockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
 			expectedError: "invalid argument",
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+
+			listCmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if slice, ok := f.Value.(pflag.SliceValue); ok {
+					_ = slice.Replace([]string{})
+				} else {
+					_ = f.Value.Set(f.DefValue)
+				}
+				f.Changed = false
+			})
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			// setup Mock Client
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(t, mockClient)
 
-			originalClientCreator := getRuleTypeClient
-			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
+			ctx := cli.WithRPCClient(context.Background(), mockClient)
 
-			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-				return mockClient
-			}
+			cmd := listCmd
+			cmd.SetContext(ctx)
 
-			// setup Command and Viper state
-			viper.Reset()
-			viper.Set("project", "00000000-0000-0000-0000-000000000000")
-			viper.Set("output", tt.outputFormat)
+			err := cmd.Flags().Parse(tt.args)
+			require.NoError(t, err)
+
+			_ = viper.BindPFlags(cmd.Flags())
+			viper.Set("project", zeroUUID)
 
 			buf := new(bytes.Buffer)
-			listCmd.SetOut(buf)
-			listCmd.SetErr(buf)
+			cmd.SetOut(buf)
+			cmd.SetErr(buf)
 
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			// execute the command directly
-			err := listCommand(context.Background(), listCmd, []string{}, nil)
+			execErr := listCommand(ctx, cmd, cmd.Flags().Args(), nil)
 
-			// restore os.Stdout after execution so test logs work
 			w.Close()
 			os.Stdout = oldStdout
-
-			// read whatever the table library printed
 			var capturedStdout bytes.Buffer
 			_, _ = io.Copy(&capturedStdout, r)
 			r.Close()
-			finalOutput := buf.String() + capturedStdout.String()
 
-			// assertions
 			if tt.expectedError != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				require.Error(t, execErr)
+				assert.Contains(t, execErr.Error(), tt.expectedError)
 				return
 			}
 
-			require.NoError(t, err)
+			require.NoError(t, execErr)
 
-			// golden File Check
+			finalOutput := buf.String() + capturedStdout.String()
 			checkGoldenFile(t, tt.goldenFileName, finalOutput)
 		})
 	}
-}
-
-func checkGoldenFile(t *testing.T, filename string, actual string) {
-	t.Helper()
-	goldenPath := filepath.Join("testdata", filename+".golden")
-
-	if *update {
-		err := os.MkdirAll("testdata", 0755)
-		require.NoError(t, err)
-
-		err = os.WriteFile(goldenPath, []byte(actual), 0644)
-		require.NoError(t, err)
-		t.Logf("Updated golden file: %s", goldenPath)
-	}
-
-	expected, err := os.ReadFile(goldenPath)
-	require.NoError(t, err, "could not read golden file. Run 'go test ./... -update' to generate it")
-
-	assert.Equal(t, string(expected), actual, "Output does not match golden file")
-}
-
-//nolint:unparam // filename is currently always the same, but kept generic for architectural consistency
-func loadFixture(t *testing.T, filename string, target protoreflect.ProtoMessage) {
-	t.Helper()
-
-	data, err := os.ReadFile(filepath.Join("fixture", filename))
-	require.NoError(t, err, "failed to read fixture file. Check if 'fixture/%s' exists", filename)
-
-	err = protojson.Unmarshal(data, target)
-	require.NoError(t, err, "failed to unmarshal fixture into protobuf")
 }

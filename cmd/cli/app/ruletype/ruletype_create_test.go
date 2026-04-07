@@ -11,18 +11,18 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestCreateCommand(t *testing.T) {
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
 
@@ -30,14 +30,14 @@ func TestCreateCommand(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		fileArgs       []string
+		args           []string
 		mockSetup      func(client *mockv1.MockRuleTypeServiceClient)
 		goldenFileName string
 		expectedError  string
 	}{
 		{
-			name:     "create rule type from file",
-			fileArgs: []string{sampleFile},
+			name: "create rule type from file",
+			args: []string{"-f", sampleFile},
 			mockSetup: func(client *mockv1.MockRuleTypeServiceClient) {
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				loadFixture(t, "mock_ruletypes_response.json", mockResp)
@@ -52,7 +52,7 @@ func TestCreateCommand(t *testing.T) {
 		},
 		{
 			name:          "missing required file flag",
-			fileArgs:      []string{},
+			args:          []string{},
 			mockSetup:     func(_ *mockv1.MockRuleTypeServiceClient) {},
 			expectedError: "required flag(s) \"file\" not set",
 		},
@@ -60,44 +60,33 @@ func TestCreateCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+
+			createCmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if slice, ok := f.Value.(pflag.SliceValue); ok {
+					_ = slice.Replace([]string{})
+				} else {
+					_ = f.Value.Set(f.DefValue)
+				}
+				f.Changed = false
+			})
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(mockClient)
 
-			// mock Injection
-			originalClientCreator := getRuleTypeClient
-			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
-			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-				return mockClient
-			}
+			ctx := cli.WithRPCClient(context.Background(), mockClient)
 
-			// create a fresh command and context
-			ctx := context.Background()
-			cmd := &cobra.Command{}
+			cmd := createCmd
 			cmd.SetContext(ctx)
 
-			// define flags
-			cmd.Flags().StringArrayP("file", "f", []string{}, "file flag")
-			_ = cmd.MarkFlagRequired("file")
+			err := cmd.Flags().Parse(tt.args)
+			require.NoError(t, err)
 
-			viper.Reset()
+			_ = viper.BindPFlags(cmd.Flags())
 			viper.Set("project", zeroUUID)
-
-			// set flags
-			for _, f := range tt.fileArgs {
-				err := cmd.Flags().Set("file", f)
-				require.NoError(t, err)
-			}
-
-			// check for required flags (manual trigger for test)
-			if tt.expectedError != "" {
-				err := cmd.ValidateRequiredFlags()
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-				return
-			}
 
 			buf := new(bytes.Buffer)
 			cmd.SetOut(buf)
@@ -107,13 +96,26 @@ func TestCreateCommand(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			err := createCommand(ctx, cmd, []string{}, nil)
+			// execute
+			valErr := cmd.ValidateRequiredFlags()
+			if valErr == nil {
+				err = createCommand(ctx, cmd, cmd.Flags().Args(), nil)
+			} else {
+				err = valErr
+			}
 
 			w.Close()
 			os.Stdout = oldStdout
 			var capturedStdout bytes.Buffer
 			_, _ = io.Copy(&capturedStdout, r)
 			r.Close()
+
+			// assertions
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				return
+			}
 
 			require.NoError(t, err)
 

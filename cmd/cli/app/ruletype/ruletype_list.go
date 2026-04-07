@@ -28,7 +28,7 @@ var listCmd = &cobra.Command{
 
 // listCommand is the ruletype list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(conn)
+	client := getRuleTypeClient(ctx, conn)
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")

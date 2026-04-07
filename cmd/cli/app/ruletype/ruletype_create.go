@@ -26,8 +26,8 @@ var createCmd = &cobra.Command{
 }
 
 // createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(conn)
+func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+	client := getRuleTypeClient(ctx, conn)
 
 	project := viper.GetString("project")
 

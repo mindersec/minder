@@ -30,7 +30,7 @@ var deleteCmd = &cobra.Command{
 
 // deleteCommand is the rule type delete subcommand
 func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(conn)
+	client := getRuleTypeClient(ctx, conn)
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")

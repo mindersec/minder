@@ -15,14 +15,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-//nolint:paralleltest // Cannot run in parallel because it swaps a global client creator
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestGetCommand(t *testing.T) {
 	const (
 		zeroUUID = "00000000-0000-0000-0000-000000000000"
@@ -32,14 +32,14 @@ func TestGetCommand(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		args           map[string]string
+		args           []string
 		mockSetup      func(t *testing.T, client *mockv1.MockRuleTypeServiceClient)
 		goldenFileName string
 		expectedError  string
 	}{
 		{
 			name: "get by id - table output",
-			args: map[string]string{"id": ruleID, "output": app.Table},
+			args: []string{"--id", ruleID, "-o", app.Table},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
@@ -53,7 +53,7 @@ func TestGetCommand(t *testing.T) {
 		},
 		{
 			name: "get by name - yaml output",
-			args: map[string]string{"name": ruleName, "output": app.YAML},
+			args: []string{"--name", ruleName, "-o", app.YAML},
 			mockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
 				t.Helper()
 				mockResp := &minderv1.ListRuleTypesResponse{}
@@ -67,7 +67,7 @@ func TestGetCommand(t *testing.T) {
 		},
 		{
 			name:          "missing both id and name",
-			args:          map[string]string{"output": app.Table},
+			args:          []string{"-o", app.Table},
 			mockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
 			expectedError: "at least one of the flags in the group [id name] is required",
 		},
@@ -75,52 +75,49 @@ func TestGetCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			viper.Reset()
+
+			getCmd.Flags().VisitAll(func(f *pflag.Flag) {
+				if slice, ok := f.Value.(pflag.SliceValue); ok {
+					_ = slice.Replace([]string{})
+				} else {
+					_ = f.Value.Set(f.DefValue)
+				}
+				f.Changed = false
+			})
+
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
 			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
 			tt.mockSetup(t, mockClient)
 
-			originalClientCreator := getRuleTypeClient
-			t.Cleanup(func() { getRuleTypeClient = originalClientCreator })
+			ctx := cli.WithRPCClient(context.Background(), mockClient)
 
-			getRuleTypeClient = func(_ grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-				return mockClient
-			}
+			cmd := getCmd
+			cmd.SetContext(ctx)
 
-			viper.Reset()
+			err := cmd.Flags().Parse(tt.args)
+			require.NoError(t, err)
+
+			_ = viper.BindPFlags(cmd.Flags())
 			viper.Set("project", zeroUUID)
 
-			getCmd.Flags().VisitAll(func(f *pflag.Flag) {
-				_ = f.Value.Set(f.DefValue)
-				f.Changed = false
-			})
-
-			for k, v := range tt.args {
-				viper.Set(k, v)
-				err := getCmd.Flags().Set(k, v)
-				require.NoError(t, err)
-			}
-
-			// validate flags before calling the command logic
-			// this prevents unexpected grpc calls when flags are missing
-			if tt.expectedError != "" {
-				valErr := getCmd.ValidateFlagGroups()
-				if valErr != nil {
-					assert.Contains(t, valErr.Error(), tt.expectedError)
-					return
-				}
-			}
-
 			buf := new(bytes.Buffer)
-			getCmd.SetOut(buf)
-			getCmd.SetErr(buf)
+			cmd.SetOut(buf)
+			cmd.SetErr(buf)
 
 			oldStdout := os.Stdout
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			err := getCommand(context.Background(), getCmd, []string{}, nil)
+			valErr := cmd.ValidateFlagGroups()
+			var execErr error
+			if valErr == nil {
+				execErr = getCommand(ctx, cmd, cmd.Flags().Args(), nil)
+			} else {
+				execErr = valErr
+			}
 
 			w.Close()
 			os.Stdout = oldStdout
@@ -128,7 +125,14 @@ func TestGetCommand(t *testing.T) {
 			_, _ = io.Copy(&capturedStdout, r)
 			r.Close()
 
-			require.NoError(t, err)
+			if tt.expectedError != "" {
+				require.Error(t, execErr)
+				assert.Contains(t, execErr.Error(), tt.expectedError)
+				return
+			}
+
+			require.NoError(t, execErr)
+
 			finalOutput := buf.String() + capturedStdout.String()
 			checkGoldenFile(t, tt.goldenFileName, finalOutput)
 		})
