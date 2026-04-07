@@ -16,10 +16,11 @@ minder ruletype delete [flags]
 ### Options
 
 ```
-  -a, --all         Warning: Deletes all rule types
-  -h, --help        help for delete
-  -i, --id string   ID of rule type to delete
-  -y, --yes         Bypass yes/no prompt when deleting all rule types
+  -a, --all           Warning: Deletes all rule types
+  -h, --help          help for delete
+  -i, --id string     ID of rule type to delete
+  -n, --name string   Name of rule type to delete
+  -y, --yes           Bypass yes/no prompt when deleting all rule types
 ```
 
 ### Options inherited from parent commands
