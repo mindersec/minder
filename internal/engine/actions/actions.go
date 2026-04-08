@@ -320,6 +320,11 @@ func mapEvalStatus(err error) EvalStatus {
 		return EvalStatusSkipped
 	}
 
-	// treat all other errors as failure (matches existing behavior closely enough)
-	return EvalStatusFailure
+	// failure case (CORRECT detection)
+	if errors.Is(err, interfaces.ErrEvaluationFailed) {
+		return EvalStatusFailure
+	}
+
+	// everything else = error
+	return EvalStatusError
 }
