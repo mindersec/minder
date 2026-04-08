@@ -96,10 +96,7 @@ func (rae *RuleActionsEngine) DoActions(
 				AlertMeta:         &row.AlertMetadata,
 			}
 		}
-		status := EvalStatus("success") // temporary fallback
-		if params.GetEvalErr() != nil {
-			status = EvalStatus("failure")
-		}
+		status := mapEvalStatus(params.GetEvalErr())
 
 		cmd := shouldRemediate(prev, status)
 		result.RemediateMeta, result.RemediateErr = rae.processAction(
@@ -122,10 +119,7 @@ func (rae *RuleActionsEngine) DoActions(
 				AlertMeta:         &row.AlertMetadata,
 			}
 		}
-		status := EvalStatus("success") // temporary fallback
-		if params.GetEvalErr() != nil {
-			status = EvalStatus("failure")
-		}
+		status := mapEvalStatus(params.GetEvalErr())
 
 		cmd := shouldAlert(
 			prev,
@@ -312,4 +306,20 @@ func getDefaultResult(ctx context.Context) enginerr.ActionsError {
 		RemediateMeta: m,
 		AlertMeta:     m,
 	}
+}
+
+// mapEvalStatus converts evaluation error into engine EvalStatus.
+func mapEvalStatus(err error) EvalStatus {
+	if err == nil {
+		return EvalStatusSuccess
+	}
+
+	// skipped cases
+	if errors.Is(err, enginerr.ErrEvaluationSkipSilently) ||
+		errors.Is(err, interfaces.ErrEvaluationSkipped) {
+		return EvalStatusSkipped
+	}
+
+	// treat all other errors as failure (matches existing behavior closely enough)
+	return EvalStatusFailure
 }
