@@ -34,19 +34,19 @@ const config = {
   title: 'Minder docs',
   tagline: 'Documentation site for Minder',
   // This doesn't seem to exist?
-  favicon: 'img/stacklok-favicon.png',
+  favicon: 'img/favicon.png',
   themes: ['@docusaurus/theme-mermaid', 'docusaurus-theme-redoc'],
 
   // Set the production url of your site here
   // TODO: pivot this to be under https://mindersec.dev/docs
-  url: 'https://minder-docs.stacklok.dev/',
+  url: 'https://docs.mindersec.dev/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'stacklok', // Usually your GitHub org/user name.
+  organizationName: 'mindersec', // Usually your GitHub org/user name.
   projectName: 'minder', // Usually your repo name.
   trailingSlash: false,
   onBrokenLinks: 'throw',
