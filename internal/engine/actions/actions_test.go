@@ -115,10 +115,7 @@ func TestShouldRemediate(t *testing.T) {
 			}
 
 			// map error → EvalStatus
-			status := EvalStatus("success")
-			if tt.evalErr != nil {
-				status = EvalStatus("failure")
-			}
+			status := mapEvalStatus(tt.evalErr)
 
 			got := shouldRemediate(prev, status)
 			assert.Equal(t, tt.expected, got)
@@ -234,10 +231,7 @@ func TestShouldAlert(t *testing.T) {
 			}
 
 			// map error → EvalStatus
-			status := EvalStatus("success")
-			if tt.evalErr != nil {
-				status = EvalStatus("failure")
-			}
+			status := mapEvalStatus(tt.evalErr)
 
 			got := shouldAlert(prev, status, tt.remErr, tt.remType)
 			assert.Equal(t, tt.expected, got)
