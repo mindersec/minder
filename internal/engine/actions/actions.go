@@ -15,8 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	dbadapter "github.com/mindersec/minder/internal/adapters/db"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
@@ -89,21 +87,49 @@ func (rae *RuleActionsEngine) DoActions(
 	}
 
 	if !skipRemediate {
-		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
+		var prev *PreviousEval
+		if row := params.GetEvalStatusFromDb(); row != nil {
+			prev = &PreviousEval{
+				RemediationStatus: RemediationStatus(row.RemStatus),
+				AlertStatus:       AlertStatus(row.AlertStatus),
+				RemediationMeta:   &row.RemMetadata,
+				AlertMeta:         &row.AlertMetadata,
+			}
+		}
+		status := EvalStatus("success") // temporary fallback
+		if params.GetEvalErr() != nil {
+			status = EvalStatus("failure")
+		}
+
+		cmd := shouldRemediate(prev, status)
 		result.RemediateMeta, result.RemediateErr = rae.processAction(
 			ctx,
 			remediate.ActionType,
 			cmd,
 			ent,
 			params,
-			getRemediationMeta(params.GetEvalStatusFromDb()),
+			getRemediationMeta(prev),
 		)
 	}
 
 	if !skipAlert {
+		var prev *PreviousEval
+		if row := params.GetEvalStatusFromDb(); row != nil {
+			prev = &PreviousEval{
+				RemediationStatus: RemediationStatus(row.RemStatus),
+				AlertStatus:       AlertStatus(row.AlertStatus),
+				RemediationMeta:   &row.RemMetadata,
+				AlertMeta:         &row.AlertMetadata,
+			}
+		}
+		status := EvalStatus("success") // temporary fallback
+		if params.GetEvalErr() != nil {
+			status = EvalStatus("failure")
+		}
+
 		cmd := shouldAlert(
-			params.GetEvalStatusFromDb(),
-			params.GetEvalErr(),
+			prev,
+			status,
 			result.RemediateErr,
 			remediateEngine.Type(),
 		)
@@ -114,7 +140,7 @@ func (rae *RuleActionsEngine) DoActions(
 			cmd,
 			ent,
 			params,
-			getAlertMeta(params.GetEvalStatusFromDb()),
+			getAlertMeta(prev),
 		)
 	}
 
@@ -146,36 +172,38 @@ func (rae *RuleActionsEngine) processAction(
 	return action.Do(ctx, cmd, ent, params, metadata)
 }
 
-// shouldRemediate returns the action command for remediation,
+// shouldRemediate determines the remediation action command.
 // taking into account the current evaluation result and the
 // previous remediation state.
-func shouldRemediate(prev *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
+func shouldRemediate(prevEval *PreviousEval, evalStatus EvalStatus) engif.ActionCmd {
+	// Determine current evaluation status
+	newEval := evalStatus
 
-	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
-
-	// Default to skipped if no previous evaluation exists
-	prevRemediation := db.RemediationStatusTypesSkipped
-	if prev != nil {
-		prevRemediation = prev.RemStatus
+	// Default previous remediation status
+	prevRemediation := RemediationStatus("skipped")
+	if prevEval != nil {
+		prevRemediation = prevEval.RemediationStatus
 	}
 
 	switch newEval {
-	case db.EvalStatusTypesError:
+	case EvalStatusError:
 		return engif.ActionCmdDoNothing
 
-	case db.EvalStatusTypesSuccess:
-		if prevRemediation != db.RemediationStatusTypesSkipped {
+	case EvalStatusSuccess:
+		// Turn off remediation if it was previously active
+		if prevRemediation != RemediationStatus("skipped") {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
 
-	case db.EvalStatusTypesFailure:
-		if prevRemediation == db.RemediationStatusTypesSkipped {
+	case EvalStatusFailure:
+		// Trigger remediation only if previously skipped
+		if prevRemediation == RemediationStatus("skipped") {
 			return engif.ActionCmdOn
 		}
 		return engif.ActionCmdDoNothing
 
-	case db.EvalStatusTypesSkipped, db.EvalStatusTypesPending:
+	case EvalStatusSkipped, EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
@@ -186,44 +214,43 @@ func shouldRemediate(prev *db.ListRuleEvaluationsByProfileIdRow, evalErr error) 
 // based on the current evaluation result, previous alert state,
 // and remediation outcome.
 func shouldAlert(
-	prev *db.ListRuleEvaluationsByProfileIdRow,
-	evalErr error,
+	prevEval *PreviousEval,
+	evalStatus EvalStatus,
 	remErr error,
 	remType string,
 ) engif.ActionCmd {
 
-	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
+	// Determine current evaluation status
+	newEval := evalStatus
 
-	// Default to skipped if no previous evaluation exists
-	prevAlert := db.AlertStatusTypesSkipped
-	if prev != nil {
-		prevAlert = prev.AlertStatus
+	// Default previous alert status
+	prevAlert := AlertStatus("skipped")
+	if prevEval != nil {
+		prevAlert = prevEval.AlertStatus
 	}
 
+	// Case: successful remediation (non-PR type)
 	if remType != pull_request.RemediateType && remErr == nil {
-		if prevAlert != db.AlertStatusTypesOff {
+		if prevAlert != AlertStatus("off") {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
 	}
 
 	switch newEval {
-	case db.EvalStatusTypesError:
-		return engif.ActionCmdDoNothing
-
-	case db.EvalStatusTypesFailure:
-		if prevAlert != db.AlertStatusTypesOn {
+	case EvalStatusError, EvalStatusFailure:
+		if prevAlert != AlertStatus("on") {
 			return engif.ActionCmdOn
 		}
 		return engif.ActionCmdDoNothing
 
-	case db.EvalStatusTypesSuccess:
-		if prevAlert != db.AlertStatusTypesOff {
+	case EvalStatusSuccess:
+		if prevAlert != AlertStatus("off") {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
 
-	case db.EvalStatusTypesSkipped, db.EvalStatusTypesPending:
+	case EvalStatusSkipped, EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
@@ -236,7 +263,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	action, ok := rae.actions[actionType]
 	if !ok {
 		zerolog.Ctx(ctx).Info().
-			Str("eval_status", string(dbadapter.ErrorAsEvalStatus(evalErr))).
+			Str("eval_status", fmt.Sprintf("%v", evalErr)).
 			Str("action", string(actionType)).
 			Msg("action type not found, skipping")
 		return true
@@ -255,17 +282,18 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	return false
 }
 
-// helpers
-func getRemediationMeta(prev *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prev != nil {
-		return &prev.RemMetadata
+// getRemediationMeta returns remediation metadata from previous evaluation.
+func getRemediationMeta(prevEval *PreviousEval) *json.RawMessage {
+	if prevEval != nil {
+		return prevEval.RemediationMeta
 	}
 	return nil
 }
 
-func getAlertMeta(prev *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prev != nil {
-		return &prev.AlertMetadata
+// getAlertMeta returns alert metadata from previous evaluation.
+func getAlertMeta(prevEval *PreviousEval) *json.RawMessage {
+	if prevEval != nil {
+		return prevEval.AlertMeta
 	}
 	return nil
 }
