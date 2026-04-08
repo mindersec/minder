@@ -4,8 +4,8 @@
   <ShortName>Minder docs</ShortName>
   <Description>Search Minder docs</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://minder-docs.stacklok.dev/img/stacklok-favicon.png</Image>
-  <Url type="text/html" method="get" template="https://minder-docs.stacklok.dev/search?q={searchTerms}"/>
-  <Url type="application/opensearchdescription+xml" rel="self" template="https://minder-docs.stacklok.dev/opensearch.xml" />
-  <moz:SearchForm>https://minder-docs.stacklok.dev/</moz:SearchForm>
+  <Image width="16" height="16" type="image/x-icon">https://docs.mindersec.dev/img/favicon.png</Image>
+  <Url type="text/html" method="get" template="https://docs.mindersec.dev/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://docs.mindersec.dev/opensearch.xml" />
+  <moz:SearchForm>https://docs.mindersec.dev/</moz:SearchForm>
 </OpenSearchDescription>
