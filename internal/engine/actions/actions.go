@@ -232,7 +232,11 @@ func shouldAlert(
 	}
 
 	switch newEval {
-	case EvalStatusError, EvalStatusFailure:
+
+	case EvalStatusError:
+		return engif.ActionCmdDoNothing
+
+	case EvalStatusFailure:
 		if prevAlert != AlertStatus("on") {
 			return engif.ActionCmdOn
 		}
