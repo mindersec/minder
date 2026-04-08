@@ -141,9 +141,15 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 	switch cmd {
 	// Create a review
 	case interfaces.ActionCmdOn:
+
+		event := "COMMENT"
+		if alert.reviewCfg.GetAction() == "request_changes" {
+			event = "REQUEST_CHANGES"
+		}
+
 		review := &github.PullRequestReviewRequest{
 			CommitID: github.String(params.CommitSha),
-			Event:    github.String("COMMENT"),
+			Event:    github.String(event),
 			Body:     github.String(params.Comment),
 		}
 

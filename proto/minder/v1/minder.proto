@@ -2933,6 +2933,12 @@ message RuleType {
                     },
                     (google.api.field_behavior) = REQUIRED
                 ];
+                string action = 2 [
+                    (buf.validate.field).string = {
+                        in: ["comment", "request_changes"],
+                    },
+                    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
+                ];
             }
             optional AlertTypePRComment pull_request_comment = 3;
         }

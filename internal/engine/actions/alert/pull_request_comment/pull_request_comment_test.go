@@ -43,6 +43,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 		actionType       engif.ActionType
 		cmd              engif.ActionCmd
 		reviewMsg        string
+		cfgAction        string
 		inputMetadata    *json.RawMessage
 		mockSetup        func(*mockghclient.MockGitHub)
 		expectedErr      error
@@ -52,6 +53,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			name:       "create a PR comment",
 			actionType: TestActionTypeValid,
 			reviewMsg:  "This is a constant review message",
+			cfgAction:  "comment",
 			cmd:        engif.ActionCmdOn,
 			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
 				mockGitHub.EXPECT().
@@ -64,6 +66,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			name:       "create a PR comment with eval error details template",
 			actionType: TestActionTypeValid,
 			reviewMsg:  "{{ .EvalErrorDetails }}",
+			cfgAction:  "comment",
 			cmd:        engif.ActionCmdOn,
 			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
 				mockGitHub.EXPECT().
@@ -76,6 +79,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			name:       "create a PR comment with eval result output template",
 			actionType: TestActionTypeValid,
 			reviewMsg:  "{{ .EvalResultOutput.ViolationMsg }}",
+			cfgAction:  "comment",
 			cmd:        engif.ActionCmdOn,
 			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
 				mockGitHub.EXPECT().
@@ -88,6 +92,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			name:       "error from provider creating PR comment",
 			actionType: TestActionTypeValid,
 			reviewMsg:  "This is a constant review message",
+			cfgAction:  "comment",
 			cmd:        engif.ActionCmdOn,
 			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
 				mockGitHub.EXPECT().
@@ -100,6 +105,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 			name:          "dismiss PR comment",
 			actionType:    TestActionTypeValid,
 			reviewMsg:     "This is a constant review message",
+			cfgAction:     "comment",
 			cmd:           engif.ActionCmdOff,
 			inputMetadata: &successfulRunMetadata,
 			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
@@ -108,6 +114,24 @@ func TestPullRequestCommentAlert(t *testing.T) {
 					Return(&github.PullRequestReview{}, nil)
 			},
 			expectedErr: enginerr.ErrActionTurnedOff,
+		},
+		{
+			name:       "create a PR review with request_changes action",
+			actionType: TestActionTypeValid,
+			reviewMsg:  "Security block: please remove binaries",
+			cfgAction:  "request_changes",
+			cmd:        engif.ActionCmdOn,
+			mockSetup: func(mockGitHub *mockghclient.MockGitHub) {
+				mockGitHub.EXPECT().
+					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _ string, _ int, review *github.PullRequestReviewRequest) (*github.PullRequestReview, error) {
+						if review.GetEvent() != "REQUEST_CHANGES" {
+							return nil, fmt.Errorf("expected event REQUEST_CHANGES, got %s", review.GetEvent())
+						}
+						return &github.PullRequestReview{ID: &reviewID}, nil
+					})
+			},
+			expectedMetadata: json.RawMessage(fmt.Sprintf(`{"review_id":"%s"}`, reviewIDStr)),
 		},
 	}
 
@@ -123,6 +147,7 @@ func TestPullRequestCommentAlert(t *testing.T) {
 
 			prCommentCfg := pb.RuleType_Definition_Alert_AlertTypePRComment{
 				ReviewMessage: tt.reviewMsg,
+				Action:        tt.cfgAction,
 			}
 
 			mockClient := mockghclient.NewMockGitHub(ctrl)
