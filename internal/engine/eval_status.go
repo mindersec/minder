@@ -12,10 +12,11 @@ import (
 
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/entities"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )
 
@@ -99,19 +100,24 @@ func (e *executor) createOrUpdateEvalStatus(
 		return nil
 	}
 
-	status := evalerrors.ErrorAsEvalStatus(params.GetEvalErr())
+	status := dbadapter.ErrorAsEvalStatus(params.GetEvalErr())
 	e.metrics.CountEvalStatus(ctx, status, params.EntityType)
 
-	remediationStatus := evalerrors.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
+	remediationStatus := dbadapter.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr)
 	e.metrics.CountRemediationStatus(ctx, remediationStatus)
 
-	alertStatus := evalerrors.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
+	alertStatus := dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
 	e.metrics.CountAlertStatus(ctx, alertStatus)
 
 	chckpoint := params.GetIngestResult().GetCheckpoint()
 	chkpjs, err := chckpoint.ToJSONorDefault(json.RawMessage(`{}`))
 	if err != nil {
 		logger.Err(err).Msg("error marshalling checkpoint")
+	}
+
+	var evalOutput any
+	if res := params.GetEvalResult(); res != nil {
+		evalOutput = res.Output
 	}
 
 	// Log result in the evaluation history tables
@@ -125,6 +131,7 @@ func (e *executor) createOrUpdateEvalStatus(
 			params.EntityID,
 			params.GetEvalErr(),
 			chkpjs,
+			evalOutput,
 		)
 		if err != nil {
 			return err

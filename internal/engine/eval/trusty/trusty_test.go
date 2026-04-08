@@ -13,11 +13,11 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )

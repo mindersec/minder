@@ -13,7 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -208,136 +207,30 @@ type ActionsError struct {
 	AlertMeta     json.RawMessage
 }
 
-// ErrorAsEvalStatus returns the evaluation status for a given error
-func ErrorAsEvalStatus(err error) db.EvalStatusTypes {
-	if errors.Is(err, interfaces.ErrEvaluationFailed) {
-		return db.EvalStatusTypesFailure
-	} else if errors.Is(err, interfaces.ErrEvaluationSkipped) {
-		return db.EvalStatusTypesSkipped
-	} else if err != nil {
-		return db.EvalStatusTypesError
-	}
-	return db.EvalStatusTypesSuccess
-}
-
-// ErrorAsEvalDetails returns the evaluation details for a given error
-func ErrorAsEvalDetails(err error) string {
-	var evalErr *EvaluationError
-	if errors.As(err, &evalErr) && evalErr.Template != "" {
-		return evalErr.Details()
-	}
-	if errors.As(err, &evalErr) {
-		return evalErr.Msg
-	}
-	if err != nil {
-		return err.Error()
-	}
-	return ""
-}
-
-// ErrorAsRemediationStatus returns the remediation status for a given error
-func ErrorAsRemediationStatus(err error) db.RemediationStatusTypes {
-	if err == nil {
-		return db.RemediationStatusTypesSuccess
-	}
-
-	switch err != nil {
-	case errors.Is(err, ErrActionFailed):
-		return db.RemediationStatusTypesFailure
-	case errors.Is(err, ErrActionSkipped):
-		return db.RemediationStatusTypesSkipped
-	case errors.Is(err, ErrActionNotAvailable):
-		return db.RemediationStatusTypesNotAvailable
-	case errors.Is(err, ErrActionPending):
-		return db.RemediationStatusTypesPending
-	}
-	return db.RemediationStatusTypesError
-}
-
-// RemediationStatusAsError returns the remediation status for a given error
-func RemediationStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
-	if prevStatus == nil {
-		return ErrActionSkipped
-	}
-
-	s := prevStatus.RemStatus
-	switch s {
-	case db.RemediationStatusTypesSuccess:
-		return nil
-	case db.RemediationStatusTypesFailure:
-		return ErrActionFailed
-	case db.RemediationStatusTypesSkipped:
-		return ErrActionSkipped
-	case db.RemediationStatusTypesNotAvailable:
-		return ErrActionNotAvailable
-	case db.RemediationStatusTypesPending:
-		return ErrActionPending
-	case db.RemediationStatusTypesError:
-		return fmt.Errorf("generic remediation error status: %s", s)
-	}
-	return fmt.Errorf("generic remediation error status: %s", s)
-}
-
-// ErrorAsAlertStatus returns the alert status for a given error
-func ErrorAsAlertStatus(err error) db.AlertStatusTypes {
-	if err == nil {
-		return db.AlertStatusTypesOn
-	}
-
-	switch err != nil {
-	case errors.Is(err, ErrActionTurnedOff):
-		return db.AlertStatusTypesOff
-	case errors.Is(err, ErrActionFailed):
-		return db.AlertStatusTypesError
-	case errors.Is(err, ErrActionSkipped):
-		return db.AlertStatusTypesSkipped
-	case errors.Is(err, ErrActionNotAvailable):
-		return db.AlertStatusTypesNotAvailable
-	}
-	return db.AlertStatusTypesError
-}
-
-// AlertStatusAsError returns the error for a given alert status
-func AlertStatusAsError(prevStatus *db.ListRuleEvaluationsByProfileIdRow) error {
-	if prevStatus == nil {
-		return errors.New("no previous alert state")
-	}
-
-	s := prevStatus.AlertStatus
-
-	switch s {
-	case db.AlertStatusTypesOn:
-		return nil
-	case db.AlertStatusTypesOff:
-		return ErrActionTurnedOff
-	case db.AlertStatusTypesError:
-		return ErrActionFailed
-	case db.AlertStatusTypesSkipped:
-		return ErrActionSkipped
-	case db.AlertStatusTypesNotAvailable:
-		return ErrActionNotAvailable
-	}
-	return fmt.Errorf("unknown alert status: %s", s)
-}
-
 var (
 	// ErrUnauthorized is returned when a request is unauthorized
 	ErrUnauthorized = errors.New("unauthorized")
+
 	// ErrForbidden is returned when a request is forbidden
 	ErrForbidden = errors.New("forbidden")
+
 	// ErrNotFound is returned when a resource is not found
 	ErrNotFound = errors.New("not found")
+
 	// ErrValidateOrSpammed is returned when a request is a validation or spammed error
 	ErrValidateOrSpammed = errors.New("validation or spammed error")
+
 	// ErrClientError is returned when a request is a client error
 	ErrClientError = errors.New("client error")
+
 	// ErrServerError is returned when a request is a server error
 	ErrServerError = errors.New("server error")
+
 	// ErrOther is returned when a request is another error
 	ErrOther = errors.New("other error")
 )
 
-// HTTPErrorCodeToErr converts an HTTP error code to an error
+// HTTPErrorCodeToErr returns an engine error corresponding to the given HTTP status code.
 func HTTPErrorCodeToErr(httpCode int) error {
 	var err = ErrOther
 
@@ -359,22 +252,4 @@ func HTTPErrorCodeToErr(httpCode int) error {
 	}
 
 	return err
-}
-
-// EvalErrorAsString returns the evaluation error as a string
-func EvalErrorAsString(err error) string {
-	dbEvalStatus := ErrorAsEvalStatus(err)
-	return string(dbEvalStatus)
-}
-
-// RemediationErrorAsString returns the remediation error as a string
-func RemediationErrorAsString(err error) string {
-	dbRemediationStatus := ErrorAsRemediationStatus(err)
-	return string(dbRemediationStatus)
-}
-
-// AlertErrorAsString returns the alert error as a string
-func AlertErrorAsString(err error) string {
-	dbAlertStatus := ErrorAsAlertStatus(err)
-	return string(dbAlertStatus)
 }

@@ -7,14 +7,16 @@ package history
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	propertiessvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 )
@@ -24,7 +26,9 @@ import (
 // EvaluationHistoryService contains methods to add/query data in the history table.
 type EvaluationHistoryService interface {
 	// StoreEvaluationStatus stores the result of this evaluation in the history table.
-	// Returns the UUID of the evaluation status, and the UUID of the rule-entity
+	// Returns the UUID of the evaluation status, and the UUID of the rule-entity.
+	// If output is non-nil, it is JSON-encoded and persisted in the evaluation_outputs table.
+	// output should be a Go struct suitable for JSON encoding.
 	StoreEvaluationStatus(
 		ctx context.Context,
 		qtx db.Querier,
@@ -34,6 +38,7 @@ type EvaluationHistoryService interface {
 		entityID uuid.UUID,
 		evalError error,
 		marshaledCheckpoint []byte,
+		output any,
 	) (uuid.UUID, error)
 	// ListEvaluationHistory returns a list of evaluations stored
 	// in the history table.
@@ -83,10 +88,11 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	entityID uuid.UUID,
 	evalError error,
 	marshaledCheckpoint []byte,
+	output any,
 ) (uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
-	status := evalerrors.ErrorAsEvalStatus(evalError)
-	details := evalerrors.ErrorAsEvalDetails(evalError)
+	status := dbadapter.ErrorAsEvalStatus(evalError)
+	details := dbadapter.ErrorAsEvalDetails(evalError)
 
 	params := paramsFromEntity(ruleID, entityID)
 
@@ -120,6 +126,19 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	evaluationID, err := e.createNewStatus(ctx, qtx, ruleEntityID, profileID, status, details, marshaledCheckpoint)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error while creating new evaluation status for rule/entity %s: %w", ruleEntityID, err)
+	}
+
+	// Persist structured output if provided
+	if output != nil {
+		outputJSON, err := json.Marshal(output)
+		if err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("failed to convert rule output to JSON")
+		} else if err := qtx.UpsertEvaluationOutput(ctx, db.UpsertEvaluationOutputParams{
+			ID:     evaluationID,
+			Output: outputJSON,
+		}); err != nil {
+			return evaluationID, fmt.Errorf("error storing extended output for rule/entity %s: %w", ruleEntityID, err)
+		}
 	}
 
 	return evaluationID, nil
@@ -379,7 +398,9 @@ func paramsFromLabelFilter(
 	if len(filter.IncludedLabels()) != 0 {
 		params.Labels = filter.IncludedLabels()
 	}
-	// We do not exclude based on labels
+	if len(filter.ExcludedLabels()) != 0 {
+		params.Notlabels = filter.ExcludedLabels()
+	}
 	return nil
 }
 

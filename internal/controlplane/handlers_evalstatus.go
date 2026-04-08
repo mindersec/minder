@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -89,6 +91,18 @@ func (s *Server) GetEvaluationHistory(
 		},
 		Alert:       getAlert(eval.AlertStatus, eval.AlertDetails.String),
 		Remediation: getRemediation(eval.RemediationStatus, eval.RemediationDetails.String),
+	}
+
+	if in.GetIncludeOutputs() {
+		output, err := s.store.GetEvaluationOutput(ctx, eval.EvaluationID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluation output")
+		} else if err == nil {
+			pbEval.Status.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(output.Output.RawMessage, pbEval.Status.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+			}
+		}
 	}
 
 	return &minderv1.GetEvaluationHistoryResponse{Evaluation: pbEval}, nil
@@ -219,6 +233,11 @@ func fromEvaluationHistoryRows(
 			return nil, err
 		}
 
+		evalStatus := &minderv1.EvaluationHistoryStatus{
+			Status:  string(row.EvalHistoryRow.EvaluationStatus),
+			Details: row.EvalHistoryRow.EvaluationDetails,
+		}
+
 		res[i] = &minderv1.EvaluationHistory{
 			Id:          row.EvalHistoryRow.EvaluationID.String(),
 			EvaluatedAt: timestamppb.New(row.EvalHistoryRow.EvaluatedAt),
@@ -233,10 +252,7 @@ func fromEvaluationHistoryRows(
 				Severity: ruleSeverity,
 				Profile:  row.EvalHistoryRow.ProfileName,
 			},
-			Status: &minderv1.EvaluationHistoryStatus{
-				Status:  string(row.EvalHistoryRow.EvaluationStatus),
-				Details: row.EvalHistoryRow.EvaluationDetails,
-			},
+			Status:      evalStatus,
 			Alert:       getAlert(row.EvalHistoryRow.AlertStatus, row.EvalHistoryRow.AlertDetails.String),
 			Remediation: getRemediation(row.EvalHistoryRow.RemediationStatus, row.EvalHistoryRow.RemediationDetails.String),
 		}
@@ -639,7 +655,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		return nil, fmt.Errorf("converting release phase: %w", err)
 	}
 
-	return &minderv1.RuleEvaluationStatus{
+	res := &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
 		ProfileId:              profile.Profile.ID.String(),
@@ -659,7 +675,9 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		Alert:                  buildEvalResultAlertFromLRERow(&eval, efp),
 		Severity:               sev,
 		ReleasePhase:           rp,
-	}, nil
+	}
+
+	return res, nil
 }
 
 func buildEntityFromEvaluation(efp *entmodels.EntityWithProperties) *minderv1.EntityTypedId {

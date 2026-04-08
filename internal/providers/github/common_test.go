@@ -22,11 +22,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
