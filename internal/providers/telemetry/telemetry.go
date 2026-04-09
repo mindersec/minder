@@ -6,6 +6,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -57,25 +58,25 @@ func (irt *instrumentedRoundTripper) recordRateLimitMetrics(
 	resp *http.Response,
 	labels []attribute.KeyValue,
 ) {
-
 	remainingHeader := resp.Header.Get("X-RateLimit-Remaining")
+	// Parse the header once; use math.MinInt64 as sentinel when absent or unparseable.
+	remaining := int64(math.MinInt64)
 	if remainingHeader != "" {
-		if remaining, err := strconv.ParseInt(remainingHeader, 10, 64); err == nil {
-			irt.rateLimitRemainingHistogram.Record(ctx, remaining, metric.WithAttributes(labels...))
+		if parsed, err := strconv.ParseInt(remainingHeader, 10, 64); err == nil {
+			remaining = parsed
 		}
+	}
+
+	if remaining != math.MinInt64 {
+		irt.rateLimitRemainingHistogram.Record(ctx, remaining, metric.WithAttributes(labels...))
 	}
 
 	// Check for throttling (403 or 429 with rate limit headers)
 	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests {
-		// Verify it's actually a rate limit error by checking the remaining quota (if 0)
-		// or if it's an abuse rate limit.
-		isThrottled := false
-		if remainingHeader != "" {
-			if remaining, err := strconv.ParseInt(remainingHeader, 10, 64); err == nil && remaining == 0 {
-				isThrottled = true
-			}
-		}
-		if resp.StatusCode == http.StatusTooManyRequests {
+		// A 429 is always throttled; a 403 is throttled only when quota is exhausted.
+		isThrottled := resp.StatusCode == http.StatusTooManyRequests
+		// then add the case where we don't get a 429, but we have 0 quota remaining
+		if !isThrottled && remaining == 0 {
 			isThrottled = true
 		}
 

@@ -28,6 +28,7 @@ func (m *mockRoundTripper) RoundTrip(_ *http.Request) (*http.Response, error) {
 }
 
 func TestInstrumentedRoundTripper_RateLimitMetrics(t *testing.T) {
+	t.Parallel()
 	// Initialize OTel metrics for testing
 	reader := sdkmetric.NewManualReader()
 	mp := sdkmetric.NewMeterProvider(sdkmetric.WithReader(reader))
@@ -88,6 +89,7 @@ func TestInstrumentedRoundTripper_RateLimitMetrics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			resp := &http.Response{
 				StatusCode: tt.statusCode,
 				Header:     make(http.Header),

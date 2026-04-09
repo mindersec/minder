@@ -975,13 +975,13 @@ func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData
 }
 
 func isRateLimitError(err error) bool {
-	var rateLimitError *github.RateLimitError
-	isRateLimitErr := errors.As(err, &rateLimitError)
-
-	var abuseRateLimitError *github.AbuseRateLimitError
-	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
-
-	return isRateLimitErr || isAbuseRateLimitErr
+	if _, ok := errors.AsType[*github.RateLimitError](err); ok {
+		return true
+	}
+	if _, ok := errors.AsType[*github.AbuseRateLimitError](err); ok {
+		return true
+	}
+	return false
 }
 
 // IsMinderHook checks if a GitHub hook is a Minder hook
