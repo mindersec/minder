@@ -3,11 +3,13 @@
 
 ---
 exit-code: 1
+
 severity:
   # Same as '--severity'
   # Default is 'UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL'
   - HIGH
   - CRITICAL
+
 scan:
   # Same as '--skip-dirs'
   # Default is empty
@@ -16,6 +18,7 @@ scan:
     - ".cache/trivy/"
     - internal/engine/ingester/deps/testdata/
     - examples/rules-and-profiles/
-    -examples/
-    -testdata/
 
+    # Added to avoid scanning non-runtime/example code
+    - examples/
+    - testdata/
