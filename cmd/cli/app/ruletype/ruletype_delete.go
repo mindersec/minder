@@ -93,10 +93,10 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
+	deletedRuleTypes, bundleBlocked, profileBlocked := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
-	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
+	printDeleteResults(cmd, deletedRuleTypes, bundleBlocked, profileBlocked)
 
 	return nil
 }
@@ -106,10 +106,11 @@ func deleteRuleTypes(
 	client minderv1.RuleTypeServiceClient,
 	rulesToDelete []*minderv1.RuleType,
 	project string,
-) ([]string, []ruleTypeBlock) {
+) ([]string, []string, []ruleTypeBlock) {
 
 	var deletedRuleTypes []string
-	var remainingRuleTypes []ruleTypeBlock
+	var bundleBlocked []string
+	var profileBlocked []ruleTypeBlock
 
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
@@ -117,9 +118,14 @@ func deleteRuleTypes(
 			Id:      ruleType.GetId(),
 		})
 		if err != nil {
+			if isBundleError(err) {
+				bundleBlocked = append(bundleBlocked, ruleType.GetName())
+				continue
+			}
+
 			profiles := extractProfiles(err.Error())
 
-			remainingRuleTypes = append(remainingRuleTypes, ruleTypeBlock{
+			profileBlocked = append(profileBlocked, ruleTypeBlock{
 				Name:     ruleType.GetName(),
 				Profiles: profiles,
 			})
@@ -127,36 +133,48 @@ func deleteRuleTypes(
 		}
 		deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
 	}
-	return deletedRuleTypes, remainingRuleTypes
+	return deletedRuleTypes, bundleBlocked, profileBlocked
 }
 
 func printDeleteResults(
 	cmd *cobra.Command,
 	deletedRuleTypes []string,
-	remainingRuleTypes []ruleTypeBlock,
+	bundleBlocked []string,
+	profileBlocked []ruleTypeBlock,
 ) {
-	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
+	if len(deletedRuleTypes) == 0 && len(bundleBlocked) == 0 && len(profileBlocked) == 0 {
 		cmd.Println("There are no rule types to delete")
 		return
 	}
 
 	if len(deletedRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) were successfully deleted:")
+		cmd.Println()
+		cmd.Println("The following rule type(s) were successfully deleted:")
 		for _, ruleType := range deletedRuleTypes {
 			cmd.Println(ruleType)
 		}
 	}
 
-	if len(remainingRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
-		for _, ruleType := range remainingRuleTypes {
+	if len(bundleBlocked) > 0 {
+		cmd.Println()
+		cmd.Println("The following rule type(s) cannot be deleted because they are part of a bundle:")
+		for _, ruleType := range bundleBlocked {
+			cmd.Println(ruleType)
+		}
+	}
+
+	if len(profileBlocked) > 0 {
+		cmd.Println()
+		cmd.Println("The following rule type(s) are referenced by existing profiles and were not deleted:")
+		for _, ruleType := range profileBlocked {
 			cmd.Println(ruleType.Name)
 		}
 
-		cmd.Println("\nThey are referenced by profiles:")
+		cmd.Println()
+		cmd.Println("They are referenced by profiles:")
 
 		seen := map[string]bool{}
-		for _, b := range remainingRuleTypes {
+		for _, b := range profileBlocked {
 			for _, p := range b.Profiles {
 				if !seen[p] {
 					cmd.Println(p)
@@ -168,6 +186,13 @@ func printDeleteResults(
 	}
 }
 
+func isBundleError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(err.Error()), "cannot delete rule type from bundle")
+}
+
 func extractProfiles(errMsg string) []string {
 	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
 	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
@@ -175,9 +200,7 @@ func extractProfiles(errMsg string) []string {
 		return []string{}
 	}
 
-	profilesPart := strings.TrimSpace(match[1])
-
-	parts := strings.Split(profilesPart, ",")
+	parts := strings.Split(match[1], ",")
 	for i := range parts {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
