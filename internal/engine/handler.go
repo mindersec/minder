@@ -42,6 +42,7 @@ type ExecutorEventHandler struct {
 	// is cancelled.
 	cancels []*context.CancelFunc
 	lock    sync.Mutex
+	closed  bool
 }
 
 // NewExecutorEventHandler creates the event handler for the executor
@@ -61,6 +62,8 @@ func NewExecutorEventHandler(
 		<-ctx.Done()
 		eh.lock.Lock()
 		defer eh.lock.Unlock()
+
+		eh.closed = true
 
 		for _, cancel := range eh.cancels {
 			(*cancel)()
@@ -97,6 +100,11 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
 	e.lock.Lock()
+	if e.closed {
+		e.lock.Unlock()
+		shutdownCancel() // 👈 cancel immediately
+		return nil       // 👈 stop processing
+	}
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
 
