@@ -16,6 +16,12 @@ First off, thank you for taking the time to contribute to Minder! :+1: :tada: Mi
 ## Code of Conduct
 This project and all members must abide by the [OpenSSF Code of Conduct](https://openssf.org/community/code-of-conduct/).
 
+## Community Meetings
+
+* Minder holds regular community meetings. The schedule is available on the [OpenSSF Community Calendar](https://calendar.google.com/calendar/embed?src=s63voefhp5i9pfltb555404s4s%40group.calendar.google.com).
+* We encourage everyone to join — it's a great way to get involved, ask questions, and follow the project's direction.
+* The project charter and governance documents can be found in the [mindersec/community](https://github.com/mindersec/community) repository.
+
 ## Reporting Security Vulnerabilities
 
 If you think you have found a security vulnerability in Minder please DO NOT disclose it publicly until we’ve had a chance to fix it. Please don’t report security vulnerabilities using GitHub issues; instead, please follow this [process](https://github.com/mindersec/minder/blob/main/SECURITY.md)
