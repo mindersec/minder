@@ -97,6 +97,10 @@ func (rae *RuleActionsEngine) DoActions(
 	}
 	status := mapEvalStatus(params.GetEvalErr())
 
+	var remMeta *json.RawMessage
+	if prev != nil {
+		remMeta = getRemediationMeta(prev)
+	}
 	if !skipRemediate {
 		cmd := shouldRemediate(prev, status)
 		result.RemediateMeta, result.RemediateErr = rae.processAction(
@@ -105,8 +109,13 @@ func (rae *RuleActionsEngine) DoActions(
 			cmd,
 			ent,
 			params,
-			getRemediationMeta(prev),
+			remMeta,
 		)
+	}
+
+	var alertMeta *json.RawMessage
+	if prev != nil {
+		alertMeta = getAlertMeta(prev)
 	}
 
 	if !skipAlert {
@@ -123,7 +132,7 @@ func (rae *RuleActionsEngine) DoActions(
 			cmd,
 			ent,
 			params,
-			getAlertMeta(prev),
+			alertMeta,
 		)
 	}
 
