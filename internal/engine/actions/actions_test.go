@@ -15,7 +15,6 @@ import (
 	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 )
 
-
 func TestShouldRemediate(t *testing.T) {
 	t.Parallel()
 
