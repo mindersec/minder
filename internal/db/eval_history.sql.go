@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const deleteEvaluationHistoryByIDs = `-- name: DeleteEvaluationHistoryByIDs :execrows
@@ -284,7 +285,9 @@ SELECT s.id::uuid AS evaluation_id,
        re.details AS remediation_details,
        -- alert status and details
        ae.status AS alert_status,
-       ae.details AS alert_details
+       ae.details AS alert_details,
+       -- evaluation output
+       eo.output AS eval_output
   FROM evaluation_statuses s
   JOIN evaluation_rule_entities ere ON ere.id = s.rule_entity_id
   JOIN rule_instances ri ON ere.rule_id = ri.id
@@ -294,41 +297,43 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN projects j ON ei.project_id = j.id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
- WHERE ($1::timestamp without time zone IS NULL OR $1 > s.evaluation_time)
-   AND ($2::timestamp without time zone IS NULL OR $2 < s.evaluation_time)
+  LEFT JOIN evaluation_outputs eo ON eo.id = s.id AND $1::boolean
+ WHERE ($2::timestamp without time zone IS NULL OR $2 > s.evaluation_time)
+   AND ($3::timestamp without time zone IS NULL OR $3 < s.evaluation_time)
    -- inclusion filters
-   AND ($3::entities[] IS NULL OR ere.entity_type = ANY($3::entities[]))
-   AND ($4::text[] IS NULL OR ei.name = ANY($4::text[]))
-   AND ($5::text[] IS NULL OR p.name = ANY($5::text[]))
-   AND ($6::remediation_status_types[] IS NULL OR re.status = ANY($6::remediation_status_types[]))
-   AND ($7::alert_status_types[] IS NULL OR ae.status = ANY($7::alert_status_types[]))
-   AND ($8::eval_status_types[] IS NULL OR s.status = ANY($8::eval_status_types[]))
+   AND ($4::entities[] IS NULL OR ere.entity_type = ANY($4::entities[]))
+   AND ($5::text[] IS NULL OR ei.name = ANY($5::text[]))
+   AND ($6::text[] IS NULL OR p.name = ANY($6::text[]))
+   AND ($7::remediation_status_types[] IS NULL OR re.status = ANY($7::remediation_status_types[]))
+   AND ($8::alert_status_types[] IS NULL OR ae.status = ANY($8::alert_status_types[]))
+   AND ($9::eval_status_types[] IS NULL OR s.status = ANY($9::eval_status_types[]))
    -- exclusion filters
-   AND ($9::entities[] IS NULL OR ere.entity_type != ALL($9::entities[]))
-   AND ($10::text[] IS NULL OR ei.name != ALL($10::text[]))
-   AND ($11::text[] IS NULL OR p.name != ALL($11::text[]))
-   AND ($12::remediation_status_types[] IS NULL OR re.status != ALL($12::remediation_status_types[]))
-   AND ($13::alert_status_types[] IS NULL OR ae.status != ALL($13::alert_status_types[]))
-   AND ($14::eval_status_types[] IS NULL OR s.status != ALL($14::eval_status_types[]))
+   AND ($10::entities[] IS NULL OR ere.entity_type != ALL($10::entities[]))
+   AND ($11::text[] IS NULL OR ei.name != ALL($11::text[]))
+   AND ($12::text[] IS NULL OR p.name != ALL($12::text[]))
+   AND ($13::remediation_status_types[] IS NULL OR re.status != ALL($13::remediation_status_types[]))
+   AND ($14::alert_status_types[] IS NULL OR ae.status != ALL($14::alert_status_types[]))
+   AND ($15::eval_status_types[] IS NULL OR s.status != ALL($15::eval_status_types[]))
    -- time range filter
-   AND ($15::timestamp without time zone IS NULL OR s.evaluation_time >= $15)
-   AND ($16::timestamp without time zone IS NULL OR  s.evaluation_time < $16)
+   AND ($16::timestamp without time zone IS NULL OR s.evaluation_time >= $16)
+   AND ($17::timestamp without time zone IS NULL OR  s.evaluation_time < $17)
    -- implicit filter by project id
-   AND j.id = $17
+   AND j.id = $18
    -- implicit filter by profile labels
-   AND (($18::text[] IS NULL AND p.labels = array[]::text[]) -- include only unlabelled records
-	OR (($18::text[] IS NOT NULL AND $18::text[] = array['*']::text[]) -- include all labels
-	    OR ($18::text[] IS NOT NULL AND p.labels && $18::text[]) -- include only specified labels
+   AND (($19::text[] IS NULL AND p.labels = array[]::text[]) -- include only unlabelled records
+	OR (($19::text[] IS NOT NULL AND $19::text[] = array['*']::text[]) -- include all labels
+	    OR ($19::text[] IS NOT NULL AND p.labels && $19::text[]) -- include only specified labels
 	)
    )
-   AND ($19::text[] IS NULL OR NOT p.labels && $19::text[]) -- exclude only specified labels
+   AND ($20::text[] IS NULL OR NOT p.labels && $20::text[]) -- exclude only specified labels
  ORDER BY
- CASE WHEN $1::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
- CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
- LIMIT $20::bigint
+ CASE WHEN $2::timestamp without time zone IS NULL THEN s.evaluation_time END ASC,
+ CASE WHEN $3::timestamp without time zone IS NULL THEN s.evaluation_time END DESC
+ LIMIT $21::bigint
 `
 
 type ListEvaluationHistoryParams struct {
+	IncludeOutputs  bool                     `json:"include_outputs"`
 	Next            sql.NullTime             `json:"next"`
 	Prev            sql.NullTime             `json:"prev"`
 	Entitytypes     []Entities               `json:"entitytypes"`
@@ -368,10 +373,12 @@ type ListEvaluationHistoryRow struct {
 	RemediationDetails sql.NullString             `json:"remediation_details"`
 	AlertStatus        NullAlertStatusTypes       `json:"alert_status"`
 	AlertDetails       sql.NullString             `json:"alert_details"`
+	EvalOutput         pqtype.NullRawMessage      `json:"eval_output"`
 }
 
 func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error) {
 	rows, err := q.db.QueryContext(ctx, listEvaluationHistory,
+		arg.IncludeOutputs,
 		arg.Next,
 		arg.Prev,
 		pq.Array(arg.Entitytypes),
@@ -417,6 +424,7 @@ func (q *Queries) ListEvaluationHistory(ctx context.Context, arg ListEvaluationH
 			&i.RemediationDetails,
 			&i.AlertStatus,
 			&i.AlertDetails,
+			&i.EvalOutput,
 		); err != nil {
 			return nil, err
 		}
