@@ -102,8 +102,8 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	e.lock.Lock()
 	if e.closed {
 		e.lock.Unlock()
-		shutdownCancel() // 👈 cancel immediately
-		return nil       // 👈 stop processing
+		shutdownCancel()
+		return nil
 	}
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
