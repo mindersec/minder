@@ -16,3 +16,6 @@ scan:
     - ".cache/trivy/"
     - internal/engine/ingester/deps/testdata/
     - examples/rules-and-profiles/
+    -examples/
+    -testdata/
+
