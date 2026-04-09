@@ -350,6 +350,11 @@ func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.R
 				Int("retry", retryCount).
 				Msg("rate limited, retrying")
 			retryCount++
+			// Drain and close the body before retrying to allow connection reuse.
+			_, _ = io.Copy(io.Discard, resp.Body)
+			if err := resp.Body.Close(); err != nil {
+				zerolog.Ctx(req.Context()).Debug().Err(err).Msg("failed to close response body")
+			}
 			return errors.New("rate limited")
 		}
 

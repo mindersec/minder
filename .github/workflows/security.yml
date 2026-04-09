@@ -36,6 +36,10 @@ jobs:
           sarif_file: code-results.sarif
           category: code-scan
   
+      - name: Fetch Helm chart dependencies
+        if: always()
+        run: helm dependency update ./deployment/helm
+
       - name: Helm Security Scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         if: always()
