@@ -74,6 +74,7 @@ events:
   driver: go-channel
   router_close_timeout: 10
   go-channel: {}
+  # execution_timeout: 5m  # Timeout for execution of a set of profiles on an entity (default: 5m)
 
 authz:
   api_url: http://openfga:8080 # Use http://localhost:8082 instead for running minder outside of docker compose
