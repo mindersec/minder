@@ -53,6 +53,11 @@ func executeOnOneDataSource(
 		ds.Context.ProjectId = proj
 	}
 
+	// Ensure context is not nil so the server can fall back to the default project
+	if ds.Context == nil {
+		ds.Context = &minderv1.ContextV2{}
+	}
+
 	if err := ds.Validate(); err != nil {
 		return fmt.Errorf("error validating data source: %w", err)
 	}
