@@ -116,6 +116,45 @@ func testServer(t *testing.T, ctrl *gomock.Controller) *mockServer {
 	}
 }
 
+func TestListProviderClasses(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	fakeServer := testServer(t, ctrl)
+
+	resp, err := fakeServer.server.ListProviderClasses(context.Background(), &minder.ListProviderClassesRequest{})
+	require.NoError(t, err)
+
+	legacyClasses := resp.GetProviderClasses() //nolint:staticcheck // Backward-compatibility check for deprecated field.
+	require.Equal(t, []string{
+		string(db.ProviderClassDockerhub),
+		string(db.ProviderClassGithub),
+		string(db.ProviderClassGithubApp),
+	}, legacyClasses)
+
+	infos := resp.GetProviderClassInfos()
+	require.Len(t, infos, len(legacyClasses))
+
+	infoByClass := make(map[string]*minder.ProviderClassInfo, len(infos))
+	for _, info := range infos {
+		infoByClass[info.GetClass()] = info
+	}
+
+	require.Contains(t, infoByClass, string(db.ProviderClassGithub))
+	githubInfo := infoByClass[string(db.ProviderClassGithub)]
+	assert.Equal(t, "GitHub OAuth", githubInfo.GetDisplayName())
+	assert.Contains(t, githubInfo.GetSupportedProviderTypes(), minder.ProviderType_PROVIDER_TYPE_GITHUB)
+	assert.Contains(t, githubInfo.GetSupportedAuthFlows(),
+		minder.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW)
+	assert.Contains(t, githubInfo.GetSupportedEntities(), minder.Entity_ENTITY_REPOSITORIES)
+	assert.NotEmpty(t, githubInfo.GetDocumentationUrl())
+	assert.NotEmpty(t, githubInfo.GetCreationHelp())
+
+	require.NotContains(t, infoByClass, string(db.ProviderClassGitlab))
+}
+
 func TestCreateProvider(t *testing.T) {
 	t.Parallel()
 

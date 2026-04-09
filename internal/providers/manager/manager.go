@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -300,6 +301,22 @@ func (p *providerManager) IterateWebhookHandlers() iter.Seq2[string, http.Handle
 			}
 		}
 	}
+}
+
+// ListSupportedClasses returns the classes registered in this provider manager.
+// This is intentionally not part of the ProviderManager interface and is exposed
+// via type assertion where needed.
+func (p *providerManager) ListSupportedClasses() []db.ProviderClass {
+	classes := make([]db.ProviderClass, 0, len(p.classManagers))
+	for class := range p.classManagers {
+		classes = append(classes, class)
+	}
+
+	sort.Slice(classes, func(i, j int) bool {
+		return classes[i] < classes[j]
+	})
+
+	return classes
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

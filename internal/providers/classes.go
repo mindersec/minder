@@ -3,14 +3,19 @@
 
 package providers
 
-import "github.com/mindersec/minder/internal/db"
+import "sort"
 
 // ListProviderClasses returns a list of provider classes.
 func ListProviderClasses() []string {
-	return []string{
-		string(db.ProviderClassGithub),
-		string(db.ProviderClassGithubApp),
-		string(db.ProviderClassDockerhub),
-		string(db.ProviderClassGhcr),
+	defs := ListProviderClassDefinitions()
+	classes := make([]string, 0, len(defs))
+
+	for class := range defs {
+		classes = append(classes, class)
 	}
+
+	// Stable ordering keeps API output and tests deterministic.
+	sort.Strings(classes)
+
+	return classes
 }
