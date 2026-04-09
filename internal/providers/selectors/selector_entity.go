@@ -94,7 +94,24 @@ func pullRequestToSelectorEntity(
 	return selEnt
 }
 
-// newConverterFactory creates a new converterFactory with the default converters for each entity type
+// genericToSelectorEntity is a fallback converter used for any generic or newly added
+// entities (e.g. release, build). It extracts standard entity properties natively.
+func genericToSelectorEntity(
+	entityWithProps *models.EntityWithProperties, selProv *internalpb.SelectorProvider,
+) *internalpb.SelectorEntity {
+	selEnt := buildBaseSelectorEntity(entityWithProps, selProv)
+	selEnt.Entity = &internalpb.SelectorEntity_Generic{
+		Generic: &internalpb.SelectorGeneric{
+			Name:       entityWithProps.Entity.Name,
+			Properties: entityWithProps.Properties.ToProtoStruct(),
+			Provider:   selProv,
+		},
+	}
+	return selEnt
+}
+
+// newConverter creates a toSelectorEntity converter with the default converters for each entity type.
+// If an entity isn't explicitly mocked out, it correctly falls back to generic conversion.
 func newConverter(entType minderv1.Entity) toSelectorEntity {
 	switch entType { // nolint:exhaustive
 	case minderv1.Entity_ENTITY_REPOSITORIES:
@@ -103,8 +120,10 @@ func newConverter(entType minderv1.Entity) toSelectorEntity {
 		return artifactToSelectorEntity
 	case minderv1.Entity_ENTITY_PULL_REQUESTS:
 		return pullRequestToSelectorEntity
+	default:
+		// gracefully handle generic or unknown entities so properties can still be queried in selectors
+		return genericToSelectorEntity
 	}
-	return nil
 }
 
 func fillProviderInfo(
