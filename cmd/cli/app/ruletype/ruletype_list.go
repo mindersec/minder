@@ -76,7 +76,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			return strings.Compare(a.GetName(), b.GetName())
 		})
 
-		table := initializeTableForList()
+		table := initializeTableForList(cmd.OutOrStdout())
 
 		for _, rt := range resp.RuleTypes {
 			table.AddRow(

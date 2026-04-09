@@ -4,6 +4,7 @@
 package table
 
 import (
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -27,13 +28,14 @@ type Table interface {
 	AddRow(row ...string)
 	AddRowWithColor(row ...layouts.ColoredColumn)
 	Render()
+	// SeparateRows ensures each row is clearly separated (probably because it is multi-line)
 	SeparateRows() Table
 	SetAutoMerge(merge bool) Table
 	SetEqualColumns(equal bool) Table
 }
 
 // New creates a new table.
-func New(_ string, layout layouts.TableLayout, header []string) Table {
+func New(_ string, layout layouts.TableLayout, out io.Writer, header []string) Table {
 	t := table.NewWriter()
 
 	switch layout {
@@ -42,12 +44,12 @@ func New(_ string, layout layouts.TableLayout, header []string) Table {
 	case layouts.Heavy:
 		t.SetStyle(table.StyleBold) // Thick lines for importance
 	case layouts.Default:
-		t.SetStyle(table.StyleRounded)
+		t.SetStyle(table.StyleRounded) // Rounded corner for table
 	default:
 		t.SetStyle(table.StyleRounded) // The standard Minder look
 	}
 
-	t.SetOutputMirror(os.Stdout)
+	t.SetOutputMirror(out)
 
 	headerRow := make(table.Row, len(header))
 	maxColWidths := make([]int, len(header))

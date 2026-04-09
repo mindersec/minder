@@ -82,7 +82,7 @@ func ListProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, co
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default,
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
 			[]string{"Name", "Version", "Implements"}).
 			SetAutoMerge(true)
 

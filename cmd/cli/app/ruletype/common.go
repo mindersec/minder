@@ -101,16 +101,16 @@ func shouldSkipFile(f string) bool {
 }
 
 // initializeTableForList initializes the table for the rule type
-func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func initializeTableForList(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Name", "Entity Type", "Description"}).
 		SetAutoMerge(true).
 		SeparateRows()
 }
 
 // initializeTableForOne initializes the table for the rule type
-func initializeTableForOne() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func initializeTableForOne(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Rule Type", "Details"})
 }
 

@@ -148,7 +148,7 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 }
 
 func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji bool) {
-	historyTable := table.New(table.Simple, layouts.Default,
+	historyTable := table.New(table.Simple, layouts.Default, w,
 		[]string{"Time", "Entity", "Rule", "Status"}).
 		SetAutoMerge(true)
 

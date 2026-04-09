@@ -121,8 +121,8 @@ func appendDataSourcePropertiesToName(ds *minderv1.DataSource) string {
 }
 
 // initializeTableForList initializes the table for listing data sources
-func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func initializeTableForList(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Project ID", "ID", "Name", "Description"}).
 		SetAutoMerge(true)
 }

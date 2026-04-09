@@ -158,7 +158,7 @@ func printArtifact(
 ) error {
 	switch format {
 	case app.Table:
-		ta := table.New(table.Simple, layouts.Default,
+		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
 			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 		ta.AddRow(
 			art.ArtifactPk,
@@ -192,7 +192,7 @@ func printEvalStatus(
 ) error {
 	switch format {
 	case app.Table:
-		ta := table.New(table.Simple, layouts.Default,
+		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
 			[]string{"Profile", "Rule", "Status", "Message"})
 		for _, status := range evalStatus {
 			ta.AddRow(

@@ -5,6 +5,7 @@ package profile
 
 import (
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"time"
@@ -30,11 +31,11 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 }
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
-func NewProfileSettingsTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func NewProfileSettingsTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Name", "Description", "Alert", "Remediate"}).
 		SetAutoMerge(true).
-		SetEqualColumns(true) // Divided equally across terminal width
+		SetEqualColumns(false) // Divided equally across terminal width
 }
 
 // RenderProfileSettingsTable renders the profile settings table
@@ -43,11 +44,11 @@ func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
 }
 
 // NewProfileRulesTable creates a new table for rendering profiles
-func NewProfileRulesTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func NewProfileRulesTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"}).
 		SetAutoMerge(true).
-		SetEqualColumns(true) // Divided equally across terminal width
+		SetEqualColumns(false) // Divided equally across terminal width
 }
 
 // RenderProfileRulesTable renders the profile table
@@ -71,12 +72,12 @@ func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, 
 }
 
 // NewProfileStatusTable creates a new table for rendering profile status
-func NewProfileStatusTable() table.Table {
+func NewProfileStatusTable(out io.Writer) table.Table {
 	// Status tables are usually better "Compact" (default) because they have short fields
-	return table.New(table.Simple, layouts.Default,
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Name", "Status", "Evaluated At"}).
 		SetAutoMerge(true).
-		SetEqualColumns(true)
+		SetEqualColumns(false)
 }
 
 // RenderProfileStatusTable renders the profile status table
@@ -89,11 +90,11 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 }
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
-func NewRuleEvaluationsTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
+func NewRuleEvaluationsTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Entity", "Rule Name", "Status", "Details"}).
 		SetAutoMerge(true).
-		SetEqualColumns(true)
+		SetEqualColumns(false)
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.
