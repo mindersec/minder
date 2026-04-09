@@ -78,6 +78,7 @@ type paramsPR struct {
 	ingested   *engifv1.Ingested
 	repo       *pb.Repository
 	title      string
+	ruleName   string
 	modifier   fsModifier
 	body       string
 	metadata   *pullRequestMetadata
@@ -238,6 +239,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		ingested:   ingested,
 		repo:       repo,
 		title:      title,
+		ruleName:   params.GetRule().Name,
 		modifier:   modification,
 		body:       prFullBodyText,
 		metadata:   meta,
@@ -312,9 +314,9 @@ func (r *Remediator) runOn(
 	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
 	defer checkoutToOriginallyFetchedBranch(&logger, wt, currHeadName)
 
-	logger.Debug().Str("branch", branchBaseName(p.title)).Msg("Checking out branch")
+	logger.Debug().Str("branch", branchBaseName(p.title, p.ruleName)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branchBaseName(p.title)),
+		Branch: plumbing.NewBranchReferenceName(branchBaseName(p.title, p.ruleName)),
 		Create: true,
 	})
 	if err != nil {
@@ -346,12 +348,12 @@ func (r *Remediator) runOn(
 		return nil, fmt.Errorf("cannot commit: %w", err)
 	}
 
-	refspec := refFromBranch(branchBaseName(p.title))
+	refspec := refFromBranch(branchBaseName(p.title, p.ruleName))
 
-	l := logger.With().Str("branchBaseName", branchBaseName(p.title)).Logger()
+	l := logger.With().Str("branchBaseName", branchBaseName(p.title, p.ruleName)).Logger()
 
 	// Check if a PR already exists for this branch
-	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title))
+	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title, p.ruleName))
 
 	// If no PR exists, push the branch and create a PR
 	if prNumber == 0 {
@@ -492,10 +494,14 @@ func refFromBranch(branchFrom string) string {
 	return fmt.Sprintf("refs/heads/%s", branchFrom)
 }
 
-func branchBaseName(prTitle string) string {
+func branchBaseName(prTitle, ruleName string) string {
 	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
-	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+	if ruleName == "" {
+		return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+	}
+	normalizedRuleName := strings.ReplaceAll(strings.ToLower(ruleName), " ", "_")
+	return fmt.Sprintf("%s_%s_%s", baseName, normalizedRuleName, normalizedPrTitle)
 }
 
 func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {

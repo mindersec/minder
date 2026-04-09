@@ -381,7 +381,7 @@ func mockRepoSetupWithBranch(t *testing.T) (*git.Repository, error) {
 		// this is just a convoluted way of creating a new branch
 		ref := plumbing.NewHashReference(
 			plumbing.ReferenceName(
-				refFromBranch(branchBaseName(commitTitle)),
+				refFromBranch(branchBaseName(commitTitle, "")),
 			),
 			headRef.Hash())
 
@@ -423,7 +423,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(42)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -445,7 +445,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(nil, fmt.Errorf("failed to create PR"))
 			},
 			expectedErr:      errors.ErrActionFailed,
@@ -467,7 +467,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(41)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -555,7 +555,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBody,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(40)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -580,7 +580,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(43)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -606,7 +606,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(44)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -629,7 +629,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						yqCommitTitle, yqPrBody,
-						refFromBranch(branchBaseName(yqCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(yqCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(45)}, nil)
 			},
 			remArgs:          createTestRemArgs(),
@@ -696,6 +696,52 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			require.ErrorIs(t, err, tt.expectedErr, "expected error")
 			require.Equal(t, tt.expectedMetadata, retMeta)
+		})
+	}
+}
+
+func TestBranchBaseName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		title    string
+		ruleName string
+		expected string
+	}{
+		{
+			name:     "no rule name falls back to title only",
+			title:    "Add Dependabot configuration for gomod",
+			ruleName: "",
+			expected: "minder_add_dependabot_configuration_for_gomod",
+		},
+		{
+			name:     "rule name is included in branch name",
+			title:    "Add Dependabot configuration for gomod",
+			ruleName: "my-rule",
+			expected: "minder_my-rule_add_dependabot_configuration_for_gomod",
+		},
+		{
+			name:     "two rules with same title produce different branches",
+			title:    "Replace tags with sha",
+			ruleName: "codeql-rule-1",
+			expected: "minder_codeql-rule-1_replace_tags_with_sha",
+		},
+		{
+			name:     "second rule with same title produces different branch",
+			title:    "Replace tags with sha",
+			ruleName: "codeql-rule-2",
+			expected: "minder_codeql-rule-2_replace_tags_with_sha",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := branchBaseName(tt.title, tt.ruleName)
+			if got != tt.expected {
+				t.Errorf("branchBaseName(%q, %q) = %q, want %q", tt.title, tt.ruleName, got, tt.expected)
+			}
 		})
 	}
 }
