@@ -87,7 +87,7 @@ func (e *ExecutorEventHandler) Wait() {
 // as well as the init event.
 func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
-	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
+	// We preserve parent context cancellation while still allowing controlled shutdown.
 	// completion, because the default watermill behavior for both Go channels and
 	// SQL is to process messages sequentially, but we need additional parallelism
 	// beyond that.  When we switch to a different message processing system, we
@@ -95,7 +95,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// provide the parallelism.
 	// We _do_ still want to cancel on shutdown, however.
 	// TODO: Make this timeout configurable
-	msgCtx := context.WithoutCancel(msg.Context())
+	msgCtx := msg.Context()
 	//nolint:gosec // this is called when we iterate over e.cancels
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
