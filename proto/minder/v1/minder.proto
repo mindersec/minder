@@ -1885,7 +1885,7 @@ message RuleEvaluationStatus {
     // Because output may be multiple KB, it is only returned
     // if include_outputs is set. Historical evaluations may
     // discard structured output sooner than status results.
-    google.protobuf.Struct output = 21;
+    google.protobuf.Value output = 21;
 }
 
 // EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
@@ -4023,7 +4023,7 @@ message EvaluationHistoryStatus {
     // Because output may be multiple KB, it is only returned
     // if include_outputs is set. Historical evaluations may
     // discard structured output sooner than status results.
-    google.protobuf.Struct output = 3;
+    google.protobuf.Value output = 3;
 }
 
 message EvaluationHistoryRemediation {
