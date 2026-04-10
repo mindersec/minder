@@ -179,6 +179,7 @@ type remediateArgs struct {
 	ent       protoreflect.ProtoMessage
 	pol       map[string]any
 	params    map[string]any
+	ruleName  string
 }
 
 func createTestRemArgs() *remediateArgs {
@@ -636,6 +637,32 @@ func TestPullRequestRemediate(t *testing.T) {
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
 		},
+		{
+			name: "open a PR with a rule name",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      dependabotPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.ruleName = "my-rule"
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						commitTitle, prBody,
+						refFromBranch("minder_my-rule_add_dependabot_configuration_for_gomod"), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(46)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":46}`),
+		},
 	}
 
 	for _, tt := range tests {
@@ -672,6 +699,7 @@ func TestPullRequestRemediate(t *testing.T) {
 				Rule: &models.RuleInstance{
 					Def:    tt.remArgs.pol,
 					Params: tt.remArgs.params,
+					Name:   tt.remArgs.ruleName,
 				},
 			}
 
@@ -700,48 +728,3 @@ func TestPullRequestRemediate(t *testing.T) {
 	}
 }
 
-func TestBranchBaseName(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		title    string
-		ruleName string
-		expected string
-	}{
-		{
-			name:     "no rule name falls back to title only",
-			title:    "Add Dependabot configuration for gomod",
-			ruleName: "",
-			expected: "minder_add_dependabot_configuration_for_gomod",
-		},
-		{
-			name:     "rule name is included in branch name",
-			title:    "Add Dependabot configuration for gomod",
-			ruleName: "my-rule",
-			expected: "minder_my-rule_add_dependabot_configuration_for_gomod",
-		},
-		{
-			name:     "two rules with same title produce different branches",
-			title:    "Replace tags with sha",
-			ruleName: "codeql-rule-1",
-			expected: "minder_codeql-rule-1_replace_tags_with_sha",
-		},
-		{
-			name:     "second rule with same title produces different branch",
-			title:    "Replace tags with sha",
-			ruleName: "codeql-rule-2",
-			expected: "minder_codeql-rule-2_replace_tags_with_sha",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			got := branchBaseName(tt.title, tt.ruleName)
-			if got != tt.expected {
-				t.Errorf("branchBaseName(%q, %q) = %q, want %q", tt.title, tt.ruleName, got, tt.expected)
-			}
-		})
-	}
-}
