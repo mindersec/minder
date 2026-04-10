@@ -107,7 +107,6 @@ func deleteRuleTypes(
 	rulesToDelete []*minderv1.RuleType,
 	project string,
 ) ([]string, []ruleTypeBlock) {
-
 	var deletedRuleTypes []string
 	var remainingRuleTypes []ruleTypeBlock
 
@@ -169,7 +168,7 @@ func printDeleteResults(
 }
 
 func extractProfiles(errMsg string) []string {
-	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	profilesRegex := regexp.MustCompile(`used by profiles (.+)`)
 	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
 	if len(match) < 2 {
 		return []string{}

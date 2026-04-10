@@ -81,7 +81,6 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 		updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
 			RuleType: rt,
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
 		}
@@ -114,5 +113,4 @@ func init() {
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
-
 }
