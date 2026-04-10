@@ -16,6 +16,7 @@ import (
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	minderlogger "github.com/mindersec/minder/internal/logger"
+	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 )
@@ -118,10 +119,13 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	e.wgEntityEventExecution.Add(1)
 	go func() {
 		defer e.wgEntityEventExecution.Done()
-		select {
-		case <-time.After(ArtifactSignatureWaitPeriod):
-		case <-msgCtx.Done():
-			return
+		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
+			// Wait for artifact signatures, but allow early exit on shutdown
+			select {
+			case <-time.After(ArtifactSignatureWaitPeriod):
+			case <-msgCtx.Done():
+				return
+			}
 		}
 
 		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
