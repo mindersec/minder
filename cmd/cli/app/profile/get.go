@@ -84,11 +84,11 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		}
 		cmd.Println(out)
 	case app.Table:
-		settable := NewProfileSettingsTable()
+		settable := NewProfileSettingsTable(cmd.OutOrStdout())
 		RenderProfileSettingsTable(prof, settable)
 		settable.Render()
 		fmt.Println()
-		table := NewProfileRulesTable()
+		table := NewProfileRulesTable(cmd.OutOrStdout())
 		table.SeparateRows()
 		RenderProfileRulesTable(prof, table)
 		table.Render()

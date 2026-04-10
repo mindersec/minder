@@ -1,110 +1,238 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package table contains utilities for rendering tables
 package table
 
 import (
-	"fmt"
+	"io"
 	"os"
+	"strconv"
+	"strings"
+	"unicode/utf8"
 
-	"github.com/charmbracelet/lipgloss"
-	lg "github.com/charmbracelet/lipgloss/table"
+	"github.com/jedib0t/go-pretty/v6/table"
+	"github.com/jedib0t/go-pretty/v6/text"
 	"golang.org/x/term"
 
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 )
 
 const (
-	// Simple is a simple table
-	Simple = "simple"
+	// Simple defines the standard table layout used across the Minder CLI.
+	Simple               = "simple"
+	defaultTerminalWidth = 100
 )
 
-// Table is an interface for rendering tables
+// Table is the interface for rendering CLI tables using the go-pretty engine.
 type Table interface {
 	AddRow(row ...string)
 	AddRowWithColor(row ...layouts.ColoredColumn)
-	// Render outputs the table to stdout (TODO: make output configurable)
 	Render()
 	// SeparateRows ensures each row is clearly separated (probably because it is multi-line)
-	SeparateRows()
+	SeparateRows() Table
+	SetAutoMerge(merge bool) Table
+	SetEqualColumns(equal bool) Table
 }
 
-// New creates a new table
-func New(_ string, _ layouts.TableLayout, header []string) Table {
-	//nolint:gosec  // This overflow doesn't actually happen, but windows doesn't like syscall.Stdout
-	w, _, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil || w == 0 {
-		w = 80 // Default width if we can't determine terminal size
+// New creates a new table.
+func New(_ string, layout layouts.TableLayout, out io.Writer, header []string) Table {
+	t := table.NewWriter()
+
+	switch layout {
+	case layouts.Condensed:
+		t.SetStyle(table.StyleLight) // Thin lines for tight spaces
+	case layouts.Heavy:
+		t.SetStyle(table.StyleBold) // Thick lines for importance
+	case layouts.Default:
+		t.SetStyle(table.StyleRounded) // Rounded corner for table
+	default:
+		t.SetStyle(table.StyleRounded) // The standard Minder look
 	}
-	return &lipGlossTable{
-		table: lg.New().
-			// Border(lipgloss.HiddenBorder()).
-			BorderTop(false).BorderBottom(false).
-			BorderLeft(false).BorderRight(false).
-			Headers(header...).
-			Width(w).Wrap(true),
-		colors: make(map[int]map[int]layouts.Color),
+
+	t.SetOutputMirror(out)
+
+	headerRow := make(table.Row, len(header))
+	maxColWidths := make([]int, len(header))
+
+	for i, h := range header {
+		headerRow[i] = h
+		maxColWidths[i] = utf8.RuneCountInString(h)
+	}
+	t.AppendHeader(headerRow)
+
+	t.Style().Options.DrawBorder = false
+	t.Style().Options.SeparateColumns = true
+	t.Style().Options.SeparateHeader = true
+	t.Style().Options.SeparateRows = true
+	t.Style().Box.PaddingLeft = " "
+	t.Style().Box.PaddingRight = " "
+
+	return &goPrettyTable{
+		t:            t,
+		numCols:      len(header),
+		headers:      header,
+		maxColWidths: maxColWidths,
 	}
 }
 
-type lipGlossTable struct {
-	table  *lg.Table
-	rows   int
-	colors map[int]map[int]layouts.Color
+type goPrettyTable struct {
+	t            table.Writer
+	autoMerge    bool
+	equalColumns bool
+	numCols      int
+	headers      []string
+	maxColWidths []int
 }
 
-// AddRow implements Table.
-func (l *lipGlossTable) AddRow(row ...string) {
-	l.table.Row(row...)
-	l.rows++
+func (g *goPrettyTable) SetAutoMerge(merge bool) Table {
+	g.autoMerge = merge
+	return g
 }
 
-// AddRowWithColor implements Table.
-func (l *lipGlossTable) AddRowWithColor(row ...layouts.ColoredColumn) {
-	cells := make([]string, 0, len(row))
-	for i, cell := range row {
-		cells = append(cells, cell.Column)
-		if cell.Color != "" {
-			row := l.colors[l.rows]
-			if row == nil {
-				row = make(map[int]layouts.Color)
-				l.colors[l.rows] = row
+func (g *goPrettyTable) SetEqualColumns(equal bool) Table {
+	g.equalColumns = equal
+	return g
+}
+
+func (g *goPrettyTable) updateWidths(row []string) {
+	for i, val := range row {
+		if i >= g.numCols {
+			break
+		}
+		w := 0
+		for _, line := range strings.Split(val, "\n") {
+			lw := utf8.RuneCountInString(line)
+			if lw > w {
+				w = lw
 			}
-			l.colors[l.rows][i] = cell.Color
+		}
+		if w > g.maxColWidths[i] {
+			g.maxColWidths[i] = w
 		}
 	}
-	l.AddRow(cells...)
 }
 
-// SeparateRows implements Table.
-func (l *lipGlossTable) SeparateRows() {
-	l.table.BorderRow(true).
-		BorderLeft(true).BorderRight(true).
-		BorderTop(true).BorderBottom(true)
+func (g *goPrettyTable) AddRow(row ...string) {
+	r := make(table.Row, len(row))
+	for i, val := range row {
+		r[i] = val
+	}
+	g.updateWidths(row)
+	g.t.AppendRow(r)
 }
 
-// Render implements Table.
-func (l *lipGlossTable) Render() {
-	l.table.StyleFunc(func(row, col int) lipgloss.Style {
-		style := lipgloss.NewStyle().
-			Padding(0, 1)
-		rowData := l.colors[row]
-		if rowData == nil {
-			return style
-		}
-		color := rowData[col]
-		switch color {
+func (g *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
+	r := make(table.Row, len(row))
+	rawRow := make([]string, len(row))
+
+	for i, cell := range row {
+		val := cell.Column
+		rawRow[i] = val
+
+		switch cell.Color {
 		case layouts.ColorRed:
-			return style.Foreground(lipgloss.Color("#ff0000"))
+			val = text.FgRed.Sprint(val)
 		case layouts.ColorGreen:
-			return style.Foreground(lipgloss.Color("#00ff00"))
+			val = text.FgGreen.Sprint(val)
 		case layouts.ColorYellow:
-			return style.Foreground(lipgloss.Color("#ffff00"))
-		default:
-			return style
+			val = text.FgYellow.Sprint(val)
 		}
-	})
+		r[i] = val
+	}
 
-	fmt.Println(l.table.Render())
+	g.updateWidths(rawRow)
+	g.t.AppendRow(r)
+}
+
+func (g *goPrettyTable) SeparateRows() Table {
+	g.t.Style().Options.SeparateRows = true
+	return g
+}
+
+func (g *goPrettyTable) Render() {
+	w := getTerminalWidth()
+
+	// With DrawBorder = false and SeparateColumns = true:
+	barsAndPadding := (g.numCols - 1) + (g.numCols * 2)
+	usableWidth := w - barsAndPadding
+	if usableWidth < 10 {
+		usableWidth = 10
+	}
+
+	assignedWidths := make([]int, g.numCols)
+
+	if g.equalColumns && g.numCols > 0 {
+		equalWidth := usableWidth / g.numCols
+		for i := range assignedWidths {
+			assignedWidths[i] = equalWidth
+		}
+		assignedWidths[g.numCols-1] += (usableWidth % g.numCols)
+	} else {
+		totalRequested := 0
+		for _, req := range g.maxColWidths {
+			totalRequested += req
+		}
+
+		if totalRequested > 0 {
+			currentTotal := 0
+			for i, req := range g.maxColWidths {
+				// Calculate share: (column_req / total_req) * usable_width
+				share := int(float64(req) / float64(totalRequested) * float64(usableWidth))
+
+				// Ensure a minimum width so columns don't disappear
+				if share < 5 {
+					share = 5
+				}
+				assignedWidths[i] = share
+				currentTotal += share
+			}
+
+			diff := usableWidth - currentTotal
+			if g.numCols > 0 {
+				if assignedWidths[g.numCols-1]+diff > 5 {
+					assignedWidths[g.numCols-1] += diff
+				} else {
+					assignedWidths[g.numCols-1] = 5
+				}
+			}
+		} else {
+			// Fallback if no rows were added: default to equal
+			equalWidth := usableWidth / g.numCols
+			for i := range assignedWidths {
+				assignedWidths[i] = equalWidth
+			}
+		}
+	}
+
+	configs := make([]table.ColumnConfig, len(g.headers))
+	for i := range g.headers {
+		configs[i] = table.ColumnConfig{
+			Number:           i + 1,
+			WidthMax:         assignedWidths[i],
+			WidthMin:         assignedWidths[i], // Forcing Min to match Max ensures full stretch
+			WidthMaxEnforcer: text.WrapSoft,
+			AutoMerge:        g.autoMerge,
+			VAlign:           text.VAlignTop,
+		}
+	}
+
+	g.t.SetColumnConfigs(configs)
+
+	g.t.Style().Size.WidthMax = w
+
+	g.t.Render()
+}
+
+func getTerminalWidth() int {
+	if cols := os.Getenv("COLUMNS"); cols != "" {
+		if w, err := strconv.Atoi(cols); err == nil && w > 0 {
+			return w
+		}
+	}
+
+	//nolint:gosec // G115
+	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+		return w
+	}
+	return defaultTerminalWidth
 }

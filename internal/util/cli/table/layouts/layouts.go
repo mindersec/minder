@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// TODO: retire this entirely in favor of more native lipgloss
-
 // Package layouts defines the available table layouts
 package layouts
 
@@ -10,8 +8,14 @@ package layouts
 type TableLayout string
 
 const (
-	// Default is the default table layout
-	Default TableLayout = ""
+	// Default defines the standard, rounded-corner layout for Minder tables.
+	Default TableLayout = "default"
+
+	// Condensed defines a thin-border layout for dense data.
+	Condensed TableLayout = "condensed"
+
+	// Heavy defines a bold-border layout for high-visibility tables.
+	Heavy TableLayout = "heavy"
 )
 
 // Color is the type for table colors
