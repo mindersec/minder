@@ -415,6 +415,7 @@ func TestServer_DeleteRepository(t *testing.T) {
 		RepoID           string
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
+		EmptyProvider    bool
 		ExpectedError    string
 	}{
 		{
@@ -426,6 +427,12 @@ func TestServer_DeleteRepository(t *testing.T) {
 			Name:          "delete by ID fails when ID is malformed",
 			RepoID:        "I am not a UUID",
 			ExpectedError: "invalid repository ID",
+		},
+		{
+			Name:          "delete by name fails when provider is empty",
+			RepoName:      repoOwnerAndName,
+			EmptyProvider: true,
+			ExpectedError: "provider name must be specified when deleting a repository by name",
 		},
 		{
 			Name:             "deletion fails when repo service returns error",
@@ -485,8 +492,14 @@ func TestServer_DeleteRepository(t *testing.T) {
 			var expectation string
 			if scenario.RepoName != "" {
 				req := &pb.DeleteRepositoryByNameRequest{
-					Name: scenario.RepoName,
+					Name:    scenario.RepoName,
+					Context: &pb.Context{},
 				}
+
+				if !scenario.EmptyProvider {
+					req.Context.Provider = ptr.Ptr(ghprovider.Github)
+				}
+
 				res, err := server.DeleteRepositoryByName(ctx, req)
 				if res != nil {
 					result = res.Name

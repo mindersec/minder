@@ -298,6 +298,11 @@ func (s *Server) DeleteRepositoryByName(
 	}
 
 	projectID := GetProjectID(ctx)
+
+	if in.GetContext() == nil || in.GetContext().GetProvider() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name must be specified when deleting a repository by name")
+	}
+
 	providerName := GetProviderName(ctx)
 
 	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
