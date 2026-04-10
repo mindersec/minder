@@ -124,7 +124,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			select {
 			case <-time.After(ArtifactSignatureWaitPeriod):
 			case <-msgCtx.Done():
-				return
+				// stop waiting early, but continue execution
 			}
 		}
 
