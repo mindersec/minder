@@ -208,7 +208,7 @@ func (ps *propertiesService) replaceAllPropertiesWithQuerier(
 	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
 }
 
-func (ps *propertiesService) saveAllPropertiesWithQuerier(
+func (*propertiesService) saveAllPropertiesWithQuerier(
 	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
 ) error {
 	for key, prop := range props.Iterate() {

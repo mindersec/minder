@@ -115,12 +115,12 @@ type failOnNthUpsertStore struct {
 }
 
 func (f *failOnNthUpsertStore) WithTransactionErr(fn func(db.ExtendQuerier) error) error {
-	tx, err := f.Store.BeginTransaction()
+	tx, err := f.BeginTransaction()
 	if err != nil {
 		return err
 	}
 
-	qtx := f.Store.GetQuerierWithTransaction(tx)
+	qtx := f.GetQuerierWithTransaction(tx)
 	wrapped := &failOnNthUpsertQuerier{
 		ExtendQuerier: qtx,
 		failOnCall:    f.failOnCall,
@@ -128,7 +128,7 @@ func (f *failOnNthUpsertStore) WithTransactionErr(fn func(db.ExtendQuerier) erro
 	}
 
 	defer func() {
-		_ = f.Store.Rollback(tx)
+		_ = f.Rollback(tx)
 	}()
 
 	err = fn(wrapped)
@@ -136,7 +136,7 @@ func (f *failOnNthUpsertStore) WithTransactionErr(fn func(db.ExtendQuerier) erro
 		return err
 	}
 
-	return f.Store.Commit(tx)
+	return f.Commit(tx)
 }
 
 func createTestCtx(ctx context.Context, t *testing.T) testCtx {
