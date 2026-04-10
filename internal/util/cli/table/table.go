@@ -84,19 +84,19 @@ type goPrettyTable struct {
 	maxColWidths []int
 }
 
-func (l *goPrettyTable) SetAutoMerge(merge bool) Table {
-	l.autoMerge = merge
-	return l
+func (g *goPrettyTable) SetAutoMerge(merge bool) Table {
+	g.autoMerge = merge
+	return g
 }
 
-func (l *goPrettyTable) SetEqualColumns(equal bool) Table {
-	l.equalColumns = equal
-	return l
+func (g *goPrettyTable) SetEqualColumns(equal bool) Table {
+	g.equalColumns = equal
+	return g
 }
 
-func (l *goPrettyTable) updateWidths(row []string) {
+func (g *goPrettyTable) updateWidths(row []string) {
 	for i, val := range row {
-		if i >= l.numCols {
+		if i >= g.numCols {
 			break
 		}
 		w := 0
@@ -106,22 +106,22 @@ func (l *goPrettyTable) updateWidths(row []string) {
 				w = lw
 			}
 		}
-		if w > l.maxColWidths[i] {
-			l.maxColWidths[i] = w
+		if w > g.maxColWidths[i] {
+			g.maxColWidths[i] = w
 		}
 	}
 }
 
-func (l *goPrettyTable) AddRow(row ...string) {
+func (g *goPrettyTable) AddRow(row ...string) {
 	r := make(table.Row, len(row))
 	for i, val := range row {
 		r[i] = val
 	}
-	l.updateWidths(row)
-	l.t.AppendRow(r)
+	g.updateWidths(row)
+	g.t.AppendRow(r)
 }
 
-func (l *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
+func (g *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 	r := make(table.Row, len(row))
 	rawRow := make([]string, len(row))
 
@@ -140,42 +140,42 @@ func (l *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 		r[i] = val
 	}
 
-	l.updateWidths(rawRow)
-	l.t.AppendRow(r)
+	g.updateWidths(rawRow)
+	g.t.AppendRow(r)
 }
 
-func (l *goPrettyTable) SeparateRows() Table {
-	l.t.Style().Options.SeparateRows = true
-	return l
+func (g *goPrettyTable) SeparateRows() Table {
+	g.t.Style().Options.SeparateRows = true
+	return g
 }
 
-func (l *goPrettyTable) Render() {
+func (g *goPrettyTable) Render() {
 	w := getTerminalWidth()
 
 	// With DrawBorder = false and SeparateColumns = true:
-	barsAndPadding := (l.numCols - 1) + (l.numCols * 2)
+	barsAndPadding := (g.numCols - 1) + (g.numCols * 2)
 	usableWidth := w - barsAndPadding
 	if usableWidth < 10 {
 		usableWidth = 10
 	}
 
-	assignedWidths := make([]int, l.numCols)
+	assignedWidths := make([]int, g.numCols)
 
-	if l.equalColumns && l.numCols > 0 {
-		equalWidth := usableWidth / l.numCols
+	if g.equalColumns && g.numCols > 0 {
+		equalWidth := usableWidth / g.numCols
 		for i := range assignedWidths {
 			assignedWidths[i] = equalWidth
 		}
-		assignedWidths[l.numCols-1] += (usableWidth % l.numCols)
+		assignedWidths[g.numCols-1] += (usableWidth % g.numCols)
 	} else {
 		totalRequested := 0
-		for _, req := range l.maxColWidths {
+		for _, req := range g.maxColWidths {
 			totalRequested += req
 		}
 
 		if totalRequested > 0 {
 			currentTotal := 0
-			for i, req := range l.maxColWidths {
+			for i, req := range g.maxColWidths {
 				// Calculate share: (column_req / total_req) * usable_width
 				share := int(float64(req) / float64(totalRequested) * float64(usableWidth))
 
@@ -187,41 +187,40 @@ func (l *goPrettyTable) Render() {
 				currentTotal += share
 			}
 
-			// Adjust for rounding errors to ensure we hit EXACTLY the terminal width
 			diff := usableWidth - currentTotal
-			if l.numCols > 0 {
-				// If we have a deficit or surplus due to integer rounding,
-				// adjust the last column to snap to the edge.
-				if assignedWidths[l.numCols-1]+diff > 0 {
-					assignedWidths[l.numCols-1] += diff
+			if g.numCols > 0 {
+				if assignedWidths[g.numCols-1]+diff > 5 {
+					assignedWidths[g.numCols-1] += diff
+				} else {
+					assignedWidths[g.numCols-1] = 5
 				}
 			}
 		} else {
 			// Fallback if no rows were added: default to equal
-			equalWidth := usableWidth / l.numCols
+			equalWidth := usableWidth / g.numCols
 			for i := range assignedWidths {
 				assignedWidths[i] = equalWidth
 			}
 		}
 	}
 
-	configs := make([]table.ColumnConfig, len(l.headers))
-	for i := range l.headers {
+	configs := make([]table.ColumnConfig, len(g.headers))
+	for i := range g.headers {
 		configs[i] = table.ColumnConfig{
 			Number:           i + 1,
 			WidthMax:         assignedWidths[i],
 			WidthMin:         assignedWidths[i], // Forcing Min to match Max ensures full stretch
 			WidthMaxEnforcer: text.WrapSoft,
-			AutoMerge:        l.autoMerge,
+			AutoMerge:        g.autoMerge,
 			VAlign:           text.VAlignTop,
 		}
 	}
 
-	l.t.SetColumnConfigs(configs)
+	g.t.SetColumnConfigs(configs)
 
-	l.t.SetAllowedRowLength(w)
+	g.t.Style().Size.WidthMax = w
 
-	l.t.Render()
+	g.t.Render()
 }
 
 func getTerminalWidth() int {

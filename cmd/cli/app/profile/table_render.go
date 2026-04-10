@@ -20,10 +20,12 @@ import (
 )
 
 func marshalStructOrEmpty(v *structpb.Struct) string {
-	if len(v.AsMap()) == 0 {
+	if v == nil || len(v.GetFields()) == 0 {
 		return ""
 	}
-	out, err := yaml.Marshal(v.AsMap())
+
+	m := v.AsMap()
+	out, err := yaml.Marshal(m)
 	if err != nil {
 		return ""
 	}

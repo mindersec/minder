@@ -345,9 +345,6 @@ func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.R
 			return err
 		}
 
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-
 		if resp.StatusCode == http.StatusTooManyRequests {
 			zerolog.Ctx(req.Context()).Debug().
 				Int("retry", retryCount).
