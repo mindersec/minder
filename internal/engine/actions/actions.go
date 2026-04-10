@@ -180,14 +180,15 @@ func shouldRemediate(prevEval *PreviousEval, evalStatus EvalStatus) engif.Action
 		return engif.ActionCmdDoNothing
 
 	case EvalStatusSuccess:
-		// Turn off remediation if it was previously active
+		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
+		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		if prevRemediation != RemediationStatus("skipped") {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
 
 	case EvalStatusFailure:
-		// Trigger remediation only if previously skipped
+		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
 		if prevRemediation == RemediationStatus("skipped") {
 			return engif.ActionCmdOn
 		}
@@ -242,7 +243,7 @@ func shouldAlert(
 			return engif.ActionCmdOn
 		}
 		return engif.ActionCmdDoNothing
-
+	// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
 	case EvalStatusSuccess:
 		if prevAlert != AlertStatus("off") {
 			return engif.ActionCmdOff
@@ -262,7 +263,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	action, ok := rae.actions[actionType]
 	if !ok {
 		zerolog.Ctx(ctx).Info().
-			Str("eval_status", fmt.Sprintf("%v", evalErr)).
+			Str("eval_status", evalErr.Error()).
 			Str("action", string(actionType)).
 			Msg("action type not found, skipping")
 		return true
