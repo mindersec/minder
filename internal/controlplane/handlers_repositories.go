@@ -40,7 +40,11 @@ func (s *Server) RegisterRepository(
 	in *pb.RegisterRepositoryRequest,
 ) (*pb.RegisterRepositoryResponse, error) {
 	projectID := GetProjectID(ctx)
-	providerName := GetProviderName(ctx)
+
+	if in.GetContext() == nil || in.GetContext().GetProvider() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name must be specified when registering a repository")
+	}
+	providerName := in.GetContext().GetProvider()
 
 	var fetchByProps *properties.Properties
 	var provider *db.Provider
@@ -137,10 +141,15 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 // This function will typically be called by the client to get a list of
 // repositories that are registered present in the minder database
 func (s *Server) ListRepositories(ctx context.Context,
-	_ *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+
+	if in.GetContext() == nil || in.GetContext().GetProvider() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name must be specified when listing repositories")
+	}
+
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	providerName := entityCtx.Provider.Name
+	providerName := in.GetContext().GetProvider()
 
 	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
@@ -239,9 +248,13 @@ func (s *Server) GetRepositoryByName(ctx context.Context,
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid repository name, needs to have the format: owner/name")
 	}
 
+	if in.GetContext() == nil || in.GetContext().GetProvider() == "" {
+		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name must be specified when getting a repository by name")
+	}
+
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
-	providerName := entityCtx.Provider.Name
+	providerName := in.GetContext().GetProvider()
 
 	// Use the service to fetch the repository
 	repo, err := s.repos.GetRepositoryByName(ctx, fragments[0], fragments[1], projectID, providerName)
@@ -303,7 +316,7 @@ func (s *Server) DeleteRepositoryByName(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "provider name must be specified when deleting a repository by name")
 	}
 
-	providerName := GetProviderName(ctx)
+	providerName := in.GetContext().GetProvider()
 
 	err := s.repos.DeleteByName(ctx, fragments[0], fragments[1], projectID, providerName)
 	if errors.Is(err, sql.ErrNoRows) {

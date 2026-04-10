@@ -50,8 +50,16 @@ func TestServer_RegisterRepository(t *testing.T) {
 		RepoName         string
 		RepoServiceSetup repoMockBuilder
 		ProviderFails    bool
+		EmptyProvider    bool
 		ExpectedError    string
 	}{
+		{
+			Name:          "Repo registration fails when provider is empty",
+			RepoOwner:     repoOwner,
+			RepoName:      repoName,
+			EmptyProvider: true,
+			ExpectedError: "provider name must be specified when registering a repository",
+		},
 		{
 			Name:          "Repo creation fails when provider cannot be found",
 			RepoOwner:     repoOwner,
@@ -136,11 +144,17 @@ func TestServer_RegisterRepository(t *testing.T) {
 			)
 
 			req := &pb.RegisterRepositoryRequest{
+				Context: &pb.Context{},
 				Repository: &pb.UpstreamRepositoryRef{
 					Owner: scenario.RepoOwner,
 					Name:  scenario.RepoName,
 				},
 			}
+
+			if !scenario.EmptyProvider {
+				req.Context.Provider = ptr.Ptr(ghprovider.Github)
+			}
+
 			res, err := server.RegisterRepository(ctx, req)
 			if scenario.ExpectedError == "" {
 				expectation := &pb.RegisterRepositoryResponse{
@@ -169,9 +183,15 @@ func TestServer_ListRepositories(t *testing.T) {
 		RepoServiceSetup repoMockBuilder
 		ProviderSetup    func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager)
 		ProviderFails    bool
+		EmptyProvider    bool
 		ExpectedResults  []*pb.Repository
 		ExpectedError    string
 	}{
+		{
+			Name:          "List repositories fails when provider is empty",
+			EmptyProvider: true,
+			ExpectedError: "provider name must be specified when listing repositories",
+		},
 		{
 			Name: "List repositories succeeds with multiple results",
 			RepoServiceSetup: rf.NewRepoService(
@@ -282,7 +302,14 @@ func TestServer_ListRepositories(t *testing.T) {
 				mgr,
 			)
 
-			req := &pb.ListRepositoriesRequest{}
+			req := &pb.ListRepositoriesRequest{
+				Context: &pb.Context{},
+			}
+
+			if !scenario.EmptyProvider {
+				req.Context.Provider = ptr.Ptr(ghprovider.Github)
+			}
+
 			res, err := server.ListRepositories(ctx, req)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
@@ -400,6 +427,146 @@ func TestServer_ListRemoteRepositoriesFromProvider(t *testing.T) {
 			} else {
 				require.Nil(t, res)
 				require.Contains(t, err.Error(), scenario.ExpectedError)
+			}
+		})
+	}
+}
+
+func mockGetRepoByName(res *pb.Repository, err error) repoMockBuilder {
+	return func(ctrl *gomock.Controller) repoServiceMock {
+		mock := mockrepo.NewMockRepositoryService(ctrl)
+		mock.EXPECT().GetRepositoryByName(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(res, err).AnyTimes()
+		return mock
+	}
+}
+
+func mockGetRepoByID(res *pb.Repository, err error) repoMockBuilder {
+	return func(ctrl *gomock.Controller) repoServiceMock {
+		mock := mockrepo.NewMockRepositoryService(ctrl)
+		mock.EXPECT().GetRepositoryById(gomock.Any(), gomock.Any(), gomock.Any()).Return(res, err).AnyTimes()
+		return mock
+	}
+}
+
+func TestServer_GetRepository(t *testing.T) {
+	t.Parallel()
+
+	scenarios := []struct {
+		Name             string
+		RepoName         string
+		RepoID           string
+		RepoServiceSetup repoMockBuilder
+		ProviderFails    bool
+		EmptyProvider    bool
+		ExpectedError    string
+	}{
+		{
+			Name:          "get by name fails when name is malformed",
+			RepoName:      "I am not a repo name",
+			ExpectedError: "invalid repository name",
+		},
+		{
+			Name:          "get by ID fails when ID is malformed",
+			RepoID:        "I am not a UUID",
+			ExpectedError: "invalid repository ID",
+		},
+		{
+			Name:          "get by name fails when provider is empty",
+			RepoName:      repoOwnerAndName,
+			EmptyProvider: true,
+			ExpectedError: "provider name must be specified when getting a repository by name",
+		},
+		{
+			Name:             "get by name fails when repo service returns error",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: mockGetRepoByName(nil, errDefault),
+			ExpectedError:    errDefault.Error(),
+		},
+		{
+			Name:             "get by ID fails when repo service returns error",
+			RepoID:           repoID,
+			RepoServiceSetup: mockGetRepoByID(nil, errDefault),
+			ExpectedError:    "cannot read repository",
+		},
+		{
+			Name:             "get by name fails when repo is not found",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: mockGetRepoByName(nil, sql.ErrNoRows),
+			ExpectedError:    "repository not found",
+		},
+		{
+			Name:             "get by ID fails when repo is not found",
+			RepoID:           repoID,
+			RepoServiceSetup: mockGetRepoByID(nil, sql.ErrNoRows),
+			ExpectedError:    "repository not found",
+		},
+		{
+			Name:             "get by name succeeds",
+			RepoName:         repoOwnerAndName,
+			RepoServiceSetup: mockGetRepoByName(&existingRepo, nil),
+		},
+		{
+			Name:             "get by ID succeeds",
+			RepoID:           repoID,
+			RepoServiceSetup: mockGetRepoByID(&existingRepo, nil),
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.Name, func(t *testing.T) {
+			t.Parallel()
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Provider: engcontext.Provider{Name: ghprovider.Github},
+				Project:  engcontext.Project{ID: projectID},
+			})
+
+			server := createServer(
+				ctrl,
+				scenario.RepoServiceSetup,
+				scenario.ProviderFails,
+				nil,
+			)
+
+			var result *pb.Repository
+			var resultError error
+
+			if scenario.RepoName != "" {
+				req := &pb.GetRepositoryByNameRequest{
+					Name:    scenario.RepoName,
+					Context: &pb.Context{},
+				}
+
+				if !scenario.EmptyProvider {
+					req.Context.Provider = ptr.Ptr(ghprovider.Github)
+				}
+
+				res, err := server.GetRepositoryByName(ctx, req)
+				if res != nil {
+					result = res.Repository
+				}
+				resultError = err
+			} else {
+				req := &pb.GetRepositoryByIdRequest{
+					RepositoryId: scenario.RepoID,
+				}
+				res, err := server.GetRepositoryById(ctx, req)
+				if res != nil {
+					result = res.Repository
+				}
+				resultError = err
+			}
+
+			if scenario.ExpectedError == "" {
+				require.NoError(t, resultError)
+				require.NotNil(t, result)
+				if scenario.RepoName != "" {
+					require.Equal(t, scenario.RepoName, fmt.Sprintf("%s/%s", result.Owner, result.Name))
+				}
+			} else {
+				require.Nil(t, result)
+				require.ErrorContains(t, resultError, scenario.ExpectedError)
 			}
 		})
 	}
