@@ -194,6 +194,13 @@ func (ps *propertiesService) SaveAllProperties(
 	opts *CallOptions,
 ) error {
 	qtx := ps.getStoreOrTransaction(opts)
+
+	if store, ok := qtx.(db.Store); ok {
+		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+			return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+		})
+	}
+
 	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
 }
 

@@ -1084,7 +1084,7 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 	})
 }
 
-func TestPropertiesService_ReplaceAllProperties_EnsuresTransaction(t *testing.T) {
+func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1094,81 +1094,111 @@ func TestPropertiesService_ReplaceAllProperties_EnsuresTransaction(t *testing.T)
 		"is_private": true,
 	})
 
-	t.Run("starts a transaction when using store directly", func(t *testing.T) {
-		t.Parallel()
+	scenarios := []struct {
+		name                  string
+		invoke                func(PropertiesService, context.Context, uuid.UUID, *properties.Properties, *CallOptions) error
+		expectDeleteBeforePut bool
+	}{
+		{
+			name: "replace all properties",
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+				props *properties.Properties, opts *CallOptions,
+			) error {
+				return ps.ReplaceAllProperties(ctx, entityID, props, opts)
+			},
+			expectDeleteBeforePut: true,
+		},
+		{
+			name: "save all properties",
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+				props *properties.Properties, opts *CallOptions,
+			) error {
+				return ps.SaveAllProperties(ctx, entityID, props, opts)
+			},
+		},
+	}
 
-		ctrl := gomock.NewController(t)
-		t.Cleanup(ctrl.Finish)
+	for _, tt := range scenarios {
+		tt := tt
 
-		mockStore := mockdb.NewMockStore(ctrl)
-		mockTxQuerier := mockdb.NewMockStore(ctrl)
+		t.Run(tt.name+" starts a transaction when using store directly", func(t *testing.T) {
+			t.Parallel()
 
-		mockStore.EXPECT().
-			WithTransactionErr(gomock.Any()).
-			DoAndReturn(func(fn func(db.ExtendQuerier) error) error {
-				return fn(mockTxQuerier)
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockTxQuerier := mockdb.NewMockStore(ctrl)
+
+			mockStore.EXPECT().
+				WithTransactionErr(gomock.Any()).
+				DoAndReturn(func(fn func(db.ExtendQuerier) error) error {
+					return fn(mockTxQuerier)
+				})
+			if tt.expectDeleteBeforePut {
+				mockTxQuerier.EXPECT().
+					DeleteAllPropertiesForEntity(ctx, entityID).
+					Return(nil)
+			}
+			mockTxQuerier.EXPECT().
+				UpsertPropertyValueV1(ctx, gomock.Any()).
+				Return(db.Property{}, nil).
+				Times(2)
+
+			ps := NewPropertiesService(mockStore)
+			err := tt.invoke(ps, ctx, entityID, props, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run(tt.name+" reuses existing transaction querier", func(t *testing.T) {
+			t.Parallel()
+
+			tctx := createTestCtx(ctx, t)
+			ent, err := tctx.testQueries.CreateEntity(ctx, db.CreateEntityParams{
+				EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+				Name:       rand.RandomName(time.Now().UnixNano()),
+				ProjectID:  tctx.dbProj.ID,
+				ProviderID: tctx.ghAppProvider.ID,
 			})
-		mockTxQuerier.EXPECT().
-			DeleteAllPropertiesForEntity(ctx, entityID).
-			Return(nil)
-		mockTxQuerier.EXPECT().
-			UpsertPropertyValueV1(ctx, gomock.Any()).
-			Return(db.Property{}, nil).
-			Times(2)
+			require.NoError(t, err)
 
-		ps := NewPropertiesService(mockStore)
-		err := ps.ReplaceAllProperties(ctx, entityID, props, nil)
-		require.NoError(t, err)
-	})
+			tx, err := tctx.testQueries.BeginTransaction()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = tx.Rollback()
+			})
+			txQuerier := tctx.testQueries.GetQuerierWithTransaction(tx)
 
-	t.Run("reuses existing transaction querier", func(t *testing.T) {
-		t.Parallel()
+			ps := NewPropertiesService(tctx.testQueries)
+			err = tt.invoke(ps, ctx, ent.ID, props,
+				CallBuilder().WithStoreOrTransaction(txQuerier))
+			require.NoError(t, err)
 
-		tctx := createTestCtx(ctx, t)
-		ent, err := tctx.testQueries.CreateEntity(ctx, db.CreateEntityParams{
-			EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
-			Name:       rand.RandomName(time.Now().UnixNano()),
-			ProjectID:  tctx.dbProj.ID,
-			ProviderID: tctx.ghAppProvider.ID,
+			stored, err := txQuerier.GetAllPropertiesForEntity(ctx, ent.ID)
+			require.NoError(t, err)
+			require.Len(t, stored, 2)
 		})
-		require.NoError(t, err)
 
-		tx, err := tctx.testQueries.BeginTransaction()
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = tx.Rollback()
+		t.Run(tt.name+" returns transaction wrapper errors", func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			expectedErr := errors.New("begin transaction failed")
+
+			mockStore.EXPECT().
+				WithTransactionErr(gomock.Any()).
+				Return(expectedErr)
+
+			ps := NewPropertiesService(mockStore)
+			err := tt.invoke(ps, ctx, entityID, props, nil)
+			require.ErrorIs(t, err, expectedErr)
 		})
-		txQuerier := tctx.testQueries.GetQuerierWithTransaction(tx)
+	}
 
-		ps := NewPropertiesService(tctx.testQueries)
-		err = ps.ReplaceAllProperties(ctx, ent.ID, props,
-			CallBuilder().WithStoreOrTransaction(txQuerier))
-		require.NoError(t, err)
-
-		stored, err := txQuerier.GetAllPropertiesForEntity(ctx, ent.ID)
-		require.NoError(t, err)
-		require.Len(t, stored, 2)
-	})
-
-	t.Run("returns transaction wrapper errors", func(t *testing.T) {
-		t.Parallel()
-
-		ctrl := gomock.NewController(t)
-		t.Cleanup(ctrl.Finish)
-
-		mockStore := mockdb.NewMockStore(ctrl)
-		expectedErr := errors.New("begin transaction failed")
-
-		mockStore.EXPECT().
-			WithTransactionErr(gomock.Any()).
-			Return(expectedErr)
-
-		ps := NewPropertiesService(mockStore)
-		err := ps.ReplaceAllProperties(ctx, entityID, props, nil)
-		require.ErrorIs(t, err, expectedErr)
-	})
-
-	t.Run("rolls back delete when an insert fails mid-replacement", func(t *testing.T) {
+	t.Run("replace all properties rolls back delete when an insert fails mid-replacement", func(t *testing.T) {
 		t.Parallel()
 
 		tctx := createTestCtx(ctx, t)
