@@ -727,4 +727,3 @@ func TestPullRequestRemediate(t *testing.T) {
 		})
 	}
 }
-
