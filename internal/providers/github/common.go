@@ -588,21 +588,18 @@ func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.H
 // DeleteHook deletes a specified Hook.
 func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
 	resp, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
-	if err != nil {
-		if isRateLimitError(err) {
-			return c.waitForRateLimitReset(ctx, err)
-		}
-		if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusForbidden) {
-			// If the hook is not found, we can ignore the
-			// error, user might have deleted it manually.
-			// We also ignore deleting webhooks that we're not
-			// allowed to touch. This is usually the case
-			// with repository transfer.
-			return nil
-		}
-		return err
+	if isRateLimitError(err) {
+		return c.waitForRateLimitReset(ctx, err)
 	}
-	return nil
+	if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusForbidden) {
+		// If the hook is not found, we can ignore the
+		// error, user might have deleted it manually.
+		// We also ignore deleting webhooks that we're not
+		// allowed to touch. This is usually the case
+		// with repository transfer.
+		return nil
+	}
+	return err
 }
 
 // CreateHook creates a new Hook.
