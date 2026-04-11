@@ -171,7 +171,6 @@ func newTestGenericSelectorEntity(provSelBld testProviderSelectorBuilder, generi
 
 		provSel := provSelBld()
 		generic.Provider = provSel
-		generic.Entity.(*internalpb.SelectorEntity_Generic).Generic.Provider = provSel
 
 		return generic
 	}

@@ -104,7 +104,6 @@ func genericToSelectorEntity(
 		Generic: &internalpb.SelectorGeneric{
 			Name:       entityWithProps.Entity.Name,
 			Properties: entityWithProps.Properties.ToProtoStruct(),
-			Provider:   selProv,
 		},
 	}
 	return selEnt

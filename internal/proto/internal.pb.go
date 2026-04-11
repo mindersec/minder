@@ -658,7 +658,6 @@ func (x *SelectorPullRequest) GetProperties() *structpb.Struct {
 type SelectorGeneric struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Provider      *SelectorProvider      `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
 	Properties    *structpb.Struct       `protobuf:"bytes,3,opt,name=properties,proto3" json:"properties,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -699,13 +698,6 @@ func (x *SelectorGeneric) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-func (x *SelectorGeneric) GetProvider() *SelectorProvider {
-	if x != nil {
-		return x.Provider
-	}
-	return nil
 }
 
 func (x *SelectorGeneric) GetProperties() *structpb.Struct {
@@ -1152,10 +1144,9 @@ const file_internal_proto_rawDesc = "" +
 	"\bprovider\x18\x03 \x01(\v2\x1a.internal.SelectorProviderR\bprovider\x127\n" +
 	"\n" +
 	"properties\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
-	"properties\"\x96\x01\n" +
+	"properties\"^\n" +
 	"\x0fSelectorGeneric\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x126\n" +
-	"\bprovider\x18\x02 \x01(\v2\x1a.internal.SelectorProviderR\bprovider\x127\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
 	"\n" +
 	"properties\x18\x03 \x01(\v2\x17.google.protobuf.StructR\n" +
 	"properties\"\x8f\x03\n" +
@@ -1225,22 +1216,21 @@ var file_internal_proto_depIdxs = []int32{
 	16, // 10: internal.SelectorArtifact.properties:type_name -> google.protobuf.Struct
 	5,  // 11: internal.SelectorPullRequest.provider:type_name -> internal.SelectorProvider
 	16, // 12: internal.SelectorPullRequest.properties:type_name -> google.protobuf.Struct
-	5,  // 13: internal.SelectorGeneric.provider:type_name -> internal.SelectorProvider
-	16, // 14: internal.SelectorGeneric.properties:type_name -> google.protobuf.Struct
-	17, // 15: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
-	5,  // 16: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
-	6,  // 17: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
-	7,  // 18: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
-	8,  // 19: internal.SelectorEntity.pull_request:type_name -> internal.SelectorPullRequest
-	9,  // 20: internal.SelectorEntity.generic:type_name -> internal.SelectorGeneric
-	1,  // 21: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
-	12, // 22: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
-	14, // 23: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	16, // 13: internal.SelectorGeneric.properties:type_name -> google.protobuf.Struct
+	17, // 14: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
+	5,  // 15: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
+	6,  // 16: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
+	7,  // 17: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
+	8,  // 18: internal.SelectorEntity.pull_request:type_name -> internal.SelectorPullRequest
+	9,  // 19: internal.SelectorEntity.generic:type_name -> internal.SelectorGeneric
+	1,  // 20: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
+	12, // 21: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
+	14, // 22: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_init() }

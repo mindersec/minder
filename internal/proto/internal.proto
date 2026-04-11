@@ -128,7 +128,6 @@ message SelectorPullRequest {
 
 message SelectorGeneric {
   string name = 1;
-  SelectorProvider provider = 2;
   google.protobuf.Struct properties = 3;
 }
 
