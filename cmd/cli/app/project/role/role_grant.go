@@ -89,7 +89,7 @@ func GrantCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grp
 	case app.Table:
 		cmd.Println(successMsg)
 		if resp.Invitation != nil && resp.Invitation.Code != "" {
-			t := initializeTableForGrantListInvitations()
+			t := initializeTableForGrantListInvitations(cmd.OutOrStdout())
 			i := resp.Invitation
 			t.AddRow(i.Email, i.Role, i.SponsorDisplay, i.ExpiresAt.AsTime().Format(time.RFC3339))
 			t.Render()

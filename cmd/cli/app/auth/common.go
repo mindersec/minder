@@ -32,8 +32,8 @@ func userRegistered(ctx context.Context, client minderv1.UserServiceClient) (boo
 	return true, res, nil
 }
 
-func renderNewUser(conn string, newUser *minderv1.CreateUserResponse) {
-	t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
+func renderNewUser(conn string, newUser *minderv1.CreateUserResponse, out io.Writer) {
+	t := table.New(table.Simple, layouts.Default, out, []string{"Key", "Value"})
 	t.AddRow("Subject", newUser.GetIdentitySubject())
 	t.AddRow("Project ID", newUser.ProjectId)
 	t.AddRow("Project Name", newUser.ProjectName)
@@ -41,8 +41,8 @@ func renderNewUser(conn string, newUser *minderv1.CreateUserResponse) {
 	t.Render()
 }
 
-func renderUserInfo(conn string, user *minderv1.GetUserResponse) {
-	t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
+func renderUserInfo(conn string, user *minderv1.GetUserResponse, out io.Writer) {
+	t := table.New(table.Simple, layouts.Default, out, []string{"Key", "Value"})
 	t.AddRow("Minder Server", conn)
 	t.AddRow("Subject", user.GetUser().GetIdentitySubject())
 	for _, project := range getProjectTableRows(user.GetProjectRoles()) {
@@ -55,7 +55,7 @@ func renderUserInfoWhoami(conn string, outWriter io.Writer, format string, user 
 	switch format {
 	case app.Table:
 		fmt.Fprintln(outWriter, cli.Header.Render("Here are your details:"))
-		t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
+		t := table.New(table.Simple, layouts.Default, outWriter, []string{"Key", "Value"})
 		t.AddRow("Subject", user.GetUser().GetIdentitySubject())
 		t.AddRow("Created At", user.GetUser().GetCreatedAt().AsTime().String())
 		t.AddRow("Updated At", user.GetUser().GetUpdatedAt().AsTime().String())
