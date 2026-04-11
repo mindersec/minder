@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
+// Package table provides utilities for formatting and rendering CLI output as tables.
 package table
 
 import (
@@ -168,11 +169,18 @@ func GetStatusIcon(eval EvalStatus, emoji bool) layouts.ColoredColumn {
 // BestDetail returns the best detail for the given evaluation status.
 func BestDetail(eval EvalStatus) layouts.ColoredColumn {
 	// TODO: combine with GetStatusIcon, and pick color, etc based on status
+	icon := GetStatusIcon(eval, false)
+
+	detailText := eval.GetStatusDetail()
 	if eval.GetRemediationDetail() != "" {
-		return layouts.NoColor(eval.GetRemediationDetail())
+		detailText = eval.GetRemediationDetail()
+	} else if eval.GetAlert().GetDetails() != "" {
+		detailText = eval.GetAlert().GetDetails()
 	}
-	if eval.GetAlert().GetDetails() != "" {
-		return layouts.NoColor(eval.GetAlert().GetDetails())
+
+	// Return the detail text with the same color as the status icon
+	return layouts.ColoredColumn{
+		Column: detailText,
+		Color:  icon.Color,
 	}
-	return layouts.NoColor(eval.GetStatusDetail())
 }

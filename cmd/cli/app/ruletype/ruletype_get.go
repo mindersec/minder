@@ -82,7 +82,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		cmd.Println(out)
 	case app.Table:
 		// Initialize the table
-		table := initializeTableForOne()
+		table := initializeTableForOne(cmd.OutOrStdout())
 		rt := rtype.GetRuleType()
 		oneRuleTypeToRows(table, rt)
 		// add the rule type to the table rows
