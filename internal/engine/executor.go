@@ -319,10 +319,10 @@ func logEval(
 
 	// log evaluation result and actions status
 	evalLog.Info().
-		Str("action", string(remediate.ActionType)).
-		Str("action_status", string(dbadapter.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
-		Str("action", string(alert.ActionType)).
-		Str("action_status", string(dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
+		Str("remediate_action", string(remediate.ActionType)).
+		Str("remediate_status", string(dbadapter.ErrorAsRemediationStatus(params.GetActionsErr().RemediateErr))).
+		Str("alert_action", string(alert.ActionType)).
+		Str("alert_status", string(dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr))).
 		Msg("entity evaluation - completed")
 
 	// log business logic
