@@ -244,7 +244,7 @@ func GetRealmUrl(
 		// Unable to get the header, fall back to static configuration
 	}
 
-	cmd.Printf("Unable to fetch WWW-Authenticate header (%s), falling back on static configuration", err)
+	cmd.Printf("Unable to fetch WWW-Authenticate header (%s), falling back on static configuration\n", err)
 	parsedURL, err := url.Parse(issuerUrl)
 	if err != nil {
 		return "", fmt.Errorf("error parsing issuer URL: %v", err)

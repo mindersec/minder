@@ -578,7 +578,7 @@ func (c *GitHub) IsOrg() bool {
 // ListHooks lists all Hooks for the specified repository.
 func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
 	list, resp, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
-	if err != nil && resp.StatusCode == http.StatusNotFound {
+	if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
 		// return empty list so that the caller can ignore the error and iterate over the empty list
 		return []*github.Hook{}, fmt.Errorf("hooks not found for repository %s/%s: %w", owner, repo, ErrNotFound)
 	}
@@ -1053,8 +1053,9 @@ func (c *GitHub) StartCheckRun(
 		// If error is 403 then it means we are missing permissions
 		if resp != nil && resp.StatusCode == 403 {
 			return nil, fmt.Errorf("missing permissions: check")
+			return nil, ErroNoCheckPermissions
 		}
-		return nil, ErroNoCheckPermissions
+		return nil, fmt.Errorf("creating check run: %w", err)
 	}
 	return run, nil
 }

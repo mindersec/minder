@@ -606,6 +606,16 @@ func (t *mockTransport) RoundTrip(*http.Request) (*http.Response, error) {
 	return t.response, nil
 }
 
+// mockTransportError simulates a network-level failure where the HTTP client
+// returns an error with a nil *http.Response (e.g., DNS failure, TCP timeout).
+type mockTransportError struct {
+	err error
+}
+
+func (t *mockTransportError) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, t.err
+}
+
 func TestIsMinderHook(t *testing.T) {
 	t.Parallel()
 
@@ -1059,6 +1069,48 @@ func TestStartCheckRun(t *testing.T) {
 			wantErr:     true,
 			expectedErr: ErroNoCheckPermissions,
 		},
+		{
+			name:  "nil response on network error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			opts: &github.CreateCheckRunOptions{
+				Name:    "test-check",
+				HeadSHA: "abc123",
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransportError{
+						err: errors.New("connection refused"),
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: true,
+		},
+		{
+			name:  "non-403 error returns actual error",
+			owner: "test-owner",
+			repo:  "test-repo",
+			opts: &github.CreateCheckRunOptions{
+				Name:    "test-check",
+				HeadSHA: "abc123",
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransport{
+						response: &http.Response{
+							StatusCode: http.StatusInternalServerError,
+							Body:       io.NopCloser(strings.NewReader(`{"message": "Internal Server Error"}`)),
+							Header:     make(http.Header),
+						},
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1152,6 +1204,26 @@ func TestUpdateCheckRun(t *testing.T) {
 			},
 			wantErr:     true,
 			expectedErr: ErroNoCheckPermissions,
+		},
+		{
+			name:       "nil response on network error",
+			owner:      "test-owner",
+			repo:       "test-repo",
+			checkRunID: 1,
+			opts: &github.UpdateCheckRunOptions{
+				Name:   "test-check",
+				Status: github.String("completed"),
+			},
+			setupMocks: func(th *testGitHub) {
+				client := &http.Client{
+					Transport: &mockTransportError{
+						err: errors.New("connection refused"),
+					},
+				}
+				ghClient := github.NewClient(client)
+				th.gh.client = ghClient
+			},
+			wantErr: true,
 		},
 	}
 

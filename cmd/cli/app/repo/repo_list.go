@@ -4,8 +4,10 @@
 package repo
 
 import (
+	"cmp"
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -27,7 +29,6 @@ var listCmd = &cobra.Command{
 	RunE:  cli.GRPCClientWrapRunE(listCommand),
 }
 
-// listCommand is the repo list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
 	client := minderv1.NewRepositoryServiceClient(conn)
 
@@ -53,8 +54,17 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	switch format {
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default,
-			[]string{"Owner", "Name", "Provider", "Upstream ID"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
+			[]string{"Owner", "Name", "Provider", "Upstream ID"}).
+			SetAutoMerge(true)
+
+		slices.SortFunc(resp.Results, func(a, b *minderv1.Repository) int {
+			return cmp.Or(
+				strings.Compare(a.GetOwner(), b.GetOwner()),
+				strings.Compare(a.GetContext().GetProvider(), b.GetContext().GetProvider()),
+			)
+		})
+
 		for _, v := range resp.Results {
 			t.AddRow(
 				v.GetOwner(),

@@ -153,7 +153,7 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, ent)
 
-		dbProp, err := testQueries.GetAllPropertyValuesV1(context.Background(), ent.ID)
+		dbProp, err := testQueries.GetAllPropertiesForEntity(context.Background(), ent.ID)
 		require.NoError(t, err)
 		require.Empty(t, dbProp)
 
@@ -173,22 +173,29 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, prop)
 
-		dbProp, err = testQueries.GetAllPropertyValuesV1(context.Background(), ent.ID)
+		dbProp, err = testQueries.GetAllPropertiesForEntity(context.Background(), ent.ID)
 		require.NoError(t, err)
 		require.Len(t, dbProp, 2)
+		require.Equal(t, "testvalue", propertyByKey(t, dbProp, "testkey"))
+		require.Equal(t, "anothervalue", propertyByKey(t, dbProp, "anotherkey"))
 
-		propTestKey := propertyByKey(t, dbProp, "testkey")
-		require.Equal(t, propTestKey.Value, "testvalue")
-		propAnotherKey := propertyByKey(t, dbProp, "anotherkey")
-		require.Equal(t, propAnotherKey.Value, "anothervalue")
-
-		keyVal, err := testQueries.GetPropertyValueV1(context.Background(), ent.ID, "testkey")
+		keyVal, err := testQueries.GetProperty(context.Background(), GetPropertyParams{
+			EntityID: ent.ID,
+			Key:      "testkey",
+		})
 		require.NoError(t, err)
-		require.Equal(t, keyVal.Value, "testvalue")
-
-		anotherKeyVal, err := testQueries.GetPropertyValueV1(context.Background(), ent.ID, "anotherkey")
+		value, err := PropValueFromDbV1(keyVal.Value)
 		require.NoError(t, err)
-		require.Equal(t, anotherKeyVal.Value, "anothervalue")
+		require.Equal(t, "testvalue", value)
+
+		anotherKeyVal, err := testQueries.GetProperty(context.Background(), GetPropertyParams{
+			EntityID: ent.ID,
+			Key:      "anotherkey",
+		})
+		require.NoError(t, err)
+		anotherValue, err := PropValueFromDbV1(anotherKeyVal.Value)
+		require.NoError(t, err)
+		require.Equal(t, "anothervalue", anotherValue)
 	})
 
 	t.Run("GetTypedEntitiesByPropertyV1", func(t *testing.T) {
@@ -302,15 +309,18 @@ func Test_PropertyCrud(t *testing.T) {
 	})
 }
 
-func propertyByKey(t *testing.T, props []PropertyValueV1, key string) PropertyValueV1 {
+func propertyByKey(t *testing.T, props []Property, key string) any {
 	t.Helper()
 
 	for _, prop := range props {
 		if prop.Key == key {
-			return prop
+			value, err := PropValueFromDbV1(prop.Value)
+			require.NoError(t, err)
+			return value
 		}
 	}
-	return PropertyValueV1{}
+	require.FailNowf(t, "property not found", "missing property with key %q", key)
+	return nil
 }
 
 func Test_PropertyHelpers(t *testing.T) {
