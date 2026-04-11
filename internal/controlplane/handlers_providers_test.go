@@ -149,8 +149,8 @@ func TestListProviderClasses(t *testing.T) {
 	assert.Contains(t, githubInfo.GetSupportedAuthFlows(),
 		minder.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW)
 	assert.Contains(t, githubInfo.GetSupportedEntities(), minder.Entity_ENTITY_REPOSITORIES)
+	assert.Equal(t, "GitHub provider using OAuth credentials.", githubInfo.GetDescription())
 	assert.NotEmpty(t, githubInfo.GetDocumentationUrl())
-	assert.NotEmpty(t, githubInfo.GetCreationHelp())
 
 	require.NotContains(t, infoByClass, string(db.ProviderClassGitlab))
 }

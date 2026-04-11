@@ -428,6 +428,12 @@ func TestGetAuthorizationURL(t *testing.T) {
 			mockJwt := mockjwt.NewMockValidator(ctrl)
 			mockAuthManager := mockmanager.NewMockAuthManager(ctrl)
 			mockAuthManager.EXPECT().NewOAuthConfig(gomock.Any(), gomock.Any()).Return(&oauth2.Config{}, nil).AnyTimes()
+			mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
+			mockProviderManager.EXPECT().GetProviderClassInfo(gomock.Any()).DoAndReturn(
+				func(class db.ProviderClass) (*pb.ProviderClassInfo, error) {
+					return testProviderClassInfo(class), nil
+				},
+			).AnyTimes()
 
 			server := &Server{
 				store:               store,
@@ -436,11 +442,44 @@ func TestGetAuthorizationURL(t *testing.T) {
 				cfg:                 c,
 				mt:                  metrics.NewNoopMetrics(),
 				providerAuthManager: mockAuthManager,
+				providerManager:     mockProviderManager,
 			}
 
 			res, err := server.GetAuthorizationURL(ctx, tc.req)
 			tc.checkResponse(t, res, err)
 		})
+	}
+}
+
+func testProviderClassInfo(class db.ProviderClass) *pb.ProviderClassInfo {
+	switch class {
+	case db.ProviderClassGithub:
+		return &pb.ProviderClassInfo{
+			Class: string(class),
+			SupportedAuthFlows: []pb.AuthorizationFlow{
+				pb.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW,
+			},
+		}
+	case db.ProviderClassGithubApp:
+		return &pb.ProviderClassInfo{
+			Class: string(class),
+			SupportedAuthFlows: []pb.AuthorizationFlow{
+				pb.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW,
+			},
+		}
+	case db.ProviderClassGhcr:
+		fallthrough
+	case db.ProviderClassDockerhub:
+		fallthrough
+	case db.ProviderClassGitlab:
+		fallthrough
+	default:
+		return &pb.ProviderClassInfo{
+			Class: string(class),
+			SupportedAuthFlows: []pb.AuthorizationFlow{
+				pb.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT,
+			},
+		}
 	}
 }
 

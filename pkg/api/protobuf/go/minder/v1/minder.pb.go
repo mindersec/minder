@@ -10627,7 +10627,7 @@ type ProviderClassInfo struct {
 	Class string `protobuf:"bytes,1,opt,name=class,proto3" json:"class,omitempty"`
 	// display_name is a human-friendly provider class name.
 	DisplayName string `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// description is a short summary of the provider class.
+	// description is a short plaintext summary of the provider class.
 	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
 	// supported_provider_types is the list of provider traits/interfaces supported by this class.
 	SupportedProviderTypes []ProviderType `protobuf:"varint,4,rep,packed,name=supported_provider_types,json=supportedProviderTypes,proto3,enum=minder.v1.ProviderType" json:"supported_provider_types,omitempty"`
@@ -10637,10 +10637,8 @@ type ProviderClassInfo struct {
 	SupportedEntities []Entity `protobuf:"varint,6,rep,packed,name=supported_entities,json=supportedEntities,proto3,enum=minder.v1.Entity" json:"supported_entities,omitempty"`
 	// documentation_url points to provider-specific or generic documentation.
 	DocumentationUrl string `protobuf:"bytes,7,opt,name=documentation_url,json=documentationUrl,proto3" json:"documentation_url,omitempty"`
-	// creation_help is high-level guidance for enrolling this provider class.
-	CreationHelp  string `protobuf:"bytes,8,opt,name=creation_help,json=creationHelp,proto3" json:"creation_help,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ProviderClassInfo) Reset() {
@@ -10718,13 +10716,6 @@ func (x *ProviderClassInfo) GetSupportedEntities() []Entity {
 func (x *ProviderClassInfo) GetDocumentationUrl() string {
 	if x != nil {
 		return x.DocumentationUrl
-	}
-	return ""
-}
-
-func (x *ProviderClassInfo) GetCreationHelp() string {
-	if x != nil {
-		return x.CreationHelp
 	}
 	return ""
 }
@@ -15752,7 +15743,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x1aDeleteProviderByIDResponse\x12\x13\n" +
 	"\x02id\x18\x01 \x01(\tB\x03\xe0A\x02R\x02id\"J\n" +
 	"\x1aListProviderClassesRequest\x12,\n" +
-	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\"\xb9\x03\n" +
+	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\"\xa9\x03\n" +
 	"\x11ProviderClassInfo\x12\x19\n" +
 	"\x05class\x18\x01 \x01(\tB\x03\xe0A\x02R\x05class\x12&\n" +
 	"\fdisplay_name\x18\x02 \x01(\tB\x03\xe0A\x02R\vdisplayName\x12 \n" +
@@ -15760,8 +15751,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x18supported_provider_types\x18\x04 \x03(\x0e2\x17.minder.v1.ProviderTypeB\x03\xe0A\x02R\x16supportedProviderTypes\x12S\n" +
 	"\x14supported_auth_flows\x18\x05 \x03(\x0e2\x1c.minder.v1.AuthorizationFlowB\x03\xe0A\x02R\x12supportedAuthFlows\x12@\n" +
 	"\x12supported_entities\x18\x06 \x03(\x0e2\x11.minder.v1.EntityR\x11supportedEntities\x12+\n" +
-	"\x11documentation_url\x18\a \x01(\tR\x10documentationUrl\x12#\n" +
-	"\rcreation_help\x18\b \x01(\tR\fcreationHelp\"\xa4\x01\n" +
+	"\x11documentation_url\x18\a \x01(\tR\x10documentationUrlJ\x04\b\b\x10\tR\rcreation_help\"\xa4\x01\n" +
 	"\x1bListProviderClassesResponse\x120\n" +
 	"\x10provider_classes\x18\x01 \x03(\tB\x05\xe0A\x02\x18\x01R\x0fproviderClasses\x12S\n" +
 	"\x14provider_class_infos\x18\x02 \x03(\v2\x1c.minder.v1.ProviderClassInfoB\x03\xe0A\x02R\x12providerClassInfos\"\xb1\x01\n" +

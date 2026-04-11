@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -27,10 +26,6 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
 )
-
-type supportedProviderClassLister interface {
-	ListSupportedClasses() []db.ProviderClass
-}
 
 // CreateProvider implements the CreateProvider RPC method.
 func (s *Server) CreateProvider(
@@ -172,104 +167,23 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 
 // ListProviderClasses lists the provider classes available in the system.
 func (s *Server) ListProviderClasses(
-	ctx context.Context, _ *minderv1.ListProviderClassesRequest,
+	_ context.Context, _ *minderv1.ListProviderClassesRequest,
 ) (*minderv1.ListProviderClassesResponse, error) {
-	// Class definitions are the canonical metadata source; runtime manager state
-	// decides which classes are enabled in this deployment.
-	classDefinitions := providers.ListProviderClassDefinitions()
-	classes := listEnabledProviderClasses(s.providerManager, classDefinitions)
-
-	infos := make([]*minderv1.ProviderClassInfo, 0, len(classes))
+	classes := s.providerManager.ListSupportedClasses()
+	legacyClasses := make([]string, 0, len(classes))
 	for _, class := range classes {
-		def, ok := classDefinitions[class]
-		if !ok {
-			zerolog.Ctx(ctx).Warn().Str("provider_class", class).Msg("provider class definition not found")
-			continue
-		}
+		legacyClasses = append(legacyClasses, string(class))
+	}
 
-		infos = append(infos, protobufProviderClassInfoFromDefinition(ctx, class, def))
+	infos, err := s.providerManager.ListProviderClassInfo()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error listing provider class metadata: %v", err)
 	}
 
 	return &minderv1.ListProviderClassesResponse{
-		ProviderClasses:    classes,
+		ProviderClasses:    legacyClasses,
 		ProviderClassInfos: infos,
 	}, nil
-}
-
-func listEnabledProviderClasses(
-	providerManager interface{}, classDefinitions map[string]providers.ProviderClassDefinition,
-) []string {
-	classes := make([]string, 0, len(classDefinitions))
-
-	// Prefer classes registered in the current provider manager so the response
-	// reflects deployment/feature-flag reality. Fall back to static definitions
-	// when runtime discovery is unavailable (e.g., tests or alternate wiring).
-	if supportedClasses, ok := providerManager.(supportedProviderClassLister); ok {
-		for _, class := range supportedClasses.ListSupportedClasses() {
-			if _, ok := classDefinitions[string(class)]; !ok {
-				continue
-			}
-
-			classes = append(classes, string(class))
-		}
-
-		sort.Strings(classes)
-		return classes
-	}
-
-	for class := range classDefinitions {
-		classes = append(classes, class)
-	}
-
-	sort.Strings(classes)
-
-	return classes
-}
-
-func protobufProviderClassInfoFromDefinition(
-	ctx context.Context,
-	class string,
-	definition providers.ProviderClassDefinition,
-) *minderv1.ProviderClassInfo {
-	supportedTypes := make([]minderv1.ProviderType, 0, len(definition.Traits))
-	for _, trait := range definition.Traits {
-		// Skip unknown mappings instead of failing the endpoint to keep metadata
-		// listing resilient to partial enum/version skew.
-		typeValue, ok := providers.DBToPBType(trait)
-		if !ok {
-			zerolog.Ctx(ctx).Error().Str("type", string(trait)).Str("class", class).Msg("unknown provider type")
-			continue
-		}
-
-		supportedTypes = append(supportedTypes, typeValue)
-	}
-
-	supportedFlows := make([]minderv1.AuthorizationFlow, 0, len(definition.AuthorizationFlows))
-	for _, flow := range definition.AuthorizationFlows {
-		flowValue, ok := providers.DBToPBAuthFlow(flow)
-		if !ok {
-			zerolog.Ctx(ctx).Error().Str("flow", string(flow)).Str("class", class).Msg("unknown authorization flow")
-			continue
-		}
-
-		supportedFlows = append(supportedFlows, flowValue)
-	}
-
-	supportedEntities := append([]minderv1.Entity(nil), definition.SupportedEntities...)
-	sort.Slice(supportedEntities, func(i, j int) bool {
-		return supportedEntities[i] < supportedEntities[j]
-	})
-
-	return &minderv1.ProviderClassInfo{
-		Class:                  class,
-		DisplayName:            definition.DisplayName,
-		Description:            definition.Description,
-		SupportedProviderTypes: supportedTypes,
-		SupportedAuthFlows:     supportedFlows,
-		SupportedEntities:      supportedEntities,
-		DocumentationUrl:       definition.DocumentationURL,
-		CreationHelp:           definition.CreationHelp,
-	}
 }
 
 // DeleteProvider deletes a provider by name from a specific project.

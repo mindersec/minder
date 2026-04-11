@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util/cache"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -67,6 +68,12 @@ type ProviderManager interface {
 	PatchProviderConfig(ctx context.Context, providerName string, projectID uuid.UUID, configPatch map[string]any) error
 	// IterateWebhookHandlers iterates over the classes and returns the associated webhook handler
 	IterateWebhookHandlers() iter.Seq2[string, http.Handler]
+	// ListSupportedClasses returns all provider classes available in this deployment.
+	ListSupportedClasses() []db.ProviderClass
+	// GetProviderClassInfo returns metadata for a provider class.
+	GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error)
+	// ListProviderClassInfo returns metadata for all supported provider classes.
+	ListProviderClassInfo() ([]*minderv1.ProviderClassInfo, error)
 }
 
 // ProviderClassManager describes an interface for creating instances of a
@@ -84,6 +91,8 @@ type ProviderClassManager interface {
 	// GetSupportedClasses lists the types of Provider class which this manager
 	// can produce.
 	GetSupportedClasses() []db.ProviderClass
+	// GetProviderClassInfo returns metadata for a specific provider class.
+	GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error)
 	// GetWebhookHandler returns the webhook handler for the provider class
 	GetWebhookHandler() http.Handler
 }
@@ -171,7 +180,22 @@ func (p *providerManager) CreateFromConfig(
 		return nil, providers.NewErrProviderInvalidConfig(err.Error())
 	}
 
-	return p.store.Create(ctx, providerClass, name, projectID, marshalledConfig)
+	classInfo, err := manager.GetProviderClassInfo(providerClass)
+	if err != nil {
+		return nil, fmt.Errorf("error getting provider class info: %w", err)
+	}
+
+	traits, err := providers.PBProviderTypesToDB(classInfo.GetSupportedProviderTypes())
+	if err != nil {
+		return nil, fmt.Errorf("error converting provider traits: %w", err)
+	}
+
+	authFlows, err := providers.PBAuthFlowsToDB(classInfo.GetSupportedAuthFlows())
+	if err != nil {
+		return nil, fmt.Errorf("error converting provider auth flows: %w", err)
+	}
+
+	return p.store.Create(ctx, providerClass, name, projectID, marshalledConfig, traits, authFlows)
 }
 
 func (p *providerManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {
@@ -304,8 +328,6 @@ func (p *providerManager) IterateWebhookHandlers() iter.Seq2[string, http.Handle
 }
 
 // ListSupportedClasses returns the classes registered in this provider manager.
-// This is intentionally not part of the ProviderManager interface and is exposed
-// via type assertion where needed.
 func (p *providerManager) ListSupportedClasses() []db.ProviderClass {
 	classes := make([]db.ProviderClass, 0, len(p.classManagers))
 	for class := range p.classManagers {
@@ -317,6 +339,33 @@ func (p *providerManager) ListSupportedClasses() []db.ProviderClass {
 	})
 
 	return classes
+}
+
+// GetProviderClassInfo returns metadata for a specific provider class.
+func (p *providerManager) GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error) {
+	manager, err := p.getClassManager(class)
+	if err != nil {
+		return nil, err
+	}
+
+	return manager.GetProviderClassInfo(class)
+}
+
+// ListProviderClassInfo returns metadata for all supported provider classes.
+func (p *providerManager) ListProviderClassInfo() ([]*minderv1.ProviderClassInfo, error) {
+	classes := p.ListSupportedClasses()
+	infos := make([]*minderv1.ProviderClassInfo, 0, len(classes))
+
+	for _, class := range classes {
+		info, err := p.GetProviderClassInfo(class)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving class %s metadata: %w", class, err)
+		}
+
+		infos = append(infos, info)
+	}
+
+	return infos, nil
 }
 
 func (p *providerManager) deleteByRecord(ctx context.Context, config *db.Provider) error {

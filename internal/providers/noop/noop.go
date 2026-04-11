@@ -46,6 +46,11 @@ func (*Provider) SupportsEntity(_ minderv1.Entity) bool {
 	return false
 }
 
+// ProviderClassInfo implements the Provider interface
+func (*Provider) ProviderClassInfo() *minderv1.ProviderClassInfo {
+	return nil
+}
+
 // CreationOptions implements the Provider interface
 func (*Provider) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
 	// No-op provider doesn't support any entities

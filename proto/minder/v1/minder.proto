@@ -3650,7 +3650,7 @@ message ProviderClassInfo {
         (google.api.field_behavior) = REQUIRED
     ];
 
-    // description is a short summary of the provider class.
+    // description is a short plaintext summary of the provider class.
     string description = 3;
 
     // supported_provider_types is the list of provider traits/interfaces supported by this class.
@@ -3669,8 +3669,8 @@ message ProviderClassInfo {
     // documentation_url points to provider-specific or generic documentation.
     string documentation_url = 7;
 
-    // creation_help is high-level guidance for enrolling this provider class.
-    string creation_help = 8;
+    reserved 8;
+    reserved "creation_help";
 }
 
 message ListProviderClassesResponse {

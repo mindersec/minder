@@ -5720,7 +5720,7 @@
         },
         "description": {
           "type": "string",
-          "description": "description is a short summary of the provider class."
+          "description": "description is a short plaintext summary of the provider class."
         },
         "supportedProviderTypes": {
           "type": "array",
@@ -5746,10 +5746,6 @@
         "documentationUrl": {
           "type": "string",
           "description": "documentation_url points to provider-specific or generic documentation."
-        },
-        "creationHelp": {
-          "type": "string",
-          "description": "creation_help is high-level guidance for enrolling this provider class."
         }
       },
       "required": [

@@ -24,7 +24,13 @@ import (
 type ProviderStore interface {
 	// Create creates a new provider in the database
 	Create(
-		ctx context.Context, providerClass db.ProviderClass, name string, projectID uuid.UUID, config json.RawMessage,
+		ctx context.Context,
+		providerClass db.ProviderClass,
+		name string,
+		projectID uuid.UUID,
+		config json.RawMessage,
+		traits []db.ProviderType,
+		authFlows []db.AuthorizationFlow,
 	) (*db.Provider, error)
 	// GetByID returns the provider identified by its UUID primary key.
 	// This should only be used in places when it is certain that the requester
@@ -92,23 +98,20 @@ func (p *providerStore) Create(
 	name string,
 	projectID uuid.UUID,
 	config json.RawMessage,
+	traits []db.ProviderType,
+	authFlows []db.AuthorizationFlow,
 ) (*db.Provider, error) {
 	if projectID == uuid.Nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid arguments")
-	}
-
-	providerDef, err := GetProviderClassDefinition(string(providerClass))
-	if err != nil {
-		return nil, fmt.Errorf("error getting provider definition: %w", err)
 	}
 
 	provParams := db.CreateProviderParams{
 		Name:       name,
 		ProjectID:  projectID,
 		Class:      providerClass,
-		Implements: providerDef.Traits,
+		Implements: traits,
 		Definition: config,
-		AuthFlows:  providerDef.AuthorizationFlows,
+		AuthFlows:  authFlows,
 	}
 
 	prov, err := p.store.CreateProvider(ctx, provParams)
