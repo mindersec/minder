@@ -135,9 +135,11 @@ func (s *Server) repoCreateInfoFromUpstreamEntityRef(
 
 // ListRepositories returns a list of repositories for a given project
 // This function will typically be called by the client to get a list of
-// repositories that are registered present in the minder database
+// repositories that are registered present in the minder database.
+// Pagination is cursor-based: pass an empty cursor for the first page,
+// then use the returned cursor for subsequent pages.
 func (s *Server) ListRepositories(ctx context.Context,
-	_ *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
+	in *pb.ListRepositoriesRequest) (*pb.ListRepositoriesResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
@@ -154,8 +156,24 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	// Fetch repositories using the service
-	repoEntities, err := s.repos.ListRepositories(ctx, projectID, provider.ID)
+	// Parse cursor from request (empty string means first page)
+	var cursor uuid.UUID
+	if in.GetCursor() != "" {
+		cursor, err = uuid.Parse(in.GetCursor())
+		if err != nil {
+			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid cursor format")
+		}
+	}
+
+	// Use request limit if provided, otherwise default
+	limit := in.GetLimit()
+	if limit <= 0 {
+		limit = 100
+	}
+
+	// Fetch repositories using the paginated service method
+	repoEntities, nextCursor, err := s.repos.ListRepositoriesPaginated(
+		ctx, projectID, provider.ID, cursor, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -191,11 +209,10 @@ func (s *Server) ListRepositories(ctx context.Context,
 		results = append(results, pbRepo)
 	}
 
-	// TODO: Implement cursor-based pagination using entity IDs
-	// For now, return all results without pagination
-
 	resp.Results = results
-	resp.Cursor = ""
+	if nextCursor != uuid.Nil {
+		resp.Cursor = nextCursor.String()
+	}
 
 	return &resp, nil
 }

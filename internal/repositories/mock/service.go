@@ -132,3 +132,19 @@ func (mr *MockRepositoryServiceMockRecorder) ListRepositories(ctx, projectID, pr
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositories", reflect.TypeOf((*MockRepositoryService)(nil).ListRepositories), ctx, projectID, providerID)
 }
+
+// ListRepositoriesPaginated mocks base method.
+func (m *MockRepositoryService) ListRepositoriesPaginated(ctx context.Context, projectID, providerID, cursor uuid.UUID, limit int64) ([]*models.EntityWithProperties, uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRepositoriesPaginated", ctx, projectID, providerID, cursor, limit)
+	ret0, _ := ret[0].([]*models.EntityWithProperties)
+	ret1, _ := ret[1].(uuid.UUID)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListRepositoriesPaginated indicates an expected call of ListRepositoriesPaginated.
+func (mr *MockRepositoryServiceMockRecorder) ListRepositoriesPaginated(ctx, projectID, providerID, cursor, limit any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRepositoriesPaginated", reflect.TypeOf((*MockRepositoryService)(nil).ListRepositoriesPaginated), ctx, projectID, providerID, cursor, limit)
+}
