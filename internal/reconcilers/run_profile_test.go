@@ -6,15 +6,14 @@ package reconcilers
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"testing"
 
+	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"errors"
-
-	watermillMsg "github.com/ThreeDotsLabs/watermill/message"
 	df "github.com/mindersec/minder/database/mock/fixtures"
 	"github.com/mindersec/minder/internal/db"
 	entityMessage "github.com/mindersec/minder/internal/entities/handlers/message"
@@ -24,12 +23,13 @@ import (
 
 var (
 	testReconcileProjectID = uuid.New()
-	simulateFailUUID       = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	failEntityID           = uuid.MustParse("00000000-0000-0000-0000-000000000001")
 )
 
+// override for tests
 func init() {
 	toMessage = func(entRefresh *entityMessage.HandleEntityAndDoMessage, m *watermillMsg.Message) error {
-		if entRefresh.Entity.EntityID == simulateFailUUID {
+		if entRefresh.Entity.EntityID == failEntityID {
 			return errors.New("mock marshal error")
 		}
 		return entRefresh.ToMessage(m)
@@ -80,7 +80,7 @@ func Test_handleProfileInitEvent(t *testing.T) {
 			numPublish:  0,
 		},
 		{
-			name: "marshal failure skips but continues",
+			name: "skip entity on marshal error",
 			setupDbMocks: func() df.MockStoreBuilder {
 				retEnts := []db.EntityInstance{
 					{
@@ -89,7 +89,7 @@ func Test_handleProfileInitEvent(t *testing.T) {
 					},
 					{
 						EntityType: db.EntitiesPullRequest,
-						ID:         simulateFailUUID, // this will fail to marshal in test hook
+						ID:         failEntityID, // triggers injected failure
 					},
 					{
 						EntityType: db.EntitiesRepository,

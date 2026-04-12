@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	// toMessage is a package-level hook to allow injecting marshalling failures in tests
+	// toMessage wraps ToMessage; overridden in tests
 	toMessage = func(entRefresh *entityMessage.HandleEntityAndDoMessage, m *message.Message) error {
 		return entRefresh.ToMessage(m)
 	}
