@@ -17,6 +17,13 @@ import (
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
 
+var (
+	// toMessage is a package-level hook to allow injecting marshalling failures in tests
+	toMessage = func(entRefresh *entityMessage.HandleEntityAndDoMessage, m *message.Message) error {
+		return entRefresh.ToMessage(m)
+	}
+)
+
 // ProfileInitEvent is an event that is sent to the reconciler topic
 // when a new profile is created. It is used to initialize the profile
 // by iterating over all registered entities for the relevant project
@@ -90,9 +97,8 @@ func (r *Reconciler) publishProfileInitEvents(
 		m := message.NewMessage(uuid.New().String(), nil)
 		m.SetContext(ctx)
 
-		if err := entRefresh.ToMessage(m); err != nil {
+		if err := toMessage(entRefresh, m); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error marshalling message")
-			// Skip this entity but continue processing the rest
 			continue
 		}
 
