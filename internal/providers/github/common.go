@@ -69,6 +69,7 @@ type GitHub struct {
 	packageListingClient *github.Client
 	cache                ratecache.RestClientCache
 	delegate             Delegate
+	providerClass        db.ProviderClass
 	ghcrwrap             *ghcr.ImageLister
 	gitConfig            config.GitConfig
 	webhookConfig        *config.WebhookConfig
@@ -158,6 +159,7 @@ func NewGitHub(
 	packageListingClient *github.Client,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
+	providerClass db.ProviderClass,
 	cfg *config.ProviderConfig,
 	whcfg *config.WebhookConfig,
 	propertyFetchers properties.GhPropertyFetcherFactory,
@@ -171,6 +173,7 @@ func NewGitHub(
 		packageListingClient: packageListingClient,
 		cache:                cache,
 		delegate:             delegate,
+		providerClass:        providerClass,
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 		gitConfig:            gitConfig,
 		webhookConfig:        whcfg,
