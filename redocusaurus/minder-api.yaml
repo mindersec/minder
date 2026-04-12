@@ -4779,9 +4779,18 @@ definitions:
         type: array
         items:
           type: string
-        description: provider_classes is the list of provider classes.
+        description: |-
+          provider_classes is the legacy list of provider class names.
+          Deprecated: use provider_class_infos for rich metadata.
+      providerClassInfos:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/v1ProviderClassInfo'
+        description: provider_class_infos is the rich metadata for each provider class.
     required:
       - providerClasses
+      - providerClassInfos
   v1ListProvidersResponse:
     type: object
     properties:
@@ -5144,6 +5153,47 @@ definitions:
       systems.
 
       All fields are optional because we want to allow partial updates.
+  v1ProviderClassInfo:
+    type: object
+    properties:
+      class:
+        type: string
+        description: class is the provider class identifier.
+      displayName:
+        type: string
+        description: display_name is a human-friendly provider class name.
+      description:
+        type: string
+        description: description is a short plaintext summary of the provider class.
+      supportedProviderTypes:
+        type: array
+        items:
+          $ref: '#/definitions/v1ProviderType'
+        description: >-
+          supported_provider_types is the list of provider traits/interfaces
+          supported by this class.
+      supportedAuthFlows:
+        type: array
+        items:
+          $ref: '#/definitions/v1AuthorizationFlow'
+        description: supported_auth_flows is the list of supported authorization flows.
+      supportedEntities:
+        type: array
+        items:
+          $ref: '#/definitions/v1Entity'
+        description: >-
+          supported_entities is the list of entity types supported by this
+          provider class.
+      documentationUrl:
+        type: string
+        description: >-
+          documentation_url points to provider-specific or generic
+          documentation.
+    required:
+      - class
+      - displayName
+      - supportedProviderTypes
+      - supportedAuthFlows
   v1ProviderParameter:
     type: object
     properties:
