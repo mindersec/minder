@@ -1926,7 +1926,8 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider_classes | <TypeLink type="string">string</TypeLink> | repeated | provider_classes is the list of provider classes. |
+| provider_classes | <TypeLink type="string">string</TypeLink> | repeated | **Deprecated.** provider_classes is the legacy list of provider class names. Deprecated: use provider_class_infos for rich metadata. |
+| provider_class_infos | <TypeLink type="minder-v1-ProviderClassInfo">ProviderClassInfo</TypeLink> | repeated | provider_class_infos is the rich metadata for each provider class. |
 
 
 
@@ -2285,6 +2286,23 @@ All fields are optional because we want to allow partial updates.
 | parameters | <TypeLink type="minder-v1-ProviderParameter">ProviderParameter</TypeLink> |  | parameters is the list of parameters that the provider requires. |
 | credentials_state | <TypeLink type="string">string</TypeLink> |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the provider. |
+
+
+
+<Message id="minder-v1-ProviderClassInfo">ProviderClassInfo</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| class | <TypeLink type="string">string</TypeLink> |  | class is the provider class identifier. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is a human-friendly provider class name. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is a short plaintext summary of the provider class. |
+| supported_provider_types | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | supported_provider_types is the list of provider traits/interfaces supported by this class. |
+| supported_auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | supported_auth_flows is the list of supported authorization flows. |
+| supported_entities | <TypeLink type="minder-v1-Entity">Entity</TypeLink> | repeated | supported_entities is the list of entity types supported by this provider class. |
+| documentation_url | <TypeLink type="string">string</TypeLink> |  | documentation_url points to provider-specific or generic documentation. |
 
 
 

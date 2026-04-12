@@ -22,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/gitlab"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -91,6 +92,14 @@ func NewGitLabProviderClassManager(
 // GetSupportedClasses implements the ProviderClassManager interface
 func (*providerClassManager) GetSupportedClasses() []db.ProviderClass {
 	return []db.ProviderClass{db.ProviderClassGitlab}
+}
+
+func (g *providerClassManager) GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error) {
+	if !slices.Contains(g.GetSupportedClasses(), class) {
+		return nil, fmt.Errorf("provider does not implement %s", class)
+	}
+
+	return gitlab.ClassInfo(), nil
 }
 
 // Build implements the ProviderClassManager interface

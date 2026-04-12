@@ -24,11 +24,13 @@ import (
 	propssvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
+	ghprovider "github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/github/service"
 	m "github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/providers/ratecache"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer/interfaces"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -87,6 +89,14 @@ var (
 
 func (*githubProviderManager) GetSupportedClasses() []db.ProviderClass {
 	return supportedClasses
+}
+
+func (*githubProviderManager) GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error) {
+	if !slices.Contains(supportedClasses, class) {
+		return nil, fmt.Errorf("provider does not implement %s", class)
+	}
+
+	return ghprovider.ProviderClassInfo(class)
 }
 
 func (g *githubProviderManager) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
