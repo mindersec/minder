@@ -25,7 +25,9 @@ import (
 	mockpropssvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/history"
 	mockhistory "github.com/mindersec/minder/internal/history/mock"
+	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
 func TestBuildEvalResultAlertFromLRERow(t *testing.T) {
@@ -841,6 +843,131 @@ func TestListEvaluationHistoryIncludeOutputs(t *testing.T) {
 			} else {
 				require.Nil(t, resp.Data[0].Status.Output)
 			}
+		})
+	}
+}
+
+func TestListEvaluationResultsEntityInfo(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	profileID := uuid.New()
+	entityID := uuid.New()
+	ruleTypeID := uuid.New()
+
+	tests := []struct {
+		name       string
+		entityType db.Entities
+		expectKeys []string
+	}{
+		{
+			name:       "artifact entity info",
+			entityType: db.EntitiesArtifact,
+			expectKeys: []string{"artifact_name", "artifact_type", "entity_id", "entity_type", "provider", "artifact_id"},
+		},
+		{
+			name:       "pull request entity info",
+			entityType: db.EntitiesPullRequest,
+			expectKeys: []string{"entity_id", "entity_type", "provider"}, // PR doesn't have specialized keys in getRuleEvalEntityInfo yet besides name
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
+
+			minderEntityType := minderv1.Entity_ENTITY_REPOSITORIES
+			if tt.entityType == db.EntitiesArtifact {
+				minderEntityType = minderv1.Entity_ENTITY_ARTIFACTS
+			} else if tt.entityType == db.EntitiesPullRequest {
+				minderEntityType = minderv1.Entity_ENTITY_PULL_REQUESTS
+			}
+
+			props := map[string]any{
+				properties.PropertyName: "test-entity",
+			}
+			if tt.entityType == db.EntitiesArtifact {
+				props[ghprop.ArtifactPropertyName] = "test-artifact"
+				props[ghprop.ArtifactPropertyType] = "container"
+			}
+
+			psObj := properties.NewProperties(props)
+			efp := entmodels.NewEntityWithPropertiesFromInstance(
+				entmodels.EntityInstance{
+					ID:   entityID,
+					Type: minderEntityType,
+					Name: "test-entity",
+				}, psObj)
+
+			mockProps.EXPECT().
+				EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any()).
+				Return(efp, nil)
+			mockProps.EXPECT().
+				RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil)
+			mockStore.EXPECT().
+				GetProfileStatusByProject(gomock.Any(), projectID).
+				Return([]db.GetProfileStatusByProjectRow{
+					{ID: profileID, ProfileStatus: db.EvalStatusTypesSuccess},
+				}, nil)
+			mockStore.EXPECT().
+				ListProfilesByProjectIDAndLabel(gomock.Any(), gomock.Any()).
+				Return([]db.ListProfilesByProjectIDAndLabelRow{
+					{Profile: db.Profile{ID: profileID, Name: "test-profile", UpdatedAt: time.Now()}},
+				}, nil)
+			mockStore.EXPECT().
+				ListRuleEvaluationsByProfileId(gomock.Any(), gomock.Any()).
+				Return([]db.ListRuleEvaluationsByProfileIdRow{
+					{
+						RuleEvaluationID:      uuid.New(),
+						EntityType:            tt.entityType,
+						EntityID:              entityID,
+						EntityName:            "test-entity",
+						ProjectID:             projectID,
+						RuleTypeID:            ruleTypeID,
+						RuleName:              "my_rule",
+						RuleTypeName:          "rule_type_a",
+						RuleTypeReleasePhase:  db.ReleaseStatusAlpha,
+						EvalStatus:            db.EvalStatusTypesFailure,
+						EvalLastUpdated:       time.Now(),
+						RemStatus:             db.RemediationStatusTypesSkipped,
+						RemLastUpdated:        time.Now(),
+						AlertStatus:           db.AlertStatusTypesOff,
+						AlertLastUpdated:      time.Now(),
+						RuleTypeSeverityValue: db.SeverityMedium,
+						Provider:              "github",
+					},
+				}, nil)
+
+			server := Server{store: mockStore, props: mockProps}
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
+
+			resp, err := server.ListEvaluationResults(ctx, &minderv1.ListEvaluationResultsRequest{})
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			found := false
+			for _, ent := range resp.Entities {
+				for _, prof := range ent.Profiles {
+					for _, res := range prof.Results {
+						found = true
+						for _, key := range tt.expectKeys {
+							_, ok := res.EntityInfo[key]
+							require.True(t, ok, "key %s not found in EntityInfo", key)
+						}
+					}
+				}
+			}
+			require.True(t, found, "no results found in response")
 		})
 	}
 }

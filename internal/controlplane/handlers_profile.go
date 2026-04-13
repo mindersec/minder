@@ -20,13 +20,11 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
-	entmodels "github.com/mindersec/minder/internal/entities/models"
 	propSvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/logger"
 	ghprop "github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/entities/properties"
 	prof "github.com/mindersec/minder/pkg/profiles"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
@@ -248,49 +246,6 @@ func getProfilePBFromDB(
 
 // TODO: We need to replace this with a more generic method that can be used for all entities
 // probably coming from the properties.
-func getRuleEvalEntityInfo(
-	rs db.ListRuleEvaluationsByProfileIdRow,
-	efp *entmodels.EntityWithProperties,
-) map[string]string {
-	entityInfo := map[string]string{}
-
-	if name := efp.Properties.GetProperty(properties.PropertyName); name != nil {
-		entityInfo["name"] = name.GetString()
-	}
-
-	if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
-		entityInfo["repo_owner"] = owner.GetString()
-	}
-	if name := efp.Properties.GetProperty(ghprop.RepoPropertyName); name != nil {
-		entityInfo["repo_name"] = name.GetString()
-	}
-
-	if artName := efp.Properties.GetProperty(ghprop.ArtifactPropertyName); artName != nil {
-		entityInfo["artifact_name"] = artName.GetString()
-	}
-
-	if artType := efp.Properties.GetProperty(ghprop.ArtifactPropertyType); artType != nil {
-		entityInfo["artifact_type"] = artType.GetString()
-	}
-
-	entityInfo["provider"] = rs.Provider
-	entityInfo["entity_type"] = efp.Entity.Type.ToString()
-	entityInfo["entity_id"] = rs.EntityID.String()
-
-	// temporary: These will be replaced by entity_id
-	//nolint:exhaustive
-	switch rs.EntityType {
-	case db.EntitiesRepository:
-		entityInfo["repository_id"] = efp.Entity.ID.String()
-	case db.EntitiesArtifact:
-		entityInfo["artifact_id"] = efp.Entity.ID.String()
-	default:
-		// We only need to handle the above two types specially for historical compatibility.
-	}
-
-	return entityInfo
-}
-
 func (s *Server) getRuleEvaluationStatuses(
 	ctx context.Context,
 	dbRuleEvaluationStatuses []db.ListRuleEvaluationsByProfileIdRow,
