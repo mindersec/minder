@@ -5,6 +5,7 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/ThreeDotsLabs/watermill/message"
@@ -16,10 +17,34 @@ import (
 // It allows the benchmark to run without invoking real evaluation logic.
 type fakeExecutor struct{}
 
+type fakeExecutorWithWork struct{}
+
+// EvalEntityEvent simulates real-world work such as evaluation and processing.
 // EvalEntityEvent satisfies the Executor interface.
-// It performs no work and always returns nil.
+
 func (f *fakeExecutor) EvalEntityEvent(_ context.Context, _ *entities.EntityInfoWrapper) error {
 	_ = f
+	return nil
+}
+
+// NOTE:
+// This benchmark simulates evaluation and processing logic in a lightweight,
+// deterministic way. It does not execute real policy evaluation or remediation,
+// but aims to approximate the structural cost of the execution path.
+func (f *fakeExecutorWithWork) EvalEntityEvent(_ context.Context, _ *entities.EntityInfoWrapper) error {
+	_ = f
+
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			continue
+		}
+	}
+
+	data := map[string]string{
+		"type": "entity",
+	}
+	_, _ = json.Marshal(data)
+
 	return nil
 }
 
@@ -64,6 +89,40 @@ func BenchmarkHandleEntityEvent(b *testing.B) {
 // are processed concurrently, which is important for throughput analysis.
 func BenchmarkHandleEntityEventParallel(b *testing.B) {
 	handler := newTestHandler()
+	msg := newTestMessage()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_ = handler.HandleEntityEvent(msg)
+		}
+	})
+}
+
+func newTestHandlerWithWork() *ExecutorEventHandler {
+	return &ExecutorEventHandler{
+		executor: &fakeExecutorWithWork{},
+	}
+}
+
+// BenchmarkHandleEntityEventWithWork measures performance with simulated
+// evaluation and processing logic to better reflect real-world usage.
+func BenchmarkHandleEntityEventWithWork(b *testing.B) {
+	handler := newTestHandlerWithWork()
+	msg := newTestMessage()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = handler.HandleEntityEvent(msg)
+	}
+}
+
+func BenchmarkHandleEntityEventWithWorkParallel(b *testing.B) {
+	handler := newTestHandlerWithWork()
 	msg := newTestMessage()
 
 	b.ReportAllocs()
