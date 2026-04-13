@@ -6,6 +6,7 @@ package role
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -66,7 +67,7 @@ func ListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := initializeTableForList()
+		t := initializeTableForList(cmd.OutOrStdout())
 		for _, r := range resp.Roles {
 			t.AddRow(r.Name, r.Description)
 		}
@@ -75,8 +76,8 @@ func ListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	return nil
 }
 
-func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Name", "Description"})
+func initializeTableForList(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out, []string{"Name", "Description"})
 }
 
 func init() {

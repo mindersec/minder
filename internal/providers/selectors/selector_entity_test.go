@@ -234,11 +234,26 @@ func TestEntityToSelectorEntity(t *testing.T) {
 			success:   true,
 		},
 		{
-			name:       "Invalid Entity Type",
+			name:       "Generic Entity Type",
 			entityType: minderv1.Entity_ENTITY_BUILD,
 			entityName: "testorg/testbuild",
-			dbSetup:    dbf.NewDBMock(),
-			success:    false,
+			entityProps: map[string]any{
+				"build_id": "12345",
+			},
+			expSelEnt: &internalpb.SelectorEntity{
+				EntityType: minderv1.Entity_ENTITY_BUILD,
+				Name:       "testorg/testbuild",
+				Entity: &internalpb.SelectorEntity_Generic{
+					Generic: &internalpb.SelectorGeneric{
+						Name: "testorg/testbuild",
+					},
+				},
+			},
+			dbSetup: dbf.NewDBMock(
+				withGetProviderByID(githubProvider, nil),
+			),
+			expDbProv: &githubProvider,
+			success:   true,
 		},
 		{
 			name:       "Invalid Provider",

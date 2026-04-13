@@ -60,6 +60,28 @@ func DBToPBType(t db.ProviderType) (minderv1.ProviderType, bool) {
 	}
 }
 
+// PBToDBType converts a protobuf provider type to a database provider type.
+func PBToDBType(t minderv1.ProviderType) (db.ProviderType, bool) {
+	switch t {
+	case minderv1.ProviderType_PROVIDER_TYPE_GIT:
+		return db.ProviderTypeGit, true
+	case minderv1.ProviderType_PROVIDER_TYPE_GITHUB:
+		return db.ProviderTypeGithub, true
+	case minderv1.ProviderType_PROVIDER_TYPE_REST:
+		return db.ProviderTypeRest, true
+	case minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER:
+		return db.ProviderTypeRepoLister, true
+	case minderv1.ProviderType_PROVIDER_TYPE_OCI:
+		return db.ProviderTypeOci, true
+	case minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER:
+		return db.ProviderTypeImageLister, true
+	case minderv1.ProviderType_PROVIDER_TYPE_UNSPECIFIED:
+		return db.ProviderType(""), false
+	default:
+		return db.ProviderType(""), false
+	}
+}
+
 // DBToPBAuthFlow converts a database authorization flow to a protobuf authorization flow.
 func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
 	switch t {
@@ -74,6 +96,54 @@ func DBToPBAuthFlow(t db.AuthorizationFlow) (minderv1.AuthorizationFlow, bool) {
 	default:
 		return minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_UNSPECIFIED, false
 	}
+}
+
+// PBToDBAuthFlow converts a protobuf authorization flow to a database authorization flow.
+func PBToDBAuthFlow(t minderv1.AuthorizationFlow) (db.AuthorizationFlow, bool) {
+	switch t {
+	case minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_NONE:
+		return db.AuthorizationFlowNone, true
+	case minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT:
+		return db.AuthorizationFlowUserInput, true
+	case minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW:
+		return db.AuthorizationFlowOauth2AuthorizationCodeFlow, true
+	case minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW:
+		return db.AuthorizationFlowGithubAppFlow, true
+	case minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_UNSPECIFIED:
+		return db.AuthorizationFlow(""), false
+	default:
+		return db.AuthorizationFlow(""), false
+	}
+}
+
+// PBProviderTypesToDB converts provider types from protobuf to database values.
+func PBProviderTypesToDB(types []minderv1.ProviderType) ([]db.ProviderType, error) {
+	out := make([]db.ProviderType, 0, len(types))
+	for _, t := range types {
+		mapped, ok := PBToDBType(t)
+		if !ok {
+			return nil, fmt.Errorf("unsupported provider type: %s", t.String())
+		}
+
+		out = append(out, mapped)
+	}
+
+	return out, nil
+}
+
+// PBAuthFlowsToDB converts authorization flows from protobuf to database values.
+func PBAuthFlowsToDB(flows []minderv1.AuthorizationFlow) ([]db.AuthorizationFlow, error) {
+	out := make([]db.AuthorizationFlow, 0, len(flows))
+	for _, f := range flows {
+		mapped, ok := PBToDBAuthFlow(f)
+		if !ok {
+			return nil, fmt.Errorf("unsupported authorization flow: %s", f.String())
+		}
+
+		out = append(out, mapped)
+	}
+
+	return out, nil
 }
 
 // GetCredentialStateForProvider returns the credential state for the given provider.

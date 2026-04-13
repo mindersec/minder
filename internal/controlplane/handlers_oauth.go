@@ -80,13 +80,16 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	logger.BusinessRecord(ctx).Project = projectID
 
 	// get provider info
-	providerDef, err := providers.GetProviderClassDefinition(providerClass)
+	providerInfo, err := s.providerManager.GetProviderClassInfo(db.ProviderClass(providerClass))
 	if err != nil {
 		return nil, providerError(err)
 	}
 
-	if !slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) &&
-		!slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowGithubAppFlow) {
+	if !slices.Contains(
+		providerInfo.GetSupportedAuthFlows(),
+		pb.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW,
+	) &&
+		!slices.Contains(providerInfo.GetSupportedAuthFlows(), pb.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW) {
 		return nil, util.UserVisibleError(codes.InvalidArgument,
 			"provider does not support authorization code flow")
 	}
@@ -170,7 +173,7 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	}
 
 	var authorizationURL string
-	if slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowGithubAppFlow) {
+	if slices.Contains(providerInfo.GetSupportedAuthFlows(), pb.AuthorizationFlow_AUTHORIZATION_FLOW_GITHUB_APP_FLOW) {
 		gitHubAppConfig := s.cfg.Provider.GitHubApp
 		if gitHubAppConfig == nil || gitHubAppConfig.AppName == "" {
 			return nil, status.Errorf(codes.Internal, "error getting GitHub App config: %s", err)
@@ -186,7 +189,10 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 		}
 		asURL.RawQuery = params.Encode()
 		authorizationURL = asURL.String()
-	} else if slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowOauth2AuthorizationCodeFlow) {
+	} else if slices.Contains(
+		providerInfo.GetSupportedAuthFlows(),
+		pb.AuthorizationFlow_AUTHORIZATION_FLOW_OAUTH2_AUTHORIZATION_CODE_FLOW,
+	) {
 		authorizationURL = oauthConfig.AuthCodeURL(state, oauth2.AccessTypeOffline)
 	}
 

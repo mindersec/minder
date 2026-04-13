@@ -58,7 +58,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	table := initializeTableForList()
+	table := initializeTableForList(cmd.OutOrStdout())
 
 	applyFunc := func(ctx context.Context, fileName string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		createResp, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{
