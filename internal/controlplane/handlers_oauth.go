@@ -436,18 +436,9 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
-		var confErr providers.ErrProviderInvalidConfig
 		dbProv, err := s.ghProviders.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
-			if errors.As(err, &confErr) {
-				return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
-					"The provider configuration is invalid: %s", confErr.Details)
-			}
-			if errors.Is(err, service.ErrInvalidTokenIdentity) {
-				return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
-					"The provided login token was associated with a different GitHub user.")
-			}
-			return fmt.Errorf("error creating GitHub App provider: %w", err)
+			return handleProviderCreationError(err)
 		}
 
 		if dbProv != nil {
@@ -801,4 +792,17 @@ func (s *Server) decryptRedirect(stateData *db.GetProjectIDBySessionStateRow) (*
 		return nil, fmt.Errorf("error parsing redirect URL: %w", err)
 	}
 	return parsedURL, nil
+}
+
+func handleProviderCreationError(err error) error {
+	var confErr providers.ErrProviderInvalidConfig
+	if errors.As(err, &confErr) {
+		return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
+			"The provider configuration is invalid: %s", confErr.Details)
+	}
+	if errors.Is(err, service.ErrInvalidTokenIdentity) {
+		return newHttpError(http.StatusForbidden, "User token mismatch").SetContents(
+			"The provided login token was associated with a different GitHub user.")
+	}
+	return fmt.Errorf("error creating GitHub App provider: %w", err)
 }

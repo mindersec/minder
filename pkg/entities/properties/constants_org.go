@@ -5,10 +5,10 @@ package properties
 
 // Organization property keys
 const (
-// OrgPropertyIsUser represents whether the organization is actually a user account
-OrgPropertyIsUser = "is_user"
-// OrgPropertyAvatarURL represents the avatar URL of the organization
-OrgPropertyAvatarURL = "avatar_url"
-// OrgPropertyCompany represents the company name of the organization
-OrgPropertyCompany = "company"
+	// OrgPropertyIsUser represents whether the organization is actually a user account
+	OrgPropertyIsUser = "is_user"
+	// OrgPropertyAvatarURL represents the avatar URL of the organization
+	OrgPropertyAvatarURL = "avatar_url"
+	// OrgPropertyCompany represents the company name of the organization
+	OrgPropertyCompany = "company"
 )
