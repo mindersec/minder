@@ -4,17 +4,27 @@
 package controlplane
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/engcontext"
 	entmodels "github.com/mindersec/minder/internal/entities/models"
+	mockpropssvc "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/history"
+	mockhistory "github.com/mindersec/minder/internal/history/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -306,7 +316,7 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			res, err := fromEvaluationHistoryRows(tt.rows)
+			res, err := fromEvaluationHistoryRows(context.Background(), tt.rows)
 
 			if tt.err {
 				require.Error(t, err)
@@ -353,6 +363,9 @@ func TestFromEvaluationHistoryRows(t *testing.T) {
 						item.Remediation.Details,
 					)
 				}
+
+				// Verify that existing history rows do not set output
+				require.Nil(t, item.Status.Output)
 			}
 		})
 	}
@@ -376,5 +389,458 @@ func nullRemediationStatusTypesSuccess() db.NullRemediationStatusTypes {
 	return db.NullRemediationStatusTypes{
 		RemediationStatusTypes: db.RemediationStatusTypesSuccess,
 		Valid:                  true,
+	}
+}
+
+func TestGetEvaluationHistoryIncludeOutputs(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	evalID := uuid.New()
+	entityID := uuid.New()
+
+	baseRow := db.GetEvaluationHistoryRow{
+		EvaluationID:     evalID,
+		EvaluatedAt:      time.Now().UTC(),
+		EntityType:       db.EntitiesRepository,
+		EntityID:         entityID,
+		EntityName:       "mindersec/minder",
+		ProjectID:        projectID,
+		RuleType:         "rule_type",
+		RuleName:         "rule_name",
+		RuleSeverity:     db.SeverityUnknown,
+		ProfileName:      "profile_name",
+		EvaluationStatus: db.EvalStatusTypesSuccess,
+	}
+
+	tests := []struct {
+		name         string
+		outputErr    error
+		outputRow    db.EvaluationOutput
+		expectOutput *structpb.Value
+	}{
+		{
+			name:         "include_outputs with sql.ErrNoRows",
+			outputErr:    sql.ErrNoRows,
+			expectOutput: nil,
+		},
+		{
+			name:      "include_outputs with array output",
+			outputErr: nil,
+			outputRow: db.EvaluationOutput{
+				ID: evalID,
+				Output: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`[1,2,3]`),
+					Valid:      true,
+				},
+			},
+			expectOutput: func() *structpb.Value {
+				v := &structpb.Value{}
+				err := protojson.Unmarshal([]byte(`[1,2,3]`), v)
+				require.NoError(t, err)
+				return v
+			}(),
+		},
+		{
+			name:      "include_outputs with object output",
+			outputErr: nil,
+			outputRow: db.EvaluationOutput{
+				ID: evalID,
+				Output: pqtype.NullRawMessage{
+					RawMessage: json.RawMessage(`{"a":{"b":"c"}}`),
+					Valid:      true,
+				},
+			},
+			expectOutput: func() *structpb.Value {
+				v := &structpb.Value{}
+				err := protojson.Unmarshal([]byte(`{"a":{"b":"c"}}`), v)
+				require.NoError(t, err)
+				return v
+			}(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockStore.EXPECT().
+				GetEvaluationHistory(gomock.Any(), db.GetEvaluationHistoryParams{
+					EvaluationID: evalID,
+					ProjectID:    projectID,
+				}).
+				Return(baseRow, nil)
+			mockStore.EXPECT().
+				GetEvaluationOutput(gomock.Any(), evalID).
+				Return(tt.outputRow, tt.outputErr)
+
+			server := Server{store: mockStore}
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
+
+			resp, err := server.GetEvaluationHistory(ctx, &minderv1.GetEvaluationHistoryRequest{
+				Id:             evalID.String(),
+				IncludeOutputs: true,
+			})
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.NotNil(t, resp.Evaluation)
+			require.NotNil(t, resp.Evaluation.Status)
+
+			if tt.expectOutput == nil {
+				require.Nil(t, resp.Evaluation.Status.Output)
+			} else {
+				require.NotNil(t, resp.Evaluation.Status.Output)
+				require.True(t, protojson.Format(tt.expectOutput) == protojson.Format(resp.Evaluation.Status.Output),
+					"expected output %s, got %s",
+					protojson.Format(tt.expectOutput),
+					protojson.Format(resp.Evaluation.Status.Output),
+				)
+			}
+		})
+	}
+}
+
+func TestFromEvaluationHistoryRowsWithOutput(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now().UTC()
+	evalID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+	entityID := uuid.MustParse("00000000-0000-0000-0000-000000000011")
+
+	outputJSON := json.RawMessage(`{"finding":"something_wrong","severity":"high"}`)
+	expectedOutput := &structpb.Value{}
+	require.NoError(t, protojson.Unmarshal(outputJSON, expectedOutput))
+
+	tests := []struct {
+		name   string
+		rows   []*history.OneEvalHistoryAndEntity
+		expect *structpb.Value
+	}{
+		{
+			name: "output included",
+			rows: []*history.OneEvalHistoryAndEntity{
+				{
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityID,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "mindersec/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: evalID,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityID,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+						EvalOutput: pqtype.NullRawMessage{
+							RawMessage: outputJSON,
+							Valid:      true,
+						},
+					},
+				},
+			},
+			expect: expectedOutput,
+		},
+		{
+			name: "output null when not requested",
+			rows: []*history.OneEvalHistoryAndEntity{
+				{
+					EntityWithProperties: entmodels.NewEntityWithPropertiesFromInstance(
+						entmodels.EntityInstance{
+							ID:   entityID,
+							Type: minderv1.Entity_ENTITY_REPOSITORIES,
+							Name: "mindersec/minder",
+						}, nil),
+					EvalHistoryRow: db.ListEvaluationHistoryRow{
+						EvaluationID: evalID,
+						EvaluatedAt:  now,
+						EntityType:   db.EntitiesRepository,
+						EntityID:     entityID,
+						ProjectID:    uuid.New(),
+						RuleType:     "rule_type",
+						RuleName:     "rule_name",
+						RuleSeverity: "unknown",
+						ProfileName:  "profile_name",
+						EvalOutput: pqtype.NullRawMessage{
+							Valid: false,
+						},
+					},
+				},
+			},
+			expect: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			res, err := fromEvaluationHistoryRows(context.Background(), tt.rows)
+			require.NoError(t, err)
+			require.Len(t, res, 1)
+
+			if tt.expect == nil {
+				require.Nil(t, res[0].Status.Output)
+			} else {
+				require.NotNil(t, res[0].Status.Output)
+				require.True(t,
+					protojson.Format(tt.expect) == protojson.Format(res[0].Status.Output),
+					"expected output %s, got %s",
+					protojson.Format(tt.expect),
+					protojson.Format(res[0].Status.Output),
+				)
+			}
+		})
+	}
+}
+
+func TestListEvaluationResultsIncludeOutputs(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	profileID := uuid.New()
+	entityID := uuid.New()
+	ruleTypeID := uuid.New()
+
+	outputJSON := json.RawMessage(`{"finding":"something_wrong"}`)
+	expectedOutput := &structpb.Value{}
+	require.NoError(t, protojson.Unmarshal(outputJSON, expectedOutput))
+
+	tests := []struct {
+		name           string
+		includeOutputs bool
+		evalOutput     pqtype.NullRawMessage
+		expectOutput   bool
+	}{
+		{
+			name:           "include_outputs=true returns output",
+			includeOutputs: true,
+			evalOutput:     pqtype.NullRawMessage{RawMessage: outputJSON, Valid: true},
+			expectOutput:   true,
+		},
+		{
+			name:           "include_outputs=false omits output",
+			includeOutputs: false,
+			evalOutput:     pqtype.NullRawMessage{Valid: false},
+			expectOutput:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
+
+			efp := entmodels.NewEntityWithPropertiesFromInstance(
+				entmodels.EntityInstance{
+					ID:   entityID,
+					Type: minderv1.Entity_ENTITY_REPOSITORIES,
+					Name: "mindersec/minder",
+				}, nil)
+
+			mockProps.EXPECT().
+				EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any()).
+				Return(efp, nil)
+			mockProps.EXPECT().
+				RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(nil)
+			mockStore.EXPECT().
+				GetProfileStatusByProject(gomock.Any(), projectID).
+				Return([]db.GetProfileStatusByProjectRow{
+					{ID: profileID, ProfileStatus: db.EvalStatusTypesSuccess},
+				}, nil)
+			mockStore.EXPECT().
+				ListProfilesByProjectIDAndLabel(gomock.Any(), gomock.Any()).
+				Return([]db.ListProfilesByProjectIDAndLabelRow{
+					{Profile: db.Profile{ID: profileID, Name: "test-profile", UpdatedAt: time.Now()}},
+				}, nil)
+			mockStore.EXPECT().
+				ListRuleEvaluationsByProfileId(gomock.Any(), db.ListRuleEvaluationsByProfileIdParams{
+					ProfileID:      profileID,
+					IncludeOutputs: tt.includeOutputs,
+				}).
+				Return([]db.ListRuleEvaluationsByProfileIdRow{
+					{
+						RuleEvaluationID:      uuid.New(),
+						EntityType:            db.EntitiesRepository,
+						EntityID:              entityID,
+						EntityName:            "mindersec/minder",
+						ProjectID:             projectID,
+						RuleTypeID:            ruleTypeID,
+						RuleName:              "my_rule",
+						RuleTypeName:          "rule_type_a",
+						RuleTypeReleasePhase:  db.ReleaseStatusAlpha,
+						EvalStatus:            db.EvalStatusTypesFailure,
+						EvalLastUpdated:       time.Now(),
+						RemStatus:             db.RemediationStatusTypesSkipped,
+						RemLastUpdated:        time.Now(),
+						AlertStatus:           db.AlertStatusTypesOff,
+						AlertLastUpdated:      time.Now(),
+						RuleTypeSeverityValue: db.SeverityMedium,
+						EvalOutput:            tt.evalOutput,
+					},
+				}, nil)
+
+			server := Server{store: mockStore, props: mockProps}
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
+
+			resp, err := server.ListEvaluationResults(ctx, &minderv1.ListEvaluationResultsRequest{
+				IncludeOutputs: tt.includeOutputs,
+			})
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			var gotOutput *structpb.Value
+			for _, ent := range resp.Entities {
+				for _, prof := range ent.Profiles {
+					for _, res := range prof.Results {
+						if res.Output != nil {
+							gotOutput = res.Output
+						}
+					}
+				}
+			}
+
+			if tt.expectOutput {
+				require.NotNil(t, gotOutput)
+				require.True(t,
+					protojson.Format(expectedOutput) == protojson.Format(gotOutput),
+					"expected output %s, got %s",
+					protojson.Format(expectedOutput),
+					protojson.Format(gotOutput),
+				)
+			} else {
+				require.Nil(t, gotOutput)
+			}
+		})
+	}
+}
+
+func TestListEvaluationHistoryIncludeOutputs(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	evalID := uuid.New()
+	entityID := uuid.New()
+
+	outputJSON := json.RawMessage(`{"finding":"detected_issue"}`)
+	expectedOutput := &structpb.Value{}
+	require.NoError(t, protojson.Unmarshal(outputJSON, expectedOutput))
+
+	now := time.Now().UTC()
+
+	tests := []struct {
+		name           string
+		includeOutputs bool
+		evalOutput     pqtype.NullRawMessage
+		expectOutput   bool
+	}{
+		{
+			name:           "include_outputs=true returns output",
+			includeOutputs: true,
+			evalOutput:     pqtype.NullRawMessage{RawMessage: outputJSON, Valid: true},
+			expectOutput:   true,
+		},
+		{
+			name:           "include_outputs=false omits output",
+			includeOutputs: false,
+			evalOutput:     pqtype.NullRawMessage{Valid: false},
+			expectOutput:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockHist := mockhistory.NewMockEvaluationHistoryService(ctrl)
+
+			efp := entmodels.NewEntityWithPropertiesFromInstance(
+				entmodels.EntityInstance{
+					ID:   entityID,
+					Type: minderv1.Entity_ENTITY_REPOSITORIES,
+					Name: "mindersec/minder",
+				}, nil)
+
+			mockStore.EXPECT().BeginTransaction().Return(nil, nil)
+			mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+			mockStore.EXPECT().Rollback(gomock.Any()).Return(nil)
+			mockStore.EXPECT().Commit(gomock.Any()).Return(nil)
+
+			mockHist.EXPECT().
+				ListEvaluationHistory(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), tt.includeOutputs).
+				Return(&history.ListEvaluationHistoryResult{
+					Data: []*history.OneEvalHistoryAndEntity{
+						{
+							EntityWithProperties: efp,
+							EvalHistoryRow: db.ListEvaluationHistoryRow{
+								EvaluationID:      evalID,
+								EvaluatedAt:       now,
+								EntityType:        db.EntitiesRepository,
+								EntityID:          entityID,
+								ProjectID:         projectID,
+								RuleType:          "rule_type",
+								RuleName:          "rule_name",
+								RuleSeverity:      "unknown",
+								ProfileName:       "profile_name",
+								EvaluationStatus:  db.EvalStatusTypesFailure,
+								EvaluationDetails: "some details",
+								EvalOutput:        tt.evalOutput,
+							},
+						},
+					},
+					Next: []byte("+1234567890"),
+					Prev: []byte("-1234567890"),
+				}, nil)
+
+			server := Server{store: mockStore, history: mockHist}
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project: engcontext.Project{ID: projectID},
+			})
+
+			resp, err := server.ListEvaluationHistory(ctx, &minderv1.ListEvaluationHistoryRequest{
+				IncludeOutputs: tt.includeOutputs,
+			})
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Len(t, resp.Data, 1)
+			require.NotNil(t, resp.Data[0].Status)
+
+			if tt.expectOutput {
+				require.NotNil(t, resp.Data[0].Status.Output)
+				require.True(t,
+					protojson.Format(expectedOutput) == protojson.Format(resp.Data[0].Status.Output),
+					"expected output %s, got %s",
+					protojson.Format(expectedOutput),
+					protojson.Format(resp.Data[0].Status.Output),
+				)
+			} else {
+				require.Nil(t, resp.Data[0].Status.Output)
+			}
+		})
 	}
 }

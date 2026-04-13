@@ -5,6 +5,8 @@ package ruletype
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,6 +15,11 @@ import (
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
+
+type ruleTypeBlock struct {
+	Name     string
+	Profiles []string
+}
 
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
@@ -27,6 +34,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
+	name := viper.GetString("name")
 	deleteAll := viper.GetBool("all")
 	yesFlag := viper.GetBool("yes")
 
@@ -48,17 +56,31 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	// List of rule types to delete
 	var rulesToDelete []*minderv1.RuleType
+
 	if !deleteAll {
-		// Fetch the rule type from the DB, so we can get its name
-		rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
-			Context: &minderv1.Context{Project: &project},
-			Id:      id,
-		})
-		if err != nil {
-			return cli.MessageAndError("Error getting rule type", err)
+		// Fetch the rule type from the DB by either ID or Name
+		if id != "" {
+			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+				Context: &minderv1.Context{Project: &project},
+				Id:      id,
+			})
+			if err != nil {
+				return cli.MessageAndError("Error getting rule type by id", err)
+			}
+			rulesToDelete = append(rulesToDelete, rtype.RuleType)
 		}
-		// Add the rule type for deletion
-		rulesToDelete = append(rulesToDelete, rtype.RuleType)
+
+		if name != "" {
+			rtype, err := client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+				Context: &minderv1.Context{Project: &project},
+				Name:    name,
+			})
+			if err != nil {
+				return cli.MessageAndError("Error getting rule type by name", err)
+			}
+			rulesToDelete = append(rulesToDelete, rtype.RuleType)
+		}
+
 	} else {
 		// List all rule types
 		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
@@ -74,22 +96,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
 
 	// Print the results
-	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
-		cmd.Println("There are no rule types to delete")
-		return nil
-	}
-	if len(deletedRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) were successfully deleted:")
-		for _, ruleType := range deletedRuleTypes {
-			cmd.Println(ruleType)
-		}
-	}
-	if len(remainingRuleTypes) > 0 {
-		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
-		for _, ruleType := range remainingRuleTypes {
-			cmd.Println(ruleType)
-		}
-	}
+	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
 
 	return nil
 }
@@ -99,16 +106,23 @@ func deleteRuleTypes(
 	client minderv1.RuleTypeServiceClient,
 	rulesToDelete []*minderv1.RuleType,
 	project string,
-) ([]string, []string) {
+) ([]string, []ruleTypeBlock) {
+
 	var deletedRuleTypes []string
-	var remainingRuleTypes []string
+	var remainingRuleTypes []ruleTypeBlock
+
 	for _, ruleType := range rulesToDelete {
 		_, err := client.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{
 			Context: &minderv1.Context{Project: &project},
 			Id:      ruleType.GetId(),
 		})
 		if err != nil {
-			remainingRuleTypes = append(remainingRuleTypes, ruleType.GetName())
+			profiles := extractProfiles(err.Error())
+
+			remainingRuleTypes = append(remainingRuleTypes, ruleTypeBlock{
+				Name:     ruleType.GetName(),
+				Profiles: profiles,
+			})
 			continue
 		}
 		deletedRuleTypes = append(deletedRuleTypes, ruleType.GetName())
@@ -116,15 +130,69 @@ func deleteRuleTypes(
 	return deletedRuleTypes, remainingRuleTypes
 }
 
+func printDeleteResults(
+	cmd *cobra.Command,
+	deletedRuleTypes []string,
+	remainingRuleTypes []ruleTypeBlock,
+) {
+	if len(deletedRuleTypes) == 0 && len(remainingRuleTypes) == 0 {
+		cmd.Println("There are no rule types to delete")
+		return
+	}
+
+	if len(deletedRuleTypes) > 0 {
+		cmd.Println("\nThe following rule type(s) were successfully deleted:")
+		for _, ruleType := range deletedRuleTypes {
+			cmd.Println(ruleType)
+		}
+	}
+
+	if len(remainingRuleTypes) > 0 {
+		cmd.Println("\nThe following rule type(s) are referenced by existing profiles and were not deleted:")
+		for _, ruleType := range remainingRuleTypes {
+			cmd.Println(ruleType.Name)
+		}
+
+		cmd.Println("\nThey are referenced by profiles:")
+
+		seen := map[string]bool{}
+		for _, b := range remainingRuleTypes {
+			for _, p := range b.Profiles {
+				if !seen[p] {
+					cmd.Println(p)
+					seen[p] = true
+				}
+			}
+		}
+
+	}
+}
+
+func extractProfiles(errMsg string) []string {
+	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
+	if len(match) < 2 {
+		return []string{}
+	}
+
+	profilesPart := strings.TrimSpace(match[1])
+
+	parts := strings.Split(profilesPart, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+
+	return parts
+}
+
 func init() {
 	ruleTypeCmd.AddCommand(deleteCmd)
 	// Flags
 	deleteCmd.Flags().StringP("id", "i", "", "ID of rule type to delete")
+	deleteCmd.Flags().StringP("name", "n", "", "Name of rule type to delete")
 	deleteCmd.Flags().BoolP("all", "a", false, "Warning: Deletes all rule types")
 	deleteCmd.Flags().BoolP("yes", "y", false, "Bypass yes/no prompt when deleting all rule types")
-	// TODO: add a flag for the rule type name
 	// Exclusive
-	deleteCmd.MarkFlagsOneRequired("id", "all")
-	deleteCmd.MarkFlagsMutuallyExclusive("id", "all")
-
+	deleteCmd.MarkFlagsOneRequired("id", "name", "all")
+	deleteCmd.MarkFlagsMutuallyExclusive("id", "name", "all")
 }

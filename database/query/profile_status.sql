@@ -90,7 +90,8 @@ SELECT
     ere.entity_instance_id as entity_id,
     ei.name as entity_name,
     ei.project_id as project_id,
-    rt.release_phase as rule_type_release_phase
+    rt.release_phase as rule_type_release_phase,
+    eo.output AS eval_output
 FROM latest_evaluation_statuses les
          INNER JOIN evaluation_rule_entities ere ON ere.id = les.rule_entity_id
          INNER JOIN eval_details ed ON ed.id = les.evaluation_history_id
@@ -100,6 +101,7 @@ FROM latest_evaluation_statuses les
          INNER JOIN rule_type rt ON rt.id = ri.rule_type_id
          INNER JOIN entity_instances ei ON ei.id = ere.entity_instance_id
          INNER JOIN providers prov ON prov.id = ei.provider_id
+         LEFT JOIN evaluation_outputs eo ON eo.id = les.evaluation_history_id AND sqlc.arg(include_outputs)::boolean
 WHERE les.profile_id = $1
     AND (ere.entity_instance_id = sqlc.narg(entity_id)::UUID OR sqlc.narg(entity_id)::UUID IS NULL)
     AND (ei.name = sqlc.narg(entity_name) OR sqlc.narg(entity_name) IS NULL)

@@ -92,7 +92,7 @@ func UpdateCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 			return nil
 		}
 		// Otherwise, print the role assignments if it was about updating a role
-		t := initializeTableForGrantListRoleAssignments()
+		t := initializeTableForGrantListRoleAssignments(cmd.OutOrStdout())
 		for _, r := range resp.RoleAssignments {
 			t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
 		}

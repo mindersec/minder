@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -89,6 +91,19 @@ func (s *Server) GetEvaluationHistory(
 		},
 		Alert:       getAlert(eval.AlertStatus, eval.AlertDetails.String),
 		Remediation: getRemediation(eval.RemediationStatus, eval.RemediationDetails.String),
+	}
+
+	if in.GetIncludeOutputs() {
+		output, err := s.store.GetEvaluationOutput(ctx, eval.EvaluationID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluation output")
+		} else if err == nil && output.Output.Valid {
+			pbEval.Status.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(output.Output.RawMessage, pbEval.Status.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+				pbEval.Status.Output = nil
+			}
+		}
 	}
 
 	return &minderv1.GetEvaluationHistoryResponse{Evaluation: pbEval}, nil
@@ -169,6 +184,7 @@ func (s *Server) ListEvaluationHistory(
 		cursor,
 		size,
 		filter,
+		in.GetIncludeOutputs(),
 	)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluations")
@@ -176,7 +192,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 
 	// convert data set to proto
-	data, err := fromEvaluationHistoryRows(result.Data)
+	data, err := fromEvaluationHistoryRows(ctx, result.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +222,7 @@ func (s *Server) ListEvaluationHistory(
 }
 
 func fromEvaluationHistoryRows(
+	ctx context.Context,
 	rows []*history.OneEvalHistoryAndEntity,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := make([]*minderv1.EvaluationHistory, len(rows))
@@ -222,6 +239,13 @@ func fromEvaluationHistoryRows(
 		evalStatus := &minderv1.EvaluationHistoryStatus{
 			Status:  string(row.EvalHistoryRow.EvaluationStatus),
 			Details: row.EvalHistoryRow.EvaluationDetails,
+		}
+
+		if row.EvalHistoryRow.EvalOutput.Valid {
+			evalStatus.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(row.EvalHistoryRow.EvalOutput.RawMessage, evalStatus.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+			}
 		}
 
 		res[i] = &minderv1.EvaluationHistory{
@@ -335,12 +359,15 @@ func (s *Server) ListEvaluationResults(
 	// Do the final sort of all the data
 	entities, profileStatuses, statusByEntity, err := s.sortEntitiesEvaluationStatus(
 		ctx, s.store, profileList, profileStatusList, rtIndex, entIdIndex, entTypeIndex,
+		in.GetIncludeOutputs(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("sorting rule evaluations: %w", err)
 	}
 
-	return buildListEvaluationResponse(entities, profileStatuses, statusByEntity), nil
+	resp := buildListEvaluationResponse(entities, profileStatuses, statusByEntity)
+
+	return resp, nil
 }
 
 // sortEntitiesEvaluationStatus queries the database from the filtered lists
@@ -354,6 +381,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 	profileList []db.ListProfilesByProjectIDAndLabelRow,
 	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
 	rtIndex, entIdIndex, entTypeIndex map[string]struct{},
+	includeOutputs bool,
 ) (
 	entities map[string]*minderv1.EntityTypedId,
 	profileStatuses map[uuid.UUID]*minderv1.ProfileStatus,
@@ -371,7 +399,10 @@ func (s *Server) sortEntitiesEvaluationStatus(
 
 	for _, p := range profileList {
 		evals, err := store.ListRuleEvaluationsByProfileId(
-			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.Profile.ID},
+			ctx, db.ListRuleEvaluationsByProfileIdParams{
+				ProfileID:      p.Profile.ID,
+				IncludeOutputs: includeOutputs,
+			},
 		)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -661,6 +692,16 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		Alert:                  buildEvalResultAlertFromLRERow(&eval, efp),
 		Severity:               sev,
 		ReleasePhase:           rp,
+	}
+
+	if eval.EvalOutput.Valid {
+		res.Output = &structpb.Value{}
+		if err := protojson.Unmarshal(eval.EvalOutput.RawMessage, res.Output); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("evaluation_id", eval.RuleEvaluationID.String()).
+				Msg("Unable to unmarshal rule output")
+			res.Output = nil
+		}
 	}
 
 	return res, nil
