@@ -12,11 +12,11 @@ del(.services.migrate.build) | \
 
 .PHONY: run-cli
 run-cli: ## run the CLI, needs additional arguments
-	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/cli
+	@go run -ldflags "-X github.com/mindersec/minder/internal/constants.CLIVersion=$(shell git describe --abbrev=0 --tags)+ref.$(shell git rev-parse --short HEAD)" -tags '$(BUILDTAGS)' ./cmd/cli
 
 .PHONY: run-server
 run-server: ## run the app
-	@go run -ldflags "-X main.version=$(shell git describe --abbrev=0 --tags)" -tags '$(BUILDTAGS)' ./cmd/server serve
+	@go run -ldflags "-X github.com/mindersec/minder/internal/constants.CLIVersion=$(shell git describe --abbrev=0 --tags)+ref.$(shell git rev-parse --short HEAD)" -tags '$(BUILDTAGS)' ./cmd/server serve
 
 .PHONY: run-docker-teardown
 run-docker-teardown: ## teardown the docker compose environment
@@ -35,7 +35,7 @@ run-docker: run-docker-teardown ## run the app under docker compose
 	@# podman (at least) doesn't seem to like multi-arch images, and sometimes picks the wrong one (e.g. amd64 on arm64)
 	@# We also need to remove the build: directives to use ko builds
 	@# ko resolve will fill in the image: field in the compose file, but it adds a yaml document separator
-	@yq e $(YQ_BUILD_REPLACE_STRING) docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
+	@yq e $(YQ_BUILD_REPLACE_STRING) docker-compose.yaml | KO_DOCKER_REPO=$(KO_DOCKER_REPO) GOFLAGS="-ldflags=-X=github.com/mindersec/minder/internal/constants.CLIVersion=$(shell git describe --abbrev=0 --tags)+ref.$(shell git rev-parse --short HEAD)" ko resolve --base-import-paths --platform linux/$(DOCKERARCH) -f - | sed 's/^--*$$//' > .resolved-compose.yaml
 	@$(COMPOSE) -f .resolved-compose.yaml up $(COMPOSE_ARGS) $(services)
 	@rm .resolved-compose.yaml*
 
