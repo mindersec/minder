@@ -325,7 +325,8 @@ func processInstallationRepositoriesAppEvent(
 			installation,
 		)
 		if err != nil {
-			return nil, err
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository in batch")
+			continue
 		}
 
 		results = append(results, res)
@@ -336,15 +337,22 @@ func processInstallationRepositoriesAppEvent(
 	// be deleted by means of "meta" and "repository" events as
 	// well.
 	for _, repo := range event.GetRepositoriesRemoved() {
-		res := repositoryRemoved(repo)
+		res, err := repositoryRemoved(repo)
+		if err != nil {
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository removal in batch")
+			continue
+		}
 		results = append(results, res)
 	}
 
 	return results, nil
 }
 
-func repositoryRemoved(repo *repo) *processingResult {
-	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
+func repositoryRemoved(repo *repo) (*processingResult, error) {
+	if repo.GetID() == 0 {
+		return nil, errors.New("invalid repository: id is 0")
+	}
+	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete), nil
 }
 
 func repositoryAdded(
