@@ -51,8 +51,21 @@ RETURNING *;
 
 -- name: FlushCache :one
 DELETE FROM flush_cache
-WHERE entity_instance_id= $1
+WHERE flush_cache.entity_instance_id = sqlc.arg(entity_instance_id)
+    AND flush_cache.project_id = sqlc.arg(project_id)
+    AND EXISTS (
+        SELECT 1 FROM entity_instances ei
+        WHERE ei.id = flush_cache.entity_instance_id 
+        AND ei.provider_id = sqlc.arg(provider_id)
+    )
 RETURNING *;
 
 -- name: ListFlushCache :many
-SELECT * FROM flush_cache;
+SELECT 
+    fc.entity, 
+    fc.project_id, 
+    fc.entity_instance_id, 
+    fc.queued_at, 
+    ei.provider_id
+FROM flush_cache fc
+JOIN entity_instances ei ON fc.entity_instance_id = ei.id;

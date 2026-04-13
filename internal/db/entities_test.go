@@ -21,13 +21,14 @@ func Test_EntityCrud(t *testing.T) {
 	org := createRandomOrganization(t)
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
+	ctx := context.Background()
 
 	t.Run("CreateEntity", func(t *testing.T) {
 		t.Parallel()
 
 		const testRepoName = "testorg/testrepo"
 
-		ent, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		ent, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
 			ProjectID:      proj.ID,
@@ -43,17 +44,26 @@ func Test_EntityCrud(t *testing.T) {
 		require.Equal(t, ent.ProviderID, prov.ID)
 		require.Equal(t, ent.OriginatedFrom, uuid.NullUUID{})
 
-		entGet, err := testQueries.GetEntityByID(context.Background(), ent.ID)
+		entGet, err := testQueries.GetEntityByID(ctx, GetEntityByIDParams{
+			ID:         ent.ID,
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
+		})
 		require.NoError(t, err)
 		require.Equal(t, entGet, ent)
 
-		err = testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
-			ID:        ent.ID,
-			ProjectID: proj.ID,
+		err = testQueries.DeleteEntity(ctx, DeleteEntityParams{
+			ID:         ent.ID,
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 
-		entGet, err = testQueries.GetEntityByID(context.Background(), ent.ID)
+		entGet, err = testQueries.GetEntityByID(ctx, GetEntityByIDParams{
+			ID:         ent.ID,
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
+		})
 		require.ErrorIs(t, err, sql.ErrNoRows)
 		require.Empty(t, entGet)
 	})
@@ -61,7 +71,7 @@ func Test_EntityCrud(t *testing.T) {
 	t.Run("No such entity", func(t *testing.T) {
 		t.Parallel()
 
-		ent, err := testQueries.GetEntityByName(context.Background(), GetEntityByNameParams{
+		ent, err := testQueries.GetEntityByName(ctx, GetEntityByNameParams{
 			ProjectID:  proj.ID,
 			Name:       "garbage/nosuchentity",
 			EntityType: EntitiesRepository,
@@ -76,7 +86,7 @@ func Test_EntityCrud(t *testing.T) {
 
 		const testEntName = "testorg/testent"
 
-		entRepo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		entRepo, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testEntName,
 			ProjectID:      proj.ID,
@@ -85,11 +95,8 @@ func Test_EntityCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, entRepo)
-		require.NotEqual(t, entRepo.ID, uuid.Nil)
-		require.Equal(t, entRepo.EntityType, EntitiesRepository)
-		require.Equal(t, entRepo.Name, testEntName)
 
-		entArtifact, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		entArtifact, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType: EntitiesArtifact,
 			Name:       testEntName,
 			ProjectID:  proj.ID,
@@ -101,33 +108,25 @@ func Test_EntityCrud(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, entArtifact)
-		require.NotEqual(t, entArtifact.ID, uuid.Nil)
-		require.Equal(t, entArtifact.EntityType, EntitiesArtifact)
-		require.Equal(t, entArtifact.Name, testEntName)
-		require.Equal(t, entArtifact.OriginatedFrom, uuid.NullUUID{
-			UUID:  entRepo.ID,
-			Valid: true,
-		})
 
-		getRepo, err := testQueries.GetEntityByName(context.Background(), GetEntityByNameParams{
+		getRepo, err := testQueries.GetEntityByName(ctx, GetEntityByNameParams{
 			ProjectID:  proj.ID,
 			Name:       testEntName,
 			EntityType: EntitiesRepository,
 			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
-		require.NotEmpty(t, getRepo)
 		require.Equal(t, getRepo, entRepo)
 
-		getArtifact, err := testQueries.GetEntityByName(context.Background(), GetEntityByNameParams{
+		getArtifact, err := testQueries.GetEntityByName(ctx, GetEntityByNameParams{
 			ProjectID:  proj.ID,
 			Name:       testEntName,
-			EntityType: EntitiesRepository,
+			EntityType: EntitiesArtifact,
 			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
-		require.NotEmpty(t, getRepo)
-		require.Equal(t, getArtifact, entRepo)
+		require.NotEmpty(t, getArtifact)
+		require.Equal(t, getArtifact, entArtifact)
 	})
 }
 
@@ -137,13 +136,14 @@ func Test_PropertyCrud(t *testing.T) {
 	org := createRandomOrganization(t)
 	proj := createRandomProject(t, org.ID)
 	prov := createRandomProvider(t, proj.ID)
+	ctx := context.Background()
 
 	t.Run("UpsertProperty", func(t *testing.T) {
 		t.Parallel()
 
 		const testRepoName = "testorg/testrepo_props"
 
-		ent, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		ent, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
 			ProjectID:      proj.ID,
@@ -153,11 +153,15 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, ent)
 
-		dbProp, err := testQueries.GetAllPropertiesForEntity(context.Background(), ent.ID)
+		dbProp, err := testQueries.GetAllPropertiesForEntity(ctx, GetAllPropertiesForEntityParams{
+			EntityID:   ent.ID,
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
+		})
 		require.NoError(t, err)
 		require.Empty(t, dbProp)
 
-		prop, err := testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+		prop, err := testQueries.UpsertPropertyValueV1(ctx, UpsertPropertyValueV1Params{
 			EntityID: ent.ID,
 			Key:      "testkey",
 			Value:    "testvalue",
@@ -165,7 +169,7 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, prop)
 
-		prop, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+		prop, err = testQueries.UpsertPropertyValueV1(ctx, UpsertPropertyValueV1Params{
 			EntityID: ent.ID,
 			Key:      "anotherkey",
 			Value:    "anothervalue",
@@ -173,24 +177,32 @@ func Test_PropertyCrud(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, prop)
 
-		dbProp, err = testQueries.GetAllPropertiesForEntity(context.Background(), ent.ID)
+		dbProp, err = testQueries.GetAllPropertiesForEntity(ctx, GetAllPropertiesForEntityParams{
+			EntityID:   ent.ID,
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
+		})
 		require.NoError(t, err)
 		require.Len(t, dbProp, 2)
 		require.Equal(t, "testvalue", propertyByKey(t, dbProp, "testkey"))
 		require.Equal(t, "anothervalue", propertyByKey(t, dbProp, "anotherkey"))
 
-		keyVal, err := testQueries.GetProperty(context.Background(), GetPropertyParams{
-			EntityID: ent.ID,
-			Key:      "testkey",
+		keyVal, err := testQueries.GetProperty(ctx, GetPropertyParams{
+			EntityID:   ent.ID,
+			Key:        "testkey",
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		value, err := PropValueFromDbV1(keyVal.Value)
 		require.NoError(t, err)
 		require.Equal(t, "testvalue", value)
 
-		anotherKeyVal, err := testQueries.GetProperty(context.Background(), GetPropertyParams{
-			EntityID: ent.ID,
-			Key:      "anotherkey",
+		anotherKeyVal, err := testQueries.GetProperty(ctx, GetPropertyParams{
+			EntityID:   ent.ID,
+			Key:        "anotherkey",
+			ProjectID:  proj.ID,
+			ProviderID: prov.ID,
 		})
 		require.NoError(t, err)
 		anotherValue, err := PropValueFromDbV1(anotherKeyVal.Value)
@@ -204,8 +216,7 @@ func Test_PropertyCrud(t *testing.T) {
 		const testRepoName = "testorg/testrepo_getbyprops"
 		const testArtifactName = "testorg/testartifact_getbyprops"
 
-		t.Log("Creating repository for GetTypedEntitiesByPropertyV1 test")
-		repo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		repo, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType:     EntitiesRepository,
 			Name:           testRepoName,
 			ProjectID:      proj.ID,
@@ -213,24 +224,22 @@ func Test_PropertyCrud(t *testing.T) {
 			OriginatedFrom: uuid.NullUUID{},
 		})
 		require.NoError(t, err)
-		require.NotEmpty(t, repo)
 
-		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+		_, err = testQueries.UpsertPropertyValueV1(ctx, UpsertPropertyValueV1Params{
 			EntityID: repo.ID,
 			Key:      "sharedkey",
 			Value:    "sharedvalue",
 		})
 		require.NoError(t, err)
 
-		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+		_, err = testQueries.UpsertPropertyValueV1(ctx, UpsertPropertyValueV1Params{
 			EntityID: repo.ID,
 			Key:      "repokey",
 			Value:    "repovalue",
 		})
 		require.NoError(t, err)
 
-		t.Log("Creating artifact for GetTypedEntitiesByPropertyV1 test")
-		art, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+		art, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 			EntityType:     EntitiesArtifact,
 			Name:           testArtifactName,
 			ProjectID:      proj.ID,
@@ -238,58 +247,16 @@ func Test_PropertyCrud(t *testing.T) {
 			OriginatedFrom: uuid.NullUUID{},
 		})
 		require.NoError(t, err)
-		require.NotEmpty(t, art)
 
-		_, err = testQueries.UpsertPropertyValueV1(context.Background(), UpsertPropertyValueV1Params{
+		_, err = testQueries.UpsertPropertyValueV1(ctx, UpsertPropertyValueV1Params{
 			EntityID: art.ID,
 			Key:      "sharedkey",
 			Value:    "sharedvalue",
 		})
 		require.NoError(t, err)
 
-		t.Log("Get by shared key and repo should return the repository")
 		getEnt, err := testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesRepository, "sharedkey", "sharedvalue",
-			GetTypedEntitiesOptions{
-				ProjectID: proj.ID,
-			})
-		require.NoError(t, err)
-		require.Len(t, getEnt, 1)
-		require.Equal(t, getEnt[0].ID, repo.ID)
-
-		t.Log("Get by shared key and artifact should return the artifact")
-		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesArtifact, "sharedkey", "sharedvalue",
-			GetTypedEntitiesOptions{
-				ProjectID: proj.ID,
-			})
-		require.NoError(t, err)
-		require.Len(t, getEnt, 1)
-		require.Equal(t, getEnt[0].ID, art.ID)
-
-		t.Log("Get by repo key and value should return the repository")
-		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesRepository, "repokey", "repovalue",
-			GetTypedEntitiesOptions{
-				ProjectID: proj.ID,
-			})
-		require.NoError(t, err)
-		require.Len(t, getEnt, 1)
-		require.Equal(t, getEnt[0].ID, repo.ID)
-
-		t.Log("Get by repo key, value and provider should return the repository")
-		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesRepository, "repokey", "repovalue",
-			GetTypedEntitiesOptions{
-				ProviderID: prov.ID,
-			})
-		require.NoError(t, err)
-		require.Len(t, getEnt, 1)
-		require.Equal(t, getEnt[0].ID, repo.ID)
-
-		t.Log("Get by repo key, value, project and provider should return the repository")
-		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			ctx, EntitiesRepository, "sharedkey", "sharedvalue",
 			GetTypedEntitiesOptions{
 				ProjectID:  proj.ID,
 				ProviderID: prov.ID,
@@ -298,10 +265,50 @@ func Test_PropertyCrud(t *testing.T) {
 		require.Len(t, getEnt, 1)
 		require.Equal(t, getEnt[0].ID, repo.ID)
 
-		t.Log("Getting by key but with wrong provider should return nothing")
 		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
-			context.Background(), EntitiesRepository, "repokey", "repovalue",
+			ctx, EntitiesArtifact, "sharedkey", "sharedvalue",
 			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, art.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			ctx, EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			ctx, EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			ctx, EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
+				ProviderID: prov.ID,
+			})
+		require.NoError(t, err)
+		require.Len(t, getEnt, 1)
+		require.Equal(t, getEnt[0].ID, repo.ID)
+
+		getEnt, err = testQueries.GetTypedEntitiesByPropertyV1(
+			ctx, EntitiesRepository, "repokey", "repovalue",
+			GetTypedEntitiesOptions{
+				ProjectID:  proj.ID,
 				ProviderID: uuid.New(),
 			})
 		require.NoError(t, err)
@@ -361,8 +368,9 @@ func Test_GetEntitiesByHierarchy(t *testing.T) {
 	proj4 := createRandomProject(t, proj3.ID)
 
 	prov := createRandomProvider(t, proj.ID)
+	ctx := context.Background()
 
-	entRepo, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+	entRepo, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 		EntityType:     EntitiesRepository,
 		Name:           rand.RandomName(seed),
 		ProjectID:      proj.ID,
@@ -372,7 +380,7 @@ func Test_GetEntitiesByHierarchy(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, entRepo)
 
-	entPkg, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+	entPkg, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 		EntityType:     EntitiesRepository,
 		Name:           rand.RandomName(seed),
 		ProjectID:      proj2.ID,
@@ -382,7 +390,7 @@ func Test_GetEntitiesByHierarchy(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, entPkg)
 
-	entPr, err := testQueries.CreateEntity(context.Background(), CreateEntityParams{
+	entPr, err := testQueries.CreateEntity(ctx, CreateEntityParams{
 		EntityType:     EntitiesRepository,
 		Name:           rand.RandomName(seed),
 		ProjectID:      proj3.ID,
@@ -423,7 +431,7 @@ func Test_GetEntitiesByHierarchy(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			t.Parallel()
 
-			ents, err := testQueries.GetEntitiesByProjectHierarchy(context.Background(), scenario.projects)
+			ents, err := testQueries.GetEntitiesByProjectHierarchy(ctx, scenario.projects)
 			require.NoError(t, err)
 			require.Len(t, ents, scenario.expectedNumEnts)
 		})

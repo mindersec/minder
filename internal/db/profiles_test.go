@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
 package db
 
 import (
@@ -3418,8 +3421,9 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
 				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
-					ID:        delRepo.ID,
-					ProjectID: delRepo.ProjectID,
+					ID:         delRepo.ID,
+					ProjectID:  delRepo.ProjectID,
+					ProviderID: delRepo.ProviderID,
 				})
 				require.NoError(t, err)
 			},
@@ -3471,8 +3475,9 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			expectedStatusAfterSetup: EvalStatusTypesError,
 			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
 				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
-					ID:        delRepo.ID,
-					ProjectID: delRepo.ProjectID,
+					ID:         delRepo.ID,
+					ProjectID:  delRepo.ProjectID,
+					ProviderID: delRepo.ProviderID,
 				})
 				require.NoError(t, err)
 			},
@@ -3524,8 +3529,9 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			expectedStatusAfterSetup: EvalStatusTypesError,
 			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
 				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
-					ID:        delRepo.ID,
-					ProjectID: delRepo.ProjectID,
+					ID:         delRepo.ID,
+					ProjectID:  delRepo.ProjectID,
+					ProviderID: delRepo.ProviderID,
 				})
 				require.NoError(t, err)
 			},
@@ -3558,8 +3564,9 @@ func TestCreateProfileStatusStoredDeleteProcedure(t *testing.T) {
 			expectedStatusAfterSetup: EvalStatusTypesFailure,
 			ruleStatusDeleteFn: func(delRepo *EntityRepository) {
 				err := testQueries.DeleteEntity(context.Background(), DeleteEntityParams{
-					ID:        delRepo.ID,
-					ProjectID: delRepo.ProjectID,
+					ID:         delRepo.ID,
+					ProjectID:  delRepo.ProjectID,
+					ProviderID: delRepo.ProviderID,
 				})
 				require.NoError(t, err)
 			},

@@ -50,7 +50,7 @@ type PropertiesService interface {
 	) (protoreflect.ProtoMessage, error)
 	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithPropertiesByID(
-		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
+		ctx context.Context, entityID uuid.UUID, projectID uuid.UUID, providerID uuid.UUID, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
 	// EntityWithPropertiesByUpstreamHint fetches an entity by upstream properties
 	// and returns the entity with its properties. It is expected that the caller
@@ -83,7 +83,12 @@ type PropertiesService interface {
 	) error
 	// ReplaceAllProperties saves all properties for the given entity
 	ReplaceAllProperties(
-		ctx context.Context, entityID uuid.UUID, props *properties.Properties, opts *CallOptions,
+		ctx context.Context,
+		entityID uuid.UUID,
+		props *properties.Properties,
+		projectID uuid.UUID,
+		providerID uuid.UUID,
+		opts *CallOptions,
 	) error
 	// SaveAllProperties saves all properties for the given entity
 	SaveAllProperties(
@@ -91,7 +96,13 @@ type PropertiesService interface {
 	) error
 	// ReplaceProperty saves a single property for the given entity
 	ReplaceProperty(
-		ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property, opts *CallOptions,
+		ctx context.Context,
+		entityID uuid.UUID,
+		key string,
+		prop *properties.Property,
+		projectID uuid.UUID,
+		providerID uuid.UUID,
+		opts *CallOptions,
 	) error
 }
 
@@ -144,7 +155,7 @@ func (ps *propertiesService) RetrieveAllProperties(
 		return nil, fmt.Errorf("failed to get entity ID: %w", err)
 	}
 
-	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, lookupProperties, entType, opts, l)
+	return ps.retrieveAllPropertiesForEntity(ctx, provider, entID, projectId, providerID, lookupProperties, entType, opts, l)
 }
 
 func (ps *propertiesService) RetrieveAllPropertiesForEntity(
@@ -164,7 +175,16 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 		return fmt.Errorf("error instantiating provider: %w", err)
 	}
 
-	props, err := ps.retrieveAllPropertiesForEntity(ctx, propClient, efp.Entity.ID, efp.Properties, efp.Entity.Type, opts, l)
+	props, err := ps.retrieveAllPropertiesForEntity(
+		ctx,
+		propClient,
+		efp.Entity.ID,
+		efp.Entity.ProjectID,
+		efp.Entity.ProviderID,
+		efp.Properties,
+		efp.Entity.Type,
+		opts,
+		l)
 	if err != nil {
 		return fmt.Errorf("error fetching properties for entity: %w", err)
 	}
@@ -175,6 +195,7 @@ func (ps *propertiesService) RetrieveAllPropertiesForEntity(
 
 func (ps *propertiesService) ReplaceAllProperties(
 	ctx context.Context, entityID uuid.UUID, props *properties.Properties,
+	projectID uuid.UUID, providerID uuid.UUID,
 	opts *CallOptions,
 ) error {
 	qtx := ps.getStoreOrTransaction(opts)
@@ -182,11 +203,11 @@ func (ps *propertiesService) ReplaceAllProperties(
 
 	if store, ok := qtx.(db.Store); ok {
 		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-			return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+			return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, projectID, providerID, qtx)
 		})
 	}
 
-	return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+	return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, projectID, providerID, qtx)
 }
 
 func (ps *propertiesService) SaveAllProperties(
@@ -205,9 +226,15 @@ func (ps *propertiesService) SaveAllProperties(
 }
 
 func (ps *propertiesService) replaceAllPropertiesWithQuerier(
-	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties,
+	projectID uuid.UUID, providerID uuid.UUID, qtx db.ExtendQuerier,
 ) error {
-	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
+	err := qtx.DeleteAllPropertiesForEntity(ctx, db.DeleteAllPropertiesForEntityParams{
+		EntityID:   entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
+	})
+
 	if err != nil {
 		return fmt.Errorf("failed to delete properties: %w", err)
 	}
@@ -234,13 +261,16 @@ func (*propertiesService) saveAllPropertiesWithQuerier(
 
 func (ps *propertiesService) ReplaceProperty(
 	ctx context.Context, entityID uuid.UUID, key string, prop *properties.Property,
+	projectID uuid.UUID, providerID uuid.UUID,
 	opts *CallOptions,
 ) error {
 	qtx := ps.getStoreOrTransaction(opts)
 	if prop == nil {
 		return qtx.DeleteProperty(ctx, db.DeletePropertyParams{
-			EntityID: entityID,
-			Key:      key,
+			EntityID:   entityID,
+			Key:        key,
+			ProjectID:  projectID,
+			ProviderID: providerID,
 		})
 	}
 
@@ -259,7 +289,12 @@ func (ps *propertiesService) getEntityWithProperties(
 ) (*models.EntityWithProperties, error) {
 	q := ps.getStoreOrTransaction(opts)
 
-	dbProps, err := q.GetAllPropertiesForEntity(ctx, ent.ID)
+	dbProps, err := q.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+		EntityID:   ent.ID,
+		ProjectID:  ent.ProjectID,
+		ProviderID: ent.ProviderID,
+	})
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("failed to get properties for entity: %w", ErrEntityNotFound)
 	} else if err != nil {
@@ -286,12 +321,17 @@ func (ps *propertiesService) getEntityWithProperties(
 }
 
 func (ps *propertiesService) EntityWithPropertiesByID(
-	ctx context.Context, entityID uuid.UUID,
+	ctx context.Context, entityID uuid.UUID, projectID uuid.UUID, providerID uuid.UUID,
 	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
 	q := ps.getStoreOrTransaction(opts)
 
-	ent, err := q.GetEntityByID(ctx, entityID)
+	ent, err := q.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         entityID,
+		ProjectID:  projectID,
+		ProviderID: providerID,
+	})
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrEntityNotFound
 	} else if err != nil {

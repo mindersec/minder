@@ -178,13 +178,16 @@ func (g *githubProviderManager) Delete(ctx context.Context, config *db.Provider)
 			return err
 		}
 
-		entities, err := g.store.GetEntitiesByProvider(ctx, config.ID)
+		entities, err := g.store.GetEntitiesByProvider(ctx, db.GetEntitiesByProviderParams{
+			ProviderID: config.ID,
+			Projects:   []uuid.UUID{config.ProjectID},
+		})
 		if err != nil {
 			return fmt.Errorf("unable to retrieve list of entities to deregister: %w", err)
 		}
 
 		for _, ent := range entities {
-			ewp, err := g.propsSvc.EntityWithPropertiesByID(ctx, ent.ID, nil)
+			ewp, err := g.propsSvc.EntityWithPropertiesByID(ctx, ent.ID, config.ProjectID, config.ID, nil)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).
 					Str("provider_id", config.ID.String()).

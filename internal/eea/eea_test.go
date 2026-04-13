@@ -39,10 +39,6 @@ const (
 	providerName = "test-provider"
 )
 
-var (
-	providerID = uuid.New()
-)
-
 func TestAggregator(t *testing.T) {
 	t.Parallel()
 
@@ -55,7 +51,7 @@ func TestAggregator(t *testing.T) {
 
 	var concurrentEvents int64 = 100
 
-	projectID, repoID := createNeededEntities(ctx, t, testQueries)
+	projectID, dbProviderID, repoID := createNeededEntities(ctx, t, testQueries)
 
 	evt, err := eventer.New(ctx, nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
@@ -101,7 +97,7 @@ func TestAggregator(t *testing.T) {
 		WithRepository(&minderv1.Repository{}).
 		WithID(repoID).
 		WithProjectID(projectID).
-		WithProviderID(providerID)
+		WithProviderID(dbProviderID)
 	msg, err := inf.BuildMessage()
 	require.NoError(t, err, "expected no error when building message")
 
@@ -147,7 +143,7 @@ func TestAggregator(t *testing.T) {
 	assert.Equal(t, int32(1), flushedMessages.count.Load(), "expected only one message to be published")
 }
 
-func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Store) (projID uuid.UUID, repoID uuid.UUID) {
+func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Store) (projID uuid.UUID, provID uuid.UUID, repoID uuid.UUID) {
 	t.Helper()
 
 	// setup project
@@ -177,7 +173,7 @@ func createNeededEntities(ctx context.Context, t *testing.T, testQueries db.Stor
 	})
 	require.NoError(t, err, "expected no error when creating repo")
 
-	return proj.ID, repo.ID
+	return proj.ID, prov.ID, repo.ID
 }
 
 func TestFlushAll(t *testing.T) {
@@ -198,13 +194,13 @@ func TestFlushAll(t *testing.T) {
 			name: "flushes one repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().ListFlushCache(ctx).
-					Return([]db.FlushCache{
+					Return([]db.ListFlushCacheRow{
 						{
-							ID:               uuid.New(),
 							Entity:           db.EntitiesRepository,
 							QueuedAt:         time.Now(),
 							ProjectID:        projectID,
 							EntityInstanceID: repoID,
+							ProviderID:       providerID,
 						},
 					}, nil)
 
@@ -212,7 +208,7 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
-				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Nil()).
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Eq(projectID), gomock.Eq(providerID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
 							ID:         repoID,
@@ -231,13 +227,13 @@ func TestFlushAll(t *testing.T) {
 			name: "flushes one artifact with repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().ListFlushCache(ctx).
-					Return([]db.FlushCache{
+					Return([]db.ListFlushCacheRow{
 						{
-							ID:               uuid.New(),
 							Entity:           db.EntitiesArtifact,
 							QueuedAt:         time.Now(),
 							ProjectID:        projectID,
 							EntityInstanceID: artID,
+							ProviderID:       providerID,
 						},
 					}, nil)
 
@@ -245,7 +241,7 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
-				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Eq(projectID), gomock.Eq(providerID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
 							ID:             artID,
@@ -265,13 +261,13 @@ func TestFlushAll(t *testing.T) {
 			name: "flushes one artifact with no repo",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().ListFlushCache(ctx).
-					Return([]db.FlushCache{
+					Return([]db.ListFlushCacheRow{
 						{
-							ID:               uuid.New(),
 							Entity:           db.EntitiesArtifact,
 							QueuedAt:         time.Now(),
 							ProjectID:        projectID,
 							EntityInstanceID: artID,
+							ProviderID:       providerID,
 						},
 					}, nil)
 
@@ -279,7 +275,7 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
-				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Nil()).
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(artID), gomock.Eq(projectID), gomock.Eq(providerID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
 							ID:         artID,
@@ -298,13 +294,13 @@ func TestFlushAll(t *testing.T) {
 			name: "flushes one PR",
 			mockDBSetup: func(ctx context.Context, mockStore *mockdb.MockStore) {
 				mockStore.EXPECT().ListFlushCache(ctx).
-					Return([]db.FlushCache{
+					Return([]db.ListFlushCacheRow{
 						{
-							ID:               uuid.New(),
 							Entity:           db.EntitiesPullRequest,
 							ProjectID:        projectID,
 							EntityInstanceID: prID,
 							QueuedAt:         time.Now(),
+							ProviderID:       providerID,
 						},
 					}, nil)
 
@@ -312,7 +308,7 @@ func TestFlushAll(t *testing.T) {
 				mockStore.EXPECT().FlushCache(ctx, gomock.Any()).Times(1)
 			},
 			mockPropSvcSetup: func(mockPropSvc *propsvcmock.MockPropertiesService) {
-				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(prID), gomock.Nil()).
+				mockPropSvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(prID), gomock.Eq(projectID), gomock.Eq(providerID), gomock.Nil()).
 					Return(&models.EntityWithProperties{
 						Entity: models.EntityInstance{
 							ID:             prID,
@@ -507,20 +503,21 @@ func TestFlushAllListFlushListsARepoThatGetsDeletedLater(t *testing.T) {
 
 	repoID := uuid.New()
 	projID := uuid.New()
+	provID := uuid.New()
 
 	// initial list flush
 	mockStore.EXPECT().ListFlushCache(ctx).
-		Return([]db.FlushCache{
+		Return([]db.ListFlushCacheRow{
 			{
-				ID:               uuid.New(),
 				Entity:           db.EntitiesRepository,
 				ProjectID:        projID,
 				EntityInstanceID: repoID,
 				QueuedAt:         time.Now(),
+				ProviderID:       provID,
 			},
 		}, nil)
 
-	propsvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Nil()).
+	propsvc.EXPECT().EntityWithPropertiesByID(gomock.Any(), gomock.Eq(repoID), gomock.Eq(projID), gomock.Eq(provID), gomock.Nil()).
 		Return(nil, psvc.ErrEntityNotFound)
 
 	t.Log("Flushing all")

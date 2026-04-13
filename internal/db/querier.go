@@ -20,7 +20,7 @@ type Querier interface {
 	//
 	AddRuleTypeDataSourceReference(ctx context.Context, arg AddRuleTypeDataSourceReferenceParams) (RuleTypeDataSource, error)
 	BulkGetProfilesByID(ctx context.Context, profileIds []uuid.UUID) ([]BulkGetProfilesByIDRow, error)
-	// CountEntitiesByType counts all entities of a given type (across all projects/providers).
+	// CountEntitiesByType counts all entities of a given type (Global admin metric).
 	CountEntitiesByType(ctx context.Context, entityType Entities) (int64, error)
 	// CountEntitiesByTypeAndProject counts entities of a given type for a specific project.
 	CountEntitiesByTypeAndProject(ctx context.Context, arg CountEntitiesByTypeAndProjectParams) (int64, error)
@@ -54,13 +54,14 @@ type Querier interface {
 	// Subscriptions --
 	CreateSubscription(ctx context.Context, arg CreateSubscriptionParams) (Subscription, error)
 	CreateUser(ctx context.Context, identitySubject string) (User, error)
-	DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error
+	// DeleteAllPropertiesForEntity deletes all properties for an entity securely.
+	DeleteAllPropertiesForEntity(ctx context.Context, arg DeleteAllPropertiesForEntityParams) error
 	DeleteDataSource(ctx context.Context, arg DeleteDataSourceParams) (DataSource, error)
 	DeleteDataSourceFunction(ctx context.Context, arg DeleteDataSourceFunctionParams) (DataSourcesFunction, error)
 	// DeleteDataSourceFunctions deletes all functions associated with a given datasource
 	// in a specific project.
 	DeleteDataSourceFunctions(ctx context.Context, arg DeleteDataSourceFunctionsParams) ([]DataSourcesFunction, error)
-	// DeleteEntity removes an entity from the entity_instances table for a project.
+	// DeleteEntity removes an entity from the entity_instances table securely.
 	DeleteEntity(ctx context.Context, arg DeleteEntityParams) error
 	DeleteEvaluationHistoryByIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
 	DeleteEvaluationOutputsByEvaluationIDs(ctx context.Context, evaluationids []uuid.UUID) (int64, error)
@@ -74,6 +75,7 @@ type Querier interface {
 	DeleteProfile(ctx context.Context, arg DeleteProfileParams) error
 	DeleteProfileForEntity(ctx context.Context, arg DeleteProfileForEntityParams) error
 	DeleteProject(ctx context.Context, id uuid.UUID) ([]DeleteProjectRow, error)
+	// DeleteProperty deletes a property, using USING to ensure the caller owns the parent entity.
 	DeleteProperty(ctx context.Context, arg DeletePropertyParams) error
 	DeleteProvider(ctx context.Context, arg DeleteProviderParams) error
 	DeleteRuleInstanceOfProfileInProject(ctx context.Context, arg DeleteRuleInstanceOfProfileInProjectParams) error
@@ -84,18 +86,19 @@ type Querier interface {
 	DeleteSessionStateByProjectID(ctx context.Context, arg DeleteSessionStateByProjectIDParams) error
 	DeleteUser(ctx context.Context, id int32) error
 	EnqueueFlush(ctx context.Context, arg EnqueueFlushParams) (FlushCache, error)
-	// EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+	// EntityExistsAfterID checks if any entity exists after a cursor ID securely.
 	EntityExistsAfterID(ctx context.Context, arg EntityExistsAfterIDParams) (bool, error)
 	// FindProviders allows us to take a trait and filter
 	// providers by it. It also optionally takes a name, in case we want to
 	// filter by name as well.
 	FindProviders(ctx context.Context, arg FindProvidersParams) ([]Provider, error)
-	FlushCache(ctx context.Context, entityInstanceID uuid.UUID) (FlushCache, error)
+	FlushCache(ctx context.Context, arg FlushCacheParams) (FlushCache, error)
 	GetAccessTokenByEnrollmentNonce(ctx context.Context, arg GetAccessTokenByEnrollmentNonceParams) (ProviderAccessToken, error)
 	GetAccessTokenByProjectID(ctx context.Context, arg GetAccessTokenByProjectIDParams) (ProviderAccessToken, error)
 	GetAccessTokenByProvider(ctx context.Context, provider string) ([]ProviderAccessToken, error)
 	GetAccessTokenSinceDate(ctx context.Context, arg GetAccessTokenSinceDateParams) (ProviderAccessToken, error)
-	GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error)
+	// GetAllPropertiesForEntity retrieves all properties for one entity, strictly bounded.
+	GetAllPropertiesForEntity(ctx context.Context, arg GetAllPropertiesForEntityParams) ([]Property, error)
 	GetBundle(ctx context.Context, arg GetBundleParams) (Bundle, error)
 	GetChildrenProjects(ctx context.Context, id uuid.UUID) ([]GetChildrenProjectsRow, error)
 	// GetDataSource retrieves a datasource by its id and a project hierarchy.
@@ -111,16 +114,16 @@ type Querier interface {
 	GetDataSourceByName(ctx context.Context, arg GetDataSourceByNameParams) (DataSource, error)
 	// GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
 	GetEntitiesByProjectHierarchy(ctx context.Context, projects []uuid.UUID) ([]EntityInstance, error)
-	// GetEntitiesByProvider retrieves all entities of a given provider.
+	// GetEntitiesByProvider retrieves all entities of a given provider scoped by project hierarchy.
 	// this is how one would get all repositories, artifacts, etc. for a given provider.
-	GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error)
-	// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
+	GetEntitiesByProvider(ctx context.Context, arg GetEntitiesByProviderParams) ([]EntityInstance, error)
+	// GetEntitiesByType retrieves all entities of a given type for a project hierarchy.
 	// this is how one would get all repositories, artifacts, etc.
 	GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error)
 	GetEntitlementFeaturesByProjectID(ctx context.Context, projectID uuid.UUID) ([]string, error)
 	// GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
-	GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstance, error)
-	// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
+	GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (EntityInstance, error)
+	// GetEntityByName retrieves an entity by its name securely.
 	GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error)
 	GetEvaluationHistory(ctx context.Context, arg GetEvaluationHistoryParams) (GetEvaluationHistoryRow, error)
 	GetEvaluationOutput(ctx context.Context, id uuid.UUID) (EvaluationOutput, error)
@@ -163,6 +166,9 @@ type Querier interface {
 	GetProjectByID(ctx context.Context, id uuid.UUID) (Project, error)
 	GetProjectByName(ctx context.Context, name string) (Project, error)
 	GetProjectIDBySessionState(ctx context.Context, sessionState string) (GetProjectIDBySessionStateRow, error)
+	// GetPropertiesForEntities retrieves properties for multiple entities in bulk
+	GetPropertiesForEntities(ctx context.Context, arg GetPropertiesForEntitiesParams) ([]Property, error)
+	// GetProperty retrieves a single property, using a JOIN to ensure the caller owns the parent entity
 	GetProperty(ctx context.Context, arg GetPropertyParams) (Property, error)
 	GetProviderByID(ctx context.Context, id uuid.UUID) (Provider, error)
 	GetProviderByIDAndProject(ctx context.Context, arg GetProviderByIDAndProjectParams) (Provider, error)
@@ -186,6 +192,7 @@ type Querier interface {
 	GetSelectorByID(ctx context.Context, id uuid.UUID) (ProfileSelector, error)
 	GetSelectorsByProfileID(ctx context.Context, profileID uuid.UUID) ([]ProfileSelector, error)
 	GetSubscriptionByProjectBundle(ctx context.Context, arg GetSubscriptionByProjectBundleParams) (Subscription, error)
+	// GetTypedEntitiesByProperty retrieves entities matching a specific property JSONB query securely.
 	GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEntitiesByPropertyParams) ([]EntityInstance, error)
 	GetUnclaimedInstallationsByUser(ctx context.Context, ghID sql.NullString) ([]ProviderGithubAppInstallation, error)
 	GetUserByID(ctx context.Context, id int32) (User, error)
@@ -204,12 +211,12 @@ type Querier interface {
 	// Note that to get a datasource for a given project, one can simply
 	// pass one project id in the project_id array.
 	ListDataSources(ctx context.Context, projects []uuid.UUID) ([]DataSource, error)
-	// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+	// ListEntitiesAfterID retrieves entities for pagination securely.
 	// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
 	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
-	ListFlushCache(ctx context.Context) ([]FlushCache, error)
+	ListFlushCache(ctx context.Context) ([]ListFlushCacheRow, error)
 	// ListInvitationsForProject collects the information visible to project
 	// administrators after an invitation has been issued.  In particular, it
 	// *does not* report the invitation code, which is a secret intended for
@@ -286,6 +293,8 @@ type Querier interface {
 	UpsertInstallationID(ctx context.Context, arg UpsertInstallationIDParams) (ProviderGithubAppInstallation, error)
 	UpsertLatestEvaluationStatus(ctx context.Context, arg UpsertLatestEvaluationStatusParams) error
 	UpsertProfileForEntity(ctx context.Context, arg UpsertProfileForEntityParams) (EntityProfile, error)
+	// UpsertProperty upserts a property.
+	// NOTE: Ownership MUST be verified in Go (e.g. via GetEntityByID) before executing this statement.
 	UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error)
 	// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
 	// SPDX-License-Identifier: Apache-2.0

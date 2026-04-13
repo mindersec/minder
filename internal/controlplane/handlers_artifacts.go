@@ -94,7 +94,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 	}
 
 	// Fetch the entity with properties
-	ewp, err := s.props.EntityWithPropertiesByID(ctx, entities[0].ID, nil)
+	ewp, err := s.props.EntityWithPropertiesByID(ctx, entities[0].ID, projectID, provider.ID, nil)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
@@ -128,7 +128,7 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 
 	return &pb.GetArtifactByNameResponse{
 		Artifact: pbArtifact,
-		Versions: nil, // explicitly nil, will probably deprecate that field later
+		Versions: nil, // explicitly nil, will probably deprecate that field later.
 	}, nil
 }
 
@@ -137,24 +137,28 @@ func (s *Server) GetArtifactByName(ctx context.Context, in *pb.GetArtifactByName
 func (s *Server) GetArtifactById(ctx context.Context, in *pb.GetArtifactByIdRequest) (*pb.GetArtifactByIdResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
 
 	parsedArtifactID, err := uuid.Parse(in.Id)
 	if err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid artifact ID")
 	}
 
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
+	}
+
 	// Fetch artifact entity
-	ewp, err := s.props.EntityWithPropertiesByID(ctx, parsedArtifactID, nil)
+	ewp, err := s.props.EntityWithPropertiesByID(ctx, parsedArtifactID, projectID, provider.ID, nil)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, status.Errorf(codes.NotFound, "artifact not found")
 		}
 		return nil, status.Errorf(codes.Unknown, "failed to get artifact: %s", err)
-	}
-
-	// Verify the entity belongs to the correct project
-	if ewp.Entity.ProjectID != projectID {
-		return nil, status.Errorf(codes.NotFound, "artifact not found")
 	}
 
 	// Verify it's an artifact entity
