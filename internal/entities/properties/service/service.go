@@ -181,30 +181,12 @@ func (ps *propertiesService) ReplaceAllProperties(
 	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("replacing all properties")
 
 	if store, ok := qtx.(db.Store); ok {
-		tx, err := store.BeginTransaction()
-		if err != nil {
-			return err
-		}
-		defer func() {
-			_ = store.Rollback(tx)
-		}()
-
-		qtx = store.GetQuerierWithTransaction(tx)
-		if err := qtx.DeleteAllPropertiesForEntity(ctx, entityID); err != nil {
-			return fmt.Errorf("failed to delete properties: %w", err)
-		}
-		if err := ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx); err != nil {
-			return err
-		}
-
-		return store.Commit(tx)
+		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+			return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+		})
 	}
 
-	if err := qtx.DeleteAllPropertiesForEntity(ctx, entityID); err != nil {
-		return fmt.Errorf("failed to delete properties: %w", err)
-	}
-
-	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+	return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
 }
 
 func (ps *propertiesService) SaveAllProperties(
@@ -214,20 +196,20 @@ func (ps *propertiesService) SaveAllProperties(
 	qtx := ps.getStoreOrTransaction(opts)
 
 	if store, ok := qtx.(db.Store); ok {
-		tx, err := store.BeginTransaction()
-		if err != nil {
-			return err
-		}
-		defer func() {
-			_ = store.Rollback(tx)
-		}()
+		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+			return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+		})
+	}
 
-		qtx = store.GetQuerierWithTransaction(tx)
-		if err := ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx); err != nil {
-			return err
-		}
+	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+}
 
-		return store.Commit(tx)
+func (ps *propertiesService) replaceAllPropertiesWithQuerier(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+) error {
+	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
+	if err != nil {
+		return fmt.Errorf("failed to delete properties: %w", err)
 	}
 
 	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)

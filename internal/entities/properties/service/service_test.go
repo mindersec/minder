@@ -114,12 +114,29 @@ type failOnNthUpsertStore struct {
 	err        error
 }
 
-func (f *failOnNthUpsertStore) GetQuerierWithTransaction(tx *sql.Tx) db.ExtendQuerier {
-	return &failOnNthUpsertQuerier{
-		ExtendQuerier: f.Store.GetQuerierWithTransaction(tx),
+func (f *failOnNthUpsertStore) WithTransactionErr(fn func(db.ExtendQuerier) error) error {
+	tx, err := f.BeginTransaction()
+	if err != nil {
+		return err
+	}
+
+	qtx := f.GetQuerierWithTransaction(tx)
+	wrapped := &failOnNthUpsertQuerier{
+		ExtendQuerier: qtx,
 		failOnCall:    f.failOnCall,
 		err:           f.err,
 	}
+
+	defer func() {
+		_ = f.Rollback(tx)
+	}()
+
+	err = fn(wrapped)
+	if err != nil {
+		return err
+	}
+
+	return f.Commit(tx)
 }
 
 func createTestCtx(ctx context.Context, t *testing.T) testCtx {
@@ -1112,14 +1129,12 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockTxQuerier := mockdb.NewMockStore(ctrl)
-			tx := &sql.Tx{}
 
 			mockStore.EXPECT().
-				BeginTransaction().
-				Return(tx, nil)
-			mockStore.EXPECT().
-				GetQuerierWithTransaction(tx).
-				Return(mockTxQuerier)
+				WithTransactionErr(gomock.Any()).
+				DoAndReturn(func(fn func(db.ExtendQuerier) error) error {
+					return fn(mockTxQuerier)
+				})
 			if tt.expectDeleteBeforePut {
 				mockTxQuerier.EXPECT().
 					DeleteAllPropertiesForEntity(ctx, entityID).
@@ -1129,12 +1144,6 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 				UpsertPropertyValueV1(ctx, gomock.Any()).
 				Return(db.Property{}, nil).
 				Times(2)
-			mockStore.EXPECT().
-				Commit(tx).
-				Return(nil)
-			mockStore.EXPECT().
-				Rollback(tx).
-				Return(nil)
 
 			ps := NewPropertiesService(mockStore)
 			err := tt.invoke(ps, ctx, entityID, props, nil)
@@ -1180,8 +1189,8 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 			expectedErr := errors.New("begin transaction failed")
 
 			mockStore.EXPECT().
-				BeginTransaction().
-				Return(nil, expectedErr)
+				WithTransactionErr(gomock.Any()).
+				Return(expectedErr)
 
 			ps := NewPropertiesService(mockStore)
 			err := tt.invoke(ps, ctx, entityID, props, nil)
