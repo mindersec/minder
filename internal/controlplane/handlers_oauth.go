@@ -431,7 +431,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		logger.BusinessRecord(ctx).Project = stateData.ProjectID
 
 		var confErr providers.ErrProviderInvalidConfig
-		_, err = s.ghProviders.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
+		dbProv, err := s.ghProviders.CreateGitHubAppProvider(ctx, *token, stateData, installationID, state)
 		if err != nil {
 			if errors.As(err, &confErr) {
 				return newHttpError(http.StatusBadRequest, "Invalid provider config").SetContents(
@@ -442,6 +442,11 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 					"The provided login token was associated with a different GitHub user.")
 			}
 			return fmt.Errorf("error creating GitHub App provider: %w", err)
+		}
+
+		if dbProv != nil {
+			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			s.publishOrganizationEntityEvent(ctx, dbProv.ID, dbProv.ProjectID, login)
 		}
 
 		if stateData.RedirectUrl.Valid || stateData.EncryptedRedirect.Valid {
@@ -535,7 +540,17 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 	}
 
 	_, err = db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*db.Project, error) {
-		return s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
+		proj, dbProv, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, *userID, installationID)
+		if err != nil {
+			return nil, err
+		}
+		if dbProv != nil && proj != nil {
+			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			// It is generally safe to publish an event from within a transaction, as long
+			// as the event handler evaluates the state matching later.
+			s.publishOrganizationEntityEvent(ctx, dbProv.ID, proj.ID, login)
+		}
+		return proj, nil
 	})
 	return err
 }

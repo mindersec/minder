@@ -322,6 +322,7 @@ const (
 	Entity_ENTITY_PIPELINE_RUN       Entity = 6
 	Entity_ENTITY_TASK_RUN           Entity = 7
 	Entity_ENTITY_BUILD              Entity = 8
+	Entity_ENTITY_ORGANIZATION       Entity = 9
 )
 
 // Enum value maps for Entity.
@@ -336,6 +337,7 @@ var (
 		6: "ENTITY_PIPELINE_RUN",
 		7: "ENTITY_TASK_RUN",
 		8: "ENTITY_BUILD",
+		9: "ENTITY_ORGANIZATION",
 	}
 	Entity_value = map[string]int32{
 		"ENTITY_UNSPECIFIED":        0,
@@ -347,6 +349,7 @@ var (
 		"ENTITY_PIPELINE_RUN":       6,
 		"ENTITY_TASK_RUN":           7,
 		"ENTITY_BUILD":              8,
+		"ENTITY_ORGANIZATION":       9,
 	}
 )
 
@@ -15887,7 +15890,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x1bTARGET_RESOURCE_UNSPECIFIED\x10\x00\x12\x18\n" +
 	"\x14TARGET_RESOURCE_NONE\x10\x01\x12\x18\n" +
 	"\x14TARGET_RESOURCE_USER\x10\x02\x12\x1b\n" +
-	"\x17TARGET_RESOURCE_PROJECT\x10\x03*\xdc\x01\n" +
+	"\x17TARGET_RESOURCE_PROJECT\x10\x03*\xf5\x01\n" +
 	"\x06Entity\x12\x16\n" +
 	"\x12ENTITY_UNSPECIFIED\x10\x00\x12\x17\n" +
 	"\x13ENTITY_REPOSITORIES\x10\x01\x12\x1d\n" +
@@ -15897,7 +15900,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x0eENTITY_RELEASE\x10\x05\x12\x17\n" +
 	"\x13ENTITY_PIPELINE_RUN\x10\x06\x12\x13\n" +
 	"\x0fENTITY_TASK_RUN\x10\a\x12\x10\n" +
-	"\fENTITY_BUILD\x10\b*\xf9\x01\n" +
+	"\fENTITY_BUILD\x10\b\x12\x17\n" +
+	"\x13ENTITY_ORGANIZATION\x10\t*\xf9\x01\n" +
 	"\x14RuleTypeReleasePhase\x12'\n" +
 	"#RULE_TYPE_RELEASE_PHASE_UNSPECIFIED\x10\x00\x12,\n" +
 	"\x1dRULE_TYPE_RELEASE_PHASE_ALPHA\x10\x01\x1a\t\xea\xdc\x14\x05alpha\x12*\n" +

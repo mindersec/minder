@@ -42,7 +42,7 @@ type GitHubProviderService interface {
 	//
 	// Note that this function may return nil, nil if the installation user is not known to Minder.
 	CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID int64,
-		installationID int64) (*db.Project, error)
+		installationID int64) (*db.Project, *db.Provider, error)
 	// ValidateGitHubInstallationId checks if the supplied GitHub token has access to the installation ID
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 	// DeleteGitHubAppInstallation deletes the GitHub App installation and provider from the database.
@@ -170,10 +170,10 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	qtx db.ExtendQuerier,
 	userID int64,
 	installationID int64,
-) (*db.Project, error) {
+) (*db.Project, *db.Provider, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	isOrg := installationOwner.GetType() == TypeGitHubOrganization
@@ -198,22 +198,22 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 			IsOrg: isOrg,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error saving installation ID: %w", err)
+			return nil, nil, fmt.Errorf("error saving installation ID: %w", err)
 		}
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("owner", installationOwner.GetID()).
 		Msg("Creating GitHub App Provider")
 
-	_, err = createGitHubApp(
+	provider, err := createGitHubApp(
 		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github-app": {}}`), nil, sql.NullString{})
 	if err != nil {
-		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
+		return nil, nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
 
 	}
 
-	return project, err
+	return project, &provider, err
 }
 
 // Internal shared implementation between CreateGitHubAppProvider and CreateGitHubAppWithoutInvitation.
