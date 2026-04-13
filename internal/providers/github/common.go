@@ -1052,10 +1052,9 @@ func (c *GitHub) StartCheckRun(
 		}
 		// If error is 403 then it means we are missing permissions
 		if resp != nil && resp.StatusCode == 403 {
-			return nil, fmt.Errorf("missing permissions: check")
 			return nil, ErroNoCheckPermissions
 		}
-		return nil, fmt.Errorf("creating check run: %w", err)
+		return nil, fmt.Errorf("creating check: %w", err)
 	}
 	return run, nil
 }
