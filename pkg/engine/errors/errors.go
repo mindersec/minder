@@ -11,6 +11,7 @@ import (
 	"io"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
@@ -21,6 +22,35 @@ const (
 
 // ErrInternal is an error that occurs when there is an internal error in the minder engine.
 var ErrInternal = errors.New("internal minder error")
+
+// RateLimitError is a custom error type for rate limit errors.
+type RateLimitError struct {
+	Base      error
+	Limit     int64
+	Remaining int64
+	ResetTime time.Time
+}
+
+// Unwrap returns the base error
+func (e *RateLimitError) Unwrap() error {
+	return e.Base
+}
+
+// Error implements the error interface for RateLimitError.
+func (e *RateLimitError) Error() string {
+	return fmt.Sprintf("rate limit exceeded: %v (limit: %d, remaining: %d, reset at: %v)",
+		e.Base, e.Limit, e.Remaining, e.ResetTime)
+}
+
+// NewRateLimitError creates a new rate limit error.
+func NewRateLimitError(base error, limit, remaining int64, resetTime time.Time) error {
+	return &RateLimitError{
+		Base:      base,
+		Limit:     limit,
+		Remaining: remaining,
+		ResetTime: resetTime,
+	}
+}
 
 type limitedWriter struct {
 	w io.Writer
