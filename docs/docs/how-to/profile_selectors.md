@@ -47,7 +47,7 @@ selection:
 Let's break down the example above:
 
 - `entity`: Defines the type of entity you want to filter (`repository`,
-  `artifact`, or `pull_request`). In the case that the `entity` type is omitted,
+  `artifact`, `pull_request`, `release`, `build`, etc.). In the case that the `entity` type is omitted,
   the selector will be applied to all entities.
 - `selector`: The CEL expression that specifies the filtering criteria. In the
   example:
@@ -130,6 +130,21 @@ while the properties are provider-specific and prefixed with the provider name.
 | `github/pull_author_login` | The GitHub login of the author of the pull request | string |
 | `github/repo_name`         | The GitHub repo name (e.g. `stacklok`).            | string |
 | `github/repo_owner`        | The GitHub repo owner (e.g. `minder`).             | string |
+
+## Generic entity selectors
+
+For entities without a dedicated selector (such as `release` or `build`), you can access their properties using the `generic` object in your CEL expressions.
+
+| Field  | Description                                                  | Type   |
+| ------ | ------------------------------------------------------------ | ------ |
+| `name` | The full name of the generic entity, e.g. testorg/testrelease | string |
+
+For example, a selector for a `release` entity might look like:
+
+```yaml
+- entity: release
+  selector: generic.name == 'stacklok/minder/v1.0.0'
+```
 
 ## Entity provider selectors
 

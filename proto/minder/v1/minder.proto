@@ -1885,7 +1885,7 @@ message RuleEvaluationStatus {
     // Because output may be multiple KB, it is only returned
     // if include_outputs is set. Historical evaluations may
     // discard structured output sooner than status results.
-    google.protobuf.Struct output = 21;
+    google.protobuf.Value output = 21;
 }
 
 // EntityTypedId is a message that carries an ID together with a type to uniquely identify an entity
@@ -3639,9 +3639,50 @@ message ListProviderClassesRequest {
     Context context = 1;
 }
 
+message ProviderClassInfo {
+    // class is the provider class identifier.
+    string class = 1 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // display_name is a human-friendly provider class name.
+    string display_name = 2 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // description is a short plaintext summary of the provider class.
+    string description = 3;
+
+    // supported_provider_types is the list of provider traits/interfaces supported by this class.
+    repeated ProviderType supported_provider_types = 4 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // supported_auth_flows is the list of supported authorization flows.
+    repeated AuthorizationFlow supported_auth_flows = 5 [
+        (google.api.field_behavior) = REQUIRED
+    ];
+
+    // supported_entities is the list of entity types supported by this provider class.
+    repeated Entity supported_entities = 6;
+
+    // documentation_url points to provider-specific or generic documentation.
+    string documentation_url = 7;
+
+    reserved 8;
+    reserved "creation_help";
+}
+
 message ListProviderClassesResponse {
-    // provider_classes is the list of provider classes.
+    // provider_classes is the legacy list of provider class names.
+    // Deprecated: use provider_class_infos for rich metadata.
     repeated string provider_classes = 1 [
+        (google.api.field_behavior) = REQUIRED,
+        deprecated = true
+    ];
+
+    // provider_class_infos is the rich metadata for each provider class.
+    repeated ProviderClassInfo provider_class_infos = 2 [
         (google.api.field_behavior) = REQUIRED
     ];
 }
@@ -4023,7 +4064,7 @@ message EvaluationHistoryStatus {
     // Because output may be multiple KB, it is only returned
     // if include_outputs is set. Historical evaluations may
     // discard structured output sooner than status results.
-    google.protobuf.Struct output = 3;
+    google.protobuf.Value output = 3;
 }
 
 message EvaluationHistoryRemediation {

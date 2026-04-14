@@ -839,7 +839,7 @@ func TestListEvaluationHistory(t *testing.T) {
 			service := NewEvaluationHistoryService(pm, withPropertiesServiceBuilder(func(_ db.ExtendQuerier) service.PropertiesService {
 				return propsSvc
 			}))
-			res, err := service.ListEvaluationHistory(ctx, store, tt.cursor, tt.size, tt.filter)
+			res, err := service.ListEvaluationHistory(ctx, store, tt.cursor, tt.size, tt.filter, false)
 			if tt.err {
 				require.Error(t, err)
 				return

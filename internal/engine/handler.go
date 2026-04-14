@@ -43,6 +43,7 @@ type ExecutorEventHandler struct {
 
 	cancels []*context.CancelFunc
 	lock    sync.Mutex
+	closed  bool
 }
 
 // NewExecutorEventHandler creates a new ExecutorEventHandler with
@@ -75,6 +76,8 @@ func NewExecutorEventHandler(
 		<-ctx.Done()
 		eh.lock.Lock()
 		defer eh.lock.Unlock()
+
+		eh.closed = true
 
 		for _, cancel := range eh.cancels {
 			(*cancel)()
@@ -112,6 +115,11 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
 	e.lock.Lock()
+	if e.closed {
+		e.lock.Unlock()
+		shutdownCancel()
+		return nil
+	}
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
 
@@ -128,7 +136,12 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		defer e.wgEntityEventExecution.Done()
 
 		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
-			time.Sleep(ArtifactSignatureWaitPeriod)
+			// Wait for artifact signatures, but allow early exit on shutdown
+			select {
+			case <-time.After(ArtifactSignatureWaitPeriod):
+			case <-msgCtx.Done():
+				// stop waiting early, but continue execution
+			}
 		}
 
 		// use configurable timeout

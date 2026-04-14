@@ -166,3 +166,40 @@ func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 	//Ensure execution timed out early
 	require.Less(t, elapsed, 3*time.Second, "execution did not timeout as expected")
 }
+
+func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	executor := mockengine.NewMockExecutor(ctrl)
+
+	executor.EXPECT().
+		EvalEntityEvent(gomock.Any(), gomock.Any()).
+		Times(0)
+
+	handler := engine.NewExecutorEventHandler(
+		ctx,
+		nil,
+		[]message.HandlerMiddleware{},
+		executor,
+	)
+
+	// Trigger shutdown
+	cancel()
+
+	time.Sleep(10 * time.Millisecond)
+	msg := message.NewMessage("1", []byte("{}"))
+
+	// Call handler AFTER shutdown
+	err := handler.HandleEntityEvent(msg)
+	require.NoError(t, err)
+
+	// Give time in case something incorrectly executes
+	time.Sleep(50 * time.Millisecond)
+
+	handler.Wait()
+}

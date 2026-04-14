@@ -166,13 +166,23 @@ func (s *Server) ListProviders(ctx context.Context, req *minderv1.ListProvidersR
 }
 
 // ListProviderClasses lists the provider classes available in the system.
-func (*Server) ListProviderClasses(
+func (s *Server) ListProviderClasses(
 	_ context.Context, _ *minderv1.ListProviderClassesRequest,
 ) (*minderv1.ListProviderClassesResponse, error) {
-	// Note: New provider classes should be added to the providers package.
-	classes := providers.ListProviderClasses()
+	classes := s.providerManager.ListSupportedClasses()
+	legacyClasses := make([]string, 0, len(classes))
+	for _, class := range classes {
+		legacyClasses = append(legacyClasses, string(class))
+	}
+
+	infos, err := s.providerManager.ListProviderClassInfo()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "error listing provider class metadata: %v", err)
+	}
+
 	return &minderv1.ListProviderClassesResponse{
-		ProviderClasses: classes,
+		ProviderClasses:    legacyClasses,
+		ProviderClassInfos: infos,
 	}, nil
 }
 

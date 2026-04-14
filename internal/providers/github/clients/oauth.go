@@ -25,19 +25,11 @@ import (
 // Github is the string that represents the GitHubOAuth provider
 const Github = "github"
 
-// OAuthImplements is the list of provider types that the GitHubOAuth provider implements
-var OAuthImplements = []db.ProviderType{
-	db.ProviderTypeGithub,
-	db.ProviderTypeGit,
-	db.ProviderTypeRest,
-	db.ProviderTypeRepoLister,
-}
+// OAuthImplements is the list of provider types that the GitHub OAuth provider implements.
+var OAuthImplements = github.OAuthImplements
 
-// OAuthAuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
-var OAuthAuthorizationFlows = []db.AuthorizationFlow{
-	db.AuthorizationFlowUserInput,
-	db.AuthorizationFlowOauth2AuthorizationCodeFlow,
-}
+// OAuthAuthorizationFlows is the list of authorization flows that the GitHub OAuth provider supports.
+var OAuthAuthorizationFlows = github.OAuthAuthorizationFlows
 
 // GitHubOAuthDelegate is the struct that contains the GitHub access token specifc operations
 type GitHubOAuthDelegate struct {
@@ -88,6 +80,7 @@ func NewRestClient(
 		ghClient, // use the same client for listing packages and all other operations
 		restClientCache,
 		delegate,
+		db.ProviderClassGithub,
 		providerCfg,
 		whcfg,
 		propertyFetchers,

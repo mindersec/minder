@@ -143,7 +143,7 @@ func formatAndDisplayOutput(
 		}
 		cmd.Println(out)
 	case app.Table:
-		table := profile.NewProfileStatusTable()
+		table := profile.NewProfileStatusTable(cmd.OutOrStdout())
 		profile.RenderProfileStatusTable(resp.GetProfileStatus(), table, emoji)
 		table.Render()
 	}

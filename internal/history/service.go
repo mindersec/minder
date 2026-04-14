@@ -48,6 +48,7 @@ type EvaluationHistoryService interface {
 		cursor *ListEvaluationCursor,
 		size uint32,
 		filter ListEvaluationFilter,
+		includeOutputs bool,
 	) (*ListEvaluationHistoryResult, error)
 }
 
@@ -201,9 +202,11 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 	cursor *ListEvaluationCursor,
 	size uint32,
 	filter ListEvaluationFilter,
+	includeOutputs bool,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{
-		Size: int64(size),
+		Size:           int64(size),
+		IncludeOutputs: includeOutputs,
 	}
 
 	if err := toSQLCursor(cursor, &params); err != nil {

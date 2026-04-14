@@ -21,8 +21,6 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/db"
-	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/rand"
@@ -107,7 +105,7 @@ func EnrollProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, 
 
 	// the token only applies to the old flow
 	// TODO: allow for token to be passed in if the provider allows it, don't hardcode
-	userFlow, err := supportsToken(provider)
+	userFlow, err := supportsToken(ctx, providerClient, provider, project)
 	if err != nil {
 		return cli.MessageAndError("Error checking provider support", err)
 	}
@@ -345,12 +343,31 @@ func providerConfigFromArg(configSource string, dashReader io.Reader) (*structpb
 	return structpb.NewStruct(config)
 }
 
-func supportsToken(providerClass string) (bool, error) {
-	providerDef, err := providers.GetProviderClassDefinition(providerClass)
+func supportsToken(
+	ctx context.Context,
+	providerClient minderv1.ProvidersServiceClient,
+	providerClass string,
+	project string,
+) (bool, error) {
+	resp, err := providerClient.ListProviderClasses(ctx, &minderv1.ListProviderClassesRequest{
+		Context: &minderv1.Context{Project: &project},
+	})
 	if err != nil {
 		return false, err
 	}
-	return slices.Contains(providerDef.AuthorizationFlows, db.AuthorizationFlowUserInput), nil
+
+	for _, info := range resp.GetProviderClassInfos() {
+		if info.GetClass() != providerClass {
+			continue
+		}
+
+		return slices.Contains(
+			info.GetSupportedAuthFlows(),
+			minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT,
+		), nil
+	}
+
+	return false, fmt.Errorf("provider class %s not supported", providerClass)
 }
 
 func init() {

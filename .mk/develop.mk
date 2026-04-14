@@ -84,3 +84,6 @@ lint-fix: ## fix all linting issues which can be automatically fixed
 .PHONY: generate-tools
 generate-tools: ## go generate tools
 	(cd ./tools && go generate -tags tools ./tools.go)
+
+## check: Run all checks (gen, lint, test, build)
+check: gen lint test build
