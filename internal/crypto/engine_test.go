@@ -4,6 +4,8 @@
 package crypto
 
 import (
+	"encoding/base64"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,9 +16,13 @@ import (
 	"github.com/mindersec/minder/pkg/config/server"
 )
 
-//Test both the algorithm and the engine in one test suite
-// TODO: if we add additional algorithms in future, we should split up testing
+var config = &server.Config{
+	Auth: server.AuthConfig{
+		TokenKey: "./testdata/test_encryption_key",
+	},
+}
 
+// Test both the algorithm and the engine in one test suite
 func TestNewFromCryptoConfig(t *testing.T) {
 	t.Parallel()
 
@@ -211,8 +217,121 @@ func TestDecryptFailedDecryption(t *testing.T) {
 	require.ErrorIs(t, err, ErrDecrypt)
 }
 
-var config = &server.Config{
-	Auth: server.AuthConfig{
-		TokenKey: "./testdata/test_encryption_key",
-	},
+func TestEngineGeneratesUniqueSalts(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+
+	const sampleData = "Super Secret Password"
+
+	encrypted1, err := engine.EncryptString(sampleData)
+	require.NoError(t, err)
+
+	encrypted2, err := engine.EncryptString(sampleData)
+	require.NoError(t, err)
+
+	assert.NotEqual(t, encrypted1.EncodedData, encrypted2.EncodedData)
+	assert.NotEqual(t, encrypted1.Salt, encrypted2.Salt)
+
+	decrypted1, err := engine.DecryptString(encrypted1)
+	require.NoError(t, err)
+	assert.Equal(t, sampleData, decrypted1)
+}
+
+func TestEngineRoutesLegacyCFBDecryption(t *testing.T) {
+	t.Parallel()
+
+	engine, err := NewEngineFromConfig(config)
+	require.NoError(t, err)
+
+	const sampleData = "Legacy CFB Secret"
+	cfbAlgo := &algorithms.AES256CFBAlgorithm{}
+
+	keyBytes, err := os.ReadFile(config.Auth.TokenKey)
+	require.NoError(t, err)
+
+	testSalt := []byte("1234567890123456")
+	rawCiphertext, err := cfbAlgo.Encrypt([]byte(sampleData), keyBytes, testSalt)
+	require.NoError(t, err)
+
+	legacyPayload := EncryptedData{
+		Algorithm:   algorithms.Aes256Cfb,
+		EncodedData: base64.StdEncoding.EncodeToString(rawCiphertext),
+		KeyVersion:  "test_encryption_key",
+		Salt:        base64.StdEncoding.EncodeToString(testSalt),
+	}
+
+	decrypted, err := engine.DecryptString(legacyPayload)
+	require.NoError(t, err)
+	assert.Equal(t, sampleData, decrypted)
+}
+
+func TestGCM_NoDoubleStorage(t *testing.T) {
+	t.Parallel()
+
+	algo := &algorithms.AES256GCMAlgorithm{}
+	validKey := []byte("YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=")
+	salt := []byte("1234567890123456")
+	plaintext := []byte("hello")
+
+	ciphertext, err := algo.Encrypt(plaintext, validKey, salt)
+	require.NoError(t, err)
+
+	// Verify nonce isn't prepended (Length = plaintext + GCM Tag)
+	assert.Equal(t, len(plaintext)+16, len(ciphertext))
+}
+
+func TestGCM_SafelyHandlesKeystoreNewlines(t *testing.T) {
+	t.Parallel()
+
+	algo := &algorithms.AES256GCMAlgorithm{}
+	dirtyKey := []byte("YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=\n")
+	salt := []byte("1234567890123456")
+	plaintext := []byte("testing newlines")
+
+	ciphertext, err := algo.Encrypt(plaintext, dirtyKey, salt)
+	require.NoError(t, err)
+
+	decrypted, err := algo.Decrypt(ciphertext, dirtyKey, salt)
+	require.NoError(t, err)
+	assert.Equal(t, plaintext, decrypted)
+}
+
+func TestCFB_LegacySaltFallback(t *testing.T) {
+	t.Parallel()
+
+	algo := &algorithms.AES256CFBAlgorithm{}
+	key := []byte("my_raw_password_string\n")
+	plaintext := []byte("legacy fallback test")
+
+	var emptySalt []byte
+	ciphertext, err := algo.Encrypt(plaintext, key, emptySalt)
+	require.NoError(t, err)
+
+	decrypted, err := algo.Decrypt(ciphertext, key, emptySalt)
+	require.NoError(t, err)
+	assert.Equal(t, plaintext, decrypted)
+}
+
+func TestCFB_DynamicSalt(t *testing.T) {
+	t.Parallel()
+
+	algo := &algorithms.AES256CFBAlgorithm{}
+
+	key := []byte("a_very_secure_passphrase\n")
+	salt := []byte("dynamic_salt_123")
+	plaintext := []byte("testing dynamic salt with cfb")
+
+	ciphertext, err := algo.Encrypt(plaintext, key, salt)
+	require.NoError(t, err)
+
+	decrypted, err := algo.Decrypt(ciphertext, key, salt)
+	require.NoError(t, err)
+
+	assert.Equal(t, string(plaintext), string(decrypted), "CFB should successfully encrypt/decrypt using a dynamic salt")
+
+	wrongSalt := []byte("wrong_salt_45678")
+	wrongDecrypted, _ := algo.Decrypt(ciphertext, key, wrongSalt)
+	assert.NotEqual(t, string(plaintext), string(wrongDecrypted), "Decryption with the wrong salt should produce garbage data")
 }
