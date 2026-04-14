@@ -13,19 +13,21 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
+const aes256KeySize = 32
+
 // AES256CFBAlgorithm implements the AES-256-CFB algorithm
 type AES256CFBAlgorithm struct{}
 
-// Our current implementation of AES-256-CFB uses a fixed salt.
-// Since we are planning to move to AES-256-GCM, leave this hardcoded here.
+// legacySalt is used ONLY for decrypting old secrets that were encrypted before
+// the dynamic salt implementation.
 var legacySalt = []byte("somesalt")
 
 // Encrypt encrypts a row of data.
-func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
+func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte, salt []byte) ([]byte, error) {
 	if len(plaintext) > maxPlaintextSize {
 		return nil, ErrExceedsMaxSize
 	}
-	block, err := aes.NewCipher(a.deriveKey(key))
+	block, err := aes.NewCipher(a.deriveKey(key, salt))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
@@ -45,8 +47,8 @@ func (a *AES256CFBAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, erro
 }
 
 // Decrypt decrypts a row of data.
-func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(a.deriveKey(key))
+func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte) ([]byte, error) {
+	block, err := aes.NewCipher(a.deriveKey(key, salt))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
@@ -67,6 +69,11 @@ func (a *AES256CFBAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, err
 }
 
 // Function to derive a key from a passphrase using Argon2
-func (*AES256CFBAlgorithm) deriveKey(key []byte) []byte {
-	return argon2.IDKey(key, legacySalt, 1, 64*1024, 4, 32)
+func (*AES256CFBAlgorithm) deriveKey(key []byte, salt []byte) []byte {
+	activeSalt := salt
+	// If no salt was provided (e.g. legacy data) fallback to the hardcoded salt
+	if len(activeSalt) == 0 {
+		activeSalt = legacySalt
+	}
+	return argon2.IDKey(key, activeSalt, 1, 64*1024, 4, aes256KeySize)
 }

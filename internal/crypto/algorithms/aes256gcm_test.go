@@ -11,6 +11,15 @@ import (
 	"github.com/mindersec/minder/internal/crypto/algorithms"
 )
 
+var (
+	key = []byte("2hcGLimy2i7LAknby2AFqYx87CaaCAtjxDiorRxYq8Q=")
+	gcm = algorithms.AES256GCMAlgorithm{}
+	// GCM expects a 12-byte nonce/salt
+	validSalt = []byte("123456789012")
+)
+
+const plaintext = "Hello world"
+
 func TestGCMEncrypt(t *testing.T) {
 	t.Parallel()
 
@@ -35,7 +44,7 @@ func TestGCMEncrypt(t *testing.T) {
 		{
 			Name:          "GCM Encrypt rejects oversized plaintext",
 			Key:           key,
-			Plaintext:     make([]byte, 33*1024*1024), // 33MiB
+			Plaintext:     make([]byte, 33*1024*1024), // 33MiB (Limit is 32MiB)
 			ExpectedError: algorithms.ErrExceedsMaxSize.Error(),
 		},
 		{
@@ -49,11 +58,11 @@ func TestGCMEncrypt(t *testing.T) {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := gcm.Encrypt(scenario.Plaintext, scenario.Key)
+			result, err := gcm.Encrypt(scenario.Plaintext, scenario.Key, validSalt)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 				// validate by decrypting
-				decrypted, err := gcm.Decrypt(result, key)
+				decrypted, err := gcm.Decrypt(result, scenario.Key, validSalt)
 				require.NoError(t, err)
 				require.Equal(t, scenario.Plaintext, decrypted)
 			} else {
@@ -63,7 +72,6 @@ func TestGCMEncrypt(t *testing.T) {
 	}
 }
 
-// This doesn't test decryption - that is tested in the happy path of the encrypt test
 func TestGCMDecrypt(t *testing.T) {
 	t.Parallel()
 
@@ -88,7 +96,7 @@ func TestGCMDecrypt(t *testing.T) {
 		{
 			Name:          "GCM Decrypt rejects malformed ciphertext",
 			Key:           key,
-			Ciphertext:    make([]byte, 32), // 33MiB
+			Ciphertext:    make([]byte, 32),
 			ExpectedError: "message authentication failed",
 		},
 		{
@@ -103,15 +111,8 @@ func TestGCMDecrypt(t *testing.T) {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := gcm.Decrypt(scenario.Ciphertext, scenario.Key)
+			_, err := gcm.Decrypt(scenario.Ciphertext, scenario.Key, validSalt)
 			require.ErrorContains(t, err, scenario.ExpectedError)
 		})
 	}
 }
-
-var (
-	key = []byte("2hcGLimy2i7LAknby2AFqYx87CaaCAtjxDiorRxYq8Q=")
-	gcm = algorithms.AES256GCMAlgorithm{}
-)
-
-const plaintext = "Hello world"

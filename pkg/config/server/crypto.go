@@ -5,9 +5,10 @@ package server
 
 // CryptoConfig is the configuration for the crypto engine
 type CryptoConfig struct {
-	KeyStore KeyStoreConfig `mapstructure:"keystore"`
-	Default  DefaultCrypto  `mapstructure:"default"`
-	Fallback FallbackCrypto `mapstructure:"fallback"`
+	KeyStore            KeyStoreConfig `mapstructure:"keystore"`
+	Default             DefaultCrypto  `mapstructure:"default"`
+	Fallback            FallbackCrypto `mapstructure:"fallback"`
+	SupportedAlgorithms []string       `mapstructure:"supported_algorithms"`
 }
 
 // KeyStoreConfig specifies the type of keystore to use and its configuration

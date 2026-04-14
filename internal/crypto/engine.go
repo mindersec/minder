@@ -5,6 +5,7 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -56,7 +57,6 @@ const (
 )
 
 // NewEngineFromConfig creates a new crypto engine from the service config
-// TODO: modify to support multiple keys/algorithms
 func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 	// Use fallback if the new config structure is missing
 	var cryptoCfg serverconfig.CryptoConfig
@@ -74,20 +74,32 @@ func NewEngineFromConfig(config *serverconfig.Config) (Engine, error) {
 
 	keystore, err := keystores.NewKeyStoreFromConfig(cryptoCfg)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create keystore: %s", err)
+		return nil, fmt.Errorf("unable to create keystore: %w", err)
 	}
 
-	// Instantiate all the algorithms we need
+	// Ensure critical defaults are always loaded, plus any defined in the config.
 	algoTypes := []algorithms.Type{
 		DefaultAlgorithm,
 		FallbackAlgorithm,
 	}
 
-	supportedAlgorithms := make(algorithmsByName, len(algoTypes))
+	for _, algoStr := range cryptoCfg.SupportedAlgorithms {
+		algoTypes = append(algoTypes, algorithms.Type(algoStr))
+	}
+
+	// Assuming cryptoCfg.SupportedAlgorithms is added to serverconfig.
+	// If not, this loop safely defaults to the base types without breaking.
+	// algoTypes = append(algoTypes, cryptoCfg.SupportedAlgorithms...)
+	supportedAlgorithms := make(algorithmsByName)
 	for _, algoType := range algoTypes {
+		// Prevent duplicate instantiation
+		if _, exists := supportedAlgorithms[algoType]; exists {
+			continue
+		}
+
 		algorithm, err := algorithms.NewFromType(algoType)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to instantiate algorithm %s: %w", algoType, err)
 		}
 		supportedAlgorithms[algoType] = algorithm
 	}
@@ -159,17 +171,22 @@ func (e *engine) encrypt(plaintext []byte) (EncryptedData, error) {
 		return EncryptedData{}, fmt.Errorf("unable to find preferred key with ID: %s", e.defaultKeyID)
 	}
 
-	encrypted, err := algorithm.Encrypt(plaintext, key)
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return EncryptedData{}, errors.Join(ErrEncrypt, fmt.Errorf("failed to generate salt: %w", err))
+	}
+
+	// Pass the salt into the encryption algorithm
+	encrypted, err := algorithm.Encrypt(plaintext, key, salt)
 	if err != nil {
 		return EncryptedData{}, errors.Join(ErrEncrypt, err)
 	}
 
-	encoded := base64.StdEncoding.EncodeToString(encrypted)
-	// TODO: Allow salt to be randomly generated per secret.
 	return EncryptedData{
 		Algorithm:   e.defaultAlgorithm,
-		EncodedData: encoded,
+		EncodedData: base64.StdEncoding.EncodeToString(encrypted),
 		KeyVersion:  e.defaultKeyID,
+		Salt:        base64.StdEncoding.EncodeToString(salt),
 	}, nil
 }
 
@@ -180,7 +197,7 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 
 	algorithm, ok := e.supportedAlgorithms[data.Algorithm]
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, e.defaultAlgorithm)
+		return nil, fmt.Errorf("%w: %s", algorithms.ErrUnknownAlgorithm, data.Algorithm)
 	}
 
 	key, err := e.keystore.GetKey(data.KeyVersion)
@@ -195,11 +212,20 @@ func (e *engine) decrypt(data EncryptedData) ([]byte, error) {
 		return nil, fmt.Errorf("error decoding secret: %w", err)
 	}
 
-	// decrypt the data
-	result, err := algorithm.Decrypt(encrypted, key)
+	// Decode the salt if it exists (legacy data will have an empty salt string)
+	var salt []byte
+	if data.Salt != "" {
+		salt, err = base64.StdEncoding.DecodeString(data.Salt)
+		if err != nil {
+			return nil, fmt.Errorf("error decoding salt: %w", err)
+		}
+	}
+
+	result, err := algorithm.Decrypt(encrypted, key, salt)
 	if err != nil {
 		return nil, errors.Join(ErrDecrypt, err)
 	}
+
 	return result, nil
 }
 

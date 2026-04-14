@@ -37,11 +37,14 @@ func TestCFBEncrypt(t *testing.T) {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := cfb.Encrypt(scenario.Plaintext, scenario.Key)
+			// Added a dummy salt to satisfy the updated interface
+			dummySalt := []byte("test-salt")
+
+			result, err := cfb.Encrypt(scenario.Plaintext, scenario.Key, dummySalt)
 			if scenario.ExpectedError == "" {
 				require.NoError(t, err)
 				// validate by decrypting
-				decrypted, err := cfb.Decrypt(result, key)
+				decrypted, err := cfb.Decrypt(result, key, dummySalt)
 				require.NoError(t, err)
 				require.Equal(t, scenario.Plaintext, decrypted)
 			} else {
@@ -79,7 +82,10 @@ func TestCFBDecrypt(t *testing.T) {
 		t.Run(scenario.Name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := cfb.Decrypt(scenario.Ciphertext, scenario.Key)
+			// Added a dummy salt to satisfy the updated interface
+			dummySalt := []byte("test-salt")
+
+			_, err := cfb.Decrypt(scenario.Ciphertext, scenario.Key, dummySalt)
 			require.ErrorContains(t, err, scenario.ExpectedError)
 		})
 	}

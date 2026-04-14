@@ -18,20 +18,19 @@ package algorithms
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
+	"strings"
 )
 
-// AES256GCMAlgorithm provides symmetric authenticated encryption using 256-bit AES-GCM with a random nonce.
+// AES256GCMAlgorithm provides symmetric authenticated encryption using 256-bit AES-GCM.
 type AES256GCMAlgorithm struct{}
 
 // Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Output takes the
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func (*AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error) {
+func (*AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte, salt []byte) ([]byte, error) {
 	if len(plaintext) > maxPlaintextSize {
 		return nil, ErrExceedsMaxSize
 	}
@@ -41,63 +40,71 @@ func (*AES256GCMAlgorithm) Encrypt(plaintext []byte, key []byte) ([]byte, error)
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(decodedKey[:])
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
-	nonce := make([]byte, gcm.NonceSize())
-	_, err = io.ReadFull(rand.Reader, nonce)
-	if err != nil {
-		return nil, err
+	nonceSize := gcm.NonceSize()
+	if len(salt) < nonceSize {
+		return nil, fmt.Errorf("provided salt is too short for GCM nonce (need %d bytes)", nonceSize)
 	}
+	nonce := salt[:nonceSize]
 
-	return gcm.Seal(nonce, nonce, plaintext, nil), nil
+	// The salt is already being saved in the database by engine.go.
+	// Seal prepends the nonce to the ciphertext
+	return gcm.Seal(nil, nonce, plaintext, nil), nil
 }
 
 // Decrypt decrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Expects input
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func (*AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+func (*AES256GCMAlgorithm) Decrypt(ciphertext []byte, key []byte, salt []byte) ([]byte, error) {
 	decodedKey, err := decodeKey(key)
 	if err != nil {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(decodedKey[:])
+	block, err := aes.NewCipher(decodedKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create cipher: %w", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
 	}
 
-	if len(ciphertext) < gcm.NonceSize() {
+	nonceSize := gcm.NonceSize()
+	if len(salt) < nonceSize {
+		return nil, fmt.Errorf("provided salt is too short for GCM decryption (need %d bytes)", nonceSize)
+	}
+	nonce := salt[:nonceSize]
+
+	if len(ciphertext) < gcm.Overhead() {
 		return nil, errors.New("malformed ciphertext")
 	}
 
-	return gcm.Open(nil,
-		ciphertext[:gcm.NonceSize()],
-		ciphertext[gcm.NonceSize():],
-		nil,
-	)
+	return gcm.Open(nil, nonce, ciphertext, nil)
 }
 
 func decodeKey(key []byte) ([]byte, error) {
-	// Minder reads its keys as base64 encoded strings. Decode the string before
-	// using it as the key. Ideally, this would be done by the keystore, but there
-	// are some interesting quirks with how CFB uses the keys (see the comment
-	// in keystore.go) so I am doing it here for now.
-	decodedKey, err := base64.StdEncoding.DecodeString(string(key))
+	cleanKey := strings.TrimSpace(string(key))
+
+	decodedKey, err := base64.StdEncoding.DecodeString(cleanKey)
 	if err != nil {
 		return nil, fmt.Errorf("unable to base64 decode the encryption key: %w", err)
 	}
+
+	// FIX: Safety check to ensure AES-256 gets exactly 32 bytes
+	if len(decodedKey) != 32 {
+		return nil, fmt.Errorf("invalid key size: expected 32 bytes, got %d", len(decodedKey))
+	}
+
 	return decodedKey, nil
 }

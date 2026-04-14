@@ -20,6 +20,8 @@ type EncryptedData struct {
 	// An identifier which specifies the key used.
 	// Used to handle multiple keys during key rotation.
 	KeyVersion string
+	// Salt used during encryption to ensure non-deterministic ciphertexts.
+	Salt string `json:"salt,omitempty"`
 }
 
 // Serialize converts the contents to JSON.
@@ -36,6 +38,7 @@ func NewBackwardsCompatibleEncryptedData(encryptedData string) EncryptedData {
 		Algorithm:   algorithms.Aes256Cfb,
 		EncodedData: encryptedData,
 		KeyVersion:  "",
+		Salt:        "",
 	}
 }
 
