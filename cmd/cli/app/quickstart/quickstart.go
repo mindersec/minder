@@ -12,6 +12,8 @@ import (
 	"os"
 	"strings"
 
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -23,7 +25,6 @@ import (
 	"github.com/mindersec/minder/cmd/cli/app/profile"
 	minderprov "github.com/mindersec/minder/cmd/cli/app/provider"
 	"github.com/mindersec/minder/cmd/cli/app/repo"
-	internalrepo "github.com/mindersec/minder/cmd/cli/internal/repo"
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -329,7 +330,7 @@ func loadCatalogFromRepo(
 	registeredRepos []string,
 	repoURL string,
 ) error {
-	catalogRepo, err := internalrepo.CloneInMemory(repoURL)
+	catalogRepo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{URL: repoURL})
 	if err != nil {
 		return fmt.Errorf("failed to clone catalog repository: %w", err)
 	}
