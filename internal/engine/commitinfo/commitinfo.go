@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
+// SPDX-License-Identifier: Apache-2.0
+
 // Package commitinfo provides utilities for extracting and normalizing
 // pull request commit metadata into a provider-agnostic structure.
 //
