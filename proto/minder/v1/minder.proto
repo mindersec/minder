@@ -1274,12 +1274,15 @@ message UpstreamRepositoryRef {
     // This is only set on output, and is ignored on input.
     int64 repo_id = 3 [
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE, // Given it's ignored on input, we can ignore empty values
-        (buf.validate.field).int64 = { gte: 1 }
+        (buf.validate.field).int64 = { gte: 1 },
+        (google.api.field_behavior) = OUTPUT_ONLY
     ];
     Context context = 4;
     // True if the repository is already registered in Minder.
     // This is only set on output, and is ignored on input.
-    bool registered = 5;
+    bool registered = 5 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 }
 
 // Repository API objects. This is only used in responses.
@@ -2580,7 +2583,8 @@ message RuleType {
     // id is the id of the rule type.
     // This is mostly optional and is set by the server.
     optional string id = 1 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
     // name is the name of the rule type.
@@ -2980,7 +2984,8 @@ message Profile {
     // id is the id of the profile.
     // This is optional and is set by the system.
     optional string id = 2 [
-        (buf.validate.field).string = {uuid: true}
+        (buf.validate.field).string = {uuid: true},
+        (google.api.field_behavior) = OUTPUT_ONLY
     ];
 
     // name is the name of the profile instance.
@@ -3728,13 +3733,16 @@ message GitHubAppParams {
     // The GitHub organization slug where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
-    string organization = 2;
+    string organization = 2 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
     // The GitHub organization ID where the app is installed.  This is an
     // output-only parameter, and is validated on input if set (i.e. the value
     // must be either empty or match the org of the installation_id).
     int64 organization_id = 3 [
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
-        (buf.validate.field).int64 = {gt: 0}
+        (buf.validate.field).int64 = {gt: 0},
+        (google.api.field_behavior) = OUTPUT_ONLY
     ];
 }
 
@@ -3793,7 +3801,9 @@ message Provider {
     ];
     // project is the project where the provider is.  This is ignored on input
     // in favor of the context field in CreateProviderRequest.
-    string project = 2;
+    string project = 2 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
     // version is the version of the provider.
     // if unset, "v1" is assumed.
     string version = 3 [
@@ -3817,7 +3827,9 @@ message Provider {
 
     // credentials_state is the state of the credentials for the provider.
     // This is an output-only field. It may be: "set", "unset", "not_applicable".
-    string credentials_state = 9;
+    string credentials_state = 9 [
+        (google.api.field_behavior) = OUTPUT_ONLY
+    ];
 
     // id is the unique identifier of the provider.
     string id = 10 [
