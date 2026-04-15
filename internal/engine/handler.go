@@ -119,6 +119,31 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	e.wgEntityEventExecution.Add(1)
 	go func() {
 		defer e.wgEntityEventExecution.Done()
+
+		// Ensure cancel function is cleaned up even if panic occurs.
+		// This guarantees the lifecycle of cancel functions is reliable
+		// and prevents stale references from accumulating in the cancels slice.
+		defer func() {
+			if panicErr := recover(); panicErr != nil {
+				// Log panic with context but ensure cleanup completes
+				// Use msgCtx as it's available at defer time
+				zerolog.Ctx(msgCtx).Error().
+					Any("panic", panicErr).
+					Str("project", inf.ProjectID.String()).
+					Str("provider_id", inf.ProviderID.String()).
+					Str("entity", inf.Type.String()).
+					Str("entity_id", inf.EntityID.String()).
+					Msg("panic occurred during entity event evaluation")
+			}
+
+			// Cleanup is guaranteed to execute even if panic occurred above
+			e.lock.Lock()
+			e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
+				return cf == &shutdownCancel
+			})
+			e.lock.Unlock()
+		}()
+
 		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
 			// Wait for artifact signatures, but allow early exit on shutdown
 			select {
@@ -130,13 +155,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
 		defer cancel()
-		defer func() {
-			e.lock.Lock()
-			e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
-				return cf == &shutdownCancel
-			})
-			e.lock.Unlock()
-		}()
 
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
