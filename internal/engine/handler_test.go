@@ -151,3 +151,51 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 
 	handler.Wait()
 }
+
+func TestExecutorEventHandler_CleanupOnPanic(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	repositoryID := uuid.New()
+	executionID := uuid.New()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	eiw := entities.NewEntityInfoWrapper().
+		WithProviderID(providerID).
+		WithProjectID(projectID).
+		WithRepository(&minderv1.Repository{
+			Name:     "test",
+			RepoId:   123,
+			CloneUrl: "github.com/foo/bar.git",
+		}).WithID(repositoryID).
+		WithExecutionID(executionID)
+
+	executor := mockengine.NewMockExecutor(ctrl)
+	// Make the executor panic to test panic recovery and cleanup
+	executor.EXPECT().
+		EvalEntityEvent(gomock.Any(), gomock.Eq(eiw)).
+		Do(func(context.Context, *entities.EntityInfoWrapper) {
+			panic("test panic in executor")
+		})
+
+	handler := engine.NewExecutorEventHandler(
+		ctx,
+		nil,
+		[]message.HandlerMiddleware{},
+		executor,
+	)
+
+	msg, err := eiw.BuildMessage()
+	require.NoError(t, err, "expected no error building message")
+	require.NoError(t, handler.HandleEntityEvent(msg), "expected no error from HandleEntityEvent")
+
+	// Give time for the goroutine to execute, panic, recover, and cleanup
+	time.Sleep(100 * time.Millisecond)
+	handler.Wait()
+}
