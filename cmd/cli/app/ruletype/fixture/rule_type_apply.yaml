@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: rule-type
+name: applied_rule
+context:
+  project: 00000000-0000-0000-0000-000000000000
+description: 'A minimal test rule type.'
+displayName: 'Applied Rule'
+releasePhase: alpha
+severity:
+  value: low
+def:
+  inEntity: repository
+
+  # How to gather data (Minimal REST example)
+  ingest:
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}'
+      parse: 'json'
+
+  # How to evaluate the data (Minimal Rego example that always passes)
+  eval:
+    type: rego
+    rego:
+      type: 'deny-by-default'
+      def: |
+        package minder
+
+        default allow := false
+
+        allow { 
+            true 
+        }
