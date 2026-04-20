@@ -26,6 +26,7 @@ import (
 	mock_ratecache "github.com/mindersec/minder/internal/providers/ratecache/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	config "github.com/mindersec/minder/pkg/config/server"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -120,7 +121,7 @@ func TestWaitForRateLimitReset(t *testing.T) {
 				).Return()
 			},
 			wantErr:     true,
-			expectedErr: &github.RateLimitError{},
+			expectedErr: &engerrors.RateLimitError{Base: &github.RateLimitError{}},
 		},
 		{
 			name: "abuse rate limit error with retry after under max wait",
@@ -817,7 +818,7 @@ func TestCreateHook(t *testing.T) {
 				headers := make(http.Header)
 				headers.Set("X-RateLimit-Limit", "60")
 				headers.Set("X-RateLimit-Remaining", "0")
-				headers.Set("X-RateLimit-Reset", "1632182400")
+				headers.Set("X-RateLimit-Reset", fmt.Sprint(time.Now().Add(1*time.Hour).Unix()))
 				headers.Set("Content-Type", "application/json; charset=utf-8")
 
 				client := &http.Client{
@@ -853,7 +854,7 @@ func TestCreateHook(t *testing.T) {
 				).AnyTimes()
 			},
 			wantErr:     true,
-			expectedErr: &github.RateLimitError{},
+			expectedErr: &engerrors.RateLimitError{Base: &github.RateLimitError{}},
 		},
 	}
 
