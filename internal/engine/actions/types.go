@@ -5,12 +5,10 @@ package actions
 
 import "encoding/json"
 
-// RemediationStatus represents a high-level remediation state, decoupled
-// from database-specific types.
+// RemediationStatus represents remediation state.
 type RemediationStatus string
 
-// RemediationStatus* constants mirror the remediation status lifecycle used
-// for actions while remaining decoupled from database-specific types.
+// RemediationStatus constants represent remediation states.
 const (
 	RemediationStatusSuccess      RemediationStatus = "success"
 	RemediationStatusFailure      RemediationStatus = "failure"
@@ -20,12 +18,10 @@ const (
 	RemediationStatusPending      RemediationStatus = "pending"
 )
 
-// AlertStatus represents a high-level alert state, decoupled from
-// database-specific types.
+// AlertStatus represents alert state.
 type AlertStatus string
 
-// AlertStatus* constants mirror the alert status lifecycle used for actions
-// while remaining decoupled from database-specific types.
+// AlertStatus constants represent alert states.
 const (
 	AlertStatusOn           AlertStatus = "on"
 	AlertStatusOff          AlertStatus = "off"
@@ -34,12 +30,10 @@ const (
 	AlertStatusNotAvailable AlertStatus = "not_available"
 )
 
-// EvalStatus represents the normalized evaluation status derived from
-// rule evaluation errors.
+// EvalStatus represents evaluation status.
 type EvalStatus string
 
-// EvalStatus* constants represent the normalized evaluation status derived
-// from rule evaluation errors.
+// EvalStatus constants represent evaluation statuses.
 const (
 	EvalStatusSuccess EvalStatus = "success"
 	EvalStatusFailure EvalStatus = "failure"
@@ -48,11 +42,10 @@ const (
 	EvalStatusPending EvalStatus = "pending"
 )
 
-// PreviousEval captures the previous remediation and alert state along with
-// associated metadata in a database-agnostic form.
-type PreviousEval struct {
+// previousEval captures previous remediation and alert state.
+type previousEval struct {
 	RemediationStatus RemediationStatus
 	AlertStatus       AlertStatus
-	RemediationMeta   *json.RawMessage
-	AlertMeta         *json.RawMessage
+	RemediationMeta   json.RawMessage
+	AlertMeta         json.RawMessage
 }

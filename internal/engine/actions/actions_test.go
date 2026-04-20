@@ -111,9 +111,9 @@ func TestShouldRemediate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var prev *PreviousEval
+			var prev *previousEval
 			if tt.hasPrev {
-				prev = &PreviousEval{RemediationStatus: tt.prevStatus}
+				prev = &previousEval{RemediationStatus: tt.prevStatus}
 			}
 			status := mapEvalStatus(tt.evalErr)
 			got := shouldRemediate(prev, status)
@@ -225,9 +225,9 @@ func TestShouldAlert(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var prev *PreviousEval
+			var prev *previousEval
 			if tt.hasPrev {
-				prev = &PreviousEval{AlertStatus: tt.prevAlert}
+				prev = &previousEval{AlertStatus: tt.prevAlert}
 			}
 			status := mapEvalStatus(tt.evalErr)
 			got := shouldAlert(prev, status, tt.remErr, tt.remType)

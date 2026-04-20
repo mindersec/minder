@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-// Package actions provides the rule actions engine responsible for
-// processing remediation and alert actions based on evaluation results.
+// Package actions provide necessary interfaces and implementations for
+// processing actions, such as remediation and alerts.
 package actions
 
 import (
@@ -26,24 +26,25 @@ import (
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// RuleActionsEngine is responsible for executing remediation and alert actions
+// RuleActionsEngine is the engine responsible for processing all actions i.e., remediation and alerts
 type RuleActionsEngine struct {
 	actions map[engif.ActionType]engif.Action
 }
 
-// NewRuleActions creates a new RuleActionsEngine
+// NewRuleActions creates a new rule actions engine
 func NewRuleActions(
 	ctx context.Context,
 	ruletype *minderv1.RuleType,
 	provider provinfv1.Provider,
 	actionConfig *models.ActionConfiguration,
 ) (*RuleActionsEngine, error) {
-
+	// Create the remediation engine
 	remEngine, err := remediate.NewRuleRemediator(ruletype, provider, actionConfig.Remediate)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule remediator: %w", err)
 	}
 
+	// Create the alert engine
 	alertEngine, err := alert.NewRuleAlert(ctx, ruletype, provider, actionConfig.Alert)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create rule alerter: %w", err)
@@ -57,18 +58,21 @@ func NewRuleActions(
 	}, nil
 }
 
-// DoActions executes remediation and alert actions
+// DoActions processes all actions i.e., remediation and alerts
 func (rae *RuleActionsEngine) DoActions(
 	ctx context.Context,
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 ) enginerr.ActionsError {
+	// Get logger
 	logger := zerolog.Ctx(ctx)
 
-	result := getDefaultResult()
+	// Default to skipping all actions
+	result := getDefaultResult(ctx)
 	skipRemediate := true
 	skipAlert := true
 
+	// Verify the remediate action engine is available and get its status - on/off/dry-run
 	remediateEngine, ok := rae.actions[remediate.ActionType]
 	if !ok {
 		logger.Error().Str("action_type", string(remediate.ActionType)).Msg("not found")
@@ -77,6 +81,7 @@ func (rae *RuleActionsEngine) DoActions(
 		skipRemediate = rae.isSkippable(ctx, remediate.ActionType, params.GetEvalErr())
 	}
 
+	// Verify the alert action engine is available and get its status - on/off/dry-run
 	_, ok = rae.actions[alert.ActionType]
 	if !ok {
 		logger.Error().Str("action_type", string(alert.ActionType)).Msg("not found")
@@ -85,59 +90,39 @@ func (rae *RuleActionsEngine) DoActions(
 		skipAlert = rae.isSkippable(ctx, alert.ActionType, params.GetEvalErr())
 	}
 
-	var prev *PreviousEval
+	var prev *previousEval
+
 	if row := params.GetEvalStatusFromDb(); row != nil {
-		prev = &PreviousEval{
+		prev = &previousEval{
 			RemediationStatus: RemediationStatus(row.RemStatus),
 			AlertStatus:       AlertStatus(row.AlertStatus),
-			RemediationMeta:   &row.RemMetadata,
-			AlertMeta:         &row.AlertMetadata,
+			RemediationMeta:   row.RemMetadata,
+			AlertMeta:         row.AlertMetadata,
 		}
 	}
 	status := mapEvalStatus(params.GetEvalErr())
 
-	var remMeta *json.RawMessage
-	var alertMeta *json.RawMessage
-
-	if prev != nil {
-		remMeta = getRemediationMeta(prev)
-		alertMeta = getAlertMeta(prev)
-	}
-
+	// Try remediating
 	if !skipRemediate {
+		// Decide if we should remediate
 		cmd := shouldRemediate(prev, status)
-		result.RemediateMeta, result.RemediateErr = rae.processAction(
-			ctx,
-			remediate.ActionType,
-			cmd,
-			ent,
-			params,
-			remMeta,
-		)
+		// Run remediation
+		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
+			getRemediationMeta(prev))
 	}
 
+	// Try alerting
 	if !skipAlert {
-		cmd := shouldAlert(
-			prev,
-			status,
-			result.RemediateErr,
-			remediateEngine.Type(),
-		)
-
-		result.AlertMeta, result.AlertErr = rae.processAction(
-			ctx,
-			alert.ActionType,
-			cmd,
-			ent,
-			params,
-			alertMeta,
-		)
+		// Decide if we should alert
+		cmd := shouldAlert(prev, status, result.RemediateErr, remediateEngine.Type())
+		// Run alerting
+		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
+			getAlertMeta(prev))
 	}
-
 	return result
 }
 
-// processAction safely executes an action
+// processAction runs the action engine for the given action type, and also sanity checks the result of the action
 func (rae *RuleActionsEngine) processAction(
 	ctx context.Context,
 	actionType engif.ActionType,
@@ -145,85 +130,82 @@ func (rae *RuleActionsEngine) processAction(
 	ent protoreflect.ProtoMessage,
 	params engif.ActionsParams,
 	metadata *json.RawMessage,
-) (res json.RawMessage, err error) {
+) (jmsg json.RawMessage, finalErr error) {
 	defer func() {
 		if r := recover(); r != nil {
-			zerolog.Ctx(ctx).Error().
-				Interface("recovered", r).
+			zerolog.Ctx(ctx).Error().Interface("recovered", r).
 				Bytes("stack", debug.Stack()).
 				Msg("panic in action execution")
-
-			err = enginerr.ErrInternal
+			finalErr = enginerr.ErrInternal
 		}
 	}()
-
+	zerolog.Ctx(ctx).Debug().Str("action", string(actionType)).Str("cmd", string(cmd)).Msg("invoking action")
+	// Get action engine
 	action := rae.actions[actionType]
+	// Return the result of the action
 	return action.Do(ctx, cmd, ent, params, metadata)
 }
 
-// shouldRemediate determines the remediation action command.
-// taking into account the current evaluation result and the
-// previous remediation state.
-func shouldRemediate(prevEval *PreviousEval, evalStatus EvalStatus) engif.ActionCmd {
-	// Default previous remediation status
+// shouldRemediate returns the action command for remediation taking into account previous evaluations
+func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.ActionCmd {
+	// Get previous Remediation status
 	prevRemediation := RemediationStatusSkipped
 	if prevEval != nil {
 		prevRemediation = prevEval.RemediationStatus
 	}
 
+	// Start evaluation scenarios
+
+	// Case 1 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
+
+	// Proceed with use cases where the evaluation changed
 	switch evalStatus {
 	case EvalStatusError:
-		// TODO: Historically, error may have fallen through to success behavior.
-		// This change treats error as no-op. Confirm intended behavior.
 		return engif.ActionCmdDoNothing
-
 	case EvalStatusSuccess:
 		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
-		// If remediation was previously active, turn it off.
-		if prevRemediation != RemediationStatusSkipped {
+		// The Remediation should be OFF (if it wasn't already)
+		if RemediationStatusSkipped != prevRemediation {
 			return engif.ActionCmdOff
 		}
-		// DoNothing means we keep the current state unchanged, rather than explicitly turning it OFF.
+		// We should do nothing if remediation was already skipped
 		return engif.ActionCmdDoNothing
-
 	case EvalStatusFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
-		// We only trigger remediation if the previous remediation was skipped.
-		// This prevents repeated remediation attempts and avoids endless remediation loops
-		// where the system keeps trying to remediate an already-handled failure.
-		if prevRemediation == RemediationStatusSkipped {
+		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
+		if RemediationStatusSkipped == prevRemediation {
 			return engif.ActionCmdOn
 		}
+		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
 		return engif.ActionCmdDoNothing
-
-	case EvalStatusSkipped, EvalStatusPending:
+	case EvalStatusSkipped:
+	case EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
+	// Default to do nothing
 	return engif.ActionCmdDoNothing
 }
 
-// shouldAlert returns the action command for alerting,
-// based on the current evaluation result, previous alert state,
-// and remediation outcome.
+// shouldAlert returns the action command for alerting taking into account previous evaluations
 func shouldAlert(
-	prevEval *PreviousEval,
+	prevEval *previousEval,
 	evalStatus EvalStatus,
 	remErr error,
 	remType string,
 ) engif.ActionCmd {
-
-	// Default previous alert status
+	// Get previous Alert status
 	prevAlert := AlertStatusSkipped
 	if prevEval != nil {
 		prevAlert = prevEval.AlertStatus
 	}
 
+	// Start evaluation scenarios
+
 	// Case 1 - Successful remediation of a type that is not PR is considered instant.
 	if remType != pull_request.RemediateType && remErr == nil {
-		// If remediation succeeded, we turn alert OFF.
-		// This effectively skips alerting (or turns it off) when remediation resolves the issue immediately.
+		// If this is the case either skip alerting or turn it off if it was on
 		if prevAlert != AlertStatusOff {
 			return engif.ActionCmdOff
 		}
@@ -233,84 +215,100 @@ func shouldAlert(
 	// Case 2 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
-
-	// The alert logic attempts to interpret transitions between previous and current states,
-	// rather than simply mirroring the current evaluation result. This helps avoid noisy or
-	// redundant alerts and ensures we react only to meaningful state changes.
-
 	switch evalStatus {
-
 	case EvalStatusError:
-		// TODO: Historically, error may have fallen through to success behavior.
-		// This change treats error as no-op. Confirm intended behavior.
 		return engif.ActionCmdDoNothing
-
-	// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
-	// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
 	case EvalStatusFailure:
-		if prevAlert != AlertStatusOn {
+		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
+		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
+		// The Alert should be on (if it wasn't already)
+		if AlertStatusOn != prevAlert {
 			return engif.ActionCmdOn
 		}
+		// We should do nothing if alert was already turned on
 		return engif.ActionCmdDoNothing
-	// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
 	case EvalStatusSuccess:
 		// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
-		if prevAlert != AlertStatusOff {
+		// The Alert should be turned OFF (if it wasn't already)
+		if AlertStatusOff != prevAlert {
 			return engif.ActionCmdOff
 		}
+		// We should do nothing if the Alert is already OFF
 		return engif.ActionCmdDoNothing
-
-	case EvalStatusSkipped, EvalStatusPending:
+	case EvalStatusSkipped:
+	case EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
+	// Default to do nothing
 	return engif.ActionCmdDoNothing
 }
 
-// isSkippable checks if action should be skipped
+// isSkippable returns true if the action should be skipped
 func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.ActionType, evalErr error) bool {
+	var skipAction bool
+
+	logger := zerolog.Ctx(ctx).Info().
+		Str("eval_status", string(mapEvalStatus(evalErr))).
+		Str("action", string(actionType))
+
+	// Get the profile option set for this action type
 	action, ok := rae.actions[actionType]
 	if !ok {
-		zerolog.Ctx(ctx).Info().
-			Str("eval_status", string(mapEvalStatus(evalErr))).
-			Str("action", string(actionType)).
-			Msg("action type not found, skipping")
+		// If the action is not found, definitely skip it
+		logger.Msg("action type not found, skipping")
 		return true
 	}
-
+	// Check the action option
 	switch action.GetOnOffState() {
 	case models.ActionOptOff:
+		// Action is off, skip
+		logger.Msg("action is off, skipping")
 		return true
 	case models.ActionOptUnknown:
+		// Action is unknown, skip
+		logger.Msg("unknown action option, skipping")
 		return true
 	case models.ActionOptDryRun, models.ActionOptOn:
-		// Some actions in ON or DRY-RUN mode may still be skipped if the evaluation
-		// explicitly returns a "skip" result. This ensures we respect evaluation intent.
-		return errors.Is(evalErr, interfaces.ErrEvaluationSkipped) ||
-			errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently)
+		// Action is on or dry-run, do not skip yet. Check the evaluation error
+		skipAction =
+			// rule evaluation was skipped, skip action too
+			errors.Is(evalErr, interfaces.ErrEvaluationSkipped) ||
+				// rule evaluation was skipped silently, skip action
+				errors.Is(evalErr, enginerr.ErrEvaluationSkipSilently)
 	}
-
-	return false
+	logger.Bool("skip_action", skipAction).Msg("action skip decision")
+	// Everything else, do not skip
+	return skipAction
 }
 
-// getRemediationMeta returns remediation metadata from previous evaluation.
-func getRemediationMeta(prevEval *PreviousEval) *json.RawMessage {
+// getRemediationMeta returns the json.RawMessage from the previous evaluation, empty if not valid
+func getRemediationMeta(prevEval *previousEval) *json.RawMessage {
 	if prevEval != nil {
-		return prevEval.RemediationMeta
+		return &prevEval.RemediationMeta
 	}
 	return nil
 }
 
-// getAlertMeta returns alert metadata from previous evaluation.
-func getAlertMeta(prevEval *PreviousEval) *json.RawMessage {
+// getAlertMeta returns the json.RawMessage from the previous evaluation, empty if not valid
+func getAlertMeta(prevEval *previousEval) *json.RawMessage {
 	if prevEval != nil {
-		return prevEval.AlertMeta
+		return &prevEval.AlertMeta
 	}
 	return nil
 }
 
-func getDefaultResult() enginerr.ActionsError {
-	m := json.RawMessage("{}")
+// getDefaultResult returns the default result for the action engine
+func getDefaultResult(ctx context.Context) enginerr.ActionsError {
+	// Get logger
+	logger := zerolog.Ctx(ctx)
+
+	// Even though meta is an empty json struct by default, there's no risk of overwriting
+	// any existing meta entry since we don't upsert in case of conflict while skipping
+	m, err := json.Marshal(&map[string]any{})
+	if err != nil {
+		logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
+	}
 
 	return enginerr.ActionsError{
 		RemediateErr:  enginerr.ErrActionSkipped,
@@ -319,24 +317,19 @@ func getDefaultResult() enginerr.ActionsError {
 		AlertMeta:     m,
 	}
 }
-
-// mapEvalStatus converts evaluation error into engine EvalStatus.
 func mapEvalStatus(err error) EvalStatus {
 	if err == nil {
 		return EvalStatusSuccess
 	}
 
-	// skipped cases
 	if errors.Is(err, enginerr.ErrEvaluationSkipSilently) ||
 		errors.Is(err, interfaces.ErrEvaluationSkipped) {
 		return EvalStatusSkipped
 	}
 
-	// failure case (CORRECT detection)
 	if errors.Is(err, interfaces.ErrEvaluationFailed) {
 		return EvalStatusFailure
 	}
 
-	// everything else = error
 	return EvalStatusError
 }
