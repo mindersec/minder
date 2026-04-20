@@ -123,6 +123,8 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
 
+	// Copy the message so the async goroutine does not share mutable state with
+	// the original Watermill message.
 	msg = msg.Copy()
 
 	inf, err := entities.ParseEntityEvent(msg)
@@ -144,7 +146,6 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			}
 		}
 
-		// use configurable timeout
 		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
 
@@ -159,7 +160,7 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
 			Provider: engcontext.Provider{
-				Name: inf.ProviderID.String(), // unchanged
+				Name: inf.ProviderID.String(),
 			},
 		})
 
@@ -181,12 +182,12 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		if err != nil {
 			logMsg = logger.Error()
 		}
-		ts.Record(logMsg).Send()
 
 		// record telemetry regardless of error. We explicitly record telemetry
 		// here even though we also record it in the middleware because the evaluation
 		// is done in a separate goroutine which usually still runs after the middleware
 		// had already recorded the telemetry.
+		ts.Record(logMsg).Send()
 
 		if err != nil {
 			logger.Info().

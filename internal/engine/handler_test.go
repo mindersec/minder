@@ -118,8 +118,8 @@ func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 	repositoryID := uuid.New()
 	executionID := uuid.New()
 
-	// Mock executor that simulates long-running work
 	executor := mockengine.NewMockExecutor(ctrl)
+	var timedOut bool
 	executor.EXPECT().
 		EvalEntityEvent(gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
@@ -127,6 +127,7 @@ func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 			case <-time.After(5 * time.Second):
 				return nil
 			case <-ctx.Done():
+				timedOut = true
 				return ctx.Err()
 			}
 		})
@@ -147,9 +148,7 @@ func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 	eiw := entities.NewEntityInfoWrapper().
 		WithProviderID(providerID).
 		WithProjectID(projectID).
-		WithRepository(&minderv1.Repository{
-			Name: "test",
-		}).
+		WithRepository(&minderv1.Repository{Name: "test"}).
 		WithID(repositoryID).
 		WithExecutionID(executionID)
 
@@ -157,13 +156,11 @@ func TestExecutorEventHandler_RespectsTimeout(t *testing.T) {
 	require.NoError(t, err)
 
 	start := time.Now()
-
 	require.NoError(t, handler.HandleEntityEvent(msg))
 	handler.Wait()
-
 	elapsed := time.Since(start)
 
-	//Ensure execution timed out early
+	require.True(t, timedOut, "execution did not hit the timeout path")
 	require.Less(t, elapsed, 3*time.Second, "execution did not timeout as expected")
 }
 
@@ -176,7 +173,6 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	executor := mockengine.NewMockExecutor(ctrl)
-
 	executor.EXPECT().
 		EvalEntityEvent(gomock.Any(), gomock.Any()).
 		Times(0)
@@ -186,20 +182,64 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 		nil,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
 	)
 
-	// Trigger shutdown
 	cancel()
-
 	time.Sleep(10 * time.Millisecond)
-	msg := message.NewMessage("1", []byte("{}"))
 
-	// Call handler AFTER shutdown
+	msg := message.NewMessage("1", []byte("{}"))
 	err := handler.HandleEntityEvent(msg)
 	require.NoError(t, err)
 
-	// Give time in case something incorrectly executes
 	time.Sleep(50 * time.Millisecond)
+	handler.Wait()
+}
 
+func TestExecutorEventHandler_UsesConfiguredTimeout(t *testing.T) {
+	t.Parallel()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	repositoryID := uuid.New()
+	executionID := uuid.New()
+
+	executor := mockengine.NewMockExecutor(ctrl)
+	executor.EXPECT().
+		EvalEntityEvent(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
+			deadline, ok := ctx.Deadline()
+			require.True(t, ok, "expected execution context deadline")
+			remaining := time.Until(deadline)
+			require.Greater(t, remaining, 40*time.Second)
+			require.Less(t, remaining, 80*time.Second)
+			return nil
+		})
+
+	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{Driver: "go-channel"})
+	require.NoError(t, err)
+
+	handler := engine.NewExecutorEventHandler(
+		context.Background(),
+		evt,
+		nil,
+		executor,
+		1*time.Minute,
+	)
+
+	eiw := entities.NewEntityInfoWrapper().
+		WithProviderID(providerID).
+		WithProjectID(projectID).
+		WithRepository(&minderv1.Repository{Name: "test"}).
+		WithID(repositoryID).
+		WithExecutionID(executionID)
+
+	msg, err := eiw.BuildMessage()
+	require.NoError(t, err)
+
+	require.NoError(t, handler.HandleEntityEvent(msg))
 	handler.Wait()
 }
