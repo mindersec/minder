@@ -19,18 +19,32 @@ import (
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
 var update = flag.Bool("update", false, "update golden files")
+
+// ResetEntireTree wipes flags and contexts so tests don't "bleed" into each other
+func ResetEntireTree(c *cobra.Command) {
+	//nolint:staticcheck // SA1012: Cobra requires nil to clear the context so it can resume inheriting from the root
+	c.SetContext(nil)
+	c.Flags().VisitAll(func(f *pflag.Flag) {
+		if slice, ok := f.Value.(pflag.SliceValue); ok {
+			_ = slice.Replace([]string{})
+		} else {
+			_ = f.Value.Set(f.DefValue)
+		}
+		f.Changed = false
+	})
+	for _, child := range c.Commands() {
+		ResetEntireTree(child)
+	}
+}
 
 // CmdTestCase is the shared struct for all rule type CLI tests
 type CmdTestCase struct {
 	Name           string
 	Args           []string
-	MockSetup      func(t *testing.T, client *mockv1.MockRuleTypeServiceClient)
+	MockSetup      func(t *testing.T, ctrl *gomock.Controller) context.Context
 	GoldenFileName string
 	ExpectedError  string
 }
@@ -40,46 +54,43 @@ func RunCmdTests(
 	t *testing.T,
 	tests []CmdTestCase,
 	cmd *cobra.Command,
-	execFunc func(ctx context.Context, c *cobra.Command) error,
 ) {
-
 	t.Helper()
 	const zeroUUID = "00000000-0000-0000-0000-000000000000"
+
+	cwd, _ := os.Getwd()
+	dummyConfig := filepath.Join(cwd, "config.yaml")
+	if _, err := os.Stat(dummyConfig); os.IsNotExist(err) {
+		_ = os.WriteFile(dummyConfig, []byte(""), 0600)
+		defer os.Remove(dummyConfig)
+	}
 
 	for _, tc := range tests {
 		t.Run(tc.Name, func(t *testing.T) {
 			viper.Reset()
-			cmd.Flags().VisitAll(func(f *pflag.Flag) {
-				if slice, ok := f.Value.(pflag.SliceValue); ok {
-					_ = slice.Replace([]string{})
-				} else {
-					_ = f.Value.Set(f.DefValue)
-				}
-				f.Changed = false
-			})
+
+			rootCmd := cmd.Root()
+			ResetEntireTree(rootCmd)
 
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockClient := mockv1.NewMockRuleTypeServiceClient(ctrl)
+			ctx := context.Background()
 			if tc.MockSetup != nil {
-				tc.MockSetup(t, mockClient)
+				ctx = tc.MockSetup(t, ctrl)
 			}
 
-			ctx := WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), mockClient)
-			cmd.SetContext(ctx)
-
 			buf := new(bytes.Buffer)
-			cmd.SetOut(buf)
-			cmd.SetErr(buf)
+			rootCmd.SetOut(buf)
+			rootCmd.SetErr(buf)
+			rootCmd.SetContext(ctx)
 
-			err := cmd.Flags().Parse(tc.Args)
-			require.NoError(t, err, "flag parsing should not fail")
+			rootCmd.SetArgs(tc.Args)
 
 			_ = viper.BindPFlags(cmd.Flags())
 			viper.Set("project", zeroUUID)
 
-			err = execFunc(ctx, cmd)
+			_, err := cmd.ExecuteContextC(ctx)
 
 			if tc.ExpectedError != "" {
 				require.Error(t, err)

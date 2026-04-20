@@ -5,12 +5,12 @@ package ruletype
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -25,22 +25,43 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a rule type",
 	Long:  `The ruletype delete subcommand lets you delete rule types within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		id, _ := cmd.Flags().GetString("id")
+		name, _ := cmd.Flags().GetString("name")
+		deleteAll, _ := cmd.Flags().GetBool("all")
+
+		if id == "" && name == "" && !deleteAll {
+			return fmt.Errorf("at least one of the flags in the group [id name all] is required")
+		}
+
+		return nil
+	},
+	RunE: deleteCommand,
 }
 
-// deleteCommand is the rule type delete subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(ctx, conn)
+func deleteCommand(cmd *cobra.Command, _ []string) error {
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
+	client, closeConn, err := getRuleTypeClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+	defer cancel()
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 	name := viper.GetString("name")
 	deleteAll := viper.GetBool("all")
 	yesFlag := viper.GetBool("yes")
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
 
 	if deleteAll && !yesFlag {
 		// Ask for confirmation if deleteAll is set on purpose
@@ -99,6 +120,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
 
 	return nil
+
 }
 
 func deleteRuleTypes(
@@ -163,7 +185,6 @@ func printDeleteResults(
 				}
 			}
 		}
-
 	}
 }
 

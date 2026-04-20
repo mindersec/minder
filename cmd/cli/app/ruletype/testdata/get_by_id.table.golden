@@ -22,10 +22,9 @@
                    │ can use secret scanning to prevent supported secrets from being pushed into    
                    │ your repository by enabling secret scanning push protection. For more          
                    │ information, see GitHub's documentation                                        
-                   │ https://docs.github.com/en/code-security/secret-                               
-                   │ scanning/push-protection-for-repositories-and-                                 
-                   │ organizations#enabling-secret-scanning-as-a-push- protection-for-              
-                   │ a-repository.                                                                  
+                   │ https://docs.github.com/en/code-security/secret-scanning/push-protection-for-r 
+                   │ epositories-and-organizations#enabling-secret-scanning-as-a-push-protection-fo 
+                   │ r-a-repository.                                                                
 ───────────────────┼────────────────────────────────────────────────────────────────────────────────
  Remediation       │ rest                                                                           
 ───────────────────┼────────────────────────────────────────────────────────────────────────────────

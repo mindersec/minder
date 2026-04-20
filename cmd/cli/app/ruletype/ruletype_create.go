@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -22,23 +21,31 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a rule type",
 	Long:  `The ruletype create subcommand lets you create new rule types for a project within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(createCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		fileFlag, err := cmd.Flags().GetStringArray("file")
+		if err != nil {
+			return cli.MessageAndError("Error parsing file flag", err)
+		}
+
+		if len(fileFlag) == 0 {
+			return fmt.Errorf("required flag(s) \"file\" not set")
+		}
+
+		if err = validateFilesArg(fileFlag); err != nil {
+			return cli.MessageAndError("Error validating file flag", err)
+		}
+
+		return nil
+	},
+	RunE: createCommand,
 }
 
-// createCommand is the profile create subcommand
-func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(ctx, conn)
-
-	project := viper.GetString("project")
-
-	fileFlag, err := cmd.Flags().GetStringArray("file")
-	if err != nil {
-		return cli.MessageAndError("Error parsing file flag", err)
-	}
-
-	if err = validateFilesArg(fileFlag); err != nil {
-		return cli.MessageAndError("Error validating file flag", err)
-	}
+func createCommand(cmd *cobra.Command, _ []string) error {
+	fileFlag, _ := cmd.Flags().GetStringArray("file")
 
 	files, err := util.ExpandFileArgs(fileFlag...)
 	if err != nil {
@@ -48,6 +55,17 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, closeConn, err := getRuleTypeClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+	defer cancel()
+
+	project := viper.GetString("project")
 
 	table := initializeTableForList(cmd.OutOrStdout())
 
@@ -68,7 +86,7 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		}
 		// cmd.Context() is the root context. We need to create a new context for each file
 		// so we can avoid the timeout.
-		if err = execOnOneRuleType(cmd.Context(), table, f.Path, os.Stdin, project, createFunc); err != nil {
+		if err = execOnOneRuleType(ctx, table, f.Path, os.Stdin, project, createFunc); err != nil {
 			// We swallow errors if you're loading a directory to avoid failing
 			// on test files.
 			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
@@ -83,6 +101,7 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// Render the table
 	table.Render()
 	return nil
+
 }
 
 func init() {

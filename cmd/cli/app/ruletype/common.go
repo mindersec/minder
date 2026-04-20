@@ -125,7 +125,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("Description", rt.Description)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
-	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(0.7)))
+	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(50.0)))
 	t.AddRow("Remediation", cmp.Or(rt.Def.GetRemediate().GetType(), "unsupported"))
 	t.AddRow("Alert", cmp.Or(rt.Def.GetAlert().GetType(), "unsupported"))
 }

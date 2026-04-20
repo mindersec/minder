@@ -7,7 +7,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,67 +22,70 @@ func TestListCommand(t *testing.T) {
 	tests := []cli.CmdTestCase{
 		{
 			Name: "table output with data",
-			Args: []string{"-o", app.Table},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "list", "-o", app.Table},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				mockResponse := &minderv1.ListRuleTypesResponse{}
 				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResponse)
 
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(mockResponse, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "list_populated.table",
 		},
 		{
 			Name: "table output empty",
-			Args: []string{"-o", app.Table},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "list", "-o", app.Table},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(&minderv1.ListRuleTypesResponse{
 						RuleTypes: []*minderv1.RuleType{},
 					}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "list_empty.table",
 		},
 		{
 			Name: "yaml output",
-			Args: []string{"-o", app.YAML},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "list", "-o", app.YAML},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				mockResponse := &minderv1.ListRuleTypesResponse{}
 				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResponse)
 
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(mockResponse, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "list_populated.yaml",
 		},
 		{
 			Name: "grpc error handling",
-			Args: []string{"-o", app.Table},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "list", "-o", app.Table},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				client.EXPECT().
 					ListRuleTypes(gomock.Any(), gomock.Any()).
 					Return(nil, status.Error(codes.DeadlineExceeded, "request timed out"))
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			ExpectedError: "request timed out",
 		},
 		{
 			Name:          "invalid output format",
-			Args:          []string{"-o", "csv"},
-			MockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
+			Args:          []string{"ruletype", "list", "-o", "csv"},
 			ExpectedError: "invalid argument",
 		},
 	}
 
-	execFunc := func(ctx context.Context, cmd *cobra.Command) error {
-		return listCommand(ctx, cmd, cmd.Flags().Args(), nil)
-	}
-
-	cli.RunCmdTests(t, tests, listCmd, execFunc)
+	cli.RunCmdTests(t, tests, ruleTypeCmd)
 }
