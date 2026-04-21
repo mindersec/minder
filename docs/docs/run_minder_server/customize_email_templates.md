@@ -33,7 +33,7 @@ All email templates have access to the following variables:
 | `{{.RoleName}}` | Role being assigned | "admin", "editor", "viewer" |
 | `{{.RoleVerb}}` | Action the role can perform | "manage", "contribute to", "view" |
 
-> **Note**: `{{.TermsURL}}` and `{{.PrivacyURL}}` are currently hardcoded to Stacklok's URLs in the application code. To use custom URLs, you'll need to hardcode them directly in your template or modify the application configuration.
+> **Note**: We recommend hardcoding parameters that don't need to vary between environments, such as your domain name. For example, instead of using `{{.InvitationURL}}` or `{{.SignInURL}}`, you construct these URLs explicitly in your template using your known domain and the `{{.InvitationCode}}` directly (e.g., `https://minder.your-domain.com/invite/{{.InvitationCode}}`). This is especially important for `{{.TermsURL}}` and `{{.PrivacyURL}}`, which currently default to Stacklok's URLs in the application code.
 
 This guide outlines two distinct ways to override these templates when running Minder on Kubernetes.
 
@@ -72,11 +72,11 @@ data:
           <h2>You're invited to join {{.OrganizationName}}!</h2>
           <p><strong>{{.AdminName}}</strong> has invited you to become <strong>{{.RoleName}}</strong> in the {{.OrganizationName}} organization.</p>
           <p>Once you accept, you'll be able to {{.RoleVerb}} the {{.OrganizationName}} organization.</p>
-          <p><a href="{{.InvitationURL}}" class="button">Accept Invitation</a></p>
+          <p><a href="https://your-domain.com/invite/{{.InvitationCode}}" class="button">Accept Invitation</a></p>
           <p>Or use the CLI: <code>minder auth invite accept {{.InvitationCode}}</code></p>
           <hr>
           <p><small>This invitation was sent to {{.RecipientEmail}}. If you weren't expecting this, you can ignore this email.</small></p>
-          <p><small><a href="https://your-domain.com/terms">Terms</a> | <a href="https://your-domain.com/privacy">Privacy</a> | <a href="{{.SignInURL}}">Sign In</a></small></p>
+          <p><small><a href="https://your-domain.com/terms">Terms</a> | <a href="https://your-domain.com/privacy">Privacy</a> | <a href="https://your-domain.com/login">Sign In</a></small></p>
         </div>
       </body>
     </html>
@@ -85,7 +85,7 @@ data:
     
     {{.AdminName}} has invited you to become {{.RoleName}} in the {{.OrganizationName}} organization.
     
-    Accept your invitation: {{.InvitationURL}}
+    Accept your invitation: https://your-domain.com/invite/{{.InvitationCode}}
     
     Or use the CLI:
     minder auth invite accept {{.InvitationCode}}
@@ -99,14 +99,14 @@ data:
     
     Terms: https://your-domain.com/terms
     Privacy: https://your-domain.com/privacy
-    Sign In: {{.SignInURL}}
+    Sign In: https://your-domain.com/login
     
     Your Company Team
 ```
 
 ### Mount in the Deployment
 
-Update your Minder `Deployment` to mount this `ConfigMap` using `subPath`. This ensures that only the specific template files are replaced, while the rest of the existing templates in `/var/run/ko/templates/` remain intact.
+If you are managing your Kubernetes manifests directly, update your Minder `Deployment` to mount this `ConfigMap` using `subPath`. This ensures that only the specific template files are replaced, while the rest of the existing templates in `/var/run/ko/templates/` remain intact.
 
 ```yaml
 apiVersion: apps/v1
@@ -130,6 +130,25 @@ spec:
         - name: custom-template-volume
           configMap:
             name: minder-custom-email-template
+```
+
+### Reference via Helm Chart
+
+If you used the Minder [Helm chart](https://docs.mindersec.dev/run_minder_server/installing_minder#helm-chart-parameters) to deploy Minder, you can configure these templates via the `deploymentSettings.extraVolumes` and `deploymentSettings.extraVolumeMounts` values.
+
+```yaml
+deploymentSettings:
+  extraVolumes:
+    - name: custom-template-volume
+      configMap:
+        name: minder-custom-email-template
+  extraVolumeMounts:
+    - name: custom-template-volume
+      mountPath: /var/run/ko/templates/invite-email.html.tmpl
+      subPath: invite-email.html.tmpl
+    - name: custom-template-volume
+      mountPath: /var/run/ko/templates/invite-email.txt.tmpl
+      subPath: invite-email.txt.tmpl
 ```
 
 ## 2. The Modern Approach: Using OCI Volume Sources (Kubernetes v1.35+)
@@ -190,9 +209,16 @@ spec:
 
 ## Debugging
 
-To verify your templates are mounted correctly:
+Because Minder is built as a minimal image using `ko`, it does not contain a shell or basic utilities like `ls` or `cat`. Therefore, you cannot use `kubectl exec` to verify the templates at runtime.
+
+To verify your custom volume mounts, inspect the configuration of your Pods in Kubernetes:
 
 ```bash
-kubectl exec -it deployment/minder-server -- ls -la /var/run/ko/templates/
-kubectl exec -it deployment/minder-server -- cat /var/run/ko/templates/invite-email.html.tmpl
+kubectl describe deployment minder-server
+```
+
+If you need to analyze the contents of the built image (e.g., specifically when using OCI volume sources), you can use an external tool like [dive](https://github.com/wagoodman/dive):
+
+```bash
+dive ghcr.io/your-org/minder-templates:v1
 ```
