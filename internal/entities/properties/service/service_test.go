@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -87,6 +88,55 @@ type testCtx struct {
 	dbProj            db.Project
 	ghAppProvider     db.Provider
 	dockerHubProvider db.Provider
+}
+
+type failOnNthUpsertQuerier struct {
+	db.ExtendQuerier
+	failOnCall int
+	callCount  int
+	err        error
+}
+
+func (f *failOnNthUpsertQuerier) UpsertPropertyValueV1(
+	ctx context.Context, params db.UpsertPropertyValueV1Params,
+) (db.Property, error) {
+	f.callCount++
+	if f.callCount == f.failOnCall {
+		return db.Property{}, f.err
+	}
+
+	return f.ExtendQuerier.UpsertPropertyValueV1(ctx, params)
+}
+
+type failOnNthUpsertStore struct {
+	db.Store
+	failOnCall int
+	err        error
+}
+
+func (f *failOnNthUpsertStore) WithTransactionErr(fn func(db.ExtendQuerier) error) error {
+	tx, err := f.BeginTransaction()
+	if err != nil {
+		return err
+	}
+
+	qtx := f.GetQuerierWithTransaction(tx)
+	wrapped := &failOnNthUpsertQuerier{
+		ExtendQuerier: qtx,
+		failOnCall:    f.failOnCall,
+		err:           f.err,
+	}
+
+	defer func() {
+		_ = f.Rollback(tx)
+	}()
+
+	err = fn(wrapped)
+	if err != nil {
+		return err
+	}
+
+	return f.Commit(tx)
 }
 
 func createTestCtx(ctx context.Context, t *testing.T) testCtx {
@@ -1031,5 +1081,156 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 
 		_, err := WithEntityCache(nil, 100)
 		require.Error(t, err)
+	})
+}
+
+func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	entityID := uuid.New()
+	props := properties.NewProperties(map[string]any{
+		"name":       "repo-1",
+		"is_private": true,
+	})
+
+	scenarios := []struct {
+		name                  string
+		invoke                func(PropertiesService, context.Context, uuid.UUID, *properties.Properties, *CallOptions) error
+		expectDeleteBeforePut bool
+	}{
+		{
+			name: "replace all properties",
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+				props *properties.Properties, opts *CallOptions,
+			) error {
+				return ps.ReplaceAllProperties(ctx, entityID, props, opts)
+			},
+			expectDeleteBeforePut: true,
+		},
+		{
+			name: "save all properties",
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+				props *properties.Properties, opts *CallOptions,
+			) error {
+				return ps.SaveAllProperties(ctx, entityID, props, opts)
+			},
+		},
+	}
+
+	for _, tt := range scenarios {
+		tt := tt
+
+		t.Run(tt.name+" starts a transaction when using store directly", func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			mockTxQuerier := mockdb.NewMockStore(ctrl)
+
+			mockStore.EXPECT().
+				WithTransactionErr(gomock.Any()).
+				DoAndReturn(func(fn func(db.ExtendQuerier) error) error {
+					return fn(mockTxQuerier)
+				})
+			if tt.expectDeleteBeforePut {
+				mockTxQuerier.EXPECT().
+					DeleteAllPropertiesForEntity(ctx, entityID).
+					Return(nil)
+			}
+			mockTxQuerier.EXPECT().
+				UpsertPropertyValueV1(ctx, gomock.Any()).
+				Return(db.Property{}, nil).
+				Times(2)
+
+			ps := NewPropertiesService(mockStore)
+			err := tt.invoke(ps, ctx, entityID, props, nil)
+			require.NoError(t, err)
+		})
+
+		t.Run(tt.name+" reuses existing transaction querier", func(t *testing.T) {
+			t.Parallel()
+
+			tctx := createTestCtx(ctx, t)
+			ent, err := tctx.testQueries.CreateEntity(ctx, db.CreateEntityParams{
+				EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+				Name:       rand.RandomName(time.Now().UnixNano()),
+				ProjectID:  tctx.dbProj.ID,
+				ProviderID: tctx.ghAppProvider.ID,
+			})
+			require.NoError(t, err)
+
+			tx, err := tctx.testQueries.BeginTransaction()
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = tx.Rollback()
+			})
+			txQuerier := tctx.testQueries.GetQuerierWithTransaction(tx)
+
+			ps := NewPropertiesService(tctx.testQueries)
+			err = tt.invoke(ps, ctx, ent.ID, props,
+				CallBuilder().WithStoreOrTransaction(txQuerier))
+			require.NoError(t, err)
+
+			stored, err := txQuerier.GetAllPropertiesForEntity(ctx, ent.ID)
+			require.NoError(t, err)
+			require.Len(t, stored, 2)
+		})
+
+		t.Run(tt.name+" returns transaction wrapper errors", func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(ctrl.Finish)
+
+			mockStore := mockdb.NewMockStore(ctrl)
+			expectedErr := errors.New("begin transaction failed")
+
+			mockStore.EXPECT().
+				WithTransactionErr(gomock.Any()).
+				Return(expectedErr)
+
+			ps := NewPropertiesService(mockStore)
+			err := tt.invoke(ps, ctx, entityID, props, nil)
+			require.ErrorIs(t, err, expectedErr)
+		})
+	}
+
+	t.Run("replace all properties rolls back delete when an insert fails mid-replacement", func(t *testing.T) {
+		t.Parallel()
+
+		tctx := createTestCtx(ctx, t)
+		ent, err := tctx.testQueries.CreateEntity(ctx, db.CreateEntityParams{
+			EntityType: entities.EntityTypeToDB(minderv1.Entity_ENTITY_REPOSITORIES),
+			Name:       rand.RandomName(time.Now().UnixNano()),
+			ProjectID:  tctx.dbProj.ID,
+			ProviderID: tctx.ghAppProvider.ID,
+		})
+		require.NoError(t, err)
+
+		originalProps := map[string]any{
+			"name":       "original-repo",
+			"is_private": false,
+		}
+		insertPropertiesFromMap(ctx, t, tctx.testQueries, ent.ID, originalProps)
+
+		ps := NewPropertiesService(&failOnNthUpsertStore{
+			Store:      tctx.testQueries,
+			failOnCall: 2,
+			err:        errors.New("forced upsert failure"),
+		})
+
+		err = ps.ReplaceAllProperties(ctx, ent.ID, props, nil)
+		require.ErrorContains(t, err, "forced upsert failure")
+
+		stored, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, ent.ID)
+		require.NoError(t, err)
+
+		restoredProps, err := models.DbPropsToModel(stored)
+		require.NoError(t, err)
+		require.Equal(t, "original-repo", restoredProps.GetProperty("name").GetString())
+		require.False(t, restoredProps.GetProperty("is_private").GetBool())
 	})
 }
