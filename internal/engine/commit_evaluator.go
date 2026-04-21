@@ -5,7 +5,12 @@ package engine
 
 import "regexp"
 
-var conventionalCommitPattern = regexp.MustCompile(`^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+`)
+const conventionalCommitTypePattern = `(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)`
+const conventionalCommitScopePattern = `(\([A-Za-z0-9._/-]+\))?`
+
+var conventionalCommitPattern = regexp.MustCompile(
+	`^` + conventionalCommitTypePattern + conventionalCommitScopePattern + `!?: .+`,
+)
 
 // Commit contains commit-level data that can be evaluated by policies.
 type Commit struct {
