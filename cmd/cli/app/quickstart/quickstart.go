@@ -250,8 +250,23 @@ func quickstartCommand(
 		registeredRepos = append(registeredRepos, r)
 	}
 
+	return loadCatalog(cmd, ruleClient, profileClient, provider, project, registeredRepos)
+}
+
+// loadCatalog loads and applies the quickstart rule type and profile catalog
+// using the same prompts and flow as the inline implementation.
+//
+//nolint:gocyclo // kept as a straight extraction to preserve behavior
+func loadCatalog(
+	cmd *cobra.Command,
+	ruleClient minderv1.RuleTypeServiceClient,
+	profileClient minderv1.ProfileServiceClient,
+	provider string,
+	project string,
+	registeredRepos []string,
+) error {
 	// Step 3 - Confirm rule type creation
-	yes = cli.PrintYesNoPrompt(cmd,
+	yes := cli.PrintYesNoPrompt(cmd,
 		stepPromptMsgRuleType,
 		"Proceed?",
 		"Quickstart operation cancelled.",
@@ -285,7 +300,7 @@ func quickstartCommand(
 	}
 
 	// New context so we don't time out between steps
-	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
+	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
 	defer cancel()
 
 	// Create the rule type in minder
@@ -368,6 +383,7 @@ func quickstartCommand(
 		profile.RenderProfileRulesTable(resp.GetProfile(), table)
 		table.Render()
 	}
+
 	return nil
 }
 

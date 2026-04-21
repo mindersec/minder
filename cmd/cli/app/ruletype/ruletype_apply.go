@@ -28,9 +28,8 @@ var applyCmd = &cobra.Command{
 }
 
 // applyCommand is the "rule type" apply subcommand
-func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
-
+func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
+	client := getRuleTypeClient(ctx, conn)
 	project := viper.GetString("project")
 
 	fileFlag, err := cmd.Flags().GetStringArray("file")
@@ -82,7 +81,6 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 		updateResp, err := client.UpdateRuleType(ctx, &minderv1.UpdateRuleTypeRequest{
 			RuleType: rt,
 		})
-
 		if err != nil {
 			return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
 		}
@@ -115,5 +113,4 @@ func init() {
 	// Flags
 	applyCmd.Flags().StringArrayP("file", "f", []string{},
 		"Path to the YAML defining the rule type (or - for stdin). Can be specified multiple times. Can be a directory.")
-
 }

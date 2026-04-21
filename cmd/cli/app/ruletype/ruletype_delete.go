@@ -30,7 +30,7 @@ var deleteCmd = &cobra.Command{
 
 // deleteCommand is the rule type delete subcommand
 func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
+	client := getRuleTypeClient(ctx, conn)
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
@@ -107,7 +107,6 @@ func deleteRuleTypes(
 	rulesToDelete []*minderv1.RuleType,
 	project string,
 ) ([]string, []ruleTypeBlock) {
-
 	var deletedRuleTypes []string
 	var remainingRuleTypes []ruleTypeBlock
 
@@ -169,7 +168,7 @@ func printDeleteResults(
 }
 
 func extractProfiles(errMsg string) []string {
-	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	profilesRegex := regexp.MustCompile(`used by profiles (.+)`)
 	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
 	if len(match) < 2 {
 		return []string{}
