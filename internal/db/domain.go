@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package db contains domain-level methods for db structs.
-//
-//nolint:gci
 package db
 
 import (

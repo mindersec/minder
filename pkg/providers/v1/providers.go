@@ -175,7 +175,7 @@ type CommitStatusPublisher interface {
 	Provider
 	// SetCommitStatus creates or updates a commit status.
 	//
-	// This mirrors the GitHub API, and should be common across other Git
+	// This mirrors the GitHub API, and should be common across other Git Forge
 	// providers.
 	SetCommitStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, error)
 }

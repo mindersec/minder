@@ -986,10 +986,7 @@ func isRateLimitError(err error) bool {
 		return true
 	}
 	var abuseRateLimitErr *github.AbuseRateLimitError
-	if errors.As(err, &abuseRateLimitErr) {
-		return true
-	}
-	return false
+	return errors.As(err, &abuseRateLimitErr)
 }
 
 // IsMinderHook checks if a GitHub hook is a Minder hook
