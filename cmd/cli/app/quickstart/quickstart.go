@@ -7,11 +7,15 @@ package quickstart
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
+	"github.com/go-git/go-billy/v5"
+	git "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -23,7 +27,6 @@ import (
 	"github.com/mindersec/minder/cmd/cli/app/profile"
 	minderprov "github.com/mindersec/minder/cmd/cli/app/provider"
 	"github.com/mindersec/minder/cmd/cli/app/repo"
-	cliintern "github.com/mindersec/minder/internal/cli"
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -128,9 +131,6 @@ In case you have registered new repositories during this flow, the profile will 
 
 `
 )
-
-//go:embed embed*
-var content embed.FS
 
 var cmd = &cobra.Command{
 	Use:   "quickstart",
@@ -258,38 +258,27 @@ func quickstartCommand(
 		repoURL = defaultQuickstartCatalogRepoURL
 	}
 
-	return loadCatalog(cmd, ruleClient, profileClient, provider, project, registeredRepos, repoURL)
-}
+	clonedRepo, err := git.Clone(memory.NewStorage(), nil, &git.CloneOptions{
+		URL:   repoURL,
+		Depth: 1,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to load catalog repo: %w", err)
+	}
 
-const (
-	quickstartRuleTypeFilePath      = "rule-types/github/secret_scanning.yaml"
-	quickstartProfileFilePath       = "profiles/github/profile.yaml"
-	defaultQuickstartCatalogRepoURL = "https://github.com/mindersec/minder-rules-and-profiles"
-)
+	worktree, err := clonedRepo.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to load catalog repo: %w", err)
+	}
 
-// loadCatalog drives the catalog portion of the quickstart flow.
-//
-// It first asks the user to confirm creation of the initial quickstart
-// resources (the secret_scanning rule type and its profile), then attempts
-// to source those resources from the configured catalog repository using
-// loadCatalogFromRepo.
-//
-// If cloning the catalog repository or reading/parsing its files fails for
-// any reason, loadCatalog prints a warning and transparently falls back to
-// runExistingFlow, which uses the embedded quickstart YAML files shipped
-// with the CLI. This preserves the original quickstart behavior while
-// preferring the up-to-date remote catalog when available.
-func loadCatalog(
-	cmd *cobra.Command,
-	ruleClient minderv1.RuleTypeServiceClient,
-	profileClient minderv1.ProfileServiceClient,
-	provider string,
-	project string,
-	registeredRepos []string,
-	repoURL string,
-) error {
+	catalog, err := LoadCatalogFromFS(worktree.Filesystem)
+	if err != nil {
+		return fmt.Errorf("failed to load catalog: %w", err)
+	}
+
+	// Now prompt user AFTER validation
 	// Step 3 - Confirm rule type creation
-	yes := cli.PrintYesNoPrompt(cmd,
+	yes = cli.PrintYesNoPrompt(cmd,
 		stepPromptMsgRuleType,
 		"Proceed?",
 		"Quickstart operation cancelled.",
@@ -298,75 +287,8 @@ func loadCatalog(
 		return nil
 	}
 
-	if err := loadCatalogFromRepo(cmd, ruleClient, profileClient, provider, project, registeredRepos, repoURL); err != nil {
-		cmd.Printf("Warning: failed to load quickstart catalog from %s: %v\n", repoURL, err)
-		cmd.Printf("Falling back to embedded quickstart catalog.\n")
-		return runExistingFlow(cmd, ruleClient, profileClient, provider, project, registeredRepos)
-	}
-
-	return nil
-}
-
-// loadCatalogFromRepo loads the quickstart rule type and profile directly
-// from the configured Git repository.
-//
-// The function clones the catalog repository in memory, opens the
-// quickstart rule type and profile YAML files from the in-memory
-// filesystem, parses them into protobuf/CLI profile structures, applies
-// the current provider/project context, and then creates the resources via
-// the RuleType and Profile gRPC services.
-//
-// It mirrors the prompts and output of the original quickstart flow while
-// sourcing the definitions from a remote catalog instead of the embedded
-// YAML. Any error is propagated to the caller so that a higher-level
-// fallback (to the embedded flow) can be applied.
-func loadCatalogFromRepo(
-	cmd *cobra.Command,
-	ruleClient minderv1.RuleTypeServiceClient,
-	profileClient minderv1.ProfileServiceClient,
-	provider string,
-	project string,
-	registeredRepos []string,
-	repoURL string,
-) error {
-	fs, err := cliintern.CloneRepoFilesystem(repoURL)
-	if err != nil {
-		return fmt.Errorf("failed to clone catalog repository: %w", err)
-	}
-
-	rtReader, err := fs.Open(quickstartRuleTypeFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to open rule type file: %w", err)
-	}
-	defer rtReader.Close()
-
-	rt := &minderv1.RuleType{}
-	if err := minderv1.ParseResource(rtReader, rt); err != nil {
-		return fmt.Errorf("failed to parse rule type: %w", err)
-	}
-
-	rt.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
-	}
-
-	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
-	cmd.Printf("Creating rule type from remote catalog...\n")
-	_, err = ruleClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{RuleType: rt})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return fmt.Errorf("error creating rule type from remote catalog: %w", err)
-			}
-			cmd.Println("Rule type secret_scanning already exists")
-		} else {
-			return cli.MessageAndError("error creating rule type", err)
-		}
-	}
-
-	yes := cli.PrintYesNoPrompt(cmd,
+	// Step 4 - Confirm profile creation with context
+	yes = cli.PrintYesNoPrompt(cmd,
 		fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos, "\n")),
 		"Proceed?",
 		"Quickstart operation cancelled.",
@@ -375,163 +297,331 @@ func loadCatalogFromRepo(
 		return nil
 	}
 
-	cmd.Printf("Creating profile from remote catalog...\n")
-	profileReader, err := fs.Open(quickstartProfileFilePath)
+	// Apply all resources (transactional flow)
+	return applyCatalog(cmd, ruleClient, profileClient, catalog, project)
+}
+
+const (
+	defaultQuickstartCatalogRepoURL = "https://github.com/mindersec/minder-rules-and-profiles"
+	catalogRuleTypesDir             = "rule-types"
+	catalogProfilesDir              = "profiles"
+)
+
+// Catalog represents a loaded collection of rule types and profiles from a filesystem.
+type Catalog struct {
+	RuleTypes []*minderv1.RuleType
+	Profiles  []*minderv1.Profile
+}
+
+// LoadCatalogFromFS loads and validates all YAML resources under the catalog directories.
+//
+// It recursively scans the rule-types and profiles directories, loads every YAML file,
+// and verifies that each rule type referenced by each profile exists in the loaded set.
+func LoadCatalogFromFS(fs billy.Filesystem) (*Catalog, error) {
+	ruleTypes, ruleTypeNames, err := loadRuleTypesFromFS(fs)
 	if err != nil {
-		return fmt.Errorf("failed to open profile file: %w", err)
+		return nil, err
 	}
-	defer profileReader.Close()
 
-	p, err := profiles.ParseYAML(profileReader)
+	loadedProfiles, err := loadProfilesFromFS(fs)
 	if err != nil {
-		return fmt.Errorf("failed to parse profile: %w", err)
+		return nil, err
 	}
 
-	p.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
+	if err := validateCatalog(ruleTypeNames, loadedProfiles); err != nil {
+		return nil, err
 	}
 
-	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
-	defer cancel()
+	return &Catalog{RuleTypes: ruleTypes, Profiles: loadedProfiles}, nil
+}
 
-	alreadyExists := false
-	resp, err := profileClient.CreateProfile(ctx, &minderv1.CreateProfileRequest{Profile: p})
+func loadRuleTypesFromFS(fs billy.Filesystem) ([]*minderv1.RuleType, map[string]struct{}, error) {
+	paths, err := collectYAMLFiles(fs, catalogRuleTypesDir)
 	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return cli.MessageAndError("error creating profile", err)
+		return nil, nil, err
+	}
+	if len(paths) == 0 {
+		return nil, nil, fmt.Errorf("no rule type YAML files found under %s", catalogRuleTypesDir)
+	}
+
+	// Keep load order deterministic across filesystems.
+	sort.Strings(paths)
+	ruleTypes := make([]*minderv1.RuleType, 0, len(paths))
+	ruleTypeNames := make(map[string]struct{}, len(paths))
+
+	for _, path := range paths {
+		if err := func() error {
+			reader, err := fs.Open(path)
+			if err != nil {
+				return fmt.Errorf("failed to open rule type file %s: %w", path, err)
 			}
-			alreadyExists = true
-		} else {
-			return cli.MessageAndError("error creating profile", err)
+			defer reader.Close()
+
+			ruleType := &minderv1.RuleType{}
+			if err := minderv1.ParseResource(reader, ruleType); err != nil {
+				return fmt.Errorf("failed to parse rule type file %s: %w", path, err)
+			}
+			if ruleType.GetName() == "" {
+				return fmt.Errorf("rule type file %s has no name", path)
+			}
+			if _, exists := ruleTypeNames[ruleType.GetName()]; exists {
+				return fmt.Errorf("duplicate rule type %q found in %s", ruleType.GetName(), path)
+			}
+			ruleTypeNames[ruleType.GetName()] = struct{}{}
+			ruleTypes = append(ruleTypes, ruleType)
+			return nil
+		}(); err != nil {
+			return nil, nil, err
 		}
 	}
 
-	if alreadyExists {
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
-	} else {
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
-		cmd.Println("Profile details (minder profile list):")
-		table := profile.NewProfileRulesTable(cmd.OutOrStdout())
-		profile.RenderProfileRulesTable(resp.GetProfile(), table)
-		table.Render()
+	return ruleTypes, ruleTypeNames, nil
+}
+
+func loadProfilesFromFS(fs billy.Filesystem) ([]*minderv1.Profile, error) {
+	paths, err := collectYAMLFiles(fs, catalogProfilesDir)
+	if err != nil {
+		return nil, err
+	}
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("no profile YAML files found under %s", catalogProfilesDir)
+	}
+
+	// Keep load order deterministic across filesystems.
+	sort.Strings(paths)
+	loadedProfiles := make([]*minderv1.Profile, 0, len(paths))
+	profileNames := make(map[string]struct{}, len(paths))
+
+	for _, path := range paths {
+		if err := func() error {
+			reader, err := fs.Open(path)
+			if err != nil {
+				return fmt.Errorf("failed to open profile file %s: %w", path, err)
+			}
+			defer reader.Close()
+
+			profile, err := profiles.ParseYAML(reader)
+			if err != nil {
+				return fmt.Errorf("failed to parse profile file %s: %w", path, err)
+			}
+			if profile.GetName() == "" {
+				return fmt.Errorf("profile file %s has no name", path)
+			}
+			if _, exists := profileNames[profile.GetName()]; exists {
+				return fmt.Errorf("duplicate profile %q found in %s", profile.GetName(), path)
+			}
+			profileNames[profile.GetName()] = struct{}{}
+			loadedProfiles = append(loadedProfiles, profile)
+			return nil
+		}(); err != nil {
+			return nil, err
+		}
+	}
+
+	return loadedProfiles, nil
+}
+
+func validateCatalog(ruleTypeNames map[string]struct{}, loadedProfiles []*minderv1.Profile) error {
+	for _, loadedProfile := range loadedProfiles {
+		referencedRuleTypes := make(map[string]struct{})
+		if err := profiles.TraverseRuleTypesForEntities(loadedProfile, func(_ minderv1.Entity, rule *minderv1.Profile_Rule) error {
+			if rule.GetType() != "" {
+				referencedRuleTypes[rule.GetType()] = struct{}{}
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to inspect profile %q: %w", loadedProfile.GetName(), err)
+		}
+
+		for ruleType := range referencedRuleTypes {
+			if _, exists := ruleTypeNames[ruleType]; !exists {
+				return fmt.Errorf("profile %q references missing rule type %q", loadedProfile.GetName(), ruleType)
+			}
+		}
 	}
 
 	return nil
 }
 
-// runExistingFlow contains the original quickstart catalog logic that uses
-// the embedded secret_scanning rule type and profile YAML files.
+func collectYAMLFiles(fs billy.Filesystem, root string) ([]string, error) {
+	entries, err := fs.ReadDir(root)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("catalog directory %s not found", root)
+		}
+		return nil, fmt.Errorf("failed to read catalog directory %s: %w", root, err)
+	}
+
+	paths := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		path := filepath.Join(root, entry.Name())
+		if entry.IsDir() {
+			nested, err := collectYAMLFiles(fs, path)
+			if err != nil {
+				return nil, err
+			}
+			paths = append(paths, nested...)
+			continue
+		}
+
+		switch strings.ToLower(filepath.Ext(entry.Name())) {
+		case ".yaml", ".yml":
+			paths = append(paths, path)
+		}
+	}
+
+	return paths, nil
+}
+
+// applyCatalog creates all rule types and profiles from the catalog via gRPC services.
 //
-// This function is used as a safe fallback when loading the catalog from
-// the configured repository fails. It recreates the previous Step 3 and
-// Step 4 behavior by:
-//   - reading secret_scanning.yaml and profile.yaml from the embedded FS,
-//   - parsing them into the appropriate rule type and profile structures,
-//   - applying the current provider/project context, and
-//   - creating the resources via the corresponding gRPC services, including
-//     handling AlreadyExists responses and printing the final banners and
-//     profile details table.
-func runExistingFlow(
+// This function is called AFTER user confirmation and validation. It creates all
+// resources in the catalog. If any creation fails, the error is returned immediately.
+// The function always prints a summary of created resources, whether new or already
+// existing.
+func applyCatalog(
 	cmd *cobra.Command,
 	ruleClient minderv1.RuleTypeServiceClient,
 	profileClient minderv1.ProfileServiceClient,
-	provider string,
+	catalog *Catalog,
 	project string,
-	registeredRepos []string,
 ) error {
-	cmd.Println("Creating rule type...")
-	reader, err := content.Open("embed/secret_scanning.yaml")
-	if err != nil {
-		return cli.MessageAndError("error opening rule type", err)
-	}
-
-	rt := &minderv1.RuleType{}
-	if err := minderv1.ParseResource(reader, rt); err != nil {
-		return cli.MessageAndError("error parsing rule type", err)
-	}
-
-	if rt.Context == nil {
-		rt.Context = &minderv1.Context{}
-	}
-
-	rt.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
-	}
-
 	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
 	defer cancel()
 
-	_, err = ruleClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{RuleType: rt})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return fmt.Errorf("error creating rule type from: %w", err)
+	projectContext := &minderv1.Context{
+		Project: &project,
+	}
+	result := applyCatalogResult{
+		createdRuleTypes: make([]string, 0, len(catalog.RuleTypes)),
+		createdProfiles:  make([]string, 0, len(catalog.Profiles)),
+	}
+
+	if err := createCatalogRuleTypes(ctx, cmd, ruleClient, catalog.RuleTypes, projectContext, &result); err != nil {
+		rollbackCatalogResources(ctx, ruleClient, profileClient, result)
+		return err
+	}
+
+	if err := createCatalogProfiles(ctx, cmd, profileClient, catalog.Profiles, projectContext, &result); err != nil {
+		rollbackCatalogResources(ctx, ruleClient, profileClient, result)
+		return err
+	}
+
+	printCatalogSummary(cmd, result)
+	return nil
+}
+
+type applyCatalogResult struct {
+	createdRuleTypes    []string
+	createdProfiles     []string
+	summaryProfile      *minderv1.Profile
+	seenExistingProfile bool
+}
+
+func rollbackCatalogResources(
+	ctx context.Context,
+	ruleClient minderv1.RuleTypeServiceClient,
+	profileClient minderv1.ProfileServiceClient,
+	result applyCatalogResult,
+) {
+	for i := len(result.createdProfiles) - 1; i >= 0; i-- {
+		_, _ = profileClient.DeleteProfile(ctx, &minderv1.DeleteProfileRequest{Id: result.createdProfiles[i]})
+	}
+	for i := len(result.createdRuleTypes) - 1; i >= 0; i-- {
+		_, _ = ruleClient.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{Id: result.createdRuleTypes[i]})
+	}
+}
+
+func createCatalogRuleTypes(
+	ctx context.Context,
+	cmd *cobra.Command,
+	ruleClient minderv1.RuleTypeServiceClient,
+	ruleTypes []*minderv1.RuleType,
+	projectContext *minderv1.Context,
+	result *applyCatalogResult,
+) error {
+	for _, ruleType := range ruleTypes {
+		ruleType.Context = projectContext
+
+		cmd.Printf("Creating rule type %s...\n", ruleType.GetName())
+		resp, err := ruleClient.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{RuleType: ruleType})
+		if err != nil {
+			if st, ok := status.FromError(err); ok && st.Code() == codes.AlreadyExists {
+				cmd.Printf("Rule type %s already exists\n", ruleType.GetName())
+				continue
 			}
-			cmd.Println("Rule type secret_scanning already exists")
-		} else {
-			return cli.MessageAndError("error creating rule type", err)
-		}
-	}
-
-	yes := cli.PrintYesNoPrompt(cmd,
-		fmt.Sprintf(stepPromptMsgProfile, strings.Join(registeredRepos, "\n")),
-		"Proceed?",
-		"Quickstart operation cancelled.",
-		true)
-	if !yes {
-		return nil
-	}
-
-	cmd.Println("Creating profile...")
-	reader, err = content.Open("embed/profile.yaml")
-	if err != nil {
-		return cli.MessageAndError("error opening profile", err)
-	}
-
-	p, err := profiles.ParseYAML(reader)
-	if err != nil {
-		return cli.MessageAndError("error parsing profile", err)
-	}
-
-	if p.Context == nil {
-		p.Context = &minderv1.Context{}
-	}
-
-	p.Context = &minderv1.Context{
-		Provider: &provider,
-		Project:  &project,
-	}
-
-	ctx, cancel = getQuickstartContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
-	alreadyExists := false
-	resp, err := profileClient.CreateProfile(ctx, &minderv1.CreateProfileRequest{Profile: p})
-	if err != nil {
-		if st, ok := status.FromError(err); ok {
-			if st.Code() != codes.AlreadyExists {
-				return cli.MessageAndError("error creating profile", err)
+			if st, ok := status.FromError(err); ok {
+				return fmt.Errorf("error creating rule type %s: %s", ruleType.GetName(), st.Message())
 			}
-			alreadyExists = true
-		} else {
-			return cli.MessageAndError("error creating profile", err)
+			return cli.MessageAndError(fmt.Sprintf("error creating rule type %s", ruleType.GetName()), err)
 		}
-	}
 
-	if alreadyExists {
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
-	} else {
-		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
-		cmd.Println("Profile details (minder profile list):")
-		table := profile.NewProfileRulesTable(cmd.OutOrStdout())
-		profile.RenderProfileRulesTable(resp.GetProfile(), table)
-		table.Render()
+		createdName := ruleType.GetName()
+		if resp != nil && resp.GetRuleType() != nil && resp.GetRuleType().GetName() != "" {
+			createdName = resp.GetRuleType().GetName()
+		}
+		result.createdRuleTypes = append(result.createdRuleTypes, createdName)
 	}
 
 	return nil
+}
+
+func createCatalogProfiles(
+	ctx context.Context,
+	cmd *cobra.Command,
+	profileClient minderv1.ProfileServiceClient,
+	loadedProfiles []*minderv1.Profile,
+	projectContext *minderv1.Context,
+	result *applyCatalogResult,
+) error {
+	for _, profileResource := range loadedProfiles {
+		profileResource.Context = projectContext
+		result.summaryProfile = profileResource
+
+		cmd.Printf("Creating profile %s...\n", profileResource.GetName())
+		resp, err := profileClient.CreateProfile(ctx, &minderv1.CreateProfileRequest{Profile: profileResource})
+		if err != nil {
+			if st, ok := status.FromError(err); ok && st.Code() == codes.AlreadyExists {
+				result.seenExistingProfile = true
+				result.summaryProfile = profileResource
+				continue
+			}
+			if st, ok := status.FromError(err); ok {
+				return fmt.Errorf("error creating profile %s: %s", profileResource.GetName(), st.Message())
+			}
+			return cli.MessageAndError(fmt.Sprintf("error creating profile %s", profileResource.GetName()), err)
+		}
+
+		if resp != nil && resp.GetProfile() != nil {
+			result.summaryProfile = resp.GetProfile()
+			if result.summaryProfile.GetId() != "" {
+				result.createdProfiles = append(result.createdProfiles, result.summaryProfile.GetId())
+			} else {
+				result.createdProfiles = append(result.createdProfiles, profileResource.GetName())
+			}
+		} else {
+			result.createdProfiles = append(result.createdProfiles, profileResource.GetName())
+		}
+	}
+
+	return nil
+}
+
+func printCatalogSummary(cmd *cobra.Command, result applyCatalogResult) {
+	if result.seenExistingProfile {
+		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishExisting + stepPromptMsgFinishBase))
+	} else {
+		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
+	}
+
+	if result.summaryProfile == nil {
+		return
+	}
+
+	cmd.Println("Profile details (minder profile list):")
+	table := profile.NewProfileRulesTable(cmd.OutOrStdout())
+	profile.RenderProfileRulesTable(result.summaryProfile, table)
+	table.Render()
 }
 
 func init() {
