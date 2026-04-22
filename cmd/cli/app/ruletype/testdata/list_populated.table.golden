@@ -1,0 +1,22 @@
+ NAME                            │ ENTITY  │ DESCRIPTION                                            
+                                 │ TYPE    │                                                        
+─────────────────────────────────┼─────────┼────────────────────────────────────────────────────────
+ secret_push_protection          │ reposit │ Verifies that secret push protection is enabled for a  
+ (release_phase: beta)           │ ory     │ given repository. Note that this will will not work as 
+                                 │         │ expected for private repositories unless you have      
+                                 │         │ GitHub Advanced Security enabled. If you still want to 
+                                 │         │ use this rule because you have a mixture of private    
+                                 │         │ and public repositories, enable the                    
+                                 │         │ `skip_private_repos` flag.                             
+─────────────────────────────────┤         ├────────────────────────────────────────────────────────
+ secret_scanning (release_phase: │         │ Verifies that secret scanning is enabled for a given   
+ beta)                           │         │ repository. Note that this will will not work as       
+                                 │         │ expected for private repositories unless you have      
+                                 │         │ GitHub Advanced Security enabled. If you still want to 
+                                 │         │ use this rule because you have a mixture of private    
+                                 │         │ and public repositories, enable the                    
+                                 │         │ `skip_private_repos` flag.                             
+─────────────────────────────────┤         ├────────────────────────────────────────────────────────
+ test_base_file_rule             │         │ Checks whether README.md exists in the repository.     
+ (release_phase: alpha,          │         │                                                        
+ can_remediate: false)           │         │                                                        

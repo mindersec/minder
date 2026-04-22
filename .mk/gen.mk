@@ -29,7 +29,7 @@ oapi: ## generate openapi files
 mock: ## generate mocks
 	go generate ./...
 	mockgen -package mockdb -destination database/mock/store.go github.com/mindersec/minder/internal/db Store
-	mockgen -package mock_github -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub
+	mockgen -package mock_github -destination internal/providers/github/mock/github.go -source pkg/providers/v1/providers.go GitHub,CommitStatusPublisher,ReviewPublisher
 	mockgen -package mockbundle -destination internal/marketplaces/bundles/mock/reader.go -source pkg/mindpak/reader/reader.go
 	mockgen -package mockbundle -destination internal/marketplaces/bundles/mock/source.go -source pkg/mindpak/sources/source.go
 
