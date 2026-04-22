@@ -3,3 +3,16 @@ vulnerabilities:
   # The actual vulnerability is in AuthZ plugins, which Minder does not implement or build.
   - id: CVE-2026-34040
   - id: CVE-2026-33997
+
+  # Indirect/test dependencies (not used in runtime execution)
+  - id: CVE-2026-39883
+    reason: Present in indirect dependency not used in runtime code paths
+
+  - id: CVE-2026-4800
+    reason: Found in example/test modules and not used in production execution
+
+  - id: GHSA-5c6j-r48x-rmvq
+    reason: Affects indirect dependency not exercised in runtime
+
+  - id: GHSA-52f5-9888-hmc6
+    reason: Only present in development/test dependencies

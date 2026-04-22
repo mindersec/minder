@@ -8,9 +8,10 @@ package db
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/sqlc-dev/pqtype"
+
+	"github.com/mindersec/minder/internal/labels"
 )
 
 // This file contains domain-level methods for db structs
@@ -50,27 +51,7 @@ func (r ListProfilesByProjectIDAndLabelRow) GetSelectors() []ProfileSelector {
 
 // LabelsFromFilter parses the filter string and populates the IncludeLabels and ExcludeLabels fields
 func (lp *ListProfilesByProjectIDAndLabelParams) LabelsFromFilter(filter string) {
-	// If s does not contain sep and sep is not empty, Split returns a
-	// slice of length 1 whose only element is s. Work around that by
-	// returning early if filter is empty.
-	if filter == "" {
-		return
-	}
-
-	var starMatched bool
-	for _, label := range strings.Split(filter, ",") {
-		switch {
-		case label == "*":
-			starMatched = true
-		case strings.HasPrefix(label, "!"):
-			// if the label starts with a "!", it is a negative filter, add it to the negative list
-			lp.ExcludeLabels = append(lp.ExcludeLabels, label[1:])
-		default:
-			lp.IncludeLabels = append(lp.IncludeLabels, label)
-		}
-	}
-
-	if starMatched {
-		lp.IncludeLabels = []string{"*"}
-	}
+	inc, exc := labels.ParseLabelFilter(filter)
+	lp.IncludeLabels = inc
+	lp.ExcludeLabels = exc
 }

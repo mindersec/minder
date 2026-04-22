@@ -26,8 +26,8 @@ var createCmd = &cobra.Command{
 }
 
 // createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
+func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+	client := getRuleTypeClient(ctx, conn)
 
 	project := viper.GetString("project")
 
@@ -49,7 +49,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	table := initializeTableForList()
+	table := initializeTableForList(cmd.OutOrStdout())
 
 	createFunc := func(ctx context.Context, _ string, rt *minderv1.RuleType) (*minderv1.RuleType, error) {
 		resprt, err := client.CreateRuleType(ctx, &minderv1.CreateRuleTypeRequest{

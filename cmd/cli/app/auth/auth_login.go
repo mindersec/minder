@@ -69,13 +69,13 @@ func LoginCommand(cmd *cobra.Command, _ []string) error {
 		))
 		cmd.Println(cli.Header.Render("Here are your details:"))
 
-		renderNewUser(conn.Target(), newUser)
+		renderNewUser(conn.Target(), newUser, cmd.OutOrStdout())
 	} else {
 		cmd.Println(cli.SuccessBanner.Render(
 			"You have successfully logged in."))
 
 		cmd.Println(cli.Header.Render("Here are your details:"))
-		renderUserInfo(conn.Target(), userInfo)
+		renderUserInfo(conn.Target(), userInfo, cmd.OutOrStdout())
 	}
 
 	cmd.Printf("Your access credentials have been saved to %s\n", filePath)

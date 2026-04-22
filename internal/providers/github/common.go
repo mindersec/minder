@@ -69,6 +69,7 @@ type GitHub struct {
 	packageListingClient *github.Client
 	cache                ratecache.RestClientCache
 	delegate             Delegate
+	providerClass        db.ProviderClass
 	ghcrwrap             *ghcr.ImageLister
 	gitConfig            config.GitConfig
 	webhookConfig        *config.WebhookConfig
@@ -164,6 +165,7 @@ func NewGitHub(
 	packageListingClient *github.Client,
 	cache ratecache.RestClientCache,
 	delegate Delegate,
+	providerClass db.ProviderClass,
 	cfg *config.ProviderConfig,
 	whcfg *config.WebhookConfig,
 	propertyFetchers properties.GhPropertyFetcherFactory,
@@ -177,6 +179,7 @@ func NewGitHub(
 		packageListingClient: packageListingClient,
 		cache:                cache,
 		delegate:             delegate,
+		providerClass:        providerClass,
 		ghcrwrap:             ghcr.FromGitHubClient(client, delegate.GetOwner()),
 		gitConfig:            gitConfig,
 		webhookConfig:        whcfg,
@@ -584,7 +587,7 @@ func (c *GitHub) IsOrg() bool {
 // ListHooks lists all Hooks for the specified repository.
 func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.Hook, error) {
 	list, resp, err := c.client.Repositories.ListHooks(ctx, owner, repo, nil)
-	if err != nil && resp.StatusCode == http.StatusNotFound {
+	if err != nil && resp != nil && resp.StatusCode == http.StatusNotFound {
 		// return empty list so that the caller can ignore the error and iterate over the empty list
 		return []*github.Hook{}, fmt.Errorf("hooks not found for repository %s/%s: %w", owner, repo, ErrNotFound)
 	}
@@ -594,13 +597,13 @@ func (c *GitHub) ListHooks(ctx context.Context, owner, repo string) ([]*github.H
 // DeleteHook deletes a specified Hook.
 func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) error {
 	resp, err := c.client.Repositories.DeleteHook(ctx, owner, repo, id)
-	if resp != nil && resp.StatusCode == http.StatusNotFound {
+	if isRateLimitError(err) {
+		return c.waitForRateLimitReset(ctx, err)
+	}
+	if resp != nil && (resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusForbidden) {
 		// If the hook is not found, we can ignore the
 		// error, user might have deleted it manually.
-		return nil
-	}
-	if resp != nil && resp.StatusCode == http.StatusForbidden {
-		// We ignore deleting webhooks that we're not
+		// We also ignore deleting webhooks that we're not
 		// allowed to touch. This is usually the case
 		// with repository transfer.
 		return nil
@@ -611,12 +614,22 @@ func (c *GitHub) DeleteHook(ctx context.Context, owner, repo string, id int64) e
 // CreateHook creates a new Hook.
 func (c *GitHub) CreateHook(ctx context.Context, owner, repo string, hook *github.Hook) (*github.Hook, error) {
 	h, _, err := c.client.Repositories.CreateHook(ctx, owner, repo, hook)
+	if isRateLimitError(err) {
+		if waitErr := c.waitForRateLimitReset(ctx, err); waitErr != nil {
+			return nil, waitErr
+		}
+	}
 	return h, err
 }
 
 // EditHook edits an existing Hook.
 func (c *GitHub) EditHook(ctx context.Context, owner, repo string, id int64, hook *github.Hook) (*github.Hook, error) {
 	h, _, err := c.client.Repositories.EditHook(ctx, owner, repo, id, hook)
+	if isRateLimitError(err) {
+		if waitErr := c.waitForRateLimitReset(ctx, err); waitErr != nil {
+			return nil, waitErr
+		}
+	}
 	return h, err
 }
 
@@ -867,16 +880,12 @@ func (c *GitHub) setAsRateLimited() {
 // than MaxRateLimitWait or requests' context is cancelled.
 func (c *GitHub) waitForRateLimitReset(ctx context.Context, err error) error {
 	var rateLimitError *github.RateLimitError
-	isRateLimitErr := errors.As(err, &rateLimitError)
-
-	if isRateLimitErr {
+	if errors.As(err, &rateLimitError) {
 		return c.processPrimaryRateLimitErr(ctx, rateLimitError)
 	}
 
 	var abuseRateLimitError *github.AbuseRateLimitError
-	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
-
-	if isAbuseRateLimitErr {
+	if errors.As(err, &abuseRateLimitError) {
 		return c.processAbuseRateLimitErr(ctx, abuseRateLimitError)
 	}
 
@@ -899,7 +908,7 @@ func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.Rat
 
 		if waitTime > MaxRateLimitWait {
 			logger.Debug().Msgf("rate limit reset time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
-			return err
+			return engerrors.NewRateLimitError(err, int64(rate.Limit), int64(rate.Remaining), resetTime)
 		}
 
 		// Wait for the rate limit to reset
@@ -908,7 +917,7 @@ func (c *GitHub) processPrimaryRateLimitErr(ctx context.Context, err *github.Rat
 			return nil
 		case <-ctx.Done():
 			logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
-			return err
+			return engerrors.NewRateLimitError(err, int64(rate.Limit), int64(rate.Remaining), resetTime)
 		}
 	}
 
@@ -929,7 +938,7 @@ func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.Abuse
 
 	if waitTime > MaxRateLimitWait {
 		logger.Debug().Msgf("abuse rate limit wait time: %v exceeds maximum wait time: %v", waitTime, MaxRateLimitWait)
-		return err
+		return engerrors.NewRateLimitError(err, 0, 0, time.Now().Add(waitTime))
 	}
 
 	// Wait for the rate limit to reset
@@ -938,7 +947,7 @@ func (c *GitHub) processAbuseRateLimitErr(ctx context.Context, err *github.Abuse
 		return nil
 	case <-ctx.Done():
 		logger.Debug().Err(ctx.Err()).Msg("context done while waiting for rate limit to reset")
-		return err
+		return engerrors.NewRateLimitError(err, 0, 0, time.Now().Add(waitTime))
 	}
 }
 
@@ -972,13 +981,13 @@ func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData
 }
 
 func isRateLimitError(err error) bool {
-	var rateLimitError *github.RateLimitError
-	isRateLimitErr := errors.As(err, &rateLimitError)
-
-	var abuseRateLimitError *github.AbuseRateLimitError
-	isAbuseRateLimitErr := errors.As(err, &abuseRateLimitError)
-
-	return isRateLimitErr || isAbuseRateLimitErr
+	if _, ok := errors.AsType[*github.RateLimitError](err); ok {
+		return true
+	}
+	if _, ok := errors.AsType[*github.AbuseRateLimitError](err); ok {
+		return true
+	}
+	return false
 }
 
 // IsMinderHook checks if a GitHub hook is a Minder hook
@@ -1047,11 +1056,14 @@ func (c *GitHub) StartCheckRun(
 
 	run, resp, err := c.client.Checks.CreateCheckRun(ctx, owner, repo, *opts)
 	if err != nil {
-		// If error is 403 then it means we are missing permissions
-		if resp.StatusCode == 403 {
-			return nil, fmt.Errorf("missing permissions: check")
+		if isRateLimitError(err) {
+			return nil, c.waitForRateLimitReset(ctx, err)
 		}
-		return nil, ErroNoCheckPermissions
+		// If error is 403 then it means we are missing permissions
+		if resp != nil && resp.StatusCode == 403 {
+			return nil, ErroNoCheckPermissions
+		}
+		return nil, fmt.Errorf("creating check: %w", err)
 	}
 	return run, nil
 }
@@ -1063,8 +1075,11 @@ func (c *GitHub) UpdateCheckRun(
 ) (*github.CheckRun, error) {
 	run, resp, err := c.client.Checks.UpdateCheckRun(ctx, owner, repo, checkRunID, *opts)
 	if err != nil {
+		if isRateLimitError(err) {
+			return nil, c.waitForRateLimitReset(ctx, err)
+		}
 		// If error is 403 then it means we are missing permissions
-		if resp.StatusCode == 403 {
+		if resp != nil && resp.StatusCode == 403 {
 			return nil, ErroNoCheckPermissions
 		}
 		return nil, fmt.Errorf("updating check: %w", err)

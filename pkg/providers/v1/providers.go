@@ -67,6 +67,9 @@ type Provider interface {
 	// SupportsEntity returns true if the provider supports the given entity type
 	SupportsEntity(entType minderv1.Entity) bool
 
+	// ProviderClassInfo returns metadata for this provider's class.
+	ProviderClassInfo() *minderv1.ProviderClassInfo
+
 	// RegisterEntity ensures that the service provider has the necessary information
 	// to know that the entity is handled by Minder. This could be creating a webhook
 	// for a particular repository or artifact, tagging a resource in some way, or

@@ -14,6 +14,7 @@ import (
 	"github.com/mindersec/minder/internal/crypto"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/providers/credentials"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
@@ -33,6 +34,14 @@ func NewDockerHubProviderClassManager(crypteng crypto.Engine, store db.Store) *p
 // GetSupportedClasses implements the ProviderClassManager interface
 func (*providerClassManager) GetSupportedClasses() []db.ProviderClass {
 	return []db.ProviderClass{db.ProviderClassDockerhub}
+}
+
+func (g *providerClassManager) GetProviderClassInfo(class db.ProviderClass) (*minderv1.ProviderClassInfo, error) {
+	if !slices.Contains(g.GetSupportedClasses(), class) {
+		return nil, fmt.Errorf("provider does not implement %s", class)
+	}
+
+	return ClassInfo(), nil
 }
 
 // Build implements the ProviderClassManager interface

@@ -148,9 +148,10 @@ func cursorFromOptions(cursorStr string, size uint32) *minderv1.Cursor {
 }
 
 func printTable(w io.Writer, resp *minderv1.ListEvaluationHistoryResponse, emoji bool) {
-	historyTable := table.New(table.Simple, layouts.Default,
-		[]string{"Time", "Entity", "Rule", "Status"})
-	// TODO: add automerge common cells
+	historyTable := table.New(table.Simple, layouts.Default, w,
+		[]string{"Time", "Entity", "Rule", "Status"}).
+		SetAutoMerge(true)
+
 	renderRuleEvaluationStatusTable(resp.Data, historyTable, emoji)
 	historyTable.Render()
 	fmt.Println("")
@@ -202,6 +203,25 @@ func renderRuleEvaluationStatusTable(
 	t table.Table,
 	emoji bool,
 ) {
+	//Multi level sort to guarantee perfect AutoMerge blocks
+	slices.SortFunc(statuses, func(a, b *minderv1.EvaluationHistory) int {
+		timeA := a.EvaluatedAt.AsTime().Format(time.DateTime)
+		timeB := b.EvaluatedAt.AsTime().Format(time.DateTime)
+
+		//Sort by Time (Descending - newest at top)
+		if sort := strings.Compare(timeB, timeA); sort != 0 {
+			return sort
+		}
+
+		//Sort by Rule Name (Ascending) -> Groups identical rules together
+		if sort := strings.Compare(a.Rule.Name, b.Rule.Name); sort != 0 {
+			return sort
+		}
+
+		//Sort by Entity Name (Ascending)
+		return strings.Compare(a.Entity.Name, b.Entity.Name)
+	})
+
 	for _, eval := range statuses {
 		t.AddRowWithColor(
 			layouts.NoColor(eval.EvaluatedAt.AsTime().Format(time.DateTime)),

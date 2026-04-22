@@ -123,6 +123,20 @@ func (mr *MockProviderMockRecorder) PropertiesToProtoMessage(entType, props any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockProvider)(nil).PropertiesToProtoMessage), entType, props)
 }
 
+// ProviderClassInfo mocks base method.
+func (m *MockProvider) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockProviderMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockProvider)(nil).ProviderClassInfo))
+}
+
 // RegisterEntity mocks base method.
 func (m *MockProvider) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -262,6 +276,20 @@ func (m *MockGit) PropertiesToProtoMessage(entType v10.Entity, props *properties
 func (mr *MockGitMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockGit)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockGit) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockGitMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockGit)(nil).ProviderClassInfo))
 }
 
 // RegisterEntity mocks base method.
@@ -434,6 +462,20 @@ func (mr *MockRESTMockRecorder) PropertiesToProtoMessage(entType, props any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockREST)(nil).PropertiesToProtoMessage), entType, props)
 }
 
+// ProviderClassInfo mocks base method.
+func (m *MockREST) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockRESTMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockREST)(nil).ProviderClassInfo))
+}
+
 // RegisterEntity mocks base method.
 func (m *MockREST) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -573,6 +615,20 @@ func (m *MockRepoLister) PropertiesToProtoMessage(entType v10.Entity, props *pro
 func (mr *MockRepoListerMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockRepoLister)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockRepoLister) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockRepoListerMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockRepoLister)(nil).ProviderClassInfo))
 }
 
 // RegisterEntity mocks base method.
@@ -1654,6 +1710,20 @@ func (mr *MockGitHubMockRecorder) PropertiesToProtoMessage(entType, props any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockGitHub)(nil).PropertiesToProtoMessage), entType, props)
 }
 
+// ProviderClassInfo mocks base method.
+func (m *MockGitHub) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockGitHubMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockGitHub)(nil).ProviderClassInfo))
+}
+
 // RegisterEntity mocks base method.
 func (m *MockGitHub) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -1897,6 +1967,20 @@ func (mr *MockImageListerMockRecorder) PropertiesToProtoMessage(entType, props a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockImageLister)(nil).PropertiesToProtoMessage), entType, props)
 }
 
+// ProviderClassInfo mocks base method.
+func (m *MockImageLister) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockImageListerMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockImageLister)(nil).ProviderClassInfo))
+}
+
 // RegisterEntity mocks base method.
 func (m *MockImageLister) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -2110,6 +2194,20 @@ func (m *MockOCI) PropertiesToProtoMessage(entType v10.Entity, props *properties
 func (mr *MockOCIMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockOCI)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockOCI) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockOCIMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockOCI)(nil).ProviderClassInfo))
 }
 
 // RegisterEntity mocks base method.

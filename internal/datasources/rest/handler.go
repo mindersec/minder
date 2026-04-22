@@ -346,6 +346,11 @@ func retriableDo(dofunc func(*http.Request) (*http.Response, error), req *http.R
 		}
 
 		if resp.StatusCode == http.StatusTooManyRequests {
+			// Drain and close the response body to release the underlying
+			// TCP connection back to the pool before retrying.
+			//nolint:gosec // errors from draining and closing a rate-limit response are non-actionable
+			_, _ = io.Copy(io.Discard, resp.Body)
+			_ = resp.Body.Close()
 			zerolog.Ctx(req.Context()).Debug().
 				Int("retry", retryCount).
 				Msg("rate limited, retrying")

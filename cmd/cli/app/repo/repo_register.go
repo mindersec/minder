@@ -34,10 +34,6 @@ var repoRegisterCmd = &cobra.Command{
 			return fmt.Errorf("cannot use --name and --all together")
 		}
 
-		if len(inputRepoList) == 0 && !registerAll {
-			return fmt.Errorf("must provide either --name or --all")
-		}
-
 		return nil
 	},
 
@@ -247,7 +243,7 @@ func printRepoRegistrationStatus(cmd *cobra.Command, results []*minderv1.Registe
 		return
 	}
 
-	t := table.New(table.Simple, layouts.Default, []string{"Repository", "Status", "Message"})
+	t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Repository", "Status", "Message"})
 	for _, result := range results {
 		// in the case of a malformed response, skip over it to avoid segfaulting
 		if result.Repository == nil {

@@ -67,12 +67,12 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		table := profile.NewProfileStatusTable()
+		table := profile.NewProfileStatusTable(cmd.OutOrStdout())
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table, viper.GetBool("emoji"))
 		table.Render()
 		if detailed {
 			fmt.Println()
-			table = profile.NewRuleEvaluationsTable()
+			table = profile.NewRuleEvaluationsTable(cmd.OutOrStdout())
 			table.SeparateRows()
 			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table, viper.GetBool("emoji"))
 			table.Render()
