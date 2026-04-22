@@ -3183,6 +3183,14 @@ definitions:
     properties:
       reviewMessage:
         type: string
+        description: review_message is the message to post in the PR review.
+      action:
+        type: string
+        description: >-
+          action is the action to use for the PR review (comment or
+          request_changes).
+
+          Default is comment.
     required:
       - reviewMessage
   AlertAlertTypeSA:
@@ -3204,6 +3212,14 @@ definitions:
     properties:
       type:
         type: string
+        description: >-
+          type is the type of the alert.
+
+          * 'security_advisory' can only be used with the 'repository' entity
+          type.
+
+          * 'pull_request_comment' can only be used with the 'pull_request'
+          entity type.
       securityAdvisory:
         $ref: '#/definitions/AlertAlertTypeSA'
       pullRequestComment:
@@ -3299,12 +3315,24 @@ definitions:
     properties:
       type:
         type: string
+        description: >-
+          type is the type of the remediation.
+
+          * 'rest' can be used with any entity type.
+
+          * 'gh_branch_protection' and 'pull_request' can only be used with the
+          'repository' entity type.
+
+          * 'pull_request_comment' can only be used with the 'pull_request'
+          entity type.
       rest:
         $ref: '#/definitions/v1RestType'
       ghBranchProtection:
         $ref: '#/definitions/RemediateGhBranchProtectionType'
       pullRequest:
         $ref: '#/definitions/RemediatePullRequestRemediation'
+      pullRequestComment:
+        $ref: '#/definitions/AlertAlertTypePRComment'
   DepsTypePullRequestConfigs:
     type: object
     properties:
