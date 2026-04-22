@@ -26,7 +26,7 @@ jobs:
         uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
       # Install gotestfmt and go-junit-report on the VM running the action.
       - name: Set up gotestfmt
-        uses: GoTestTools/gotestfmt-action@8b4478c7019be847373babde9300210e7de34bfb # v2.2.0
+        uses: GoTestTools/gotestfmt-action@eba2ac97f623e866e7b1b117c99f18b43cd36d18 # v2.3.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install gotestsum
