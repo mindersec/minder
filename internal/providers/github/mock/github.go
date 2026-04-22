@@ -834,6 +834,20 @@ func (mr *MockCommitStatusPublisherMockRecorder) PropertiesToProtoMessage(entTyp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockCommitStatusPublisher)(nil).PropertiesToProtoMessage), entType, props)
 }
 
+// ProviderClassInfo mocks base method.
+func (m *MockCommitStatusPublisher) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockCommitStatusPublisherMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockCommitStatusPublisher)(nil).ProviderClassInfo))
+}
+
 // RegisterEntity mocks base method.
 func (m *MockCommitStatusPublisher) RegisterEntity(ctx context.Context, entType v10.Entity, props *properties.Properties) (*properties.Properties, error) {
 	m.ctrl.T.Helper()
@@ -1033,6 +1047,20 @@ func (m *MockReviewPublisher) PropertiesToProtoMessage(entType v10.Entity, props
 func (mr *MockReviewPublisherMockRecorder) PropertiesToProtoMessage(entType, props any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesToProtoMessage", reflect.TypeOf((*MockReviewPublisher)(nil).PropertiesToProtoMessage), entType, props)
+}
+
+// ProviderClassInfo mocks base method.
+func (m *MockReviewPublisher) ProviderClassInfo() *v10.ProviderClassInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProviderClassInfo")
+	ret0, _ := ret[0].(*v10.ProviderClassInfo)
+	return ret0
+}
+
+// ProviderClassInfo indicates an expected call of ProviderClassInfo.
+func (mr *MockReviewPublisherMockRecorder) ProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProviderClassInfo", reflect.TypeOf((*MockReviewPublisher)(nil).ProviderClassInfo))
 }
 
 // RegisterEntity mocks base method.

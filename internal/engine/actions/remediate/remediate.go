@@ -71,7 +71,7 @@ func NewRuleRemediator(
 	case pull_request_comment.AlertType:
 		client, err := provinfv1.As[provinfv1.ReviewPublisher](provider)
 		if err != nil {
-			return nil, errors.New("provider does not support publishing pull request reviews")
+			return nil, errors.New("provider does not implement pull_request_comment trait")
 		}
 		if remediate.GetPullRequestComment() == nil {
 			return nil, fmt.Errorf("remediations engine missing pull_request_comment configuration")

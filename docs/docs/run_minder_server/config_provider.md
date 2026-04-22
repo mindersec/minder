@@ -62,7 +62,6 @@ Select the following permissions:
 - Repository Permissions:
 
   - Administration (read and write)
-  - Commit statuses (read and write)
   - Contents (read and write)
   - Metadata (read only)
   - Packages (read and write)

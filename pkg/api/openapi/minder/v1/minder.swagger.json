@@ -3450,9 +3450,9 @@
           "type": "string",
           "description": "review_message is the message to post in the PR review."
         },
-        "reviewEvent": {
+        "action": {
           "type": "string",
-          "description": "review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES).\nDefault is COMMENT."
+          "description": "action is the action to use for the PR review (comment or request_changes).\nDefault is comment."
         }
       },
       "required": [

@@ -981,10 +981,12 @@ func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData
 }
 
 func isRateLimitError(err error) bool {
-	if _, ok := errors.AsType[*github.RateLimitError](err); ok {
+	var rateLimitErr *github.RateLimitError
+	if errors.As(err, &rateLimitErr) {
 		return true
 	}
-	if _, ok := errors.AsType[*github.AbuseRateLimitError](err); ok {
+	var abuseRateLimitErr *github.AbuseRateLimitError
+	if errors.As(err, &abuseRateLimitErr) {
 		return true
 	}
 	return false

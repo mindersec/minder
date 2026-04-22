@@ -171,13 +171,15 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 				return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
 			}
 			reviewID = review.GetID()
+			existingReview = review
 			logger.Info().Int64("review_id", reviewID).Msg("PR review created")
 		}
 
 		now := time.Now()
 		newMeta, err := json.Marshal(alertMetadata{
-			ReviewID:    strconv.FormatInt(reviewID, 10),
-			SubmittedAt: &now,
+			ReviewID:       strconv.FormatInt(reviewID, 10),
+			SubmittedAt:    &now,
+			PullRequestUrl: existingReview.HTMLURL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
@@ -315,7 +317,13 @@ func (alert *Alert) getParamsForPRComment(
 	}
 
 	result.RuleName = params.GetRule().Name
-	result.Event = cmp.Or(alert.reviewCfg.GetReviewEvent(), "COMMENT")
+
+	action := cmp.Or(alert.reviewCfg.GetAction(), "comment")
+	if strings.ToLower(action) == "request_changes" {
+		result.Event = "REQUEST_CHANGES"
+	} else {
+		result.Event = "COMMENT"
+	}
 
 	// Add magic comment to identify Minder reviews for this rule
 	result.Comment = fmt.Sprintf("%s\n\n<!-- minder-rule: %s -->", comment, result.RuleName)

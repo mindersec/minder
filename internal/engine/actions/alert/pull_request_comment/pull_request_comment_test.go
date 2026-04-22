@@ -196,14 +196,14 @@ func TestPullRequestCommentAlert(t *testing.T) {
 				ctrl.Finish()
 			})
 
-			reviewEvent := ""
+			reviewAction := ""
 			if tt.name == "create a PR comment with REQUEST_CHANGES" {
-				reviewEvent = "REQUEST_CHANGES"
+				reviewAction = "request_changes"
 			}
 
 			prCommentCfg := pb.RuleType_Definition_Alert_AlertTypePRComment{
 				ReviewMessage: tt.reviewMsg,
-				ReviewEvent:   &reviewEvent,
+				Action:        &reviewAction,
 			}
 
 			mockClient := mock_provifv1.NewMockReviewPublisher(ctrl)

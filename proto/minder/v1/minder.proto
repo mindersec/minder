@@ -2942,11 +2942,11 @@ message RuleType {
                     },
                     (google.api.field_behavior) = REQUIRED
                 ];
-                // review_event is the event to use for the PR review (COMMENT or REQUEST_CHANGES).
-                // Default is COMMENT.
-                optional string review_event = 2 [
+                // action is the action to use for the PR review (comment or request_changes).
+                // Default is comment.
+                optional string action = 2 [
                     (buf.validate.field).string = {
-                        in: ["COMMENT", "REQUEST_CHANGES"],
+                        in: ["comment", "request_changes"],
                     }
                 ];
             }
