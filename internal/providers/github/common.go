@@ -79,6 +79,12 @@ type GitHub struct {
 // Ensure that the GitHub client implements the GitHub interface
 var _ provifv1.GitHub = (*GitHub)(nil)
 
+// Ensure that the GitHub client implements the CommitStatusPublisher interface
+var _ provifv1.CommitStatusPublisher = (*GitHub)(nil)
+
+// Ensure that the GitHub client implements the ReviewPublisher interface
+var _ provifv1.ReviewPublisher = (*GitHub)(nil)
+
 // ClientService is an interface for GitHub operations
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
@@ -975,13 +981,12 @@ func performWithRetry[T any](ctx context.Context, op backoffv4.OperationWithData
 }
 
 func isRateLimitError(err error) bool {
-	if _, ok := errors.AsType[*github.RateLimitError](err); ok {
+	var rateLimitErr *github.RateLimitError
+	if errors.As(err, &rateLimitErr) {
 		return true
 	}
-	if _, ok := errors.AsType[*github.AbuseRateLimitError](err); ok {
-		return true
-	}
-	return false
+	var abuseRateLimitErr *github.AbuseRateLimitError
+	return errors.As(err, &abuseRateLimitErr)
 }
 
 // IsMinderHook checks if a GitHub hook is a Minder hook
