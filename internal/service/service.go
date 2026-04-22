@@ -113,6 +113,8 @@ func AllInOneServerService(
 	projectCreator := projects.NewProjectCreator(authzClient, marketplace, &cfg.DefaultProfiles, &cfg.Features)
 	propSvc := propService.NewPropertiesService(store)
 
+	// TODO: isolate GitHub-specific wiring. We'll need to isolate GitHub
+	// webhook handling to make this viable.
 	ghProviders := service.NewGithubProviderService(
 		store,
 		cryptoEngine,

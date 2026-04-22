@@ -18,6 +18,8 @@ import (
 // return a user of "" with no error if no users were found matching the GitHub ID.
 func GetUserForGitHubId(ctx context.Context, idClient Resolver, ghUser int64) (string, error) {
 	// look up the user in the identity provider
+	// TODO: For a generic identity provider, resolving by a raw numerical GitHub ID
+	// might not work unless the provider specifically indexes 'gh_id' attributes (like Keycloak does).
 	id, err := idClient.Resolve(ctx, fmt.Sprintf("%d", ghUser))
 	if err != nil {
 		// If the user is not found, return an empty string and no error

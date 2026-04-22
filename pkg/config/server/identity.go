@@ -5,13 +5,13 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/zitadel/oidc/v3/pkg/client"
 
 	"github.com/mindersec/minder/pkg/config"
 )
@@ -73,32 +73,19 @@ func (sic *IdentityConfig) DiscoverOIDCEndpoints(ctx context.Context) (*OIDCConf
 
 	// Keycloak specific path for discovery if realm is set
 	if sic.Realm != "" {
-		discoveryUrl = discoveryUrl.JoinPath("realms", sic.Realm, ".well-known/openid-configuration")
-	} else {
-		discoveryUrl = discoveryUrl.JoinPath(".well-known/openid-configuration")
+		discoveryUrl = discoveryUrl.JoinPath("realms", sic.Realm)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, discoveryUrl.String(), nil)
+	discoveredCfg, err := client.Discover(ctx, discoveryUrl.String(), http.DefaultClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create discovery request: %w", err)
+		return nil, fmt.Errorf("failed to discover OIDC configuration: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute discovery request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code from discovery: %d", resp.StatusCode)
-	}
-
-	var cfg OIDCConfig
-	if err := json.NewDecoder(resp.Body).Decode(&cfg); err != nil {
-		return nil, fmt.Errorf("failed to decode OIDC configuration: %w", err)
-	}
-
-	return &cfg, nil
+	return &OIDCConfig{
+		Issuer:   discoveredCfg.Issuer,
+		JWKSURI:  discoveredCfg.JwksURI,
+		TokenURI: discoveredCfg.TokenEndpoint,
+	}, nil
 }
 
 // Issuer returns the URL of the identity server

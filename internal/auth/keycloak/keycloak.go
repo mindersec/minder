@@ -42,9 +42,14 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 		return nil, err
 	}
 
-	parsedIssuerUrl, err := url.Parse(cfg.IssuerClaim)
+	oidcCfg, err := cfg.DiscoverOIDCEndpoints(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse issuer claim: %w", err)
+		return nil, fmt.Errorf("failed to discover OIDC endpoints: %w", err)
+	}
+
+	parsedIssuerUrl, err := url.Parse(oidcCfg.Issuer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse discovered issuer: %w", err)
 	}
 
 	return &KeyCloak{
@@ -75,6 +80,7 @@ func (k *KeyCloak) URL() url.URL {
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
 	remoteUser, err := k.lookupUser(ctx, id)
 	if err != nil {
+		// TODO: pass through to the next statements to try to create the user if not existing
 		return nil, fmt.Errorf("unable to resolve user: %w", err)
 	}
 	if remoteUser != nil {
@@ -85,6 +91,9 @@ func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, erro
 
 // Validate implements auth.IdentityProvider.
 func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
+	// TODO: implement validating the JWT against the jwks.
+	// Note: Currently, JWTs are validated before this method is called within internal/auth/jwt/validator.go.
+
 	humanName, ok := token.Get("preferred_username")
 	if !ok {
 		return nil, errors.New("preferred_username not found in token")

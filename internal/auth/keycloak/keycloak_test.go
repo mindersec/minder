@@ -111,6 +111,7 @@ func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/admin/realms/stacklok/users/{userid}", f.GetUser)
 	mux.HandleFunc("/admin/realms/stacklok/users", f.GetUserByQuery)
 	mux.HandleFunc("/realms/stacklok/protocol/openid-connect/token", f.GetToken)
+	mux.HandleFunc("/realms/stacklok/.well-known/openid-configuration", f.GetOIDCConfig)
 	mux.HandleFunc("/", LogMissing(t))
 
 	return httptest.NewServer(mux)
@@ -119,6 +120,17 @@ func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
 func (*fakeKeycloak) GetToken(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write([]byte(`{"access_token":"1234","expires_in":300,"token_type":"Bearer"}`)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (*fakeKeycloak) GetOIDCConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write([]byte(`{
+		"issuer": "http://` + r.Host + `/realms/stacklok",
+		"jwks_uri": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/certs",
+		"token_endpoint": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/token"
+	}`)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
