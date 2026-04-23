@@ -9,11 +9,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 
-	"github.com/go-git/go-billy/v5"
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/spf13/cobra"
@@ -24,13 +21,12 @@ import (
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/auth"
-	"github.com/mindersec/minder/cmd/cli/app/profile"
 	minderprov "github.com/mindersec/minder/cmd/cli/app/provider"
 	"github.com/mindersec/minder/cmd/cli/app/repo"
+	internalcli "github.com/mindersec/minder/internal/cli"
 	ghclient "github.com/mindersec/minder/internal/providers/github/clients"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/profiles"
 )
 
 const (
@@ -271,7 +267,7 @@ func quickstartCommand(
 		return fmt.Errorf("failed to load catalog repo: %w", err)
 	}
 
-	catalog, err := LoadCatalogFromFS(worktree.Filesystem)
+	catalog, err := internalcli.LoadCatalogFromFS(worktree.Filesystem, cmd.Printf)
 	if err != nil {
 		return fmt.Errorf("failed to load catalog: %w", err)
 	}
@@ -303,175 +299,7 @@ func quickstartCommand(
 
 const (
 	defaultQuickstartCatalogRepoURL = "https://github.com/mindersec/minder-rules-and-profiles"
-	catalogRuleTypesDir             = "rule-types"
-	catalogProfilesDir              = "profiles"
 )
-
-// Catalog represents a loaded collection of rule types and profiles from a filesystem.
-type Catalog struct {
-	RuleTypes []*minderv1.RuleType
-	Profiles  []*minderv1.Profile
-}
-
-// LoadCatalogFromFS loads and validates all YAML resources under the catalog directories.
-//
-// It recursively scans the rule-types and profiles directories, loads every YAML file,
-// and verifies that each rule type referenced by each profile exists in the loaded set.
-func LoadCatalogFromFS(fs billy.Filesystem) (*Catalog, error) {
-	ruleTypes, ruleTypeNames, err := loadRuleTypesFromFS(fs)
-	if err != nil {
-		return nil, err
-	}
-
-	loadedProfiles, err := loadProfilesFromFS(fs)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := validateCatalog(ruleTypeNames, loadedProfiles); err != nil {
-		return nil, err
-	}
-
-	return &Catalog{RuleTypes: ruleTypes, Profiles: loadedProfiles}, nil
-}
-
-func loadRuleTypesFromFS(fs billy.Filesystem) ([]*minderv1.RuleType, map[string]struct{}, error) {
-	paths, err := collectYAMLFiles(fs, catalogRuleTypesDir)
-	if err != nil {
-		return nil, nil, err
-	}
-	if len(paths) == 0 {
-		return nil, nil, fmt.Errorf("no rule type YAML files found under %s", catalogRuleTypesDir)
-	}
-
-	// Keep load order deterministic across filesystems.
-	sort.Strings(paths)
-	ruleTypes := make([]*minderv1.RuleType, 0, len(paths))
-	ruleTypeNames := make(map[string]struct{}, len(paths))
-
-	for _, path := range paths {
-		if err := func() error {
-			reader, err := fs.Open(path)
-			if err != nil {
-				return fmt.Errorf("failed to open rule type file %s: %w", path, err)
-			}
-			defer reader.Close()
-
-			ruleType := &minderv1.RuleType{}
-			if err := minderv1.ParseResource(reader, ruleType); err != nil {
-				return fmt.Errorf("failed to parse rule type file %s: %w", path, err)
-			}
-			if ruleType.GetName() == "" {
-				return fmt.Errorf("rule type file %s has no name", path)
-			}
-			if _, exists := ruleTypeNames[ruleType.GetName()]; exists {
-				return fmt.Errorf("duplicate rule type %q found in %s", ruleType.GetName(), path)
-			}
-			ruleTypeNames[ruleType.GetName()] = struct{}{}
-			ruleTypes = append(ruleTypes, ruleType)
-			return nil
-		}(); err != nil {
-			return nil, nil, err
-		}
-	}
-
-	return ruleTypes, ruleTypeNames, nil
-}
-
-func loadProfilesFromFS(fs billy.Filesystem) ([]*minderv1.Profile, error) {
-	paths, err := collectYAMLFiles(fs, catalogProfilesDir)
-	if err != nil {
-		return nil, err
-	}
-	if len(paths) == 0 {
-		return nil, fmt.Errorf("no profile YAML files found under %s", catalogProfilesDir)
-	}
-
-	// Keep load order deterministic across filesystems.
-	sort.Strings(paths)
-	loadedProfiles := make([]*minderv1.Profile, 0, len(paths))
-	profileNames := make(map[string]struct{}, len(paths))
-
-	for _, path := range paths {
-		if err := func() error {
-			reader, err := fs.Open(path)
-			if err != nil {
-				return fmt.Errorf("failed to open profile file %s: %w", path, err)
-			}
-			defer reader.Close()
-
-			profile, err := profiles.ParseYAML(reader)
-			if err != nil {
-				return fmt.Errorf("failed to parse profile file %s: %w", path, err)
-			}
-			if profile.GetName() == "" {
-				return fmt.Errorf("profile file %s has no name", path)
-			}
-			if _, exists := profileNames[profile.GetName()]; exists {
-				return fmt.Errorf("duplicate profile %q found in %s", profile.GetName(), path)
-			}
-			profileNames[profile.GetName()] = struct{}{}
-			loadedProfiles = append(loadedProfiles, profile)
-			return nil
-		}(); err != nil {
-			return nil, err
-		}
-	}
-
-	return loadedProfiles, nil
-}
-
-func validateCatalog(ruleTypeNames map[string]struct{}, loadedProfiles []*minderv1.Profile) error {
-	for _, loadedProfile := range loadedProfiles {
-		referencedRuleTypes := make(map[string]struct{})
-		if err := profiles.TraverseRuleTypesForEntities(loadedProfile, func(_ minderv1.Entity, rule *minderv1.Profile_Rule) error {
-			if rule.GetType() != "" {
-				referencedRuleTypes[rule.GetType()] = struct{}{}
-			}
-			return nil
-		}); err != nil {
-			return fmt.Errorf("failed to inspect profile %q: %w", loadedProfile.GetName(), err)
-		}
-
-		for ruleType := range referencedRuleTypes {
-			if _, exists := ruleTypeNames[ruleType]; !exists {
-				return fmt.Errorf("profile %q references missing rule type %q", loadedProfile.GetName(), ruleType)
-			}
-		}
-	}
-
-	return nil
-}
-
-func collectYAMLFiles(fs billy.Filesystem, root string) ([]string, error) {
-	entries, err := fs.ReadDir(root)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("catalog directory %s not found", root)
-		}
-		return nil, fmt.Errorf("failed to read catalog directory %s: %w", root, err)
-	}
-
-	paths := make([]string, 0, len(entries))
-	for _, entry := range entries {
-		path := filepath.Join(root, entry.Name())
-		if entry.IsDir() {
-			nested, err := collectYAMLFiles(fs, path)
-			if err != nil {
-				return nil, err
-			}
-			paths = append(paths, nested...)
-			continue
-		}
-
-		switch strings.ToLower(filepath.Ext(entry.Name())) {
-		case ".yaml", ".yml":
-			paths = append(paths, path)
-		}
-	}
-
-	return paths, nil
-}
 
 // applyCatalog creates all rule types and profiles from the catalog via gRPC services.
 //
@@ -483,7 +311,7 @@ func applyCatalog(
 	cmd *cobra.Command,
 	ruleClient minderv1.RuleTypeServiceClient,
 	profileClient minderv1.ProfileServiceClient,
-	catalog *Catalog,
+	catalog *internalcli.Catalog,
 	project string,
 ) error {
 	ctx, cancel := getQuickstartContext(cmd.Context(), viper.GetViper())
@@ -514,7 +342,6 @@ func applyCatalog(
 type applyCatalogResult struct {
 	createdRuleTypes    []string
 	createdProfiles     []string
-	summaryProfile      *minderv1.Profile
 	seenExistingProfile bool
 }
 
@@ -524,11 +351,11 @@ func rollbackCatalogResources(
 	profileClient minderv1.ProfileServiceClient,
 	result applyCatalogResult,
 ) {
-	for i := len(result.createdProfiles) - 1; i >= 0; i-- {
-		_, _ = profileClient.DeleteProfile(ctx, &minderv1.DeleteProfileRequest{Id: result.createdProfiles[i]})
+	for _, profileID := range result.createdProfiles {
+		_, _ = profileClient.DeleteProfile(ctx, &minderv1.DeleteProfileRequest{Id: profileID})
 	}
-	for i := len(result.createdRuleTypes) - 1; i >= 0; i-- {
-		_, _ = ruleClient.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{Id: result.createdRuleTypes[i]})
+	for _, ruleTypeID := range result.createdRuleTypes {
+		_, _ = ruleClient.DeleteRuleType(ctx, &minderv1.DeleteRuleTypeRequest{Id: ruleTypeID})
 	}
 }
 
@@ -550,17 +377,14 @@ func createCatalogRuleTypes(
 				cmd.Printf("Rule type %s already exists\n", ruleType.GetName())
 				continue
 			}
-			if st, ok := status.FromError(err); ok {
-				return fmt.Errorf("error creating rule type %s: %s", ruleType.GetName(), st.Message())
-			}
-			return cli.MessageAndError(fmt.Sprintf("error creating rule type %s", ruleType.GetName()), err)
+			return fmt.Errorf("error creating rule type %s: %w", ruleType.GetName(), err)
 		}
 
-		createdName := ruleType.GetName()
-		if resp != nil && resp.GetRuleType() != nil && resp.GetRuleType().GetName() != "" {
-			createdName = resp.GetRuleType().GetName()
+		name := resp.GetRuleType().GetName()
+		if name == "" {
+			name = ruleType.GetName()
 		}
-		result.createdRuleTypes = append(result.createdRuleTypes, createdName)
+		result.createdRuleTypes = append(result.createdRuleTypes, name)
 	}
 
 	return nil
@@ -576,32 +400,19 @@ func createCatalogProfiles(
 ) error {
 	for _, profileResource := range loadedProfiles {
 		profileResource.Context = projectContext
-		result.summaryProfile = profileResource
 
 		cmd.Printf("Creating profile %s...\n", profileResource.GetName())
 		resp, err := profileClient.CreateProfile(ctx, &minderv1.CreateProfileRequest{Profile: profileResource})
 		if err != nil {
 			if st, ok := status.FromError(err); ok && st.Code() == codes.AlreadyExists {
+				cmd.Printf("Profile %s already exists\n", profileResource.GetName())
 				result.seenExistingProfile = true
-				result.summaryProfile = profileResource
 				continue
 			}
-			if st, ok := status.FromError(err); ok {
-				return fmt.Errorf("error creating profile %s: %s", profileResource.GetName(), st.Message())
-			}
-			return cli.MessageAndError(fmt.Sprintf("error creating profile %s", profileResource.GetName()), err)
+			return fmt.Errorf("error creating profile %s: %w", profileResource.GetName(), err)
 		}
 
-		if resp != nil && resp.GetProfile() != nil {
-			result.summaryProfile = resp.GetProfile()
-			if result.summaryProfile.GetId() != "" {
-				result.createdProfiles = append(result.createdProfiles, result.summaryProfile.GetId())
-			} else {
-				result.createdProfiles = append(result.createdProfiles, profileResource.GetName())
-			}
-		} else {
-			result.createdProfiles = append(result.createdProfiles, profileResource.GetName())
-		}
+		result.createdProfiles = append(result.createdProfiles, resp.GetProfile().GetId())
 	}
 
 	return nil
@@ -613,15 +424,6 @@ func printCatalogSummary(cmd *cobra.Command, result applyCatalogResult) {
 	} else {
 		cmd.Println(cli.WarningBanner.Render(stepPromptMsgFinishOK + stepPromptMsgFinishBase))
 	}
-
-	if result.summaryProfile == nil {
-		return
-	}
-
-	cmd.Println("Profile details (minder profile list):")
-	table := profile.NewProfileRulesTable(cmd.OutOrStdout())
-	profile.RenderProfileRulesTable(result.summaryProfile, table)
-	table.Render()
 }
 
 func init() {
