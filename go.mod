@@ -3,8 +3,8 @@ module github.com/mindersec/minder
 go 1.26
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
-	buf.build/go/protovalidate v1.0.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1
+	buf.build/go/protovalidate v1.1.3
 	buf.build/go/protoyaml v0.6.0
 	github.com/ThreeDotsLabs/watermill v1.5.1
 	github.com/ThreeDotsLabs/watermill-sql/v3 v3.1.0
@@ -82,7 +82,7 @@ require (
 	github.com/thomaspoignant/go-feature-flag v1.49.0
 	github.com/wneessen/go-mail v0.7.2
 	github.com/yuin/goldmark v1.7.13
-	gitlab.com/gitlab-org/api/client-go v0.159.0
+	gitlab.com/gitlab-org/api/client-go v1.46.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
 	go.opentelemetry.io/otel v1.43.0
@@ -397,7 +397,7 @@ require (
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/certificate-transparency-go v1.3.2 // indirect
-	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
