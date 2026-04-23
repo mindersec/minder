@@ -9,9 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
@@ -32,26 +33,65 @@ type Decoder interface {
 var _ Decoder = (*yaml.Decoder)(nil)
 var _ Decoder = (*json.Decoder)(nil)
 
-// DecoderForFile returns a Decoder for the file at the specified path,
-// or nil if the file is not of the appropriate type.
-func DecoderForFile(path string) (Decoder, io.Closer) {
-	path = filepath.Clean(path)
-	ext := filepath.Ext(path)
-	var builder func(io.Reader) Decoder
-	// we return functions here so that we can early-exit without opening the file if the extension is unmatched.
-	switch ext {
+func decoderForReader(path string, reader io.Reader) (Decoder, error) {
+	switch filepath.Ext(filepath.Clean(path)) {
 	case ".json":
-		builder = func(r io.Reader) Decoder { return json.NewDecoder(r) }
+		return json.NewDecoder(reader), nil
 	case ".yaml", ".yml":
-		builder = func(r io.Reader) Decoder { return yaml.NewDecoder(r) }
+		return yaml.NewDecoder(reader), nil
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unsupported file format: %s", path)
 	}
-	file, err := os.Open(path)
+}
+
+func decoderForPath(fs billy.Filesystem, path string) (Decoder, io.Closer) {
+	path = filepath.Clean(path)
+
+	if fs == nil {
+		if !filepath.IsAbs(path) {
+			absPath, err := filepath.Abs(path)
+			if err != nil {
+				return nil, nil
+			}
+			path = absPath
+		}
+		fs = osfs.New("/")
+	}
+
+	file, err := fs.Open(path)
 	if err != nil {
 		return nil, nil
 	}
-	return builder(file), file
+
+	decoder, decoderErr := decoderForReader(path, file)
+	if decoderErr != nil {
+		_ = file.Close()
+		return nil, nil
+	}
+
+	return decoder, file
+}
+
+// DecoderForFile returns a Decoder for the file at the specified path,
+// or nil if the file is not of the appropriate type.
+func DecoderForFile(path string) (Decoder, io.Closer) {
+	return decoderForPath(nil, path)
+}
+
+// ReadResourceFromFile reads a single resource from the specified filesystem path.
+func ReadResourceFromFile[T proto.Message](fs billy.Filesystem, path string) (resource T, err error) {
+	decoder, closer := decoderForPath(fs, path)
+	if decoder == nil {
+		return resource, fmt.Errorf("error opening file %s", path)
+	}
+	defer closer.Close()
+
+	resource, err = ReadResourceTyped[T](decoder)
+	if err != nil {
+		return resource, err
+	}
+
+	return resource, nil
 }
 
 // WriteResource outputs a Minder proto resource to an existing Encoder.
