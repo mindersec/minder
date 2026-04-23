@@ -57,10 +57,7 @@ func listCommand(cmd *cobra.Command, _ []string) error {
 
 	format := viper.GetString("output")
 
-	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
-	resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+	resp, err := client.ListRuleTypes(cmd.Context(), &minderv1.ListRuleTypesRequest{
 		Context: &minderv1.Context{Project: &project},
 	})
 	if err != nil {

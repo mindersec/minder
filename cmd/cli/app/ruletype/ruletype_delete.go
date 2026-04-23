@@ -32,10 +32,9 @@ var deleteCmd = &cobra.Command{
 
 		id, _ := cmd.Flags().GetString("id")
 		name, _ := cmd.Flags().GetString("name")
-		deleteAll, _ := cmd.Flags().GetBool("all")
 
-		if id == "" && name == "" && !deleteAll {
-			return fmt.Errorf("at least one of the flags in the group [id name all] is required")
+		if id != "" && name != "" {
+			return fmt.Errorf("please provide either the --id or --name flag, but not both")
 		}
 
 		return nil
@@ -53,9 +52,6 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		return cli.MessageAndError("Error connecting to server", err)
 	}
 	defer closeConn()
-
-	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-	defer cancel()
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
@@ -81,7 +77,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 	if !deleteAll {
 		// Fetch the rule type from the DB by either ID or Name
 		if id != "" {
-			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+			rtype, err := client.GetRuleTypeById(cmd.Context(), &minderv1.GetRuleTypeByIdRequest{
 				Context: &minderv1.Context{Project: &project},
 				Id:      id,
 			})
@@ -92,7 +88,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 		}
 
 		if name != "" {
-			rtype, err := client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+			rtype, err := client.GetRuleTypeByName(cmd.Context(), &minderv1.GetRuleTypeByNameRequest{
 				Context: &minderv1.Context{Project: &project},
 				Name:    name,
 			})
@@ -104,7 +100,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 
 	} else {
 		// List all rule types
-		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+		resp, err := client.ListRuleTypes(cmd.Context(), &minderv1.ListRuleTypesRequest{
 			Context: &minderv1.Context{Project: &project},
 		})
 		if err != nil {
@@ -114,7 +110,7 @@ func deleteCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
+	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(cmd.Context(), client, rulesToDelete, project)
 
 	// Print the results
 	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)

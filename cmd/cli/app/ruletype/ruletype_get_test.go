@@ -60,6 +60,11 @@ func TestGetCommand(t *testing.T) {
 			Args:          []string{"ruletype", "get", "-o", app.Table},
 			ExpectedError: "at least one of the flags in the group [id name] is required",
 		},
+		{
+			Name:          "giving both id and name",
+			Args:          []string{"ruletype", "get", "-n", ruleName, "-i", ruleID, app.Table},
+			ExpectedError: "please provide either the --id or --name flag, but not both",
+		},
 	}
 
 	cli.RunCmdTests(t, tests, ruleTypeCmd)

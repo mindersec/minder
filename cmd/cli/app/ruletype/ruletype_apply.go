@@ -107,8 +107,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 		if f.Path != "-" && shouldSkipFile(f.Path) {
 			continue
 		}
-		ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-		if err = execOnOneRuleType(ctx, table, f.Path, os.Stdin, project, applyFunc); err != nil {
+		if err = execOnOneRuleType(cmd.Context(), table, f.Path, os.Stdin, project, applyFunc); err != nil {
 			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
 				cmd.PrintErrf("Skipping file %s: not a rule type\n", f.Path)
 				// We'll skip the file if it's not a rule type
@@ -116,7 +115,6 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 			}
 			return cli.MessageAndError(fmt.Sprintf("error applying rule type from %s", f.Path), err)
 		}
-		cancel()
 	}
 	// Render the table
 	table.Render()

@@ -25,23 +25,28 @@ var ruleTypeCmd = &cobra.Command{
 
 // getRuleTypeClient returns the RuleTypeServiceClient, a cleanup function to close the connection and an error
 func getRuleTypeClient(cmd *cobra.Command) (minderv1.RuleTypeServiceClient, func(), error) {
-	ctx := cmd.Context()
+	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+	cmd.SetContext(ctx)
 
 	// Check the backpack. Are we running inside a test?
 	if mockClient, ok := cli.GetRPCClient[minderv1.RuleTypeServiceClient](ctx); ok {
-		return mockClient, func() {}, nil
+		return mockClient, func() { cancel() }, nil
 	}
 
 	// The backpack is empty. We are in production, make a real connection.
 	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
 	if err != nil {
+		cancel()
 		return nil, nil, err
 	}
 
 	client := minderv1.NewRuleTypeServiceClient(conn)
 
 	// Return the client and the closer so the subcommand can manage the lifecycle
-	return client, func() { _ = conn.Close() }, nil
+	return client, func() {
+		cancel()
+		_ = conn.Close()
+	}, nil
 }
 
 func init() {

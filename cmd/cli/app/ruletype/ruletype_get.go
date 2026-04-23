@@ -35,11 +35,8 @@ var getCmd = &cobra.Command{
 		name, _ := cmd.Flags().GetString("name")
 		format, _ := cmd.Flags().GetString("output")
 
-		if id == "" && name == "" {
-			return fmt.Errorf("at least one of the flags in the group [id name] is required")
-		}
 		if id != "" && name != "" {
-			return fmt.Errorf("if any flags in the group [id name] are set they must all be set; but mutually exclusive flags were passed")
+			return fmt.Errorf("please provide either the --id or --name flag, but not both")
 		}
 
 		// Ensure the output format is supported
@@ -63,9 +60,6 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer closeConn()
 
-	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
-	defer cancel()
-
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	id := viper.GetString("id")
@@ -74,12 +68,12 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	var rtype ruleTypeGetter
 
 	if id != "" {
-		rtype, err = client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+		rtype, err = client.GetRuleTypeById(cmd.Context(), &minderv1.GetRuleTypeByIdRequest{
 			Context: &minderv1.Context{Project: &project},
 			Id:      id,
 		})
 	} else {
-		rtype, err = client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+		rtype, err = client.GetRuleTypeByName(cmd.Context(), &minderv1.GetRuleTypeByNameRequest{
 			Context: &minderv1.Context{Project: &project},
 			Name:    name,
 		})
