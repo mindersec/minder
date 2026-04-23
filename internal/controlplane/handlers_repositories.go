@@ -156,14 +156,8 @@ func (s *Server) ListRepositories(ctx context.Context,
 		return nil, status.Errorf(codes.Internal, "cannot get provider: %v", err)
 	}
 
-	// Parse cursor from request (empty string means first page)
-	var cursor uuid.UUID
-	if in.GetCursor() != "" {
-		cursor, err = uuid.Parse(in.GetCursor())
-		if err != nil {
-			return nil, util.UserVisibleError(codes.InvalidArgument, "invalid cursor format")
-		}
-	}
+	// Parse cursor from request (base64-encoded UUID)
+	cursorStr := in.GetCursor()
 
 	// Use request limit if provided, otherwise default
 	limit := in.GetLimit()
@@ -173,7 +167,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 
 	// Fetch repositories using the paginated service method
 	repoEntities, nextCursor, err := s.repos.ListRepositoriesPaginated(
-		ctx, projectID, provider.ID, cursor, limit)
+		ctx, projectID, provider.ID, cursorStr, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -210,9 +204,7 @@ func (s *Server) ListRepositories(ctx context.Context,
 	}
 
 	resp.Results = results
-	if nextCursor != uuid.Nil {
-		resp.Cursor = nextCursor.String()
-	}
+	resp.Cursor = nextCursor
 
 	return &resp, nil
 }

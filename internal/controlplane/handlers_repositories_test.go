@@ -176,10 +176,11 @@ func TestServer_ListRepositories(t *testing.T) {
 			Name: "List repositories succeeds with multiple results",
 			RepoServiceSetup: rf.NewRepoService(
 				rf.WithSuccessfulListRepositoriesPaginated(
-				 []*models.EntityWithProperties{
+					[]*models.EntityWithProperties{
 						simpleDbRepository(repoName, remoteRepoId),
 						simpleDbRepository(repoName2, remoteRepoId2),
 					},
+					"",
 				),
 			),
 			ProviderSetup: func(ctrl *gomock.Controller, mgr *mockmanager.MockProviderManager) {
@@ -248,7 +249,7 @@ func TestServer_ListRepositories(t *testing.T) {
 		{
 			Name: "List repositories succeeds with empty results",
 			RepoServiceSetup: rf.NewRepoService(
-				rf.WithSuccessfulListRepositoriesPaginated(nil),
+				rf.WithSuccessfulListRepositoriesPaginated(nil, ""),
 			),
 			ExpectedResults: nil,
 		},

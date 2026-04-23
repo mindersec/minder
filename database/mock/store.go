@@ -1913,6 +1913,21 @@ func (mr *MockStoreMockRecorder) ListEntitiesAfterID(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitiesAfterID", reflect.TypeOf((*MockStore)(nil).ListEntitiesAfterID), ctx, arg)
 }
 
+// ListEntitiesByTypePaginated mocks base method.
+func (m *MockStore) ListEntitiesByTypePaginated(ctx context.Context, arg db.ListEntitiesByTypePaginatedParams) ([]db.EntityInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEntitiesByTypePaginated", ctx, arg)
+	ret0, _ := ret[0].([]db.EntityInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListEntitiesByTypePaginated indicates an expected call of ListEntitiesByTypePaginated.
+func (mr *MockStoreMockRecorder) ListEntitiesByTypePaginated(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitiesByTypePaginated", reflect.TypeOf((*MockStore)(nil).ListEntitiesByTypePaginated), ctx, arg)
+}
+
 // ListEvaluationHistory mocks base method.
 func (m *MockStore) ListEvaluationHistory(ctx context.Context, arg db.ListEvaluationHistoryParams) ([]db.ListEvaluationHistoryRow, error) {
 	m.ctrl.T.Helper()

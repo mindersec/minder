@@ -7,6 +7,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -76,9 +77,9 @@ type RepositoryService interface {
 		ctx context.Context,
 		projectID uuid.UUID,
 		providerID uuid.UUID,
-		cursor uuid.UUID,
+		cursor string,
 		limit int64,
-	) ([]*models.EntityWithProperties, uuid.UUID, error)
+	) ([]*models.EntityWithProperties, string, error)
 
 	// GetRepositoryById retrieves a repository by its ID and project.
 	GetRepositoryById(ctx context.Context, repositoryID uuid.UUID, projectID uuid.UUID) (*pb.Repository, error)
@@ -220,93 +221,110 @@ func (r *repositoryService) ListRepositories(
 	return ents, nil
 }
 
+// DefaultListRepositoriesPageLimit is the default (and maximum) page size for
+// ListRepositoriesPaginated when the caller does not request a specific value
+// or requests one above the cap.
+const DefaultListRepositoriesPageLimit = 100
+
 func (r *repositoryService) ListRepositoriesPaginated(
 	ctx context.Context,
 	projectID uuid.UUID,
 	providerID uuid.UUID,
-	cursor uuid.UUID,
+	cursorStr string,
 	limit int64,
-) ([]*models.EntityWithProperties, uuid.UUID, error) {
-	if limit <= 0 {
-		limit = 100
+) (ents []*models.EntityWithProperties, nextCursor string, outErr error) {
+	if limit <= 0 || limit > DefaultListRepositoriesPageLimit {
+		limit = DefaultListRepositoriesPageLimit
 	}
-	if limit > 1000 {
-		limit = 1000
+
+	cursor, err := decodeCursor(cursorStr)
+	if err != nil {
+		return nil, "", err
 	}
 
 	tx, err := r.store.BeginTransaction()
 	if err != nil {
-		return nil, uuid.Nil, fmt.Errorf("error starting transaction: %w", err)
+		return nil, "", fmt.Errorf("error starting transaction: %w", err)
 	}
 
-	outErr := errors.New("outer error placeholder")
 	defer func() {
 		if outErr != nil {
-			if err := tx.Rollback(); err != nil {
-				log.Printf("error rolling back transaction: %v", err)
+			if rbErr := tx.Rollback(); rbErr != nil && !errors.Is(rbErr, sql.ErrTxDone) {
+				zerolog.Ctx(ctx).Error().Err(rbErr).Msg("error rolling back transaction")
 			}
 		}
 	}()
 
 	qtx := r.store.GetQuerierWithTransaction(tx)
 
-	var repoEnts []db.EntityInstance
-	if cursor == uuid.Nil {
-		repoEnts, outErr = qtx.GetEntitiesByType(ctx, db.GetEntitiesByTypeParams{
-			EntityType: db.EntitiesRepository,
-			ProviderID: providerID,
-			Projects:   []uuid.UUID{projectID},
-		})
-		if outErr != nil {
-			return nil, uuid.Nil, fmt.Errorf("error fetching repositories: %w", outErr)
-		}
-	} else {
-		repoEnts, outErr = qtx.ListEntitiesAfterID(ctx, db.ListEntitiesAfterIDParams{
-			EntityType: db.EntitiesRepository,
-			ID:         cursor,
-			Limit:      limit,
-		})
-		if outErr != nil {
-			return nil, uuid.Nil, fmt.Errorf("error fetching repositories after cursor: %w", outErr)
-		}
+	repoEnts, err := qtx.ListEntitiesByTypePaginated(ctx, db.ListEntitiesByTypePaginatedParams{
+		EntityType: db.EntitiesRepository,
+		ProviderID: providerID,
+		Projects:   []uuid.UUID{projectID},
+		Cursor:     cursor,
+		PageLimit:  limit,
+	})
+	if err != nil {
+		return nil, "", fmt.Errorf("error fetching repositories: %w", err)
 	}
 
-	// Apply limit in memory for the non-cursor case (GetEntitiesByType has no limit)
-	hasMore := false
-	if cursor == uuid.Nil && int64(len(repoEnts)) > limit {
+	hasMore := int64(len(repoEnts)) > limit
+	if hasMore {
 		repoEnts = repoEnts[:limit]
-		hasMore = true
 	}
 
-	ents := make([]*models.EntityWithProperties, 0, len(repoEnts))
+	ents = make([]*models.EntityWithProperties, 0, len(repoEnts))
 	var lastID uuid.UUID
 	for _, ent := range repoEnts {
-		ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, ent.ID,
-			service.CallBuilder().WithStoreOrTransaction(qtx))
+		ewp, err := r.hydrateEntityProperties(ctx, qtx, ent.ID)
 		if err != nil {
-			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
+			return nil, "", err
 		}
-
-		if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
-			service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
-			return nil, uuid.Nil, fmt.Errorf("error fetching properties for repository: %w", err)
-		}
-
 		ents = append(ents, ewp)
 		lastID = ent.ID
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, uuid.Nil, fmt.Errorf("error committing transaction: %w", err)
+		return nil, "", fmt.Errorf("error committing transaction: %w", err)
 	}
-	outErr = nil
 
-	var nextCursor uuid.UUID
-	if hasMore || cursor != uuid.Nil {
-		nextCursor = lastID
+	if hasMore && lastID != uuid.Nil {
+		nextCursor = base64.StdEncoding.EncodeToString(lastID[:])
 	}
 
 	return ents, nextCursor, nil
+}
+
+func (r *repositoryService) hydrateEntityProperties(
+	ctx context.Context,
+	qtx db.ExtendQuerier,
+	entityID uuid.UUID,
+) (*models.EntityWithProperties, error) {
+	ewp, err := r.propSvc.EntityWithPropertiesByID(ctx, entityID,
+		service.CallBuilder().WithStoreOrTransaction(qtx))
+	if err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+	if err := r.propSvc.RetrieveAllPropertiesForEntity(ctx, ewp, r.providerManager,
+		service.ReadBuilder().WithStoreOrTransaction(qtx).TolerateStaleData()); err != nil {
+		return nil, fmt.Errorf("error fetching properties for repository: %w", err)
+	}
+	return ewp, nil
+}
+
+func decodeCursor(cursorStr string) (uuid.UUID, error) {
+	if cursorStr == "" {
+		return uuid.Nil, nil
+	}
+	cursorBytes, err := base64.StdEncoding.DecodeString(cursorStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid cursor format: %w", err)
+	}
+	cursor, err := uuid.FromBytes(cursorBytes)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("invalid cursor format: %w", err)
+	}
+	return cursor, nil
 }
 
 func (r *repositoryService) GetRepositoryById(

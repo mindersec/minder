@@ -134,11 +134,11 @@ func (mr *MockRepositoryServiceMockRecorder) ListRepositories(ctx, projectID, pr
 }
 
 // ListRepositoriesPaginated mocks base method.
-func (m *MockRepositoryService) ListRepositoriesPaginated(ctx context.Context, projectID, providerID, cursor uuid.UUID, limit int64) ([]*models.EntityWithProperties, uuid.UUID, error) {
+func (m *MockRepositoryService) ListRepositoriesPaginated(ctx context.Context, projectID, providerID uuid.UUID, cursor string, limit int64) ([]*models.EntityWithProperties, string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListRepositoriesPaginated", ctx, projectID, providerID, cursor, limit)
 	ret0, _ := ret[0].([]*models.EntityWithProperties)
-	ret1, _ := ret[1].(uuid.UUID)
+	ret1, _ := ret[1].(string)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
