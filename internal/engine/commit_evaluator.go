@@ -3,15 +3,6 @@
 
 package engine
 
-import "regexp"
-
-const conventionalCommitTypePattern = `(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)`
-const conventionalCommitScopePattern = `(\([A-Za-z0-9._/-]+\))?`
-
-var conventionalCommitPattern = regexp.MustCompile(
-	`^` + conventionalCommitTypePattern + conventionalCommitScopePattern + `!?: .+`,
-)
-
 // Commit contains commit-level data that can be evaluated by policies.
 type Commit struct {
 	SHA     string
@@ -31,7 +22,8 @@ type CommitResult struct {
 	Evaluations []CommitEvaluation
 }
 
-// CommitPolicy defines a single commit-level policy.
+// CommitPolicy defines the minimal contract for demo-oriented commit-level policies.
+// Concrete implementations should live outside internal/engine.
 type CommitPolicy interface {
 	Name() string
 	Evaluate(commit Commit) CommitEvaluation
@@ -96,30 +88,4 @@ func HasPolicyFailures(results []CommitResult) bool {
 // Deprecated: use HasPolicyFailures for clearer semantics.
 func HasFailures(results []CommitResult) bool {
 	return HasPolicyFailures(results)
-}
-
-// ConventionalCommitPolicy is an example commit policy that validates commit
-// messages against a Conventional Commits-like format.
-type ConventionalCommitPolicy struct{}
-
-// Name returns the policy name.
-func (ConventionalCommitPolicy) Name() string {
-	return "conventional_commit"
-}
-
-// Evaluate validates commit message format.
-func (p ConventionalCommitPolicy) Evaluate(commit Commit) CommitEvaluation {
-	if conventionalCommitPattern.MatchString(commit.Message) {
-		return CommitEvaluation{
-			Policy: p.Name(),
-			Passed: true,
-			Reason: "commit message matches conventional commit format",
-		}
-	}
-
-	return CommitEvaluation{
-		Policy: p.Name(),
-		Passed: false,
-		Reason: "commit message must follow <type>(optional-scope): <description>",
-	}
 }

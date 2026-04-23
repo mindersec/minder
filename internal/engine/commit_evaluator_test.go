@@ -58,45 +58,6 @@ func TestCommitEvaluatorEvaluateWithPolicy(t *testing.T) {
 	require.Equal(t, "policy passed", results[0].Reason)
 }
 
-func TestConventionalCommitPolicy(t *testing.T) {
-	t.Parallel()
-
-	policy := ConventionalCommitPolicy{}
-
-	t.Run("passes on valid message", func(t *testing.T) {
-		t.Parallel()
-
-		result := policy.Evaluate(Commit{Message: "feat(engine): add commit evaluator"})
-		require.True(t, result.Passed)
-		require.Equal(t, "conventional_commit", result.Policy)
-	})
-
-	t.Run("passes with slash scope", func(t *testing.T) {
-		t.Parallel()
-
-		result := policy.Evaluate(Commit{Message: "feat(api/v1): add endpoint"})
-		require.True(t, result.Passed)
-		require.Equal(t, "conventional_commit", result.Policy)
-	})
-
-	t.Run("passes with uppercase scope", func(t *testing.T) {
-		t.Parallel()
-
-		result := policy.Evaluate(Commit{Message: "fix(API): handle timeout"})
-		require.True(t, result.Passed)
-		require.Equal(t, "conventional_commit", result.Policy)
-	})
-
-	t.Run("fails on invalid message", func(t *testing.T) {
-		t.Parallel()
-
-		result := policy.Evaluate(Commit{Message: "Add commit evaluator"})
-		require.False(t, result.Passed)
-		require.Equal(t, "conventional_commit", result.Policy)
-		require.Contains(t, result.Reason, "commit message")
-	})
-}
-
 func TestCommitEvaluatorEvaluateAll(t *testing.T) {
 	t.Parallel()
 
