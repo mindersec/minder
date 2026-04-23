@@ -692,8 +692,8 @@ func TestSelectSelectorEntity(t *testing.T) {
 					"github": map[string]any{"is_fork": true},
 				}),
 			),
-			expectedSelectErr: ErrResultUnknown,
-			selected:          false,
+			// Missing property: entity is selected so evaluation can proceed
+			selected: true,
 		},
 		{
 			name: "Attempt to use a property while having nil properties",
@@ -704,8 +704,8 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestRepoSelectorEntity(newGithubProviderSelector()),
-			expectedSelectErr: ErrResultUnknown,
-			selected:          false,
+			// Missing property: entity is selected so evaluation can proceed
+			selected: true,
 		},
 		{
 			name: "The selector shortcuts if evaluation is not needed for properties",
@@ -993,7 +993,8 @@ func TestSelectorEntityFillProperties(t *testing.T) {
 						},
 					}}
 			},
-			secondSucceeds: false,
+			// property is missing, entity is selected so evaluation can proceed
+			secondSucceeds: true,
 		},
 	}
 

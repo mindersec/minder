@@ -419,7 +419,15 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...Sele
 		// check unknowns /before/ an error. Maybe we should try to special-case the one
 		// error we get from the CEL library in this case and check for the rest?
 		if s.detailHasUnknowns(sel, details) {
-			return false, "", ErrResultUnknown
+			if len(opts.unknownPaths) > 0 {
+				// Explicit unknown paths were set by the caller (via WithUnknownPaths), meaning
+				// the caller is doing a first-pass evaluation with intentionally incomplete data
+				// and expects to retry with more information. Signal this intent.
+				return false, "", ErrResultUnknown
+			}
+			// No explicit unknown paths: the entity simply does not have this property.
+			// Properties are not guaranteed to exist, so proceed with evaluation.
+			return true, "", nil
 		}
 
 		if err != nil {
@@ -427,7 +435,8 @@ func (s *EntitySelection) Select(se *internalpb.SelectorEntity, userOpts ...Sele
 		}
 
 		if types.IsUnknown(out) {
-			return false, "", ErrResultUnknown
+			// The property is missing from the entity data; proceed with evaluation.
+			return true, "", nil
 		}
 
 		if out.Type() != cel.BoolType {
