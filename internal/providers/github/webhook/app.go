@@ -317,15 +317,13 @@ func processInstallationRepositoriesAppEvent(
 
 	results := make([]*processingResult, 0)
 	for _, repo := range addedRepos {
-		// caveat: we're accessing the database once for every
-		// repository, which might be inefficient at scale.
 		res, err := repositoryAdded(
 			ctx,
 			repo,
 			installation,
 		)
 		if err != nil {
-			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository in batch")
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository in added batch")
 			continue
 		}
 
@@ -337,22 +335,19 @@ func processInstallationRepositoriesAppEvent(
 	// be deleted by means of "meta" and "repository" events as
 	// well.
 	for _, repo := range event.GetRepositoriesRemoved() {
-		res, err := repositoryRemoved(repo)
-		if err != nil {
-			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository removal in batch")
+		if repo.GetID() == 0 {
+			zerolog.Ctx(ctx).Warn().Msg("skipping removed repository with zero ID")
 			continue
 		}
+		res := repositoryRemoved(repo)
 		results = append(results, res)
 	}
 
 	return results, nil
 }
 
-func repositoryRemoved(repo *repo) (*processingResult, error) {
-	if repo.GetID() == 0 {
-		return nil, errors.New("invalid repository: id is 0")
-	}
-	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete), nil
+func repositoryRemoved(repo *repo) *processingResult {
+	return sendEvaluateRepoMessage(repo, constants.TopicQueueGetEntityAndDelete)
 }
 
 func repositoryAdded(
