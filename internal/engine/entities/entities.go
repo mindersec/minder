@@ -50,6 +50,8 @@ func EntityTypeFromDB(entity db.Entities) minderv1.Entity {
 		return minderv1.Entity_ENTITY_PIPELINE_RUN
 	case db.EntitiesTaskRun:
 		return minderv1.Entity_ENTITY_TASK_RUN
+	case db.EntitiesOrganization:
+		return minderv1.Entity_ENTITY_ORGANIZATION
 	case db.EntitiesBuild:
 		return minderv1.Entity_ENTITY_BUILD
 	default:
@@ -76,6 +78,8 @@ func EntityTypeToDB(entity minderv1.Entity) db.Entities {
 		dbEnt = db.EntitiesPipelineRun
 	case minderv1.Entity_ENTITY_TASK_RUN:
 		dbEnt = db.EntitiesTaskRun
+	case minderv1.Entity_ENTITY_ORGANIZATION:
+		dbEnt = db.EntitiesOrganization
 	case minderv1.Entity_ENTITY_BUILD:
 		dbEnt = db.EntitiesBuild
 	case minderv1.Entity_ENTITY_UNSPECIFIED:

@@ -332,7 +332,7 @@ func TestProviderService_CreateGitHubAppWithNewProject(t *testing.T) {
 			},
 		}, nil, nil)
 
-	project, err := provSvc.CreateGitHubAppWithoutInvitation(
+	project, _, err := provSvc.CreateGitHubAppWithoutInvitation(
 		context.Background(), mocks.fakeStore, accountID, installationID)
 	require.NoError(t, err)
 	require.NotNil(t, project)
@@ -389,7 +389,7 @@ func TestProviderService_CreateUnclaimedGitHubAppInstallation(t *testing.T) {
 			},
 		}, nil, nil)
 
-	project, err := provSvc.CreateGitHubAppWithoutInvitation(
+	project, _, err := provSvc.CreateGitHubAppWithoutInvitation(
 		context.Background(), mocks.fakeStore, accountID, installationID)
 	require.NoError(t, err)
 	require.Nil(t, project)

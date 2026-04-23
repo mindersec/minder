@@ -768,6 +768,8 @@ func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
 	switch dbEnt {
 	case db.EntitiesPullRequest:
 		return minderv1.Entity_ENTITY_PULL_REQUESTS
+	case db.EntitiesOrganization:
+		return minderv1.Entity_ENTITY_ORGANIZATION
 	case db.EntitiesArtifact:
 		return minderv1.Entity_ENTITY_ARTIFACTS
 	case db.EntitiesRepository:

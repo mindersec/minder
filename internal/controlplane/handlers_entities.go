@@ -127,3 +127,34 @@ func createEntityMessage(
 
 	return msg, nil
 }
+
+func (s *Server) publishOrganizationEntityEvent(
+	ctx context.Context,
+	providerID, projectID uuid.UUID,
+	login string,
+) {
+	l := zerolog.Ctx(ctx)
+	msg := message.NewMessage(uuid.New().String(), nil)
+	msg.SetContext(ctx)
+
+	orgProps := properties.NewProperties(map[string]any{
+		properties.PropertyName: login,
+	})
+
+	event := messages.NewMinderEvent().
+		WithProjectID(projectID).
+		WithProviderID(providerID).
+		WithEntityType(pb.Entity_ENTITY_ORGANIZATION).
+		WithProperties(orgProps)
+
+	if err := event.ToMessage(msg); err != nil {
+		l.Error().Err(err).Msg("error marshalling organization entity event")
+		return
+	}
+
+	if err := s.evt.Publish(constants.TopicQueueReconcileEntityAdd, msg); err != nil {
+		l.Error().Err(err).Msg("error publishing organization entity event")
+	} else {
+		l.Info().Str("messageID", msg.UUID).Msg("published organization entity event for execution")
+	}
+}

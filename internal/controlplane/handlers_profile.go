@@ -427,7 +427,7 @@ func (s *Server) getRuleEvalStatus(
 				repoPath = fmt.Sprintf("%s/%s", prRepoOwner, prRepoName)
 			}
 		case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
-			db.EntitiesTaskRun, db.EntitiesBuild:
+			db.EntitiesTaskRun, db.EntitiesBuild, db.EntitiesOrganization:
 			zerolog.Ctx(ctx).Warn().Msgf("attempting to set alerts for unsupported entity type: %v", dbRuleEvalStat.EntityType)
 		default:
 			zerolog.Ctx(ctx).Error().Msgf("unknown entity type: %v", dbRuleEvalStat.EntityType)

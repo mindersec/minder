@@ -851,7 +851,7 @@ func TestHandleGitHubAppCallback(t *testing.T) {
 				db.EXPECT().Rollback(gomock.Any()).Return(nil)
 				service.EXPECT().
 					CreateGitHubAppWithoutInvitation(gomock.Any(), gomock.Any(), userId, installationID).
-					Return(nil, nil)
+					Return(nil, nil, nil)
 			},
 			checkResponse: func(t *testing.T, resp httptest.ResponseRecorder) {
 				t.Helper()

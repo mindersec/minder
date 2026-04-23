@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -134,10 +135,14 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) 
 
 	for _, i := range installs {
 		// TODO: if we can get an GitHub auth token for the user, we can do the rest with CreateGitHubAppWithoutInvitation
-		proj, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
+		proj, dbProv, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Int64("org_id", i.OrganizationID).Msg("failed to create GitHub app at first login")
 			continue
+		}
+		if dbProv != nil {
+			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			s.publishOrganizationEntityEvent(ctx, dbProv.ID, proj.ID, login)
 		}
 		if proj != nil {
 			userProjects = append(userProjects, proj)

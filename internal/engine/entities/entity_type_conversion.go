@@ -28,6 +28,8 @@ func EntityTypeToDBType(entityType pb.Entity) (db.Entities, error) {
 		return db.EntitiesPipelineRun, nil
 	case pb.Entity_ENTITY_TASK_RUN:
 		return db.EntitiesTaskRun, nil
+	case pb.Entity_ENTITY_ORGANIZATION:
+		return db.EntitiesOrganization, nil
 	case pb.Entity_ENTITY_BUILD:
 		return db.EntitiesBuild, nil
 	case pb.Entity_ENTITY_UNSPECIFIED:
