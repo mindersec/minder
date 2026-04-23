@@ -436,25 +436,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 			mockIdManager := mockauth.NewMockIdentityManager(ctrl)
 			tc.buildStubs(mockStore, mockJwtValidator, mockIdManager)
 
-			testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				switch r.URL.Path {
-				case tokenEndpoint:
-					data := oauth2.Token{
-						AccessToken: "some-token",
-					}
-					w.Header().Add("Content-Type", "application/json")
-					w.WriteHeader(http.StatusOK)
-					err := json.NewEncoder(w).Encode(data)
-					if err != nil {
-						t.Fatal(err)
-					}
-				case "/admin/realms/stacklok/users/subject1":
-					w.WriteHeader(http.StatusNoContent)
-				default:
-					t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
-				}
-			}))
-			defer testServer.Close()
+			// HTTP server mock removed because the IdentityManager mock now handles identity deletions.
 
 			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 				Driver:    "go-channel",
@@ -475,7 +457,7 @@ func TestDeleteUser_gRPC(t *testing.T) {
 					},
 					Identity: serverconfig.IdentityConfigWrapper{
 						Server: serverconfig.IdentityConfig{
-							IssuerUrl:    testServer.URL,
+							IssuerUrl:    "http://example.com",
 							Realm:        "stacklok",
 							ClientId:     "client-id",
 							ClientSecret: "client-secret",

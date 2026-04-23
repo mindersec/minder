@@ -64,8 +64,6 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 var _ auth.IdentityManager = (*KeyCloak)(nil)
 var _ auth.IdentityProvider = (*KeyCloak)(nil)
 
-var errNotFound = errors.New("user not found in identity store")
-
 // String implements auth.IdentityProvider.
 func (k *KeyCloak) String() string {
 	return k.name
@@ -86,7 +84,7 @@ func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, erro
 	if remoteUser != nil {
 		return remoteUser, nil
 	}
-	return nil, errNotFound
+	return nil, auth.ErrNotFound
 }
 
 // Validate implements auth.IdentityProvider.
@@ -201,7 +199,7 @@ func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, e
 		}
 	}
 
-	return nil, errNotFound
+	return nil, auth.ErrNotFound
 }
 
 func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity {

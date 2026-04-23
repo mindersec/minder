@@ -15,6 +15,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// ErrNotFound is returned when an identity cannot be resolved because it doesn't exist.
+var ErrNotFound = errors.New("user not found in identity store")
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // Identity represents a particular user's identity in a particular trust domain

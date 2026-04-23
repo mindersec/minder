@@ -87,6 +87,7 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 	}
 
 	ctx = auth.WithIdentityContext(ctx, id)
+	// TODO: remove and replace with identity
 	ctx = jwt.WithAuthTokenContext(ctx, parsedToken)
 
 	// Attach the login sha for telemetry usage (hash of the user subject from the JWT)

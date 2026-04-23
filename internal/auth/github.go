@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 )
 
 // GetUserForGitHubId looks up a user in the identity provider by their GitHub ID.
@@ -23,7 +22,7 @@ func GetUserForGitHubId(ctx context.Context, idClient Resolver, ghUser int64) (s
 	id, err := idClient.Resolve(ctx, fmt.Sprintf("%d", ghUser))
 	if err != nil {
 		// If the user is not found, return an empty string and no error
-		if errors.Is(err, errors.New("user not found in identity store")) || strings.Contains(err.Error(), "not found") {
+		if errors.Is(err, ErrNotFound) {
 			return "", nil
 		}
 		return "", err
