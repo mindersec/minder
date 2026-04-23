@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-git/go-billy/v5/memfs"
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -191,6 +192,27 @@ func TestReadResourceTyped(t *testing.T) {
 	t.Cleanup(func() { _ = ruleTypeCloser.Close() })
 	_, err = ReadResourceTyped[*minderv1.RuleType](ruleTypeDecoder)
 	require.NoError(t, err, "Expected no error reading profile")
+}
+
+func TestReadResourceFromFile(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+	file, err := fs.Create("profile.yaml")
+	require.NoError(t, err)
+	_, err = file.Write([]byte(`type: profile
+version: v1
+name: test-profile
+repository:
+  - type: sample-rule
+    def: {}
+`))
+	require.NoError(t, err)
+	require.NoError(t, file.Close())
+
+	profile, err := ReadResourceFromFile[*minderv1.Profile](fs, "profile.yaml")
+	require.NoError(t, err)
+	require.Equal(t, "test-profile", profile.GetName())
 }
 
 func TestReadAll(t *testing.T) {

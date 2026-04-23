@@ -85,13 +85,7 @@ func ReadProfileFromFile(fpath string) (*pb.Profile, error) {
 
 // ReadProfileFromPath reads a pipeline profile from a billy filesystem path.
 func ReadProfileFromPath(vfs billy.Filesystem, path string) (*pb.Profile, error) {
-	reader, err := vfs.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("error opening profile path %s: %w", path, err)
-	}
-	defer reader.Close()
-
-	return ParseYAML(reader)
+	return fileconvert.ReadResourceFromFile[*pb.Profile](vfs, path)
 }
 
 // GetRulesForEntity returns the rules for the given entity

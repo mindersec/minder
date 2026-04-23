@@ -8,13 +8,14 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mindersec/minder/pkg/fileconvert"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/profiles"
 )
 
 // ExecOnOneProfile is a helper function to execute a function on a single profile
@@ -46,7 +47,7 @@ func ExecOnOneProfile(ctx context.Context, t table.Table, f string, dashOpen io.
 }
 
 func parseProfile(r io.Reader, proj string) (*minderv1.Profile, error) {
-	p, err := profiles.ParseYAML(r)
+	p, err := fileconvert.ReadResourceTyped[*minderv1.Profile](yaml.NewDecoder(r))
 	if err != nil {
 		return nil, fmt.Errorf("error reading profile from file: %w", err)
 	}
