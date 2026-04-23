@@ -10,6 +10,7 @@ Available Commands:
   list        List rule types
 
 Flags:
+  -h, --help             help for ruletype
   -j, --project string   ID of the project
 
 Global Flags:

@@ -180,9 +180,12 @@ func (g *goPrettyTable) Render() {
 				share := int(float64(req) / float64(totalRequested) * float64(usableWidth))
 
 				// Ensure a minimum width so columns don't disappear
-				if share < 5 {
+				if share < req && req <= (usableWidth/3) {
+					share = req
+				} else if share < 5 {
 					share = 5
 				}
+
 				assignedWidths[i] = share
 				currentTotal += share
 			}

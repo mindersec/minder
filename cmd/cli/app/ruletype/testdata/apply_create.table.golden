@@ -1,9 +1,8 @@
- NAME               │ ENTITY    │ DESCRIPTION                                                       
-                    │ TYPE      │                                                                   
-────────────────────┼───────────┼───────────────────────────────────────────────────────────────────
- secret_push_protec │ repositor │ Verifies that secret push protection is enabled for a given       
- tion               │ y         │ repository. Note that this will will not work as expected for     
- (release_phase:    │           │ private repositories unless you have GitHub Advanced Security     
- beta)              │           │ enabled. If you still want to use this rule because you have a    
-                    │           │ mixture of private and public repositories, enable the            
-                    │           │ `skip_private_repos` flag.                                        
+ NAME                   │ ENTITY TYPE │ DESCRIPTION                                                 
+────────────────────────┼─────────────┼─────────────────────────────────────────────────────────────
+ secret_push_protection │ repository  │ Verifies that secret push protection is enabled for a given 
+ (release_phase: beta)  │             │ repository. Note that this will will not work as expected   
+                        │             │ for private repositories unless you have GitHub Advanced    
+                        │             │ Security enabled. If you still want to use this rule        
+                        │             │ because you have a mixture of private and public            
+                        │             │ repositories, enable the `skip_private_repos` flag.         
