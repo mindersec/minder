@@ -191,14 +191,15 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			ExpectedError: "error instantiating provider",
 		},
 		{
-			Name:         "DeleteByName still works when entity cannot be deregistered",
+			Name:         "DeleteByName fails when entity cannot be deregistered",
 			DeleteType:   ByName,
-			DBSetup:      newDBMock(withSuccessfulGetByName, withSuccessfulDelete),
+			DBSetup:      newDBMock(withSuccessfulGetByName),
 			ServiceSetup: newPropSvcMock(withSuccessfulEntityWithProps),
 			ProviderManagerSetup: func(p provinfv1.Provider) pf.ProviderManagerMockBuilder {
 				return pf.NewProviderManagerMock(pf.WithSuccessfulInstantiateFromID(p))
 			},
 			ProviderSetup: newProviderMock(withFailedDeregister),
+			ExpectedError: "failed to deregister entity upstream",
 		},
 		{
 			Name:         "DeleteByName by ID fails when repo cannot be deleted from DB",
@@ -244,14 +245,15 @@ func TestRepositoryService_DeleteRepository(t *testing.T) {
 			ExpectedError: "error instantiating provider",
 		},
 		{
-			Name:         "DeleteByID works when entity cannot be deregistered",
+			Name:         "DeleteByID fails when entity cannot be deregistered",
 			DeleteType:   ByID,
-			DBSetup:      newDBMock(withSuccessfulDelete),
+			DBSetup:      newDBMock(),
 			ServiceSetup: newPropSvcMock(withSuccessfulEntityWithProps),
 			ProviderManagerSetup: func(p provinfv1.Provider) pf.ProviderManagerMockBuilder {
 				return pf.NewProviderManagerMock(pf.WithSuccessfulInstantiateFromID(p))
 			},
 			ProviderSetup: newProviderMock(withFailedDeregister),
+			ExpectedError: "failed to deregister entity upstream",
 		},
 		{
 			Name:         "DeleteByID by ID fails when repo cannot be deleted from DB",

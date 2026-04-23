@@ -405,6 +405,7 @@ func (r *repositoryService) deleteRepository(
 		zerolog.Ctx(ctx).Error().
 			Dict("properties", repo.Properties.ToLogDict()).
 			Err(err).Msg("error deregistering repo")
+		return fmt.Errorf("failed to deregister entity upstream, aborting deletion to prevent orphaned webhook: %w", err)
 	}
 
 	_, err = db.WithTransaction(r.store, func(t db.ExtendQuerier) (*pb.Repository, error) {
