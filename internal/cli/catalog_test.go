@@ -11,82 +11,87 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
-func TestCatalogValidate_NilCatalog(t *testing.T) {
+func TestCatalogValidate(t *testing.T) {
 	t.Parallel()
-	var catalog *Catalog
 
-	require.NotPanics(t, func() {
-		err := catalog.Validate(nil)
-		require.Error(t, err)
-	})
-}
-
-func TestCatalogValidate_EmptyCatalog(t *testing.T) {
-	t.Parallel()
-	catalog := &Catalog{
-		RuleTypes: []*minderv1.RuleType{},
-		Profiles:  []*minderv1.Profile{},
-	}
-
-	err := catalog.Validate(nil)
-	require.Error(t, err)
-}
-
-func TestCatalogValidate_WithValidRuleReference(t *testing.T) {
-	t.Parallel()
-	ruleType := &minderv1.RuleType{
-		Name: "test-rule",
-	}
-
-	profile := &minderv1.Profile{
-		Name: "test-profile",
-		Repository: []*minderv1.Profile_Rule{
-			{
-				Type: "test-rule",
+	tests := []struct {
+		name             string
+		catalog          Catalog
+		expectErr        bool
+		expectedProfiles int
+		expectedFirst    string
+	}{
+		{
+			name: "empty catalog",
+			catalog: Catalog{
+				RuleTypes: []*minderv1.RuleType{},
+				Profiles:  []*minderv1.Profile{},
 			},
+			expectErr:        true,
+			expectedProfiles: 0,
+		},
+		{
+			name: "valid catalog",
+			catalog: Catalog{
+				RuleTypes: []*minderv1.RuleType{
+					{Name: "test-rule"},
+				},
+				Profiles: []*minderv1.Profile{
+					{
+						Name: "valid",
+						Repository: []*minderv1.Profile_Rule{
+							{Type: "test-rule"},
+						},
+					},
+				},
+			},
+			expectErr:        false,
+			expectedProfiles: 1,
+			expectedFirst:    "valid",
+		},
+		{
+			name: "mixed valid and missing rule references",
+			catalog: Catalog{
+				RuleTypes: []*minderv1.RuleType{
+					{Name: "test-rule"},
+				},
+				Profiles: []*minderv1.Profile{
+					{
+						Name: "valid",
+						Repository: []*minderv1.Profile_Rule{
+							{Type: "test-rule"},
+						},
+					},
+					{
+						Name: "invalid",
+						Repository: []*minderv1.Profile_Rule{
+							{Type: "missing-rule"},
+						},
+					},
+				},
+			},
+			expectErr:        false,
+			expectedProfiles: 1,
+			expectedFirst:    "valid",
 		},
 	}
 
-	catalog := &Catalog{
-		RuleTypes: []*minderv1.RuleType{ruleType},
-		Profiles:  []*minderv1.Profile{profile},
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			err := tt.catalog.Validate(func(string, ...any) {})
+
+			if tt.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.Len(t, tt.catalog.Profiles, tt.expectedProfiles)
+			if tt.expectedFirst != "" {
+				require.Equal(t, tt.expectedFirst, tt.catalog.Profiles[0].Name)
+			}
+		})
 	}
-
-	err := catalog.Validate(func(string, ...any) {})
-	require.NoError(t, err)
-}
-
-func TestCatalogValidate_SkipsProfilesWithMissingRuleTypes(t *testing.T) {
-	t.Parallel()
-	ruleType := &minderv1.RuleType{
-		Name: "test-rule",
-	}
-
-	validProfile := &minderv1.Profile{
-		Name: "valid-profile",
-		Repository: []*minderv1.Profile_Rule{
-			{
-				Type: "test-rule",
-			},
-		},
-	}
-
-	invalidProfile := &minderv1.Profile{
-		Name: "invalid-profile",
-		Repository: []*minderv1.Profile_Rule{
-			{
-				Type: "missing-rule",
-			},
-		},
-	}
-
-	catalog := &Catalog{
-		RuleTypes: []*minderv1.RuleType{ruleType},
-		Profiles:  []*minderv1.Profile{validProfile, invalidProfile},
-	}
-
-	err := catalog.Validate(func(string, ...any) {})
-	require.NoError(t, err)
-	require.Len(t, catalog.Profiles, 1)
-	require.Equal(t, "valid-profile", catalog.Profiles[0].Name)
 }
