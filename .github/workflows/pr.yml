@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   license-check:
@@ -29,6 +28,9 @@ jobs:
   image-build:
     uses: ./.github/workflows/image-build.yml
   security:
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/security.yml
   compose-migrate:
     uses: ./.github/workflows/compose-migrate.yml
