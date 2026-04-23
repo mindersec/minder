@@ -8,12 +8,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"math"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
 
+	"github.com/go-git/go-billy/v5"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/rs/zerolog"
 	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/protobuf/encoding/protojson"
@@ -121,25 +124,57 @@ type ExpandedFile struct {
 // ExpandFileArgs expands a list of file arguments into a list of files.
 // If the file list contains "-" or regular files, it will leave them as-is.
 // If the file list contains directories, it will expand them into a list of files.
-func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
+func ExpandFileArgs(vfs billy.Filesystem, files ...string) ([]ExpandedFile, error) {
 	var expandedFiles []ExpandedFile
+
+	appendExpandedPath := func(path string, expanded bool) {
+		expandedFiles = append(expandedFiles, ExpandedFile{
+			Path:     path,
+			Expanded: expanded,
+		})
+	}
+
 	for _, f := range files {
 		if f == "-" {
-			expandedFiles = append(expandedFiles, ExpandedFile{
-				Path:     f,
-				Expanded: false,
-			})
+			appendExpandedPath(f, false)
 			continue
 		}
 
 		f = filepath.Clean(f)
-		fi, err := os.Stat(f)
+
+		if vfs == nil {
+			fi, err := os.Stat(f)
+			if err != nil {
+				return nil, fmt.Errorf("error getting file info: %w", err)
+			}
+
+			expanded := fi.IsDir()
+			err = filepath.Walk(f, func(path string, info os.FileInfo, walkerr error) error {
+				if walkerr != nil {
+					return fmt.Errorf("error walking path %s: %w", path, walkerr)
+				}
+
+				if info.IsDir() {
+					return nil
+				}
+
+				appendExpandedPath(path, expanded)
+
+				return nil
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error walking directory: %w", err)
+			}
+			continue
+		}
+
+		fi, err := vfs.Stat(f)
 		if err != nil {
 			return nil, fmt.Errorf("error getting file info: %w", err)
 		}
 
 		expanded := fi.IsDir()
-		err = filepath.Walk(f, func(path string, info os.FileInfo, walkerr error) error {
+		err = billyutil.Walk(vfs, f, func(path string, info iofs.FileInfo, walkerr error) error {
 			if walkerr != nil {
 				return fmt.Errorf("error walking path %s: %w", path, walkerr)
 			}
@@ -148,10 +183,7 @@ func ExpandFileArgs(files ...string) ([]ExpandedFile, error) {
 				return nil
 			}
 
-			expandedFiles = append(expandedFiles, ExpandedFile{
-				Path:     path,
-				Expanded: expanded,
-			})
+			appendExpandedPath(path, expanded)
 
 			return nil
 		})

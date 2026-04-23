@@ -6,7 +6,8 @@ package cli
 
 import (
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
@@ -47,14 +48,9 @@ func LoadCatalogFromFS(vfs billy.Filesystem, warnf WarnFunc) (*Catalog, error) {
 		return nil, err
 	}
 
-	ruleTypeNames := make([]string, 0, len(ruleTypesByName))
-	for name := range ruleTypesByName {
-		ruleTypeNames = append(ruleTypeNames, name)
-	}
-	sort.Strings(ruleTypeNames)
-
-	ruleTypes := make([]*minderv1.RuleType, 0, len(ruleTypeNames))
-	for _, name := range ruleTypeNames {
+	names := slices.Sorted(maps.Keys(ruleTypesByName))
+	ruleTypes := make([]*minderv1.RuleType, 0, len(names))
+	for _, name := range names {
 		ruleTypes = append(ruleTypes, ruleTypesByName[name])
 	}
 
@@ -66,7 +62,8 @@ func LoadCatalogFromFS(vfs billy.Filesystem, warnf WarnFunc) (*Catalog, error) {
 	return catalog, nil
 }
 
-// Validate validates the catalog contents and keeps only profiles whose rule types exist.
+// Validate validates the catalog and MUTATES it by removing profiles
+// whose rule type references do not exist in the catalog.
 func (c *Catalog) Validate(warnf WarnFunc) error {
 	if c == nil {
 		return fmt.Errorf("catalog is nil")
@@ -95,15 +92,13 @@ func (c *Catalog) Validate(warnf WarnFunc) error {
 			continue
 		}
 
-		missingRuleTypes := make([]string, 0)
-		for ruleType := range referencedRuleTypes {
-			if _, exists := ruleTypesByName[ruleType]; !exists {
-				missingRuleTypes = append(missingRuleTypes, ruleType)
-			}
-		}
+		maps.DeleteFunc(referencedRuleTypes, func(ruleType string, _ struct{}) bool {
+			_, exists := ruleTypesByName[ruleType]
+			return exists
+		})
+		missingRuleTypes := slices.Sorted(maps.Keys(referencedRuleTypes))
 
 		if len(missingRuleTypes) > 0 {
-			sort.Strings(missingRuleTypes)
 			warnf(
 				"Skipping profile %q: references missing rule type(s): %s\n",
 				loadedProfile.GetName(),
@@ -124,13 +119,18 @@ func (c *Catalog) Validate(warnf WarnFunc) error {
 }
 
 func loadRuleTypesFromFS(vfs billy.Filesystem, warnf WarnFunc) (map[string]*minderv1.RuleType, error) {
-	ruleTypes, err := fileconvert.ResourcesFromFilesystem[*minderv1.RuleType](warnf, vfs, catalogRuleTypesDir)
+	resources, err := fileconvert.ResourcesFromPaths(vfs, warnf, catalogRuleTypesDir)
 	if err != nil {
 		return nil, err
 	}
 
-	ruleTypesByName := make(map[string]*minderv1.RuleType, len(ruleTypes))
-	for _, ruleType := range ruleTypes {
+	ruleTypesByName := make(map[string]*minderv1.RuleType, len(resources))
+	for _, resource := range resources {
+		ruleType, ok := resource.(*minderv1.RuleType)
+		if !ok {
+			warnf("Skipping invalid resource type %T under %s\n", resource, catalogRuleTypesDir)
+			continue
+		}
 		if ruleType.GetName() == "" {
 			warnf("Skipping invalid rule type: missing name\n")
 			continue
@@ -150,15 +150,20 @@ func loadRuleTypesFromFS(vfs billy.Filesystem, warnf WarnFunc) (map[string]*mind
 }
 
 func loadProfilesFromFS(vfs billy.Filesystem, warnf WarnFunc) ([]*minderv1.Profile, error) {
-	loadedProfilesFromFS, err := fileconvert.ResourcesFromFilesystem[*minderv1.Profile](warnf, vfs, catalogProfilesDir)
+	resources, err := fileconvert.ResourcesFromPaths(vfs, warnf, catalogProfilesDir)
 	if err != nil {
 		return nil, err
 	}
 
-	loadedProfiles := make([]*minderv1.Profile, 0, len(loadedProfilesFromFS))
-	profileNames := make(map[string]struct{}, len(loadedProfilesFromFS))
+	loadedProfiles := make([]*minderv1.Profile, 0, len(resources))
+	profileNames := make(map[string]struct{}, len(resources))
 
-	for _, profile := range loadedProfilesFromFS {
+	for _, resource := range resources {
+		profile, ok := resource.(*minderv1.Profile)
+		if !ok {
+			warnf("Skipping invalid resource type %T under %s\n", resource, catalogProfilesDir)
+			continue
+		}
 		if profile.GetName() == "" {
 			warnf("Skipping invalid profile: missing name\n")
 			continue

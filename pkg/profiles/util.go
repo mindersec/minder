@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/go-git/go-billy/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/sqlc-dev/pqtype"
 	"google.golang.org/protobuf/proto"
@@ -81,11 +80,6 @@ func ReadProfileFromFile(fpath string) (*pb.Profile, error) {
 	}
 	defer closer.Close()
 	return fileconvert.ReadResourceTyped[*pb.Profile](decoder)
-}
-
-// ReadProfileFromPath reads a pipeline profile from a billy filesystem path.
-func ReadProfileFromPath(vfs billy.Filesystem, path string) (*pb.Profile, error) {
-	return fileconvert.ReadResourceFromFile[*pb.Profile](vfs, path)
 }
 
 // GetRulesForEntity returns the rules for the given entity

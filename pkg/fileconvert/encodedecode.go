@@ -9,10 +9,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"path/filepath"
 
 	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v3"
@@ -44,37 +44,54 @@ func decoderForReader(path string, reader io.Reader) (Decoder, error) {
 	}
 }
 
-// DecoderForFile returns a Decoder for the file at the specified path,
-// or nil if the file is not of the appropriate type.
-func DecoderForFile(path string) (Decoder, io.Closer) {
-	file, err := os.Open(path) // #nosec G304 -- path is limited to on-disk catalog inputs
+func decoderForPath(fs billy.Filesystem, path string) (Decoder, io.Closer) {
+	path = filepath.Clean(path)
+
+	if fs == nil {
+		if !filepath.IsAbs(path) {
+			absPath, err := filepath.Abs(path)
+			if err != nil {
+				return nil, nil
+			}
+			path = absPath
+		}
+		fs = osfs.New("/")
+	}
+
+	file, err := fs.Open(path)
 	if err != nil {
 		return nil, nil
 	}
+
 	decoder, decoderErr := decoderForReader(path, file)
 	if decoderErr != nil {
 		_ = file.Close()
 		return nil, nil
 	}
+
 	return decoder, file
 }
 
+// DecoderForFile returns a Decoder for the file at the specified path,
+// or nil if the file is not of the appropriate type.
+func DecoderForFile(path string) (Decoder, io.Closer) {
+	return decoderForPath(nil, path)
+}
+
 // ReadResourceFromFile reads a single resource from the specified filesystem path.
-func ReadResourceFromFile[T proto.Message](fs billy.Filesystem, path string) (T, error) {
-	var zero T
+func ReadResourceFromFile[T proto.Message](fs billy.Filesystem, path string) (resource T, err error) {
+	decoder, closer := decoderForPath(fs, path)
+	if decoder == nil {
+		return resource, fmt.Errorf("error opening file %s", path)
+	}
+	defer closer.Close()
 
-	file, err := fs.Open(path)
+	resource, err = ReadResourceTyped[T](decoder)
 	if err != nil {
-		return zero, fmt.Errorf("error opening file %s: %w", path, err)
-	}
-	defer file.Close()
-
-	decoder, decoderErr := decoderForReader(path, file)
-	if decoderErr != nil {
-		return zero, decoderErr
+		return resource, err
 	}
 
-	return ReadResourceTyped[T](decoder)
+	return resource, nil
 }
 
 // WriteResource outputs a Minder proto resource to an existing Encoder.

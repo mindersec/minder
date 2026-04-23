@@ -15,6 +15,7 @@ import (
 	"testing"
 
 	"github.com/go-git/go-billy/v5/memfs"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -198,27 +199,33 @@ func TestReadResourceFromFile(t *testing.T) {
 	t.Parallel()
 
 	fs := memfs.New()
-	file, err := fs.Create("profile.yaml")
-	require.NoError(t, err)
-	_, err = file.Write([]byte(`type: profile
+	err := billyutil.WriteFile(fs, "profile.yaml", []byte(`type: profile
 version: v1
 name: test-profile
 repository:
   - type: sample-rule
     def: {}
-`))
+`), 0644)
 	require.NoError(t, err)
-	require.NoError(t, file.Close())
 
 	profile, err := ReadResourceFromFile[*minderv1.Profile](fs, "profile.yaml")
 	require.NoError(t, err)
 	require.Equal(t, "test-profile", profile.GetName())
 }
 
+func TestReadResourceFromFile_FileNotFound(t *testing.T) {
+	t.Parallel()
+
+	fs := memfs.New()
+
+	_, err := ReadResourceFromFile[*minderv1.Profile](fs, "missing.yaml")
+	require.Error(t, err)
+}
+
 func TestReadAll(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(nil, t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
 	collectedInput, closer := DecoderForFile("testdata/resources.yaml")
@@ -246,7 +253,7 @@ func TestReadAll(t *testing.T) {
 func TestReadWriteRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	dirResources, err := ResourcesFromPaths(t.Logf, "testdata/directory")
+	dirResources, err := ResourcesFromPaths(nil, t.Logf, "testdata/directory")
 	require.NoError(t, err)
 
 	tempFile := filepath.Clean(filepath.Join(t.TempDir(), "collected.yaml"))
