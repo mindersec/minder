@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/mindersec/minder/pkg/fileconvert"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 // ExecOnOneProfile is a helper function to execute a function on a single profile

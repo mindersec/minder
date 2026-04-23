@@ -9,10 +9,11 @@ import (
 	"io/fs"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
 	"github.com/mindersec/minder/pkg/mindpak"
-	"gopkg.in/yaml.v3"
 )
 
 // BundleReader provides a high-level interface for accessing the contents of

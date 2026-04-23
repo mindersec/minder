@@ -47,7 +47,7 @@ func decoderForReader(path string, reader io.Reader) (Decoder, error) {
 // DecoderForFile returns a Decoder for the file at the specified path,
 // or nil if the file is not of the appropriate type.
 func DecoderForFile(path string) (Decoder, io.Closer) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) // #nosec G304 -- path is limited to on-disk catalog inputs
 	if err != nil {
 		return nil, nil
 	}

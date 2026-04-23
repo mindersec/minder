@@ -150,15 +150,15 @@ func loadRuleTypesFromFS(vfs billy.Filesystem, warnf WarnFunc) (map[string]*mind
 }
 
 func loadProfilesFromFS(vfs billy.Filesystem, warnf WarnFunc) ([]*minderv1.Profile, error) {
-	profiles, err := fileconvert.ResourcesFromFilesystem[*minderv1.Profile](warnf, vfs, catalogProfilesDir)
+	loadedProfilesFromFS, err := fileconvert.ResourcesFromFilesystem[*minderv1.Profile](warnf, vfs, catalogProfilesDir)
 	if err != nil {
 		return nil, err
 	}
 
-	loadedProfiles := make([]*minderv1.Profile, 0, len(profiles))
-	profileNames := make(map[string]struct{}, len(profiles))
+	loadedProfiles := make([]*minderv1.Profile, 0, len(loadedProfilesFromFS))
+	profileNames := make(map[string]struct{}, len(loadedProfilesFromFS))
 
-	for _, profile := range profiles {
+	for _, profile := range loadedProfilesFromFS {
 		if profile.GetName() == "" {
 			warnf("Skipping invalid profile: missing name\n")
 			continue
