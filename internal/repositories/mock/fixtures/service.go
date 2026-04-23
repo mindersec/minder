@@ -141,6 +141,7 @@ func WithFailedListRepositories(err error) func(RepoServiceMock) {
 
 func WithSuccessfulListRepositoriesPaginated(
 	repositories []*models.EntityWithProperties,
+	nextCursor string,
 ) func(RepoServiceMock) {
 	return func(mock RepoServiceMock) {
 		mock.EXPECT().
@@ -151,7 +152,7 @@ func WithSuccessfulListRepositoriesPaginated(
 				gomock.Any(),
 				gomock.Any(),
 			).
-			Return(repositories, uuid.Nil, nil).AnyTimes()
+			Return(repositories, nextCursor, nil).AnyTimes()
 	}
 }
 
@@ -165,6 +166,6 @@ func WithFailedListRepositoriesPaginated(err error) func(RepoServiceMock) {
 				gomock.Any(),
 				gomock.Any(),
 			).
-			Return(nil, uuid.Nil, err).AnyTimes()
+			Return(nil, "", err).AnyTimes()
 	}
 }
