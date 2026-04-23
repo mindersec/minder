@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -23,30 +22,38 @@ var applyCmd = &cobra.Command{
 	Use:   "apply [files...]",
 	Short: "Apply a rule type",
 	Long:  `The ruletype apply subcommand lets you create or update rule types for a project within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(applyCommand),
-	Args:  cobra.ArbitraryArgs,
+	Args: func(cmd *cobra.Command, args []string) error {
+		fileFlag, err := cmd.Flags().GetStringArray("file")
+		if err != nil {
+			return cli.MessageAndError("Error parsing file flag", err)
+		}
+
+		if len(fileFlag) == 0 && len(args) == 0 {
+			return fmt.Errorf("no files specified: use positional arguments or the -f flag")
+		}
+		return nil
+	},
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+
+		fileFlag, _ := cmd.Flags().GetStringArray("file")
+
+		if err := validateFilesArg(fileFlag); err != nil {
+			return cli.MessageAndError("Error validating files", err)
+		}
+
+		return nil
+	},
+	RunE: applyCommand,
 }
 
-// applyCommand is the "rule type" apply subcommand
-func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
-	client := getRuleTypeClient(ctx, conn)
-	project := viper.GetString("project")
-
-	fileFlag, err := cmd.Flags().GetStringArray("file")
-	if err != nil {
-		return cli.MessageAndError("Error parsing file flag", err)
-	}
+func applyCommand(cmd *cobra.Command, args []string) error {
+	fileFlag, _ := cmd.Flags().GetStringArray("file")
 
 	// Combine positional args with -f flag values
 	allFiles := append(fileFlag, args...)
-
-	if len(allFiles) == 0 {
-		return fmt.Errorf("no files specified: use positional arguments or the -f flag")
-	}
-
-	if err = validateFilesArg(fileFlag); err != nil {
-		return cli.MessageAndError("Error validating files", err)
-	}
 
 	files, err := util.ExpandFileArgs(allFiles...)
 	if err != nil {
@@ -56,6 +63,14 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, closeConn, err := getRuleTypeClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	project := viper.GetString("project")
 
 	table := initializeTableForList(cmd.OutOrStdout())
 
@@ -92,8 +107,6 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 		if f.Path != "-" && shouldSkipFile(f.Path) {
 			continue
 		}
-		// cmd.Context() is the root context. We need to create a new context for each file
-		// so we can avoid the timeout.
 		if err = execOnOneRuleType(cmd.Context(), table, f.Path, os.Stdin, project, applyFunc); err != nil {
 			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {
 				cmd.PrintErrf("Skipping file %s: not a rule type\n", f.Path)
@@ -106,6 +119,7 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 	// Render the table
 	table.Render()
 	return nil
+
 }
 
 func init() {

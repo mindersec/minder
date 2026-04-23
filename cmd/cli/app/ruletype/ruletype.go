@@ -5,10 +5,8 @@
 package ruletype
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
+	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -25,14 +23,30 @@ var ruleTypeCmd = &cobra.Command{
 	},
 }
 
-func getRuleTypeClient(ctx context.Context, conn grpc.ClientConnInterface) minderv1.RuleTypeServiceClient {
-	// 1. Check the backpack. Are we running inside a test?
+// getRuleTypeClient returns the RuleTypeServiceClient, a cleanup function to close the connection and an error
+func getRuleTypeClient(cmd *cobra.Command) (minderv1.RuleTypeServiceClient, func(), error) {
+	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+	cmd.SetContext(ctx)
+
+	// Check the backpack. Are we running inside a test?
 	if mockClient, ok := cli.GetRPCClient[minderv1.RuleTypeServiceClient](ctx); ok {
-		return mockClient
+		return mockClient, func() { cancel() }, nil
 	}
 
-	// 2. The backpack is empty. We are in production, make a real connection.
-	return minderv1.NewRuleTypeServiceClient(conn)
+	// The backpack is empty. We are in production, make a real connection.
+	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		cancel()
+		return nil, nil, err
+	}
+
+	client := minderv1.NewRuleTypeServiceClient(conn)
+
+	// Return the client and the closer so the subcommand can manage the lifecycle
+	return client, func() {
+		cancel()
+		_ = conn.Close()
+	}, nil
 }
 
 func init() {

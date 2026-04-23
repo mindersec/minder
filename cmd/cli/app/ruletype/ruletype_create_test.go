@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
 
 	"github.com/mindersec/minder/internal/util/cli"
@@ -23,9 +22,10 @@ func TestCreateCommand(t *testing.T) {
 	tests := []cli.CmdTestCase{
 		{
 			Name: "create rule type from file",
-			Args: []string{"-f", sampleFile},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "create", "-f", sampleFile},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -34,24 +34,16 @@ func TestCreateCommand(t *testing.T) {
 					Return(&minderv1.CreateRuleTypeResponse{
 						RuleType: mockResp.RuleTypes[0],
 					}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "create_success.table",
 		},
 		{
-			Name: "missing required file flag",
-			Args: []string{},
-			// Fixed: unused-parameter (changed t to _)
-			MockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
+			Name:          "missing required file flag",
+			Args:          []string{"ruletype", "create"},
 			ExpectedError: "required flag(s) \"file\" not set",
 		},
 	}
 
-	execFunc := func(ctx context.Context, cmd *cobra.Command) error {
-		if valErr := cmd.ValidateRequiredFlags(); valErr != nil {
-			return valErr
-		}
-		return createCommand(ctx, cmd, cmd.Flags().Args(), nil)
-	}
-
-	cli.RunCmdTests(t, tests, createCmd, execFunc)
+	cli.RunCmdTests(t, tests, ruleTypeCmd)
 }

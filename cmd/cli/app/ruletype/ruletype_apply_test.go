@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,23 +24,26 @@ func TestApplyCommand(t *testing.T) {
 	tests := []cli.CmdTestCase{
 		{
 			Name: "apply - create new rule type via flag",
-			Args: []string{"-f", applyFixture},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "apply", "-f", applyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
 
 				client.EXPECT().
 					CreateRuleType(gomock.Any(), gomock.Any()).
 					Return(&minderv1.CreateRuleTypeResponse{RuleType: mockResp.RuleTypes[0]}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_create.table",
 		},
 		{
 			Name: "apply - update existing rule type via positional arg",
-			Args: []string{applyFixture},
-			MockSetup: func(t *testing.T, client *mockv1.MockRuleTypeServiceClient) {
+			Args: []string{"ruletype", "apply", applyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
 				mockResp := &minderv1.ListRuleTypesResponse{}
 				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
 
@@ -52,20 +54,16 @@ func TestApplyCommand(t *testing.T) {
 				client.EXPECT().
 					UpdateRuleType(gomock.Any(), gomock.Any()).
 					Return(&minderv1.UpdateRuleTypeResponse{RuleType: mockResp.RuleTypes[0]}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_update.table",
 		},
 		{
 			Name:          "no files specified",
-			Args:          []string{},
-			MockSetup:     func(_ *testing.T, _ *mockv1.MockRuleTypeServiceClient) {},
+			Args:          []string{"ruletype", "apply"},
 			ExpectedError: "no files specified",
 		},
 	}
 
-	execFunc := func(ctx context.Context, cmd *cobra.Command) error {
-		return applyCommand(ctx, cmd, cmd.Flags().Args(), nil)
-	}
-
-	cli.RunCmdTests(t, tests, applyCmd, execFunc)
+	cli.RunCmdTests(t, tests, ruleTypeCmd)
 }
