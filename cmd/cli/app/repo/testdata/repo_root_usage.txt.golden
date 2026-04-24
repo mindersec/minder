@@ -1,0 +1,38 @@
+Usage:
+  minder repo [flags]
+  minder repo [command]
+
+Examples:
+
+  # List repositories
+    minder repo list
+
+  # Register a repository
+    minder repo register --name my-repo --provider github
+
+  # Delete a repository
+    minder repo delete --name my-repo
+
+
+Available Commands:
+  delete      Delete a repository
+  get         Get repository details
+  list        List repositories
+  reconcile   Reconcile (Sync) a repository with Minder.
+  register    Register a repository
+
+Flags:
+  -h, --help              help for repo
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github
+
+Global Flags:
+      --config string            Config file (default is $PWD/config.yaml)
+      --grpc-host string         Server host (default "api.custcodian.dev")
+      --grpc-insecure            Allow establishing insecure connections
+      --grpc-port int            Server port (default 443)
+      --identity-client string   Identity server client ID (default "minder-cli")
+      --identity-url string      Identity server issuer URL (default "https://auth.custcodian.dev")
+  -v, --verbose                  Output additional messages to STDERR
+
+Use "minder repo [command] --help" for more information about a command.
