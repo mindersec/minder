@@ -18,6 +18,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app/profile"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
@@ -130,13 +131,13 @@ func artifactEvalStatus(
 
 	var respList []*minderv1.RuleEvaluationStatus
 
-	for _, profile := range profiles.Profiles {
+	for _, prof := range profiles.Profiles {
 		req := &minderv1.GetProfileStatusByNameRequest{
 			Context: &minderv1.Context{
 				Provider: &provider,
 				Project:  &project,
 			},
-			Name: profile.GetName(),
+			Name: prof.GetName(),
 			Entity: &minderv1.EntityTypedId{
 				Id:   artifact.ArtifactPk,
 				Type: minderv1.Entity_ENTITY_ARTIFACTS,
@@ -193,13 +194,16 @@ func printEvalStatus(
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-			[]string{"Profile", "Rule", "Status", "Message"})
+			[]string{"Profile", "Rule", "Result", "Reasoning"})
 		for _, status := range evalStatus {
+			ruleName := profile.RuleDisplayName(status)
+			reasoning := profile.FormatEvaluationReasoning(status)
+
 			ta.AddRow(
 				status.ProfileId,
-				status.RuleTypeName,
+				fmt.Sprintf("%s\n[%s]", ruleName, status.GetRuleTypeName()),
 				status.Status,
-				status.Details,
+				reasoning,
 			)
 		}
 		ta.Render()
