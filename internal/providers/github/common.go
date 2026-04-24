@@ -428,6 +428,49 @@ func (c *GitHub) ListFiles(
 	return resp.files, resp.resp, err
 }
 
+// ListPullRequestCommits is a wrapper for the GitHub API to list commits in a pull request.
+// It is currently intended for internal engine experimentation, such as iterating over all
+// commits in a PR during evaluation.
+func (c *GitHub) ListPullRequestCommits(
+	ctx context.Context,
+	owner string,
+	repo string,
+	prNumber int,
+	perPage int,
+	pageNumber int,
+) ([]*github.RepositoryCommit, *github.Response, error) {
+	type listCommitsRespWrapper struct {
+		commits []*github.RepositoryCommit
+		resp    *github.Response
+	}
+
+	op := func() (listCommitsRespWrapper, error) {
+		opt := &github.ListOptions{
+			Page:    pageNumber,
+			PerPage: perPage,
+		}
+		commits, resp, err := c.client.PullRequests.ListCommits(ctx, owner, repo, prNumber, opt)
+
+		wrapped := listCommitsRespWrapper{
+			commits: commits,
+			resp:    resp,
+		}
+
+		if isRateLimitError(err) {
+			waitErr := c.waitForRateLimitReset(ctx, err)
+			if waitErr == nil {
+				return wrapped, err
+			}
+			return wrapped, backoffv4.Permanent(err)
+		}
+
+		return wrapped, backoffv4.Permanent(err)
+	}
+
+	resp, err := performWithRetry(ctx, op)
+	return resp.commits, resp.resp, err
+}
+
 // CreateReview is a wrapper for the GitHub API to create a review
 func (c *GitHub) CreateReview(
 	ctx context.Context, owner, repo string, number int, reviewRequest *github.PullRequestReviewRequest,
