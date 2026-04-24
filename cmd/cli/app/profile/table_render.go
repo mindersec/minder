@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/mindersec/minder/internal/util"
@@ -30,6 +31,19 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 		return ""
 	}
 	return strings.TrimSpace(out)
+}
+
+func marshalValueOrEmpty(v *structpb.Value) string {
+	if v == nil {
+		return ""
+	}
+
+	out, err := yaml.Marshal(v.AsInterface())
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(out))
 }
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
