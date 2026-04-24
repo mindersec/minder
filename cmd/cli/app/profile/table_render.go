@@ -32,6 +32,19 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 	return string(out)
 }
 
+func marshalValueOrEmpty(v *structpb.Value) string {
+	if v == nil {
+		return ""
+	}
+
+	out, err := yaml.Marshal(v.AsInterface())
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(out))
+}
+
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable(out io.Writer) table.Table {
 	return table.New(table.Simple, layouts.Default, out,
@@ -94,9 +107,62 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable(out io.Writer) table.Table {
 	return table.New(table.Simple, layouts.Default, out,
-		[]string{"Entity", "Rule Name", "Status", "Details"}).
+		[]string{"Entity", "Rule", "Result", "Reasoning"}).
 		SetAutoMerge(true).
 		SetEqualColumns(false)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		trimmed := strings.TrimSpace(value)
+		if trimmed != "" {
+			return trimmed
+		}
+	}
+
+	return ""
+}
+
+func formatReasoning(eval *minderv1.RuleEvaluationStatus) string {
+	parts := []string{}
+
+	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
+		parts = append(parts, fmt.Sprintf("- %s", detail))
+	}
+	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
+		parts = append(parts, fmt.Sprintf("- Guidance: %s", guidance))
+	}
+	if remDetails := strings.TrimSpace(eval.GetRemediationDetails()); remDetails != "" {
+		parts = append(parts, fmt.Sprintf("- Remediation: %s", remDetails))
+	}
+	if alert := eval.GetAlert(); alert != nil {
+		if alertDetails := strings.TrimSpace(alert.GetDetails()); alertDetails != "" {
+			parts = append(parts, fmt.Sprintf("- Alert: %s", alertDetails))
+		}
+		if alertURL := strings.TrimSpace(alert.GetUrl()); alertURL != "" {
+			parts = append(parts, fmt.Sprintf("- Alert URL: %s", alertURL))
+		}
+	}
+	if output := marshalValueOrEmpty(eval.GetOutput()); output != "" {
+		parts = append(parts, fmt.Sprintf("- Output:\n%s", output))
+	}
+
+	return strings.Join(parts, "\n")
+}
+
+// RuleDisplayName returns the most user-friendly rule name available.
+func RuleDisplayName(eval *minderv1.RuleEvaluationStatus) string {
+	return firstNonEmpty(eval.GetRuleDisplayName(), eval.GetRuleDescriptionName(), eval.GetRuleTypeName())
+}
+
+// FormatEvaluationReasoning returns a rendered reasoning block for CLI output.
+func FormatEvaluationReasoning(eval *minderv1.RuleEvaluationStatus) string {
+	reasoning := formatReasoning(eval)
+	if reasoning == "" {
+		return "-"
+	}
+
+	return reasoning
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.
@@ -114,11 +180,13 @@ func RenderRuleEvaluationStatusTable(
 
 	for _, eval := range statuses {
 		evalInfo := types.RuleEvalStatus(eval)
+		ruleName := RuleDisplayName(eval)
+		reasoning := FormatEvaluationReasoning(eval)
 		t.AddRowWithColor(
 			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
-			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.RuleDescriptionName, eval.RuleTypeName)),
+			layouts.NoColor(fmt.Sprintf("%s\n[%s]", ruleName, eval.GetRuleTypeName())),
 			table.GetStatusIcon(evalInfo, emoji),
-			table.BestDetail(evalInfo),
+			layouts.NoColor(reasoning),
 		)
 	}
 }
