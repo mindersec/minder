@@ -1,6 +1,5 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
-
 package engine_test
 
 import (
@@ -29,7 +28,6 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// declarations
 	projectID := uuid.New()
 	providerID := uuid.New()
 	repositoryID := uuid.New()
@@ -37,15 +35,13 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 
 	parallelOps := 2
 
-	// -- end expectations
-
 	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
 		GoChannel: serverconfig.GoChannelEventConfig{
 			BlockPublishUntilSubscriberAck: true,
 		},
 	})
-	require.NoError(t, err, "failed to setup eventer")
+	require.NoError(t, err)
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
@@ -54,7 +50,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		t.Log("Running eventer")
 		evt.Register(constants.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
-		require.NoError(t, err, "failed to run eventer")
+		require.NoError(t, err)
 	}()
 
 	testTimeout := 5 * time.Second
@@ -68,7 +64,8 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).WithID(repositoryID).
+		}).
+		WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	executor := mockengine.NewMockExecutor(ctrl)
@@ -83,23 +80,22 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
 	)
 
 	t.Log("waiting for eventer to start")
 	<-evt.Running()
 
 	msg, err := eiw.BuildMessage()
-	require.NoError(t, err, "expected no error")
+	require.NoError(t, err)
 
-	// Run in the background, twice
 	for i := 0; i < parallelOps; i++ {
 		go func() {
 			t.Log("Running entity event handler")
-			require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
+			require.NoError(t, handler.HandleEntityEvent(msg))
 		}()
 	}
 
-	// expect flush
 	for i := 0; i < parallelOps; i++ {
 		t.Log("waiting for flush")
 		result := <-queued
@@ -109,7 +105,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		require.Equal(t, projectID.String(), msg.Metadata.Get(entities.ProjectIDEventKey))
 	}
 
-	require.NoError(t, evt.Close(), "expected no error")
+	require.NoError(t, evt.Close())
 
 	t.Log("waiting for executor to finish")
 	handler.Wait()

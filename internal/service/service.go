@@ -262,9 +262,10 @@ func AllInOneServerService(
 
 	handler := engine.NewExecutorEventHandler(
 		ctx,
-		evt,
+		evt.(interfaces.Publisher),
 		executorMiddleware,
 		exec,
+		engine.DefaultExecutionTimeout,
 	)
 
 	evt.ConsumeEvents(handler)
