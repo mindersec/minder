@@ -138,7 +138,7 @@ func ExitNicelyOnError(err error, userMsg string) {
 			fmt.Fprintf(os.Stderr, "Message: %s\n", message)
 		}
 		// Print the details, if any
-		if details != "" {
+		if details != "" && details != message {
 			fmt.Fprintf(os.Stderr, "Details: %s\n", details)
 		}
 		// Exit with the right code
