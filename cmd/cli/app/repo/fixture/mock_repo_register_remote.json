@@ -1,0 +1,12 @@
+{
+  "results": [
+    {
+      "owner": "mock-owner",
+      "name": "mock-repo",
+      "registered": false,
+      "context": {
+        "provider": "github"
+      }
+    }
+  ]
+}

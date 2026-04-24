@@ -11,9 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/mindersec/minder/cmd/cli/app/provider"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
@@ -26,7 +26,11 @@ var repoRegisterCmd = &cobra.Command{
 	Short: "Register a repository",
 	Long:  `The repo register subcommand is used to register a repo within Minder.`,
 
-	PreRunE: func(_ *cobra.Command, _ []string) error {
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
 		inputRepoList := viper.GetStringSlice("name")
 		registerAll := viper.GetBool("all")
 
@@ -37,16 +41,14 @@ var repoRegisterCmd = &cobra.Command{
 		return nil
 	},
 
-	RunE: cli.GRPCClientWrapRunE(RegisterCmd),
+	RunE: RegisterCmd,
 }
 
 // RegisterCmd represents the register command to register a repo with minder
 //
 //nolint:gocyclo
-func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	repoClient := minderv1.NewRepositoryServiceClient(conn)
-
-	provider := viper.GetString("provider")
+func RegisterCmd(cmd *cobra.Command, _ []string) error {
+	providerName := viper.GetString("provider")
 	project := viper.GetString("project")
 	inputRepoList := viper.GetStringSlice("name")
 	registerAll := viper.GetBool("all")
@@ -61,9 +63,13 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			return nil
 		}
 
-		providerClient := minderv1.NewProvidersServiceClient(conn)
+		providerClient, cleanup, err := provider.GetProviderClient(cmd)
+		if err != nil {
+			return cli.MessageAndError("Error connecting to server", err)
+		}
+		defer cleanup()
 
-		ret, err := enableAutoRegistration(ctx, providerClient, project, provider)
+		ret, err := enableAutoRegistration(cmd.Context(), providerClient, project, providerName)
 		if err != nil {
 			cmd.Println("Enabling auto registration failed for one or more providers.")
 		} else {
@@ -88,8 +94,14 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 	}
 
+	repoClient, cleanup, err := getRepoClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	// Fetch remote repos, both registered and unregistered.
-	repos, err := fetchRepos(ctx, provider, project, repoClient)
+	repos, err := fetchRepos(cmd.Context(), providerName, project, repoClient)
 	if err != nil {
 		return cli.MessageAndError("Error getting registered repos", err)
 	}
@@ -146,7 +158,7 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 	}
 
-	results, warnings := registerRepos(project, repoClient, selectedRepos)
+	results, warnings := registerRepos(cmd.Context(), project, repoClient, selectedRepos)
 	printWarnings(cmd, warnings)
 
 	printRepoRegistrationStatus(cmd, results)
@@ -155,13 +167,13 @@ func RegisterCmd(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 func fetchRepos(
 	ctx context.Context,
-	provider string,
+	providerName string,
 	project string,
 	client minderv1.RepositoryServiceClient,
 ) ([]*minderv1.UpstreamRepositoryRef, error) {
 	var provPtr *string
-	if provider != "" {
-		provPtr = &provider
+	if providerName != "" {
+		provPtr = &providerName
 	}
 
 	resp, err := client.ListRemoteRepositoriesFromProvider(
@@ -208,6 +220,7 @@ func selectReposInteractively(
 }
 
 func registerRepos(
+	ctx context.Context,
 	project string,
 	client minderv1.RepositoryServiceClient,
 	repos []*minderv1.UpstreamRepositoryRef,
@@ -216,7 +229,7 @@ func registerRepos(
 	var warnings []string
 	for _, repo := range repos {
 		result, err := client.RegisterRepository(
-			context.Background(),
+			ctx,
 			&minderv1.RegisterRepositoryRequest{
 				Context: &minderv1.Context{
 					Provider: ptr.Ptr(repo.GetContext().GetProvider()),
@@ -314,26 +327,26 @@ func enableAutoRegistrationAllProviders(
 
 		cursor = allProviders.Cursor
 
-		for _, provider := range allProviders.Providers {
-			if !slices.Contains(provider.GetImplements(), minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER) {
+		for _, prov := range allProviders.Providers {
+			if !slices.Contains(prov.GetImplements(), minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER) {
 				continue
 			}
 
-			err := enableAutoRegistrationForProvider(ctx, provCli, project, provider.Name)
+			err := enableAutoRegistrationForProvider(ctx, provCli, project, prov.Name)
 			if err != nil {
 				if errors.Is(err, errAutoRegistrationAlreadyEnabled) {
 					// Store the provider name that was already enabled
-					ret.alreadyEnabled = append(ret.alreadyEnabled, provider.Name)
+					ret.alreadyEnabled = append(ret.alreadyEnabled, prov.Name)
 					continue
 				}
 				// Store the provider name that failed to update
-				ret.failedProviders = append(ret.failedProviders, provider.Name)
+				ret.failedProviders = append(ret.failedProviders, prov.Name)
 				// we could print a diagnostic message here, but since the legacy github provider doesn't support
 				// auto-enrollment and we still pre-create it, the user would see the message all the time.
 				continue
 			}
 			// Store the provider name that was successfully updated
-			ret.updatedProviders = append(ret.updatedProviders, provider.Name)
+			ret.updatedProviders = append(ret.updatedProviders, prov.Name)
 		}
 
 		if allProviders.Cursor == "" {

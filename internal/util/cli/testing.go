@@ -6,6 +6,7 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"os"
 	"path/filepath"
@@ -121,7 +122,13 @@ func checkGoldenFile(t *testing.T, filename string, actual string) {
 	expected, err := os.ReadFile(goldenPath)
 	require.NoError(t, err, "could not read golden file. Run 'go test ./... -update' to generate it")
 
-	assert.Equal(t, string(expected), actual, "Output does not match golden file")
+	if json.Valid(expected) && json.Valid([]byte(actual)) {
+		// if it's valid json compare the objects (ignores spaces/newlines)
+		require.JSONEq(t, string(expected), actual, "JSON Output does not match golden file")
+	} else {
+		// if it's a table, txt, or yaml fallback to exact string matching
+		require.Equal(t, string(expected), actual, "Output does not match golden file")
+	}
 }
 
 // LoadFixture reads a JSON file from the "fixture" directory and unmarshals

@@ -227,7 +227,8 @@ func quickstartCommand(
 	defer cancel()
 
 	// Prompt to register repositories
-	err = repo.RegisterCmd(ctx, cmd, []string{}, conn)
+	cmd.SetContext(ctx)
+	err = repo.RegisterCmd(cmd, []string{})
 	if err != nil {
 		return cli.MessageAndError("Error registering repositories", err)
 	}
