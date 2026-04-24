@@ -34,6 +34,7 @@ https://mindersec.github.io/
 * [minder profile](minder_profile.md)	 - Manage profiles
 * [minder project](minder_project.md)	 - Manage project within a minder control plane
 * [minder provider](minder_provider.md)	 - Manage providers within a minder control plane
+* [minder quickstart](minder_quickstart.md)	 - Quickstart minder
 * [minder repo](minder_repo.md)	 - Manage repositories within a Minder project
 * [minder ruletype](minder_ruletype.md)	 - Manage rule types
 * [minder set-project](minder_set-project.md)	 - Move the current context to another project
