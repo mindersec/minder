@@ -15,7 +15,7 @@ func (s *ProfileSelector) Scan(value interface{}) error {
 		return nil
 	}
 
-	// Convert the value to a string
+	// Convert the value to string
 	bytes, ok := value.([]byte)
 	if !ok {
 		return fmt.Errorf("failed to scan SelectorInfo: %v", value)

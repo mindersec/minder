@@ -612,6 +612,7 @@ func TestListEvaluationResultsIncludeOutputs(t *testing.T) {
 	profileID := uuid.New()
 	entityID := uuid.New()
 	ruleTypeID := uuid.New()
+	providerID := uuid.New()
 
 	outputJSON := json.RawMessage(`{"finding":"something_wrong"}`)
 	expectedOutput := &structpb.Value{}
@@ -649,13 +650,15 @@ func TestListEvaluationResultsIncludeOutputs(t *testing.T) {
 
 			efp := entmodels.NewEntityWithPropertiesFromInstance(
 				entmodels.EntityInstance{
-					ID:   entityID,
-					Type: minderv1.Entity_ENTITY_REPOSITORIES,
-					Name: "mindersec/minder",
+					ID:         entityID,
+					Type:       minderv1.Entity_ENTITY_REPOSITORIES,
+					Name:       "mindersec/minder",
+					ProjectID:  projectID,
+					ProviderID: providerID,
 				}, nil)
 
 			mockProps.EXPECT().
-				EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any()).
+				EntityWithPropertiesByID(gomock.Any(), entityID, gomock.Any(), gomock.Any(), gomock.Any()).
 				Return(efp, nil)
 			mockProps.EXPECT().
 				RetrieveAllPropertiesForEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
@@ -682,6 +685,7 @@ func TestListEvaluationResultsIncludeOutputs(t *testing.T) {
 						EntityID:              entityID,
 						EntityName:            "mindersec/minder",
 						ProjectID:             projectID,
+						ProviderID:            providerID,
 						RuleTypeID:            ruleTypeID,
 						RuleName:              "my_rule",
 						RuleTypeName:          "rule_type_a",
