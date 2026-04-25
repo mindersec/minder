@@ -11,6 +11,8 @@ import (
 )
 
 func TestProfileCmd_Help(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		args []string
@@ -22,7 +24,10 @@ func TestProfileCmd_Help(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			output, err := testutils.RunCommand(ProfileCmd, tt.args...)
 
 			if err != nil {
