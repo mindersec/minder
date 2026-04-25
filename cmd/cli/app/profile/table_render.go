@@ -32,19 +32,6 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 	return strings.TrimSpace(out)
 }
 
-func marshalValueOrEmpty(v *structpb.Value) string {
-	if v == nil {
-		return ""
-	}
-
-	out, err := util.GetYamlFromProto(v)
-	if err != nil {
-		return ""
-	}
-
-	return strings.TrimSpace(out)
-}
-
 // NewProfileSettingsTable creates a new table for rendering profile settings
 func NewProfileSettingsTable(out io.Writer) table.Table {
 	return table.New(table.Simple, layouts.Default, out,
@@ -112,23 +99,15 @@ func NewRuleEvaluationsTable(out io.Writer) table.Table {
 		SetEqualColumns(false)
 }
 
-func firstLine(text string) string {
-	for _, line := range strings.Split(text, "\n") {
-		trimmed := strings.TrimSpace(line)
-		if trimmed != "" {
-			return trimmed
-		}
-	}
-
-	return ""
-}
-
 func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
 	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
 		return fmt.Sprintf("- %s", detail)
 	}
 	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
 		return fmt.Sprintf("- Guidance: %s", guidance)
+	}
+	if remURL := strings.TrimSpace(eval.GetRemediationUrl()); remURL != "" {
+		return fmt.Sprintf("- Remediation URL: %s", remURL)
 	}
 	if remDetails := strings.TrimSpace(eval.GetRemediationDetails()); remDetails != "" {
 		return fmt.Sprintf("- Remediation: %s", remDetails)
@@ -141,15 +120,8 @@ func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
 			return fmt.Sprintf("- Alert URL: %s", alertURL)
 		}
 	}
-	if output := strings.TrimSpace(marshalValueOrEmpty(eval.GetOutput())); output != "" {
-		return fmt.Sprintf("- Output: %s", firstLine(output))
-	}
 
 	return ""
-}
-
-func formatReasoning(eval *minderv1.RuleEvaluationStatus) string {
-	return buildDetailSummary(eval)
 }
 
 // RuleDisplayName returns the most user-friendly rule name available.
@@ -159,7 +131,7 @@ func RuleDisplayName(eval *minderv1.RuleEvaluationStatus) string {
 
 // FormatEvaluationReasoning returns a rendered reasoning block for CLI output.
 func FormatEvaluationReasoning(eval *minderv1.RuleEvaluationStatus) string {
-	return cmp.Or(formatReasoning(eval), "-")
+	return cmp.Or(buildDetailSummary(eval), "-")
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.
@@ -181,7 +153,7 @@ func RenderRuleEvaluationStatusTable(
 		reasoning := FormatEvaluationReasoning(eval)
 		t.AddRowWithColor(
 			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
-			layouts.NoColor(fmt.Sprintf("%s\n[%s]", ruleName, eval.GetRuleTypeName())),
+			layouts.NoColor(ruleName),
 			table.GetStatusIcon(evalInfo, emoji),
 			layouts.NoColor(reasoning),
 		)
