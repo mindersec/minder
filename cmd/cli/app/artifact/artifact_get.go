@@ -194,14 +194,14 @@ func printEvalStatus(
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-			[]string{"Profile", "Rule", "Result", "Reasoning"})
+			[]string{"Profile", "Rule", "Result", "Details"})
 		for _, status := range evalStatus {
 			ruleName := profile.RuleDisplayName(status)
 			reasoning := profile.FormatEvaluationReasoning(status)
 
 			ta.AddRow(
 				status.ProfileId,
-				fmt.Sprintf("%s\n[%s]", ruleName, status.GetRuleTypeName()),
+				ruleName,
 				status.Status,
 				reasoning,
 			)
