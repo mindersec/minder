@@ -4,6 +4,7 @@
 package profile
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"slices"
@@ -11,8 +12,8 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/yaml.v2"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	"github.com/mindersec/minder/internal/util/cli/types"
@@ -24,12 +25,11 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 		return ""
 	}
 
-	m := v.AsMap()
-	out, err := yaml.Marshal(m)
+	out, err := util.GetYamlFromProto(v)
 	if err != nil {
 		return ""
 	}
-	return string(out)
+	return strings.TrimSpace(out)
 }
 
 func marshalValueOrEmpty(v *structpb.Value) string {
@@ -37,12 +37,12 @@ func marshalValueOrEmpty(v *structpb.Value) string {
 		return ""
 	}
 
-	out, err := yaml.Marshal(v.AsInterface())
+	out, err := util.GetYamlFromProto(v)
 	if err != nil {
 		return ""
 	}
 
-	return strings.TrimSpace(string(out))
+	return strings.TrimSpace(out)
 }
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
@@ -107,14 +107,14 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable(out io.Writer) table.Table {
 	return table.New(table.Simple, layouts.Default, out,
-		[]string{"Entity", "Rule", "Result", "Reasoning"}).
+		[]string{"Entity", "Rule", "Result", "Details"}).
 		SetAutoMerge(true).
 		SetEqualColumns(false)
 }
 
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		trimmed := strings.TrimSpace(value)
+func firstLine(text string) string {
+	for _, line := range strings.Split(text, "\n") {
+		trimmed := strings.TrimSpace(line)
 		if trimmed != "" {
 			return trimmed
 		}
@@ -123,46 +123,43 @@ func firstNonEmpty(values ...string) string {
 	return ""
 }
 
-func formatReasoning(eval *minderv1.RuleEvaluationStatus) string {
-	parts := []string{}
-
+func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
 	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
-		parts = append(parts, fmt.Sprintf("- %s", detail))
+		return fmt.Sprintf("- %s", detail)
 	}
 	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
-		parts = append(parts, fmt.Sprintf("- Guidance: %s", guidance))
+		return fmt.Sprintf("- Guidance: %s", guidance)
 	}
 	if remDetails := strings.TrimSpace(eval.GetRemediationDetails()); remDetails != "" {
-		parts = append(parts, fmt.Sprintf("- Remediation: %s", remDetails))
+		return fmt.Sprintf("- Remediation: %s", remDetails)
 	}
 	if alert := eval.GetAlert(); alert != nil {
 		if alertDetails := strings.TrimSpace(alert.GetDetails()); alertDetails != "" {
-			parts = append(parts, fmt.Sprintf("- Alert: %s", alertDetails))
+			return fmt.Sprintf("- Alert: %s", alertDetails)
 		}
 		if alertURL := strings.TrimSpace(alert.GetUrl()); alertURL != "" {
-			parts = append(parts, fmt.Sprintf("- Alert URL: %s", alertURL))
+			return fmt.Sprintf("- Alert URL: %s", alertURL)
 		}
 	}
-	if output := marshalValueOrEmpty(eval.GetOutput()); output != "" {
-		parts = append(parts, fmt.Sprintf("- Output:\n%s", output))
+	if output := strings.TrimSpace(marshalValueOrEmpty(eval.GetOutput())); output != "" {
+		return fmt.Sprintf("- Output: %s", firstLine(output))
 	}
 
-	return strings.Join(parts, "\n")
+	return ""
+}
+
+func formatReasoning(eval *minderv1.RuleEvaluationStatus) string {
+	return buildDetailSummary(eval)
 }
 
 // RuleDisplayName returns the most user-friendly rule name available.
 func RuleDisplayName(eval *minderv1.RuleEvaluationStatus) string {
-	return firstNonEmpty(eval.GetRuleDisplayName(), eval.GetRuleDescriptionName(), eval.GetRuleTypeName())
+	return strings.TrimSpace(cmp.Or(eval.GetRuleDescriptionName(), eval.GetRuleDisplayName(), eval.GetRuleTypeName()))
 }
 
 // FormatEvaluationReasoning returns a rendered reasoning block for CLI output.
 func FormatEvaluationReasoning(eval *minderv1.RuleEvaluationStatus) string {
-	reasoning := formatReasoning(eval)
-	if reasoning == "" {
-		return "-"
-	}
-
-	return reasoning
+	return cmp.Or(formatReasoning(eval), "-")
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.

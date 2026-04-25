@@ -229,12 +229,6 @@ func renderRuleEvaluationStatusTable(
 			layouts.NoColor(eval.Rule.Name),
 			table.GetStatusIcon(types.HistoryStatus(eval), emoji),
 		)
-		timeValue := layouts.NoColor(eval.EvaluatedAt.AsTime().Format(time.DateTime))
-		entityValue := layouts.NoColor(eval.Entity.Name)
-		ruleValue := layouts.NoColor(eval.Rule.Name)
-		statusValue := table.GetStatusIcon(types.HistoryStatus(eval), emoji)
-
-		t.AddRowWithColor(timeValue, entityValue, ruleValue, statusValue)
 	}
 }
 
