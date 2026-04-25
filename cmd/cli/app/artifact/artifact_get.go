@@ -213,22 +213,14 @@ func printEvalStatus(
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-<<<<<<< HEAD
 			[]string{"Profile", "Rule", "Result", "Details"})
-=======
-			[]string{"Profile", "Rule", "Result", "Reasoning"})
->>>>>>> 1124d27ee (feat(cli): improve evaluation reasoning output using existing fields)
 		for _, status := range evalStatus {
 			ruleName := profile.RuleDisplayName(status)
 			reasoning := profile.FormatEvaluationReasoning(status)
 
 			ta.AddRow(
 				status.ProfileId,
-<<<<<<< HEAD
 				ruleName,
-=======
-				fmt.Sprintf("%s\n[%s]", ruleName, status.GetRuleTypeName()),
->>>>>>> 1124d27ee (feat(cli): improve evaluation reasoning output using existing fields)
 				status.Status,
 				reasoning,
 			)
