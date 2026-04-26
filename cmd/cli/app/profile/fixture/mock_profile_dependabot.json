@@ -1,0 +1,28 @@
+{
+  "id": "22222222-2222-2222-2222-222222222222",
+  "name": "mock-dependabot-profile",
+  "display_name": "Mock Dependabot Profile",
+  "context": {
+    "provider": "mock-provider",
+    "project": "00000000-0000-0000-0000-000000000000"
+  },
+  "alert": "off",
+  "remediate": "off",
+  "repository": [
+    {
+      "type": "dependabot_configured",
+      "def": {
+        "package_ecosystem": "mock-ecosystem",
+        "schedule_interval": "weekly",
+        "apply_if_file": "mock.mod"
+      }
+    },
+    {
+      "type": "branch_protection_enabled",
+      "params": {
+        "branch": ""
+      },
+      "def": {}
+    }
+  ]
+}

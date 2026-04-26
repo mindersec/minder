@@ -1,0 +1,20 @@
+Successfully created new profile named: mock-attestation-profile
+ ENTITY     │ RULE                      │ RULE PARAMS              │ RULE DEFINITION                
+────────────┼───────────────────────────┼──────────────────────────┼────────────────────────────────
+ repository │ dependabot_configured     │                          │ apply_if_file: mock.mod        
+            │                           │                          │ package_ecosystem:             
+            │                           │                          │ mock-ecosystem                 
+            │                           │                          │ schedule_interval: weekly      
+            ├───────────────────────────┼──────────────────────────┼────────────────────────────────
+            │ branch_protection_enabled │ branch: ""               │                                
+            │                           │                          │                                
+────────────┼───────────────────────────┼──────────────────────────┼────────────────────────────────
+ artifact   │ artifact_attestation_slsa │ name: fake-artifact-name │ event: - workflow_dispatch     
+            │                           │ tags: - mock-tag         │ runner_environment:            
+            │                           │                          │ mock-hosted signer_identity:   
+            │                           │                          │ .github/workflows/mock-workflo 
+            │                           │                          │ w.yml workflow_ref:            
+            │                           │                          │ refs/heads/mock-branch         
+            │                           │                          │ workflow_repository:           
+            │                           │                          │ https://github.com/acme-corp/f 
+            │                           │                          │ ake-repo                       

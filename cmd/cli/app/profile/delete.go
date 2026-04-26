@@ -4,12 +4,11 @@
 package profile
 
 import (
-	"context"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -19,13 +18,17 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a profile",
 	Long:  `The profile delete subcommand lets you delete profiles within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: deleteCommand,
 }
 
 // deleteCommand is the profile delete subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
+func deleteCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 
@@ -33,8 +36,14 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
 	// Delete profile
-	_, err := client.DeleteProfile(ctx, &minderv1.DeleteProfileRequest{
+	_, err = client.DeleteProfile(cmd.Context(), &minderv1.DeleteProfileRequest{
 		Context: &minderv1.Context{Project: &project},
 		Id:      id,
 	})

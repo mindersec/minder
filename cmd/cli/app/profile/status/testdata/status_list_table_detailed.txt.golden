@@ -1,0 +1,11 @@
+ NAME                          │ STATUS         │ EVALUATED AT                                      
+───────────────────────────────┼────────────────┼───────────────────────────────────────────────────
+ mock-profile                  │ ✅             │ 2024-01-01T00:00:00Z                              
+
+ ENTITY                  │ RULE NAME            │ STATUS  │ DETAILS                                 
+─────────────────────────┼──────────────────────┼─────────┼─────────────────────────────────────────
+ acme-corp/mock-repo     │                      │ ✅      │ Mock rule evaluation succeeded.         
+ [repository]            │ [secret_scanning]    │         │                                         
+                         ├──────────────────────┼─────────┼─────────────────────────────────────────
+                         │                      │ ⛔      │ Mock rule evaluation failed.            
+                         │ [codeql_enabled]     │         │                                         

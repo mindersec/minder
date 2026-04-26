@@ -1,0 +1,8 @@
+ NAME                         │ DESCRIPTION                │ ALERT        │ REMEDIATE               
+──────────────────────────────┼────────────────────────────┼──────────────┼─────────────────────────
+ mock-profile                 │                            │ on           │ off                     
+
+ ENTITY        │ RULE                         │ RULE PARAMS    │ RULE DEFINITION                    
+───────────────┼──────────────────────────────┼────────────────┼────────────────────────────────────
+ repository    │ dependabot_configured        │                │ package_ecosystem: gomod           
+               │                              │                │                                    

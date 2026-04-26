@@ -1,0 +1,39 @@
+profileStatus:
+  lastUpdated: "2024-01-01T00:00:00Z"
+  profileId: 11111111-1111-1111-1111-111111111111
+  profileName: mock-profile
+  profileStatus: success
+ruleEvaluationStatus:
+  - details: Mock rule evaluation succeeded.
+    entity: repository
+    entityInfo:
+      entity_type: repository
+      name: acme-corp/mock-repo
+      provider: github-app-mock-provider
+      repo_name: mock-repo
+      repo_owner: acme-corp
+      repository_id: 22222222-2222-2222-2222-222222222222
+    lastUpdated: "2024-01-01T00:00:00Z"
+    profileId: 11111111-1111-1111-1111-111111111111
+    ruleDisplayName: Enable secret scanning to detect hardcoded secrets
+    ruleId: mock-rule-123
+    ruleName: secret_scanning
+    ruleTypeName: secret_scanning
+    status: success
+  - details: Mock rule evaluation failed.
+    entity: repository
+    entityInfo:
+      entity_type: repository
+      name: acme-corp/mock-repo
+      provider: github-app-mock-provider
+      repo_name: mock-repo
+      repo_owner: acme-corp
+      repository_id: 22222222-2222-2222-2222-222222222222
+    lastUpdated: "2024-01-01T00:00:00Z"
+    profileId: 11111111-1111-1111-1111-111111111111
+    ruleDisplayName: Enable CodeQL for vulnerability scanning
+    ruleId: mock-rule-456
+    ruleName: codeql_enabled
+    ruleTypeName: codeql_enabled
+    status: failure
+

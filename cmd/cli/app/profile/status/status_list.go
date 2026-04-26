@@ -4,13 +4,11 @@
 package status
 
 import (
-	"context"
 	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/cmd/cli/app/profile"
@@ -23,18 +21,22 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List profile status",
 	Long:  `The profile status list subcommand lets you list profile status within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: listCommand,
 }
 
-// listCommand is the profile "list" subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
+func listCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
 	detailed := viper.GetBool("detailed")
 	ruleType := viper.GetString("ruleType")
 	ruleName := viper.GetString("ruleName")
+
 	format := viper.GetString("output")
 
 	// Ensure the output format is supported
@@ -42,7 +44,17 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
-	resp, err := client.GetProfileStatusByName(ctx, &minderv1.GetProfileStatusByNameRequest{
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
+	client, closer, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closer()
+
+	resp, err := client.GetProfileStatusByName(cmd.Context(), &minderv1.GetProfileStatusByNameRequest{
 		Context:  &minderv1.Context{Project: &project},
 		Name:     profileName,
 		All:      detailed,
@@ -70,8 +82,9 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		table := profile.NewProfileStatusTable(cmd.OutOrStdout())
 		profile.RenderProfileStatusTable(resp.ProfileStatus, table, viper.GetBool("emoji"))
 		table.Render()
+
 		if detailed {
-			fmt.Println()
+			cmd.Println()
 			table = profile.NewRuleEvaluationsTable(cmd.OutOrStdout())
 			table.SeparateRows()
 			profile.RenderRuleEvaluationStatusTable(resp.RuleEvaluationStatus, table, viper.GetBool("emoji"))
