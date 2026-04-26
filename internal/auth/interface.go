@@ -91,6 +91,11 @@ type Resolver interface {
 	// For Keycloak + GitHub, this may define a new user in Keycloak based on
 	// GitHub user data if the user is not already known to Keycloak.
 	Resolve(ctx context.Context, id string) (*Identity, error)
+
+	// ResolveFederated takes a federated identity provider and a stable identifier
+	// within that provider and returns the underlying identity. This is used
+	// to look up users by their linked third-party accounts (e.g. GitHub ID).
+	ResolveFederated(ctx context.Context, federatedIdP, id string) (*Identity, error)
 }
 
 // IdentityProvider provides an abstract interface for looking up identities
@@ -159,6 +164,11 @@ func (*NoopIdentityManager) URL() url.URL {
 
 // Resolve always returns an error as noop manager cannot resolve identities
 func (*NoopIdentityManager) Resolve(_ context.Context, _ string) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot resolve identities")
+}
+
+// ResolveFederated always returns an error as noop manager cannot resolve identities
+func (*NoopIdentityManager) ResolveFederated(_ context.Context, _, _ string) (*Identity, error) {
 	return nil, errors.New("noop identity manager cannot resolve identities")
 }
 
@@ -249,6 +259,17 @@ func (c *IdentityClient) Resolve(ctx context.Context, id string) (*Identity, err
 	}
 
 	return provider.Resolve(ctx, id)
+}
+
+// ResolveFederated implements Resolver.
+func (c *IdentityClient) ResolveFederated(ctx context.Context, federatedIdP, id string) (*Identity, error) {
+	// For now, we resolve using the default provider (registered as "")
+	provider, ok := c.providers.Load("")
+	if !ok || provider == nil {
+		return nil, errors.New("no default identity provider configured")
+	}
+
+	return provider.ResolveFederated(ctx, federatedIdP, id)
 }
 
 // Validate implements Resolver.

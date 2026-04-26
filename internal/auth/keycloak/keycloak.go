@@ -76,14 +76,47 @@ func (k *KeyCloak) URL() url.URL {
 
 // Resolve implements auth.IdentityProvider.
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
-	remoteUser, err := k.lookupUser(ctx, id)
-	if err != nil {
-		// TODO: pass through to the next statements to try to create the user if not existing
-		return nil, fmt.Errorf("unable to resolve user: %w", err)
+	// First, look up by user ID
+	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
+	if err == nil && resp.StatusCode() == http.StatusOK {
+		id := k.userToIdentity(*resp.JSON200)
+		if id != nil {
+			return id, nil
+		}
 	}
-	if remoteUser != nil {
-		return remoteUser, nil
+
+	// next, try lookup by username
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+		Exact:    ptr.Ptr(true),
+		Username: &id,
+	})
+	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
+		id := k.userToIdentity((*userLookup.JSON200)[0])
+		if id != nil {
+			return id, nil
+		}
 	}
+
+	return nil, auth.ErrNotFound
+}
+
+// ResolveFederated implements auth.IdentityProvider.
+func (k *KeyCloak) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	if federatedIdP != "github" {
+		return nil, fmt.Errorf("unsupported federated identity provider %q", federatedIdP)
+	}
+
+	// try lookup by GitHub numeric ID (legacy Keycloak behavior)
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
+	})
+	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
+		id := k.userToIdentity((*userLookup.JSON200)[0])
+		if id != nil {
+			return id, nil
+		}
+	}
+
 	return nil, auth.ErrNotFound
 }
 
@@ -166,41 +199,6 @@ func (k *KeyCloak) GetAdminEvents(ctx context.Context, operationTypes, resourceT
 	return events, nil
 }
 
-func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, error) {
-	// First, look up by user ID
-	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
-	if err == nil && resp.StatusCode() == http.StatusOK {
-		id := k.userToIdentity(*resp.JSON200)
-		if id != nil {
-			return id, nil
-		}
-	}
-
-	// next, try lookup by GitHub login
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
-		Exact:    ptr.Ptr(true),
-		Username: &id,
-	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
-	}
-
-	// last, try lookup by GitHub numeric ID
-	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
-		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
-	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
-	}
-
-	return nil, auth.ErrNotFound
-}
 
 func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity {
 	if user.Attributes == nil || user.Id == nil {

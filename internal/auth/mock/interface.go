@@ -58,6 +58,21 @@ func (mr *MockResolverMockRecorder) Resolve(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockResolver)(nil).Resolve), ctx, id)
 }
 
+// ResolveFederated mocks base method.
+func (m *MockResolver) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockResolverMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockResolver)(nil).ResolveFederated), ctx, federatedIdP, id)
+}
+
 // Validate mocks base method.
 func (m *MockResolver) Validate(ctx context.Context, token jwt.Token) (*auth.Identity, error) {
 	m.ctrl.T.Helper()
@@ -110,6 +125,21 @@ func (m *MockIdentityProvider) Resolve(ctx context.Context, id string) (*auth.Id
 func (mr *MockIdentityProviderMockRecorder) Resolve(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockIdentityProvider)(nil).Resolve), ctx, id)
+}
+
+// ResolveFederated mocks base method.
+func (m *MockIdentityProvider) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockIdentityProviderMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockIdentityProvider)(nil).ResolveFederated), ctx, federatedIdP, id)
 }
 
 // String mocks base method.
@@ -236,6 +266,21 @@ func (m *MockIdentityManager) Resolve(ctx context.Context, id string) (*auth.Ide
 func (mr *MockIdentityManagerMockRecorder) Resolve(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockIdentityManager)(nil).Resolve), ctx, id)
+}
+
+// ResolveFederated mocks base method.
+func (m *MockIdentityManager) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockIdentityManagerMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockIdentityManager)(nil).ResolveFederated), ctx, federatedIdP, id)
 }
 
 // String mocks base method.
