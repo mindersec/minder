@@ -15,6 +15,9 @@ import (
 	"github.com/rs/zerolog"
 )
 
+// ErrNotFound is returned when an identity cannot be resolved because it doesn't exist.
+var ErrNotFound = errors.New("user not found in identity store")
+
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
 // Identity represents a particular user's identity in a particular trust domain
@@ -88,6 +91,11 @@ type Resolver interface {
 	// For Keycloak + GitHub, this may define a new user in Keycloak based on
 	// GitHub user data if the user is not already known to Keycloak.
 	Resolve(ctx context.Context, id string) (*Identity, error)
+
+	// ResolveFederated takes a federated identity provider and a stable identifier
+	// within that provider and returns the underlying identity. This is used
+	// to look up users by their linked third-party accounts (e.g. GitHub ID).
+	ResolveFederated(ctx context.Context, federatedIdP, id string) (*Identity, error)
 }
 
 // IdentityProvider provides an abstract interface for looking up identities
@@ -102,6 +110,86 @@ type IdentityProvider interface {
 	String() string
 	// URL returns the `iss` URL of the identity provider.
 	URL() url.URL
+}
+
+// AccountEvent is a generic user account event
+type AccountEvent struct {
+	Time   int64
+	Type   string
+	UserId string
+}
+
+const (
+	// DeleteAccountEvent represents a user deletion event
+	DeleteAccountEvent = "DELETE_ACCOUNT"
+)
+
+// AdminEvent is a generic administrative event
+type AdminEvent struct {
+	Time          int64
+	OperationType string
+	ResourceType  string
+	ResourcePath  string
+}
+
+// IdentityManager provides an abstract interface for administrative identity operations.
+type IdentityManager interface {
+	IdentityProvider
+
+	// DeleteUser deletes a user from the identity provider
+	DeleteUser(ctx context.Context, userID string) error
+	// GetEvents returns account events from the identity provider
+	GetEvents(ctx context.Context) ([]AccountEvent, error)
+	// GetAdminEvents returns administrative events from the identity provider
+	GetAdminEvents(ctx context.Context, operationTypes, resourceTypes []string) ([]AdminEvent, error)
+}
+
+// NoopIdentityManager is a no-op implementation of the IdentityManager interface
+type NoopIdentityManager struct{}
+
+// NewNoopIdentityManager creates a new NoopIdentityManager
+func NewNoopIdentityManager() *NoopIdentityManager {
+	return &NoopIdentityManager{}
+}
+
+// String returns the name of the identity manager
+func (*NoopIdentityManager) String() string {
+	return "noop"
+}
+
+// URL returns an empty URL
+func (*NoopIdentityManager) URL() url.URL {
+	return url.URL{}
+}
+
+// Resolve always returns an error as noop manager cannot resolve identities
+func (*NoopIdentityManager) Resolve(_ context.Context, _ string) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot resolve identities")
+}
+
+// ResolveFederated always returns an error as noop manager cannot resolve identities
+func (*NoopIdentityManager) ResolveFederated(_ context.Context, _, _ string) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot resolve identities")
+}
+
+// Validate always returns an error as noop manager cannot validate tokens
+func (*NoopIdentityManager) Validate(_ context.Context, _ jwt.Token) (*Identity, error) {
+	return nil, errors.New("noop identity manager cannot validate tokens")
+}
+
+// DeleteUser is a no-op implementation of DeleteUser
+func (*NoopIdentityManager) DeleteUser(_ context.Context, _ string) error {
+	return nil
+}
+
+// GetEvents is a no-op implementation of GetEvents
+func (*NoopIdentityManager) GetEvents(_ context.Context) ([]AccountEvent, error) {
+	return nil, nil
+}
+
+// GetAdminEvents is a no-op implementation of GetAdminEvents
+func (*NoopIdentityManager) GetAdminEvents(_ context.Context, _, _ []string) ([]AdminEvent, error) {
+	return nil, nil
 }
 
 // IdentityClient supports the ability to look up identities in one or more
@@ -171,6 +259,17 @@ func (c *IdentityClient) Resolve(ctx context.Context, id string) (*Identity, err
 	}
 
 	return provider.Resolve(ctx, id)
+}
+
+// ResolveFederated implements Resolver.
+func (c *IdentityClient) ResolveFederated(ctx context.Context, federatedIdP, id string) (*Identity, error) {
+	// For now, we resolve using the default provider (registered as "")
+	provider, ok := c.providers.Load("")
+	if !ok || provider == nil {
+		return nil, errors.New("no default identity provider configured")
+	}
+
+	return provider.ResolveFederated(ctx, federatedIdP, id)
 }
 
 // Validate implements Resolver.

@@ -10,3 +10,4 @@ generate:
 output-options:
   include-tags:
   - Users
+  - Realms Admin

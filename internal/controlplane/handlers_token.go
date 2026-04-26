@@ -51,7 +51,7 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 		if statusErr, ok := status.FromError(err); ok && statusErr.Code() != codes.Unauthenticated {
 			return nil, util.FromRpcError(statusErr)
 		}
-		realmUrl := s.cfg.Identity.Server.GetRealmURL()
+		realmUrl := s.idManager.URL()
 		// Provide a WWW-Authenticate header hint for authentication if configured.
 		if realmUrl.Host != "" && s.cfg.Identity.Server.Scope != "" {
 			authenticateHeader := fmt.Sprintf(`Bearer realm=%q, scope=%q`,

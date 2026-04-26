@@ -6,50 +6,25 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
-
-	"github.com/mindersec/minder/pkg/config/server"
 )
 
-// GetUserForGitHubId looks up a user in Keycloak by their GitHub ID.  This is a temporary
-// implementation until we have a proper interface in front of IDP implementations.
+// GetUserForGitHubId looks up a user in the identity provider by their GitHub ID.
 //
-// If the user is found, it returns their subject _in Keycloak_, suitable for use in
-// the `sub` claim of a JWT, and in OpenFGA's user field.  Note that this function may
+// If the user is found, it returns their subject suitable for use in
+// the `sub` claim of a JWT, and in OpenFGA's user field. Note that this function may
 // return a user of "" with no error if no users were found matching the GitHub ID.
-func GetUserForGitHubId(ctx context.Context, sic server.IdentityConfigWrapper, ghUser int64) (string, error) {
-	// look up the user in the identity provider (keycloak-specific for now)
-	q := url.Values{
-		"q": {fmt.Sprintf("gh_id:%d", ghUser)},
-		// TODO: add idpAlias and configuration for same
-	}
-	resp, err := sic.Server.AdminDo(ctx, "GET", "users", q, nil)
+func GetUserForGitHubId(ctx context.Context, idClient Resolver, ghUser int64) (string, error) {
+	// look up the user in the identity provider
+	id, err := idClient.ResolveFederated(ctx, "github", fmt.Sprintf("%d", ghUser))
 	if err != nil {
+		// If the user is not found, return an empty string and no error
+		if errors.Is(err, ErrNotFound) {
+			return "", nil
+		}
 		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 
-	type kcUser struct {
-		Id         string
-		Username   string
-		Attributes map[string][]string
-	}
-	users := []kcUser{}
-	if err := json.NewDecoder(resp.Body).Decode(&users); err != nil {
-		return "", err
-	}
-	if len(users) == 0 {
-		// No user found, that's okay.
-		return "", nil
-	}
-	if len(users) > 1 {
-		return "", fmt.Errorf("expected 1 user, got %d", len(users))
-	}
-	return users[0].Id, nil
+	return id.UserID, nil
 }
