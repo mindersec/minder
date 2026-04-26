@@ -1,0 +1,8 @@
+{
+  "name": "mock-rule-type",
+  "def": {
+    "eval": {
+      "data_sources": [{ "name": "mock-data-source" }]
+    }
+  }
+}

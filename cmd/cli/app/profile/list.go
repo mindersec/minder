@@ -4,14 +4,12 @@
 package profile
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -23,13 +21,17 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List profiles",
 	Long:  `The profile list subcommand lets you list profiles within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: listCommand,
 }
 
 // listCommand is the profile "list" subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
+func listCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	label := viper.GetString("label")
@@ -43,7 +45,13 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
+	client, closeConn, err := GetProfileClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	resp, err := client.ListProfiles(cmd.Context(), &minderv1.ListProfilesRequest{
 		Context:     &minderv1.Context{Project: &project},
 		LabelFilter: label,
 	})

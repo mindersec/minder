@@ -1,0 +1,17 @@
+# Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: profile
+name: mock-dependabot-profile
+display_name: Mock Dependabot Profile
+context:
+  provider: mock-provider
+alert: 'off'
+remediate: 'off'
+repository:
+  - type: dependabot_configured
+    def:
+      package_ecosystem: mock-ecosystem
+      schedule_interval: weekly
+      apply_if_file: mock.mod

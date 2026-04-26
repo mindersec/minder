@@ -1,0 +1,13 @@
+{
+  "name": "mock-dependabot-profile",
+  "repository": [
+    {
+      "type": "dependabot_configured",
+      "def": {
+        "package_ecosystem": "mock-ecosystem",
+        "schedule_interval": "weekly",
+        "apply_if_file": "mock.mod"
+      }
+    }
+  ]
+}

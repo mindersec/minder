@@ -1,0 +1,17 @@
+profileStatus:
+  lastUpdated: "2024-01-01T00:00:00Z"
+  profileId: 11111111-1111-1111-1111-111111111111
+  profileName: mock-profile
+  profileStatus: success
+ruleEvaluationStatus:
+  - details: Mock rule evaluation succeeded.
+    lastUpdated: "2024-01-01T00:00:00Z"
+    profileId: 11111111-1111-1111-1111-111111111111
+    ruleId: mock-rule-123
+    status: success
+  - details: Mock rule evaluation failed.
+    lastUpdated: "2024-01-01T00:00:00Z"
+    profileId: 11111111-1111-1111-1111-111111111111
+    ruleId: mock-rule-456
+    status: failure
+

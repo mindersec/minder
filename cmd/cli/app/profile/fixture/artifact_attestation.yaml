@@ -1,0 +1,20 @@
+# Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: profile
+name: mock-attestation-profile
+display_name: Mock Attestation Profile
+context:
+  provider: mock-provider
+artifact:
+  - type: artifact_attestation_slsa
+    params:
+      tags: ['mock-tag']
+      name: fake-artifact-name
+    def:
+      workflow_repository: https://github.com/acme-corp/fake-repo
+      workflow_ref: refs/heads/mock-branch
+      signer_identity: .github/workflows/mock-workflow.yml
+      event: ['workflow_dispatch']
+      runner_environment: mock-hosted
