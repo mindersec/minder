@@ -142,6 +142,17 @@ service HealthService {
             no_log: true
         };
     }
+
+    rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
+    option (google.api.http) = {
+        get: "/api/v1/version"
+    };
+
+    option (rpc_options) = {
+        target_resource: TARGET_RESOURCE_NONE
+        no_log: true
+    };
+}
 }
 
 service ArtifactService {
@@ -181,6 +192,14 @@ service ArtifactService {
         };
     }
 
+}
+
+message GetVersionRequest {}
+
+// GetVersionResponse returns the build and version info of the Minder server
+message GetVersionResponse {
+    string version = 1;
+    string commit = 2;
 }
 
 message ListArtifactsRequest {

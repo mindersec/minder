@@ -35,6 +35,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
@@ -43,6 +44,7 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
 	"github.com/mindersec/minder/internal/authz"
+	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	datasourcessvc "github.com/mindersec/minder/internal/datasources/service"
@@ -215,8 +217,7 @@ func initMetrics(r sdkmetric.Reader) *sdkmetric.MeterProvider {
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
 		semconv.ServiceName("minder"),
-		// TODO: Make this auto-generated
-		semconv.ServiceVersion("v0.1.0"),
+		semconv.ServiceVersion(constants.CLIVersion),
 	)
 	// By default/spec (?!), otel includes net.sock.peer.{addr,port}.
 	// See https://github.com/open-telemetry/opentelemetry-go-contrib/issues/3071
@@ -265,6 +266,7 @@ func (s *Server) StartGRPCServer(ctx context.Context) error {
 		s.TokenValidationInterceptor,
 		EntityContextProjectInterceptor,
 		ProjectAuthorizationInterceptor,
+		VersionHeaderInterceptor(),
 		recovery.UnaryServerInterceptor(recovery.WithRecoveryHandlerContext(recoveryHandler)),
 	}
 
@@ -541,4 +543,13 @@ func withMaxSizeMiddleware(h http.Handler) http.Handler {
 		r.Body = http.MaxBytesReader(w, r.Body, RequestBodyMaxBytes)
 		h.ServeHTTP(w, r)
 	})
+}
+
+// VersionHeaderInterceptor injects the Minder version into the HTTP response headers
+func VersionHeaderInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// SetHeader tells gRPC-Gateway to add this to the HTTP response
+		_ = grpc.SetHeader(ctx, metadata.Pairs("minder-version", constants.ServerUserAgent))
+		return handler(ctx, req)
+	}
 }
