@@ -1,0 +1,17 @@
+name: mock-profile
+repository:
+    - type: mock-rule-type
+type: profile
+version: v1
+---
+def:
+    eval:
+        data_sources:
+            - name: mock-data-source
+name: mock-rule-type
+type: rule-type
+version: v1
+---
+name: mock-data-source
+type: data-source
+version: v1

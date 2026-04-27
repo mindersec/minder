@@ -13,9 +13,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
+	"github.com/mindersec/minder/cmd/cli/app/datasource"
+	"github.com/mindersec/minder/cmd/cli/app/ruletype"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
@@ -25,19 +26,17 @@ var exportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export profile and associated resources",
 	Long:  `The profile export subcommand lets you retrieve the definition of a profile and its associated resources.`,
-	RunE:  cli.GRPCClientWrapRunE(exportCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: exportCommand,
 }
 
 // getCommand is the profile "get" subcommand
-func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	output, closer, err := getOutput(cmd)
-	if err != nil {
-		return cli.MessageAndError("Error opening output", err)
-	}
-	defer closer()
-
-	profileClient := minderv1.NewProfileServiceClient(conn)
-
+func exportCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 	name := viper.GetString("name")
@@ -50,7 +49,19 @@ func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	prof, err := getProfileByNameOrId(ctx, profileClient, project, id, name)
+	output, closer, err := getOutput(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error opening output", err)
+	}
+	defer closer()
+
+	profileClient, closeProf, err := GetProfileClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to profile service", err)
+	}
+	defer closeProf()
+
+	prof, err := getProfileByNameOrId(cmd.Context(), profileClient, project, id, name)
 	if err != nil {
 		return cli.MessageAndError("Error getting profile", err)
 	}
@@ -58,10 +69,40 @@ func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		return cli.MessageAndError("Error encoding profile", err)
 	}
 
-	// Fetch associated resources
-	rulesClient := minderv1.NewRuleTypeServiceClient(conn)
+	// Fetch associated Rule Types
+	rulesClient, closeRules, err := ruletype.GetRuleTypeClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to rule service", err)
+	}
+	defer closeRules()
 
 	// TODO: it would be nice if this were just a list of rules...
+
+	datasources, err := exportRuleTypes(cmd.Context(), rulesClient, output, project, prof)
+	if err != nil {
+		return cli.MessageAndError("Error exporting rule types", err)
+	}
+
+	datasourceClient, closeDS, err := datasource.GetDataSourceClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to datasource service", err)
+	}
+	defer closeDS()
+
+	if err := exportDataSources(cmd.Context(), datasourceClient, output, project, datasources); err != nil {
+		return cli.MessageAndError("Error exporting data sources", err)
+	}
+
+	return nil
+}
+
+func exportRuleTypes(
+	ctx context.Context,
+	client minderv1.RuleTypeServiceClient,
+	output *yaml.Encoder,
+	project string,
+	prof *minderv1.Profile,
+) ([]string, error) {
 	rules := slices.Concat(
 		prof.GetRepository(),
 		prof.GetBuildEnvironment(),
@@ -72,6 +113,7 @@ func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		prof.GetTaskRun(),
 		prof.GetBuild(),
 	)
+
 	ruletypes := make([]string, 0, len(rules))
 	for _, res := range rules {
 		ruletypes = append(ruletypes, res.GetType())
@@ -80,38 +122,49 @@ func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	ruletypes = slices.Compact(ruletypes)
 
 	// Collect the referenced datasources from the rule types as we process them.
-	datasources := make([]string, 0)
-	for _, ruletype := range ruletypes {
-		resp, err := rulesClient.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+	var datasources []string
+	for _, rtName := range ruletypes {
+		resp, err := client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
 			Context: &minderv1.Context{Project: &project},
-			Name:    ruletype,
+			Name:    rtName,
 		})
 		if err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error getting rule type %q", ruletype), err)
+			return nil, fmt.Errorf("error getting rule type %q: %w", rtName, err)
 		}
-		ruletype := resp.GetRuleType()
-		for _, datasource := range ruletype.GetDef().GetEval().GetDataSources() {
-			datasources = append(datasources, datasource.GetName())
+
+		rt := resp.GetRuleType()
+		for _, ds := range rt.GetDef().GetEval().GetDataSources() {
+			datasources = append(datasources, ds.GetName())
 		}
-		if err := fileconvert.WriteResource(output, ruletype); err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error encoding rule type %q", ruletype.GetName()), err)
+		if err := fileconvert.WriteResource(output, rt); err != nil {
+			return nil, fmt.Errorf("error encoding rule type %q: %w", rt.GetName(), err)
 		}
 	}
 
+	return datasources, nil
+}
+
+func exportDataSources(
+	ctx context.Context,
+	client minderv1.DataSourceServiceClient,
+	output *yaml.Encoder,
+	project string,
+	datasources []string,
+) error {
 	// Remove duplicates from the datasource list
 	slices.Sort(datasources)
 	datasources = slices.Compact(datasources)
-	datasourceClient := minderv1.NewDataSourceServiceClient(conn)
-	for _, datasource := range datasources {
-		resp, err := datasourceClient.GetDataSourceByName(ctx, &minderv1.GetDataSourceByNameRequest{
+
+	for _, dsName := range datasources {
+		resp, err := client.GetDataSourceByName(ctx, &minderv1.GetDataSourceByNameRequest{
 			Context: &minderv1.ContextV2{ProjectId: project},
-			Name:    datasource,
+			Name:    dsName,
 		})
 		if err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error getting datasource %q", datasource), err)
+			return fmt.Errorf("error getting datasource %q: %w", dsName, err)
 		}
 		if err := fileconvert.WriteResource(output, resp.GetDataSource()); err != nil {
-			return cli.MessageAndError(fmt.Sprintf("Error encoding datasource %q", datasource), err)
+			return fmt.Errorf("error encoding datasource %q: %w", dsName, err)
 		}
 	}
 
@@ -120,7 +173,6 @@ func exportCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 func getOutput(cmd *cobra.Command) (*yaml.Encoder, func(), error) {
 	outputFlag := viper.GetString("output")
-
 	var outFile io.Writer
 	closer := func() {}
 
@@ -141,7 +193,6 @@ func getOutput(cmd *cobra.Command) (*yaml.Encoder, func(), error) {
 		_ = output.Close()
 		closer()
 	}
-
 	return output, yamlClose, nil
 }
 

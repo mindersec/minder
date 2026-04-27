@@ -1,0 +1,4 @@
+{
+  "name": "mock-profile",
+  "repository": [{ "type": "mock-rule-type" }]
+}

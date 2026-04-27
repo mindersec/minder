@@ -54,7 +54,7 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	client, closeConn, err := getRuleTypeClient(cmd)
+	client, closeConn, err := GetRuleTypeClient(cmd)
 	if err != nil {
 		return cli.MessageAndError("Error connecting to server", err)
 	}

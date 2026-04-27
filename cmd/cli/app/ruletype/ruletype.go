@@ -23,8 +23,8 @@ var ruleTypeCmd = &cobra.Command{
 	},
 }
 
-// getRuleTypeClient returns the RuleTypeServiceClient, a cleanup function to close the connection and an error
-func getRuleTypeClient(cmd *cobra.Command) (minderv1.RuleTypeServiceClient, func(), error) {
+// GetRuleTypeClient returns the RuleTypeServiceClient, a cleanup function to close the connection and an error
+func GetRuleTypeClient(cmd *cobra.Command) (minderv1.RuleTypeServiceClient, func(), error) {
 	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
 	cmd.SetContext(ctx)
 

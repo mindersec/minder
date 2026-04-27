@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -21,23 +20,32 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a profile",
 	Long:  `The profile create subcommand lets you create new profiles for a project within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(createCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: createCommand,
 }
 
 // createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
-	project := viper.GetString("project")
+func createCommand(cmd *cobra.Command, _ []string) error {
 	f := viper.GetString("file")
+	project := viper.GetString("project")
 	enableAlerts := viper.GetBool("enable-alerts")
 	enableRems := viper.GetBool("enable-remediations")
-
 	onOverride := "on"
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, closeConn, err := GetProfileClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
 
 	table := NewProfileRulesTable(cmd.OutOrStdout())
 
@@ -59,6 +67,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 		return resp.GetProfile(), nil
 	}
+
 	// cmd.Context() is the root context. We need to create a new context for each file
 	// so we can avoid the timeout.
 	profile, err := ExecOnOneProfile(cmd.Context(), table, f, cmd.InOrStdin(), project, createFunc)
@@ -67,7 +76,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	}
 
 	// display the name above the table
-	cmd.Println("Successfully created new profile named:", profile.GetName())
+	cmd.Printf("Successfully created new profile named: %s\n", profile.GetName())
 	table.Render()
 	return nil
 }

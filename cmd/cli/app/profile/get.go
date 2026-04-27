@@ -4,13 +4,11 @@
 package profile
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
@@ -23,13 +21,17 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get details for a profile",
 	Long:  `The profile get subcommand lets you retrieve details for a profile within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(getCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: getCommand,
 }
 
 // getCommand is the profile "get" subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
+func getCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	id := viper.GetString("id")
@@ -39,15 +41,25 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	if !app.IsOutputFormatSupported(format) {
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
+	if id == "" && name == "" {
+		return cli.MessageAndError("Error getting profile", fmt.Errorf("id or name required"))
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	// 3. NOW SETUP GRPC
+	client, closeConn, err := GetProfileClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
 	var resp protoreflect.ProtoMessage
 	var prof *minderv1.Profile
 	if id != "" {
-		p, err := client.GetProfileById(ctx, &minderv1.GetProfileByIdRequest{
+		p, err := client.GetProfileById(cmd.Context(), &minderv1.GetProfileByIdRequest{
 			Context: &minderv1.Context{Project: &project},
 			Id:      id,
 		})
@@ -56,8 +68,8 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		}
 		resp = p
 		prof = p.GetProfile()
-	} else if name != "" {
-		p, err := client.GetProfileByName(ctx, &minderv1.GetProfileByNameRequest{
+	} else {
+		p, err := client.GetProfileByName(cmd.Context(), &minderv1.GetProfileByNameRequest{
 			Context: &minderv1.Context{Project: &project},
 			Name:    name,
 		})
@@ -66,8 +78,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		}
 		resp = p
 		prof = p.GetProfile()
-	} else {
-		return cli.MessageAndError("Error getting profile", fmt.Errorf("id or name required"))
 	}
 
 	switch format {
@@ -87,7 +97,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		settable := NewProfileSettingsTable(cmd.OutOrStdout())
 		RenderProfileSettingsTable(prof, settable)
 		settable.Render()
-		fmt.Println()
+		cmd.Println()
 		table := NewProfileRulesTable(cmd.OutOrStdout())
 		table.SeparateRows()
 		RenderProfileRulesTable(prof, table)
