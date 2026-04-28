@@ -196,50 +196,65 @@ func TestExecutorEventHandler_ShutdownCancelsNewEvents(t *testing.T) {
 	handler.Wait()
 }
 
-func TestExecutorEventHandler_UsesConfiguredTimeout(t *testing.T) {
+func TestExecutorEventHandler_FallsBackToDefaultTimeout(t *testing.T) {
 	t.Parallel()
 
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	tests := []struct {
+		name    string
+		timeout time.Duration
+	}{
+		{name: "zero", timeout: 0},
+		{name: "negative", timeout: -1 * time.Second},
+	}
 
-	projectID := uuid.New()
-	providerID := uuid.New()
-	repositoryID := uuid.New()
-	executionID := uuid.New()
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	executor := mockengine.NewMockExecutor(ctrl)
-	executor.EXPECT().
-		EvalEntityEvent(gomock.Any(), gomock.Any()).
-		DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
-			deadline, ok := ctx.Deadline()
-			require.True(t, ok, "expected execution context deadline")
-			remaining := time.Until(deadline)
-			require.Greater(t, remaining, 40*time.Second)
-			require.Less(t, remaining, 80*time.Second)
-			return nil
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			projectID := uuid.New()
+			providerID := uuid.New()
+			repositoryID := uuid.New()
+			executionID := uuid.New()
+
+			executor := mockengine.NewMockExecutor(ctrl)
+			executor.EXPECT().
+				EvalEntityEvent(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
+					deadline, ok := ctx.Deadline()
+					require.True(t, ok, "expected execution context deadline")
+					remaining := time.Until(deadline)
+					require.Greater(t, remaining, 4*time.Minute)
+					require.Less(t, remaining, 6*time.Minute)
+					return nil
+				})
+
+			evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{Driver: "go-channel"})
+			require.NoError(t, err)
+
+			handler := engine.NewExecutorEventHandler(
+				context.Background(),
+				evt,
+				nil,
+				executor,
+				tt.timeout,
+			)
+
+			eiw := entities.NewEntityInfoWrapper().
+				WithProviderID(providerID).
+				WithProjectID(projectID).
+				WithRepository(&minderv1.Repository{Name: "test"}).
+				WithID(repositoryID).
+				WithExecutionID(executionID)
+
+			msg, err := eiw.BuildMessage()
+			require.NoError(t, err)
+
+			require.NoError(t, handler.HandleEntityEvent(msg))
+			handler.Wait()
 		})
-
-	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{Driver: "go-channel"})
-	require.NoError(t, err)
-
-	handler := engine.NewExecutorEventHandler(
-		context.Background(),
-		evt,
-		nil,
-		executor,
-		1*time.Minute,
-	)
-
-	eiw := entities.NewEntityInfoWrapper().
-		WithProviderID(providerID).
-		WithProjectID(projectID).
-		WithRepository(&minderv1.Repository{Name: "test"}).
-		WithID(repositoryID).
-		WithExecutionID(executionID)
-
-	msg, err := eiw.BuildMessage()
-	require.NoError(t, err)
-
-	require.NoError(t, handler.HandleEntityEvent(msg))
-	handler.Wait()
+	}
 }
