@@ -260,7 +260,7 @@ func AllInOneServerService(
 		propSvc,
 	)
 
-	handler := engine.NewExecutorEventHandler(
+	handler := engine.NewExecutorEventHandlerWithStore(
 		ctx,
 		evt.(interfaces.Publisher),
 		executorMiddleware,

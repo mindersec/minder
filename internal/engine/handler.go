@@ -48,7 +48,28 @@ type ExecutorEventHandler struct {
 }
 
 // NewExecutorEventHandler creates a new ExecutorEventHandler.
+//
+// This constructor is kept for compatibility with legacy call sites.
+// It uses the default timeout and does not resolve provider names from store.
 func NewExecutorEventHandler(
+	ctx context.Context,
+	evt interfaces.Publisher,
+	handlerMiddleware []message.HandlerMiddleware,
+	executor Executor,
+) *ExecutorEventHandler {
+	return NewExecutorEventHandlerWithStore(
+		ctx,
+		evt,
+		handlerMiddleware,
+		executor,
+		DefaultExecutionTimeout,
+		nil,
+	)
+}
+
+// NewExecutorEventHandlerWithStore creates a new ExecutorEventHandler and
+// configures timeout and provider lookup store.
+func NewExecutorEventHandlerWithStore(
 	ctx context.Context,
 	evt interfaces.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
@@ -150,14 +171,16 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		}()
 
 		providerName := ""
-		provider, err := e.store.GetProviderByID(ctx, inf.ProviderID)
-		if err != nil {
-			zerolog.Ctx(ctx).Debug().
-				Err(err).
-				Str("provider_id", inf.ProviderID.String()).
-				Msg("failed to resolve provider name")
-		} else if provider.Name != "" {
-			providerName = provider.Name
+		if e.store != nil {
+			provider, err := e.store.GetProviderByID(ctx, inf.ProviderID)
+			if err != nil {
+				zerolog.Ctx(ctx).Debug().
+					Err(err).
+					Str("provider_id", inf.ProviderID.String()).
+					Msg("failed to resolve provider name")
+			} else if provider.Name != "" {
+				providerName = provider.Name
+			}
 		}
 
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{

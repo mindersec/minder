@@ -88,7 +88,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		}).
 		Times(parallelOps)
 
-	handler := engine.NewExecutorEventHandler(
+	handler := engine.NewExecutorEventHandlerWithStore(
 		ctx,
 		evt,
 		[]message.HandlerMiddleware{},
