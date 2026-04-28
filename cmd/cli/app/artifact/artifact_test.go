@@ -4,39 +4,70 @@
 package artifact
 
 import (
-	"strings"
+	"context"
 	"testing"
 
-	"github.com/mindersec/minder/cmd/cli/app/testutils"
+	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/mindersec/minder/internal/util/cli"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-func TestArtifactCmd_Help(t *testing.T) {
-	t.Parallel()
+//nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
+func TestArtifactListCommand(t *testing.T) {
+	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
+		t.Helper()
+		client := mockv1.NewMockArtifactServiceClient(ctrl)
 
-	tests := []struct {
-		name string
-		args []string
-	}{
+		mockResp := &minderv1.ListArtifactsResponse{}
+		cli.LoadFixture(t, "mock_artifact_list.json", mockResp)
+
+		client.EXPECT().
+			ListArtifacts(gomock.Any(), gomock.Any()).
+			Return(mockResp, nil).
+			Times(1)
+
+		return cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), client)
+	}
+
+	tests := []cli.CmdTestCase{
 		{
-			name: "help flag",
-			args: []string{"--help"},
+			Name:           "list artifacts - table output",
+			Args:           []string{"artifact", "list", "-o", "table"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "artifact_list.table",
+		},
+		{
+			Name:           "list artifacts - json output",
+			Args:           []string{"artifact", "list", "-o", "json"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "artifact_list.json",
+		},
+		{
+			Name:           "list artifacts - yaml output",
+			Args:           []string{"artifact", "list", "-o", "yaml"},
+			MockSetup:      setupSuccess,
+			GoldenFileName: "artifact_list.yaml",
+		},
+		{
+			Name: "server error handling",
+			Args: []string{"artifact", "list"},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockArtifactServiceClient(ctrl)
+				client.EXPECT().
+					ListArtifacts(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.Internal, "internal server error")).
+					Times(1)
+
+				return cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), client)
+			},
+			ExpectedError: "internal server error",
 		},
 	}
 
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			output, err := testutils.RunCommand(ArtifactCmd, tt.args...)
-
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			if !strings.Contains(output, "Usage") || !strings.Contains(output, "Flags") {
-				t.Errorf("unexpected help output:\n%s", output)
-			}
-		})
-	}
+	cli.RunCmdTests(t, tests, ArtifactCmd)
 }
