@@ -28,7 +28,7 @@ cover: init-examples ## display test coverage
 
 .PHONY: test-cover-silent
 test-cover-silent: clean init-examples  ## Run test coverage in a silent mode (errors only output)
-	go test -json -race -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp ./... 2>&1 | tee test-results.json | gotestfmt -hide "all"
+	bash -o pipefail -c 'go test -json -race -v -coverpkg=${COVERAGE_PACKAGES} -coverprofile=coverage.out.tmp ./... 2>&1 | tee test-results.json >/dev/null'
 	
 	cat coverage.out.tmp | grep -v ${COVERAGE_EXCLUSIONS} > coverage.out
 	rm coverage.out.tmp
