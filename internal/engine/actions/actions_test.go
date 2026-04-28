@@ -107,7 +107,17 @@ func TestShouldRemediate(t *testing.T) {
 			if !tt.nilRow {
 				prevRow = &db.ListRuleEvaluationsByProfileIdRow{RemStatus: tt.prevEval}
 			}
-			got := shouldRemediate(prevRow, tt.evalErr)
+			var prev *PreviousEval
+			if prevRow != nil {
+				prev = &PreviousEval{
+					RemediationStatus: RemediationStatus(prevRow.RemStatus),
+				}
+			}
+
+			// map error → EvalStatus
+			status := mapEvalStatus(tt.evalErr)
+
+			got := shouldRemediate(prev, status)
 			assert.Equal(t, tt.expected, got)
 		})
 	}
@@ -213,7 +223,17 @@ func TestShouldAlert(t *testing.T) {
 			if !tt.nilRow {
 				prevRow = &db.ListRuleEvaluationsByProfileIdRow{AlertStatus: tt.prevAlert}
 			}
-			got := shouldAlert(prevRow, tt.evalErr, tt.remErr, tt.remType)
+			var prev *PreviousEval
+			if prevRow != nil {
+				prev = &PreviousEval{
+					AlertStatus: AlertStatus(prevRow.AlertStatus),
+				}
+			}
+
+			// map error → EvalStatus
+			status := mapEvalStatus(tt.evalErr)
+
+			got := shouldAlert(prev, status, tt.remErr, tt.remType)
 			assert.Equal(t, tt.expected, got)
 		})
 	}

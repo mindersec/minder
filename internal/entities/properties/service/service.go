@@ -15,6 +15,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"strings"
+
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
 	"github.com/mindersec/minder/internal/providers/manager"
@@ -249,7 +251,14 @@ func (ps *propertiesService) ReplaceProperty(
 		Key:      key,
 		Value:    prop.RawValue(),
 	})
-	return err
+	if err != nil {
+		// handle duplicate key error gracefully (acts like update)
+		if strings.Contains(err.Error(), "duplicate key") {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func (ps *propertiesService) getEntityWithProperties(
