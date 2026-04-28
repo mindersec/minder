@@ -302,18 +302,11 @@ func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid syntax rego definition",
+			name: "any non-empty rego definition passes protobuf validation",
 			rego: &RuleType_Definition_Eval_Rego{
 				Def: "package example.policy\n\nallow {",
 			},
-			wantErr: true,
-		},
-		{
-			name: "missing import rego definition",
-			rego: &RuleType_Definition_Eval_Rego{
-				Def: "package example.policy\n\nallow if { input.ingested.url != \"\" }",
-			},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 

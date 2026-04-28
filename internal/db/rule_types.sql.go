@@ -24,7 +24,8 @@ INSERT INTO rule_type (
     subscription_id,
     display_name,
     release_phase,
-    short_failure_message
+    short_failure_message,
+    rego_version
 ) VALUES (
     $1,
     $2,
@@ -35,8 +36,9 @@ INSERT INTO rule_type (
     $7,
     $8,
     $9,
-    $10
-) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message
+    $10,
+    $11
+) RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version
 `
 
 type CreateRuleTypeParams struct {
@@ -50,6 +52,7 @@ type CreateRuleTypeParams struct {
 	DisplayName         string          `json:"display_name"`
 	ReleasePhase        ReleaseStatus   `json:"release_phase"`
 	ShortFailureMessage string          `json:"short_failure_message"`
+	RegoVersion         string          `json:"rego_version"`
 }
 
 func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) (RuleType, error) {
@@ -64,6 +67,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		arg.DisplayName,
 		arg.ReleasePhase,
 		arg.ShortFailureMessage,
+		arg.RegoVersion,
 	)
 	var i RuleType
 	err := row.Scan(
@@ -82,6 +86,7 @@ func (q *Queries) CreateRuleType(ctx context.Context, arg CreateRuleTypeParams) 
 		&i.DisplayName,
 		&i.ReleasePhase,
 		&i.ShortFailureMessage,
+		&i.RegoVersion,
 	)
 	return i, err
 }
@@ -96,7 +101,7 @@ func (q *Queries) DeleteRuleType(ctx context.Context, id uuid.UUID) error {
 }
 
 const getRuleTypeByID = `-- name: GetRuleTypeByID :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message FROM rule_type WHERE id = $1
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE id = $1
 `
 
 func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, error) {
@@ -118,12 +123,13 @@ func (q *Queries) GetRuleTypeByID(ctx context.Context, id uuid.UUID) (RuleType, 
 		&i.DisplayName,
 		&i.ReleasePhase,
 		&i.ShortFailureMessage,
+		&i.RegoVersion,
 	)
 	return i, err
 }
 
 const getRuleTypeByName = `-- name: GetRuleTypeByName :one
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message FROM rule_type WHERE  project_id = ANY($1::uuid[]) AND lower(name) = lower($2)
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE  project_id = ANY($1::uuid[]) AND lower(name) = lower($2)
 `
 
 type GetRuleTypeByNameParams struct {
@@ -150,6 +156,7 @@ func (q *Queries) GetRuleTypeByName(ctx context.Context, arg GetRuleTypeByNamePa
 		&i.DisplayName,
 		&i.ReleasePhase,
 		&i.ShortFailureMessage,
+		&i.RegoVersion,
 	)
 	return i, err
 }
@@ -169,7 +176,7 @@ func (q *Queries) GetRuleTypeNameByID(ctx context.Context, id uuid.UUID) (string
 }
 
 const getRuleTypesByEntityInHierarchy = `-- name: GetRuleTypesByEntityInHierarchy :many
-SELECT rt.id, rt.name, rt.provider, rt.project_id, rt.description, rt.guidance, rt.definition, rt.created_at, rt.updated_at, rt.severity_value, rt.provider_id, rt.subscription_id, rt.display_name, rt.release_phase, rt.short_failure_message FROM rule_type AS rt
+SELECT rt.id, rt.name, rt.provider, rt.project_id, rt.description, rt.guidance, rt.definition, rt.created_at, rt.updated_at, rt.severity_value, rt.provider_id, rt.subscription_id, rt.display_name, rt.release_phase, rt.short_failure_message, rt.rego_version FROM rule_type AS rt
 JOIN rule_instances AS ri ON ri.rule_type_id = rt.id
 WHERE ri.entity_type = $1
 AND ri.project_id = ANY($2::uuid[])
@@ -205,6 +212,7 @@ func (q *Queries) GetRuleTypesByEntityInHierarchy(ctx context.Context, arg GetRu
 			&i.DisplayName,
 			&i.ReleasePhase,
 			&i.ShortFailureMessage,
+			&i.RegoVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -220,7 +228,7 @@ func (q *Queries) GetRuleTypesByEntityInHierarchy(ctx context.Context, arg GetRu
 }
 
 const listRuleTypesByProject = `-- name: ListRuleTypesByProject :many
-SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message FROM rule_type WHERE project_id = $1
+SELECT id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version FROM rule_type WHERE project_id = $1
 `
 
 func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUID) ([]RuleType, error) {
@@ -248,6 +256,7 @@ func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUI
 			&i.DisplayName,
 			&i.ReleasePhase,
 			&i.ShortFailureMessage,
+			&i.RegoVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -264,9 +273,9 @@ func (q *Queries) ListRuleTypesByProject(ctx context.Context, projectID uuid.UUI
 
 const updateRuleType = `-- name: UpdateRuleType :one
 UPDATE rule_type
-    SET description = $2, definition = $3::jsonb, severity_value = $4, display_name = $5, release_phase = $6, short_failure_message = $7
+    SET description = $2, definition = $3::jsonb, severity_value = $4, display_name = $5, release_phase = $6, short_failure_message = $7, rego_version = $8
     WHERE id = $1
-    RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message
+    RETURNING id, name, provider, project_id, description, guidance, definition, created_at, updated_at, severity_value, provider_id, subscription_id, display_name, release_phase, short_failure_message, rego_version
 `
 
 type UpdateRuleTypeParams struct {
@@ -277,6 +286,7 @@ type UpdateRuleTypeParams struct {
 	DisplayName         string          `json:"display_name"`
 	ReleasePhase        ReleaseStatus   `json:"release_phase"`
 	ShortFailureMessage string          `json:"short_failure_message"`
+	RegoVersion         string          `json:"rego_version"`
 }
 
 func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) (RuleType, error) {
@@ -288,6 +298,7 @@ func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) 
 		arg.DisplayName,
 		arg.ReleasePhase,
 		arg.ShortFailureMessage,
+		arg.RegoVersion,
 	)
 	var i RuleType
 	err := row.Scan(
@@ -306,6 +317,7 @@ func (q *Queries) UpdateRuleType(ctx context.Context, arg UpdateRuleTypeParams) 
 		&i.DisplayName,
 		&i.ReleasePhase,
 		&i.ShortFailureMessage,
+		&i.RegoVersion,
 	)
 	return i, err
 }

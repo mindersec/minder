@@ -718,6 +718,7 @@ type RuleType struct {
 	DisplayName         string          `json:"display_name"`
 	ReleasePhase        ReleaseStatus   `json:"release_phase"`
 	ShortFailureMessage string          `json:"short_failure_message"`
+	RegoVersion         string          `json:"rego_version"`
 }
 
 type RuleTypeDataSource struct {

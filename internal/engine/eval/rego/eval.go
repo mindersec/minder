@@ -45,6 +45,7 @@ type Evaluator struct {
 	regoOpts     []func(*rego.Rego)
 	reseval      resultEvaluator
 	datasources  *v1datasources.DataSourceRegistry
+	regoVersion  ast.RegoVersion
 }
 
 // Input is the input for the rego evaluator
@@ -83,8 +84,9 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:     c,
-		reseval: re,
+		cfg:         c,
+		reseval:     re,
+		regoVersion: ast.RegoV0,
 		regoOpts: []func(*rego.Rego){
 			rego.Query(RegoQueryPrefix),
 			rego.Module(MinderRegoFile, c.Def),
@@ -140,8 +142,7 @@ func (e *Evaluator) Eval(
 
 	// Register options to expose functions
 	regoFuncOptions := []func(*rego.Rego){
-		// TODO: figure out a Rego V1 migration path (https://github.com/mindersec/minder/issues/5262)
-		rego.SetRegoVersion(ast.RegoV0),
+		rego.SetRegoVersion(e.regoVersion),
 	}
 
 	// Initialize the built-in minder library rego functions
@@ -185,6 +186,18 @@ func enrichInputWithEntityProps(
 ) {
 	if inner, ok := entity.(propertiesFetcher); ok {
 		input.Properties = inner.GetProperties().AsMap()
+	}
+}
+
+// WithRegoVersion returns an Option that sets the Rego language version used
+// for evaluation. The version is typically determined at rule type creation
+// time via dual-parse detection and stored in the database.
+func WithRegoVersion(v ast.RegoVersion) interfaces.Option {
+	return func(eval interfaces.Evaluator) error {
+		if e, ok := eval.(*Evaluator); ok {
+			e.regoVersion = v
+		}
+		return nil
 	}
 }
 

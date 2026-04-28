@@ -9,7 +9,8 @@ INSERT INTO rule_type (
     subscription_id,
     display_name,
     release_phase,
-    short_failure_message
+    short_failure_message,
+    rego_version
 ) VALUES (
     $1,
     $2,
@@ -20,7 +21,8 @@ INSERT INTO rule_type (
     sqlc.narg(subscription_id),
     sqlc.arg(display_name),
     sqlc.arg(release_phase),
-    sqlc.arg(short_failure_message)
+    sqlc.arg(short_failure_message),
+    sqlc.arg(rego_version)
 ) RETURNING *;
 
 -- name: ListRuleTypesByProject :many
@@ -37,7 +39,7 @@ DELETE FROM rule_type WHERE id = $1;
 
 -- name: UpdateRuleType :one
 UPDATE rule_type
-    SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value), display_name = sqlc.arg(display_name), release_phase = sqlc.arg(release_phase), short_failure_message = sqlc.arg(short_failure_message)
+    SET description = $2, definition = sqlc.arg(definition)::jsonb, severity_value = sqlc.arg(severity_value), display_name = sqlc.arg(display_name), release_phase = sqlc.arg(release_phase), short_failure_message = sqlc.arg(short_failure_message), rego_version = sqlc.arg(rego_version)
     WHERE id = $1
     RETURNING *;
 
