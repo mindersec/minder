@@ -1,0 +1,10 @@
+Successfully updated existing profile named: mock-dependabot-profile
+ ENTITY      │ RULE                         │ RULE PARAMS  │ RULE DEFINITION                        
+─────────────┼──────────────────────────────┼──────────────┼────────────────────────────────────────
+ repository  │ dependabot_configured        │              │ apply_if_file: mock.mod                
+             │                              │              │ package_ecosystem: mock-ecosystem      
+             │                              │              │ schedule_interval: weekly              
+             ├──────────────────────────────┼──────────────┼────────────────────────────────────────
+             │ branch_protection_enabled    │ branch: ""   │                                        
+             │                              │              │                                        
+

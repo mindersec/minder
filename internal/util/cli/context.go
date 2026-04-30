@@ -6,6 +6,10 @@ package cli
 import (
 	"context"
 	"reflect"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 type rpcKey struct {
@@ -23,4 +27,31 @@ func GetRPCClient[T any](ctx context.Context) (T, bool) {
 	key := rpcKey{clientType: reflect.TypeOf((*T)(nil)).Elem()}
 	client, ok := ctx.Value(key).(T)
 	return client, ok
+}
+
+// Cleanup is a function type used to define a routine that releases resources
+type Cleanup = func()
+
+// GetCLIClient takes a factory for a GRPC client service and returns
+// a client, a cleanup function to close the connection and an error
+func GetCLIClient[T interface{}](cmd *cobra.Command, client func(grpc.ClientConnInterface) T) (T, Cleanup, error) {
+	var empty T
+
+	ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
+	cmd.SetContext(ctx)
+
+	if mockClient, ok := GetRPCClient[T](ctx); ok {
+		return mockClient, func() { cancel() }, nil
+	}
+
+	conn, err := GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		cancel()
+		return empty, nil, err
+	}
+
+	return client(conn), func() {
+		cancel()
+		_ = conn.Close()
+	}, nil
 }
