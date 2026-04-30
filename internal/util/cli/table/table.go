@@ -12,6 +12,7 @@ import (
 
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
+	"github.com/mattn/go-isatty"
 	"golang.org/x/term"
 
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
@@ -101,7 +102,7 @@ func (g *goPrettyTable) updateWidths(row []string) {
 		}
 		w := 0
 		for _, line := range strings.Split(val, "\n") {
-			lw := utf8.RuneCountInString(line)
+			lw := text.RuneWidthWithoutEscSequences(line)
 			if lw > w {
 				w = lw
 			}
@@ -125,17 +126,21 @@ func (g *goPrettyTable) AddRowWithColor(row ...layouts.ColoredColumn) {
 	r := make(table.Row, len(row))
 	rawRow := make([]string, len(row))
 
+	isTerminal := isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())
+
 	for i, cell := range row {
 		val := cell.Column
 		rawRow[i] = val
 
-		switch cell.Color {
-		case layouts.ColorRed:
-			val = text.FgRed.Sprint(val)
-		case layouts.ColorGreen:
-			val = text.FgGreen.Sprint(val)
-		case layouts.ColorYellow:
-			val = text.FgYellow.Sprint(val)
+		if isTerminal {
+			switch cell.Color {
+			case layouts.ColorRed:
+				val = text.FgRed.Sprint(val)
+			case layouts.ColorGreen:
+				val = text.FgGreen.Sprint(val)
+			case layouts.ColorYellow:
+				val = text.FgYellow.Sprint(val)
+			}
 		}
 		r[i] = val
 	}
@@ -180,9 +185,12 @@ func (g *goPrettyTable) Render() {
 				share := int(float64(req) / float64(totalRequested) * float64(usableWidth))
 
 				// Ensure a minimum width so columns don't disappear
-				if share < 5 {
+				if share < req && req <= (usableWidth/3) {
+					share = req
+				} else if share < 5 {
 					share = 5
 				}
+
 				assignedWidths[i] = share
 				currentTotal += share
 			}

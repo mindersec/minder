@@ -4,13 +4,11 @@
 package repo
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -22,32 +20,46 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get repository details",
 	Long:  `The repo get subcommand is used to get details for a registered repository within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(getCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) || format == app.Table {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: getCommand,
 }
 
 // getCommand is the repo get subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
-
+func getCommand(cmd *cobra.Command, _ []string) error {
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	format := viper.GetString("output")
 	repoid := viper.GetString("id")
 	name := viper.GetString("name")
 
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) || format == app.Table {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	client, cleanup, err := getRepoClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	var repository *minderv1.Repository
+
 	// check repo by id
 	if repoid != "" {
-		resp, err := client.GetRepositoryById(ctx, &minderv1.GetRepositoryByIdRequest{
+		resp, err := client.GetRepositoryById(cmd.Context(), &minderv1.GetRepositoryByIdRequest{
 			Context:      &minderv1.Context{Provider: &provider, Project: &project},
 			RepositoryId: repoid,
 		})
@@ -57,7 +69,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		repository = resp.Repository
 	} else {
 		// check repo by name
-		resp, err := client.GetRepositoryByName(ctx, &minderv1.GetRepositoryByNameRequest{
+		resp, err := client.GetRepositoryByName(cmd.Context(), &minderv1.GetRepositoryByNameRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Name:    name,
 		})
@@ -85,6 +97,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 
 	return nil
 }
+
 func init() {
 	RepoCmd.AddCommand(getCmd)
 	// Flags

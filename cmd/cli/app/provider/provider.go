@@ -8,8 +8,10 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -65,4 +67,27 @@ func getAuthFlowsAsStrings(p *minderv1.Provider) []string {
 	}
 
 	return afs
+}
+
+// GetProviderClient is a helper to get the ProvidersServiceClient, supporting mocks via the command context
+func GetProviderClient(cmd *cobra.Command) (minderv1.ProvidersServiceClient, func(), error) {
+	ctx, cancel := cli.GetAppContext(cmd.Context(), viper.GetViper())
+	cmd.SetContext(ctx)
+
+	if mockClient, ok := cli.GetRPCClient[minderv1.ProvidersServiceClient](ctx); ok {
+		return mockClient, func() { cancel() }, nil
+	}
+
+	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		cancel()
+		return nil, nil, err
+	}
+
+	client := minderv1.NewProvidersServiceClient(conn)
+
+	return client, func() {
+		cancel()
+		_ = conn.Close()
+	}, nil
 }

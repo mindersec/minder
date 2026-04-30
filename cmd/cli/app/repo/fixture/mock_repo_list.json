@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "owner": "mock-owner",
+      "name": "mock-frontend-repo",
+      "repoId": 1122334455,
+      "context": {
+        "provider": "github"
+      }
+    },
+    {
+      "owner": "mock-owner",
+      "name": "mock-backend-repo",
+      "repoId": 9988776655,
+      "context": {
+        "provider": "github"
+      }
+    }
+  ]
+}

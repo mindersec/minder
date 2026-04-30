@@ -15,9 +15,8 @@ import (
 	"strconv"
 
 	"github.com/rs/zerolog"
-	_ "github.com/signalfx/splunk-otel-go/instrumentation/github.com/lib/pq/splunkpq" // nolint
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
@@ -49,7 +48,7 @@ func getProtoMarshalOptions() protojson.MarshalOptions {
 }
 
 // GetJsonFromProto given a proto message, formats into json
-func GetJsonFromProto(msg protoreflect.ProtoMessage) (string, error) {
+func GetJsonFromProto(msg proto.Message) (string, error) {
 	m := getProtoMarshalOptions()
 	out, err := m.Marshal(msg)
 	if err != nil {
@@ -59,7 +58,7 @@ func GetJsonFromProto(msg protoreflect.ProtoMessage) (string, error) {
 }
 
 // GetYamlFromProto given a proto message, formats into yaml
-func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
+func GetYamlFromProto(msg proto.Message) (string, error) {
 	// first converts into json using the marshal options
 	m := getProtoMarshalOptions()
 	out, err := m.Marshal(msg)
@@ -81,7 +80,7 @@ func GetYamlFromProto(msg protoreflect.ProtoMessage) (string, error) {
 }
 
 // GetBytesFromProto given a proto message, formats into bytes
-func GetBytesFromProto(message protoreflect.ProtoMessage) ([]byte, error) {
+func GetBytesFromProto(message proto.Message) ([]byte, error) {
 	m := getProtoMarshalOptions()
 	return m.Marshal(message)
 }

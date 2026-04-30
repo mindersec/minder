@@ -3,12 +3,12 @@
 
 // Package service_test contains tests for the entity service layer.
 // These tests focus on provider validation and error handling paths.
-// TODO: Add integration tests with real database for happy path scenarios
 package service_test
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -18,6 +18,8 @@ import (
 
 	mockdb "github.com/mindersec/minder/database/mock"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/db/embedded"
+	propService "github.com/mindersec/minder/internal/entities/properties/service"
 	mockprop "github.com/mindersec/minder/internal/entities/properties/service/mock"
 	"github.com/mindersec/minder/internal/entities/service"
 	"github.com/mindersec/minder/internal/entities/service/validators"
@@ -210,4 +212,155 @@ func (v *testEntityValidator) Validate(_ context.Context, _ *properties.Properti
 		return v.failError
 	}
 	return nil
+}
+
+// helper to seed a valid project and provider to satisfy foreign key constraint
+func seedProjectAndProvider(ctx context.Context, t *testing.T, store db.Store) (db.Project, db.Provider) {
+	t.Helper()
+
+	project, err := store.CreateProject(ctx, db.CreateProjectParams{
+		Name:     "test-project-" + uuid.NewString(),
+		Metadata: []byte(`{}`),
+	})
+	require.NoError(t, err)
+
+	provider, err := store.CreateProvider(ctx, db.CreateProviderParams{
+		Name:       "github-" + uuid.NewString(),
+		ProjectID:  project.ID,
+		Class:      db.ProviderClassGithub,
+		Implements: []db.ProviderType{db.ProviderTypeGithub},
+		AuthFlows:  []db.AuthorizationFlow{},
+		Definition: []byte(`{}`),
+	})
+
+	require.NoError(t, err)
+	return project, provider
+}
+
+func TestEntityCreator_Integration_HappyPath(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	realStore, cleanup, err := embedded.GetFakeStore()
+	require.NoError(t, err)
+	defer cleanup()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	project, dbProvider := seedProjectAndProvider(ctx, t, realStore)
+	realPropSvc := propService.NewPropertiesService(realStore)
+	mockProvMgr := mockprov.NewMockProviderManager(ctrl)
+	mockProv := mockprovidersv1.NewMockGitHub(ctrl)
+	mockEvt := mockevents.NewMockInterface(ctrl)
+
+	mockProvMgr.EXPECT().InstantiateFromID(ctx, dbProvider.ID).Return(mockProv, nil)
+	mockProv.EXPECT().CreationOptions(pb.Entity_ENTITY_REPOSITORIES).Return(&provifv1.EntityCreationOptions{
+		RegisterWithProvider: true,
+	})
+
+	fetchedProps := properties.NewProperties(map[string]any{"name": "my-test-repo"})
+	mockProv.EXPECT().FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(fetchedProps, nil)
+	mockProv.EXPECT().GetEntityName(gomock.Any(), gomock.Any()).Return("my-test-repo", nil)
+	mockProv.EXPECT().RegisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).Return(fetchedProps, nil)
+
+	creator := service.NewEntityCreator(realStore, realPropSvc, mockProvMgr, mockEvt, validators.NewValidatorRegistry())
+
+	res, err := creator.CreateEntity(ctx, &dbProvider, project.ID, pb.Entity_ENTITY_REPOSITORIES, nil, nil)
+
+	require.NoError(t, err)
+	dbEnt, err := realStore.GetEntityByID(ctx, res.Entity.ID)
+	require.NoError(t, err)
+	assert.Equal(t, db.EntitiesRepository, dbEnt.EntityType)
+
+	savedEntity, _ := realPropSvc.EntityWithPropertiesByID(ctx, res.Entity.ID, nil)
+	assert.Contains(t, fmt.Sprintf("%+v", savedEntity.Properties), "my-test-repo")
+}
+
+func TestEntityCreator_Integration_WithOriginator(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	realStore, cleanup, err := embedded.GetFakeStore()
+	require.NoError(t, err)
+	defer cleanup()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	project, dbProvider := seedProjectAndProvider(ctx, t, realStore)
+	realPropSvc := propService.NewPropertiesService(realStore)
+	mockProvMgr := mockprov.NewMockProviderManager(ctrl)
+	mockProv := mockprovidersv1.NewMockGitHub(ctrl)
+	mockEvt := mockevents.NewMockInterface(ctrl)
+
+	// seed parent entity
+	parentID := uuid.New()
+	_, err = realStore.CreateOrEnsureEntityByID(ctx, db.CreateOrEnsureEntityByIDParams{
+		ID:         parentID,
+		EntityType: db.EntitiesRepository,
+		Name:       "parent-repo",
+		ProjectID:  project.ID,
+		ProviderID: dbProvider.ID,
+	})
+	require.NoError(t, err)
+
+	mockProvMgr.EXPECT().InstantiateFromID(gomock.Any(), dbProvider.ID).Return(mockProv, nil)
+	mockProv.EXPECT().CreationOptions(gomock.Any()).Return(&provifv1.EntityCreationOptions{})
+	mockProv.EXPECT().FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(properties.NewProperties(map[string]any{"name": "child-artifact"}), nil)
+	mockProv.EXPECT().GetEntityName(gomock.Any(), gomock.Any()).Return("child-artifact", nil)
+
+	creator := service.NewEntityCreator(realStore, realPropSvc, mockProvMgr, mockEvt, validators.NewValidatorRegistry())
+
+	// execute with originatingEntityID
+	res, err := creator.CreateEntity(ctx, &dbProvider, project.ID, pb.Entity_ENTITY_ARTIFACTS, nil, &service.EntityCreationOptions{
+		OriginatingEntityID: &parentID,
+	})
+
+	require.NoError(t, err)
+	dbEnt, _ := realStore.GetEntityByID(ctx, res.Entity.ID)
+	assert.Equal(t, parentID, dbEnt.OriginatedFrom.UUID)
+}
+
+func TestEntityCreator_Integration_RollbackCleanup(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	realStore, cleanup, err := embedded.GetFakeStore()
+	require.NoError(t, err)
+	defer cleanup()
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	project, dbProvider := seedProjectAndProvider(ctx, t, realStore)
+	mockPropSvc := mockprop.NewMockPropertiesService(ctrl)
+	mockProvMgr := mockprov.NewMockProviderManager(ctrl)
+	mockProv := mockprovidersv1.NewMockGitHub(ctrl)
+	mockEvt := mockevents.NewMockInterface(ctrl)
+
+	// setup props to be returned by registration
+	testProps := properties.NewProperties(map[string]any{"name": "fail-repo"})
+
+	mockProvMgr.EXPECT().InstantiateFromID(gomock.Any(), dbProvider.ID).Return(mockProv, nil)
+	mockProv.EXPECT().CreationOptions(gomock.Any()).Return(&provifv1.EntityCreationOptions{RegisterWithProvider: true})
+	mockProv.EXPECT().FetchAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(testProps, nil)
+	mockProv.EXPECT().GetEntityName(gomock.Any(), gomock.Any()).Return("fail-repo", nil)
+
+	// return the props here so the cleanup logic has something to work with
+	mockProv.EXPECT().RegisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).Return(testProps, nil)
+
+	// db save fails
+	mockPropSvc.EXPECT().ReplaceAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(errors.New("database explosion"))
+
+	// ensure we match the props being deregistered
+	mockProv.EXPECT().DeregisterEntity(gomock.Any(), pb.Entity_ENTITY_REPOSITORIES, testProps).Return(nil)
+
+	creator := service.NewEntityCreator(realStore, mockPropSvc, mockProvMgr, mockEvt, validators.NewValidatorRegistry())
+
+	_, err = creator.CreateEntity(ctx, &dbProvider, project.ID, pb.Entity_ENTITY_REPOSITORIES, nil, nil)
+	assert.ErrorContains(t, err, "database explosion")
 }

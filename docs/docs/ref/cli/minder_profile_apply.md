@@ -10,14 +10,14 @@ Create or update a profile
 The profile apply subcommand lets you create or update new profiles for a project within Minder.
 
 ```
-minder profile apply [file] [flags]
+minder profile apply [files] [flags]
 ```
 
 ### Options
 
 ```
-  -f, --file string   Path to the YAML defining the profile (or - for stdin)
-  -h, --help          help for apply
+  -f, --file stringArray   Path to the YAML defining the profile (or - for stdin). Can be specified multiple files
+  -h, --help               help for apply
 ```
 
 ### Options inherited from parent commands

@@ -98,7 +98,7 @@ func AllInOneServerService(
 	inviteSvc := invites.NewInviteService()
 	selChecker := selectors.NewEnv()
 	profileSvc := profiles.NewProfileService(evt, selChecker)
-	ruleSvc := ruletypes.NewRuleTypeService()
+	ruleSvc := ruletypes.NewRuleTypeService(featureFlagClient)
 	roleScv := roles.NewRoleService()
 	dataSourcesSvc := datasourcessvc.NewDataSourceService(store)
 	marketplace, err := marketplaces.NewMarketplaceFromServiceConfig(cfg.Marketplace, profileSvc, ruleSvc, dataSourcesSvc)

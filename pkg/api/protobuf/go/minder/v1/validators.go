@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/itchyny/gojq"
-	"github.com/open-policy-agent/opa/v1/ast"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/mindersec/minder/internal/util"
@@ -251,12 +250,9 @@ func (rego *RuleType_Definition_Eval_Rego) Validate() error {
 		return fmt.Errorf("%w: rego definition is empty", ErrInvalidRuleTypeDefinition)
 	}
 
-	// TODO: figure out a Rego V1 migration path (https://github.com/mindersec/minder/issues/5262)
-	_, err := ast.ParseModuleWithOpts("minder-ruletype-def.rego", rego.Def,
-		ast.ParserOptions{RegoVersion: ast.RegoV0})
-	if err != nil {
-		return fmt.Errorf("%w: rego definition is invalid: %s", ErrInvalidRuleTypeDefinition, err)
-	}
+	// Rego language-level validation (syntax checking, version gating) is
+	// intentionally handled server-side in ruletypes/service.go so that it
+	// can be controlled via feature flags without requiring client updates.
 
 	return nil
 }
