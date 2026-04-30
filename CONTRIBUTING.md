@@ -49,6 +49,32 @@ PRs to resolve existing issues are greatly appreciated and issues labeled as ["g
 * Every pull request requires a review from the core Minder team before merging.
 * Once approved, all of your commits will be squashed into a single commit with your PR title.
 
+### Running Tests
+
+Before running the full test suite, install the required tools:
+
+```bash
+make bootstrap
+```
+
+Then generate the example rules and profiles used by some tests:
+
+```bash
+make init-examples
+```
+
+Run the linter to check your changes:
+
+```bash
+make lint
+```
+
+Run the tests:
+
+```bash
+go test ./...
+```
+
 ### Contributing to docs
 Follow [this guide](https://github.com/mindersec/minder/blob/main/docs/README.md) for instructions on building, running, and previewing Minder's documentation.
 
