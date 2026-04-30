@@ -51,11 +51,16 @@ func (s *Server) TokenValidationInterceptor(ctx context.Context, req interface{}
 		if statusErr, ok := status.FromError(err); ok && statusErr.Code() != codes.Unauthenticated {
 			return nil, util.FromRpcError(statusErr)
 		}
-		realmUrl := s.idManager.URL()
+		// Use IssuerClaim (the client-facing/public URL) for WWW-Authenticate,
+		// not the internal issuer URL. In environments like docker-compose or
+		// Kubernetes, the server reaches the IDP on an internal network address
+		// (e.g. http://keycloak:8080), but clients need the public URL
+		// (e.g. http://localhost:8081) to complete authentication.
+		realmUrl := s.cfg.Identity.Server.IssuerClaim
 		// Provide a WWW-Authenticate header hint for authentication if configured.
-		if realmUrl.Host != "" && s.cfg.Identity.Server.Scope != "" {
+		if realmUrl != "" && s.cfg.Identity.Server.Scope != "" {
 			authenticateHeader := fmt.Sprintf(`Bearer realm=%q, scope=%q`,
-				realmUrl.String(), s.cfg.Identity.Server.Scope)
+				realmUrl, s.cfg.Identity.Server.Scope)
 			authHeader := metadata.New(map[string]string{"WWW-Authenticate": authenticateHeader})
 			err := grpc.SendHeader(ctx, authHeader)
 			if err != nil {

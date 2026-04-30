@@ -245,6 +245,24 @@ func (c *IdentityClient) Register(p IdentityProvider) error {
 	return nil
 }
 
+// RegisterAlias registers an additional URL mapping for an existing provider.
+// This is useful when the IDP is reachable at different URLs from the server
+// vs the client (e.g. http://keycloak:8080 internally vs http://localhost:8081
+// externally).  Tokens with `iss` matching the alias URL will be routed to
+// the specified provider.
+func (c *IdentityClient) RegisterAlias(aliasURL string, p IdentityProvider) error {
+	if c == nil {
+		return errors.New("cannot register alias with a nil IdentityClient")
+	}
+
+	prev, ok := c.providers.LoadOrStore(aliasURL, p)
+	if ok {
+		return fmt.Errorf("duplicate provider for alias URL %s, new %q, old %q", aliasURL, p.String(), prev.String())
+	}
+
+	return nil
+}
+
 // Resolve implements Resolver.
 func (c *IdentityClient) Resolve(ctx context.Context, id string) (*Identity, error) {
 	providerName := ""

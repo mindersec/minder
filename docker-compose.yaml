@@ -53,7 +53,11 @@ services:
       - MINDER_FLAGS_GO_FEATURE_FILE_PATH=/app/flags-config.yaml
       - MINDER_LOG_GITHUB_REQUESTS=1
       - MINDER_AUTHZ_API_URL=http://openfga:8080
+      # issuer_url is the internal address for Minder-to-Keycloak API calls.
+      # issuer_claim is the public address clients use to reach Keycloak.
+      # These differ because "keycloak" is only resolvable inside the docker network.
       - MINDER_IDENTITY_SERVER_ISSUER_URL=http://keycloak:8080
+      - MINDER_IDENTITY_SERVER_ISSUER_CLAIM=http://localhost:8081/realms/stacklok
     working_dir: /app
     networks:
       - app_net
