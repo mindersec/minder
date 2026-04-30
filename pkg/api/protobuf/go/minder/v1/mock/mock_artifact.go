@@ -64,6 +64,7 @@ func (mr *MockArtifactServiceClientMockRecorder) ListArtifacts(ctx, in any, opts
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListArtifacts", reflect.TypeOf((*MockArtifactServiceClient)(nil).ListArtifacts), varargs...)
 }
+
 // GetArtifactById mocks base method.
 func (m *MockArtifactServiceClient) GetArtifactById(ctx context.Context, in *v1.GetArtifactByIdRequest, opts ...grpc.CallOption) (*v1.GetArtifactByIdResponse, error) {
 	m.ctrl.T.Helper()
