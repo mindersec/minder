@@ -7,21 +7,31 @@ artifact:
   type: image
   visibility: public
 
+<<<<<<< HEAD
 - alert:
     details: artifact attestation alert is active
     status: "on"
     url: https://example.com/alerts/artifact-111
   details: artifact attestation is disabled for this image
+=======
+- details: artifact attestation is disabled for this image
+>>>>>>> 25edf5238 (feat(cli): add artifact get command tests and align with GetCLIClient pattern)
   entity: artifact
   entityInfo:
     name: owner-1/artifact-1
   guidance: enable artifact attestations before release
+<<<<<<< HEAD
   lastUpdated: "2024-01-01T00:00:00Z"
   profileId: artifact-security-baseline
   remediationDetails: rebuild the artifact with attestations enabled
   remediationUrl: https://example.com/remediate/artifact-111
   ruleDescriptionName: Require artifact attestation
   ruleId: artifact-attestation-slsa
+=======
+  profileId: artifact-security-baseline
+  remediationUrl: https://example.com/remediate/artifact-111
+  ruleDescriptionName: Require artifact attestation
+>>>>>>> 25edf5238 (feat(cli): add artifact get command tests and align with GetCLIClient pattern)
   ruleTypeName: artifact_attestation_slsa
   status: failure
 

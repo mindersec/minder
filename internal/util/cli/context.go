@@ -17,6 +17,7 @@ type rpcKey struct {
 }
 
 type rpcInjectedKey struct{}
+
 // WithRPCClient injects the provided RPC client into the context.
 func WithRPCClient[T any](ctx context.Context, client T) context.Context {
 	key := rpcKey{clientType: reflect.TypeOf((*T)(nil)).Elem()}

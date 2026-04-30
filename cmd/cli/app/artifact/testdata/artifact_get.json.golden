@@ -1,0 +1,26 @@
+{
+  "artifact": {
+    "artifactPk": "111",
+    "owner": "owner-1",
+    "name": "artifact-1",
+    "type": "image",
+    "visibility": "public",
+    "repository": "org/repo",
+    "createdAt": "2024-01-02T15:04:05Z"
+  }
+}
+[
+  {
+    "profileId": "artifact-security-baseline",
+    "entity": "artifact",
+    "status": "failure",
+    "entityInfo": {
+      "name": "owner-1/artifact-1"
+    },
+    "details": "artifact attestation is disabled for this image",
+    "guidance": "enable artifact attestations before release",
+    "ruleTypeName": "artifact_attestation_slsa",
+    "ruleDescriptionName": "Require artifact attestation",
+    "remediationUrl": "https://example.com/remediate/artifact-111"
+  }
+]

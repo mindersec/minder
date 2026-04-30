@@ -83,17 +83,13 @@ func GRPCClientWrapRunE(
 			return fmt.Errorf("error binding flags: %s", err)
 		}
 
-		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
-		defer cancel()
-
-		if HasRPCClient(ctx) {
-			return runEFunc(ctx, cmd, args, nil)
-		}
-
 		c, err := GrpcForCommand(cmd, viper.GetViper())
 		if err != nil {
 			return err
 		}
+
+		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
+		defer cancel()
 		defer c.Close()
 
 		return runEFunc(ctx, cmd, args, c)

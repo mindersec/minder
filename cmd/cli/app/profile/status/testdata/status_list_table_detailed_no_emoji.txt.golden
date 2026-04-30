@@ -2,10 +2,10 @@
 ───────────────────────────────┼────────────────┼───────────────────────────────────────────────────
  mock-profile                  │ Ok             │ 2024-01-01T00:00:00Z                              
 
- ENTITY              │ RULE                                   │ RESULT │ DETAILS                    
-─────────────────────┼────────────────────────────────────────┼────────┼────────────────────────────
- acme-corp/mock-repo │ Enable secret scanning to detect       │ Ok     │ Details: Mock rule         
- [repository]        │ hardcoded secrets                      │        │ evaluation succeeded.      
-                     ├────────────────────────────────────────┼────────┼────────────────────────────
-                     │ Enable CodeQL for vulnerability        │ Failed │ Details: Mock rule         
-                     │ scanning                               │        │ evaluation failed.         
+ ENTITY              │ RULE                                      │ RESULT │ DETAILS                 
+─────────────────────┼───────────────────────────────────────────┼────────┼─────────────────────────
+ acme-corp/mock-repo │ Enable secret scanning to detect          │ Ok     │ - Mock rule evaluation  
+ [repository]        │ hardcoded secrets                         │        │ succeeded.              
+                     ├───────────────────────────────────────────┼────────┼─────────────────────────
+                     │ Enable CodeQL for vulnerability scanning  │ Failed │ - Mock rule evaluation  
+                     │                                           │        │ failed.                 

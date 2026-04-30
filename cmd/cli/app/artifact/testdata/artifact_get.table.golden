@@ -3,6 +3,7 @@
  111   │ image  │ owner-1  │ artifact-1   │ org/repo     │ public       │ 2024-01-02T15:04:05Z      
  PROFILE                    │ RULE                         │ RESULT  │ DETAILS                      
 ────────────────────────────┼──────────────────────────────┼─────────┼──────────────────────────────
+<<<<<<< HEAD
  artifact-security-baseline │ Require artifact attestation │ failure │ Alert: artifact attestation  
                             │                              │         │ alert is active URL:         
                             │                              │         │ https://example.com/alerts/a 
@@ -15,3 +16,7 @@
                             │                              │         │ disabled for this image      
                             │                              │         │ Guidance: enable artifact    
                             │                              │         │ attestations before release  
+=======
+ artifact-security-baseline │ Require artifact attestation │ failure │ - artifact attestation is    
+                            │                              │         │ disabled for this image      
+>>>>>>> 25edf5238 (feat(cli): add artifact get command tests and align with GetCLIClient pattern)
