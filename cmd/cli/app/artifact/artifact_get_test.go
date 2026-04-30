@@ -17,6 +17,7 @@ import (
 )
 
 // Tests inject both artifact and profile RPC clients.
+//
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestArtifactGetCommand(t *testing.T) {
 	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
