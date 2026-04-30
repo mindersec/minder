@@ -256,15 +256,3 @@ func printEvalStatus(
 
 	return nil
 }
-
-func init() {
-	ArtifactCmd.AddCommand(getCmd)
-	// Flags
-	getCmd.Flags().StringP("output", "o", app.Table,
-		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
-	getCmd.Flags().StringP("name", "n", "", "name of the artifact to get info from in the form repoOwner/repoName/artifactName")
-	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
-	// We allow searching by name or ID but not both. One of them must be specified.
-	getCmd.MarkFlagsMutuallyExclusive("name", "id")
-	getCmd.MarkFlagsOneRequired("name", "id")
-}
