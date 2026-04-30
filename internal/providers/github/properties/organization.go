@@ -6,6 +6,7 @@ package properties
 import (
 	"context"
 	"fmt"
+	"time"
 
 	go_github "github.com/google/go-github/v63/github"
 
@@ -92,7 +93,7 @@ func fetchOrganizationProperties(
 		}
 	}
 	if user.CreatedAt != nil {
-		result[properties.OrgPropertyCreatedAt] = user.GetCreatedAt().Time
+		result[properties.OrgPropertyCreatedAt] = user.GetCreatedAt().Time.Format(time.RFC3339)
 	}
 	if user.Plan != nil {
 		result[properties.OrgPropertyPlanName] = user.GetPlan().GetName()
