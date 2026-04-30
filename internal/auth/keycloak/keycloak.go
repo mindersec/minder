@@ -199,7 +199,6 @@ func (k *KeyCloak) GetAdminEvents(ctx context.Context, operationTypes, resourceT
 	return events, nil
 }
 
-
 func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity {
 	if user.Attributes == nil || user.Id == nil {
 		return nil

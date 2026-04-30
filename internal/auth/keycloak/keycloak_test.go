@@ -46,11 +46,11 @@ func TestKeyCloak_Resolve(t *testing.T) {
 		id:        "unknown",
 		wantError: "user not found in identity store",
 	}, {
-		name:          "GitHub id - federated",
-		id:            "123456",
+		name:         "GitHub id - federated",
+		id:           "123456",
 		federatedIdP: "github",
-		human:         "user",
-		userid:        "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
+		human:        "user",
+		userid:       "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
 	}}
 
 	fakeKeycloak := &fakeKeycloak{
