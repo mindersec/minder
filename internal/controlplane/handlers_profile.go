@@ -428,6 +428,7 @@ func (s *Server) getRuleEvalStatus(
 			}
 		case db.EntitiesBuildEnvironment, db.EntitiesRelease, db.EntitiesPipelineRun,
 			db.EntitiesTaskRun, db.EntitiesBuild, db.EntitiesOrganization:
+			// TODO: Alert URLs for organizations are incorrect
 			zerolog.Ctx(ctx).Warn().Msgf("attempting to set alerts for unsupported entity type: %v", dbRuleEvalStat.EntityType)
 		default:
 			zerolog.Ctx(ctx).Error().Msgf("unknown entity type: %v", dbRuleEvalStat.EntityType)

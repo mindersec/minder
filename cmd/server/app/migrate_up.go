@@ -19,6 +19,7 @@ import (
 	"github.com/mindersec/minder/database"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/pkg/config"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
@@ -100,7 +101,7 @@ var upCmd = &cobra.Command{
 		}
 
 		cmd.Println("Backfilling organizations...")
-		if err := backfillOrganizations(ctx, db.NewStore(dbConn)); err != nil {
+		if err := service.BackfillOrganizations(ctx, db.NewStore(dbConn)); err != nil {
 			return fmt.Errorf("error while backfilling organizations: %w", err)
 		}
 

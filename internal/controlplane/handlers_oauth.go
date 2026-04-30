@@ -33,6 +33,7 @@ import (
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/providers"
 	"github.com/mindersec/minder/internal/providers/credentials"
+	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/providers/github/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 	"github.com/mindersec/minder/internal/util"
@@ -442,7 +443,7 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 		}
 
 		if dbProv != nil {
-			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			login := github.GetGithubAppOwner(dbProv.Name)
 			s.publishOrganizationEntityEvent(ctx, dbProv.ID, dbProv.ProjectID, login)
 		}
 
@@ -542,7 +543,7 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 			return nil, err
 		}
 		if dbProv != nil && proj != nil {
-			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			login := github.GetGithubAppOwner(dbProv.Name)
 			// It is generally safe to publish an event from within a transaction, as long
 			// as the event handler evaluates the state matching later.
 			s.publishOrganizationEntityEvent(ctx, dbProv.ID, proj.ID, login)

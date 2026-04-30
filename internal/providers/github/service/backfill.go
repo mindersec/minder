@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package app
+package service
 
 import (
 	"context"
@@ -9,15 +9,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/pkg/entities/properties"
 )
 
-func backfillOrganizations(ctx context.Context, store db.Store) error {
+// BackfillOrganizations loops through GitHub app providers and ensures an organization entity is tracked for each
+func BackfillOrganizations(ctx context.Context, store db.Store) error {
 	l := zerolog.Ctx(ctx)
 	l.Info().Msg("Starting backfill for Organization entities...")
 
@@ -29,7 +30,7 @@ func backfillOrganizations(ctx context.Context, store db.Store) error {
 	count := 0
 
 	for _, prov := range provs {
-		login := strings.TrimPrefix(prov.Name, string(db.ProviderClassGithubApp)+"-")
+		login := github.GetGithubAppOwner(prov.Name)
 
 		_, err = db.WithTransaction(store, func(qtx db.ExtendQuerier) (any, error) {
 			// Check if organization entity already exists

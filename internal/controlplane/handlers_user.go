@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"path"
 	"strconv"
-	"strings"
 
 	"github.com/google/uuid"
 	gauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
@@ -27,6 +26,7 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
+	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -141,7 +141,7 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) 
 			continue
 		}
 		if dbProv != nil {
-			login := strings.TrimPrefix(dbProv.Name, string(db.ProviderClassGithubApp)+"-")
+			login := github.GetGithubAppOwner(dbProv.Name)
 			s.publishOrganizationEntityEvent(ctx, dbProv.ID, proj.ID, login)
 		}
 		if proj != nil {

@@ -6,7 +6,6 @@ package properties
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	go_github "github.com/google/go-github/v63/github"
 
@@ -28,8 +27,9 @@ func NewOrganizationFetcher() *OrganizationFetcher {
 						properties.PropertyUpstreamID,
 						properties.PropertyName,
 						properties.OrgPropertyIsUser,
-						properties.OrgPropertyAvatarURL,
-						properties.OrgPropertyCompany,
+						properties.OrgPropertyHasOrganizationProjects,
+						properties.OrgPropertyCreatedAt,
+						properties.OrgPropertyPlanName,
 					},
 					wrapper: fetchOrganizationProperties,
 				},
@@ -54,13 +54,16 @@ func fetchOrganizationProperties(
 	var user *go_github.User
 	var err error
 
-	if idStr := lookupProperties.GetProperty(properties.PropertyUpstreamID).GetString(); idStr != "" {
-		id, parseErr := strconv.ParseInt(idStr, 10, 64)
+	upstreamIDProp := lookupProperties.GetProperty(properties.PropertyUpstreamID)
+	nameProp := lookupProperties.GetProperty(properties.PropertyName)
+
+	if upstreamIDProp != nil {
+		id, parseErr := upstreamIDProp.AsInt64()
 		if parseErr != nil {
 			return nil, fmt.Errorf("invalid upstream ID: %w", parseErr)
 		}
 		user, _, err = ghCli.Users.GetByID(ctx, id)
-	} else if name := lookupProperties.GetProperty(properties.PropertyName).GetString(); name != "" {
+	} else if name := nameProp.GetString(); name != "" {
 		user, _, err = ghCli.Users.Get(ctx, name)
 	} else {
 		return nil, fmt.Errorf("either upstream_id or name (login) must be provided to fetch an organization")
@@ -80,11 +83,19 @@ func fetchOrganizationProperties(
 		properties.OrgPropertyIsUser:  user.GetType() == "User",
 	}
 
-	if user.AvatarURL != nil {
-		result[properties.OrgPropertyAvatarURL] = *user.AvatarURL
+	if user.GetType() == "Organization" {
+		org, _, err := ghCli.Organizations.GetByID(ctx, user.GetID())
+		if err == nil {
+			if org.HasOrganizationProjects != nil {
+				result[properties.OrgPropertyHasOrganizationProjects] = org.GetHasOrganizationProjects()
+			}
+		}
 	}
-	if user.Company != nil {
-		result[properties.OrgPropertyCompany] = *user.Company
+	if user.CreatedAt != nil {
+		result[properties.OrgPropertyCreatedAt] = user.GetCreatedAt().Time
+	}
+	if user.Plan != nil {
+		result[properties.OrgPropertyPlanName] = user.GetPlan().GetName()
 	}
 
 	return result, nil
