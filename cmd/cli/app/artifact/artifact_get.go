@@ -45,6 +45,7 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	}
 	defer cleanup()
 
+<<<<<<< HEAD
 	profileClient, profileCleanup, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
 	if err != nil {
 		return err
@@ -78,6 +79,61 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	evalStatus, err := artifactEvalStatus(ctx, profileClient, art, provider, project)
+	if err != nil {
+		return cli.MessageAndError("Error getting artifact evaluation status", err)
+	}
+
+	if err := printEvalStatus(cmd, evalStatus, format); err != nil {
+		return cli.MessageAndError("Error printing artifact evaluation status", err)
+	}
+
+	return nil
+=======
+		return nil
+	},
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return getCommand(cmd.Context(), cmd, args, nil)
+	},
+>>>>>>> dfaa74f56 (test(cli): add artifact get tests, from filter case, and align test structure)
+}
+
+func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
+	// No longer print usage on returned error, since we've parsed our inputs
+	cmd.SilenceUsage = true
+
+	client, closer, err := getArtifactClient(cmd)
+	if err != nil {
+		return err
+	}
+	defer closer()
+
+	provider := viper.GetString("provider")
+	project := viper.GetString("project")
+	artifactID := viper.GetString("id")
+	artifactName := viper.GetString("name")
+	format := viper.GetString("output")
+
+	pbArt, art, err := artifactGet(ctx, client, provider, project, artifactID, artifactName)
+	if err != nil {
+		return cli.MessageAndError("Error getting artifact", err)
+	}
+
+	if err := printArtifact(cmd, pbArt, art, format); err != nil {
+		return cli.MessageAndError("Error printing artifact", err)
+	}
+
+	// If an injected ArtifactServiceClient is present (test mode), skip profile evaluation
+	if _, ok := cli.GetRPCClient[minderv1.ArtifactServiceClient](cmd.Context()); ok {
+		return nil
+	}
+
+	conn, err := cli.GrpcForCommand(cmd, viper.GetViper())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	evalStatus, err := artifactEvalStatus(ctx, conn, art, provider, project)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact evaluation status", err)
 	}
@@ -256,3 +312,18 @@ func printEvalStatus(
 
 	return nil
 }
+<<<<<<< HEAD
+=======
+
+func init() {
+	ArtifactCmd.AddCommand(getCmd)
+	// Flags
+	getCmd.Flags().StringP("output", "o", app.Table,
+		fmt.Sprintf("Output format (one of %s)", strings.Join(app.SupportedOutputFormats(), ",")))
+	getCmd.Flags().StringP("name", "n", "", "name of the artifact to get info from in the form repoOwner/repoName/artifactName")
+	getCmd.Flags().StringP("id", "i", "", "ID of the artifact to get info from")
+	// We allow searching by name or ID but not both. One of them must be specified.
+	getCmd.MarkFlagsMutuallyExclusive("name", "id")
+	getCmd.MarkFlagsOneRequired("name", "id")
+}
+>>>>>>> dfaa74f56 (test(cli): add artifact get tests, from filter case, and align test structure)

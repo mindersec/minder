@@ -4,12 +4,14 @@
 package artifact
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -35,17 +37,18 @@ var listCmd = &cobra.Command{
 
 		return nil
 	},
-	RunE: listCommand,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return listCommand(cmd.Context(), cmd, args, nil)
+	},
 }
 
 // listCommand is the artifact list subcommand
-func listCommand(cmd *cobra.Command, _ []string) error {
+func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
 	client, closer, err := getArtifactClient(cmd)
 	if err != nil {
 		return err
 	}
 	defer closer()
-	ctx := cmd.Context()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
