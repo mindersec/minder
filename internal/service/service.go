@@ -260,9 +260,9 @@ func AllInOneServerService(
 		propSvc,
 	)
 
-	handler := engine.NewExecutorEventHandlerWithStore(
+	handler := engine.NewExecutorEventHandler(
 		ctx,
-		evt.(interfaces.Publisher),
+		evt,
 		executorMiddleware,
 		exec,
 		engine.DefaultExecutionTimeout,

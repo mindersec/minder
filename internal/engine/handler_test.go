@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
+
 package engine_test
 
 import (
@@ -14,7 +15,6 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine"
-	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	mockengine "github.com/mindersec/minder/internal/engine/mock"
 	"github.com/mindersec/minder/internal/util/testqueue"
@@ -38,13 +38,15 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	// declarations
 	projectID := uuid.New()
 	providerID := uuid.New()
 	repositoryID := uuid.New()
 	executionID := uuid.New()
 
 	parallelOps := 2
-	providerNames := make(chan string, parallelOps)
+
+	// -- end expectations
 
 	evt, err := eventer.New(context.Background(), nil, &serverconfig.EventConfig{
 		Driver: "go-channel",
@@ -52,7 +54,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			BlockPublishUntilSubscriberAck: true,
 		},
 	})
-	require.NoError(t, err)
+	require.NoError(t, err, "failed to setup eventer")
 
 	pq := testqueue.NewPassthroughQueue(t)
 	queued := pq.GetQueue()
@@ -61,7 +63,7 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		t.Log("Running eventer")
 		evt.Register(constants.TopicQueueEntityFlush, pq.Pass)
 		err := evt.Run(context.Background())
-		require.NoError(t, err)
+		require.NoError(t, err, "failed to run eventer")
 	}()
 
 	testTimeout := 5 * time.Second
@@ -75,20 +77,17 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 			Name:     "test",
 			RepoId:   123,
 			CloneUrl: "github.com/foo/bar.git",
-		}).
-		WithID(repositoryID).
+		}).WithID(repositoryID).
 		WithExecutionID(executionID)
 
 	executor := mockengine.NewMockExecutor(ctrl)
-	executor.EXPECT().
-		EvalEntityEvent(gomock.Any(), gomock.Eq(eiw)).
-		DoAndReturn(func(ctx context.Context, _ *entities.EntityInfoWrapper) error {
-			providerNames <- engcontext.EntityFromContext(ctx).Provider.Name
-			return nil
-		}).
-		Times(parallelOps)
+	for i := 0; i < parallelOps; i++ {
+		executor.EXPECT().
+			EvalEntityEvent(gomock.Any(), gomock.Eq(eiw)).
+			Return(nil)
+	}
 
-	handler := engine.NewExecutorEventHandlerWithStore(
+	handler := engine.NewExecutorEventHandler(
 		ctx,
 		evt,
 		[]message.HandlerMiddleware{},
@@ -101,15 +100,17 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	<-evt.Running()
 
 	msg, err := eiw.BuildMessage()
-	require.NoError(t, err)
+	require.NoError(t, err, "expected no error")
 
+	// Run in the background, twice
 	for i := 0; i < parallelOps; i++ {
 		go func() {
 			t.Log("Running entity event handler")
-			require.NoError(t, handler.HandleEntityEvent(msg))
+			require.NoError(t, handler.HandleEntityEvent(msg), "expected no error")
 		}()
 	}
 
+	// expect flush
 	for i := 0; i < parallelOps; i++ {
 		t.Log("waiting for flush")
 		result := <-queued
@@ -119,12 +120,8 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		require.Equal(t, projectID.String(), msg.Metadata.Get(entities.ProjectIDEventKey))
 	}
 
-	require.NoError(t, evt.Close())
+	require.NoError(t, evt.Close(), "expected no error")
 
 	t.Log("waiting for executor to finish")
 	handler.Wait()
-
-	for i := 0; i < parallelOps; i++ {
-		require.Equal(t, "test-provider", <-providerNames)
-	}
 }

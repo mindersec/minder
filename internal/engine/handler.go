@@ -23,14 +23,17 @@ import (
 )
 
 const (
-	// DefaultExecutionTimeout defines the default timeout for entity execution.
+	// DefaultExecutionTimeout is the timeout for execution of a set
+	// of profiles on an entity.
 	DefaultExecutionTimeout = 5 * time.Minute
 
-	// ArtifactSignatureWaitPeriod defines delay before processing artifact events.
+	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact
+	// signature to be available before proceeding with evaluation.
 	ArtifactSignatureWaitPeriod = 10 * time.Second
 )
 
-// ExecutorEventHandler handles entity evaluation events.
+// ExecutorEventHandler is responsible for consuming entity events, passing
+// entities to the executor, and then publishing the results.
 type ExecutorEventHandler struct {
 	evt                    interfaces.Publisher
 	handlerMiddleware      []message.HandlerMiddleware
@@ -39,37 +42,17 @@ type ExecutorEventHandler struct {
 
 	executionTimeout time.Duration
 	store            db.Store
+	closed           bool
 
-	// cancels are the cancel functions for entity events currently in flight.
-	// This allows us to cancel rule evaluation directly when the parent
-	// context is cancelled.
+	// cancels are a set of cancel functions for current entity events in flight.
+	// This allows us to cancel rule evaluation directly when terminationContext
+	// is cancelled.
 	cancels []*context.CancelFunc
 	lock    sync.Mutex
 }
 
-// NewExecutorEventHandler creates a new ExecutorEventHandler.
-//
-// This constructor is kept for compatibility with legacy call sites.
-// It uses the default timeout and does not resolve provider names from store.
+// NewExecutorEventHandler creates the event handler for the executor
 func NewExecutorEventHandler(
-	ctx context.Context,
-	evt interfaces.Publisher,
-	handlerMiddleware []message.HandlerMiddleware,
-	executor Executor,
-) *ExecutorEventHandler {
-	return NewExecutorEventHandlerWithStore(
-		ctx,
-		evt,
-		handlerMiddleware,
-		executor,
-		DefaultExecutionTimeout,
-		nil,
-	)
-}
-
-// NewExecutorEventHandlerWithStore creates a new ExecutorEventHandler and
-// configures timeout and provider lookup store.
-func NewExecutorEventHandlerWithStore(
 	ctx context.Context,
 	evt interfaces.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
@@ -100,6 +83,8 @@ func NewExecutorEventHandlerWithStore(
 		eh.lock.Lock()
 		defer eh.lock.Unlock()
 
+		eh.closed = true
+
 		for _, cancel := range eh.cancels {
 			(*cancel)()
 		}
@@ -108,17 +93,18 @@ func NewExecutorEventHandlerWithStore(
 	return eh
 }
 
-// Register registers the handler for entity evaluation events.
+// Register implements the Consumer interface.
 func (e *ExecutorEventHandler) Register(r interfaces.Registrar) {
 	r.Register(constants.TopicQueueEntityEvaluate, e.HandleEntityEvent, e.handlerMiddleware...)
 }
 
-// Wait blocks until all entity executions are complete.
+// Wait waits for all the entity executions to finish.
 func (e *ExecutorEventHandler) Wait() {
 	e.wgEntityEventExecution.Wait()
 }
 
-// HandleEntityEvent processes incoming entity events.
+// HandleEntityEvent handles events coming from webhooks/signals
+// as well as the init event.
 func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 
 	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
@@ -128,17 +114,22 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// should aim to remove this goroutine altogether and have the messaging system
 	// provide the parallelism.
 	// We _do_ still want to cancel on shutdown, however.
+	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
 
-	// This allows us to cancel rule evaluation directly when terminationContext
-	// is cancelled.
-	//nolint:gosec
+	//nolint:gosec // this is called when we iterate over e.cancels
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
 	e.lock.Lock()
+	if e.closed {
+		e.lock.Unlock()
+		shutdownCancel()
+		return nil
+	}
 	e.cancels = append(e.cancels, &shutdownCancel)
 	e.lock.Unlock()
 
+	// Let's not share memory with the caller.  Note that this does not copy Context
 	msg = msg.Copy()
 
 	inf, err := entities.ParseEntityEvent(msg)
@@ -152,14 +143,15 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		defer e.wgEntityEventExecution.Done()
 
 		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
-			time.Sleep(ArtifactSignatureWaitPeriod)
+			// Wait for artifact signatures, but allow early exit on shutdown
+			select {
+			case <-time.After(ArtifactSignatureWaitPeriod):
+			case <-msgCtx.Done():
+				// stop waiting early, but continue execution
+			}
 		}
 
-		timeout := e.executionTimeout
-		if timeout <= 0 {
-			timeout = DefaultExecutionTimeout
-		}
-		ctx, cancel := context.WithTimeout(msgCtx, timeout)
+		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
 
 		defer func() {
@@ -196,24 +188,23 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 		logger := zerolog.Ctx(ctx)
 
 		if err := inf.WithExecutionIDFromMessage(msg); err != nil {
-			logger.Debug().
+			logger.Info().
 				Str("message_id", msg.UUID).
 				Msg("message does not contain execution ID, skipping")
 			return
 		}
 
-		err = e.executor.EvalEntityEvent(ctx, inf)
-
-		logMsg := logger.Info()
-		if err != nil {
-			logMsg = logger.Error()
-		}
-		ts.Record(logMsg).Send()
+		err := e.executor.EvalEntityEvent(ctx, inf)
 
 		// record telemetry regardless of error. We explicitly record telemetry
 		// here even though we also record it in the middleware because the evaluation
 		// is done in a separate goroutine which usually still runs after the middleware
 		// had already recorded the telemetry.
+		logMsg := logger.Info()
+		if err != nil {
+			logMsg = logger.Error()
+		}
+		ts.Record(logMsg).Send()
 
 		if err != nil {
 			logger.Info().
@@ -221,16 +212,18 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 				Str("provider_id", inf.ProviderID.String()).
 				Str("entity", inf.Type.String()).
 				Str("entity_id", inf.EntityID.String()).
-				Err(err).
-				Msg("got error while evaluating entity event")
+				Err(err).Msg("got error while evaluating entity event")
 		}
 
+		// We don't need to unset the execution ID because the event is going to be
+		// deleted from the database anyway. The aggregator will take care of that.
 		msg, err := inf.BuildMessage()
 		if err != nil {
 			logger.Err(err).Msg("error building message")
 			return
 		}
 
+		// Publish the result of the entity evaluation
 		if err := e.evt.Publish(constants.TopicQueueEntityFlush, msg); err != nil {
 			logger.Err(err).Msg("error publishing flush event")
 		}
