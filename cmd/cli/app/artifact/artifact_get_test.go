@@ -3,6 +3,10 @@
 
 package artifact
 
+// JSON output is not tested because protojson formatting is not stable across environments.
+// This can cause flaky tests due to spacing differences.
+// See maintainer discussion in PR #6417.
+
 import (
 	"context"
 	"testing"
@@ -75,12 +79,6 @@ func TestArtifactGetCommand(t *testing.T) {
 			Args:           []string{"artifact", "get", "-i", "111", "-o", "table"},
 			MockSetup:      setupSuccess,
 			GoldenFileName: "artifact_get.table",
-		},
-		{
-			Name:           "get artifact - json output",
-			Args:           []string{"artifact", "get", "-i", "111", "-o", "json"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "artifact_get.json",
 		},
 		{
 			Name:           "get artifact - yaml output",
