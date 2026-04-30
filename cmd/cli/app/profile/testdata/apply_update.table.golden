@@ -6,5 +6,4 @@ Successfully updated existing profile named: mock-dependabot-profile
              │                              │              │ schedule_interval: weekly              
              ├──────────────────────────────┼──────────────┼────────────────────────────────────────
              │ branch_protection_enabled    │ branch: ""   │                                        
-             │                              │              │                                        
 

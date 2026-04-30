@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
@@ -31,13 +30,28 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
 	Long:  `The artifact get subcommand will get artifact details from an artifact, for a given ID.`,
-	RunE:  cli.GRPCClientWrapRunE(getCommand),
+	RunE:  getCommand,
 }
 
 // getCommand is the artifact get subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := getArtifactClient(ctx, conn)
-	profileClient := getProfileClient(ctx, conn)
+func getCommand(cmd *cobra.Command, _ []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %w", err)
+	}
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	profileClient, profileCleanup, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return err
+	}
+	defer profileCleanup()
+
+	ctx := cmd.Context()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -73,22 +87,6 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	}
 
 	return nil
-}
-
-func getArtifactClient(ctx context.Context, conn *grpc.ClientConn) minderv1.ArtifactServiceClient {
-	if mockClient, ok := cli.GetRPCClient[minderv1.ArtifactServiceClient](ctx); ok {
-		return mockClient
-	}
-
-	return minderv1.NewArtifactServiceClient(conn)
-}
-
-func getProfileClient(ctx context.Context, conn *grpc.ClientConn) minderv1.ProfileServiceClient {
-	if mockClient, ok := cli.GetRPCClient[minderv1.ProfileServiceClient](ctx); ok {
-		return mockClient
-	}
-
-	return minderv1.NewProfileServiceClient(conn)
 }
 
 func artifactGet(

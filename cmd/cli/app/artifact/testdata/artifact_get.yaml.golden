@@ -7,3 +7,14 @@ artifact:
   type: image
   visibility: public
 
+- details: artifact attestation is disabled for this image
+  entity: artifact
+  entityInfo:
+    name: owner-1/artifact-1
+  guidance: enable artifact attestations before release
+  profileId: artifact-security-baseline
+  remediationUrl: https://example.com/remediate/artifact-111
+  ruleDescriptionName: Require artifact attestation
+  ruleTypeName: artifact_attestation_slsa
+  status: failure
+

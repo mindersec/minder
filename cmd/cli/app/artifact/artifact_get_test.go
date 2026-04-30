@@ -8,109 +8,63 @@ import (
 	"testing"
 
 	"go.uber.org/mock/gomock"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	mockv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1/mock"
 )
 
-type artifactClientStub struct {
-	getArtifactByIDResp   *minderv1.GetArtifactByIdResponse
-	getArtifactByIDErr    error
-	getArtifactByNameResp *minderv1.GetArtifactByNameResponse
-	getArtifactByNameErr  error
-}
-
-func (s *artifactClientStub) ListArtifacts(context.Context, *minderv1.ListArtifactsRequest, ...grpc.CallOption) (*minderv1.ListArtifactsResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *artifactClientStub) GetArtifactById(_ context.Context, _ *minderv1.GetArtifactByIdRequest, _ ...grpc.CallOption) (*minderv1.GetArtifactByIdResponse, error) {
-	return s.getArtifactByIDResp, s.getArtifactByIDErr
-}
-
-func (s *artifactClientStub) GetArtifactByName(_ context.Context, _ *minderv1.GetArtifactByNameRequest, _ ...grpc.CallOption) (*minderv1.GetArtifactByNameResponse, error) {
-	return s.getArtifactByNameResp, s.getArtifactByNameErr
-}
-
-type profileClientStub struct {
-	listProfilesResp *minderv1.ListProfilesResponse
-	listProfilesErr  error
-	statusResp       *minderv1.GetProfileStatusByNameResponse
-	statusErr        error
-}
-
-func (s *profileClientStub) CreateProfile(context.Context, *minderv1.CreateProfileRequest, ...grpc.CallOption) (*minderv1.CreateProfileResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) UpdateProfile(context.Context, *minderv1.UpdateProfileRequest, ...grpc.CallOption) (*minderv1.UpdateProfileResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) PatchProfile(context.Context, *minderv1.PatchProfileRequest, ...grpc.CallOption) (*minderv1.PatchProfileResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) DeleteProfile(context.Context, *minderv1.DeleteProfileRequest, ...grpc.CallOption) (*minderv1.DeleteProfileResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) ListProfiles(_ context.Context, _ *minderv1.ListProfilesRequest, _ ...grpc.CallOption) (*minderv1.ListProfilesResponse, error) {
-	return s.listProfilesResp, s.listProfilesErr
-}
-
-func (s *profileClientStub) GetProfileById(context.Context, *minderv1.GetProfileByIdRequest, ...grpc.CallOption) (*minderv1.GetProfileByIdResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) GetProfileByName(context.Context, *minderv1.GetProfileByNameRequest, ...grpc.CallOption) (*minderv1.GetProfileByNameResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) GetProfileStatusByName(_ context.Context, _ *minderv1.GetProfileStatusByNameRequest, _ ...grpc.CallOption) (*minderv1.GetProfileStatusByNameResponse, error) {
-	return s.statusResp, s.statusErr
-}
-
-func (s *profileClientStub) GetProfileStatusById(context.Context, *minderv1.GetProfileStatusByIdRequest, ...grpc.CallOption) (*minderv1.GetProfileStatusByIdResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-func (s *profileClientStub) GetProfileStatusByProject(context.Context, *minderv1.GetProfileStatusByProjectRequest, ...grpc.CallOption) (*minderv1.GetProfileStatusByProjectResponse, error) {
-	_ = s
-	return nil, status.Error(codes.Unimplemented, "unexpected call")
-}
-
-// Tests rely on injected ArtifactServiceClient; profile evaluation is skipped in this mode.
-//
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestArtifactGetCommand(t *testing.T) {
-	setupSuccess := func(t *testing.T, _ *gomock.Controller) context.Context {
+	setupSuccess := func(t *testing.T, ctrl *gomock.Controller) context.Context {
 		t.Helper()
-		client := &artifactClientStub{}
 
-		mockResp := &minderv1.GetArtifactByIdResponse{}
-		cli.LoadFixture(t, "mock_artifact_get.json", mockResp)
+		artifactClient := mockv1.NewMockArtifactServiceClient(ctrl)
+		profileClient := mockv1.NewMockProfileServiceClient(ctrl)
 
-		client.getArtifactByIDResp = mockResp
-		client.getArtifactByIDErr = nil
+		artifactResp := &minderv1.GetArtifactByIdResponse{}
+		cli.LoadFixture(t, "mock_artifact_get.json", artifactResp)
 
-		profileClient := &profileClientStub{
-			listProfilesResp: &minderv1.ListProfilesResponse{},
-			statusResp:       &minderv1.GetProfileStatusByNameResponse{},
+		artifactClient.EXPECT().
+			GetArtifactById(gomock.Any(), gomock.Any()).
+			Return(artifactResp, nil).
+			Times(1)
+
+		listProfilesResp := &minderv1.ListProfilesResponse{
+			Profiles: []*minderv1.Profile{
+				{Name: "artifact-security-baseline"},
+			},
 		}
+		profileClient.EXPECT().
+			ListProfiles(gomock.Any(), gomock.Any()).
+			Return(listProfilesResp, nil).
+			Times(1)
 
-		ctx := cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), client)
+		statusResp := &minderv1.GetProfileStatusByNameResponse{
+			RuleEvaluationStatus: []*minderv1.RuleEvaluationStatus{
+				{
+					ProfileId:           "artifact-security-baseline",
+					RuleDescriptionName: "Require artifact attestation",
+					RuleTypeName:        "artifact_attestation_slsa",
+					Status:              "failure",
+					Details:             "artifact attestation is disabled for this image",
+					Guidance:            "enable artifact attestations before release",
+					RemediationUrl:      "https://example.com/remediate/artifact-111",
+					EntityInfo: map[string]string{
+						"name": "owner-1/artifact-1",
+					},
+					Entity: "artifact",
+				},
+			},
+		}
+		profileClient.EXPECT().
+			GetProfileStatusByName(gomock.Any(), gomock.Any()).
+			Return(statusResp, nil).
+			Times(1)
+
+		ctx := cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), artifactClient)
 		ctx = cli.WithRPCClient[minderv1.ProfileServiceClient](ctx, profileClient)
 		return ctx
 	}
@@ -137,12 +91,17 @@ func TestArtifactGetCommand(t *testing.T) {
 		{
 			Name: "server error handling",
 			Args: []string{"artifact", "get", "-i", "111"},
-			MockSetup: func(t *testing.T, _ *gomock.Controller) context.Context {
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
-				client := &artifactClientStub{getArtifactByIDErr: status.Error(codes.NotFound, "artifact not found")}
-				profileClient := &profileClientStub{listProfilesResp: &minderv1.ListProfilesResponse{}, statusResp: &minderv1.GetProfileStatusByNameResponse{}}
+				artifactClient := mockv1.NewMockArtifactServiceClient(ctrl)
+				profileClient := mockv1.NewMockProfileServiceClient(ctrl)
 
-				ctx := cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), client)
+				artifactClient.EXPECT().
+					GetArtifactById(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.NotFound, "artifact not found")).
+					Times(1)
+
+				ctx := cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), artifactClient)
 				ctx = cli.WithRPCClient[minderv1.ProfileServiceClient](ctx, profileClient)
 				return ctx
 			},
