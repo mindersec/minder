@@ -36,7 +36,8 @@ var getCmd = &cobra.Command{
 
 // getCommand is the artifact get subcommand
 func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+	client := getArtifactClient(ctx, conn)
+	profileClient := getProfileClient(ctx, conn)
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -62,7 +63,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError("Error printing artifact", err)
 	}
 
-	evalStatus, err := artifactEvalStatus(ctx, conn, art, provider, project)
+	evalStatus, err := artifactEvalStatus(ctx, profileClient, art, provider, project)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact evaluation status", err)
 	}
@@ -72,6 +73,22 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	}
 
 	return nil
+}
+
+func getArtifactClient(ctx context.Context, conn *grpc.ClientConn) minderv1.ArtifactServiceClient {
+	if mockClient, ok := cli.GetRPCClient[minderv1.ArtifactServiceClient](ctx); ok {
+		return mockClient
+	}
+
+	return minderv1.NewArtifactServiceClient(conn)
+}
+
+func getProfileClient(ctx context.Context, conn *grpc.ClientConn) minderv1.ProfileServiceClient {
+	if mockClient, ok := cli.GetRPCClient[minderv1.ProfileServiceClient](ctx); ok {
+		return mockClient
+	}
+
+	return minderv1.NewProfileServiceClient(conn)
 }
 
 func artifactGet(
@@ -114,12 +131,12 @@ func artifactGet(
 }
 
 func artifactEvalStatus(
-	ctx context.Context, conn *grpc.ClientConn,
+	ctx context.Context,
+	client minderv1.ProfileServiceClient,
 	artifact *minderv1.Artifact,
 	provider, project string,
 ) ([]*minderv1.RuleEvaluationStatus, error) {
-	profClient := minderv1.NewProfileServiceClient(conn)
-	profiles, err := profClient.ListProfiles(ctx, &minderv1.ListProfilesRequest{
+	profiles, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
 		Context: &minderv1.Context{
 			Provider: &provider,
 			Project:  &project,
@@ -144,7 +161,7 @@ func artifactEvalStatus(
 			},
 		}
 
-		resp, err := profClient.GetProfileStatusByName(ctx, req)
+		resp, err := client.GetProfileStatusByName(ctx, req)
 		if err != nil {
 			return nil, cli.MessageAndError("Error getting profile status", err)
 		}
@@ -191,6 +208,10 @@ func printArtifact(
 func printEvalStatus(
 	cmd *cobra.Command, evalStatus []*minderv1.RuleEvaluationStatus, format string,
 ) error {
+	if len(evalStatus) == 0 {
+		return nil
+	}
+
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
