@@ -3,10 +3,6 @@
 
 package artifact
 
-// JSON output is not tested because protojson formatting is not stable across environments.
-// This can cause flaky tests due to spacing differences.
-// See maintainer discussion in PR #6417.
-
 import (
 	"context"
 	"testing"
@@ -30,7 +26,6 @@ func TestArtifactGetCommand(t *testing.T) {
 
 		artifactResp := &minderv1.GetArtifactByIdResponse{}
 		cli.LoadFixture(t, "mock_artifact_get.json", artifactResp)
-
 		artifactClient.EXPECT().
 			GetArtifactById(gomock.Any(), gomock.Any()).
 			Return(artifactResp, nil).
@@ -73,6 +68,7 @@ func TestArtifactGetCommand(t *testing.T) {
 			Args: []string{"artifact", "get", "-i", "111"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
 				t.Helper()
+
 				artifactClient := mockv1.NewMockArtifactServiceClient(ctrl)
 				profileClient := mockv1.NewMockProfileServiceClient(ctrl)
 

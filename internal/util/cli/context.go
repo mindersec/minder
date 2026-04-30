@@ -16,10 +16,12 @@ type rpcKey struct {
 	clientType reflect.Type
 }
 
+type rpcInjectedKey struct{}
 // WithRPCClient injects the provided RPC client into the context.
 func WithRPCClient[T any](ctx context.Context, client T) context.Context {
 	key := rpcKey{clientType: reflect.TypeOf((*T)(nil)).Elem()}
-	return context.WithValue(ctx, key, client)
+	ctx = context.WithValue(ctx, key, client)
+	return context.WithValue(ctx, rpcInjectedKey{}, struct{}{})
 }
 
 // GetRPCClient extracts the generic RPC client from the provided context.
@@ -54,4 +56,10 @@ func GetCLIClient[T any](cmd *cobra.Command, client func(grpc.ClientConnInterfac
 		cancel()
 		_ = conn.Close()
 	}, nil
+}
+
+// HasRPCClient reports whether any RPC client has been injected into the context.
+func HasRPCClient(ctx context.Context) bool {
+	_, ok := ctx.Value(rpcInjectedKey{}).(struct{})
+	return ok
 }
