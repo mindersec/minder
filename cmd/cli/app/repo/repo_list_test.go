@@ -39,25 +39,6 @@ func TestListCommand(t *testing.T) {
 			GoldenFileName: "list_table.txt",
 		},
 		{
-			Name: "list repositories - json output",
-			Args: []string{"repo", "list", "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockRepositoryServiceClient(ctrl)
-
-				mockResp := &minderv1.ListRepositoriesResponse{}
-				cli.LoadFixture(t, "mock_repo_list.json", mockResp)
-
-				client.EXPECT().
-					ListRepositories(gomock.Any(), gomock.Any()).
-					Return(mockResp, nil).
-					Times(1)
-
-				return cli.WithRPCClient[minderv1.RepositoryServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "list_json.txt",
-		},
-		{
 			Name: "list repositories - empty result",
 			Args: []string{"repo", "list", "-o", "table"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {

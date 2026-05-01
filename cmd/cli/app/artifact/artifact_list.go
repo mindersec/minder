@@ -4,14 +4,12 @@
 package artifact
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -25,69 +23,76 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List artifacts from a provider",
 	Long:  `The artifact list subcommand will list artifacts from a provider.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
-}
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
 
-// listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+		format := viper.GetString("output")
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
 
-	provider := viper.GetString("provider")
-	project := viper.GetString("project")
-	format := viper.GetString("output")
-	fromFilter := viper.GetString("from")
-
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
-
-	artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		From:    fromFilter,
+		return nil
 	},
-	)
+	RunE: func(cmd *cobra.Command, _ []string) error {
+		ctx := cmd.Context()
 
-	if err != nil {
-		return cli.MessageAndError("Couldn't list artifacts", err)
-	}
-
-	switch format {
-	case app.Table:
-		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
-		for _, artifact := range artifactList.Results {
-			t.AddRow(
-				artifact.ArtifactPk,
-				artifact.Type,
-				artifact.GetOwner(),
-				artifact.GetName(),
-				artifact.Repository,
-				artifact.Visibility,
-				artifact.CreatedAt.AsTime().Format(time.RFC3339),
-			)
-
-		}
-		t.Render()
-	case app.JSON:
-		out, err := util.GetJsonFromProto(artifactList)
+		client, closer, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
 		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
+			return err
 		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(artifactList)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
-	}
+		defer closer()
 
-	return nil
+		provider := viper.GetString("provider")
+		project := viper.GetString("project")
+		format := viper.GetString("output")
+		fromFilter := viper.GetString("from")
+
+		cmd.SilenceUsage = true
+
+		artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			From:    fromFilter,
+		})
+		if err != nil {
+			return cli.MessageAndError("Couldn't list artifacts", err)
+		}
+
+		switch format {
+		case app.Table:
+			t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
+				[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
+			for _, artifact := range artifactList.Results {
+				t.AddRow(
+					artifact.ArtifactPk,
+					artifact.Type,
+					artifact.GetOwner(),
+					artifact.GetName(),
+					artifact.Repository,
+					artifact.Visibility,
+					artifact.CreatedAt.AsTime().Format(time.RFC3339),
+				)
+			}
+			t.Render()
+
+		case app.JSON:
+			out, err := util.GetJsonFromProto(artifactList)
+			if err != nil {
+				return cli.MessageAndError("Error getting json from proto", err)
+			}
+			cmd.Println(out)
+
+		case app.YAML:
+			out, err := util.GetYamlFromProto(artifactList)
+			if err != nil {
+				return cli.MessageAndError("Error getting yaml from proto", err)
+			}
+			cmd.Println(out)
+		}
+
+		return nil
+	},
 }
 
 func init() {
