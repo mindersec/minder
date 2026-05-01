@@ -16,6 +16,7 @@ import (
 
 	uuid "github.com/google/uuid"
 	db "github.com/mindersec/minder/internal/db"
+	service "github.com/mindersec/minder/internal/providers/github/service"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -45,10 +46,10 @@ func (m *MockGitHubProviderService) EXPECT() *MockGitHubProviderServiceMockRecor
 }
 
 // CreateGitHubAppProvider mocks base method.
-func (m *MockGitHubProviderService) CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, installationID int64, state string) (*db.Provider, error) {
+func (m *MockGitHubProviderService) CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow, installationID int64, state string) (*service.GitHubProviderFacet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGitHubAppProvider", ctx, token, stateData, installationID, state)
-	ret0, _ := ret[0].(*db.Provider)
+	ret0, _ := ret[0].(*service.GitHubProviderFacet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -60,11 +61,11 @@ func (mr *MockGitHubProviderServiceMockRecorder) CreateGitHubAppProvider(ctx, to
 }
 
 // CreateGitHubAppWithoutInvitation mocks base method.
-func (m *MockGitHubProviderService) CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID, installationID int64) (*db.Project, *db.Provider, error) {
+func (m *MockGitHubProviderService) CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID, installationID int64) (*db.Project, *service.GitHubProviderFacet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateGitHubAppWithoutInvitation", ctx, qtx, userID, installationID)
 	ret0, _ := ret[0].(*db.Project)
-	ret1, _ := ret[1].(*db.Provider)
+	ret1, _ := ret[1].(*service.GitHubProviderFacet)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }

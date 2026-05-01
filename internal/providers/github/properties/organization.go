@@ -93,7 +93,7 @@ func fetchOrganizationProperties(
 		}
 	}
 	if user.CreatedAt != nil {
-		result[properties.OrgPropertyCreatedAt] = user.GetCreatedAt().Time.Format(time.RFC3339)
+		result[properties.OrgPropertyCreatedAt] = user.GetCreatedAt().Format(time.RFC3339)
 	}
 	if user.Plan != nil {
 		result[properties.OrgPropertyPlanName] = user.GetPlan().GetName()

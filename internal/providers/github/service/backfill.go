@@ -6,7 +6,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -59,16 +58,10 @@ func BackfillOrganizations(ctx context.Context, store db.Store) error {
 			}
 
 			// Set the default property (login name)
-			propVal := map[string]any{
-				"minder.internal.type":  "string",
-				"minder.internal.value": login,
-			}
-			propBytes, _ := json.Marshal(propVal)
-
-			_, err = qtx.UpsertProperty(ctx, db.UpsertPropertyParams{
+			_, err = qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 				EntityID: ent.ID,
 				Key:      properties.PropertyName,
-				Value:    propBytes,
+				Value:    login,
 			})
 
 			if err == nil {

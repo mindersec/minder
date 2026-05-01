@@ -271,15 +271,16 @@ func TestProviderService_CreateGitHubAppProvider(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, dbProv)
 
-	require.Equal(t, dbProv.ProjectID, dbproj.ID)
-	require.Equal(t, dbProv.AuthFlows, clients.AppAuthorizationFlows)
-	require.Equal(t, dbProv.Implements, clients.AppImplements)
-	require.Equal(t, dbProv.Class, db.ProviderClassGithubApp)
-	require.Contains(t, dbProv.Name, db.ProviderClassGithubApp)
-	require.Contains(t, dbProv.Name, accountLogin)
+	require.Equal(t, dbProv.Provider.ProjectID, dbproj.ID)
+	require.Equal(t, dbProv.Provider.AuthFlows, clients.AppAuthorizationFlows)
+	require.Equal(t, dbProv.Provider.Implements, clients.AppImplements)
+	require.Equal(t, dbProv.Provider.Class, db.ProviderClassGithubApp)
+	require.Contains(t, dbProv.Provider.Name, db.ProviderClassGithubApp)
+	require.Contains(t, dbProv.Provider.Name, accountLogin)
+	require.Equal(t, accountLogin, dbProv.InstallationOwner)
 
 	dbInstall, err := mocks.fakeStore.GetInstallationIDByProviderID(context.Background(),
-		uuid.NullUUID{UUID: dbProv.ID, Valid: true},
+		uuid.NullUUID{UUID: dbProv.Provider.ID, Valid: true},
 	)
 	require.NoError(t, err)
 	require.Equal(t, dbInstall.AppInstallationID, int64(installationID))

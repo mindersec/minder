@@ -26,7 +26,6 @@ import (
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/projects"
-	"github.com/mindersec/minder/internal/providers/github"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -141,8 +140,7 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) 
 			continue
 		}
 		if dbProv != nil {
-			login := github.GetGithubAppOwner(dbProv.Name)
-			s.publishOrganizationEntityEvent(ctx, dbProv.ID, proj.ID, login)
+			s.publishOrganizationEntityEvent(ctx, dbProv.Provider.ID, proj.ID, dbProv.InstallationOwner)
 		}
 		if proj != nil {
 			userProjects = append(userProjects, proj)
