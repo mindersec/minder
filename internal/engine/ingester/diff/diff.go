@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/iofs"
+	"github.com/google/go-github/v63/github"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
@@ -27,6 +28,7 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
+	"github.com/mindersec/minder/internal/engine/commitinfo"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -37,8 +39,20 @@ const (
 	// DiffRuleDataIngestType is the type of the diff rule data ingest engine
 	DiffRuleDataIngestType = "diff"
 	prFilesPerPage         = 30
+	prCommitsPerPage       = 30
 	wildcard               = "*"
 )
+
+type commitLister interface {
+	ListPullRequestCommits(
+		ctx context.Context,
+		owner string,
+		repo string,
+		prNumber int,
+		perPage int,
+		pageNumber int,
+	) ([]*github.RepositoryCommit, *github.Response, error)
+}
 
 // Diff is the diff rule data ingest engine
 type Diff struct {
@@ -92,6 +106,10 @@ func (di *Diff) Ingest(
 	}
 	prNumber := int(pr.Number)
 
+	if err := di.logPullRequestCommits(ctx, pr, prNumber); err != nil {
+		return nil, fmt.Errorf("error listing pull request commits: %w", err)
+	}
+
 	switch di.cfg.GetType() {
 	case "", pb.DiffTypeDep:
 		return di.getDepTypeDiff(ctx, prNumber, pr)
@@ -106,6 +124,46 @@ func (di *Diff) Ingest(
 	default:
 		return nil, fmt.Errorf("unknown diff type")
 	}
+}
+
+func (di *Diff) logPullRequestCommits(ctx context.Context, pr *pbinternal.PullRequest, prNumber int) error {
+	lister, ok := di.cli.(commitLister)
+	if !ok {
+		return nil
+	}
+
+	logger := zerolog.Ctx(ctx)
+	page := 0
+	for {
+		commits, resp, err := lister.ListPullRequestCommits(
+			ctx,
+			pr.RepoOwner,
+			pr.RepoName,
+			prNumber,
+			prCommitsPerPage,
+			page,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to list pull request commits: %w", err)
+		}
+
+		for _, c := range commits {
+			info := commitinfo.Extract(c)
+			logger.Debug().
+				Str("commit_sha", info.SHA).
+				Str("commit_msg", info.Message).
+				Str("commit_author", info.Author).
+				Msg("pull request commit")
+		}
+
+		if resp == nil || resp.NextPage == 0 {
+			break
+		}
+
+		page = resp.NextPage
+	}
+
+	return nil
 }
 
 func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Ingested, error) {
