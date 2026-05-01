@@ -1,0 +1,31 @@
+{
+  "profile_status": {
+    "profile_id": "artifact-security-baseline",
+    "profile_name": "artifact-security-baseline",
+    "profile_status": "failure",
+    "last_updated": "2024-01-01T00:00:00Z"
+  },
+  "rule_evaluation_status": [
+    {
+      "profile_id": "artifact-security-baseline",
+      "rule_id": "artifact-attestation-slsa",
+      "entity": "artifact",
+      "status": "failure",
+      "last_updated": "2024-01-01T00:00:00Z",
+      "entity_info": {
+        "name": "owner-1/artifact-1"
+      },
+      "details": "artifact attestation is disabled for this image",
+      "guidance": "enable artifact attestations before release",
+      "remediation_details": "rebuild the artifact with attestations enabled",
+      "remediation_url": "https://example.com/remediate/artifact-111",
+      "rule_type_name": "artifact_attestation_slsa",
+      "rule_description_name": "Require artifact attestation",
+      "alert": {
+        "status": "on",
+        "details": "artifact attestation alert is active",
+        "url": "https://example.com/alerts/artifact-111"
+      }
+    }
+  ]
+}

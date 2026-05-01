@@ -4,6 +4,7 @@
 package profile
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"slices"
@@ -11,8 +12,8 @@ import (
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/yaml.v2"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	"github.com/mindersec/minder/internal/util/cli/types"
@@ -24,12 +25,11 @@ func marshalStructOrEmpty(v *structpb.Struct) string {
 		return ""
 	}
 
-	m := v.AsMap()
-	out, err := yaml.Marshal(m)
+	out, err := util.GetYamlFromProto(v)
 	if err != nil {
 		return ""
 	}
-	return string(out)
+	return strings.TrimSpace(out)
 }
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
@@ -94,9 +94,63 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
 func NewRuleEvaluationsTable(out io.Writer) table.Table {
 	return table.New(table.Simple, layouts.Default, out,
-		[]string{"Entity", "Rule Name", "Status", "Details"}).
+		[]string{"Entity", "Rule", "Result", "Details"}).
 		SetAutoMerge(true).
 		SetEqualColumns(false)
+}
+
+func buildLabeledBlock(label, detail, url string) string {
+	detail = strings.TrimSpace(detail)
+	url = strings.TrimSpace(url)
+
+	if detail == "" && url == "" {
+		return ""
+	}
+
+	if detail == "" {
+		return fmt.Sprintf("%s: %s", label, url)
+	}
+
+	block := fmt.Sprintf("%s: %s", label, detail)
+	if url != "" {
+		block += fmt.Sprintf("\nURL: %s", url)
+	}
+
+	return block
+}
+
+func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
+	sections := make([]string, 0, 4)
+
+	if alert := eval.GetAlert(); alert != nil {
+		if section := buildLabeledBlock("Alert", alert.GetDetails(), alert.GetUrl()); section != "" {
+			sections = append(sections, section)
+		}
+	}
+
+	if section := buildLabeledBlock("Remediation", eval.GetRemediationDetails(), eval.GetRemediationUrl()); section != "" {
+		sections = append(sections, section)
+	}
+
+	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
+		sections = append(sections, fmt.Sprintf("Details: %s", detail))
+	}
+
+	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
+		sections = append(sections, fmt.Sprintf("Guidance: %s", guidance))
+	}
+
+	return strings.Join(sections, "\n")
+}
+
+// RuleDisplayName returns the most user-friendly rule name available.
+func RuleDisplayName(eval *minderv1.RuleEvaluationStatus) string {
+	return strings.TrimSpace(cmp.Or(eval.GetRuleDescriptionName(), eval.GetRuleDisplayName(), eval.GetRuleTypeName()))
+}
+
+// FormatEvaluationReasoning returns a rendered reasoning block for CLI output.
+func FormatEvaluationReasoning(eval *minderv1.RuleEvaluationStatus) string {
+	return cmp.Or(buildDetailSummary(eval), "-")
 }
 
 // RenderRuleEvaluationStatusTable renders the rule evaluations table.
@@ -114,11 +168,13 @@ func RenderRuleEvaluationStatusTable(
 
 	for _, eval := range statuses {
 		evalInfo := types.RuleEvalStatus(eval)
+		ruleName := RuleDisplayName(eval)
+		reasoning := FormatEvaluationReasoning(eval)
 		t.AddRowWithColor(
 			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
-			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.RuleDescriptionName, eval.RuleTypeName)),
+			layouts.NoColor(ruleName),
 			table.GetStatusIcon(evalInfo, emoji),
-			table.BestDetail(evalInfo),
+			layouts.NoColor(reasoning),
 		)
 	}
 }

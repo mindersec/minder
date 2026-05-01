@@ -16,7 +16,7 @@ type rpcKey struct {
 	clientType reflect.Type
 }
 
-// WithRPCClient injects the provided RPC client into the context,
+// WithRPCClient injects the provided RPC client into the context.
 func WithRPCClient[T any](ctx context.Context, client T) context.Context {
 	key := rpcKey{clientType: reflect.TypeOf((*T)(nil)).Elem()}
 	return context.WithValue(ctx, key, client)
@@ -29,12 +29,12 @@ func GetRPCClient[T any](ctx context.Context) (T, bool) {
 	return client, ok
 }
 
-// Cleanup is a function type used to define a routine that releases resources
+// Cleanup is a function type used to define a routine that releases resources.
 type Cleanup = func()
 
 // GetCLIClient takes a factory for a GRPC client service and returns
-// a client, a cleanup function to close the connection and an error
-func GetCLIClient[T interface{}](cmd *cobra.Command, client func(grpc.ClientConnInterface) T) (T, Cleanup, error) {
+// a client, a cleanup function to close the connection and an error.
+func GetCLIClient[T any](cmd *cobra.Command, client func(grpc.ClientConnInterface) T) (T, Cleanup, error) {
 	var empty T
 
 	ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())

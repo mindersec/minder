@@ -7,7 +7,6 @@ Successfully created new profile named: mock-attestation-profile
             │                           │                          │ schedule_interval: weekly      
             ├───────────────────────────┼──────────────────────────┼────────────────────────────────
             │ branch_protection_enabled │ branch: ""               │                                
-            │                           │                          │                                
 ────────────┼───────────────────────────┼──────────────────────────┼────────────────────────────────
  artifact   │ artifact_attestation_slsa │ name: fake-artifact-name │ event: - workflow_dispatch     
             │                           │ tags: - mock-tag         │ runner_environment:            

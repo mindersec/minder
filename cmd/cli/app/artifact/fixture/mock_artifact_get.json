@@ -1,0 +1,11 @@
+{
+  "artifact": {
+    "artifactPk": "111",
+    "name": "artifact-1",
+    "type": "image",
+    "owner": "owner-1",
+    "repository": "org/repo",
+    "visibility": "public",
+    "createdAt": "2024-01-02T15:04:05Z"
+  }
+}
