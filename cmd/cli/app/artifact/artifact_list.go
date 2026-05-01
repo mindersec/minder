@@ -29,7 +29,7 @@ var listCmd = &cobra.Command{
 }
 
 // listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
 	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
 	if err != nil {
 		return err
