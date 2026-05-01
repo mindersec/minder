@@ -18,6 +18,7 @@ import (
 
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/iofs"
+	"github.com/google/go-github/v63/github"
 	scalibr "github.com/google/osv-scalibr"
 	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
@@ -92,6 +93,13 @@ func (di *Diff) Ingest(
 	}
 	prNumber := int(pr.Number)
 
+	// Best-effort experiment: if the underlying provider supports listing PR commits,
+	// iterate over them here so we can observe commit-level data during evaluation. This
+	// is intentionally non-blocking for providers that do not implement the method.
+	if err := di.logPullRequestCommits(ctx, pr, prNumber); err != nil {
+		zerolog.Ctx(ctx).Debug().Err(err).Msg("failed to list pull request commits")
+	}
+
 	switch di.cfg.GetType() {
 	case "", pb.DiffTypeDep:
 		return di.getDepTypeDiff(ctx, prNumber, pr)
@@ -106,6 +114,72 @@ func (di *Diff) Ingest(
 	default:
 		return nil, fmt.Errorf("unknown diff type")
 	}
+}
+
+// commitLister is an internal, optional trait that providers can implement to
+// expose pull request commits for a given PR.
+type commitLister interface {
+	ListPullRequestCommits(
+		ctx context.Context,
+		owner string,
+		repo string,
+		prNumber int,
+		perPage int,
+		pageNumber int,
+	) ([]*github.RepositoryCommit, *github.Response, error)
+}
+
+// logPullRequestCommits iterates over all commits in the given pull request,
+// logging their SHAs and messages when the underlying provider implements the
+// commitLister trait. This is a no-op for providers that do not support it.
+func (di *Diff) logPullRequestCommits(
+	ctx context.Context,
+	pr *pbinternal.PullRequest,
+	prNumber int,
+) error {
+	cli, ok := di.cli.(commitLister)
+	if !ok {
+		return nil
+	}
+
+	logger := zerolog.Ctx(ctx)
+	page := 0
+	const prCommitsPerPage = 50
+
+	for {
+		commits, resp, err := cli.ListPullRequestCommits(
+			ctx,
+			pr.RepoOwner,
+			pr.RepoName,
+			prNumber,
+			prCommitsPerPage,
+			page,
+		)
+		if err != nil {
+			return fmt.Errorf("error listing pull request commits: %w", err)
+		}
+
+		for _, c := range commits {
+			sha := c.GetSHA()
+			msg := c.GetCommit().GetMessage()
+			firstLine := strings.Split(msg, "\n")[0]
+
+			logger.Debug().
+				Str("pr_repo", fmt.Sprintf("%s/%s", pr.RepoOwner, pr.RepoName)).
+				Int64("pr_number", pr.Number).
+				Str("commit_sha", sha).
+				Str("commit_msg", firstLine).
+				Msg("pull request commit")
+		}
+
+		if resp == nil || resp.NextPage == 0 {
+			break
+		}
+
+		page = resp.NextPage
+	}
+
+	return nil
 }
 
 func (di *Diff) getDepTypeDiff(ctx context.Context, prNumber int, pr *pbinternal.PullRequest) (*interfaces.Ingested, error) {
