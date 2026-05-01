@@ -109,10 +109,16 @@ func (e *executor) createOrUpdateEvalStatus(
 	alertStatus := dbadapter.ErrorAsAlertStatus(params.GetActionsErr().AlertErr)
 	e.metrics.CountAlertStatus(ctx, alertStatus)
 
-	chckpoint := params.GetIngestResult().GetCheckpoint()
-	chkpjs, err := chckpoint.ToJSONorDefault(json.RawMessage(`{}`))
-	if err != nil {
-		logger.Err(err).Msg("error marshalling checkpoint")
+	var chkpjs json.RawMessage
+	var err error
+	if ingestRes := params.GetIngestResult(); ingestRes != nil {
+		chckpoint := ingestRes.GetCheckpoint()
+		chkpjs, err = chckpoint.ToJSONorDefault(json.RawMessage(`{}`))
+		if err != nil {
+			logger.Err(err).Msg("error marshalling checkpoint")
+		}
+	} else {
+		chkpjs = json.RawMessage(`{}`)
 	}
 
 	var evalOutput any

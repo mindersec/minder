@@ -176,14 +176,20 @@ func (e *executor) evaluateRule(
 	// retrieve the rule type engine from the cache
 	ruleEngine, err := ruleEngineCache.GetRuleEngine(ctx, rule.RuleTypeID)
 	if err != nil {
-		return fmt.Errorf("error creating rule type engine: %w", err)
+		evalErr := fmt.Errorf("error creating rule type engine: %w", err)
+		evalParams.SetEvalErr(evalErr)
+		logEval(ctx, inf, evalParams, "")
+		return e.createOrUpdateEvalStatus(ctx, evalParams)
 	}
 
 	// create the action engine for this rule instance
 	// unlike the rule type engine, this cannot be cached
 	actionEngine, err := actions.NewRuleActions(ctx, ruleEngine.GetRuleType(), provider, &profile.ActionConfig)
 	if err != nil {
-		return fmt.Errorf("cannot create rule actions engine: %w", err)
+		evalErr := fmt.Errorf("cannot create rule actions engine: %w", err)
+		evalParams.SetEvalErr(evalErr)
+		logEval(ctx, inf, evalParams, ruleEngine.GetRuleType().Name)
+		return e.createOrUpdateEvalStatus(ctx, evalParams)
 	}
 
 	// Update the lock lease at the end of the evaluation
