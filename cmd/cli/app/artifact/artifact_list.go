@@ -4,14 +4,12 @@
 package artifact
 
 import (
-	"context"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -38,68 +36,63 @@ var listCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listCommand(cmd.Context(), cmd, args, nil)
+		ctx := cmd.Context()
+
+		client, closer, err := getArtifactClient(cmd)
+		if err != nil {
+			return err
+		}
+		defer closer()
+
+		provider := viper.GetString("provider")
+		project := viper.GetString("project")
+		format := viper.GetString("output")
+		fromFilter := viper.GetString("from")
+
+		cmd.SilenceUsage = true
+
+		artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
+			Context: &minderv1.Context{Provider: &provider, Project: &project},
+			From:    fromFilter,
+		})
+		if err != nil {
+			return cli.MessageAndError("Couldn't list artifacts", err)
+		}
+
+		switch format {
+		case app.Table:
+			t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
+				[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
+			for _, artifact := range artifactList.Results {
+				t.AddRow(
+					artifact.ArtifactPk,
+					artifact.Type,
+					artifact.GetOwner(),
+					artifact.GetName(),
+					artifact.Repository,
+					artifact.Visibility,
+					artifact.CreatedAt.AsTime().Format(time.RFC3339),
+				)
+			}
+			t.Render()
+
+		case app.JSON:
+			out, err := util.GetJsonFromProto(artifactList)
+			if err != nil {
+				return cli.MessageAndError("Error getting json from proto", err)
+			}
+			cmd.Println(out)
+
+		case app.YAML:
+			out, err := util.GetYamlFromProto(artifactList)
+			if err != nil {
+				return cli.MessageAndError("Error getting yaml from proto", err)
+			}
+			cmd.Println(out)
+		}
+
+		return nil
 	},
-}
-
-// listCommand is the artifact list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, _ *grpc.ClientConn) error {
-	client, closer, err := getArtifactClient(cmd)
-	if err != nil {
-		return err
-	}
-	defer closer()
-
-	provider := viper.GetString("provider")
-	project := viper.GetString("project")
-	format := viper.GetString("output")
-	fromFilter := viper.GetString("from")
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
-
-	artifactList, err := client.ListArtifacts(ctx, &minderv1.ListArtifactsRequest{
-		Context: &minderv1.Context{Provider: &provider, Project: &project},
-		From:    fromFilter,
-	})
-
-	if err != nil {
-		return cli.MessageAndError("Couldn't list artifacts", err)
-	}
-
-	switch format {
-	case app.Table:
-		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
-		for _, artifact := range artifactList.Results {
-			t.AddRow(
-				artifact.ArtifactPk,
-				artifact.Type,
-				artifact.GetOwner(),
-				artifact.GetName(),
-				artifact.Repository,
-				artifact.Visibility,
-				artifact.CreatedAt.AsTime().Format(time.RFC3339),
-			)
-
-		}
-		t.Render()
-	case app.JSON:
-		out, err := util.GetJsonFromProto(artifactList)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
-		}
-		cmd.Println(out)
-	case app.YAML:
-		out, err := util.GetYamlFromProto(artifactList)
-		if err != nil {
-			return cli.MessageAndError("Error getting yaml from proto", err)
-		}
-		cmd.Println(out)
-	}
-
-	return nil
 }
 
 func init() {
