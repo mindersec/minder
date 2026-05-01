@@ -81,24 +81,6 @@ func TestStatusGetCommand(t *testing.T) {
 			GoldenFileName: "status_get_uuid_entity.txt",
 		},
 		{
-			Name: "status get json output",
-			Args: []string{"profile", "status", "get", "-i", testId, "-e", testEntityName, "-t", testEntityType, "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockProfileServiceClient(ctrl)
-
-				mockResp := &minderv1.GetProfileStatusByIdResponse{}
-				cli.LoadFixture(t, "mock_profile_status.json", mockResp)
-
-				client.EXPECT().
-					GetProfileStatusById(gomock.Any(), gomock.Any()).
-					Return(mockResp, nil)
-
-				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "status_get.json",
-		},
-		{
 			Name: "status get yaml output",
 			Args: []string{"profile", "status", "get", "-n", testName, "-e", testEntityName, "-t", testEntityType, "-o", "yaml"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {

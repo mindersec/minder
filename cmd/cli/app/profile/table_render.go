@@ -99,29 +99,48 @@ func NewRuleEvaluationsTable(out io.Writer) table.Table {
 		SetEqualColumns(false)
 }
 
+func buildLabeledBlock(label, detail, url string) string {
+	detail = strings.TrimSpace(detail)
+	url = strings.TrimSpace(url)
+
+	if detail == "" && url == "" {
+		return ""
+	}
+
+	if detail == "" {
+		return fmt.Sprintf("%s: %s", label, url)
+	}
+
+	block := fmt.Sprintf("%s: %s", label, detail)
+	if url != "" {
+		block += fmt.Sprintf("\nURL: %s", url)
+	}
+
+	return block
+}
+
 func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
-	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
-		return fmt.Sprintf("- %s", detail)
-	}
-	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
-		return fmt.Sprintf("- Guidance: %s", guidance)
-	}
-	if remURL := strings.TrimSpace(eval.GetRemediationUrl()); remURL != "" {
-		return fmt.Sprintf("- Remediation URL: %s", remURL)
-	}
-	if remDetails := strings.TrimSpace(eval.GetRemediationDetails()); remDetails != "" {
-		return fmt.Sprintf("- Remediation: %s", remDetails)
-	}
+	sections := make([]string, 0, 4)
+
 	if alert := eval.GetAlert(); alert != nil {
-		if alertDetails := strings.TrimSpace(alert.GetDetails()); alertDetails != "" {
-			return fmt.Sprintf("- Alert: %s", alertDetails)
-		}
-		if alertURL := strings.TrimSpace(alert.GetUrl()); alertURL != "" {
-			return fmt.Sprintf("- Alert URL: %s", alertURL)
+		if section := buildLabeledBlock("Alert", alert.GetDetails(), alert.GetUrl()); section != "" {
+			sections = append(sections, section)
 		}
 	}
 
-	return ""
+	if section := buildLabeledBlock("Remediation", eval.GetRemediationDetails(), eval.GetRemediationUrl()); section != "" {
+		sections = append(sections, section)
+	}
+
+	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
+		sections = append(sections, fmt.Sprintf("Details: %s", detail))
+	}
+
+	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
+		sections = append(sections, fmt.Sprintf("Guidance: %s", guidance))
+	}
+
+	return strings.Join(sections, "\n")
 }
 
 // RuleDisplayName returns the most user-friendly rule name available.

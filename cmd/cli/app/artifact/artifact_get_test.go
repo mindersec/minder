@@ -36,33 +36,15 @@ func TestArtifactGetCommand(t *testing.T) {
 			Return(artifactResp, nil).
 			Times(1)
 
-		listProfilesResp := &minderv1.ListProfilesResponse{
-			Profiles: []*minderv1.Profile{
-				{Name: "artifact-security-baseline"},
-			},
-		}
+		listProfilesResp := &minderv1.ListProfilesResponse{}
+		cli.LoadFixture(t, "mock_list_profiles.json", listProfilesResp)
 		profileClient.EXPECT().
 			ListProfiles(gomock.Any(), gomock.Any()).
 			Return(listProfilesResp, nil).
 			Times(1)
 
-		statusResp := &minderv1.GetProfileStatusByNameResponse{
-			RuleEvaluationStatus: []*minderv1.RuleEvaluationStatus{
-				{
-					ProfileId:           "artifact-security-baseline",
-					RuleDescriptionName: "Require artifact attestation",
-					RuleTypeName:        "artifact_attestation_slsa",
-					Status:              "failure",
-					Details:             "artifact attestation is disabled for this image",
-					Guidance:            "enable artifact attestations before release",
-					RemediationUrl:      "https://example.com/remediate/artifact-111",
-					EntityInfo: map[string]string{
-						"name": "owner-1/artifact-1",
-					},
-					Entity: "artifact",
-				},
-			},
-		}
+		statusResp := &minderv1.GetProfileStatusByNameResponse{}
+		cli.LoadFixture(t, "mock_profile_status.json", statusResp)
 		profileClient.EXPECT().
 			GetProfileStatusByName(gomock.Any(), gomock.Any()).
 			Return(statusResp, nil).

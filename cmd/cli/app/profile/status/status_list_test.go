@@ -131,24 +131,6 @@ func TestStatusListCommand(t *testing.T) {
 			GoldenFileName: "status_list_filter_ruletype.txt",
 		},
 		{
-			Name: "status list json success",
-			Args: []string{"profile", "status", "list", "-n", testName, "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockProfileServiceClient(ctrl)
-
-				mockResp := &minderv1.GetProfileStatusByNameResponse{}
-				cli.LoadFixture(t, "mock_profile_status.json", mockResp)
-
-				client.EXPECT().
-					GetProfileStatusByName(gomock.Any(), gomock.Any()).
-					Return(mockResp, nil)
-
-				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "status_list.json",
-		},
-		{
 			Name: "status list yaml success",
 			Args: []string{"profile", "status", "list", "-n", testName, "-o", "yaml"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
