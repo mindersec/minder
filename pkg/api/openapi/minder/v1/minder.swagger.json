@@ -3440,6 +3440,22 @@
           "UserService"
         ]
       }
+    },
+    "/api/v1/version": {
+      "get": {
+        "operationId": "HealthService_GetVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetVersionResponse"
+            }
+          }
+        },
+        "tags": [
+          "HealthService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -5046,6 +5062,18 @@
         "user",
         "projectRoles"
       ]
+    },
+    "v1GetVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      },
+      "title": "GetVersionResponse returns the build and version info of the Minder server"
     },
     "v1GitHubAppParams": {
       "type": "object",
