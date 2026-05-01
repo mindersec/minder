@@ -317,15 +317,14 @@ func processInstallationRepositoriesAppEvent(
 
 	results := make([]*processingResult, 0)
 	for _, repo := range addedRepos {
-		// caveat: we're accessing the database once for every
-		// repository, which might be inefficient at scale.
 		res, err := repositoryAdded(
 			ctx,
 			repo,
 			installation,
 		)
 		if err != nil {
-			return nil, err
+			zerolog.Ctx(ctx).Warn().Err(err).Msg("skipping invalid repository in added batch")
+			continue
 		}
 
 		results = append(results, res)
@@ -336,6 +335,10 @@ func processInstallationRepositoriesAppEvent(
 	// be deleted by means of "meta" and "repository" events as
 	// well.
 	for _, repo := range event.GetRepositoriesRemoved() {
+		if repo.GetID() == 0 {
+			zerolog.Ctx(ctx).Warn().Msg("skipping removed repository with zero ID")
+			continue
+		}
 		res := repositoryRemoved(repo)
 		results = append(results, res)
 	}
