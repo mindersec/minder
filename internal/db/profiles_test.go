@@ -497,8 +497,8 @@ func TestProfileLabels(t *testing.T) {
 	}
 }
 
+//nolint:paralleltest,tparallel // top-level parallel causes interference with other tests (gomock/shared state)
 func TestCreateProfileStatusSingleRuleTransitions(t *testing.T) {
-	t.Parallel()
 
 	tests := []struct {
 		name                      string

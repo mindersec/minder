@@ -18,6 +18,8 @@ type EventConfig struct {
 	Flags FlagDriverConfig `mapstructure:"flags"`
 	// RouterCloseTimeout is the timeout for closing the router in seconds
 	RouterCloseTimeout int64 `mapstructure:"router_close_timeout" default:"10"`
+	// ExecutionTimeout is the timeout for executor event handling.
+	ExecutionTimeout time.Duration `mapstructure:"execution_timeout" default:"5m"`
 	// GoChannel is the configuration for the go channel event driver
 	GoChannel GoChannelEventConfig `mapstructure:"go-channel"`
 	// SQLPubSub is the configuration for the database event driver
