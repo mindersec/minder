@@ -30,7 +30,11 @@ var listCmd = &cobra.Command{
 
 // listCommand is the artifact list subcommand
 func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -74,11 +78,14 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		t.Render()
 	case app.JSON:
-		out, err := util.GetJsonFromProto(artifactList)
-		if err != nil {
-			return cli.MessageAndError("Error getting json from proto", err)
+		// Emit each artifact as a separate JSON object (JSON stream)
+		for _, art := range artifactList.Results {
+			out, err := util.GetJsonFromProto(art)
+			if err != nil {
+				return cli.MessageAndError("Error getting json from proto", err)
+			}
+			cmd.Println(out)
 		}
-		cmd.Println(out)
 	case app.YAML:
 		out, err := util.GetYamlFromProto(artifactList)
 		if err != nil {
