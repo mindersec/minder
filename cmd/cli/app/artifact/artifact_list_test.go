@@ -29,7 +29,7 @@ func TestArtifactListCommand(t *testing.T) {
 			Return(listResp, nil).
 			Times(1)
 
-		ctx := cli.WithRPCClient[minderv1.ArtifactServiceClient](context.Background(), artifactClient)
+		ctx := cli.WithCLIClient[minderv1.ArtifactServiceClient](context.Background(), artifactClient)
 		return ctx
 	}
 
