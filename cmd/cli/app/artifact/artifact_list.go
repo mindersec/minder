@@ -38,7 +38,7 @@ var listCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, _ []string) error {
 		ctx := cmd.Context()
 
-		client, closer, err := getArtifactClient(cmd)
+		client, closer, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
 		if err != nil {
 			return err
 		}
