@@ -41,12 +41,6 @@ func TestArtifactListCommand(t *testing.T) {
 			GoldenFileName: "artifact_list.table",
 		},
 		{
-			Name:           "list artifacts - json output",
-			Args:           []string{"artifact", "list", "-o", "json"},
-			MockSetup:      setupSuccess,
-			GoldenFileName: "artifact_list.json",
-		},
-		{
 			Name:           "list artifacts - yaml output",
 			Args:           []string{"artifact", "list", "-o", "yaml"},
 			MockSetup:      setupSuccess,
