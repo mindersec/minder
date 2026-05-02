@@ -1,0 +1,11 @@
+{
+  "invitations": [
+    {
+      "email": "test@example.com",
+      "role": "admin",
+      "project": "00000000-0000-0000-0000-000000000001",
+      "code": "MOCK-UPDATE-INVITE",
+      "inviteUrl": "https://minder.example.com/invite/MOCK-UPDATE-INVITE"
+    }
+  ]
+}

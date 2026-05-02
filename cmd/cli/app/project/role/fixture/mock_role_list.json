@@ -1,0 +1,12 @@
+{
+  "roles": [
+    {
+      "name": "admin",
+      "description": "Administrator role with full access"
+    },
+    {
+      "name": "viewer",
+      "description": "Read-only access role"
+    }
+  ]
+}

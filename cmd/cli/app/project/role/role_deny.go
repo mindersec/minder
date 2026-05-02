@@ -4,12 +4,10 @@
 package role
 
 import (
-	"context"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -20,12 +18,22 @@ var denyCmd = &cobra.Command{
 	Short: "Deny a role to a subject on a project within the minder control plane",
 	Long: `The minder project role deny command removes a user from a role grant
 on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(DenyCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return cli.MessageAndError("Error binding flags", err)
+		}
+		return nil
+	},
+	RunE: DenyCommand,
 }
 
 // DenyCommand is the command for removing a role assignment from a project
-func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
+func DenyCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := GetPermissionsClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error getting client", err)
+	}
+	defer cleanup()
 
 	sub := viper.GetString("sub")
 	r := viper.GetString("role")
@@ -52,7 +60,7 @@ func DenyCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		successMsg = "Invite deleted successfully."
 	}
 
-	_, err := client.RemoveRole(ctx, &minderv1.RemoveRoleRequest{
+	_, err = client.RemoveRole(cmd.Context(), &minderv1.RemoveRoleRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},

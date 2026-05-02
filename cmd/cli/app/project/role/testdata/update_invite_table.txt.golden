@@ -1,0 +1,8 @@
+Invite updated successfully.
+Updated an invite for test@example.com to admin on 00000000-0000-0000-0000-000000000001
+
+The invitee can accept it by running: 
+
+minder auth invite accept MOCK-UPDATE-INVITE
+
+Or by visiting: https://minder.example.com/invite/MOCK-UPDATE-INVITE

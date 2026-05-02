@@ -1,0 +1,20 @@
+projects:
+  - createdAt: "2024-01-01T12:00:00Z"
+    description: First mock project for testing.
+    displayName: mock-project-alpha
+    name: mock-project-alpha
+    projectId: 00000000-0000-0000-0000-000000000001
+    updatedAt: "2024-01-01T12:00:00Z"
+  - createdAt: "2024-01-02T12:00:00Z"
+    description: Second mock project for testing.
+    displayName: mock-project-beta
+    name: mock-project-beta
+    projectId: 00000000-0000-0000-0000-000000000002
+    updatedAt: "2024-01-02T12:00:00Z"
+  - createdAt: "2024-01-03T12:00:00Z"
+    description: Third mock project for testing.
+    displayName: mock-project-gamma
+    name: mock-project-gamma
+    projectId: 00000000-0000-0000-0000-000000000003
+    updatedAt: "2024-01-03T12:00:00Z"
+
