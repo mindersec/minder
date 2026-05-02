@@ -145,7 +145,7 @@ func TestCreateUser_gRPC(t *testing.T) {
 					Return(&db.Project{
 						ID:   projectID,
 						Name: "github-org1",
-					}, nil)
+					}, nil, nil)
 
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())
@@ -206,14 +206,14 @@ func TestCreateUser_gRPC(t *testing.T) {
 					Return(&db.Project{
 						ID:   projectID,
 						Name: "github-org1",
-					}, nil)
+					}, nil, nil)
 
 				prov.EXPECT().
 					CreateGitHubAppWithoutInvitation(gomock.Any(), gomock.Any(), int64(31337), int64(11)).
 					Return(&db.Project{
 						ID:   uuid.New(),
 						Name: "github-org2",
-					}, nil)
+					}, nil, nil)
 
 				store.EXPECT().Commit(gomock.Any())
 				store.EXPECT().Rollback(gomock.Any())

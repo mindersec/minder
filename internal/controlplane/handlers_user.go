@@ -134,10 +134,13 @@ func (s *Server) claimGitHubInstalls(ctx context.Context, qtx db.ExtendQuerier) 
 
 	for _, i := range installs {
 		// TODO: if we can get an GitHub auth token for the user, we can do the rest with CreateGitHubAppWithoutInvitation
-		proj, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
+		proj, dbProv, err := s.ghProviders.CreateGitHubAppWithoutInvitation(ctx, qtx, userID, i.AppInstallationID)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Int64("org_id", i.OrganizationID).Msg("failed to create GitHub app at first login")
 			continue
+		}
+		if dbProv != nil {
+			s.publishOrganizationEntityEvent(ctx, dbProv.Provider.ID, proj.ID, dbProv.InstallationOwner)
 		}
 		if proj != nil {
 			userProjects = append(userProjects, proj)

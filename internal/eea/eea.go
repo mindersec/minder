@@ -255,7 +255,8 @@ func (e *EEA) buildEntityWrapper(
 	case db.EntitiesPullRequest:
 		return e.buildPullRequestInfoWrapper(ctx, entityID, projID)
 	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
-		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
+		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild, db.EntitiesOrganization:
+		// TODO: Support evaluate policy on organizations
 		return nil, fmt.Errorf("entity type %q not yet supported", entity)
 	default:
 		return nil, fmt.Errorf("unknown entity type: %q", entity)
