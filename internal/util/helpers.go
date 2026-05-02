@@ -5,7 +5,6 @@
 package util
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -17,8 +16,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
-
-	"github.com/mindersec/minder/internal/util/jsonyaml"
 )
 
 var (
@@ -57,26 +54,15 @@ func GetJsonFromProto(msg proto.Message) (string, error) {
 	return string(out), nil
 }
 
-// GetYamlFromProto given a proto message, formats into yaml
+// GetYamlFromProto given a proto message, formats into yaml.
+// For the three Minder resource types (Profile, RuleType, DataSource) the
+// fields are emitted in the standard community order:
+//
+//	version → type → name → context → (descriptive metadata) → deep structure
+//
+// All other message types fall back to alphabetical key order.
 func GetYamlFromProto(msg proto.Message) (string, error) {
-	// first converts into json using the marshal options
-	m := getProtoMarshalOptions()
-	out, err := m.Marshal(msg)
-	if err != nil {
-		return "", err
-	}
-
-	// from byte, we get the raw message so we can convert into yaml
-	var rawMsg json.RawMessage
-	err = json.Unmarshal(out, &rawMsg)
-	if err != nil {
-		return "", err
-	}
-	yamlResult, err := jsonyaml.ConvertJsonToYaml(rawMsg)
-	if err != nil {
-		return "", err
-	}
-	return yamlResult, nil
+	return GetOrderedYamlFromProto(msg)
 }
 
 // GetBytesFromProto given a proto message, formats into bytes
