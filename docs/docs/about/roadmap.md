@@ -92,7 +92,8 @@ need design and discussion.
 ### Improve Rule Testing Infrastructure
 
 **Status**: Subject of an
-[LFX Mentorship Project, Summer 2026](https://mentorship.lfx.linuxfoundation.org/project/40b209ce-c759-4648-9d83-31db4ba1d481)
+[LFX Mentorship Project, Summer 2026](https://mentorship.lfx.linuxfoundation.org/project/40b209ce-c759-4648-9d83-31db4ba1d481).
+Tracked in [#6434](https://github.com/mindersec/minder/issues/6434)
 
 [Full proposal in Google Docs](https://docs.google.com/document/d/1laRud0GSPqVg_rZ3ahD8GfRJYY2Bf-JL66nEXGZJ4kk/edit).
 
@@ -154,9 +155,9 @@ line-level PR checks; we should document when to have Minder directly generate
 PR-level comments, and when it makes more sense for Minder to install CI actions
 for checking content.
 
-### Expand Provider Coverage
+### Expand Source Forge Provider Coverage
 
-**Status**: Not tracked by a specific issue yet
+**Status**: Tracked in [#6435](https://github.com/mindersec/minder/issues/6435)
 
 Minder has _some_ support for [GitLab Cloud](https://gitlab.com/), but setup is
 neither well-documented nor well-tested. Additionally, Minder does not currently
@@ -168,11 +169,33 @@ support any of the following Git Forges:
 - **GitHub Enterprise**: this work would probably need to be funded
 - **GitLab (on-premise)**: again, this might need to be funded
 
+### Expand OCI Registry Provider Coverage
+
+**Status**: Tracked in [#6436](https://github.com/mindersec/minder/issues/6436)
+
 In addition to adding support for Git Forges (where the Minder entity model is
 well-tested), Minder has some support for artifact repositories (primarily OCI
 repositories such as GHCR and DockerHub). This should be expanded, possibly
 following the ["rule-driven child entities"](#improve-rule-output-handling) work
 to enable automatic generation of dependent entities given a known parent.
+
+Additionally, further work should be done to enable managing OCI registry
+security properties:
+
+- Verify settings (immutable tags, MFA enabled, permissions, etc) for
+  repositories and possibly hierarchical namespaces
+- Establish best practices for credential handling for remote OCI registries
+- Expand support for validating both
+  [artifacts](https://oras.land/docs/glossary/#artifacts) and
+  [config](https://oras.land/docs/glossary/#config) contents as well as via the
+  [referrers API](https://oras.land/docs/glossary/#manifest-referrers-api)
+
+Concrete OCI registries which may need specific implementations (particularly
+around credential handling; possibly also enumeration of registries, namespaces,
+and repositories) include:
+
+- Major Cloud Providers (AWS ECR, Google GCR, Azure ACR, etc)
+- Major OSS Providers (Quay.io, Harbor, GHCR, DockerHub)
 
 ### Human Identity Improvements
 
@@ -197,17 +220,21 @@ would allow e.g. a company to grant access to their own governed identities
 
 ### Rule Identity Improvements
 
-**Status**: Not tracked by a specific issue
+**Status**: Tracked in [#6437](https://github.com/mindersec/minder/issues/6437)
 
 Minder datasources support
 [using the `providerAuth` field](../understand/providers.md#defining-a-data-source)
 to authenticate rules to the API which manages the entity, but do not support
-any form of other authentication (for example, to a third-party or custom API
-endpoint to collect additional data or recommendations). Minder should consider
-defining identities for executing rule types (possibly based on the enclosing
-project), and using [OIDC](https://openid.net/developers/how-connect-works/) or
+any form of other authentication. Rule identity would be useful for calling
+third-party or custom API endpoints to collect security data (either
+company-specific like approved security exceptions, or paid-access such as
+vulnerability feeds). Minder should consider defining identities for executing
+rule types (based on the enclosing project), and using
+[OIDC](https://openid.net/developers/how-connect-works/) or
 [SPIFFE](https://spiffe.io/) to provide a unique identity for each Minder
-project or rule executing in the project.
+project or rule executing in the project. For APIs which require static secrets
+like API keys, secret stores such as Vault, OpenBao, or cloud provider APIs can
+avoid the need for building secret storage directly into Minder.
 
 GitHub Actions may
 [provide an example](https://docs.github.com/en/actions/reference/security/oidc#oidc-token-claims)
@@ -215,7 +242,7 @@ of the data which might be presented alongside a Minder rule identity.
 
 ### Status Sharing and Export (Badges)
 
-**Status**: Not tracked by a specific issue
+**Status**: Tracked in [#6438](https://github.com/mindersec/minder/6438)
 
 One use for Minder is to evaluate projects against specific conformance
 criteria, like the [OpenSSF Security Baseline](https://baseline.openssf.org).
@@ -237,6 +264,8 @@ permissions in OpenFGA. The solution would probably need to support at least:
 - Share one specific report (policy evaluation results) for an entity.
 
 ### Improved integration testing
+
+**Status**: Tracked in [#6439](https://github.com/mindersec/minder/issues/6439)
 
 Update [Minder smoke tests](https://github.com/mindersec/smoke-tests), and run a
 subset of them automatically against Minder Helm releases, updating / adding
@@ -260,3 +289,10 @@ https://github.com/StacklokLabs/minder-mcp
 - **Project hierarchies:** Enable users to create nested projects and group
   repositories within those projects. Projects will inherit profile rules in
   order to simplify profile and policy management.
+- **Other Provider Coverage:** OCI Registries have a fairy common and
+  standardized artifact format, and _somewhat_ standardized authentication
+  mechanisms. There are also a number of ecosystem-specific artifact
+  distribution platforms such as PyPI, npm, Homebrew, and Hugging Face which
+  could benefit from Minder policy enforcement. This is probably most
+  interesting for enforcement at scale (e.g. foundations or larger companies
+  with OSS engagement), and would need additional research on requirements.
