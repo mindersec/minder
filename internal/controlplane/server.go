@@ -113,6 +113,7 @@ type Server struct {
 	providerAuthManager manager.AuthManager
 	projectCreator      projects.ProjectCreator
 	projectDeleter      projects.ProjectDeleter
+	idManager           auth.IdentityManager
 
 	// Implementations for service registration
 	pb.UnimplementedHealthServiceServer
@@ -156,6 +157,7 @@ func NewServer(
 	sessionService session.ProviderSessionService,
 	projectDeleter projects.ProjectDeleter,
 	projectCreator projects.ProjectCreator,
+	idManager auth.IdentityManager,
 	entityService entitySvc.EntityService,
 	entityCreator entitySvc.EntityCreator,
 	featureFlagClient flags.Interface,
@@ -186,6 +188,7 @@ func NewServer(
 		ghProviders:         ghProviders,
 		authzClient:         authzClient,
 		idClient:            idClient,
+		idManager:           idManager,
 		projectCreator:      projectCreator,
 		projectDeleter:      projectDeleter,
 	}

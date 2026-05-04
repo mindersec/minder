@@ -58,6 +58,21 @@ func (mr *MockResolverMockRecorder) Resolve(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockResolver)(nil).Resolve), ctx, id)
 }
 
+// ResolveFederated mocks base method.
+func (m *MockResolver) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockResolverMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockResolver)(nil).ResolveFederated), ctx, federatedIdP, id)
+}
+
 // Validate mocks base method.
 func (m *MockResolver) Validate(ctx context.Context, token jwt.Token) (*auth.Identity, error) {
 	m.ctrl.T.Helper()
@@ -112,6 +127,21 @@ func (mr *MockIdentityProviderMockRecorder) Resolve(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockIdentityProvider)(nil).Resolve), ctx, id)
 }
 
+// ResolveFederated mocks base method.
+func (m *MockIdentityProvider) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockIdentityProviderMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockIdentityProvider)(nil).ResolveFederated), ctx, federatedIdP, id)
+}
+
 // String mocks base method.
 func (m *MockIdentityProvider) String() string {
 	m.ctrl.T.Helper()
@@ -153,4 +183,145 @@ func (m *MockIdentityProvider) Validate(ctx context.Context, token jwt.Token) (*
 func (mr *MockIdentityProviderMockRecorder) Validate(ctx, token any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockIdentityProvider)(nil).Validate), ctx, token)
+}
+
+// MockIdentityManager is a mock of IdentityManager interface.
+type MockIdentityManager struct {
+	ctrl     *gomock.Controller
+	recorder *MockIdentityManagerMockRecorder
+	isgomock struct{}
+}
+
+// MockIdentityManagerMockRecorder is the mock recorder for MockIdentityManager.
+type MockIdentityManagerMockRecorder struct {
+	mock *MockIdentityManager
+}
+
+// NewMockIdentityManager creates a new mock instance.
+func NewMockIdentityManager(ctrl *gomock.Controller) *MockIdentityManager {
+	mock := &MockIdentityManager{ctrl: ctrl}
+	mock.recorder = &MockIdentityManagerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIdentityManager) EXPECT() *MockIdentityManagerMockRecorder {
+	return m.recorder
+}
+
+// DeleteUser mocks base method.
+func (m *MockIdentityManager) DeleteUser(ctx context.Context, userID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUser", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUser indicates an expected call of DeleteUser.
+func (mr *MockIdentityManagerMockRecorder) DeleteUser(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockIdentityManager)(nil).DeleteUser), ctx, userID)
+}
+
+// GetAdminEvents mocks base method.
+func (m *MockIdentityManager) GetAdminEvents(ctx context.Context, operationTypes, resourceTypes []string) ([]auth.AdminEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAdminEvents", ctx, operationTypes, resourceTypes)
+	ret0, _ := ret[0].([]auth.AdminEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAdminEvents indicates an expected call of GetAdminEvents.
+func (mr *MockIdentityManagerMockRecorder) GetAdminEvents(ctx, operationTypes, resourceTypes any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAdminEvents", reflect.TypeOf((*MockIdentityManager)(nil).GetAdminEvents), ctx, operationTypes, resourceTypes)
+}
+
+// GetEvents mocks base method.
+func (m *MockIdentityManager) GetEvents(ctx context.Context) ([]auth.AccountEvent, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEvents", ctx)
+	ret0, _ := ret[0].([]auth.AccountEvent)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvents indicates an expected call of GetEvents.
+func (mr *MockIdentityManagerMockRecorder) GetEvents(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvents", reflect.TypeOf((*MockIdentityManager)(nil).GetEvents), ctx)
+}
+
+// Resolve mocks base method.
+func (m *MockIdentityManager) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Resolve", ctx, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Resolve indicates an expected call of Resolve.
+func (mr *MockIdentityManagerMockRecorder) Resolve(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resolve", reflect.TypeOf((*MockIdentityManager)(nil).Resolve), ctx, id)
+}
+
+// ResolveFederated mocks base method.
+func (m *MockIdentityManager) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResolveFederated", ctx, federatedIdP, id)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ResolveFederated indicates an expected call of ResolveFederated.
+func (mr *MockIdentityManagerMockRecorder) ResolveFederated(ctx, federatedIdP, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveFederated", reflect.TypeOf((*MockIdentityManager)(nil).ResolveFederated), ctx, federatedIdP, id)
+}
+
+// String mocks base method.
+func (m *MockIdentityManager) String() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "String")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// String indicates an expected call of String.
+func (mr *MockIdentityManagerMockRecorder) String() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockIdentityManager)(nil).String))
+}
+
+// URL mocks base method.
+func (m *MockIdentityManager) URL() url.URL {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "URL")
+	ret0, _ := ret[0].(url.URL)
+	return ret0
+}
+
+// URL indicates an expected call of URL.
+func (mr *MockIdentityManagerMockRecorder) URL() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "URL", reflect.TypeOf((*MockIdentityManager)(nil).URL))
+}
+
+// Validate mocks base method.
+func (m *MockIdentityManager) Validate(ctx context.Context, token jwt.Token) (*auth.Identity, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validate", ctx, token)
+	ret0, _ := ret[0].(*auth.Identity)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Validate indicates an expected call of Validate.
+func (mr *MockIdentityManagerMockRecorder) Validate(ctx, token any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockIdentityManager)(nil).Validate), ctx, token)
 }

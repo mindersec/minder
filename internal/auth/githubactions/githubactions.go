@@ -50,6 +50,11 @@ func (gha *GitHubActions) Resolve(_ context.Context, id string) (*auth.Identity,
 	}, nil
 }
 
+// ResolveFederated implements auth.IdentityProvider.
+func (*GitHubActions) ResolveFederated(_ context.Context, _, _ string) (*auth.Identity, error) {
+	return nil, auth.ErrNotFound
+}
+
 // Validate implements auth.IdentityProvider.
 func (gha *GitHubActions) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
 	expectedUrl := gha.URL()
