@@ -95,15 +95,26 @@ func (s *Server) GetEntityById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid entity ID")
 	}
 
-	projectID := GetProjectID(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
+
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, fmt.Errorf("error getting provider: %w", err)
+	}
 
 	// Call service to get entity
-	entity, err := s.entityService.GetEntityByID(ctx, entityID, projectID)
+	entity, err := s.entityService.GetEntityByID(ctx, entityID, projectID, provider.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = providerName
 	logger.BusinessRecord(ctx).Project = projectID
 	logger.BusinessRecord(ctx).Entity = entityID
 
@@ -168,15 +179,26 @@ func (s *Server) DeleteEntityById(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "invalid entity ID")
 	}
 
-	projectID := GetProjectID(ctx)
+	entityCtx := engcontext.EntityFromContext(ctx)
+	projectID := entityCtx.Project.ID
+	providerName := entityCtx.Provider.Name
+
+	provider, err := s.providerStore.GetByName(ctx, projectID, providerName)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, util.UserVisibleError(codes.NotFound, "provider not found")
+		}
+		return nil, fmt.Errorf("error getting provider: %w", err)
+	}
 
 	// Call service to delete entity
-	err = s.entityService.DeleteEntityByID(ctx, entityID, projectID)
+	err = s.entityService.DeleteEntityByID(ctx, entityID, projectID, provider.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Telemetry logging
+	logger.BusinessRecord(ctx).Provider = providerName // Added provider telemetry!
 	logger.BusinessRecord(ctx).Project = projectID
 	logger.BusinessRecord(ctx).Entity = entityID
 

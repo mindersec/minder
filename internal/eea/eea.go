@@ -107,7 +107,11 @@ func (e *EEA) aggregate(msg *message.Message) (*message.Message, error) {
 	qtx := e.querier.GetQuerierWithTransaction(tx)
 
 	// We'll only attempt to lock if the entity exists.
-	_, err = qtx.GetEntityByID(ctx, entityID)
+	_, err = qtx.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         entityID,
+		ProjectID:  projectID,
+		ProviderID: inf.ProviderID,
+	})
 	if err != nil {
 		// explicit rollback if entity had an issue.
 		_ = e.querier.Rollback(tx)
@@ -187,7 +191,11 @@ func (e *EEA) FlushMessageHandler(msg *message.Message) error {
 
 	logger.Debug().Msg("flushing event")
 
-	_, err = e.querier.FlushCache(ctx, eID)
+	_, err = e.querier.FlushCache(ctx, db.FlushCacheParams{
+		EntityInstanceID: eID,
+		ProjectID:        inf.ProjectID,
+		ProviderID:       inf.ProviderID,
+	})
 	// Nothing to do here. If we can't flush the cache, it means
 	// that the event has already been executed.
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
@@ -218,7 +226,7 @@ func (e *EEA) FlushAll(ctx context.Context) error {
 	for _, cache := range caches {
 
 		eiw, err := e.buildEntityWrapper(ctx, cache.Entity,
-			cache.ProjectID, cache.EntityInstanceID)
+			cache.ProjectID, cache.EntityInstanceID, cache.ProviderID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) || errors.Is(err, service.ErrEntityNotFound) {
 				continue
@@ -246,14 +254,15 @@ func (e *EEA) buildEntityWrapper(
 	entity db.Entities,
 	projID uuid.UUID,
 	entityID uuid.UUID,
+	providerID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
 	switch entity {
 	case db.EntitiesRepository:
-		return e.buildRepositoryInfoWrapper(ctx, entityID, projID)
+		return e.buildRepositoryInfoWrapper(ctx, entityID, projID, providerID)
 	case db.EntitiesArtifact:
-		return e.buildArtifactInfoWrapper(ctx, entityID, projID)
+		return e.buildArtifactInfoWrapper(ctx, entityID, projID, providerID)
 	case db.EntitiesPullRequest:
-		return e.buildPullRequestInfoWrapper(ctx, entityID, projID)
+		return e.buildPullRequestInfoWrapper(ctx, entityID, projID, providerID)
 	case db.EntitiesBuildEnvironment, db.EntitiesRelease,
 		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 		return nil, fmt.Errorf("entity type %q not yet supported", entity)
@@ -261,13 +270,13 @@ func (e *EEA) buildEntityWrapper(
 		return nil, fmt.Errorf("unknown entity type: %q", entity)
 	}
 }
-
 func (e *EEA) buildRepositoryInfoWrapper(
 	ctx context.Context,
 	repoID uuid.UUID,
 	projID uuid.UUID,
+	providerID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, repoID, nil)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, repoID, projID, providerID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity: %w", err)
 	}
@@ -297,8 +306,9 @@ func (e *EEA) buildArtifactInfoWrapper(
 	ctx context.Context,
 	artID uuid.UUID,
 	projID uuid.UUID,
+	providerID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, artID, nil)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, artID, projID, providerID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity: %w", err)
 	}
@@ -329,8 +339,9 @@ func (e *EEA) buildPullRequestInfoWrapper(
 	ctx context.Context,
 	prID uuid.UUID,
 	projID uuid.UUID,
+	providerID uuid.UUID,
 ) (*entities.EntityInfoWrapper, error) {
-	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, prID, nil)
+	ent, err := e.entityFetcher.EntityWithPropertiesByID(ctx, prID, projID, providerID, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity: %w", err)
 	}

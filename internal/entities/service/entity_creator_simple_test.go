@@ -269,11 +269,15 @@ func TestEntityCreator_Integration_HappyPath(t *testing.T) {
 	res, err := creator.CreateEntity(ctx, &dbProvider, project.ID, pb.Entity_ENTITY_REPOSITORIES, nil, nil)
 
 	require.NoError(t, err)
-	dbEnt, err := realStore.GetEntityByID(ctx, res.Entity.ID)
+	dbEnt, err := realStore.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         res.Entity.ID,
+		ProjectID:  project.ID,
+		ProviderID: dbProvider.ID,
+	})
 	require.NoError(t, err)
 	assert.Equal(t, db.EntitiesRepository, dbEnt.EntityType)
 
-	savedEntity, _ := realPropSvc.EntityWithPropertiesByID(ctx, res.Entity.ID, nil)
+	savedEntity, _ := realPropSvc.EntityWithPropertiesByID(ctx, res.Entity.ID, project.ID, dbProvider.ID, nil)
 	assert.Contains(t, fmt.Sprintf("%+v", savedEntity.Properties), "my-test-repo")
 }
 
@@ -319,7 +323,11 @@ func TestEntityCreator_Integration_WithOriginator(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	dbEnt, _ := realStore.GetEntityByID(ctx, res.Entity.ID)
+	dbEnt, _ := realStore.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         res.Entity.ID,
+		ProjectID:  project.ID,
+		ProviderID: dbProvider.ID,
+	})
 	assert.Equal(t, parentID, dbEnt.OriginatedFrom.UUID)
 }
 
@@ -353,7 +361,7 @@ func TestEntityCreator_Integration_RollbackCleanup(t *testing.T) {
 	mockProv.EXPECT().RegisterEntity(gomock.Any(), gomock.Any(), gomock.Any()).Return(testProps, nil)
 
 	// db save fails
-	mockPropSvc.EXPECT().ReplaceAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+	mockPropSvc.EXPECT().ReplaceAllProperties(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(errors.New("database explosion"))
 
 	// ensure we match the props being deregistered

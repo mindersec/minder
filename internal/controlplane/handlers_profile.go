@@ -340,7 +340,13 @@ func (s *Server) getRuleEvalStatus(
 
 	// the caller just ignores allt the errors anyway, so we don't start a transaction as the integrity issues
 	// would not be discovered anyway
-	efp, err := s.props.EntityWithPropertiesByID(ctx, dbRuleEvalStat.EntityID, nil)
+	efp, err := s.props.EntityWithPropertiesByID(
+		ctx,
+		dbRuleEvalStat.EntityID,
+		dbRuleEvalStat.ProjectID,
+		dbRuleEvalStat.ProviderID,
+		nil,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching entity for properties: %w", err)
 	}
