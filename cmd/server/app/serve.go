@@ -80,26 +80,40 @@ var serveCmd = &cobra.Command{
 		}
 
 		// Identity
-		// TODO: cfg.Identity.Server.IssuerUrl _should_ be a URL to an issuer that has an
-		// .../.well-known/jwks.json or .../.well-known/openid-configuration endpoint.  Right
-		// now it's just a hostname.  When we have this, we can consolidate the jwksUrl and issUrl,
-		// and remove the Keycloak-specific paths.
-		jwksUrl, err := cfg.Identity.Server.GetRealmPath("protocol/openid-connect/certs")
+		oidcCfg, err := cfg.Identity.Server.DiscoverOIDCEndpoints(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to create JWKS URL: %w", err)
+			return fmt.Errorf("failed to discover OIDC endpoints: %w", err)
 		}
-		issUrl, err := cfg.Identity.Server.JwtUrl()
-		if err != nil {
-			return fmt.Errorf("failed to create issuer URL: %w", err)
-		}
-		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl.String(), issUrl.String(), cfg.Identity.Server.Audience)
+
+		jwksUrl := oidcCfg.JWKSURI
+		issUrl := oidcCfg.Issuer
+
+		staticJwt, err := jwt.NewJwtValidator(ctx, jwksUrl, issUrl, cfg.Identity.Server.Audience)
 		if err != nil {
 			return fmt.Errorf("failed to fetch and cache identity provider JWKS: %w", err)
 		}
-		allowedIssuers := []string{issUrl.String()}
+		allowedIssuers := []string{issUrl}
 		allowedIssuers = append(allowedIssuers, cfg.Identity.AdditionalIssuers...)
+
+		// In docker-compose / Kubernetes, the IDP may be reached at a different URL
+		// from the server (e.g. http://keycloak:8080) than from the client
+		// (e.g. http://localhost:8081).  Keycloak echoes the calling hostname in
+		// its `iss` claim, so we may need to accept tokens with either issuer.
+		// Add issuer_claim as an additional allowed issuer if it differs from
+		// the discovered one.
+		jwtValidators := []jwt.Validator{staticJwt}
+		if cfg.Identity.Server.IssuerClaim != "" && cfg.Identity.Server.IssuerClaim != issUrl {
+			allowedIssuers = append(allowedIssuers, cfg.Identity.Server.IssuerClaim)
+			claimJwt, err := jwt.NewJwtValidator(ctx, jwksUrl, cfg.Identity.Server.IssuerClaim, cfg.Identity.Server.Audience)
+			if err != nil {
+				return fmt.Errorf("failed to create JWT validator for issuer_claim: %w", err)
+			}
+			jwtValidators = append(jwtValidators, claimJwt)
+		}
+
 		dynamicJwt := dynamic.NewDynamicValidator(ctx, cfg.Identity.Server.Audience, allowedIssuers)
-		jwt := merged.Validator{Validators: []jwt.Validator{staticJwt, dynamicJwt}}
+		jwtValidators = append(jwtValidators, dynamicJwt)
+		jwt := merged.Validator{Validators: jwtValidators}
 
 		authzc, err := authz.NewAuthzClient(&cfg.Authz, l)
 		if err != nil {
@@ -119,6 +133,17 @@ var serveCmd = &cobra.Command{
 			return fmt.Errorf("unable to create identity client: %w", err)
 		}
 
+		// Register issuer_claim as an additional URL alias in the IdentityClient so
+		// that tokens with either the internal or external issuer URL can be validated.
+		if cfg.Identity.Server.IssuerClaim != "" {
+			kcUrl := kc.URL()
+			if cfg.Identity.Server.IssuerClaim != kcUrl.String() {
+				if err := idClient.RegisterAlias(cfg.Identity.Server.IssuerClaim, kc); err != nil {
+					return fmt.Errorf("unable to register issuer_claim alias: %w", err)
+				}
+			}
+		}
+
 		providerMetrics := provtelemetry.NewProviderMetrics()
 		restClientCache := ratecache.NewRestClientCache(ctx)
 		defer restClientCache.Close()
@@ -132,6 +157,7 @@ var serveCmd = &cobra.Command{
 			restClientCache,
 			authzc,
 			idClient,
+			kc,
 			cpmetrics.NewMetrics(),
 			providerMetrics,
 			[]message.HandlerMiddleware{telemetryMiddleware.TelemetryStoreMiddleware},

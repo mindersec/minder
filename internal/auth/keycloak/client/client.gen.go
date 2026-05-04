@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for DecisionEffect.
@@ -73,6 +74,27 @@ func (e Logic) Valid() bool {
 	}
 }
 
+// Defines values for PolicyEnforcementMode.
+const (
+	DISABLED   PolicyEnforcementMode = "DISABLED"
+	ENFORCING  PolicyEnforcementMode = "ENFORCING"
+	PERMISSIVE PolicyEnforcementMode = "PERMISSIVE"
+)
+
+// Valid indicates whether the value is a known member of the PolicyEnforcementMode enum.
+func (e PolicyEnforcementMode) Valid() bool {
+	switch e {
+	case DISABLED:
+		return true
+	case ENFORCING:
+		return true
+	case PERMISSIVE:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for UnmanagedAttributePolicy.
 const (
 	ADMINEDIT UnmanagedAttributePolicy = "ADMIN_EDIT"
@@ -94,6 +116,263 @@ func (e UnmanagedAttributePolicy) Valid() bool {
 	}
 }
 
+// AdminEventRepresentation defines model for AdminEventRepresentation.
+type AdminEventRepresentation struct {
+	AuthDetails    *AuthDetailsRepresentation `json:"authDetails,omitempty"`
+	Error          *string                    `json:"error,omitempty"`
+	OperationType  *string                    `json:"operationType,omitempty"`
+	RealmId        *string                    `json:"realmId,omitempty"`
+	Representation *string                    `json:"representation,omitempty"`
+	ResourcePath   *string                    `json:"resourcePath,omitempty"`
+	ResourceType   *string                    `json:"resourceType,omitempty"`
+	Time           *int64                     `json:"time,omitempty"`
+}
+
+// ApplicationRepresentation defines model for ApplicationRepresentation.
+type ApplicationRepresentation struct {
+	Access                             *map[string]bool              `json:"access,omitempty"`
+	AdminUrl                           *string                       `json:"adminUrl,omitempty"`
+	AlwaysDisplayInConsole             *bool                         `json:"alwaysDisplayInConsole,omitempty"`
+	Attributes                         *map[string]string            `json:"attributes,omitempty"`
+	AuthenticationFlowBindingOverrides *map[string]string            `json:"authenticationFlowBindingOverrides,omitempty"`
+	AuthorizationServicesEnabled       *bool                         `json:"authorizationServicesEnabled,omitempty"`
+	AuthorizationSettings              *ResourceServerRepresentation `json:"authorizationSettings,omitempty"`
+	BaseUrl                            *string                       `json:"baseUrl,omitempty"`
+	BearerOnly                         *bool                         `json:"bearerOnly,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Claims                  *ClaimRepresentation `json:"claims,omitempty"`
+	ClientAuthenticatorType *string              `json:"clientAuthenticatorType,omitempty"`
+	ClientId                *string              `json:"clientId,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ClientTemplate      *string   `json:"clientTemplate,omitempty"`
+	ConsentRequired     *bool     `json:"consentRequired,omitempty"`
+	DefaultClientScopes *[]string `json:"defaultClientScopes,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DefaultRoles              *[]string `json:"defaultRoles,omitempty"`
+	Description               *string   `json:"description,omitempty"`
+	DirectAccessGrantsEnabled *bool     `json:"directAccessGrantsEnabled,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DirectGrantsOnly          *bool                           `json:"directGrantsOnly,omitempty"`
+	Enabled                   *bool                           `json:"enabled,omitempty"`
+	FrontchannelLogout        *bool                           `json:"frontchannelLogout,omitempty"`
+	FullScopeAllowed          *bool                           `json:"fullScopeAllowed,omitempty"`
+	Id                        *string                         `json:"id,omitempty"`
+	ImplicitFlowEnabled       *bool                           `json:"implicitFlowEnabled,omitempty"`
+	Name                      *string                         `json:"name,omitempty"`
+	NodeReRegistrationTimeout *int32                          `json:"nodeReRegistrationTimeout,omitempty"`
+	NotBefore                 *int32                          `json:"notBefore,omitempty"`
+	OptionalClientScopes      *[]string                       `json:"optionalClientScopes,omitempty"`
+	Origin                    *string                         `json:"origin,omitempty"`
+	Protocol                  *string                         `json:"protocol,omitempty"`
+	ProtocolMappers           *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+	PublicClient              *bool                           `json:"publicClient,omitempty"`
+	RedirectUris              *[]string                       `json:"redirectUris,omitempty"`
+	RegisteredNodes           *map[string]int32               `json:"registeredNodes,omitempty"`
+	RegistrationAccessToken   *string                         `json:"registrationAccessToken,omitempty"`
+	RootUrl                   *string                         `json:"rootUrl,omitempty"`
+	Secret                    *string                         `json:"secret,omitempty"`
+	ServiceAccountsEnabled    *bool                           `json:"serviceAccountsEnabled,omitempty"`
+	StandardFlowEnabled       *bool                           `json:"standardFlowEnabled,omitempty"`
+	SurrogateAuthRequired     *bool                           `json:"surrogateAuthRequired,omitempty"`
+	Type                      *string                         `json:"type,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateConfig *bool `json:"useTemplateConfig,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateMappers *bool `json:"useTemplateMappers,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateScope *bool     `json:"useTemplateScope,omitempty"`
+	WebOrigins       *[]string `json:"webOrigins,omitempty"`
+}
+
+// AuthDetailsRepresentation defines model for AuthDetailsRepresentation.
+type AuthDetailsRepresentation struct {
+	ClientId  *string `json:"clientId,omitempty"`
+	IpAddress *string `json:"ipAddress,omitempty"`
+	RealmId   *string `json:"realmId,omitempty"`
+	UserId    *string `json:"userId,omitempty"`
+}
+
+// AuthenticationExecutionExportRepresentation defines model for AuthenticationExecutionExportRepresentation.
+type AuthenticationExecutionExportRepresentation struct {
+	Authenticator       *string `json:"authenticator,omitempty"`
+	AuthenticatorConfig *string `json:"authenticatorConfig,omitempty"`
+	AuthenticatorFlow   *bool   `json:"authenticatorFlow,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	AutheticatorFlow *bool   `json:"autheticatorFlow,omitempty"`
+	FlowAlias        *string `json:"flowAlias,omitempty"`
+	Priority         *int32  `json:"priority,omitempty"`
+	Requirement      *string `json:"requirement,omitempty"`
+	UserSetupAllowed *bool   `json:"userSetupAllowed,omitempty"`
+}
+
+// AuthenticationFlowRepresentation defines model for AuthenticationFlowRepresentation.
+type AuthenticationFlowRepresentation struct {
+	Alias                    *string                                        `json:"alias,omitempty"`
+	AuthenticationExecutions *[]AuthenticationExecutionExportRepresentation `json:"authenticationExecutions,omitempty"`
+	BuiltIn                  *bool                                          `json:"builtIn,omitempty"`
+	Description              *string                                        `json:"description,omitempty"`
+	Id                       *string                                        `json:"id,omitempty"`
+	ProviderId               *string                                        `json:"providerId,omitempty"`
+	TopLevel                 *bool                                          `json:"topLevel,omitempty"`
+}
+
+// AuthenticatorConfigRepresentation defines model for AuthenticatorConfigRepresentation.
+type AuthenticatorConfigRepresentation struct {
+	Alias  *string            `json:"alias,omitempty"`
+	Config *map[string]string `json:"config,omitempty"`
+	Id     *string            `json:"id,omitempty"`
+}
+
+// ClaimRepresentation defines model for ClaimRepresentation.
+type ClaimRepresentation struct {
+	Address  *bool `json:"address,omitempty"`
+	Email    *bool `json:"email,omitempty"`
+	Gender   *bool `json:"gender,omitempty"`
+	Locale   *bool `json:"locale,omitempty"`
+	Name     *bool `json:"name,omitempty"`
+	Phone    *bool `json:"phone,omitempty"`
+	Picture  *bool `json:"picture,omitempty"`
+	Profile  *bool `json:"profile,omitempty"`
+	Username *bool `json:"username,omitempty"`
+	Website  *bool `json:"website,omitempty"`
+}
+
+// ClientPoliciesRepresentation defines model for ClientPoliciesRepresentation.
+type ClientPoliciesRepresentation struct {
+	GlobalPolicies *[]ClientPolicyRepresentation `json:"globalPolicies,omitempty"`
+	Policies       *[]ClientPolicyRepresentation `json:"policies,omitempty"`
+}
+
+// ClientPolicyConditionRepresentation defines model for ClientPolicyConditionRepresentation.
+type ClientPolicyConditionRepresentation struct {
+	Condition     *string        `json:"condition,omitempty"`
+	Configuration *[]interface{} `json:"configuration,omitempty"`
+}
+
+// ClientPolicyExecutorRepresentation defines model for ClientPolicyExecutorRepresentation.
+type ClientPolicyExecutorRepresentation struct {
+	Configuration *[]interface{} `json:"configuration,omitempty"`
+	Executor      *string        `json:"executor,omitempty"`
+}
+
+// ClientPolicyRepresentation defines model for ClientPolicyRepresentation.
+type ClientPolicyRepresentation struct {
+	Conditions  *[]ClientPolicyConditionRepresentation `json:"conditions,omitempty"`
+	Description *string                                `json:"description,omitempty"`
+	Enabled     *bool                                  `json:"enabled,omitempty"`
+	Name        *string                                `json:"name,omitempty"`
+	Profiles    *[]string                              `json:"profiles,omitempty"`
+}
+
+// ClientProfileRepresentation defines model for ClientProfileRepresentation.
+type ClientProfileRepresentation struct {
+	Description *string                               `json:"description,omitempty"`
+	Executors   *[]ClientPolicyExecutorRepresentation `json:"executors,omitempty"`
+	Name        *string                               `json:"name,omitempty"`
+}
+
+// ClientProfilesRepresentation defines model for ClientProfilesRepresentation.
+type ClientProfilesRepresentation struct {
+	GlobalProfiles *[]ClientProfileRepresentation `json:"globalProfiles,omitempty"`
+	Profiles       *[]ClientProfileRepresentation `json:"profiles,omitempty"`
+}
+
+// ClientRepresentation defines model for ClientRepresentation.
+type ClientRepresentation struct {
+	Access                             *map[string]bool              `json:"access,omitempty"`
+	AdminUrl                           *string                       `json:"adminUrl,omitempty"`
+	AlwaysDisplayInConsole             *bool                         `json:"alwaysDisplayInConsole,omitempty"`
+	Attributes                         *map[string]string            `json:"attributes,omitempty"`
+	AuthenticationFlowBindingOverrides *map[string]string            `json:"authenticationFlowBindingOverrides,omitempty"`
+	AuthorizationServicesEnabled       *bool                         `json:"authorizationServicesEnabled,omitempty"`
+	AuthorizationSettings              *ResourceServerRepresentation `json:"authorizationSettings,omitempty"`
+	BaseUrl                            *string                       `json:"baseUrl,omitempty"`
+	BearerOnly                         *bool                         `json:"bearerOnly,omitempty"`
+	ClientAuthenticatorType            *string                       `json:"clientAuthenticatorType,omitempty"`
+	ClientId                           *string                       `json:"clientId,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ClientTemplate      *string   `json:"clientTemplate,omitempty"`
+	ConsentRequired     *bool     `json:"consentRequired,omitempty"`
+	DefaultClientScopes *[]string `json:"defaultClientScopes,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DefaultRoles              *[]string `json:"defaultRoles,omitempty"`
+	Description               *string   `json:"description,omitempty"`
+	DirectAccessGrantsEnabled *bool     `json:"directAccessGrantsEnabled,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DirectGrantsOnly          *bool                           `json:"directGrantsOnly,omitempty"`
+	Enabled                   *bool                           `json:"enabled,omitempty"`
+	FrontchannelLogout        *bool                           `json:"frontchannelLogout,omitempty"`
+	FullScopeAllowed          *bool                           `json:"fullScopeAllowed,omitempty"`
+	Id                        *string                         `json:"id,omitempty"`
+	ImplicitFlowEnabled       *bool                           `json:"implicitFlowEnabled,omitempty"`
+	Name                      *string                         `json:"name,omitempty"`
+	NodeReRegistrationTimeout *int32                          `json:"nodeReRegistrationTimeout,omitempty"`
+	NotBefore                 *int32                          `json:"notBefore,omitempty"`
+	OptionalClientScopes      *[]string                       `json:"optionalClientScopes,omitempty"`
+	Origin                    *string                         `json:"origin,omitempty"`
+	Protocol                  *string                         `json:"protocol,omitempty"`
+	ProtocolMappers           *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+	PublicClient              *bool                           `json:"publicClient,omitempty"`
+	RedirectUris              *[]string                       `json:"redirectUris,omitempty"`
+	RegisteredNodes           *map[string]int32               `json:"registeredNodes,omitempty"`
+	RegistrationAccessToken   *string                         `json:"registrationAccessToken,omitempty"`
+	RootUrl                   *string                         `json:"rootUrl,omitempty"`
+	Secret                    *string                         `json:"secret,omitempty"`
+	ServiceAccountsEnabled    *bool                           `json:"serviceAccountsEnabled,omitempty"`
+	StandardFlowEnabled       *bool                           `json:"standardFlowEnabled,omitempty"`
+	SurrogateAuthRequired     *bool                           `json:"surrogateAuthRequired,omitempty"`
+	Type                      *string                         `json:"type,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateConfig *bool `json:"useTemplateConfig,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateMappers *bool `json:"useTemplateMappers,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateScope *bool     `json:"useTemplateScope,omitempty"`
+	WebOrigins       *[]string `json:"webOrigins,omitempty"`
+}
+
+// ClientScopeRepresentation defines model for ClientScopeRepresentation.
+type ClientScopeRepresentation struct {
+	Attributes      *map[string]string              `json:"attributes,omitempty"`
+	Description     *string                         `json:"description,omitempty"`
+	Id              *string                         `json:"id,omitempty"`
+	Name            *string                         `json:"name,omitempty"`
+	Protocol        *string                         `json:"protocol,omitempty"`
+	ProtocolMappers *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+}
+
+// ClientTemplateRepresentation defines model for ClientTemplateRepresentation.
+type ClientTemplateRepresentation struct {
+	Attributes                *map[string]string              `json:"attributes,omitempty"`
+	BearerOnly                *bool                           `json:"bearerOnly,omitempty"`
+	ConsentRequired           *bool                           `json:"consentRequired,omitempty"`
+	Description               *string                         `json:"description,omitempty"`
+	DirectAccessGrantsEnabled *bool                           `json:"directAccessGrantsEnabled,omitempty"`
+	FrontchannelLogout        *bool                           `json:"frontchannelLogout,omitempty"`
+	FullScopeAllowed          *bool                           `json:"fullScopeAllowed,omitempty"`
+	Id                        *string                         `json:"id,omitempty"`
+	ImplicitFlowEnabled       *bool                           `json:"implicitFlowEnabled,omitempty"`
+	Name                      *string                         `json:"name,omitempty"`
+	Protocol                  *string                         `json:"protocol,omitempty"`
+	ProtocolMappers           *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+	PublicClient              *bool                           `json:"publicClient,omitempty"`
+	ServiceAccountsEnabled    *bool                           `json:"serviceAccountsEnabled,omitempty"`
+	StandardFlowEnabled       *bool                           `json:"standardFlowEnabled,omitempty"`
+}
+
+// ClientTypeRepresentation defines model for ClientTypeRepresentation.
+type ClientTypeRepresentation struct {
+	Config   *map[string]PropertyConfig `json:"config,omitempty"`
+	Name     *string                    `json:"name,omitempty"`
+	Provider *string                    `json:"provider,omitempty"`
+}
+
+// ClientTypesRepresentation defines model for ClientTypesRepresentation.
+type ClientTypesRepresentation struct {
+	ClientTypes       *[]ClientTypeRepresentation `json:"client-types,omitempty"`
+	GlobalClientTypes *[]ClientTypeRepresentation `json:"global-client-types,omitempty"`
+}
+
 // ComponentExportRepresentation defines model for ComponentExportRepresentation.
 type ComponentExportRepresentation struct {
 	Config        *MultivaluedHashMapStringString                        `json:"config,omitempty"`
@@ -102,6 +381,14 @@ type ComponentExportRepresentation struct {
 	ProviderId    *string                                                `json:"providerId,omitempty"`
 	SubComponents *MultivaluedHashMapStringComponentExportRepresentation `json:"subComponents,omitempty"`
 	SubType       *string                                                `json:"subType,omitempty"`
+}
+
+// Composites defines model for Composites.
+type Composites struct {
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Application *map[string][]string `json:"application,omitempty"`
+	Client      *map[string][]string `json:"client,omitempty"`
+	Realm       *[]string            `json:"realm,omitempty"`
 }
 
 // CredentialRepresentation defines model for CredentialRepresentation.
@@ -141,11 +428,30 @@ type DecisionEffect string
 // DecisionStrategy defines model for DecisionStrategy.
 type DecisionStrategy string
 
+// EventRepresentation defines model for EventRepresentation.
+type EventRepresentation struct {
+	ClientId  *string            `json:"clientId,omitempty"`
+	Details   *map[string]string `json:"details,omitempty"`
+	Error     *string            `json:"error,omitempty"`
+	IpAddress *string            `json:"ipAddress,omitempty"`
+	RealmId   *string            `json:"realmId,omitempty"`
+	SessionId *string            `json:"sessionId,omitempty"`
+	Time      *int64             `json:"time,omitempty"`
+	Type      *string            `json:"type,omitempty"`
+	UserId    *string            `json:"userId,omitempty"`
+}
+
 // FederatedIdentityRepresentation defines model for FederatedIdentityRepresentation.
 type FederatedIdentityRepresentation struct {
 	IdentityProvider *string `json:"identityProvider,omitempty"`
 	UserId           *string `json:"userId,omitempty"`
 	UserName         *string `json:"userName,omitempty"`
+}
+
+// GlobalRequestResult defines model for GlobalRequestResult.
+type GlobalRequestResult struct {
+	FailedRequests  *[]string `json:"failedRequests,omitempty"`
+	SuccessRequests *[]string `json:"successRequests,omitempty"`
 }
 
 // GroupRepresentation defines model for GroupRepresentation.
@@ -162,14 +468,128 @@ type GroupRepresentation struct {
 	SubGroups     *[]GroupRepresentation `json:"subGroups,omitempty"`
 }
 
+// IdentityProviderMapperRepresentation defines model for IdentityProviderMapperRepresentation.
+type IdentityProviderMapperRepresentation struct {
+	Config                 *map[string]string `json:"config,omitempty"`
+	Id                     *string            `json:"id,omitempty"`
+	IdentityProviderAlias  *string            `json:"identityProviderAlias,omitempty"`
+	IdentityProviderMapper *string            `json:"identityProviderMapper,omitempty"`
+	Name                   *string            `json:"name,omitempty"`
+}
+
+// IdentityProviderRepresentation defines model for IdentityProviderRepresentation.
+type IdentityProviderRepresentation struct {
+	AddReadTokenRoleOnCreate  *bool              `json:"addReadTokenRoleOnCreate,omitempty"`
+	Alias                     *string            `json:"alias,omitempty"`
+	AuthenticateByDefault     *bool              `json:"authenticateByDefault,omitempty"`
+	Config                    *map[string]string `json:"config,omitempty"`
+	DisplayName               *string            `json:"displayName,omitempty"`
+	Enabled                   *bool              `json:"enabled,omitempty"`
+	FirstBrokerLoginFlowAlias *string            `json:"firstBrokerLoginFlowAlias,omitempty"`
+	InternalId                *string            `json:"internalId,omitempty"`
+	LinkOnly                  *bool              `json:"linkOnly,omitempty"`
+	PostBrokerLoginFlowAlias  *string            `json:"postBrokerLoginFlowAlias,omitempty"`
+	ProviderId                *string            `json:"providerId,omitempty"`
+	StoreToken                *bool              `json:"storeToken,omitempty"`
+	TrustEmail                *bool              `json:"trustEmail,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UpdateProfileFirstLogin *bool `json:"updateProfileFirstLogin,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UpdateProfileFirstLoginMode *string `json:"updateProfileFirstLoginMode,omitempty"`
+}
+
 // Logic defines model for Logic.
 type Logic string
+
+// ManagementPermissionReference defines model for ManagementPermissionReference.
+type ManagementPermissionReference struct {
+	Enabled          *bool              `json:"enabled,omitempty"`
+	Resource         *string            `json:"resource,omitempty"`
+	ScopePermissions *map[string]string `json:"scopePermissions,omitempty"`
+}
 
 // MultivaluedHashMapStringComponentExportRepresentation defines model for MultivaluedHashMapStringComponentExportRepresentation.
 type MultivaluedHashMapStringComponentExportRepresentation map[string][]ComponentExportRepresentation
 
 // MultivaluedHashMapStringString defines model for MultivaluedHashMapStringString.
 type MultivaluedHashMapStringString map[string][]string
+
+// OAuthClientRepresentation defines model for OAuthClientRepresentation.
+type OAuthClientRepresentation struct {
+	Access                             *map[string]bool              `json:"access,omitempty"`
+	AdminUrl                           *string                       `json:"adminUrl,omitempty"`
+	AlwaysDisplayInConsole             *bool                         `json:"alwaysDisplayInConsole,omitempty"`
+	Attributes                         *map[string]string            `json:"attributes,omitempty"`
+	AuthenticationFlowBindingOverrides *map[string]string            `json:"authenticationFlowBindingOverrides,omitempty"`
+	AuthorizationServicesEnabled       *bool                         `json:"authorizationServicesEnabled,omitempty"`
+	AuthorizationSettings              *ResourceServerRepresentation `json:"authorizationSettings,omitempty"`
+	BaseUrl                            *string                       `json:"baseUrl,omitempty"`
+	BearerOnly                         *bool                         `json:"bearerOnly,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Claims                  *ClaimRepresentation `json:"claims,omitempty"`
+	ClientAuthenticatorType *string              `json:"clientAuthenticatorType,omitempty"`
+	ClientId                *string              `json:"clientId,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ClientTemplate      *string   `json:"clientTemplate,omitempty"`
+	ConsentRequired     *bool     `json:"consentRequired,omitempty"`
+	DefaultClientScopes *[]string `json:"defaultClientScopes,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DefaultRoles              *[]string `json:"defaultRoles,omitempty"`
+	Description               *string   `json:"description,omitempty"`
+	DirectAccessGrantsEnabled *bool     `json:"directAccessGrantsEnabled,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DirectGrantsOnly          *bool                           `json:"directGrantsOnly,omitempty"`
+	Enabled                   *bool                           `json:"enabled,omitempty"`
+	FrontchannelLogout        *bool                           `json:"frontchannelLogout,omitempty"`
+	FullScopeAllowed          *bool                           `json:"fullScopeAllowed,omitempty"`
+	Id                        *string                         `json:"id,omitempty"`
+	ImplicitFlowEnabled       *bool                           `json:"implicitFlowEnabled,omitempty"`
+	Name                      *string                         `json:"name,omitempty"`
+	NodeReRegistrationTimeout *int32                          `json:"nodeReRegistrationTimeout,omitempty"`
+	NotBefore                 *int32                          `json:"notBefore,omitempty"`
+	OptionalClientScopes      *[]string                       `json:"optionalClientScopes,omitempty"`
+	Origin                    *string                         `json:"origin,omitempty"`
+	Protocol                  *string                         `json:"protocol,omitempty"`
+	ProtocolMappers           *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+	PublicClient              *bool                           `json:"publicClient,omitempty"`
+	RedirectUris              *[]string                       `json:"redirectUris,omitempty"`
+	RegisteredNodes           *map[string]int32               `json:"registeredNodes,omitempty"`
+	RegistrationAccessToken   *string                         `json:"registrationAccessToken,omitempty"`
+	RootUrl                   *string                         `json:"rootUrl,omitempty"`
+	Secret                    *string                         `json:"secret,omitempty"`
+	ServiceAccountsEnabled    *bool                           `json:"serviceAccountsEnabled,omitempty"`
+	StandardFlowEnabled       *bool                           `json:"standardFlowEnabled,omitempty"`
+	SurrogateAuthRequired     *bool                           `json:"surrogateAuthRequired,omitempty"`
+	Type                      *string                         `json:"type,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateConfig *bool `json:"useTemplateConfig,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateMappers *bool `json:"useTemplateMappers,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UseTemplateScope *bool     `json:"useTemplateScope,omitempty"`
+	WebOrigins       *[]string `json:"webOrigins,omitempty"`
+}
+
+// OrganizationDomainRepresentation defines model for OrganizationDomainRepresentation.
+type OrganizationDomainRepresentation struct {
+	Name     *string `json:"name,omitempty"`
+	Verified *bool   `json:"verified,omitempty"`
+}
+
+// OrganizationRepresentation defines model for OrganizationRepresentation.
+type OrganizationRepresentation struct {
+	Attributes        *map[string][]string                `json:"attributes,omitempty"`
+	Description       *string                             `json:"description,omitempty"`
+	Domains           *[]OrganizationDomainRepresentation `json:"domains,omitempty"`
+	Enabled           *bool                               `json:"enabled,omitempty"`
+	Id                *string                             `json:"id,omitempty"`
+	IdentityProviders *[]IdentityProviderRepresentation   `json:"identityProviders,omitempty"`
+	Members           *[]UserRepresentation               `json:"members,omitempty"`
+	Name              *string                             `json:"name,omitempty"`
+}
+
+// PolicyEnforcementMode defines model for PolicyEnforcementMode.
+type PolicyEnforcementMode string
 
 // PolicyRepresentation defines model for PolicyRepresentation.
 type PolicyRepresentation struct {
@@ -196,6 +616,213 @@ type PolicyResultRepresentation struct {
 	Status             *DecisionEffect               `json:"status,omitempty"`
 }
 
+// PropertyConfig defines model for PropertyConfig.
+type PropertyConfig struct {
+	Applicable *bool       `json:"applicable,omitempty"`
+	Value      interface{} `json:"value,omitempty"`
+}
+
+// ProtocolMapperRepresentation defines model for ProtocolMapperRepresentation.
+type ProtocolMapperRepresentation struct {
+	Config *map[string]string `json:"config,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ConsentRequired *bool `json:"consentRequired,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ConsentText    *string `json:"consentText,omitempty"`
+	Id             *string `json:"id,omitempty"`
+	Name           *string `json:"name,omitempty"`
+	Protocol       *string `json:"protocol,omitempty"`
+	ProtocolMapper *string `json:"protocolMapper,omitempty"`
+}
+
+// RealmEventsConfigRepresentation defines model for RealmEventsConfigRepresentation.
+type RealmEventsConfigRepresentation struct {
+	AdminEventsDetailsEnabled *bool     `json:"adminEventsDetailsEnabled,omitempty"`
+	AdminEventsEnabled        *bool     `json:"adminEventsEnabled,omitempty"`
+	EnabledEventTypes         *[]string `json:"enabledEventTypes,omitempty"`
+	EventsEnabled             *bool     `json:"eventsEnabled,omitempty"`
+	EventsExpiration          *int64    `json:"eventsExpiration,omitempty"`
+	EventsListeners           *[]string `json:"eventsListeners,omitempty"`
+}
+
+// RealmRepresentation defines model for RealmRepresentation.
+type RealmRepresentation struct {
+	AccessCodeLifespan                  *int32  `json:"accessCodeLifespan,omitempty"`
+	AccessCodeLifespanLogin             *int32  `json:"accessCodeLifespanLogin,omitempty"`
+	AccessCodeLifespanUserAction        *int32  `json:"accessCodeLifespanUserAction,omitempty"`
+	AccessTokenLifespan                 *int32  `json:"accessTokenLifespan,omitempty"`
+	AccessTokenLifespanForImplicitFlow  *int32  `json:"accessTokenLifespanForImplicitFlow,omitempty"`
+	AccountTheme                        *string `json:"accountTheme,omitempty"`
+	ActionTokenGeneratedByAdminLifespan *int32  `json:"actionTokenGeneratedByAdminLifespan,omitempty"`
+	ActionTokenGeneratedByUserLifespan  *int32  `json:"actionTokenGeneratedByUserLifespan,omitempty"`
+	AdminEventsDetailsEnabled           *bool   `json:"adminEventsDetailsEnabled,omitempty"`
+	AdminEventsEnabled                  *bool   `json:"adminEventsEnabled,omitempty"`
+	AdminTheme                          *string `json:"adminTheme,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ApplicationScopeMappings *map[string][]ScopeMappingRepresentation `json:"applicationScopeMappings,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Applications           *[]ApplicationRepresentation         `json:"applications,omitempty"`
+	Attributes             *map[string]string                   `json:"attributes,omitempty"`
+	AuthenticationFlows    *[]AuthenticationFlowRepresentation  `json:"authenticationFlows,omitempty"`
+	AuthenticatorConfig    *[]AuthenticatorConfigRepresentation `json:"authenticatorConfig,omitempty"`
+	BrowserFlow            *string                              `json:"browserFlow,omitempty"`
+	BrowserSecurityHeaders *map[string]string                   `json:"browserSecurityHeaders,omitempty"`
+	BruteForceProtected    *bool                                `json:"bruteForceProtected,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Certificate                     *string                                  `json:"certificate,omitempty"`
+	ClientAuthenticationFlow        *string                                  `json:"clientAuthenticationFlow,omitempty"`
+	ClientOfflineSessionIdleTimeout *int32                                   `json:"clientOfflineSessionIdleTimeout,omitempty"`
+	ClientOfflineSessionMaxLifespan *int32                                   `json:"clientOfflineSessionMaxLifespan,omitempty"`
+	ClientPolicies                  *ClientPoliciesRepresentation            `json:"clientPolicies,omitempty"`
+	ClientProfiles                  *ClientProfilesRepresentation            `json:"clientProfiles,omitempty"`
+	ClientScopeMappings             *map[string][]ScopeMappingRepresentation `json:"clientScopeMappings,omitempty"`
+	ClientScopes                    *[]ClientScopeRepresentation             `json:"clientScopes,omitempty"`
+	ClientSessionIdleTimeout        *int32                                   `json:"clientSessionIdleTimeout,omitempty"`
+	ClientSessionMaxLifespan        *int32                                   `json:"clientSessionMaxLifespan,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ClientTemplates *[]ClientTemplateRepresentation `json:"clientTemplates,omitempty"`
+	Clients         *[]ClientRepresentation         `json:"clients,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	CodeSecret                  *string                                                `json:"codeSecret,omitempty"`
+	Components                  *MultivaluedHashMapStringComponentExportRepresentation `json:"components,omitempty"`
+	DefaultDefaultClientScopes  *[]string                                              `json:"defaultDefaultClientScopes,omitempty"`
+	DefaultGroups               *[]string                                              `json:"defaultGroups,omitempty"`
+	DefaultLocale               *string                                                `json:"defaultLocale,omitempty"`
+	DefaultOptionalClientScopes *[]string                                              `json:"defaultOptionalClientScopes,omitempty"`
+	DefaultRole                 *RoleRepresentation                                    `json:"defaultRole,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DefaultRoles                 *[]string                               `json:"defaultRoles,omitempty"`
+	DefaultSignatureAlgorithm    *string                                 `json:"defaultSignatureAlgorithm,omitempty"`
+	DirectGrantFlow              *string                                 `json:"directGrantFlow,omitempty"`
+	DisplayName                  *string                                 `json:"displayName,omitempty"`
+	DisplayNameHtml              *string                                 `json:"displayNameHtml,omitempty"`
+	DockerAuthenticationFlow     *string                                 `json:"dockerAuthenticationFlow,omitempty"`
+	DuplicateEmailsAllowed       *bool                                   `json:"duplicateEmailsAllowed,omitempty"`
+	EditUsernameAllowed          *bool                                   `json:"editUsernameAllowed,omitempty"`
+	EmailTheme                   *string                                 `json:"emailTheme,omitempty"`
+	Enabled                      *bool                                   `json:"enabled,omitempty"`
+	EnabledEventTypes            *[]string                               `json:"enabledEventTypes,omitempty"`
+	EventsEnabled                *bool                                   `json:"eventsEnabled,omitempty"`
+	EventsExpiration             *int64                                  `json:"eventsExpiration,omitempty"`
+	EventsListeners              *[]string                               `json:"eventsListeners,omitempty"`
+	FailureFactor                *int32                                  `json:"failureFactor,omitempty"`
+	FederatedUsers               *[]UserRepresentation                   `json:"federatedUsers,omitempty"`
+	FirstBrokerLoginFlow         *string                                 `json:"firstBrokerLoginFlow,omitempty"`
+	Groups                       *[]GroupRepresentation                  `json:"groups,omitempty"`
+	Id                           *string                                 `json:"id,omitempty"`
+	IdentityProviderMappers      *[]IdentityProviderMapperRepresentation `json:"identityProviderMappers,omitempty"`
+	IdentityProviders            *[]IdentityProviderRepresentation       `json:"identityProviders,omitempty"`
+	InternationalizationEnabled  *bool                                   `json:"internationalizationEnabled,omitempty"`
+	KeycloakVersion              *string                                 `json:"keycloakVersion,omitempty"`
+	LocalizationTexts            *map[string]map[string]string           `json:"localizationTexts,omitempty"`
+	LoginTheme                   *string                                 `json:"loginTheme,omitempty"`
+	LoginWithEmailAllowed        *bool                                   `json:"loginWithEmailAllowed,omitempty"`
+	MaxDeltaTimeSeconds          *int32                                  `json:"maxDeltaTimeSeconds,omitempty"`
+	MaxFailureWaitSeconds        *int32                                  `json:"maxFailureWaitSeconds,omitempty"`
+	MaxTemporaryLockouts         *int32                                  `json:"maxTemporaryLockouts,omitempty"`
+	MinimumQuickLoginWaitSeconds *int32                                  `json:"minimumQuickLoginWaitSeconds,omitempty"`
+	NotBefore                    *int32                                  `json:"notBefore,omitempty"`
+	OAuth2DeviceCodeLifespan     *int32                                  `json:"oAuth2DeviceCodeLifespan,omitempty"`
+	OAuth2DevicePollingInterval  *int32                                  `json:"oAuth2DevicePollingInterval,omitempty"`
+	Oauth2DeviceCodeLifespan     *int32                                  `json:"oauth2DeviceCodeLifespan,omitempty"`
+	Oauth2DevicePollingInterval  *int32                                  `json:"oauth2DevicePollingInterval,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	OauthClients                     *[]OAuthClientRepresentation  `json:"oauthClients,omitempty"`
+	OfflineSessionIdleTimeout        *int32                        `json:"offlineSessionIdleTimeout,omitempty"`
+	OfflineSessionMaxLifespan        *int32                        `json:"offlineSessionMaxLifespan,omitempty"`
+	OfflineSessionMaxLifespanEnabled *bool                         `json:"offlineSessionMaxLifespanEnabled,omitempty"`
+	Organizations                    *[]OrganizationRepresentation `json:"organizations,omitempty"`
+	OrganizationsEnabled             *bool                         `json:"organizationsEnabled,omitempty"`
+	OtpPolicyAlgorithm               *string                       `json:"otpPolicyAlgorithm,omitempty"`
+	OtpPolicyCodeReusable            *bool                         `json:"otpPolicyCodeReusable,omitempty"`
+	OtpPolicyDigits                  *int32                        `json:"otpPolicyDigits,omitempty"`
+	OtpPolicyInitialCounter          *int32                        `json:"otpPolicyInitialCounter,omitempty"`
+	OtpPolicyLookAheadWindow         *int32                        `json:"otpPolicyLookAheadWindow,omitempty"`
+	OtpPolicyPeriod                  *int32                        `json:"otpPolicyPeriod,omitempty"`
+	OtpPolicyType                    *string                       `json:"otpPolicyType,omitempty"`
+	OtpSupportedApplications         *[]string                     `json:"otpSupportedApplications,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	PasswordCredentialGrantAllowed *bool   `json:"passwordCredentialGrantAllowed,omitempty"`
+	PasswordPolicy                 *string `json:"passwordPolicy,omitempty"`
+	PermanentLockout               *bool   `json:"permanentLockout,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	PrivateKey      *string                         `json:"privateKey,omitempty"`
+	ProtocolMappers *[]ProtocolMapperRepresentation `json:"protocolMappers,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	PublicKey                   *string `json:"publicKey,omitempty"`
+	QuickLoginCheckMilliSeconds *int64  `json:"quickLoginCheckMilliSeconds,omitempty"`
+	Realm                       *string `json:"realm,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	RealmCacheEnabled           *bool                                   `json:"realmCacheEnabled,omitempty"`
+	RefreshTokenMaxReuse        *int32                                  `json:"refreshTokenMaxReuse,omitempty"`
+	RegistrationAllowed         *bool                                   `json:"registrationAllowed,omitempty"`
+	RegistrationEmailAsUsername *bool                                   `json:"registrationEmailAsUsername,omitempty"`
+	RegistrationFlow            *string                                 `json:"registrationFlow,omitempty"`
+	RememberMe                  *bool                                   `json:"rememberMe,omitempty"`
+	RequiredActions             *[]RequiredActionProviderRepresentation `json:"requiredActions,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	RequiredCredentials  *[]string                     `json:"requiredCredentials,omitempty"`
+	ResetCredentialsFlow *string                       `json:"resetCredentialsFlow,omitempty"`
+	ResetPasswordAllowed *bool                         `json:"resetPasswordAllowed,omitempty"`
+	RevokeRefreshToken   *bool                         `json:"revokeRefreshToken,omitempty"`
+	Roles                *RolesRepresentation          `json:"roles,omitempty"`
+	ScopeMappings        *[]ScopeMappingRepresentation `json:"scopeMappings,omitempty"`
+	SmtpServer           *map[string]string            `json:"smtpServer,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Social *bool `json:"social,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	SocialProviders                 *map[string]string `json:"socialProviders,omitempty"`
+	SslRequired                     *string            `json:"sslRequired,omitempty"`
+	SsoSessionIdleTimeout           *int32             `json:"ssoSessionIdleTimeout,omitempty"`
+	SsoSessionIdleTimeoutRememberMe *int32             `json:"ssoSessionIdleTimeoutRememberMe,omitempty"`
+	SsoSessionMaxLifespan           *int32             `json:"ssoSessionMaxLifespan,omitempty"`
+	SsoSessionMaxLifespanRememberMe *int32             `json:"ssoSessionMaxLifespanRememberMe,omitempty"`
+	SupportedLocales                *[]string          `json:"supportedLocales,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UpdateProfileOnInitialSocialLogin *bool `json:"updateProfileOnInitialSocialLogin,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	UserCacheEnabled                                          *bool                                   `json:"userCacheEnabled,omitempty"`
+	UserFederationMappers                                     *[]UserFederationMapperRepresentation   `json:"userFederationMappers,omitempty"`
+	UserFederationProviders                                   *[]UserFederationProviderRepresentation `json:"userFederationProviders,omitempty"`
+	UserManagedAccessAllowed                                  *bool                                   `json:"userManagedAccessAllowed,omitempty"`
+	Users                                                     *[]UserRepresentation                   `json:"users,omitempty"`
+	VerifyEmail                                               *bool                                   `json:"verifyEmail,omitempty"`
+	WaitIncrementSeconds                                      *int32                                  `json:"waitIncrementSeconds,omitempty"`
+	WebAuthnPolicyAcceptableAaguids                           *[]string                               `json:"webAuthnPolicyAcceptableAaguids,omitempty"`
+	WebAuthnPolicyAttestationConveyancePreference             *string                                 `json:"webAuthnPolicyAttestationConveyancePreference,omitempty"`
+	WebAuthnPolicyAuthenticatorAttachment                     *string                                 `json:"webAuthnPolicyAuthenticatorAttachment,omitempty"`
+	WebAuthnPolicyAvoidSameAuthenticatorRegister              *bool                                   `json:"webAuthnPolicyAvoidSameAuthenticatorRegister,omitempty"`
+	WebAuthnPolicyCreateTimeout                               *int32                                  `json:"webAuthnPolicyCreateTimeout,omitempty"`
+	WebAuthnPolicyExtraOrigins                                *[]string                               `json:"webAuthnPolicyExtraOrigins,omitempty"`
+	WebAuthnPolicyPasswordlessAcceptableAaguids               *[]string                               `json:"webAuthnPolicyPasswordlessAcceptableAaguids,omitempty"`
+	WebAuthnPolicyPasswordlessAttestationConveyancePreference *string                                 `json:"webAuthnPolicyPasswordlessAttestationConveyancePreference,omitempty"`
+	WebAuthnPolicyPasswordlessAuthenticatorAttachment         *string                                 `json:"webAuthnPolicyPasswordlessAuthenticatorAttachment,omitempty"`
+	WebAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister  *bool                                   `json:"webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister,omitempty"`
+	WebAuthnPolicyPasswordlessCreateTimeout                   *int32                                  `json:"webAuthnPolicyPasswordlessCreateTimeout,omitempty"`
+	WebAuthnPolicyPasswordlessExtraOrigins                    *[]string                               `json:"webAuthnPolicyPasswordlessExtraOrigins,omitempty"`
+	WebAuthnPolicyPasswordlessRequireResidentKey              *string                                 `json:"webAuthnPolicyPasswordlessRequireResidentKey,omitempty"`
+	WebAuthnPolicyPasswordlessRpEntityName                    *string                                 `json:"webAuthnPolicyPasswordlessRpEntityName,omitempty"`
+	WebAuthnPolicyPasswordlessRpId                            *string                                 `json:"webAuthnPolicyPasswordlessRpId,omitempty"`
+	WebAuthnPolicyPasswordlessSignatureAlgorithms             *[]string                               `json:"webAuthnPolicyPasswordlessSignatureAlgorithms,omitempty"`
+	WebAuthnPolicyPasswordlessUserVerificationRequirement     *string                                 `json:"webAuthnPolicyPasswordlessUserVerificationRequirement,omitempty"`
+	WebAuthnPolicyRequireResidentKey                          *string                                 `json:"webAuthnPolicyRequireResidentKey,omitempty"`
+	WebAuthnPolicyRpEntityName                                *string                                 `json:"webAuthnPolicyRpEntityName,omitempty"`
+	WebAuthnPolicyRpId                                        *string                                 `json:"webAuthnPolicyRpId,omitempty"`
+	WebAuthnPolicySignatureAlgorithms                         *[]string                               `json:"webAuthnPolicySignatureAlgorithms,omitempty"`
+	WebAuthnPolicyUserVerificationRequirement                 *string                                 `json:"webAuthnPolicyUserVerificationRequirement,omitempty"`
+}
+
+// RequiredActionProviderRepresentation defines model for RequiredActionProviderRepresentation.
+type RequiredActionProviderRepresentation struct {
+	Alias         *string            `json:"alias,omitempty"`
+	Config        *map[string]string `json:"config,omitempty"`
+	DefaultAction *bool              `json:"defaultAction,omitempty"`
+	Enabled       *bool              `json:"enabled,omitempty"`
+	Name          *string            `json:"name,omitempty"`
+	Priority      *int32             `json:"priority,omitempty"`
+	ProviderId    *string            `json:"providerId,omitempty"`
+}
+
 // ResourceOwnerRepresentation defines model for ResourceOwnerRepresentation.
 type ResourceOwnerRepresentation struct {
 	Id   *string `json:"id,omitempty"`
@@ -217,6 +844,51 @@ type ResourceRepresentation struct {
 	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	Uri  *string   `json:"uri,omitempty"`
 	Uris *[]string `json:"uris,omitempty"`
+}
+
+// ResourceServerRepresentation defines model for ResourceServerRepresentation.
+type ResourceServerRepresentation struct {
+	AllowRemoteResourceManagement *bool                     `json:"allowRemoteResourceManagement,omitempty"`
+	ClientId                      *string                   `json:"clientId,omitempty"`
+	DecisionStrategy              *DecisionStrategy         `json:"decisionStrategy,omitempty"`
+	Id                            *string                   `json:"id,omitempty"`
+	Name                          *string                   `json:"name,omitempty"`
+	Policies                      *[]PolicyRepresentation   `json:"policies,omitempty"`
+	PolicyEnforcementMode         *PolicyEnforcementMode    `json:"policyEnforcementMode,omitempty"`
+	Resources                     *[]ResourceRepresentation `json:"resources,omitempty"`
+	Scopes                        *[]ScopeRepresentation    `json:"scopes,omitempty"`
+}
+
+// RoleRepresentation defines model for RoleRepresentation.
+type RoleRepresentation struct {
+	Attributes  *map[string][]string `json:"attributes,omitempty"`
+	ClientRole  *bool                `json:"clientRole,omitempty"`
+	Composite   *bool                `json:"composite,omitempty"`
+	Composites  *Composites          `json:"composites,omitempty"`
+	ContainerId *string              `json:"containerId,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	Id          *string              `json:"id,omitempty"`
+	Name        *string              `json:"name,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ScopeParamRequired *bool `json:"scopeParamRequired,omitempty"`
+}
+
+// RolesRepresentation defines model for RolesRepresentation.
+type RolesRepresentation struct {
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	Application *map[string][]RoleRepresentation `json:"application,omitempty"`
+	Client      *map[string][]RoleRepresentation `json:"client,omitempty"`
+	Realm       *[]RoleRepresentation            `json:"realm,omitempty"`
+}
+
+// ScopeMappingRepresentation defines model for ScopeMappingRepresentation.
+type ScopeMappingRepresentation struct {
+	Client      *string `json:"client,omitempty"`
+	ClientScope *string `json:"clientScope,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	ClientTemplate *string   `json:"clientTemplate,omitempty"`
+	Roles          *[]string `json:"roles,omitempty"`
+	Self           *string   `json:"self,omitempty"`
 }
 
 // ScopeRepresentation defines model for ScopeRepresentation.
@@ -294,6 +966,27 @@ type UserConsentRepresentation struct {
 	LastUpdatedDate   *int64    `json:"lastUpdatedDate,omitempty"`
 }
 
+// UserFederationMapperRepresentation defines model for UserFederationMapperRepresentation.
+type UserFederationMapperRepresentation struct {
+	Config                        *map[string]string `json:"config,omitempty"`
+	FederationMapperType          *string            `json:"federationMapperType,omitempty"`
+	FederationProviderDisplayName *string            `json:"federationProviderDisplayName,omitempty"`
+	Id                            *string            `json:"id,omitempty"`
+	Name                          *string            `json:"name,omitempty"`
+}
+
+// UserFederationProviderRepresentation defines model for UserFederationProviderRepresentation.
+type UserFederationProviderRepresentation struct {
+	ChangedSyncPeriod *int32             `json:"changedSyncPeriod,omitempty"`
+	Config            *map[string]string `json:"config,omitempty"`
+	DisplayName       *string            `json:"displayName,omitempty"`
+	FullSyncPeriod    *int32             `json:"fullSyncPeriod,omitempty"`
+	Id                *string            `json:"id,omitempty"`
+	LastSync          *int32             `json:"lastSync,omitempty"`
+	Priority          *int32             `json:"priority,omitempty"`
+	ProviderName      *string            `json:"providerName,omitempty"`
+}
+
 // UserProfileAttributeGroupMetadata defines model for UserProfileAttributeGroupMetadata.
 type UserProfileAttributeGroupMetadata struct {
 	Annotations        *map[string]interface{} `json:"annotations,omitempty"`
@@ -364,6 +1057,109 @@ type UserSessionRepresentation struct {
 	TransientUser *bool              `json:"transientUser,omitempty"`
 	UserId        *string            `json:"userId,omitempty"`
 	Username      *string            `json:"username,omitempty"`
+}
+
+// GetAdminRealmsParams defines parameters for GetAdminRealms.
+type GetAdminRealmsParams struct {
+	BriefRepresentation *bool `form:"briefRepresentation,omitempty" json:"briefRepresentation,omitempty"`
+}
+
+// PostAdminRealmsJSONBody defines parameters for PostAdminRealms.
+type PostAdminRealmsJSONBody = openapi_types.File
+
+// GetAdminRealmsRealmAdminEventsParams defines parameters for GetAdminRealmsRealmAdminEvents.
+type GetAdminRealmsRealmAdminEventsParams struct {
+	AuthClient    *string `form:"authClient,omitempty" json:"authClient,omitempty"`
+	AuthIpAddress *string `form:"authIpAddress,omitempty" json:"authIpAddress,omitempty"`
+	AuthRealm     *string `form:"authRealm,omitempty" json:"authRealm,omitempty"`
+
+	// AuthUser user id
+	AuthUser *string `form:"authUser,omitempty" json:"authUser,omitempty"`
+	DateFrom *string `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+	DateTo   *string `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+	First    *int32  `form:"first,omitempty" json:"first,omitempty"`
+
+	// Max Maximum results size (defaults to 100)
+	Max            *int32    `form:"max,omitempty" json:"max,omitempty"`
+	OperationTypes *[]string `form:"operationTypes,omitempty" json:"operationTypes,omitempty"`
+	ResourcePath   *string   `form:"resourcePath,omitempty" json:"resourcePath,omitempty"`
+	ResourceTypes  *[]string `form:"resourceTypes,omitempty" json:"resourceTypes,omitempty"`
+}
+
+// PostAdminRealmsRealmClientDescriptionConverterJSONBody defines parameters for PostAdminRealmsRealmClientDescriptionConverter.
+type PostAdminRealmsRealmClientDescriptionConverterJSONBody = string
+
+// PostAdminRealmsRealmClientDescriptionConverterTextBody defines parameters for PostAdminRealmsRealmClientDescriptionConverter.
+type PostAdminRealmsRealmClientDescriptionConverterTextBody = string
+
+// GetAdminRealmsRealmClientPoliciesPoliciesParams defines parameters for GetAdminRealmsRealmClientPoliciesPolicies.
+type GetAdminRealmsRealmClientPoliciesPoliciesParams struct {
+	IncludeGlobalPolicies *bool `form:"include-global-policies,omitempty" json:"include-global-policies,omitempty"`
+}
+
+// GetAdminRealmsRealmClientPoliciesProfilesParams defines parameters for GetAdminRealmsRealmClientPoliciesProfiles.
+type GetAdminRealmsRealmClientPoliciesProfilesParams struct {
+	IncludeGlobalProfiles *bool `form:"include-global-profiles,omitempty" json:"include-global-profiles,omitempty"`
+}
+
+// GetAdminRealmsRealmEventsParams defines parameters for GetAdminRealmsRealmEvents.
+type GetAdminRealmsRealmEventsParams struct {
+	// Client App or oauth client name
+	Client *string `form:"client,omitempty" json:"client,omitempty"`
+
+	// DateFrom From date
+	DateFrom *string `form:"dateFrom,omitempty" json:"dateFrom,omitempty"`
+
+	// DateTo To date
+	DateTo *string `form:"dateTo,omitempty" json:"dateTo,omitempty"`
+
+	// First Paging offset
+	First *int32 `form:"first,omitempty" json:"first,omitempty"`
+
+	// IpAddress IP Address
+	IpAddress *string `form:"ipAddress,omitempty" json:"ipAddress,omitempty"`
+
+	// Max Maximum results size (defaults to 100)
+	Max *int32 `form:"max,omitempty" json:"max,omitempty"`
+
+	// Type The types of events to return
+	Type *[]string `form:"type,omitempty" json:"type,omitempty"`
+
+	// User User id
+	User *string `form:"user,omitempty" json:"user,omitempty"`
+}
+
+// GetAdminRealmsRealmLocalizationLocaleParams defines parameters for GetAdminRealmsRealmLocalizationLocale.
+type GetAdminRealmsRealmLocalizationLocaleParams struct {
+	UseRealmDefaultLocaleFallback *bool `form:"useRealmDefaultLocaleFallback,omitempty" json:"useRealmDefaultLocaleFallback,omitempty"`
+}
+
+// PostAdminRealmsRealmLocalizationLocaleJSONBody defines parameters for PostAdminRealmsRealmLocalizationLocale.
+type PostAdminRealmsRealmLocalizationLocaleJSONBody map[string]string
+
+// PutAdminRealmsRealmLocalizationLocaleKeyTextBody defines parameters for PutAdminRealmsRealmLocalizationLocaleKey.
+type PutAdminRealmsRealmLocalizationLocaleKeyTextBody = string
+
+// PostAdminRealmsRealmPartialExportParams defines parameters for PostAdminRealmsRealmPartialExport.
+type PostAdminRealmsRealmPartialExportParams struct {
+	ExportClients        *bool `form:"exportClients,omitempty" json:"exportClients,omitempty"`
+	ExportGroupsAndRoles *bool `form:"exportGroupsAndRoles,omitempty" json:"exportGroupsAndRoles,omitempty"`
+}
+
+// PostAdminRealmsRealmPartialImportJSONBody defines parameters for PostAdminRealmsRealmPartialImport.
+type PostAdminRealmsRealmPartialImportJSONBody = openapi_types.File
+
+// DeleteAdminRealmsRealmSessionsSessionParams defines parameters for DeleteAdminRealmsRealmSessionsSession.
+type DeleteAdminRealmsRealmSessionsSessionParams struct {
+	IsOffline *bool `form:"isOffline,omitempty" json:"isOffline,omitempty"`
+}
+
+// PostAdminRealmsRealmTestSMTPConnectionJSONBody defines parameters for PostAdminRealmsRealmTestSMTPConnection.
+type PostAdminRealmsRealmTestSMTPConnectionJSONBody map[string]string
+
+// PostAdminRealmsRealmTestSMTPConnectionFormdataBody defines parameters for PostAdminRealmsRealmTestSMTPConnection.
+type PostAdminRealmsRealmTestSMTPConnectionFormdataBody struct {
+	Config *string `form:"config,omitempty" json:"config,omitempty"`
 }
 
 // GetAdminRealmsRealmUsersParams defines parameters for GetAdminRealmsRealmUsers.
@@ -495,8 +1291,50 @@ type PutAdminRealmsRealmUsersUserIdSendVerifyEmailParams struct {
 	RedirectUri *string `form:"redirect_uri,omitempty" json:"redirect_uri,omitempty"`
 }
 
+// PostAdminRealmsJSONRequestBody defines body for PostAdminRealms for application/json ContentType.
+type PostAdminRealmsJSONRequestBody = PostAdminRealmsJSONBody
+
+// PutAdminRealmsRealmJSONRequestBody defines body for PutAdminRealmsRealm for application/json ContentType.
+type PutAdminRealmsRealmJSONRequestBody = RealmRepresentation
+
+// PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody defines body for PostAdminRealmsRealmClientDescriptionConverter for application/json ContentType.
+type PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody = PostAdminRealmsRealmClientDescriptionConverterJSONBody
+
+// PostAdminRealmsRealmClientDescriptionConverterTextRequestBody defines body for PostAdminRealmsRealmClientDescriptionConverter for text/plain ContentType.
+type PostAdminRealmsRealmClientDescriptionConverterTextRequestBody = PostAdminRealmsRealmClientDescriptionConverterTextBody
+
+// PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody defines body for PutAdminRealmsRealmClientPoliciesPolicies for application/json ContentType.
+type PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody = ClientPoliciesRepresentation
+
+// PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody defines body for PutAdminRealmsRealmClientPoliciesProfiles for application/json ContentType.
+type PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody = ClientProfilesRepresentation
+
+// PutAdminRealmsRealmClientTypesJSONRequestBody defines body for PutAdminRealmsRealmClientTypes for application/json ContentType.
+type PutAdminRealmsRealmClientTypesJSONRequestBody = ClientTypesRepresentation
+
+// PutAdminRealmsRealmEventsConfigJSONRequestBody defines body for PutAdminRealmsRealmEventsConfig for application/json ContentType.
+type PutAdminRealmsRealmEventsConfigJSONRequestBody = RealmEventsConfigRepresentation
+
+// PostAdminRealmsRealmLocalizationLocaleJSONRequestBody defines body for PostAdminRealmsRealmLocalizationLocale for application/json ContentType.
+type PostAdminRealmsRealmLocalizationLocaleJSONRequestBody PostAdminRealmsRealmLocalizationLocaleJSONBody
+
+// PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody defines body for PutAdminRealmsRealmLocalizationLocaleKey for text/plain ContentType.
+type PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody = PutAdminRealmsRealmLocalizationLocaleKeyTextBody
+
+// PostAdminRealmsRealmPartialImportJSONRequestBody defines body for PostAdminRealmsRealmPartialImport for application/json ContentType.
+type PostAdminRealmsRealmPartialImportJSONRequestBody = PostAdminRealmsRealmPartialImportJSONBody
+
+// PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody defines body for PostAdminRealmsRealmTestSMTPConnection for application/json ContentType.
+type PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody PostAdminRealmsRealmTestSMTPConnectionJSONBody
+
+// PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody defines body for PostAdminRealmsRealmTestSMTPConnection for application/x-www-form-urlencoded ContentType.
+type PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody PostAdminRealmsRealmTestSMTPConnectionFormdataBody
+
 // PostAdminRealmsRealmUsersJSONRequestBody defines body for PostAdminRealmsRealmUsers for application/json ContentType.
 type PostAdminRealmsRealmUsersJSONRequestBody = UserRepresentation
+
+// PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody defines body for PutAdminRealmsRealmUsersManagementPermissions for application/json ContentType.
+type PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody = ManagementPermissionReference
 
 // PutAdminRealmsRealmUsersProfileJSONRequestBody defines body for PutAdminRealmsRealmUsersProfile for application/json ContentType.
 type PutAdminRealmsRealmUsersProfileJSONRequestBody = UPConfig
@@ -589,6 +1427,161 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetAdminRealms request
+	GetAdminRealms(ctx context.Context, params *GetAdminRealmsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsWithBody request with any body
+	PostAdminRealmsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealms(ctx context.Context, body PostAdminRealmsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealm request
+	DeleteAdminRealmsRealm(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealm request
+	GetAdminRealmsRealm(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmWithBody request with any body
+	PutAdminRealmsRealmWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealm(ctx context.Context, realm string, body PutAdminRealmsRealmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmAdminEvents request
+	DeleteAdminRealmsRealmAdminEvents(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmAdminEvents request
+	GetAdminRealmsRealmAdminEvents(ctx context.Context, realm string, params *GetAdminRealmsRealmAdminEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmClientDescriptionConverterWithBody request with any body
+	PostAdminRealmsRealmClientDescriptionConverterWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmClientDescriptionConverter(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmClientDescriptionConverterWithTextBody(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmClientPoliciesPolicies request
+	GetAdminRealmsRealmClientPoliciesPolicies(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmClientPoliciesPoliciesWithBody request with any body
+	PutAdminRealmsRealmClientPoliciesPoliciesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmClientPoliciesPolicies(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmClientPoliciesProfiles request
+	GetAdminRealmsRealmClientPoliciesProfiles(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmClientPoliciesProfilesWithBody request with any body
+	PutAdminRealmsRealmClientPoliciesProfilesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmClientPoliciesProfiles(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmClientSessionStats request
+	GetAdminRealmsRealmClientSessionStats(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmClientTypes request
+	GetAdminRealmsRealmClientTypes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmClientTypesWithBody request with any body
+	PutAdminRealmsRealmClientTypesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmClientTypes(ctx context.Context, realm string, body PutAdminRealmsRealmClientTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmCredentialRegistrators request
+	GetAdminRealmsRealmCredentialRegistrators(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmDefaultDefaultClientScopes request
+	GetAdminRealmsRealmDefaultDefaultClientScopes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeId request
+	DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeId request
+	PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmDefaultGroups request
+	GetAdminRealmsRealmDefaultGroups(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmDefaultGroupsGroupId request
+	DeleteAdminRealmsRealmDefaultGroupsGroupId(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmDefaultGroupsGroupId request
+	PutAdminRealmsRealmDefaultGroupsGroupId(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmDefaultOptionalClientScopes request
+	GetAdminRealmsRealmDefaultOptionalClientScopes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeId request
+	DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeId request
+	PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmEvents request
+	DeleteAdminRealmsRealmEvents(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmEvents request
+	GetAdminRealmsRealmEvents(ctx context.Context, realm string, params *GetAdminRealmsRealmEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmEventsConfig request
+	GetAdminRealmsRealmEventsConfig(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmEventsConfigWithBody request with any body
+	PutAdminRealmsRealmEventsConfigWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmEventsConfig(ctx context.Context, realm string, body PutAdminRealmsRealmEventsConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmGroupByPathPath request
+	GetAdminRealmsRealmGroupByPathPath(ctx context.Context, realm string, path string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmLocalization request
+	GetAdminRealmsRealmLocalization(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmLocalizationLocale request
+	DeleteAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmLocalizationLocale request
+	GetAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, params *GetAdminRealmsRealmLocalizationLocaleParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmLocalizationLocaleWithBody request with any body
+	PostAdminRealmsRealmLocalizationLocaleWithBody(ctx context.Context, realm string, locale string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, body PostAdminRealmsRealmLocalizationLocaleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmLocalizationLocaleKey request
+	DeleteAdminRealmsRealmLocalizationLocaleKey(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmLocalizationLocaleKey request
+	GetAdminRealmsRealmLocalizationLocaleKey(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmLocalizationLocaleKeyWithBody request with any body
+	PutAdminRealmsRealmLocalizationLocaleKeyWithBody(ctx context.Context, realm string, locale string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmLocalizationLocaleKeyWithTextBody(ctx context.Context, realm string, locale string, key string, body PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmLogoutAll request
+	PostAdminRealmsRealmLogoutAll(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmPartialExport request
+	PostAdminRealmsRealmPartialExport(ctx context.Context, realm string, params *PostAdminRealmsRealmPartialExportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmPartialImportWithBody request with any body
+	PostAdminRealmsRealmPartialImportWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmPartialImport(ctx context.Context, realm string, body PostAdminRealmsRealmPartialImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmPushRevocation request
+	PostAdminRealmsRealmPushRevocation(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAdminRealmsRealmSessionsSession request
+	DeleteAdminRealmsRealmSessionsSession(ctx context.Context, realm string, session string, params *DeleteAdminRealmsRealmSessionsSessionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostAdminRealmsRealmTestSMTPConnectionWithBody request with any body
+	PostAdminRealmsRealmTestSMTPConnectionWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmTestSMTPConnection(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostAdminRealmsRealmTestSMTPConnectionWithFormdataBody(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetAdminRealmsRealmUsers request
 	GetAdminRealmsRealmUsers(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -596,6 +1589,14 @@ type ClientInterface interface {
 	PostAdminRealmsRealmUsersWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostAdminRealmsRealmUsers(ctx context.Context, realm string, body PostAdminRealmsRealmUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAdminRealmsRealmUsersManagementPermissions request
+	GetAdminRealmsRealmUsersManagementPermissions(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutAdminRealmsRealmUsersManagementPermissionsWithBody request with any body
+	PutAdminRealmsRealmUsersManagementPermissionsWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutAdminRealmsRealmUsersManagementPermissions(ctx context.Context, realm string, body PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetAdminRealmsRealmUsersCount request
 	GetAdminRealmsRealmUsersCount(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersCountParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -706,6 +1707,678 @@ type ClientInterface interface {
 	GetAdminRealmsRealmUsersUserIdUnmanagedAttributes(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+func (c *Client) GetAdminRealms(ctx context.Context, params *GetAdminRealmsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealms(ctx context.Context, body PostAdminRealmsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealm(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealm(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealm(ctx context.Context, realm string, body PutAdminRealmsRealmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmAdminEvents(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmAdminEventsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmAdminEvents(ctx context.Context, realm string, params *GetAdminRealmsRealmAdminEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmAdminEventsRequest(c.Server, realm, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmClientDescriptionConverterWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmClientDescriptionConverterRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmClientDescriptionConverter(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmClientDescriptionConverterRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmClientDescriptionConverterWithTextBody(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmClientDescriptionConverterRequestWithTextBody(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmClientPoliciesPolicies(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesPoliciesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmClientPoliciesPoliciesRequest(c.Server, realm, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientPoliciesPoliciesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientPoliciesPoliciesRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientPoliciesPolicies(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientPoliciesPoliciesRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmClientPoliciesProfiles(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesProfilesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmClientPoliciesProfilesRequest(c.Server, realm, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientPoliciesProfilesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientPoliciesProfilesRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientPoliciesProfiles(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientPoliciesProfilesRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmClientSessionStats(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmClientSessionStatsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmClientTypes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmClientTypesRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientTypesWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientTypesRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmClientTypes(ctx context.Context, realm string, body PutAdminRealmsRealmClientTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmClientTypesRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmCredentialRegistrators(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmCredentialRegistratorsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmDefaultDefaultClientScopes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmDefaultDefaultClientScopesRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest(c.Server, realm, clientScopeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest(c.Server, realm, clientScopeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmDefaultGroups(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmDefaultGroupsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmDefaultGroupsGroupId(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmDefaultGroupsGroupIdRequest(c.Server, realm, groupId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmDefaultGroupsGroupId(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmDefaultGroupsGroupIdRequest(c.Server, realm, groupId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmDefaultOptionalClientScopes(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmDefaultOptionalClientScopesRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest(c.Server, realm, clientScopeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest(c.Server, realm, clientScopeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmEvents(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmEventsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmEvents(ctx context.Context, realm string, params *GetAdminRealmsRealmEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmEventsRequest(c.Server, realm, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmEventsConfig(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmEventsConfigRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmEventsConfigWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmEventsConfigRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmEventsConfig(ctx context.Context, realm string, body PutAdminRealmsRealmEventsConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmEventsConfigRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmGroupByPathPath(ctx context.Context, realm string, path string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmGroupByPathPathRequest(c.Server, realm, path)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmLocalization(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmLocalizationRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmLocalizationLocaleRequest(c.Server, realm, locale)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, params *GetAdminRealmsRealmLocalizationLocaleParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmLocalizationLocaleRequest(c.Server, realm, locale, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmLocalizationLocaleWithBody(ctx context.Context, realm string, locale string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmLocalizationLocaleRequestWithBody(c.Server, realm, locale, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmLocalizationLocale(ctx context.Context, realm string, locale string, body PostAdminRealmsRealmLocalizationLocaleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmLocalizationLocaleRequest(c.Server, realm, locale, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmLocalizationLocaleKey(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmLocalizationLocaleKeyRequest(c.Server, realm, locale, key)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmLocalizationLocaleKey(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmLocalizationLocaleKeyRequest(c.Server, realm, locale, key)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmLocalizationLocaleKeyWithBody(ctx context.Context, realm string, locale string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithBody(c.Server, realm, locale, key, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmLocalizationLocaleKeyWithTextBody(ctx context.Context, realm string, locale string, key string, body PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithTextBody(c.Server, realm, locale, key, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmLogoutAll(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmLogoutAllRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmPartialExport(ctx context.Context, realm string, params *PostAdminRealmsRealmPartialExportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmPartialExportRequest(c.Server, realm, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmPartialImportWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmPartialImportRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmPartialImport(ctx context.Context, realm string, body PostAdminRealmsRealmPartialImportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmPartialImportRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmPushRevocation(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmPushRevocationRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAdminRealmsRealmSessionsSession(ctx context.Context, realm string, session string, params *DeleteAdminRealmsRealmSessionsSessionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAdminRealmsRealmSessionsSessionRequest(c.Server, realm, session, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmTestSMTPConnectionWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmTestSMTPConnectionRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmTestSMTPConnection(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmTestSMTPConnectionRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostAdminRealmsRealmTestSMTPConnectionWithFormdataBody(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAdminRealmsRealmTestSMTPConnectionRequestWithFormdataBody(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetAdminRealmsRealmUsers(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAdminRealmsRealmUsersRequest(c.Server, realm, params)
 	if err != nil {
@@ -732,6 +2405,42 @@ func (c *Client) PostAdminRealmsRealmUsersWithBody(ctx context.Context, realm st
 
 func (c *Client) PostAdminRealmsRealmUsers(ctx context.Context, realm string, body PostAdminRealmsRealmUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostAdminRealmsRealmUsersRequest(c.Server, realm, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAdminRealmsRealmUsersManagementPermissions(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAdminRealmsRealmUsersManagementPermissionsRequest(c.Server, realm)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmUsersManagementPermissionsWithBody(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmUsersManagementPermissionsRequestWithBody(c.Server, realm, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutAdminRealmsRealmUsersManagementPermissions(ctx context.Context, realm string, body PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutAdminRealmsRealmUsersManagementPermissionsRequest(c.Server, realm, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1198,6 +2907,2194 @@ func (c *Client) GetAdminRealmsRealmUsersUserIdUnmanagedAttributes(ctx context.C
 	return c.Client.Do(req)
 }
 
+// NewGetAdminRealmsRequest generates requests for GetAdminRealms
+func NewGetAdminRealmsRequest(server string, params *GetAdminRealmsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.BriefRepresentation != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "briefRepresentation", *params.BriefRepresentation, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRequest calls the generic PostAdminRealms builder with application/json body
+func NewPostAdminRealmsRequest(server string, body PostAdminRealmsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAdminRealmsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostAdminRealmsRequestWithBody generates requests for PostAdminRealms with any type of body
+func NewPostAdminRealmsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmRequest generates requests for DeleteAdminRealmsRealm
+func NewDeleteAdminRealmsRealmRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmRequest generates requests for GetAdminRealmsRealm
+func NewGetAdminRealmsRealmRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmRequest calls the generic PutAdminRealmsRealm builder with application/json body
+func NewPutAdminRealmsRealmRequest(server string, realm string, body PutAdminRealmsRealmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmRequestWithBody generates requests for PutAdminRealmsRealm with any type of body
+func NewPutAdminRealmsRealmRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmAdminEventsRequest generates requests for DeleteAdminRealmsRealmAdminEvents
+func NewDeleteAdminRealmsRealmAdminEventsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/admin-events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmAdminEventsRequest generates requests for GetAdminRealmsRealmAdminEvents
+func NewGetAdminRealmsRealmAdminEventsRequest(server string, realm string, params *GetAdminRealmsRealmAdminEventsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/admin-events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.AuthClient != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "authClient", *params.AuthClient, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AuthIpAddress != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "authIpAddress", *params.AuthIpAddress, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AuthRealm != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "authRealm", *params.AuthRealm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AuthUser != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "authUser", *params.AuthUser, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.DateFrom != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dateFrom", *params.DateFrom, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.DateTo != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dateTo", *params.DateTo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.First != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "first", *params.First, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Max != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "max", *params.Max, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.OperationTypes != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "operationTypes", *params.OperationTypes, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourcePath != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "resourcePath", *params.ResourcePath, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ResourceTypes != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "resourceTypes", *params.ResourceTypes, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmClientDescriptionConverterRequest calls the generic PostAdminRealmsRealmClientDescriptionConverter builder with application/json body
+func NewPostAdminRealmsRealmClientDescriptionConverterRequest(server string, realm string, body PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAdminRealmsRealmClientDescriptionConverterRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPostAdminRealmsRealmClientDescriptionConverterRequestWithTextBody calls the generic PostAdminRealmsRealmClientDescriptionConverter builder with text/plain body
+func NewPostAdminRealmsRealmClientDescriptionConverterRequestWithTextBody(server string, realm string, body PostAdminRealmsRealmClientDescriptionConverterTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyReader = strings.NewReader(string(body))
+	return NewPostAdminRealmsRealmClientDescriptionConverterRequestWithBody(server, realm, "text/plain", bodyReader)
+}
+
+// NewPostAdminRealmsRealmClientDescriptionConverterRequestWithBody generates requests for PostAdminRealmsRealmClientDescriptionConverter with any type of body
+func NewPostAdminRealmsRealmClientDescriptionConverterRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-description-converter", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmClientPoliciesPoliciesRequest generates requests for GetAdminRealmsRealmClientPoliciesPolicies
+func NewGetAdminRealmsRealmClientPoliciesPoliciesRequest(server string, realm string, params *GetAdminRealmsRealmClientPoliciesPoliciesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-policies/policies", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.IncludeGlobalPolicies != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include-global-policies", *params.IncludeGlobalPolicies, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmClientPoliciesPoliciesRequest calls the generic PutAdminRealmsRealmClientPoliciesPolicies builder with application/json body
+func NewPutAdminRealmsRealmClientPoliciesPoliciesRequest(server string, realm string, body PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmClientPoliciesPoliciesRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmClientPoliciesPoliciesRequestWithBody generates requests for PutAdminRealmsRealmClientPoliciesPolicies with any type of body
+func NewPutAdminRealmsRealmClientPoliciesPoliciesRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-policies/policies", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmClientPoliciesProfilesRequest generates requests for GetAdminRealmsRealmClientPoliciesProfiles
+func NewGetAdminRealmsRealmClientPoliciesProfilesRequest(server string, realm string, params *GetAdminRealmsRealmClientPoliciesProfilesParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-policies/profiles", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.IncludeGlobalProfiles != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "include-global-profiles", *params.IncludeGlobalProfiles, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmClientPoliciesProfilesRequest calls the generic PutAdminRealmsRealmClientPoliciesProfiles builder with application/json body
+func NewPutAdminRealmsRealmClientPoliciesProfilesRequest(server string, realm string, body PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmClientPoliciesProfilesRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmClientPoliciesProfilesRequestWithBody generates requests for PutAdminRealmsRealmClientPoliciesProfiles with any type of body
+func NewPutAdminRealmsRealmClientPoliciesProfilesRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-policies/profiles", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmClientSessionStatsRequest generates requests for GetAdminRealmsRealmClientSessionStats
+func NewGetAdminRealmsRealmClientSessionStatsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-session-stats", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmClientTypesRequest generates requests for GetAdminRealmsRealmClientTypes
+func NewGetAdminRealmsRealmClientTypesRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-types", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmClientTypesRequest calls the generic PutAdminRealmsRealmClientTypes builder with application/json body
+func NewPutAdminRealmsRealmClientTypesRequest(server string, realm string, body PutAdminRealmsRealmClientTypesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmClientTypesRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmClientTypesRequestWithBody generates requests for PutAdminRealmsRealmClientTypes with any type of body
+func NewPutAdminRealmsRealmClientTypesRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/client-types", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmCredentialRegistratorsRequest generates requests for GetAdminRealmsRealmCredentialRegistrators
+func NewGetAdminRealmsRealmCredentialRegistratorsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/credential-registrators", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmDefaultDefaultClientScopesRequest generates requests for GetAdminRealmsRealmDefaultDefaultClientScopes
+func NewGetAdminRealmsRealmDefaultDefaultClientScopesRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-default-client-scopes", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest generates requests for DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeId
+func NewDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest(server string, realm string, clientScopeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "clientScopeId", clientScopeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-default-client-scopes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest generates requests for PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeId
+func NewPutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdRequest(server string, realm string, clientScopeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "clientScopeId", clientScopeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-default-client-scopes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmDefaultGroupsRequest generates requests for GetAdminRealmsRealmDefaultGroups
+func NewGetAdminRealmsRealmDefaultGroupsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-groups", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmDefaultGroupsGroupIdRequest generates requests for DeleteAdminRealmsRealmDefaultGroupsGroupId
+func NewDeleteAdminRealmsRealmDefaultGroupsGroupIdRequest(server string, realm string, groupId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "groupId", groupId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-groups/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmDefaultGroupsGroupIdRequest generates requests for PutAdminRealmsRealmDefaultGroupsGroupId
+func NewPutAdminRealmsRealmDefaultGroupsGroupIdRequest(server string, realm string, groupId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "groupId", groupId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-groups/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmDefaultOptionalClientScopesRequest generates requests for GetAdminRealmsRealmDefaultOptionalClientScopes
+func NewGetAdminRealmsRealmDefaultOptionalClientScopesRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-optional-client-scopes", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest generates requests for DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeId
+func NewDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest(server string, realm string, clientScopeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "clientScopeId", clientScopeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-optional-client-scopes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest generates requests for PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeId
+func NewPutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdRequest(server string, realm string, clientScopeId string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "clientScopeId", clientScopeId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/default-optional-client-scopes/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmEventsRequest generates requests for DeleteAdminRealmsRealmEvents
+func NewDeleteAdminRealmsRealmEventsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmEventsRequest generates requests for GetAdminRealmsRealmEvents
+func NewGetAdminRealmsRealmEventsRequest(server string, realm string, params *GetAdminRealmsRealmEventsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Client != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "client", *params.Client, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.DateFrom != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dateFrom", *params.DateFrom, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.DateTo != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "dateTo", *params.DateTo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.First != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "first", *params.First, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.IpAddress != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ipAddress", *params.IpAddress, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Max != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "max", *params.Max, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "type", *params.Type, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.User != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user", *params.User, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmEventsConfigRequest generates requests for GetAdminRealmsRealmEventsConfig
+func NewGetAdminRealmsRealmEventsConfigRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/events/config", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmEventsConfigRequest calls the generic PutAdminRealmsRealmEventsConfig builder with application/json body
+func NewPutAdminRealmsRealmEventsConfigRequest(server string, realm string, body PutAdminRealmsRealmEventsConfigJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmEventsConfigRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmEventsConfigRequestWithBody generates requests for PutAdminRealmsRealmEventsConfig with any type of body
+func NewPutAdminRealmsRealmEventsConfigRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/events/config", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmGroupByPathPathRequest generates requests for GetAdminRealmsRealmGroupByPathPath
+func NewGetAdminRealmsRealmGroupByPathPathRequest(server string, realm string, path string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "path", path, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/group-by-path/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmLocalizationRequest generates requests for GetAdminRealmsRealmLocalization
+func NewGetAdminRealmsRealmLocalizationRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmLocalizationLocaleRequest generates requests for DeleteAdminRealmsRealmLocalizationLocale
+func NewDeleteAdminRealmsRealmLocalizationLocaleRequest(server string, realm string, locale string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmLocalizationLocaleRequest generates requests for GetAdminRealmsRealmLocalizationLocale
+func NewGetAdminRealmsRealmLocalizationLocaleRequest(server string, realm string, locale string, params *GetAdminRealmsRealmLocalizationLocaleParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.UseRealmDefaultLocaleFallback != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "useRealmDefaultLocaleFallback", *params.UseRealmDefaultLocaleFallback, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmLocalizationLocaleRequest calls the generic PostAdminRealmsRealmLocalizationLocale builder with application/json body
+func NewPostAdminRealmsRealmLocalizationLocaleRequest(server string, realm string, locale string, body PostAdminRealmsRealmLocalizationLocaleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAdminRealmsRealmLocalizationLocaleRequestWithBody(server, realm, locale, "application/json", bodyReader)
+}
+
+// NewPostAdminRealmsRealmLocalizationLocaleRequestWithBody generates requests for PostAdminRealmsRealmLocalizationLocale with any type of body
+func NewPostAdminRealmsRealmLocalizationLocaleRequestWithBody(server string, realm string, locale string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmLocalizationLocaleKeyRequest generates requests for DeleteAdminRealmsRealmLocalizationLocaleKey
+func NewDeleteAdminRealmsRealmLocalizationLocaleKeyRequest(server string, realm string, locale string, key string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmLocalizationLocaleKeyRequest generates requests for GetAdminRealmsRealmLocalizationLocaleKey
+func NewGetAdminRealmsRealmLocalizationLocaleKeyRequest(server string, realm string, locale string, key string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithTextBody calls the generic PutAdminRealmsRealmLocalizationLocaleKey builder with text/plain body
+func NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithTextBody(server string, realm string, locale string, key string, body PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyReader = strings.NewReader(string(body))
+	return NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithBody(server, realm, locale, key, "text/plain", bodyReader)
+}
+
+// NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithBody generates requests for PutAdminRealmsRealmLocalizationLocaleKey with any type of body
+func NewPutAdminRealmsRealmLocalizationLocaleKeyRequestWithBody(server string, realm string, locale string, key string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "locale", locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "key", key, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/localization/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmLogoutAllRequest generates requests for PostAdminRealmsRealmLogoutAll
+func NewPostAdminRealmsRealmLogoutAllRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/logout-all", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmPartialExportRequest generates requests for PostAdminRealmsRealmPartialExport
+func NewPostAdminRealmsRealmPartialExportRequest(server string, realm string, params *PostAdminRealmsRealmPartialExportParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/partial-export", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.ExportClients != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exportClients", *params.ExportClients, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExportGroupsAndRoles != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "exportGroupsAndRoles", *params.ExportGroupsAndRoles, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmPartialImportRequest calls the generic PostAdminRealmsRealmPartialImport builder with application/json body
+func NewPostAdminRealmsRealmPartialImportRequest(server string, realm string, body PostAdminRealmsRealmPartialImportJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAdminRealmsRealmPartialImportRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPostAdminRealmsRealmPartialImportRequestWithBody generates requests for PostAdminRealmsRealmPartialImport with any type of body
+func NewPostAdminRealmsRealmPartialImportRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/partialImport", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmPushRevocationRequest generates requests for PostAdminRealmsRealmPushRevocation
+func NewPostAdminRealmsRealmPushRevocationRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/push-revocation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDeleteAdminRealmsRealmSessionsSessionRequest generates requests for DeleteAdminRealmsRealmSessionsSession
+func NewDeleteAdminRealmsRealmSessionsSessionRequest(server string, realm string, session string, params *DeleteAdminRealmsRealmSessionsSessionParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "session", session, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/sessions/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.IsOffline != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "isOffline", *params.IsOffline, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostAdminRealmsRealmTestSMTPConnectionRequest calls the generic PostAdminRealmsRealmTestSMTPConnection builder with application/json body
+func NewPostAdminRealmsRealmTestSMTPConnectionRequest(server string, realm string, body PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAdminRealmsRealmTestSMTPConnectionRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPostAdminRealmsRealmTestSMTPConnectionRequestWithFormdataBody calls the generic PostAdminRealmsRealmTestSMTPConnection builder with application/x-www-form-urlencoded body
+func NewPostAdminRealmsRealmTestSMTPConnectionRequestWithFormdataBody(server string, realm string, body PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyStr, err := runtime.MarshalForm(body, nil)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewPostAdminRealmsRealmTestSMTPConnectionRequestWithBody(server, realm, "application/x-www-form-urlencoded", bodyReader)
+}
+
+// NewPostAdminRealmsRealmTestSMTPConnectionRequestWithBody generates requests for PostAdminRealmsRealmTestSMTPConnection with any type of body
+func NewPostAdminRealmsRealmTestSMTPConnectionRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/testSMTPConnection", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetAdminRealmsRealmUsersRequest generates requests for GetAdminRealmsRealmUsers
 func NewGetAdminRealmsRealmUsersRequest(server string, realm string, params *GetAdminRealmsRealmUsersParams) (*http.Request, error) {
 	var err error
@@ -1500,6 +5397,87 @@ func NewPostAdminRealmsRealmUsersRequestWithBody(server string, realm string, co
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetAdminRealmsRealmUsersManagementPermissionsRequest generates requests for GetAdminRealmsRealmUsersManagementPermissions
+func NewGetAdminRealmsRealmUsersManagementPermissionsRequest(server string, realm string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/users-management-permissions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPutAdminRealmsRealmUsersManagementPermissionsRequest calls the generic PutAdminRealmsRealmUsersManagementPermissions builder with application/json body
+func NewPutAdminRealmsRealmUsersManagementPermissionsRequest(server string, realm string, body PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutAdminRealmsRealmUsersManagementPermissionsRequestWithBody(server, realm, "application/json", bodyReader)
+}
+
+// NewPutAdminRealmsRealmUsersManagementPermissionsRequestWithBody generates requests for PutAdminRealmsRealmUsersManagementPermissions with any type of body
+func NewPutAdminRealmsRealmUsersManagementPermissionsRequestWithBody(server string, realm string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "realm", realm, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/admin/realms/%s/users-management-permissions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -3381,6 +7359,161 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetAdminRealmsWithResponse request
+	GetAdminRealmsWithResponse(ctx context.Context, params *GetAdminRealmsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsResponse, error)
+
+	// PostAdminRealmsWithBodyWithResponse request with any body
+	PostAdminRealmsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsResponse, error)
+
+	PostAdminRealmsWithResponse(ctx context.Context, body PostAdminRealmsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsResponse, error)
+
+	// DeleteAdminRealmsRealmWithResponse request
+	DeleteAdminRealmsRealmWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmResponse, error)
+
+	// GetAdminRealmsRealmWithResponse request
+	GetAdminRealmsRealmWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmResponse, error)
+
+	// PutAdminRealmsRealmWithBodyWithResponse request with any body
+	PutAdminRealmsRealmWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmResponse, error)
+
+	PutAdminRealmsRealmWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmResponse, error)
+
+	// DeleteAdminRealmsRealmAdminEventsWithResponse request
+	DeleteAdminRealmsRealmAdminEventsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmAdminEventsResponse, error)
+
+	// GetAdminRealmsRealmAdminEventsWithResponse request
+	GetAdminRealmsRealmAdminEventsWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmAdminEventsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmAdminEventsResponse, error)
+
+	// PostAdminRealmsRealmClientDescriptionConverterWithBodyWithResponse request with any body
+	PostAdminRealmsRealmClientDescriptionConverterWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error)
+
+	PostAdminRealmsRealmClientDescriptionConverterWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error)
+
+	PostAdminRealmsRealmClientDescriptionConverterWithTextBodyWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterTextRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error)
+
+	// GetAdminRealmsRealmClientPoliciesPoliciesWithResponse request
+	GetAdminRealmsRealmClientPoliciesPoliciesWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesPoliciesParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientPoliciesPoliciesResponse, error)
+
+	// PutAdminRealmsRealmClientPoliciesPoliciesWithBodyWithResponse request with any body
+	PutAdminRealmsRealmClientPoliciesPoliciesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesPoliciesResponse, error)
+
+	PutAdminRealmsRealmClientPoliciesPoliciesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesPoliciesResponse, error)
+
+	// GetAdminRealmsRealmClientPoliciesProfilesWithResponse request
+	GetAdminRealmsRealmClientPoliciesProfilesWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesProfilesParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientPoliciesProfilesResponse, error)
+
+	// PutAdminRealmsRealmClientPoliciesProfilesWithBodyWithResponse request with any body
+	PutAdminRealmsRealmClientPoliciesProfilesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesProfilesResponse, error)
+
+	PutAdminRealmsRealmClientPoliciesProfilesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesProfilesResponse, error)
+
+	// GetAdminRealmsRealmClientSessionStatsWithResponse request
+	GetAdminRealmsRealmClientSessionStatsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientSessionStatsResponse, error)
+
+	// GetAdminRealmsRealmClientTypesWithResponse request
+	GetAdminRealmsRealmClientTypesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientTypesResponse, error)
+
+	// PutAdminRealmsRealmClientTypesWithBodyWithResponse request with any body
+	PutAdminRealmsRealmClientTypesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientTypesResponse, error)
+
+	PutAdminRealmsRealmClientTypesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientTypesResponse, error)
+
+	// GetAdminRealmsRealmCredentialRegistratorsWithResponse request
+	GetAdminRealmsRealmCredentialRegistratorsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmCredentialRegistratorsResponse, error)
+
+	// GetAdminRealmsRealmDefaultDefaultClientScopesWithResponse request
+	GetAdminRealmsRealmDefaultDefaultClientScopesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultDefaultClientScopesResponse, error)
+
+	// DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse request
+	DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error)
+
+	// PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse request
+	PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error)
+
+	// GetAdminRealmsRealmDefaultGroupsWithResponse request
+	GetAdminRealmsRealmDefaultGroupsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultGroupsResponse, error)
+
+	// DeleteAdminRealmsRealmDefaultGroupsGroupIdWithResponse request
+	DeleteAdminRealmsRealmDefaultGroupsGroupIdWithResponse(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse, error)
+
+	// PutAdminRealmsRealmDefaultGroupsGroupIdWithResponse request
+	PutAdminRealmsRealmDefaultGroupsGroupIdWithResponse(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultGroupsGroupIdResponse, error)
+
+	// GetAdminRealmsRealmDefaultOptionalClientScopesWithResponse request
+	GetAdminRealmsRealmDefaultOptionalClientScopesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultOptionalClientScopesResponse, error)
+
+	// DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse request
+	DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error)
+
+	// PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse request
+	PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error)
+
+	// DeleteAdminRealmsRealmEventsWithResponse request
+	DeleteAdminRealmsRealmEventsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmEventsResponse, error)
+
+	// GetAdminRealmsRealmEventsWithResponse request
+	GetAdminRealmsRealmEventsWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmEventsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmEventsResponse, error)
+
+	// GetAdminRealmsRealmEventsConfigWithResponse request
+	GetAdminRealmsRealmEventsConfigWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmEventsConfigResponse, error)
+
+	// PutAdminRealmsRealmEventsConfigWithBodyWithResponse request with any body
+	PutAdminRealmsRealmEventsConfigWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmEventsConfigResponse, error)
+
+	PutAdminRealmsRealmEventsConfigWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmEventsConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmEventsConfigResponse, error)
+
+	// GetAdminRealmsRealmGroupByPathPathWithResponse request
+	GetAdminRealmsRealmGroupByPathPathWithResponse(ctx context.Context, realm string, path string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmGroupByPathPathResponse, error)
+
+	// GetAdminRealmsRealmLocalizationWithResponse request
+	GetAdminRealmsRealmLocalizationWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationResponse, error)
+
+	// DeleteAdminRealmsRealmLocalizationLocaleWithResponse request
+	DeleteAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmLocalizationLocaleResponse, error)
+
+	// GetAdminRealmsRealmLocalizationLocaleWithResponse request
+	GetAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, params *GetAdminRealmsRealmLocalizationLocaleParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationLocaleResponse, error)
+
+	// PostAdminRealmsRealmLocalizationLocaleWithBodyWithResponse request with any body
+	PostAdminRealmsRealmLocalizationLocaleWithBodyWithResponse(ctx context.Context, realm string, locale string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLocalizationLocaleResponse, error)
+
+	PostAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, body PostAdminRealmsRealmLocalizationLocaleJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLocalizationLocaleResponse, error)
+
+	// DeleteAdminRealmsRealmLocalizationLocaleKeyWithResponse request
+	DeleteAdminRealmsRealmLocalizationLocaleKeyWithResponse(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmLocalizationLocaleKeyResponse, error)
+
+	// GetAdminRealmsRealmLocalizationLocaleKeyWithResponse request
+	GetAdminRealmsRealmLocalizationLocaleKeyWithResponse(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationLocaleKeyResponse, error)
+
+	// PutAdminRealmsRealmLocalizationLocaleKeyWithBodyWithResponse request with any body
+	PutAdminRealmsRealmLocalizationLocaleKeyWithBodyWithResponse(ctx context.Context, realm string, locale string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmLocalizationLocaleKeyResponse, error)
+
+	PutAdminRealmsRealmLocalizationLocaleKeyWithTextBodyWithResponse(ctx context.Context, realm string, locale string, key string, body PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmLocalizationLocaleKeyResponse, error)
+
+	// PostAdminRealmsRealmLogoutAllWithResponse request
+	PostAdminRealmsRealmLogoutAllWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLogoutAllResponse, error)
+
+	// PostAdminRealmsRealmPartialExportWithResponse request
+	PostAdminRealmsRealmPartialExportWithResponse(ctx context.Context, realm string, params *PostAdminRealmsRealmPartialExportParams, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialExportResponse, error)
+
+	// PostAdminRealmsRealmPartialImportWithBodyWithResponse request with any body
+	PostAdminRealmsRealmPartialImportWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialImportResponse, error)
+
+	PostAdminRealmsRealmPartialImportWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmPartialImportJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialImportResponse, error)
+
+	// PostAdminRealmsRealmPushRevocationWithResponse request
+	PostAdminRealmsRealmPushRevocationWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPushRevocationResponse, error)
+
+	// DeleteAdminRealmsRealmSessionsSessionWithResponse request
+	DeleteAdminRealmsRealmSessionsSessionWithResponse(ctx context.Context, realm string, session string, params *DeleteAdminRealmsRealmSessionsSessionParams, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmSessionsSessionResponse, error)
+
+	// PostAdminRealmsRealmTestSMTPConnectionWithBodyWithResponse request with any body
+	PostAdminRealmsRealmTestSMTPConnectionWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error)
+
+	PostAdminRealmsRealmTestSMTPConnectionWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error)
+
+	PostAdminRealmsRealmTestSMTPConnectionWithFormdataBodyWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error)
+
 	// GetAdminRealmsRealmUsersWithResponse request
 	GetAdminRealmsRealmUsersWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersResponse, error)
 
@@ -3388,6 +7521,14 @@ type ClientWithResponsesInterface interface {
 	PostAdminRealmsRealmUsersWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmUsersResponse, error)
 
 	PostAdminRealmsRealmUsersWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmUsersJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmUsersResponse, error)
+
+	// GetAdminRealmsRealmUsersManagementPermissionsWithResponse request
+	GetAdminRealmsRealmUsersManagementPermissionsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersManagementPermissionsResponse, error)
+
+	// PutAdminRealmsRealmUsersManagementPermissionsWithBodyWithResponse request with any body
+	PutAdminRealmsRealmUsersManagementPermissionsWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmUsersManagementPermissionsResponse, error)
+
+	PutAdminRealmsRealmUsersManagementPermissionsWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmUsersManagementPermissionsResponse, error)
 
 	// GetAdminRealmsRealmUsersCountWithResponse request
 	GetAdminRealmsRealmUsersCountWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersCountParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersCountResponse, error)
@@ -3498,6 +7639,928 @@ type ClientWithResponsesInterface interface {
 	GetAdminRealmsRealmUsersUserIdUnmanagedAttributesWithResponse(ctx context.Context, realm string, userId string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse, error)
 }
 
+type GetAdminRealmsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RealmRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RealmRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmAdminEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmAdminEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmAdminEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmAdminEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]AdminEventRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmAdminEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmAdminEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmClientDescriptionConverterResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ClientRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmClientDescriptionConverterResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmClientDescriptionConverterResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmClientPoliciesPoliciesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ClientPoliciesRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmClientPoliciesPoliciesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmClientPoliciesPoliciesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmClientPoliciesPoliciesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmClientPoliciesPoliciesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmClientPoliciesPoliciesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmClientPoliciesProfilesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ClientProfilesRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmClientPoliciesProfilesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmClientPoliciesProfilesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmClientPoliciesProfilesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmClientPoliciesProfilesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmClientPoliciesProfilesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmClientSessionStatsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]map[string]string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmClientSessionStatsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmClientSessionStatsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmClientTypesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ClientTypesRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmClientTypesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmClientTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmClientTypesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmClientTypesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmClientTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmCredentialRegistratorsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmCredentialRegistratorsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmCredentialRegistratorsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmDefaultDefaultClientScopesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ClientScopeRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmDefaultDefaultClientScopesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmDefaultDefaultClientScopesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmDefaultGroupsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]GroupRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmDefaultGroupsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmDefaultGroupsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmDefaultGroupsGroupIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmDefaultGroupsGroupIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmDefaultGroupsGroupIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmDefaultOptionalClientScopesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]ClientScopeRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmDefaultOptionalClientScopesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmDefaultOptionalClientScopesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]EventRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmEventsConfigResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RealmEventsConfigRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmEventsConfigResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmEventsConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmEventsConfigResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmEventsConfigResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmEventsConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmGroupByPathPathResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GroupRepresentation
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmGroupByPathPathResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmGroupByPathPathResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmLocalizationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmLocalizationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmLocalizationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmLocalizationLocaleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmLocalizationLocaleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmLocalizationLocaleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmLocalizationLocaleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmLocalizationLocaleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmLocalizationLocaleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmLocalizationLocaleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmLocalizationLocaleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmLocalizationLocaleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmLocalizationLocaleKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmLocalizationLocaleKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmLocalizationLocaleKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmLocalizationLocaleKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmLocalizationLocaleKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmLocalizationLocaleKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmLocalizationLocaleKeyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmLocalizationLocaleKeyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmLocalizationLocaleKeyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmLogoutAllResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GlobalRequestResult
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmLogoutAllResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmLogoutAllResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmPartialExportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmPartialExportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmPartialExportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmPartialImportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmPartialImportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmPartialImportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmPushRevocationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GlobalRequestResult
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmPushRevocationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmPushRevocationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAdminRealmsRealmSessionsSessionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAdminRealmsRealmSessionsSessionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAdminRealmsRealmSessionsSessionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostAdminRealmsRealmTestSMTPConnectionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostAdminRealmsRealmTestSMTPConnectionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostAdminRealmsRealmTestSMTPConnectionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetAdminRealmsRealmUsersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3535,6 +8598,50 @@ func (r PostAdminRealmsRealmUsersResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostAdminRealmsRealmUsersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAdminRealmsRealmUsersManagementPermissionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ManagementPermissionReference
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAdminRealmsRealmUsersManagementPermissionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAdminRealmsRealmUsersManagementPermissionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutAdminRealmsRealmUsersManagementPermissionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ManagementPermissionReference
+}
+
+// Status returns HTTPResponse.Status
+func (r PutAdminRealmsRealmUsersManagementPermissionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutAdminRealmsRealmUsersManagementPermissionsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4228,6 +9335,497 @@ func (r GetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse) StatusCode() 
 	return 0
 }
 
+// GetAdminRealmsWithResponse request returning *GetAdminRealmsResponse
+func (c *ClientWithResponses) GetAdminRealmsWithResponse(ctx context.Context, params *GetAdminRealmsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsResponse, error) {
+	rsp, err := c.GetAdminRealms(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsResponse(rsp)
+}
+
+// PostAdminRealmsWithBodyWithResponse request with arbitrary body returning *PostAdminRealmsResponse
+func (c *ClientWithResponses) PostAdminRealmsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsResponse, error) {
+	rsp, err := c.PostAdminRealmsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsWithResponse(ctx context.Context, body PostAdminRealmsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsResponse, error) {
+	rsp, err := c.PostAdminRealms(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmWithResponse request returning *DeleteAdminRealmsRealmResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealm(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmResponse(rsp)
+}
+
+// GetAdminRealmsRealmWithResponse request returning *GetAdminRealmsRealmResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmResponse, error) {
+	rsp, err := c.GetAdminRealmsRealm(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmResponse(rsp)
+}
+
+// PutAdminRealmsRealmWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmResponse, error) {
+	rsp, err := c.PutAdminRealmsRealm(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmAdminEventsWithResponse request returning *DeleteAdminRealmsRealmAdminEventsResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmAdminEventsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmAdminEventsResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmAdminEvents(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmAdminEventsResponse(rsp)
+}
+
+// GetAdminRealmsRealmAdminEventsWithResponse request returning *GetAdminRealmsRealmAdminEventsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmAdminEventsWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmAdminEventsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmAdminEventsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmAdminEvents(ctx, realm, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmAdminEventsResponse(rsp)
+}
+
+// PostAdminRealmsRealmClientDescriptionConverterWithBodyWithResponse request with arbitrary body returning *PostAdminRealmsRealmClientDescriptionConverterResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmClientDescriptionConverterWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmClientDescriptionConverterWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmClientDescriptionConverterResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmClientDescriptionConverterWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmClientDescriptionConverter(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmClientDescriptionConverterResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmClientDescriptionConverterWithTextBodyWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmClientDescriptionConverterTextRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmClientDescriptionConverterWithTextBody(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmClientDescriptionConverterResponse(rsp)
+}
+
+// GetAdminRealmsRealmClientPoliciesPoliciesWithResponse request returning *GetAdminRealmsRealmClientPoliciesPoliciesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmClientPoliciesPoliciesWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesPoliciesParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientPoliciesPoliciesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmClientPoliciesPolicies(ctx, realm, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmClientPoliciesPoliciesResponse(rsp)
+}
+
+// PutAdminRealmsRealmClientPoliciesPoliciesWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmClientPoliciesPoliciesResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmClientPoliciesPoliciesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesPoliciesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientPoliciesPoliciesWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientPoliciesPoliciesResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmClientPoliciesPoliciesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesPoliciesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesPoliciesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientPoliciesPolicies(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientPoliciesPoliciesResponse(rsp)
+}
+
+// GetAdminRealmsRealmClientPoliciesProfilesWithResponse request returning *GetAdminRealmsRealmClientPoliciesProfilesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmClientPoliciesProfilesWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmClientPoliciesProfilesParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientPoliciesProfilesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmClientPoliciesProfiles(ctx, realm, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmClientPoliciesProfilesResponse(rsp)
+}
+
+// PutAdminRealmsRealmClientPoliciesProfilesWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmClientPoliciesProfilesResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmClientPoliciesProfilesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesProfilesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientPoliciesProfilesWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientPoliciesProfilesResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmClientPoliciesProfilesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientPoliciesProfilesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientPoliciesProfilesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientPoliciesProfiles(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientPoliciesProfilesResponse(rsp)
+}
+
+// GetAdminRealmsRealmClientSessionStatsWithResponse request returning *GetAdminRealmsRealmClientSessionStatsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmClientSessionStatsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientSessionStatsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmClientSessionStats(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmClientSessionStatsResponse(rsp)
+}
+
+// GetAdminRealmsRealmClientTypesWithResponse request returning *GetAdminRealmsRealmClientTypesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmClientTypesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmClientTypesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmClientTypes(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmClientTypesResponse(rsp)
+}
+
+// PutAdminRealmsRealmClientTypesWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmClientTypesResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmClientTypesWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientTypesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientTypesWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientTypesResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmClientTypesWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmClientTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmClientTypesResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmClientTypes(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmClientTypesResponse(rsp)
+}
+
+// GetAdminRealmsRealmCredentialRegistratorsWithResponse request returning *GetAdminRealmsRealmCredentialRegistratorsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmCredentialRegistratorsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmCredentialRegistratorsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmCredentialRegistrators(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmCredentialRegistratorsResponse(rsp)
+}
+
+// GetAdminRealmsRealmDefaultDefaultClientScopesWithResponse request returning *GetAdminRealmsRealmDefaultDefaultClientScopesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmDefaultDefaultClientScopesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultDefaultClientScopesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmDefaultDefaultClientScopes(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmDefaultDefaultClientScopesResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse request returning *DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx, realm, clientScopeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse(rsp)
+}
+
+// PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse request returning *PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeId(ctx, realm, clientScopeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse(rsp)
+}
+
+// GetAdminRealmsRealmDefaultGroupsWithResponse request returning *GetAdminRealmsRealmDefaultGroupsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmDefaultGroupsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultGroupsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmDefaultGroups(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmDefaultGroupsResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmDefaultGroupsGroupIdWithResponse request returning *DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmDefaultGroupsGroupIdWithResponse(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmDefaultGroupsGroupId(ctx, realm, groupId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmDefaultGroupsGroupIdResponse(rsp)
+}
+
+// PutAdminRealmsRealmDefaultGroupsGroupIdWithResponse request returning *PutAdminRealmsRealmDefaultGroupsGroupIdResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmDefaultGroupsGroupIdWithResponse(ctx context.Context, realm string, groupId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultGroupsGroupIdResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmDefaultGroupsGroupId(ctx, realm, groupId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmDefaultGroupsGroupIdResponse(rsp)
+}
+
+// GetAdminRealmsRealmDefaultOptionalClientScopesWithResponse request returning *GetAdminRealmsRealmDefaultOptionalClientScopesResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmDefaultOptionalClientScopesWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmDefaultOptionalClientScopesResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmDefaultOptionalClientScopes(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmDefaultOptionalClientScopesResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse request returning *DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx, realm, clientScopeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse(rsp)
+}
+
+// PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse request returning *PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse(ctx context.Context, realm string, clientScopeId string, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeId(ctx, realm, clientScopeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmEventsWithResponse request returning *DeleteAdminRealmsRealmEventsResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmEventsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmEventsResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmEvents(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmEventsResponse(rsp)
+}
+
+// GetAdminRealmsRealmEventsWithResponse request returning *GetAdminRealmsRealmEventsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmEventsWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmEventsParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmEventsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmEvents(ctx, realm, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmEventsResponse(rsp)
+}
+
+// GetAdminRealmsRealmEventsConfigWithResponse request returning *GetAdminRealmsRealmEventsConfigResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmEventsConfigWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmEventsConfigResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmEventsConfig(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmEventsConfigResponse(rsp)
+}
+
+// PutAdminRealmsRealmEventsConfigWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmEventsConfigResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmEventsConfigWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmEventsConfigResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmEventsConfigWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmEventsConfigResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmEventsConfigWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmEventsConfigJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmEventsConfigResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmEventsConfig(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmEventsConfigResponse(rsp)
+}
+
+// GetAdminRealmsRealmGroupByPathPathWithResponse request returning *GetAdminRealmsRealmGroupByPathPathResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmGroupByPathPathWithResponse(ctx context.Context, realm string, path string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmGroupByPathPathResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmGroupByPathPath(ctx, realm, path, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmGroupByPathPathResponse(rsp)
+}
+
+// GetAdminRealmsRealmLocalizationWithResponse request returning *GetAdminRealmsRealmLocalizationResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmLocalizationWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmLocalization(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmLocalizationResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmLocalizationLocaleWithResponse request returning *DeleteAdminRealmsRealmLocalizationLocaleResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmLocalizationLocaleResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmLocalizationLocale(ctx, realm, locale, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmLocalizationLocaleResponse(rsp)
+}
+
+// GetAdminRealmsRealmLocalizationLocaleWithResponse request returning *GetAdminRealmsRealmLocalizationLocaleResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, params *GetAdminRealmsRealmLocalizationLocaleParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationLocaleResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmLocalizationLocale(ctx, realm, locale, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmLocalizationLocaleResponse(rsp)
+}
+
+// PostAdminRealmsRealmLocalizationLocaleWithBodyWithResponse request with arbitrary body returning *PostAdminRealmsRealmLocalizationLocaleResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmLocalizationLocaleWithBodyWithResponse(ctx context.Context, realm string, locale string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLocalizationLocaleResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmLocalizationLocaleWithBody(ctx, realm, locale, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmLocalizationLocaleResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmLocalizationLocaleWithResponse(ctx context.Context, realm string, locale string, body PostAdminRealmsRealmLocalizationLocaleJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLocalizationLocaleResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmLocalizationLocale(ctx, realm, locale, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmLocalizationLocaleResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmLocalizationLocaleKeyWithResponse request returning *DeleteAdminRealmsRealmLocalizationLocaleKeyResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmLocalizationLocaleKeyWithResponse(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmLocalizationLocaleKey(ctx, realm, locale, key, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmLocalizationLocaleKeyResponse(rsp)
+}
+
+// GetAdminRealmsRealmLocalizationLocaleKeyWithResponse request returning *GetAdminRealmsRealmLocalizationLocaleKeyResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmLocalizationLocaleKeyWithResponse(ctx context.Context, realm string, locale string, key string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmLocalizationLocaleKey(ctx, realm, locale, key, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmLocalizationLocaleKeyResponse(rsp)
+}
+
+// PutAdminRealmsRealmLocalizationLocaleKeyWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmLocalizationLocaleKeyResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmLocalizationLocaleKeyWithBodyWithResponse(ctx context.Context, realm string, locale string, key string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmLocalizationLocaleKeyWithBody(ctx, realm, locale, key, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmLocalizationLocaleKeyResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmLocalizationLocaleKeyWithTextBodyWithResponse(ctx context.Context, realm string, locale string, key string, body PutAdminRealmsRealmLocalizationLocaleKeyTextRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmLocalizationLocaleKeyWithTextBody(ctx, realm, locale, key, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmLocalizationLocaleKeyResponse(rsp)
+}
+
+// PostAdminRealmsRealmLogoutAllWithResponse request returning *PostAdminRealmsRealmLogoutAllResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmLogoutAllWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmLogoutAllResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmLogoutAll(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmLogoutAllResponse(rsp)
+}
+
+// PostAdminRealmsRealmPartialExportWithResponse request returning *PostAdminRealmsRealmPartialExportResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmPartialExportWithResponse(ctx context.Context, realm string, params *PostAdminRealmsRealmPartialExportParams, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialExportResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmPartialExport(ctx, realm, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmPartialExportResponse(rsp)
+}
+
+// PostAdminRealmsRealmPartialImportWithBodyWithResponse request with arbitrary body returning *PostAdminRealmsRealmPartialImportResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmPartialImportWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialImportResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmPartialImportWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmPartialImportResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmPartialImportWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmPartialImportJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPartialImportResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmPartialImport(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmPartialImportResponse(rsp)
+}
+
+// PostAdminRealmsRealmPushRevocationWithResponse request returning *PostAdminRealmsRealmPushRevocationResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmPushRevocationWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmPushRevocationResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmPushRevocation(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmPushRevocationResponse(rsp)
+}
+
+// DeleteAdminRealmsRealmSessionsSessionWithResponse request returning *DeleteAdminRealmsRealmSessionsSessionResponse
+func (c *ClientWithResponses) DeleteAdminRealmsRealmSessionsSessionWithResponse(ctx context.Context, realm string, session string, params *DeleteAdminRealmsRealmSessionsSessionParams, reqEditors ...RequestEditorFn) (*DeleteAdminRealmsRealmSessionsSessionResponse, error) {
+	rsp, err := c.DeleteAdminRealmsRealmSessionsSession(ctx, realm, session, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAdminRealmsRealmSessionsSessionResponse(rsp)
+}
+
+// PostAdminRealmsRealmTestSMTPConnectionWithBodyWithResponse request with arbitrary body returning *PostAdminRealmsRealmTestSMTPConnectionResponse
+func (c *ClientWithResponses) PostAdminRealmsRealmTestSMTPConnectionWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmTestSMTPConnectionWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmTestSMTPConnectionResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmTestSMTPConnectionWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmTestSMTPConnection(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmTestSMTPConnectionResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostAdminRealmsRealmTestSMTPConnectionWithFormdataBodyWithResponse(ctx context.Context, realm string, body PostAdminRealmsRealmTestSMTPConnectionFormdataRequestBody, reqEditors ...RequestEditorFn) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error) {
+	rsp, err := c.PostAdminRealmsRealmTestSMTPConnectionWithFormdataBody(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAdminRealmsRealmTestSMTPConnectionResponse(rsp)
+}
+
 // GetAdminRealmsRealmUsersWithResponse request returning *GetAdminRealmsRealmUsersResponse
 func (c *ClientWithResponses) GetAdminRealmsRealmUsersWithResponse(ctx context.Context, realm string, params *GetAdminRealmsRealmUsersParams, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersResponse, error) {
 	rsp, err := c.GetAdminRealmsRealmUsers(ctx, realm, params, reqEditors...)
@@ -4252,6 +9850,32 @@ func (c *ClientWithResponses) PostAdminRealmsRealmUsersWithResponse(ctx context.
 		return nil, err
 	}
 	return ParsePostAdminRealmsRealmUsersResponse(rsp)
+}
+
+// GetAdminRealmsRealmUsersManagementPermissionsWithResponse request returning *GetAdminRealmsRealmUsersManagementPermissionsResponse
+func (c *ClientWithResponses) GetAdminRealmsRealmUsersManagementPermissionsWithResponse(ctx context.Context, realm string, reqEditors ...RequestEditorFn) (*GetAdminRealmsRealmUsersManagementPermissionsResponse, error) {
+	rsp, err := c.GetAdminRealmsRealmUsersManagementPermissions(ctx, realm, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAdminRealmsRealmUsersManagementPermissionsResponse(rsp)
+}
+
+// PutAdminRealmsRealmUsersManagementPermissionsWithBodyWithResponse request with arbitrary body returning *PutAdminRealmsRealmUsersManagementPermissionsResponse
+func (c *ClientWithResponses) PutAdminRealmsRealmUsersManagementPermissionsWithBodyWithResponse(ctx context.Context, realm string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmUsersManagementPermissionsResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmUsersManagementPermissionsWithBody(ctx, realm, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmUsersManagementPermissionsResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutAdminRealmsRealmUsersManagementPermissionsWithResponse(ctx context.Context, realm string, body PutAdminRealmsRealmUsersManagementPermissionsJSONRequestBody, reqEditors ...RequestEditorFn) (*PutAdminRealmsRealmUsersManagementPermissionsResponse, error) {
+	rsp, err := c.PutAdminRealmsRealmUsersManagementPermissions(ctx, realm, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutAdminRealmsRealmUsersManagementPermissionsResponse(rsp)
 }
 
 // GetAdminRealmsRealmUsersCountWithResponse request returning *GetAdminRealmsRealmUsersCountResponse
@@ -4590,6 +10214,884 @@ func (c *ClientWithResponses) GetAdminRealmsRealmUsersUserIdUnmanagedAttributesW
 	return ParseGetAdminRealmsRealmUsersUserIdUnmanagedAttributesResponse(rsp)
 }
 
+// ParseGetAdminRealmsResponse parses an HTTP response from a GetAdminRealmsWithResponse call
+func ParseGetAdminRealmsResponse(rsp *http.Response) (*GetAdminRealmsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RealmRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsResponse parses an HTTP response from a PostAdminRealmsWithResponse call
+func ParsePostAdminRealmsResponse(rsp *http.Response) (*PostAdminRealmsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmResponse parses an HTTP response from a DeleteAdminRealmsRealmWithResponse call
+func ParseDeleteAdminRealmsRealmResponse(rsp *http.Response) (*DeleteAdminRealmsRealmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmResponse parses an HTTP response from a GetAdminRealmsRealmWithResponse call
+func ParseGetAdminRealmsRealmResponse(rsp *http.Response) (*GetAdminRealmsRealmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RealmRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmResponse parses an HTTP response from a PutAdminRealmsRealmWithResponse call
+func ParsePutAdminRealmsRealmResponse(rsp *http.Response) (*PutAdminRealmsRealmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmAdminEventsResponse parses an HTTP response from a DeleteAdminRealmsRealmAdminEventsWithResponse call
+func ParseDeleteAdminRealmsRealmAdminEventsResponse(rsp *http.Response) (*DeleteAdminRealmsRealmAdminEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmAdminEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmAdminEventsResponse parses an HTTP response from a GetAdminRealmsRealmAdminEventsWithResponse call
+func ParseGetAdminRealmsRealmAdminEventsResponse(rsp *http.Response) (*GetAdminRealmsRealmAdminEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmAdminEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []AdminEventRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmClientDescriptionConverterResponse parses an HTTP response from a PostAdminRealmsRealmClientDescriptionConverterWithResponse call
+func ParsePostAdminRealmsRealmClientDescriptionConverterResponse(rsp *http.Response) (*PostAdminRealmsRealmClientDescriptionConverterResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmClientDescriptionConverterResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ClientRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmClientPoliciesPoliciesResponse parses an HTTP response from a GetAdminRealmsRealmClientPoliciesPoliciesWithResponse call
+func ParseGetAdminRealmsRealmClientPoliciesPoliciesResponse(rsp *http.Response) (*GetAdminRealmsRealmClientPoliciesPoliciesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmClientPoliciesPoliciesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ClientPoliciesRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmClientPoliciesPoliciesResponse parses an HTTP response from a PutAdminRealmsRealmClientPoliciesPoliciesWithResponse call
+func ParsePutAdminRealmsRealmClientPoliciesPoliciesResponse(rsp *http.Response) (*PutAdminRealmsRealmClientPoliciesPoliciesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmClientPoliciesPoliciesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmClientPoliciesProfilesResponse parses an HTTP response from a GetAdminRealmsRealmClientPoliciesProfilesWithResponse call
+func ParseGetAdminRealmsRealmClientPoliciesProfilesResponse(rsp *http.Response) (*GetAdminRealmsRealmClientPoliciesProfilesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmClientPoliciesProfilesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ClientProfilesRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmClientPoliciesProfilesResponse parses an HTTP response from a PutAdminRealmsRealmClientPoliciesProfilesWithResponse call
+func ParsePutAdminRealmsRealmClientPoliciesProfilesResponse(rsp *http.Response) (*PutAdminRealmsRealmClientPoliciesProfilesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmClientPoliciesProfilesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmClientSessionStatsResponse parses an HTTP response from a GetAdminRealmsRealmClientSessionStatsWithResponse call
+func ParseGetAdminRealmsRealmClientSessionStatsResponse(rsp *http.Response) (*GetAdminRealmsRealmClientSessionStatsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmClientSessionStatsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []map[string]string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmClientTypesResponse parses an HTTP response from a GetAdminRealmsRealmClientTypesWithResponse call
+func ParseGetAdminRealmsRealmClientTypesResponse(rsp *http.Response) (*GetAdminRealmsRealmClientTypesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmClientTypesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ClientTypesRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmClientTypesResponse parses an HTTP response from a PutAdminRealmsRealmClientTypesWithResponse call
+func ParsePutAdminRealmsRealmClientTypesResponse(rsp *http.Response) (*PutAdminRealmsRealmClientTypesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmClientTypesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmCredentialRegistratorsResponse parses an HTTP response from a GetAdminRealmsRealmCredentialRegistratorsWithResponse call
+func ParseGetAdminRealmsRealmCredentialRegistratorsResponse(rsp *http.Response) (*GetAdminRealmsRealmCredentialRegistratorsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmCredentialRegistratorsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmDefaultDefaultClientScopesResponse parses an HTTP response from a GetAdminRealmsRealmDefaultDefaultClientScopesWithResponse call
+func ParseGetAdminRealmsRealmDefaultDefaultClientScopesResponse(rsp *http.Response) (*GetAdminRealmsRealmDefaultDefaultClientScopesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmDefaultDefaultClientScopesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ClientScopeRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse parses an HTTP response from a DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse call
+func ParseDeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse(rsp *http.Response) (*DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse parses an HTTP response from a PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdWithResponse call
+func ParsePutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse(rsp *http.Response) (*PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmDefaultDefaultClientScopesClientScopeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmDefaultGroupsResponse parses an HTTP response from a GetAdminRealmsRealmDefaultGroupsWithResponse call
+func ParseGetAdminRealmsRealmDefaultGroupsResponse(rsp *http.Response) (*GetAdminRealmsRealmDefaultGroupsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmDefaultGroupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []GroupRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmDefaultGroupsGroupIdResponse parses an HTTP response from a DeleteAdminRealmsRealmDefaultGroupsGroupIdWithResponse call
+func ParseDeleteAdminRealmsRealmDefaultGroupsGroupIdResponse(rsp *http.Response) (*DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmDefaultGroupsGroupIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmDefaultGroupsGroupIdResponse parses an HTTP response from a PutAdminRealmsRealmDefaultGroupsGroupIdWithResponse call
+func ParsePutAdminRealmsRealmDefaultGroupsGroupIdResponse(rsp *http.Response) (*PutAdminRealmsRealmDefaultGroupsGroupIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmDefaultGroupsGroupIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmDefaultOptionalClientScopesResponse parses an HTTP response from a GetAdminRealmsRealmDefaultOptionalClientScopesWithResponse call
+func ParseGetAdminRealmsRealmDefaultOptionalClientScopesResponse(rsp *http.Response) (*GetAdminRealmsRealmDefaultOptionalClientScopesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmDefaultOptionalClientScopesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ClientScopeRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse parses an HTTP response from a DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse call
+func ParseDeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse(rsp *http.Response) (*DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse parses an HTTP response from a PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdWithResponse call
+func ParsePutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse(rsp *http.Response) (*PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmDefaultOptionalClientScopesClientScopeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmEventsResponse parses an HTTP response from a DeleteAdminRealmsRealmEventsWithResponse call
+func ParseDeleteAdminRealmsRealmEventsResponse(rsp *http.Response) (*DeleteAdminRealmsRealmEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmEventsResponse parses an HTTP response from a GetAdminRealmsRealmEventsWithResponse call
+func ParseGetAdminRealmsRealmEventsResponse(rsp *http.Response) (*GetAdminRealmsRealmEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []EventRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmEventsConfigResponse parses an HTTP response from a GetAdminRealmsRealmEventsConfigWithResponse call
+func ParseGetAdminRealmsRealmEventsConfigResponse(rsp *http.Response) (*GetAdminRealmsRealmEventsConfigResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmEventsConfigResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RealmEventsConfigRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmEventsConfigResponse parses an HTTP response from a PutAdminRealmsRealmEventsConfigWithResponse call
+func ParsePutAdminRealmsRealmEventsConfigResponse(rsp *http.Response) (*PutAdminRealmsRealmEventsConfigResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmEventsConfigResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmGroupByPathPathResponse parses an HTTP response from a GetAdminRealmsRealmGroupByPathPathWithResponse call
+func ParseGetAdminRealmsRealmGroupByPathPathResponse(rsp *http.Response) (*GetAdminRealmsRealmGroupByPathPathResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmGroupByPathPathResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GroupRepresentation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmLocalizationResponse parses an HTTP response from a GetAdminRealmsRealmLocalizationWithResponse call
+func ParseGetAdminRealmsRealmLocalizationResponse(rsp *http.Response) (*GetAdminRealmsRealmLocalizationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmLocalizationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmLocalizationLocaleResponse parses an HTTP response from a DeleteAdminRealmsRealmLocalizationLocaleWithResponse call
+func ParseDeleteAdminRealmsRealmLocalizationLocaleResponse(rsp *http.Response) (*DeleteAdminRealmsRealmLocalizationLocaleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmLocalizationLocaleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmLocalizationLocaleResponse parses an HTTP response from a GetAdminRealmsRealmLocalizationLocaleWithResponse call
+func ParseGetAdminRealmsRealmLocalizationLocaleResponse(rsp *http.Response) (*GetAdminRealmsRealmLocalizationLocaleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmLocalizationLocaleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmLocalizationLocaleResponse parses an HTTP response from a PostAdminRealmsRealmLocalizationLocaleWithResponse call
+func ParsePostAdminRealmsRealmLocalizationLocaleResponse(rsp *http.Response) (*PostAdminRealmsRealmLocalizationLocaleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmLocalizationLocaleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmLocalizationLocaleKeyResponse parses an HTTP response from a DeleteAdminRealmsRealmLocalizationLocaleKeyWithResponse call
+func ParseDeleteAdminRealmsRealmLocalizationLocaleKeyResponse(rsp *http.Response) (*DeleteAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmLocalizationLocaleKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmLocalizationLocaleKeyResponse parses an HTTP response from a GetAdminRealmsRealmLocalizationLocaleKeyWithResponse call
+func ParseGetAdminRealmsRealmLocalizationLocaleKeyResponse(rsp *http.Response) (*GetAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmLocalizationLocaleKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmLocalizationLocaleKeyResponse parses an HTTP response from a PutAdminRealmsRealmLocalizationLocaleKeyWithResponse call
+func ParsePutAdminRealmsRealmLocalizationLocaleKeyResponse(rsp *http.Response) (*PutAdminRealmsRealmLocalizationLocaleKeyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmLocalizationLocaleKeyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmLogoutAllResponse parses an HTTP response from a PostAdminRealmsRealmLogoutAllWithResponse call
+func ParsePostAdminRealmsRealmLogoutAllResponse(rsp *http.Response) (*PostAdminRealmsRealmLogoutAllResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmLogoutAllResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GlobalRequestResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmPartialExportResponse parses an HTTP response from a PostAdminRealmsRealmPartialExportWithResponse call
+func ParsePostAdminRealmsRealmPartialExportResponse(rsp *http.Response) (*PostAdminRealmsRealmPartialExportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmPartialExportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmPartialImportResponse parses an HTTP response from a PostAdminRealmsRealmPartialImportWithResponse call
+func ParsePostAdminRealmsRealmPartialImportResponse(rsp *http.Response) (*PostAdminRealmsRealmPartialImportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmPartialImportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmPushRevocationResponse parses an HTTP response from a PostAdminRealmsRealmPushRevocationWithResponse call
+func ParsePostAdminRealmsRealmPushRevocationResponse(rsp *http.Response) (*PostAdminRealmsRealmPushRevocationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmPushRevocationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GlobalRequestResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAdminRealmsRealmSessionsSessionResponse parses an HTTP response from a DeleteAdminRealmsRealmSessionsSessionWithResponse call
+func ParseDeleteAdminRealmsRealmSessionsSessionResponse(rsp *http.Response) (*DeleteAdminRealmsRealmSessionsSessionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAdminRealmsRealmSessionsSessionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePostAdminRealmsRealmTestSMTPConnectionResponse parses an HTTP response from a PostAdminRealmsRealmTestSMTPConnectionWithResponse call
+func ParsePostAdminRealmsRealmTestSMTPConnectionResponse(rsp *http.Response) (*PostAdminRealmsRealmTestSMTPConnectionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostAdminRealmsRealmTestSMTPConnectionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseGetAdminRealmsRealmUsersResponse parses an HTTP response from a GetAdminRealmsRealmUsersWithResponse call
 func ParseGetAdminRealmsRealmUsersResponse(rsp *http.Response) (*GetAdminRealmsRealmUsersResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4627,6 +11129,58 @@ func ParsePostAdminRealmsRealmUsersResponse(rsp *http.Response) (*PostAdminRealm
 	response := &PostAdminRealmsRealmUsersResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetAdminRealmsRealmUsersManagementPermissionsResponse parses an HTTP response from a GetAdminRealmsRealmUsersManagementPermissionsWithResponse call
+func ParseGetAdminRealmsRealmUsersManagementPermissionsResponse(rsp *http.Response) (*GetAdminRealmsRealmUsersManagementPermissionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAdminRealmsRealmUsersManagementPermissionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ManagementPermissionReference
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutAdminRealmsRealmUsersManagementPermissionsResponse parses an HTTP response from a PutAdminRealmsRealmUsersManagementPermissionsWithResponse call
+func ParsePutAdminRealmsRealmUsersManagementPermissionsResponse(rsp *http.Response) (*PutAdminRealmsRealmUsersManagementPermissionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutAdminRealmsRealmUsersManagementPermissionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ManagementPermissionReference
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil

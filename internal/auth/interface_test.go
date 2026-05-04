@@ -137,6 +137,11 @@ func (s *StaticIDP) Resolve(_ context.Context, id string) (*Identity, error) {
 	return nil, errors.New("not found")
 }
 
+// ResolveFederated implements IdentityProvider.
+func (*StaticIDP) ResolveFederated(_ context.Context, _, _ string) (*Identity, error) {
+	return nil, ErrNotFound
+}
+
 // String implements IdentityProvider.
 func (s *StaticIDP) String() string {
 	return s.name

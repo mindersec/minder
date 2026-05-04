@@ -15,6 +15,7 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/keycloak/client"
 	"github.com/mindersec/minder/internal/util/ptr"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
@@ -24,19 +25,15 @@ func TestKeyCloak_Resolve(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		id        string
-		wantError string
-		human     string
-		userid    string
+		name         string
+		id           string
+		federatedIdP string
+		wantError    string
+		human        string
+		userid       string
 	}{{
 		name:   "Keycloak id",
 		id:     "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
-		human:  "user",
-		userid: "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
-	}, {
-		name:   "GitHub id",
-		id:     "123456",
 		human:  "user",
 		userid: "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
 	}, {
@@ -47,7 +44,13 @@ func TestKeyCloak_Resolve(t *testing.T) {
 	}, {
 		name:      "Unknown id",
 		id:        "unknown",
-		wantError: "unable to resolve user: user not found in identity store",
+		wantError: "user not found in identity store",
+	}, {
+		name:         "GitHub id - federated",
+		id:           "123456",
+		federatedIdP: "github",
+		human:        "user",
+		userid:       "1a311ff9-4478-4866-a14a-b1eeacf0c0c0",
 	}}
 
 	fakeKeycloak := &fakeKeycloak{
@@ -79,9 +82,16 @@ func TestKeyCloak_Resolve(t *testing.T) {
 
 			ctx := context.Background()
 
-			id, err := kc.Resolve(ctx, tt.id)
+			var id *auth.Identity
+			var err error
+			if tt.federatedIdP != "" {
+				id, err = kc.ResolveFederated(ctx, tt.federatedIdP, tt.id)
+			} else {
+				id, err = kc.Resolve(ctx, tt.id)
+			}
+
 			if tt.wantError != "" {
-				assert.Equal(t, tt.wantError, err.Error())
+				assert.ErrorIs(t, err, auth.ErrNotFound)
 				return
 			}
 			assert.NoError(t, err)
@@ -111,6 +121,7 @@ func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
 	mux.HandleFunc("/admin/realms/stacklok/users/{userid}", f.GetUser)
 	mux.HandleFunc("/admin/realms/stacklok/users", f.GetUserByQuery)
 	mux.HandleFunc("/realms/stacklok/protocol/openid-connect/token", f.GetToken)
+	mux.HandleFunc("/realms/stacklok/.well-known/openid-configuration", f.GetOIDCConfig)
 	mux.HandleFunc("/", LogMissing(t))
 
 	return httptest.NewServer(mux)
@@ -119,6 +130,17 @@ func (f *fakeKeycloak) Start(t *testing.T) *httptest.Server {
 func (*fakeKeycloak) GetToken(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write([]byte(`{"access_token":"1234","expires_in":300,"token_type":"Bearer"}`)); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (*fakeKeycloak) GetOIDCConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write([]byte(`{
+		"issuer": "http://` + r.Host + `/realms/stacklok",
+		"jwks_uri": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/certs",
+		"token_endpoint": "http://` + r.Host + `/realms/stacklok/protocol/openid-connect/token"
+	}`)); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

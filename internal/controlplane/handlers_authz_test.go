@@ -1052,6 +1052,11 @@ func (*SimpleResolver) Validate(_ context.Context, _ jwt.Token) (*auth.Identity,
 	panic("unimplemented")
 }
 
+// ResolveFederated implements auth.Resolver.
+func (*SimpleResolver) ResolveFederated(_ context.Context, _, _ string) (*auth.Identity, error) {
+	panic("unimplemented")
+}
+
 // createSignedJWTToken creates a signed JWT token with the specified subject and email.
 func createSignedJWTToken(subject, email string, privateKey *rsa.PrivateKey) (string, error) {
 	token := gojwt.NewWithClaims(gojwt.SigningMethodRS256, gojwt.MapClaims{
