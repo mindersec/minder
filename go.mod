@@ -44,7 +44,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/itchyny/gojq v0.12.17
 	github.com/jedib0t/go-pretty/v6 v6.7.9
-	github.com/lib/pq v1.11.2
+	github.com/lib/pq v1.12.3
 	github.com/mhale/smtpd v0.8.3
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/mikefarah/yq/v4 v4.48.1
