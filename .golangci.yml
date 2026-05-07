@@ -39,6 +39,11 @@ linters:
               desc: We should use zerolog instead
             - pkg: io/ioutil
               desc: this is deprecated
+    goconst:
+      min-len: 6
+      min-occurrences: 5
+      # Tests can be clearer with string literals
+      ignore-tests: true
     gocyclo:
       min-complexity: 15
     gosec:

@@ -13,6 +13,8 @@ import (
 const (
 	// IngestTypeDiff is the ingest type for a diff
 	IngestTypeDiff = "diff"
+	// IngestTypeRest is the ingest type for a rest API request
+	IngestTypeRest = "rest"
 )
 
 const (

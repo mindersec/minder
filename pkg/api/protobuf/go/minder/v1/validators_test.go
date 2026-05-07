@@ -27,7 +27,7 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 		{
 			name: "valid rest ingest",
 			ingest: &RuleType_Definition_Ingest{
-				Type: "rest",
+				Type: IngestTypeRest,
 				Rest: &RestType{
 					Endpoint: "https://example.com/api",
 				},
@@ -50,7 +50,7 @@ func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 		{
 			name: "invalid rest ingest",
 			ingest: &RuleType_Definition_Ingest{
-				Type: "rest",
+				Type: IngestTypeRest,
 				Rest: &RestType{
 					Endpoint: "",
 				},

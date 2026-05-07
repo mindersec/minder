@@ -342,7 +342,7 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
-	case "rest":
+	case IngestTypeRest:
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}

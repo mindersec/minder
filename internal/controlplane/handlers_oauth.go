@@ -362,6 +362,8 @@ func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter
 		if err != nil {
 			return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 		}
+		//nolint:gosec  // We got the URL from encrypted storage, and validated it before storage
+		// see GetAuthorizationURL for validation
 		http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 		return nil
 	}
@@ -455,6 +457,8 @@ func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, 
 			if err != nil {
 				return fmt.Errorf("unable to decrypt redirect URL: %w", err)
 			}
+			//nolint:gosec  // We got the URL from encrypted storage, and validated it before storage
+			// see GetAuthorizationURL for validation
 			http.Redirect(w, r, redirectURL.String(), http.StatusTemporaryRedirect)
 			return nil
 		}
