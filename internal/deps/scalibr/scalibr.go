@@ -10,15 +10,17 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"os"
 	"slices"
 
 	scalibr "github.com/google/osv-scalibr"
-	"github.com/google/osv-scalibr/extractor/filesystem/language/golang/gobinary"
+	scalibr_cfg "github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
 	"github.com/google/osv-scalibr/plugin/list"
 	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
+	"github.com/rs/zerolog"
 )
 
 // Extractor is a dependency extractor based on osv-scalibr.
@@ -52,17 +54,34 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		RunningSystem: false,
 	}
 
+	// TODO: it's unfortunate that scalibr spills files to disk.  File an upstream bug?
+	// NOTE: since we require NetworkOffline, we may not actually download anything...
+	tmpDir, err := os.MkdirTemp("", "minder-scalibr-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary scalibr directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+	cfg := scalibr_cfg.PluginConfig{
+		MaxFileSizeBytes:  1024 * 1024,
+		LocalRegistry:     tmpDir,
+		DisableGoogleAuth: true,
+	}
+
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
-	extractors := list.FromCapabilities(&desiredCaps)
-	// Don't run the go binary extractor; it sometimes panics on certain files.
-	extractors = slices.DeleteFunc(extractors, func(e scalibr_plugin.Plugin) bool {
-		_, ok := e.(*gobinary.Extractor)
-		return ok
+	plugins, err := list.FromCapabilities(&desiredCaps, &cfg)
+	if err != nil {
+		return nil, err
+	}
+	// unknownbinariesextr uses file extension to determine "binary-ness", and triggers on e.g. .py files
+	skipPlugins := []string{"ffa/unknownbinariesextr"}
+	plugins = slices.DeleteFunc(plugins, func(p scalibr_plugin.Plugin) bool {
+		return slices.Contains(skipPlugins, p.Name())
 	})
 	scanConfig := scalibr.ScanConfig{
-		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
-		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		Plugins:      extractors,
+		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
+		Plugins:      plugins,
 		Capabilities: &desiredCaps,
 	}
 
@@ -72,7 +91,27 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	if scanResults == nil || scanResults.Status == nil {
 		return nil, fmt.Errorf("error scanning files: no results")
 	}
-	if scanResults.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+	switch scanResults.Status.Status {
+	case scalibr_plugin.ScanStatusSucceeded:
+		// success, continue
+	case scalibr_plugin.ScanStatusPartiallySucceeded:
+		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
+		// fail for random reasons.  Accept partial success, but log the failing plugins.
+		known_bad := []string{
+			"endoflife/linuxdistro", // https://github.com/google/osv-scalibr/pull/2068
+			"rust/cargoauditable",   // https://github.com/go-git/go-billy/pull/208
+		}
+		for _, ps := range scanResults.PluginStatus {
+			if ps.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+				if !slices.Contains(known_bad, ps.Name) {
+					zerolog.Ctx(ctx).Warn().Str("plugin", ps.Name).Str("status", ps.Status.FailureReason).
+						Msg("Scalibr plugin failed")
+				}
+			}
+		}
+	case scalibr_plugin.ScanStatusUnspecified, scalibr_plugin.ScanStatusFailed:
+		fallthrough
+	default:
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
 
