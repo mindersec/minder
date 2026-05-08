@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/util"
@@ -22,35 +21,52 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+const (
+	defaultProfileType    = "profile"
+	defaultProfileVersion = "v1"
+)
+
 var editCmd = &cobra.Command{
 	Use:   "edit",
 	Short: "Edit an existing profile",
 	Long:  `The profile edit subcommand lets you fetch an existing profile, edit it in your $EDITOR, and apply the updates.`,
-	RunE:  cli.GRPCClientWrapRunE(editCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: editCommand,
 }
 
-func editCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
+// editCommand is the profile edit subcommand
+func editCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 	name := viper.GetString("name")
 
+	cmd.SilenceUsage = true
+
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
 	if id == "" && name == "" {
 		return cli.MessageAndError("Error editing profile", fmt.Errorf("id or name required"))
 	}
-	cmd.SilenceUsage = true
 
-	prof, err := getProfile(ctx, client, project, id, name)
+	prof, err := getProfile(cmd.Context(), client, project, id, name)
 	if err != nil {
 		return err
 	}
 
-	// hardcoded type and version since ParseResource requires it
 	if prof.Type == "" {
-		prof.Type = "profile"
+		prof.Type = defaultProfileType
 	}
 	if prof.Version == "" {
-		prof.Version = "v1"
+		prof.Version = defaultProfileVersion
 	}
 
 	yamlString, err := util.GetYamlFromProto(prof)
@@ -89,7 +105,7 @@ func editCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		return nil
 	}
 
-	return updateProfile(ctx, client, prof, updatedBytes, cmd)
+	return updateProfile(client, prof, updatedBytes, cmd)
 }
 
 func getProfile(ctx context.Context, client minderv1.ProfileServiceClient, project, id, name string) (*minderv1.Profile, error) {
@@ -144,7 +160,6 @@ func handleEditor(fileName string) error {
 }
 
 func updateProfile(
-	_ context.Context,
 	client minderv1.ProfileServiceClient,
 	oldProf *minderv1.Profile,
 	updatedBytes []byte,
@@ -157,16 +172,13 @@ func updateProfile(
 
 	updatedProfile.Id = proto.String(oldProf.GetId())
 	updatedProfile.Context = oldProf.GetContext()
-	updatedProfile.Type = oldProf.GetType()
-	if updatedProfile.Type == "" {
-		updatedProfile.Type = "profile"
-	}
+	updatedProfile.Type = cmp.Or(oldProf.GetType(), defaultProfileType)
 	updatedProfile.Version = oldProf.GetVersion()
 	if updatedProfile.Version == "" {
-		updatedProfile.Version = "v1"
+		updatedProfile.Version = defaultProfileVersion
 	}
 
-	updateCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	updateCtx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	resp, err := client.UpdateProfile(updateCtx, &minderv1.UpdateProfileRequest{

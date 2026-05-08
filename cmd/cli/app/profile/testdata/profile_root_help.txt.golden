@@ -8,6 +8,7 @@ Available Commands:
   apply       Create or update a profile
   create      Create a profile
   delete      Delete a profile
+  edit        Edit an existing profile
   export      Export profile and associated resources
   get         Get details for a profile
   list        List profiles
