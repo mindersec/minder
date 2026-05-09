@@ -10,7 +10,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -22,23 +21,27 @@ var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a rule type",
 	Long:  `The ruletype create subcommand lets you create new rule types for a project within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(createCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		fileFlag, err := cmd.Flags().GetStringArray("file")
+		if err != nil {
+			return cli.MessageAndError("Error parsing file flag", err)
+		}
+
+		if err = validateFilesArg(fileFlag); err != nil {
+			return cli.MessageAndError("Error validating file flag", err)
+		}
+
+		return nil
+	},
+	RunE: createCommand,
 }
 
-// createCommand is the profile create subcommand
-func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
-
-	project := viper.GetString("project")
-
-	fileFlag, err := cmd.Flags().GetStringArray("file")
-	if err != nil {
-		return cli.MessageAndError("Error parsing file flag", err)
-	}
-
-	if err = validateFilesArg(fileFlag); err != nil {
-		return cli.MessageAndError("Error validating file flag", err)
-	}
+func createCommand(cmd *cobra.Command, _ []string) error {
+	fileFlag, _ := cmd.Flags().GetStringArray("file")
 
 	files, err := util.ExpandFileArgs(fileFlag...)
 	if err != nil {
@@ -48,6 +51,14 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
+
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewRuleTypeServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	project := viper.GetString("project")
 
 	table := initializeTableForList(cmd.OutOrStdout())
 
@@ -83,6 +94,7 @@ func createCommand(_ context.Context, cmd *cobra.Command, _ []string, conn *grpc
 	// Render the table
 	table.Render()
 	return nil
+
 }
 
 func init() {

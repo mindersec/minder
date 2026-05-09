@@ -2770,7 +2770,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the alert. * 'security_advisory' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
 
@@ -2783,7 +2783,8 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| review_message | <TypeLink type="string">string</TypeLink> |  |  |
+| review_message | <TypeLink type="string">string</TypeLink> |  | review_message is the message to post in the PR review. |
+| action | <TypeLink type="string">string</TypeLink> | optional | action is the action to use for the PR review (comment or request_changes). Default is comment. |
 
 
 
@@ -2908,10 +2909,11 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |
+| pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
 
 
 

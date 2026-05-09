@@ -14,10 +14,10 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/cmd/cli/app"
+	"github.com/mindersec/minder/cmd/cli/app/profile"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
@@ -30,12 +30,28 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get artifact details",
 	Long:  `The artifact get subcommand will get artifact details from an artifact, for a given ID.`,
-	RunE:  cli.GRPCClientWrapRunE(getCommand),
+	RunE:  getCommand,
 }
 
 // getCommand is the artifact get subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewArtifactServiceClient(conn)
+func getCommand(cmd *cobra.Command, _ []string) error {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
+		return fmt.Errorf("error binding flags: %w", err)
+	}
+
+	client, cleanup, err := cli.GetCLIClient(cmd, minderv1.NewArtifactServiceClient)
+	if err != nil {
+		return err
+	}
+	defer cleanup()
+
+	profileClient, profileCleanup, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return err
+	}
+	defer profileCleanup()
+
+	ctx := cmd.Context()
 
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
@@ -61,7 +77,7 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError("Error printing artifact", err)
 	}
 
-	evalStatus, err := artifactEvalStatus(ctx, conn, art, provider, project)
+	evalStatus, err := artifactEvalStatus(ctx, profileClient, art, provider, project)
 	if err != nil {
 		return cli.MessageAndError("Error getting artifact evaluation status", err)
 	}
@@ -113,12 +129,12 @@ func artifactGet(
 }
 
 func artifactEvalStatus(
-	ctx context.Context, conn *grpc.ClientConn,
+	ctx context.Context,
+	client minderv1.ProfileServiceClient,
 	artifact *minderv1.Artifact,
 	provider, project string,
 ) ([]*minderv1.RuleEvaluationStatus, error) {
-	profClient := minderv1.NewProfileServiceClient(conn)
-	profiles, err := profClient.ListProfiles(ctx, &minderv1.ListProfilesRequest{
+	profiles, err := client.ListProfiles(ctx, &minderv1.ListProfilesRequest{
 		Context: &minderv1.Context{
 			Provider: &provider,
 			Project:  &project,
@@ -130,20 +146,20 @@ func artifactEvalStatus(
 
 	var respList []*minderv1.RuleEvaluationStatus
 
-	for _, profile := range profiles.Profiles {
+	for _, prof := range profiles.Profiles {
 		req := &minderv1.GetProfileStatusByNameRequest{
 			Context: &minderv1.Context{
 				Provider: &provider,
 				Project:  &project,
 			},
-			Name: profile.GetName(),
+			Name: prof.GetName(),
 			Entity: &minderv1.EntityTypedId{
 				Id:   artifact.ArtifactPk,
 				Type: minderv1.Entity_ENTITY_ARTIFACTS,
 			},
 		}
 
-		resp, err := profClient.GetProfileStatusByName(ctx, req)
+		resp, err := client.GetProfileStatusByName(ctx, req)
 		if err != nil {
 			return nil, cli.MessageAndError("Error getting profile status", err)
 		}
@@ -190,16 +206,23 @@ func printArtifact(
 func printEvalStatus(
 	cmd *cobra.Command, evalStatus []*minderv1.RuleEvaluationStatus, format string,
 ) error {
+	if len(evalStatus) == 0 {
+		return nil
+	}
+
 	switch format {
 	case app.Table:
 		ta := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
-			[]string{"Profile", "Rule", "Status", "Message"})
+			[]string{"Profile", "Rule", "Result", "Details"})
 		for _, status := range evalStatus {
+			ruleName := profile.RuleDisplayName(status)
+			reasoning := profile.FormatEvaluationReasoning(status)
+
 			ta.AddRow(
 				status.ProfileId,
-				status.RuleTypeName,
+				ruleName,
 				status.Status,
-				status.Details,
+				reasoning,
 			)
 		}
 		ta.Render()

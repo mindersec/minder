@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog"
 	trusty "github.com/stacklok/trusty-sdk-go/pkg/v2/client"
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
+	"golang.org/x/sync/errgroup"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/constants"
@@ -308,57 +309,38 @@ func getDependencyScore(
 		PackageVersion: &dep.Dep.Version,
 	}
 
-	summary := make(chan *trustytypes.PackageSummaryAnnotation, 1)
-	metadata := make(chan *trustytypes.TrustyPackageData, 1)
-	alternatives := make(chan *trustytypes.PackageAlternatives, 1)
-	provenance := make(chan *trustytypes.Provenance, 1)
-	errors := make(chan error)
+	var (
+		respSummary      *trustytypes.PackageSummaryAnnotation
+		respPkg          *trustytypes.TrustyPackageData
+		respAlternatives *trustytypes.PackageAlternatives
+		respProvenance   *trustytypes.Provenance
+	)
 
-	defer func() {
-		close(summary)
-		close(metadata)
-		close(alternatives)
-		close(provenance)
-		close(errors)
-	}()
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		respSummary, err = trustyClient.Summary(gctx, input)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		respPkg, err = trustyClient.PackageMetadata(gctx, input)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		respAlternatives, err = trustyClient.Alternatives(gctx, input)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		respProvenance, err = trustyClient.Provenance(gctx, input)
+		return err
+	})
 
-	go func() {
-		resp, err := trustyClient.Summary(ctx, input)
-		errors <- err
-		summary <- resp
-	}()
-
-	go func() {
-		resp, err := trustyClient.PackageMetadata(ctx, input)
-		errors <- err
-		metadata <- resp
-	}()
-
-	go func() {
-		resp, err := trustyClient.Alternatives(ctx, input)
-		errors <- err
-		alternatives <- resp
-	}()
-
-	go func() {
-		resp, err := trustyClient.Provenance(ctx, input)
-		errors <- err
-		provenance <- resp
-	}()
-
-	// Beware of the magic number 4, which is the number of
-	// asynchronous calls fired in the previous lines. This must
-	// be kept in sync.
-	for i := 0; i < 4; i++ {
-		err := <-errors
-		if err != nil {
-			return nil, fmt.Errorf("trusty call failed: %w", err)
-		}
+	if err := g.Wait(); err != nil {
+		return nil, fmt.Errorf("trusty call failed: %w", err)
 	}
-	respSummary := <-summary
-	respPkg := <-metadata
-	respAlternatives := <-alternatives
-	respProvenance := <-provenance
 
 	res := makeTrustyReport(dep,
 		*respSummary,

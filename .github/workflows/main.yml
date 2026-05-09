@@ -11,7 +11,6 @@ on:
       - 'docs/**'
 permissions:
   contents: read
-  packages: write
 
 jobs:
   license-check:
@@ -26,10 +25,16 @@ jobs:
       checks: write
     uses: ./.github/workflows/lint.yml
   build:
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build.yml
   test:
     uses: ./.github/workflows/test.yml
   image-build:
     uses: ./.github/workflows/image-build.yml
   security:
+    permissions:
+      contents: read
+      security-events: write
     uses: ./.github/workflows/security.yml

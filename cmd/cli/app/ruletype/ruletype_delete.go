@@ -5,12 +5,12 @@ package ruletype
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -25,22 +25,39 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a rule type",
 	Long:  `The ruletype delete subcommand lets you delete rule types within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		id, _ := cmd.Flags().GetString("id")
+		name, _ := cmd.Flags().GetString("name")
+
+		if id != "" && name != "" {
+			return fmt.Errorf("please provide either the --id or --name flag, but not both")
+		}
+
+		return nil
+	},
+	RunE: deleteCommand,
 }
 
-// deleteCommand is the rule type delete subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
+func deleteCommand(cmd *cobra.Command, _ []string) error {
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewRuleTypeServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
 
 	project := viper.GetString("project")
 	id := viper.GetString("id")
 	name := viper.GetString("name")
 	deleteAll := viper.GetBool("all")
 	yesFlag := viper.GetBool("yes")
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
 
 	if deleteAll && !yesFlag {
 		// Ask for confirmation if deleteAll is set on purpose
@@ -60,7 +77,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	if !deleteAll {
 		// Fetch the rule type from the DB by either ID or Name
 		if id != "" {
-			rtype, err := client.GetRuleTypeById(ctx, &minderv1.GetRuleTypeByIdRequest{
+			rtype, err := client.GetRuleTypeById(cmd.Context(), &minderv1.GetRuleTypeByIdRequest{
 				Context: &minderv1.Context{Project: &project},
 				Id:      id,
 			})
@@ -71,7 +88,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		}
 
 		if name != "" {
-			rtype, err := client.GetRuleTypeByName(ctx, &minderv1.GetRuleTypeByNameRequest{
+			rtype, err := client.GetRuleTypeByName(cmd.Context(), &minderv1.GetRuleTypeByNameRequest{
 				Context: &minderv1.Context{Project: &project},
 				Name:    name,
 			})
@@ -83,7 +100,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 
 	} else {
 		// List all rule types
-		resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+		resp, err := client.ListRuleTypes(cmd.Context(), &minderv1.ListRuleTypesRequest{
 			Context: &minderv1.Context{Project: &project},
 		})
 		if err != nil {
@@ -93,12 +110,13 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 
 	// Delete the rule types set for deletion
-	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(ctx, client, rulesToDelete, project)
+	deletedRuleTypes, remainingRuleTypes := deleteRuleTypes(cmd.Context(), client, rulesToDelete, project)
 
 	// Print the results
 	printDeleteResults(cmd, deletedRuleTypes, remainingRuleTypes)
 
 	return nil
+
 }
 
 func deleteRuleTypes(
@@ -107,7 +125,6 @@ func deleteRuleTypes(
 	rulesToDelete []*minderv1.RuleType,
 	project string,
 ) ([]string, []ruleTypeBlock) {
-
 	var deletedRuleTypes []string
 	var remainingRuleTypes []ruleTypeBlock
 
@@ -164,12 +181,11 @@ func printDeleteResults(
 				}
 			}
 		}
-
 	}
 }
 
 func extractProfiles(errMsg string) []string {
-	var profilesRegex = regexp.MustCompile(`used by profiles (.+)`)
+	profilesRegex := regexp.MustCompile(`used by profiles (.+)`)
 	match := profilesRegex.FindStringSubmatch(strings.ToLower(errMsg))
 	if len(match) < 2 {
 		return []string{}

@@ -88,6 +88,7 @@ func runTestServer(cmd *cobra.Command, _ []string) error {
 		&ratecache.NoopRestClientCache{},
 		&mockauthz.SimpleClient{},
 		&auth.IdentityClient{},
+		auth.NewNoopIdentityManager(),
 		metrics.NewNoopMetrics(),
 		provtelemetry.NewNoopMetrics(),
 		[]message.HandlerMiddleware{},

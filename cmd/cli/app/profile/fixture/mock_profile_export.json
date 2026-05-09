@@ -1,0 +1,22 @@
+{
+  "version": "v1",
+  "type": "profile",
+  "id": "239b530d-9ee6-4f15-b4f8-e3fac4a87dfb",
+  "name": "mock-profile",
+  "displayName": "Mock Export Profile",
+  "context": {
+    "provider": "github"
+  },
+  "alert": "off",
+  "remediate": "off",
+  "repository": [
+    {
+      "type": "mock-rule-type",
+      "name": "Mock rule implementation",
+      "def": {
+        "apply_if_file": "go.mod",
+        "package_ecosystem": "gomod"
+      }
+    }
+  ]
+}

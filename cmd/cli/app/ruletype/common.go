@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
 	"golang.org/x/exp/slices"
 
 	"github.com/mindersec/minder/internal/util"
@@ -30,9 +29,6 @@ func execOnOneRuleType(
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
-	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
-	defer cancel()
-
 	reader, closer, err := util.OpenFileArg(f, dashOpen)
 	if err != nil {
 		return fmt.Errorf("error opening file arg: %w", err)
@@ -125,7 +121,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("Description", rt.Description)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
-	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(0.7)))
+	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(50.0)))
 	t.AddRow("Remediation", cmp.Or(rt.Def.GetRemediate().GetType(), "unsupported"))
 	t.AddRow("Alert", cmp.Or(rt.Def.GetAlert().GetType(), "unsupported"))
 }

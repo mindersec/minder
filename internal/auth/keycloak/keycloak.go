@@ -42,26 +42,27 @@ func NewKeyCloak(name string, cfg serverconfig.IdentityConfig) (*KeyCloak, error
 		return nil, err
 	}
 
-	issuerUrl, err := cfg.JwtUrl()
+	oidcCfg, err := cfg.DiscoverOIDCEndpoints(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to discover OIDC endpoints: %w", err)
 	}
-	if issuerUrl == nil {
-		return nil, errors.New("issuer URL is nil")
+
+	parsedIssuerUrl, err := url.Parse(oidcCfg.Issuer)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse discovered issuer: %w", err)
 	}
 
 	return &KeyCloak{
 		name:     name,
-		url:      *issuerUrl,
+		url:      *parsedIssuerUrl,
 		realm:    cfg.Realm,
 		cfg:      cfg,
 		kcClient: kcClient,
 	}, nil
 }
 
+var _ auth.IdentityManager = (*KeyCloak)(nil)
 var _ auth.IdentityProvider = (*KeyCloak)(nil)
-
-var errNotFound = errors.New("user not found in identity store")
 
 // String implements auth.IdentityProvider.
 func (k *KeyCloak) String() string {
@@ -75,20 +76,54 @@ func (k *KeyCloak) URL() url.URL {
 
 // Resolve implements auth.IdentityProvider.
 func (k *KeyCloak) Resolve(ctx context.Context, id string) (*auth.Identity, error) {
-	remoteUser, err := k.lookupUser(ctx, id)
-	if err != nil {
-		// TODO: pass through to the next statements to try to create the user if not existing
-		return nil, fmt.Errorf("unable to resolve user: %w", err)
+	// First, look up by user ID
+	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
+	if err == nil && resp.StatusCode() == http.StatusOK {
+		id := k.userToIdentity(*resp.JSON200)
+		if id != nil {
+			return id, nil
+		}
 	}
-	if remoteUser != nil {
-		return remoteUser, nil
+
+	// next, try lookup by username
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+		Exact:    ptr.Ptr(true),
+		Username: &id,
+	})
+	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
+		id := k.userToIdentity((*userLookup.JSON200)[0])
+		if id != nil {
+			return id, nil
+		}
 	}
-	return nil, errNotFound
+
+	return nil, auth.ErrNotFound
+}
+
+// ResolveFederated implements auth.IdentityProvider.
+func (k *KeyCloak) ResolveFederated(ctx context.Context, federatedIdP, id string) (*auth.Identity, error) {
+	if federatedIdP != "github" {
+		return nil, fmt.Errorf("unsupported federated identity provider %q", federatedIdP)
+	}
+
+	// try lookup by GitHub numeric ID (legacy Keycloak behavior)
+	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
+		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
+	})
+	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
+		id := k.userToIdentity((*userLookup.JSON200)[0])
+		if id != nil {
+			return id, nil
+		}
+	}
+
+	return nil, auth.ErrNotFound
 }
 
 // Validate implements auth.IdentityProvider.
 func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity, error) {
 	// TODO: implement validating the JWT against the jwks.
+	// Note: Currently, JWTs are validated before this method is called within internal/auth/jwt/validator.go.
 
 	humanName, ok := token.Get("preferred_username")
 	if !ok {
@@ -105,40 +140,63 @@ func (k *KeyCloak) Validate(_ context.Context, token jwt.Token) (*auth.Identity,
 	}, nil
 }
 
-func (k *KeyCloak) lookupUser(ctx context.Context, id string) (*auth.Identity, error) {
-	// First, look up by user ID
-	resp, err := k.kcClient.GetAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, id, nil)
-	if err == nil && resp.StatusCode() == http.StatusOK {
-		id := k.userToIdentity(*resp.JSON200)
-		if id != nil {
-			return id, nil
-		}
+// DeleteUser deletes a user from Keycloak
+func (k *KeyCloak) DeleteUser(ctx context.Context, userID string) error {
+	resp, err := k.kcClient.DeleteAdminRealmsRealmUsersUserIdWithResponse(ctx, k.realm, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+	if resp.StatusCode() != http.StatusNoContent && resp.StatusCode() != http.StatusNotFound {
+		return fmt.Errorf("unexpected status code when deleting user: %d", resp.StatusCode())
+	}
+	return nil
+}
+
+// GetEvents returns account events from Keycloak
+func (k *KeyCloak) GetEvents(ctx context.Context) ([]auth.AccountEvent, error) {
+	resp, err := k.kcClient.GetAdminRealmsRealmEventsWithResponse(ctx, k.realm, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get events: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code fetching events: %d", resp.StatusCode())
 	}
 
-	// next, try lookup by GitHub login
-	userLookup, err := k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
-		Exact:    ptr.Ptr(true),
-		Username: &id,
-	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
+	var events []auth.AccountEvent
+	for _, e := range *resp.JSON200 {
+		events = append(events, auth.AccountEvent{
+			Time:   ptr.ValueOrZero(e.Time),
+			Type:   ptr.ValueOrZero(e.Type),
+			UserId: ptr.ValueOrZero(e.UserId),
+		})
+	}
+	return events, nil
+}
+
+// GetAdminEvents returns administrative events from Keycloak
+func (k *KeyCloak) GetAdminEvents(ctx context.Context, operationTypes, resourceTypes []string) ([]auth.AdminEvent, error) {
+	params := &client.GetAdminRealmsRealmAdminEventsParams{
+		OperationTypes: &operationTypes,
+		ResourceTypes:  &resourceTypes,
+	}
+	resp, err := k.kcClient.GetAdminRealmsRealmAdminEventsWithResponse(ctx, k.realm, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get admin events: %w", err)
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code fetching admin events: %d", resp.StatusCode())
 	}
 
-	// last, try lookup by GitHub numeric ID
-	userLookup, err = k.kcClient.GetAdminRealmsRealmUsersWithResponse(ctx, k.realm, &client.GetAdminRealmsRealmUsersParams{
-		Q: ptr.Ptr(fmt.Sprintf("gh_id:%s", id)),
-	})
-	if err == nil && userLookup.StatusCode() == http.StatusOK && len(*userLookup.JSON200) == 1 {
-		id := k.userToIdentity((*userLookup.JSON200)[0])
-		if id != nil {
-			return id, nil
-		}
+	var events []auth.AdminEvent
+	for _, e := range *resp.JSON200 {
+		events = append(events, auth.AdminEvent{
+			Time:          ptr.ValueOrZero(e.Time),
+			OperationType: ptr.ValueOrZero(e.OperationType),
+			ResourceType:  ptr.ValueOrZero(e.ResourceType),
+			ResourcePath:  ptr.ValueOrZero(e.ResourcePath),
+		})
 	}
-
-	return nil, errNotFound
+	return events, nil
 }
 
 func (k *KeyCloak) userToIdentity(user client.UserRepresentation) *auth.Identity {

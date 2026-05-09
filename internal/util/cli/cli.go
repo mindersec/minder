@@ -90,7 +90,6 @@ func GRPCClientWrapRunE(
 
 		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
-
 		defer c.Close()
 
 		return runEFunc(ctx, cmd, args, c)

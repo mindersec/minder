@@ -1,0 +1,37 @@
+{
+  "version": "v1",
+  "type": "rule-type",
+  "id": "31023c54-28ff-406f-9dff-14d9f7b4bfba",
+  "name": "mock-rule-type",
+  "displayName": "Mock Rule Type",
+  "description": "Verifies that mock security settings are enabled.",
+  "guidance": "Ensure that the repository has the required mock configurations. Dependabot enables automated updates.",
+  "releasePhase": 2,
+  "severity": {
+    "value": 2
+  },
+  "shortFailureMessage": "Mock configuration is missing",
+  "context": {
+    "provider": "github"
+  },
+  "def": {
+    "inEntity": "repository",
+    "eval": {
+      "rego": {
+        "type": "deny-by-default",
+        "def": "package minder\n\ndefault allow := false\n\nallow {\n    input.profile.package_ecosystem == \"gomod\"\n}"
+      },
+      "dataSources": [
+        {
+          "name": "mock-data-source"
+        }
+      ]
+    },
+    "remediate": {
+      "pullRequest": {
+        "title": "Add mock configuration",
+        "body": "This is an automated pull request to add mock configurations."
+      }
+    }
+  }
+}

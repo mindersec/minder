@@ -15,8 +15,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	dbadapter "github.com/mindersec/minder/internal/adapters/db"
-	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/actions/alert"
 	"github.com/mindersec/minder/internal/engine/actions/remediate"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
@@ -92,22 +90,34 @@ func (rae *RuleActionsEngine) DoActions(
 		skipAlert = rae.isSkippable(ctx, alert.ActionType, params.GetEvalErr())
 	}
 
+	var prev *previousEval
+
+	if row := params.GetEvalStatusFromDb(); row != nil {
+		prev = &previousEval{
+			RemediationStatus: RemediationStatus(row.RemStatus),
+			AlertStatus:       AlertStatus(row.AlertStatus),
+			RemediationMeta:   row.RemMetadata,
+			AlertMeta:         row.AlertMetadata,
+		}
+	}
+	status := mapEvalStatus(params.GetEvalErr())
+
 	// Try remediating
 	if !skipRemediate {
 		// Decide if we should remediate
-		cmd := shouldRemediate(params.GetEvalStatusFromDb(), params.GetEvalErr())
+		cmd := shouldRemediate(prev, status)
 		// Run remediation
 		result.RemediateMeta, result.RemediateErr = rae.processAction(ctx, remediate.ActionType, cmd, ent, params,
-			getRemediationMeta(params.GetEvalStatusFromDb()))
+			getRemediationMeta(prev))
 	}
 
 	// Try alerting
 	if !skipAlert {
 		// Decide if we should alert
-		cmd := shouldAlert(params.GetEvalStatusFromDb(), params.GetEvalErr(), result.RemediateErr, remediateEngine.Type())
+		cmd := shouldAlert(prev, status, result.RemediateErr, remediateEngine.Type())
 		// Run alerting
 		result.AlertMeta, result.AlertErr = rae.processAction(ctx, alert.ActionType, cmd, ent, params,
-			getAlertMeta(params.GetEvalStatusFromDb()))
+			getAlertMeta(prev))
 	}
 	return result
 }
@@ -137,14 +147,11 @@ func (rae *RuleActionsEngine) processAction(
 }
 
 // shouldRemediate returns the action command for remediation taking into account previous evaluations
-func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalErr error) engif.ActionCmd {
-	// Get current evaluation status
-	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
-
+func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.ActionCmd {
 	// Get previous Remediation status
-	prevRemediation := db.RemediationStatusTypesSkipped
-	if prevEvalFromDb != nil {
-		prevRemediation = prevEvalFromDb.RemStatus
+	prevRemediation := RemediationStatusSkipped
+	if prevEval != nil {
+		prevRemediation = prevEval.RemediationStatus
 	}
 
 	// Start evaluation scenarios
@@ -152,27 +159,28 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 	// Case 1 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
-	switch newEval {
-	case db.EvalStatusTypesError:
-	case db.EvalStatusTypesSuccess:
+	switch evalStatus {
+	case EvalStatusError:
+		return engif.ActionCmdDoNothing
+	case EvalStatusSuccess:
 		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)
-		if db.RemediationStatusTypesSkipped != prevRemediation {
+		if RemediationStatusSkipped != prevRemediation {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if remediation was already skipped
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesFailure:
+	case EvalStatusFailure:
 		// Case 4 - Evaluation has changed from something else to FAILED -> Remediation should be ON
 		// We should remediate only if the previous remediation was skipped, so we don't risk endless remediation loops
-		if db.RemediationStatusTypesSkipped == prevRemediation {
+		if RemediationStatusSkipped == prevRemediation {
 			return engif.ActionCmdOn
 		}
 		// Do nothing if the Remediation is something else other than skipped, i.e. pending, success, error, etc.
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSkipped:
-	case db.EvalStatusTypesPending:
+	case EvalStatusSkipped:
+	case EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
@@ -182,18 +190,15 @@ func shouldRemediate(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow, evalE
 
 // shouldAlert returns the action command for alerting taking into account previous evaluations
 func shouldAlert(
-	prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow,
-	evalErr error,
+	prevEval *previousEval,
+	evalStatus EvalStatus,
 	remErr error,
 	remType string,
 ) engif.ActionCmd {
-	// Get current evaluation status
-	newEval := dbadapter.ErrorAsEvalStatus(evalErr)
-
 	// Get previous Alert status
-	prevAlert := db.AlertStatusTypesSkipped
-	if prevEvalFromDb != nil {
-		prevAlert = prevEvalFromDb.AlertStatus
+	prevAlert := AlertStatusSkipped
+	if prevEval != nil {
+		prevAlert = prevEval.AlertStatus
 	}
 
 	// Start evaluation scenarios
@@ -201,7 +206,7 @@ func shouldAlert(
 	// Case 1 - Successful remediation of a type that is not PR is considered instant.
 	if remType != pull_request.RemediateType && remErr == nil {
 		// If this is the case either skip alerting or turn it off if it was on
-		if prevAlert != db.AlertStatusTypesOff {
+		if prevAlert != AlertStatusOff {
 			return engif.ActionCmdOff
 		}
 		return engif.ActionCmdDoNothing
@@ -210,27 +215,28 @@ func shouldAlert(
 	// Case 2 - Do not try to be smart about it by doing nothing if the evaluation status has not changed
 
 	// Proceed with use cases where the evaluation changed
-	switch newEval {
-	case db.EvalStatusTypesError:
-	case db.EvalStatusTypesFailure:
+	switch evalStatus {
+	case EvalStatusError:
+		return engif.ActionCmdDoNothing
+	case EvalStatusFailure:
 		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
 		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
 		// The Alert should be on (if it wasn't already)
-		if db.AlertStatusTypesOn != prevAlert {
+		if AlertStatusOn != prevAlert {
 			return engif.ActionCmdOn
 		}
 		// We should do nothing if alert was already turned on
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSuccess:
+	case EvalStatusSuccess:
 		// Case 5 - Evaluation changed from something else to PASSING -> Alert should be OFF
 		// The Alert should be turned OFF (if it wasn't already)
-		if db.AlertStatusTypesOff != prevAlert {
+		if AlertStatusOff != prevAlert {
 			return engif.ActionCmdOff
 		}
 		// We should do nothing if the Alert is already OFF
 		return engif.ActionCmdDoNothing
-	case db.EvalStatusTypesSkipped:
-	case db.EvalStatusTypesPending:
+	case EvalStatusSkipped:
+	case EvalStatusPending:
 		return engif.ActionCmdDoNothing
 	}
 
@@ -243,7 +249,7 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	var skipAction bool
 
 	logger := zerolog.Ctx(ctx).Info().
-		Str("eval_status", string(dbadapter.ErrorAsEvalStatus(evalErr))).
+		Str("eval_status", string(mapEvalStatus(evalErr))).
 		Str("action", string(actionType))
 
 	// Get the profile option set for this action type
@@ -276,18 +282,18 @@ func (rae *RuleActionsEngine) isSkippable(ctx context.Context, actionType engif.
 	return skipAction
 }
 
-// getRemediationMeta returns the json.RawMessage from the database type, empty if not valid
-func getRemediationMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil {
-		return &prevEvalFromDb.RemMetadata
+// getRemediationMeta returns the json.RawMessage from the previous evaluation, empty if not valid
+func getRemediationMeta(prevEval *previousEval) *json.RawMessage {
+	if prevEval != nil {
+		return &prevEval.RemediationMeta
 	}
 	return nil
 }
 
-// getAlertMeta returns the json.RawMessage from the database type, empty if not valid
-func getAlertMeta(prevEvalFromDb *db.ListRuleEvaluationsByProfileIdRow) *json.RawMessage {
-	if prevEvalFromDb != nil {
-		return &prevEvalFromDb.AlertMetadata
+// getAlertMeta returns the json.RawMessage from the previous evaluation, empty if not valid
+func getAlertMeta(prevEval *previousEval) *json.RawMessage {
+	if prevEval != nil {
+		return &prevEval.AlertMeta
 	}
 	return nil
 }
@@ -303,10 +309,27 @@ func getDefaultResult(ctx context.Context) enginerr.ActionsError {
 	if err != nil {
 		logger.Error().Err(err).Msg("error marshaling empty json.RawMessage")
 	}
+
 	return enginerr.ActionsError{
 		RemediateErr:  enginerr.ErrActionSkipped,
 		AlertErr:      enginerr.ErrActionSkipped,
 		RemediateMeta: m,
 		AlertMeta:     m,
 	}
+}
+func mapEvalStatus(err error) EvalStatus {
+	if err == nil {
+		return EvalStatusSuccess
+	}
+
+	if errors.Is(err, enginerr.ErrEvaluationSkipSilently) ||
+		errors.Is(err, interfaces.ErrEvaluationSkipped) {
+		return EvalStatusSkipped
+	}
+
+	if errors.Is(err, interfaces.ErrEvaluationFailed) {
+		return EvalStatusFailure
+	}
+
+	return EvalStatusError
 }
