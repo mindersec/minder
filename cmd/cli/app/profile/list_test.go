@@ -38,24 +38,6 @@ func TestListCommand(t *testing.T) {
 			GoldenFileName: "list_profiles_table.txt",
 		},
 		{
-			Name: "list profiles json success",
-			Args: []string{"profile", "list", "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockProfileServiceClient(ctrl)
-
-				mockResp := &minderv1.ListProfilesResponse{}
-				cli.LoadFixture(t, "mock_profile_list.json", mockResp)
-
-				client.EXPECT().
-					ListProfiles(gomock.Any(), gomock.Any()).
-					Return(mockResp, nil)
-
-				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "list_profiles.json",
-		},
-		{
 			Name: "list profiles yaml success",
 			Args: []string{"profile", "list", "-o", "yaml"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {

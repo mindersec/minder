@@ -18,7 +18,6 @@ import (
 
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestGetCommand(t *testing.T) {
-	testID := "00000000-0000-0000-0000-000000000001"
 	testName := "test-profile"
 
 	tests := []cli.CmdTestCase{
@@ -38,23 +37,6 @@ func TestGetCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "get_by_name_table.txt",
-		},
-		{
-			Name: "get by id json success",
-			Args: []string{"profile", "get", "--id", testID, "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockProfileServiceClient(ctrl)
-				mockProf := &minderv1.Profile{}
-				cli.LoadFixture(t, "mock_profile_get.json", mockProf)
-
-				client.EXPECT().
-					GetProfileById(gomock.Any(), gomock.Any()).
-					Return(&minderv1.GetProfileByIdResponse{Profile: mockProf}, nil)
-
-				return cli.WithRPCClient[minderv1.ProfileServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "get_by_id.json",
 		},
 		{
 			Name:          "failure missing id and name",

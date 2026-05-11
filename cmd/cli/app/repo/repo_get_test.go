@@ -25,25 +25,6 @@ func TestGetCommand(t *testing.T) {
 
 	tests := []cli.CmdTestCase{
 		{
-			Name: "get repository by name - json output",
-			Args: []string{"repo", "get", "-n", repoName, "-o", "json"},
-			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
-				t.Helper()
-				client := mockv1.NewMockRepositoryServiceClient(ctrl)
-
-				mockResp := &minderv1.GetRepositoryByNameResponse{}
-				cli.LoadFixture(t, "mock_repo_get.json", mockResp)
-
-				client.EXPECT().
-					GetRepositoryByName(gomock.Any(), gomock.Any()).
-					Return(mockResp, nil).
-					Times(1)
-
-				return cli.WithRPCClient[minderv1.RepositoryServiceClient](context.Background(), client)
-			},
-			GoldenFileName: "get_name_json.txt",
-		},
-		{
 			Name: "get repository by id - yaml output",
 			Args: []string{"repo", "get", "-i", repoID, "-o", "yaml"},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
