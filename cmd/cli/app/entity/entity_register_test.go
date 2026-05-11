@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright 2024 The Minder Authors
+// SPDX-FileCopyrightText: Copyright 2026 The Minder Authors
 // SPDX-License-Identifier: Apache-2.0
 
 package entity
@@ -19,8 +19,6 @@ import (
 
 //nolint:paralleltest // Cannot run in parallel because it swaps global Viper/Stdout state
 func TestRegisterCommand(t *testing.T) {
-	const entityID = "00000000-0000-0000-0000-000000000003"
-
 	tests := []cli.CmdTestCase{
 		{
 			Name: "register with properties - table output",
