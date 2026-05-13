@@ -33,6 +33,14 @@ For example, for a GitHub repository:
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {
 			return fmt.Errorf("error binding flags: %w", err)
 		}
+
+		format := viper.GetString("output")
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
 		return nil
 	},
 	RunE: registerCommand,

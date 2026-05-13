@@ -7,7 +7,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -64,6 +66,35 @@ func TestRegisterCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.EntityInstanceServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "register_success.json",
+		},
+		{
+			Name: "register with comma value",
+			Args: []string{
+				"entity", "register",
+				"--type", "repository",
+				"--property", "github/repo_topics=topic1,topic2,topic3",
+			},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockEntityInstanceServiceClient(ctrl)
+				mockResp := &minderv1.ListEntitiesResponse{}
+				cli.LoadFixture(t, "mock_entities_response.json", mockResp)
+
+				// Use a Do function to verify that the property value is correctly parsed into a list
+				client.EXPECT().
+					RegisterEntity(gomock.Any(), gomock.Any()).
+					Do(func(_ context.Context, req *minderv1.RegisterEntityRequest, _ ...grpc.CallOption) {
+						props := req.GetIdentifyingProperties()
+						topics, ok := props["github/repo_topics"]
+						if !ok {
+							t.Fatal("missing github/repo_topics property")
+						}
+						require.Equal(t, "topic1,topic2,topic3", topics.GetStringValue(), "expected raw string value for comma-separated topics")
+					}).
+					Return(&minderv1.RegisterEntityResponse{Entity: mockResp.Results[0]}, nil)
+				return cli.WithRPCClient[minderv1.EntityInstanceServiceClient](context.Background(), client)
+			},
+			GoldenFileName: "register_comma_value.json",
 		},
 		{
 			Name:          "missing required type flag",
