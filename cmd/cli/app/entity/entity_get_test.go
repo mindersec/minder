@@ -96,7 +96,7 @@ func TestGetCommand(t *testing.T) {
 		},
 		{
 			Name:          "giving both id and name",
-			Args:          []string{"entity", "get", "--id", entityID, "--name", entityName},
+			Args:          []string{"entity", "get", "--id", entityID, "--name", entityName, "--type", "repository", "-o", app.JSON},
 			ExpectedError: "if any flags in the group [id name] are set none of the others can be",
 		},
 		{

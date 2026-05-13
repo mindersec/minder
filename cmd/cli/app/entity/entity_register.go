@@ -48,21 +48,11 @@ For example, for a GitHub repository:
 
 // registerCommand is the entity register subcommand
 func registerCommand(cmd *cobra.Command, _ []string) error {
-	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewEntityInstanceServiceClient)
-	if err != nil {
-		return cli.MessageAndError("Error creating gRPC client", err)
-	}
-	defer closeConn()
-
 	project := viper.GetString("project")
 	provider := viper.GetString("provider")
 	format := viper.GetString("output")
 	entityTypeStr := viper.GetString("type")
 	properties := viper.GetStringSlice("property")
-
-	// No longer print usage on returned error, since we've parsed our inputs
-	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
-	cmd.SilenceUsage = true
 
 	entityType := minderv1.EntityFromString(entityTypeStr)
 	if entityType == minderv1.Entity_ENTITY_UNSPECIFIED {
@@ -78,6 +68,16 @@ func registerCommand(cmd *cobra.Command, _ []string) error {
 		}
 		identifyingProps[key] = structpb.NewStringValue(value)
 	}
+
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewEntityInstanceServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error creating gRPC client", err)
+	}
+	defer closeConn()
+
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
 
 	resp, err := client.RegisterEntity(cmd.Context(), &minderv1.RegisterEntityRequest{
 		Context: &minderv1.ContextV2{

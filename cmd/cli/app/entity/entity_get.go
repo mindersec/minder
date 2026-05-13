@@ -53,6 +53,11 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 	id := viper.GetString("id")
 	name := viper.GetString("name")
 	entityTypeStr := viper.GetString("type")
+	entityType := minderv1.EntityFromString(entityTypeStr)
+
+	if id == "" && entityType == minderv1.Entity_ENTITY_UNSPECIFIED {
+		return fmt.Errorf("invalid or unspecified entity type %q; required when using --name", entityTypeStr)
+	}
 
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
@@ -73,11 +78,6 @@ func getCommand(cmd *cobra.Command, _ []string) error {
 		}
 		entity = resp.GetEntity()
 	} else {
-		entityType := minderv1.EntityFromString(entityTypeStr)
-		if entityType == minderv1.Entity_ENTITY_UNSPECIFIED {
-			return fmt.Errorf("invalid or unspecified entity type %q; required when using --name", entityTypeStr)
-		}
-
 		resp, err := client.GetEntityByName(cmd.Context(), &minderv1.GetEntityByNameRequest{
 			Context: &minderv1.ContextV2{
 				ProjectId: project,
