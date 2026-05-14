@@ -165,3 +165,33 @@ func GetStatusIcon(eval EvalStatus, emoji bool) layouts.ColoredColumn {
 
 	return colorFunc(strings.Join(tokens, separator))
 }
+
+type entityTypeDisplay struct {
+	Emoji string
+	Text  string
+}
+
+var entityTypeIcons = map[string]entityTypeDisplay{
+	"ENTITY_REPOSITORIES":       {Emoji: "📂", Text: "Repository"},
+	"ENTITY_ARTIFACTS":          {Emoji: "📦", Text: "Artifact"},
+	"ENTITY_PULL_REQUESTS":      {Emoji: "🔀", Text: "Pull Request"},
+	"ENTITY_BUILD_ENVIRONMENTS": {Emoji: "🧰", Text: "Build Env"},
+	"ENTITY_RELEASE":            {Emoji: "🎉", Text: "Release"},
+	"ENTITY_PIPELINE_RUN":       {Emoji: "🎬", Text: "Pipeline Run"},
+	"ENTITY_TASK_RUN":           {Emoji: "🔄", Text: "Task Run"},
+	"ENTITY_BUILD":              {Emoji: "🛠️", Text: "Build"},
+}
+
+// GetEntityTypeIcon returns a colored column representing the entity type.
+// When emoji is true, an emoji icon is used; otherwise a short text label is
+// returned.  Unknown entity types fall back to the raw type string.
+func GetEntityTypeIcon(entityType string, emoji bool) layouts.ColoredColumn {
+	d, ok := entityTypeIcons[entityType]
+	if !ok {
+		return layouts.NoColor(entityType)
+	}
+	if emoji {
+		return layouts.NoColor(d.Emoji)
+	}
+	return layouts.NoColor(d.Text)
+}
