@@ -30,6 +30,7 @@ https://mindersec.github.io/
 * [minder auth](minder_auth.md)	 - Authorize and manage accounts within a minder control plane
 * [minder completion](minder_completion.md)	 - Generate the autocompletion script for the specified shell
 * [minder datasource](minder_datasource.md)	 - Manage data sources within a minder control plane
+* [minder entity](minder_entity.md)	 - Manage entities within a Minder project
 * [minder history](minder_history.md)	 - View evaluation history
 * [minder profile](minder_profile.md)	 - Manage profiles
 * [minder project](minder_project.md)	 - Manage project within a minder control plane
