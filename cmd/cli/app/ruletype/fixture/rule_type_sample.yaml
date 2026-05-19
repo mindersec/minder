@@ -33,9 +33,11 @@ def:
       def: |
         package minder
 
+        import rego.v1
+
         default allow := false
 
-        allow {
-            # Check if the required review count meets our minimum
-            input.ingested.required_pull_request_reviews.required_approving_review_count >= input.profile.required_reviews
+        allow if {
+          # Check if the required review count meets our minimum
+          input.ingested.required_pull_request_reviews.required_approving_review_count >= input.profile.required_reviews
         }
