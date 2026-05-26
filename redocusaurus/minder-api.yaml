@@ -4610,6 +4610,7 @@ definitions:
           value
 
           must be either empty or match the org of the installation_id).
+        readOnly: true
       organizationId:
         type: string
         format: int64
@@ -4620,6 +4621,7 @@ definitions:
           value
 
           must be either empty or match the org of the installation_id).
+        readOnly: true
     description: GitHubAppParams is the parameters for a GitHub App provider.
   v1GitType:
     type: object
@@ -4946,6 +4948,7 @@ definitions:
         description: |-
           id is the id of the profile.
           This is optional and is set by the system.
+        readOnly: true
       name:
         type: string
         description: name is the name of the profile instance.
@@ -5143,6 +5146,7 @@ definitions:
           input
 
           in favor of the context field in CreateProviderRequest.
+        readOnly: true
       version:
         type: string
         description: |-
@@ -5173,6 +5177,7 @@ definitions:
 
           This is an output-only field. It may be: "set", "unset",
           "not_applicable".
+        readOnly: true
       id:
         type: string
         description: id is the unique identifier of the provider.
@@ -5709,6 +5714,7 @@ definitions:
         description: |-
           id is the id of the rule type.
           This is mostly optional and is set by the server.
+        readOnly: true
       name:
         type: string
         description: name is the name of the rule type.
@@ -5985,6 +5991,7 @@ definitions:
         description: |-
           The upstream identity of the repository, as an integer.
           This is only set on output, and is ignored on input.
+        readOnly: true
       context:
         $ref: '#/definitions/v1Context'
       registered:
@@ -5992,6 +5999,7 @@ definitions:
         description: |-
           True if the repository is already registered in Minder.
           This is only set on output, and is ignored on input.
+        readOnly: true
     required:
       - name
   v1UserRecord:
