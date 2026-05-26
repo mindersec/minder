@@ -50,11 +50,27 @@ allow if {
 			wantStr: "v1",
 		},
 		{
-			name: "v1 policy with keyword syntax",
+			name: "v0 policy with future.keywords parses as v1",
 			def: `
 package minder
 
-import rego.v1
+import future.keywords.if
+import future.keywords.in
+
+default allow = false
+
+allow if {
+	"admin" in input.profile.roles
+}`,
+			// future.keywords policies are accepted by OPA's V1 parser
+			// for backward compatibility during migration.
+			want:    ast.RegoV1,
+			wantStr: "v1",
+		},
+		{
+			name: "v1 policy with keyword syntax without rego.v1 import",
+			def: `
+package minder
 
 default allow := false
 
