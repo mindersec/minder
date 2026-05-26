@@ -48,7 +48,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.DenyByDefaultEvaluationType.String(),
-					Def:  "package minder\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"bar\"\n}",
+					Def:  "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n\tinput.ingested.data == \"bar\"\n}",
 				},
 			},
 			out: &interfaces.EvaluationResult{
@@ -61,7 +61,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.DenyByDefaultEvaluationType.String(),
-					Def:  "package minder\n\nallow := false\noutput := [\"always fail\",\"never pass\"]",
+					Def:  "package minder\n\nimport rego.v1\n\nallow := false\noutput := [\"always fail\", \"never pass\"]",
 				},
 			},
 			out: &interfaces.EvaluationResult{
@@ -74,7 +74,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.ConstraintsEvaluationType.String(),
-					Def:  "package minder\n\nviolations[results] {\n\tinput.ingested.data == \"foo\"\n\tresults := {\"status\": \"denied\", \"msg\": \"foo is not allowed\"}\n}",
+					Def:  "package minder\n\nimport rego.v1\n\nviolations contains results if {\n\tinput.ingested.data == \"foo\"\n\tresults := {\"status\": \"denied\", \"msg\": \"foo is not allowed\"}\n}",
 				},
 			},
 			out: &interfaces.EvaluationResult{

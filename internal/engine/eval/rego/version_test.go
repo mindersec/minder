@@ -68,6 +68,19 @@ allow if {
 			wantStr: "v1",
 		},
 		{
+			name: "v1 policy with keyword syntax without rego.v1 import",
+			def: `
+package minder
+
+default allow := false
+
+allow if {
+	"admin" in input.profile.roles
+}`,
+			want:    ast.RegoV1,
+			wantStr: "v1",
+		},
+		{
 			name: "v1 constraints policy",
 			def: `
 package minder

@@ -311,9 +311,7 @@ def:
       def: |
         package minder
 
-        import future.keywords.contains
-        import future.keywords.if
-        import future.keywords.in
+        import rego.v1
 
         severity_to_number := {
           null: -1,
