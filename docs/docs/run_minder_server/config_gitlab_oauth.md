@@ -11,7 +11,12 @@ sidebar_position: 75
 
 ## Steps
 
-1. Navigate to [GitLab User Settings > Applications](https://gitlab.com/-/user_settings/applications)
+1. Create a GitLab OAuth application. GitLab supports three ownership levels —
+   choose the one that fits your setup:
+
+   - **User-owned:** Go to [User Settings > Applications](https://gitlab.com/-/user_settings/applications)
+   - **Group-owned:** Go to your GitLab group → **Settings** → **Applications**
+   - **Instance-wide:** Go to **Admin Area** → **Applications** (self-managed only)
 
 2. Click **Add new application** and enter the following details:
    - **Name:** `Minder` (or any name you prefer)
