@@ -26,7 +26,7 @@ sidebar_position: 75
      http://localhost:8080/api/v1/auth/callback/gitlab/web
      ```
    - **Confidential:** Yes (checked)
-   - **Scopes:** Check `api`, `read_user`, and `read_repository`
+   - **Scopes:** Check `api`, `profile`, and `read_repository`
 
 3. Click **Save application**. Copy the **Application ID** and **Secret** — the
    secret is only shown once.
@@ -42,7 +42,7 @@ sidebar_position: 75
        webhook_secret: "a-random-secret-string"
        scopes:
          - "api"
-         - "read_user"
+         - "profile"
          - "read_repository"
    ```
 
@@ -77,6 +77,20 @@ sidebar_position: 75
    authorizing, the browser will show **Minder enrollment complete** and the CLI
    will print `Provider enrolled successfully`.
 
+## Access model
+
+Minder acts as the authenticated GitLab user when managing repositories. This
+means:
+
+- If the enrolling user loses access to a repository (e.g. leaves a project or
+  organization), Minder will no longer be able to enforce policy on that
+  repository.
+- To restore access, re-enroll the provider with a user who has access:
+  `minder provider enroll --class gitlab`
+
+For production use, consider using a dedicated service account or group-owned
+OAuth application to avoid disruption if individual team members leave.
+
 ## Known limitations
 
 - GitLab support is currently only available on self-hosted Minder instances.
@@ -85,4 +99,8 @@ sidebar_position: 75
 - Webhook-based event delivery requires an externally reachable URL. For local
   development, tools like [ngrok](https://ngrok.com) can expose your local
   server.
+- PR remediation (auto-creating branches/PRs) is not yet implemented for GitLab.
+- Container registry and artifact support is not yet implemented for GitLab.
+- GitLab service account PATs are not currently supported due to a validation
+  issue with the `.` character in PAT tokens.
 - Token identity verification after enrollment is not yet implemented.
