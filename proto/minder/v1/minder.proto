@@ -1173,7 +1173,7 @@ message StoreProviderTokenRequest {
     // access_token is the token to store.
     string access_token = 3 [
         (buf.validate.field).string = {
-            pattern: "^[a-zA-Z0-9-_]+$",
+            pattern: "^[a-zA-Z0-9-_.]+$",
             min_len: 10,
             max_len: 200,
         },
