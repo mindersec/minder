@@ -147,7 +147,7 @@ func enrollUsingToken(
 		return err
 	}
 
-	if st.Code() != codes.AlreadyExists {
+	if st.Code() != codes.AlreadyExists && st.Code() != codes.OK {
 		return err
 	}
 
