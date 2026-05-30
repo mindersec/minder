@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -255,5 +256,7 @@ func (m *providerClassManager) persistToken(
 }
 
 func tokenNeedsRefresh(token oauth2.Token) bool {
-	return !token.Valid() || token.Expiry.UTC().Add(tokenExpirationThreshold).Before(time.Now().UTC())
+	bufferedExpiration := time.Now().UTC().Add(-1 * tokenExpirationThreshold)
+	return !strings.HasPrefix(token.AccessToken, "glpat-") && // is a PAT, not an OAuth token
+		(!token.Valid() || token.Expiry.UTC().Before(bufferedExpiration))
 }
