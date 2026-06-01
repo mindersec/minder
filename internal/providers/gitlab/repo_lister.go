@@ -6,7 +6,6 @@ package gitlab
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/rs/zerolog"
 	gitlab "gitlab.com/gitlab-org/api/client-go"
@@ -14,49 +13,33 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
+// Access levels, from https://docs.gitlab.com/api/projects/#list-all-projects:
+// 20 => "Reporter"
+// 25 => "Security Manager"
+// 30 => "Developer"
+// 40 => "Maintainer"
+// 50 => "Owner"
+var minAccessLevelControl = 25 // "Security Manager"
+
 func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
-	groups := []*gitlab.Group{}
-	if err := glRESTGet(ctx, c, "groups", &groups); err != nil {
-		return nil, fmt.Errorf("failed to get groups: %w", err)
+	managedProjects := []*gitlab.Project{}
+	if err := glRESTGet(ctx, c, "projects?min_access_level=40", &managedProjects); err != nil {
+		return nil, fmt.Errorf("failed to get projects: %w", err)
 	}
 
-	if len(groups) == 0 {
-		zerolog.Ctx(ctx).Debug().Msg("no groups found")
-		return nil, nil
-	}
-
-	var repos []*minderv1.Repository
-	for _, g := range groups {
-		projs := []*gitlab.Project{}
-		path, err := url.JoinPath("groups", fmt.Sprintf("%d", g.ID), "projects")
+	repos := make([]*minderv1.Repository, 0, len(managedProjects))
+	for _, p := range managedProjects {
+		props, err := gitlabProjectToProperties(p)
 		if err != nil {
-			return nil, fmt.Errorf("failed to join URL path for projects: %w", err)
-		}
-		if err := glRESTGet(ctx, c, path, &projs); err != nil {
-			return nil, fmt.Errorf("failed to get projects for group %s: %w", g.FullPath, err)
+			return nil, fmt.Errorf("failed to convert project to properties: %w", err)
 		}
 
-		if repos == nil {
-			repos = make([]*minderv1.Repository, 0, len(projs))
+		outRep, err := repoV1FromProperties(props)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert properties to repository: %w", err)
 		}
 
-		if len(projs) == 0 {
-			zerolog.Ctx(ctx).Debug().Msgf("no projects found for group %s", g.FullPath)
-		}
-
-		for _, p := range projs {
-			props, err := gitlabProjectToProperties(p)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert project to properties: %w", err)
-			}
-
-			outRep, err := repoV1FromProperties(props)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert properties to repository: %w", err)
-			}
-
-			repos = append(repos, outRep)
-		}
+		repos = append(repos, outRep)
 	}
 
 	zerolog.Ctx(ctx).Debug().Int("num_repos", len(repos)).Msg("found repositories in gitlab provider")
