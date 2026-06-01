@@ -23,7 +23,7 @@ var minAccessLevelControl = 25 // "Security Manager"
 
 func (c *gitlabClient) ListAllRepositories(ctx context.Context) ([]*minderv1.Repository, error) {
 	managedProjects := []*gitlab.Project{}
-	if err := glRESTGet(ctx, c, "projects?min_access_level=40", &managedProjects); err != nil {
+	if err := glRESTGet(ctx, c, fmt.Sprintf("projects?min_access_level=%d", minAccessLevelControl), &managedProjects); err != nil {
 		return nil, fmt.Errorf("failed to get projects: %w", err)
 	}
 
