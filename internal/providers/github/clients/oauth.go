@@ -25,9 +25,6 @@ import (
 // Github is the string that represents the GitHubOAuth provider
 const Github = "github"
 
-// OAuthImplements is the list of provider types that the GitHub OAuth provider implements.
-var OAuthImplements = github.OAuthImplements
-
 // OAuthAuthorizationFlows is the list of authorization flows that the GitHub OAuth provider supports.
 var OAuthAuthorizationFlows = github.OAuthAuthorizationFlows
 

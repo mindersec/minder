@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -300,6 +301,30 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	}
 
 	return nil
+}
+
+// providerTypeMap maps each ProviderType to the interface type that a provider
+// must implement to support it.
+var providerTypeMap = map[minderv1.ProviderType]reflect.Type{
+	minderv1.ProviderType_PROVIDER_TYPE_GITHUB:       reflect.TypeOf((*GitHub)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REST:         reflect.TypeOf((*REST)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_GIT:          reflect.TypeOf((*Git)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_OCI:          reflect.TypeOf((*OCI)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER:  reflect.TypeOf((*RepoLister)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER: reflect.TypeOf((*ImageLister)(nil)).Elem(),
+}
+
+// ProviderTypesFromImpl returns the set of ProviderType values supported by the given
+// Provider, determined by checking which interfaces it implements.
+func ProviderTypesFromImpl(p Provider) []minderv1.ProviderType {
+	t := reflect.TypeOf(p)
+	out := make([]minderv1.ProviderType, 0, len(providerTypeMap))
+	for ptype, iface := range providerTypeMap {
+		if t.Implements(iface) {
+			out = append(out, ptype)
+		}
+	}
+	return out
 }
 
 // As is a type-cast function for Providers
