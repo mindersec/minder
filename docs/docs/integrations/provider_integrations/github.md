@@ -10,12 +10,6 @@ to make them available for registration. It also tells Minder how to interact
 with your supply chain to enable features such as alerting and remediation.
 Finally, it handles the way Minder authenticates to the external service.
 
-The currently supported providers are:
-
-- GitHub
-
-Stay tuned as we add more providers in the future!
-
 ## Enrolling a provider
 
 To enroll GitHub as a provider, use the following command:
