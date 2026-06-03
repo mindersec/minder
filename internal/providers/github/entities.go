@@ -82,6 +82,8 @@ func (c *GitHub) RegisterEntity(
 	case minderv1.Entity_ENTITY_ARTIFACTS:
 		fallthrough
 	case minderv1.Entity_ENTITY_RELEASE:
+		fallthrough
+	case minderv1.Entity_ENTITY_ORGANIZATION:
 		// Nothing to do, accept:
 		return props, nil
 	case minderv1.Entity_ENTITY_REPOSITORIES:

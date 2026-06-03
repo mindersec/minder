@@ -99,6 +99,9 @@ func GetRulesForEntity(p *pb.Profile, entity pb.Entity) ([]*pb.Profile_Rule, err
 		return p.PipelineRun, nil
 	case pb.Entity_ENTITY_TASK_RUN:
 		return p.TaskRun, nil
+	case pb.Entity_ENTITY_ORGANIZATION:
+		// Profile evaluation for organizations is not currently supported
+		return nil, nil
 	case pb.Entity_ENTITY_BUILD:
 		return p.Build, nil
 	case pb.Entity_ENTITY_UNSPECIFIED:
@@ -424,6 +427,8 @@ func rowInfoToProfileMap(
 		profile.PipelineRun = ruleset
 	case pb.Entity_ENTITY_TASK_RUN:
 		profile.TaskRun = ruleset
+	case pb.Entity_ENTITY_ORGANIZATION:
+		// Profile evaluation for organizations is not currently supported
 	case pb.Entity_ENTITY_BUILD:
 		profile.Build = ruleset
 	case pb.Entity_ENTITY_UNSPECIFIED:

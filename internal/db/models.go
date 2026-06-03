@@ -158,6 +158,7 @@ const (
 	EntitiesPipelineRun      Entities = "pipeline_run"
 	EntitiesTaskRun          Entities = "task_run"
 	EntitiesBuild            Entities = "build"
+	EntitiesOrganization     Entities = "organization"
 )
 
 func (e *Entities) Scan(src interface{}) error {

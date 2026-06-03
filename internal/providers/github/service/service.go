@@ -32,17 +32,23 @@ import (
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
 
+// GitHubProviderFacet encapsulates the created db.Provider and additional GitHub specific properties
+type GitHubProviderFacet struct {
+	Provider          *db.Provider
+	InstallationOwner string
+}
+
 // GitHubProviderService encapsulates methods for creating and updating providers
 type GitHubProviderService interface {
 	// CreateGitHubAppProvider creates a GitHub App provider with an installation ID in a known project
 	CreateGitHubAppProvider(ctx context.Context, token oauth2.Token, stateData db.GetProjectIDBySessionStateRow,
-		installationID int64, state string) (*db.Provider, error)
+		installationID int64, state string) (*GitHubProviderFacet, error)
 	// CreateGitHubAppWithoutInvitation either creates a new project for the selected app, or stores
 	// the installation in preparation for creating a new project when the authorizing user logs in.
 	//
 	// Note that this function may return nil, nil if the installation user is not known to Minder.
 	CreateGitHubAppWithoutInvitation(ctx context.Context, qtx db.ExtendQuerier, userID int64,
-		installationID int64) (*db.Project, error)
+		installationID int64) (*db.Project, *GitHubProviderFacet, error)
 	// ValidateGitHubInstallationId checks if the supplied GitHub token has access to the installation ID
 	ValidateGitHubInstallationId(ctx context.Context, token *oauth2.Token, installationID int64) error
 	// DeleteGitHubAppInstallation deletes the GitHub App installation and provider from the database.
@@ -106,13 +112,13 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 	stateData db.GetProjectIDBySessionStateRow,
 	installationID int64,
 	state string,
-) (*db.Provider, error) {
+) (*GitHubProviderFacet, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
 		return nil, err
 	}
 
-	return db.WithTransaction(p.store, func(qtx db.ExtendQuerier) (*db.Provider, error) {
+	return db.WithTransaction(p.store, func(qtx db.ExtendQuerier) (*GitHubProviderFacet, error) {
 		validateOwnership := func(ctx context.Context) error {
 			// Older enrollments may not have a RemoteUser stored; these should age out fairly quickly.
 			p.mt.AddTokenOpCount(ctx, "check", stateData.RemoteUser.Valid)
@@ -157,7 +163,10 @@ func (p *ghProviderService) CreateGitHubAppProvider(
 			},
 		)
 
-		return &provider, err
+		return &GitHubProviderFacet{
+			Provider:          &provider,
+			InstallationOwner: installationOwner.GetLogin(),
+		}, err
 	})
 }
 
@@ -170,10 +179,10 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 	qtx db.ExtendQuerier,
 	userID int64,
 	installationID int64,
-) (*db.Project, error) {
+) (*db.Project, *GitHubProviderFacet, error) {
 	installationOwner, err := p.getInstallationOwner(ctx, installationID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	isOrg := installationOwner.GetType() == TypeGitHubOrganization
@@ -198,22 +207,25 @@ func (p *ghProviderService) CreateGitHubAppWithoutInvitation(
 			IsOrg: isOrg,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("error saving installation ID: %w", err)
+			return nil, nil, fmt.Errorf("error saving installation ID: %w", err)
 		}
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	zerolog.Ctx(ctx).Info().Str("project", project.ID.String()).Int64("owner", installationOwner.GetID()).
 		Msg("Creating GitHub App Provider")
 
-	_, err = createGitHubApp(
+	provider, err := createGitHubApp(
 		ctx, qtx, project.ID, installationOwner, installationID, json.RawMessage(`{"github-app": {}}`), nil, sql.NullString{})
 	if err != nil {
-		return nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
+		return nil, nil, fmt.Errorf("error creating GitHub App Provider: %w", err)
 
 	}
 
-	return project, err
+	return project, &GitHubProviderFacet{
+		Provider:          &provider,
+		InstallationOwner: installationOwner.GetLogin(),
+	}, err
 }
 
 // Internal shared implementation between CreateGitHubAppProvider and CreateGitHubAppWithoutInvitation.

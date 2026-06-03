@@ -67,7 +67,7 @@ func (entity Entity) IsValid() bool {
 	case Entity_ENTITY_REPOSITORIES, Entity_ENTITY_BUILD_ENVIRONMENTS,
 		Entity_ENTITY_ARTIFACTS, Entity_ENTITY_PULL_REQUESTS,
 		Entity_ENTITY_RELEASE, Entity_ENTITY_PIPELINE_RUN,
-		Entity_ENTITY_TASK_RUN, Entity_ENTITY_BUILD:
+		Entity_ENTITY_TASK_RUN, Entity_ENTITY_BUILD, Entity_ENTITY_ORGANIZATION:
 		return true
 	case Entity_ENTITY_UNSPECIFIED:
 		return false
