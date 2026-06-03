@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkminder_docs=globalThis.webpackChunkminder_docs||[]).push([[6288],{86288(e,s,c){c.d(s,{createInfoServices:()=>a.v});var a=c(19511);c(46921)}}]);

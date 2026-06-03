@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkminder_docs=globalThis.webpackChunkminder_docs||[]).push([[6735],{76735(e,s,c){c.d(s,{createEventModelingServices:()=>i.g});var i=c(62968);c(46921)}}]);
