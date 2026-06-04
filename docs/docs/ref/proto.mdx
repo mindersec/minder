@@ -112,6 +112,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
+| GetVersion | [GetVersionRequest](#minder-v1-GetVersionRequest) | [GetVersionResponse](#minder-v1-GetVersionResponse) |  |
 
 
 
@@ -1564,6 +1565,24 @@ get user
 | user | <TypeLink type="minder-v1-UserRecord">UserRecord</TypeLink> | optional |  |
 | projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated | **Deprecated.** This will be deprecated in favor of the project_roles field |
 | project_roles | <TypeLink type="minder-v1-ProjectRole">ProjectRole</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-GetVersionRequest">GetVersionRequest</Message>
+
+
+
+
+
+<Message id="minder-v1-GetVersionResponse">GetVersionResponse</Message>
+
+GetVersionResponse returns the build and version info of the Minder server
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | <TypeLink type="string">string</TypeLink> |  |  |
+| commit | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 

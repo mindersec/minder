@@ -5,5 +5,5 @@ package constants
 
 var (
 	// ServerUserAgent is the user agent string for the server
-	ServerUserAgent = "Minder/" + Revision
+	ServerUserAgent = "Minder/" + CLIVersion
 )

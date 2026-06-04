@@ -22,6 +22,7 @@ jobs:
             --image-label=org.opencontainers.image.source=https://github.com/mindersec/minder,org.opencontainers.image.title="Minder",org.opencontainers.image.licenses=Apache-2.0,org.opencontainers.image.vendor=OpenSSF
         env:
           KO_DOCKER_REPO: "ko.local"
+          GOFLAGS: "-ldflags=-X=github.com/mindersec/minder/internal/constants.CLIVersion=${{ github.ref_name }}"
   check-helm:
     name: Build Helm chart
     # TODO: remove the 'image' build once helm build is stable, because ko resolve will build the image
@@ -47,3 +48,4 @@ jobs:
         env:
           KO_DOCKER_REPO: "ko.local"
           KO_PUSH_IMAGE: "false"
+          GOFLAGS: "-ldflags=-X=github.com/mindersec/minder/internal/constants.CLIVersion=${{ github.ref_name }}"
