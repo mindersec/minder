@@ -2,20 +2,19 @@
 
 **Author:** Krrish Biswas
 **Mentor:** Evan Anderson
-**Status:** Draft -- Week 1 Design
+**Status:** Draft
+**Related issue:**
+[#6434](https://github.com/mindersec/minder/issues/6434)
 
 ---
 
 ## Abstract
 
-Minder's security policy rules are currently untestable without a live Minder
-server, a real GitHub token, and network access to external APIs. This document
-proposes a standalone rule testing framework that allows rule authors to verify
-rule correctness offline, using mocked HTTP responses and inline file fixtures.
-The framework is built on [Starlark](https://github.com/google/starlark-go)
-embedded in Go, and integrates with Go's native `testing` package for reporting.
-A dedicated binary (`ruletest`) discovers and executes `*.star` test files
-recursively from a directory.
+There is currently no standardized way to test Minder rules outside
+of a live environment. This document proposes a rule testing framework
+built on [Starlark](https://github.com/google/starlark-go) embedded
+in Go, using mocked HTTP responses and inline file fixtures to allow
+offline rule verification.
 
 ---
 
@@ -23,55 +22,75 @@ recursively from a directory.
 
 ### How Minder rules work
 
-A Minder rule type defines a security policy check for an entity (repository,
-artifact, pull request). Each rule has four phases:
+A Minder rule type defines a security policy check for an entity
+(repository, artifact, pull request). Each rule has four phases:
 
-<!-- markdownlint-disable MD013 -->
-
-```text
-  ┌─────────┐     ┌──────────┐     ┌───────────┐     ┌─────────┐
-  │ Ingest  │────▶│ Evaluate │────▶│ Remediate │────▶│  Alert  │
-  └─────────┘     └──────────┘     └───────────┘     └─────────┘
+```mermaid
+flowchart LR
+    A[Ingest] --> B[Evaluate]
+    B --> C[Remediate]
+    C --> D[Alert]
 ```
 
-<!-- markdownlint-enable MD013 -->
-
-**Ingest** fetches data from an external source. Three ingest types exist:
+**Ingest** fetches data from an external source via the configured
+provider. Two ingest types exist:
 
 | Type | Mechanism | Example |
 |---|---|---|
-| `rest` | HTTP GET to GitHub API | Branch protection settings |
+| `rest` | HTTP GET to provider API | Branch protection settings |
 | `git` | Clone repo, expose `file.ls()` / `file.read()` | GitHub Actions workflows |
-| `datasource` | Named HTTP client callable from Rego | Repository rulesets API |
 
-**Evaluate** runs either a `jq` expression (simple field comparison) or a
-`Rego/OPA` policy against the ingested data.
+The provider determines which API surface is used. For a GitHub
+provider, `rest` calls the GitHub API; for a GitLab provider, it
+calls the GitLab API; and so on.
 
-**Datasources** are named HTTP clients declared in the rule definition. When
-Rego calls
+**Evaluate** runs either a `jq` expression (simple field comparison)
+or a `Rego/OPA` policy against the ingested data. During evaluation,
+rules may also call **datasources** -- named HTTP clients declared
+separately from the rule. When Rego calls
 `minder.datasource.baselineghapi.branch_protection_status({...})`,
-the datasource fetches from a real API endpoint defined in a separate datasource
-YAML. Responses are returned to Rego wrapped in
-`{"body": <payload>, "status": 200}`.
+the datasource fetches from a real API endpoint defined in a
+datasource YAML. Responses are returned to Rego wrapped in
+`{"body": <payload>, "status": 200}`. See the
+[datasource documentation](https://docs.mindersec.dev/understand/data_sources)
+for more details.
 
-### The current testing gap
+**Remediate** applies an automated fix when a rule evaluation fails
+(for example, opening a PR to pin an unpinned action). **Alert**
+sends a notification about the evaluation result. Both are out of
+scope for v1 of the testing framework.
 
-There is no way to test a rule without:
+### Prior art
 
-- A running Minder server
-- A real GitHub API token
-- Live network access
+Two existing tools partially address rule testing:
 
-This means a contributor who writes a new rule type has no way to verify it
-works before opening a PR. Debugging requires a full round-trip: deploy, wait
-for evaluation, observe result, repeat. The datasource `{"body"/"status"}`
-wrapper has caused multi-hour debugging sessions because rule authors assume
-they receive the raw payload.
+**`mindev rtst`** runs a single rule evaluation against live
+providers with a manually-specified entity. It requires a full
+profile definition, rule definition, and live credentials for the
+provider. The dependency on live credentials and backend services
+makes it unsuitable for automated testing.
+
+**`rules_test.go`** from
+[minder-rules-and-profiles](https://github.com/mindersec/minder-rules-and-profiles)
+runs against test data and supports batch operation, but has several
+limitations. The framework does not support datasources and is
+verbose when testing multiple cases. Additionally, file test data
+representing vulnerabilities appears "live" to tools like dependabot
+or trivy, and it is difficult to reuse the tool outside that
+particular repo. Finally, having a standalone binary in a different
+repository introduces dependency churn management that would not
+be required if it were an official binary in the main repo.
+
+Given that `rules_test.go` is approximately 300 lines, it is
+reasonable to rewrite the functionality rather than attempt to extend
+it.
 
 ### Related repositories
 
-- `mindersec/minder` -- Core server, `pkg/engine`, `internal/datasources`
-- `mindersec/minder-rules-and-profiles` -- Rule type YAML files and profiles
+- `mindersec/minder` -- core server, `pkg/engine`,
+  `internal/datasources`
+- `mindersec/minder-rules-and-profiles` -- rule type YAML files
+  and profiles
 
 ---
 
@@ -79,15 +98,17 @@ they receive the raw payload.
 
 ### Goals
 
-- Allow rule authors to run rule tests **locally**, with no network access and
-  no credentials
-- Support all three ingest types: REST, git, and datasources
-- Integrate with Go's `testing` package for standard test output and CI
-  reporting
-- Make simple tests trivially easy to write (single-function test cases under
-  20 lines)
-- Make hard tests possible (multi-source mocking, parameterized fixtures)
-- **Auto-discover** test files in a directory tree -- no manual test registration
+- Allow rule authors to run rule tests **locally**, with no network
+  access and no credentials
+- Support both ingest types (REST and git) and datasources
+- Integrate with Go's `testing` package for standard test output
+  and CI reporting
+- Make simple tests trivially easy to write (single-function test
+  cases under 20 lines)
+- Make hard tests possible (multi-source mocking, parameterized
+  fixtures)
+- **Auto-discover** test files in a directory tree without manual
+  test registration
 
 ### Non-Goals (v1)
 
@@ -95,66 +116,35 @@ they receive the raw payload.
 - Alert output testing
 - Testing Rego `error()` abort behavior
 - Timeout simulation
-- Becoming a `minder` subcommand in v1 -- ships as a standalone binary first
 
 ---
 
 ## Overview
 
-```text
-  ┌──────────────────────────────────────┐
-  │    ruletest --dir ./rule-types       │
-  └──────────────┬───────────────────────┘
-                 │
-                 ▼
-  ┌──────────────────────────────────────┐
-  │    Test Discovery                    │
-  │    *.star file walker                │
-  └──────────────┬───────────────────────┘
-                 │
-                 ▼
-  ┌──────────────────────────────────────┐
-  │    Module Loader                     │
-  │    go.starlark.net ExecFile          │
-  └──────────────┬───────────────────────┘
-                 │
-                 ▼
-  ┌──────────────────────────────────────┐
-  │    Predeclared Builtins              │
-  │    eval / read_file / txtar /        │
-  │    check / test / body / code        │
-  └───┬──────────┬───────────┬───────────┘
-      │          │           │
-      ▼          ▼           ▼
-  ┌────────┐ ┌────────┐ ┌────────────┐
-  │  eval  │ │read_file│ │  check.*   │
-  │        │ │+ txtar  │ │  test()    │
-  └───┬────┘ └───┬────┘ └─────┬──────┘
-      │          │             │
-      ▼          ▼             ▼
-  ┌────────┐ ┌────────┐ ┌────────────┐
-  │pkg/    │ │Mock FS │ │Go testing.T│
-  │engine  │ │io/fs.FS│ │Pass / Fail │
-  │Evaluate│ │from    │ │Error       │
-  │Offline │ │txtar   │ └────────────┘
-  └───┬────┘ └────────┘
-      │
-      ▼
-  ┌──────────────────────────────────────┐
-  │    Mock HTTP Layer                   │
-  │    http.RoundTripper intercept       │
-  │                                      │
-  │    - REST ingest calls               │
-  │    - Datasource calls                │
-  └──────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["ruletest --dir ./rule-types"] --> B["Test Discovery\n*.star file walker"]
+    B --> C["Module Loader\ngo.starlark.net ExecFile"]
+    C --> D["Predeclared Builtins\neval / read_file / txtar /\ncheck / test / body / code"]
+    D --> E["eval"]
+    D --> F["read_file + txtar"]
+    D --> G["check.* / test()"]
+    E --> H["pkg/engine\nEvaluate Offline"]
+    F --> I["Mock FS\nio/fs.FS from txtar"]
+    G --> J["Go testing.T\nPass / Fail / Error"]
+    H --> K["Mock HTTP Layer\nhttp.RoundTripper intercept\nREST ingest + Datasource calls"]
 ```
 
-The test runner (`ruletest`) walks a directory tree, finds all `*.star` files,
-and executes each using an embedded Starlark interpreter. A set of predeclared
-Go builtins (`eval`, `read_file`, `txtar`, `check`, `test`) are injected into
-each module's environment. The builtins delegate to the existing `pkg/engine`
-evaluation pipeline -- the same jq and Rego engines used in production -- with
-HTTP calls intercepted by a mock layer.
+The test runner walks a directory tree, finds all `*.star` files,
+and executes each using an embedded Starlark interpreter. A set of
+predeclared Go builtins (`eval`, `read_file`, `txtar`, `check`,
+`test`) are injected into each module's environment. The builtins
+delegate to the existing `pkg/engine` evaluation pipeline, with
+HTTP and Git filesystem calls intercepted by a mock layer.
+
+Starlark's `load()` statement allows one `*.star` file to import
+another, enabling shared libraries of helper functions and check
+utilities across tests.
 
 ---
 
@@ -162,34 +152,44 @@ HTTP calls intercepted by a mock layer.
 
 ### DD1: Test File Format -- Starlark
 
-After prototyping three formats (Hybrid DSL, txtar+TOML, Starlark), Starlark
-is selected as the test file format. See
-[Alternatives Considered](#alternatives-considered) for the comparison.
+After prototyping three formats (Hybrid DSL, txtar+TOML, Starlark),
+Starlark is selected as the test file format. See
+[Alternatives Considered](#alternatives-considered) for the
+comparison.
 
-The critical advantage: a real programming language gives parameterized
-fixtures, shared helpers, and composable defaults without inventing a custom
-templating syntax.
+Using a real programming language provides benefits such as
+parameterized fixtures, shared helpers, and composable defaults
+without the need to invent a custom templating syntax.
 
 **Wrapper functions replace `[defaults]` blocks:**
 
 ```python
-# Default args carry shared setup -- tests only specify what varies
-def workflow_rule(ref, files="check_pinned.txtar", entity=DEFAULT_ENTITY):
+# Default arguments carry shared setup.
+# Tests only specify what varies.
+def workflow_rule(ref, files="check_pinned.txtar",
+                  entity=DEFAULT_ENTITY):
     fs = {}
     if files != None:
-        fs = {k: v.format(ref=ref) for k, v in txtar(read_file(files)).items()}
+        fs = {k: v.format(ref=ref)
+              for k, v in txtar(read_file(files)).items()}
     return eval(
         rule   = "actions_check_pinned_tags",
         entity = entity,
         files  = fs,
     )
 
-# One template txtar, two test variants -- no duplication
-def test_pinned():   check.eq(workflow_rule(PINNED_SHA).status, "pass")
-def test_floating(): check.eq(workflow_rule("v4").status, "fail")
+# One template txtar, two test variants.
+def test_pinned():
+    check.eq(workflow_rule(PINNED_SHA).status, "pass")
+
+def test_floating():
+    check.eq(workflow_rule("v4").status, "fail")
 ```
 
-**txtar as file-bundling layer:**
+#### txtar as file-bundling layer
+
+The txtar format is used alongside Starlark as a file-bundling
+mechanism for git-ingest test fixtures:
 
 ```text
 -- .github/workflows/ci.yml --
@@ -201,83 +201,39 @@ jobs:
       - uses: actions/checkout@{ref}
 ```
 
-The `{ref}` placeholder is substituted via Starlark's `.format()` -- enabling
-parameterized git fixture files without duplicating workflow content per test
-case.
+The `{ref}` placeholder is substituted via Starlark's `.format()`,
+enabling parameterized git fixture files without duplicating
+workflow content per test case.
 
 ---
 
-### DD2: Datasource Mocking Strategy
+### DD2: Datasource Mocking -- HTTP-Level Interception
 
-This is the most significant design decision in the framework.
-
-**Two approaches:**
-
-```text
-  Approach A -- Abstract Box          Approach B -- HTTP-Level (recommended)
-  ┌───────────────────────┐          ┌───────────────────────┐
-  │ test mocks             │          │ test mocks             │
-  │ datasource:name/method │          │ GET api.github.com/... │
-  └──────────┬────────────┘          └──────────┬────────────┘
-             │                                  │
-             ▼                                  ▼
-  ┌───────────────────────┐          ┌───────────────────────┐
-  │ Mock Layer             │          │ Mock HTTP interceptor  │
-  │ skips datasource       │          └──────────┬────────────┘
-  └──────────┬────────────┘                      │
-             │                                   ▼
-             │                       ┌───────────────────────┐
-             │                       │ Datasource definition  │
-             │                       │ processes real response │
-             │                       └──────────┬────────────┘
-             ▼                                  ▼
-  ┌───────────────────────┐          ┌───────────────────────┐
-  │ Rego                   │          │ Rego                   │
-  │ receives mocked payload│          │ receives datasource    │
-  └───────────────────────┘          │ output                 │
-                                     └───────────────────────┘
-```
-
-#### Approach A -- Abstract box mocking
-
-The test mocks the *output* of the datasource call directly, bypassing the
-datasource definition:
-
-```python
-mocks = {
-    "datasource:baselineghapi/branch_protection_status": {
-        "body": {"applied_rulesets": [{"type": "non_fast_forward"}]},
-    },
-}
-```
-
-- **Advantage:** Simple to write. No knowledge of the underlying API shape
-  needed.
-- **Disadvantage:** The datasource definition is never exercised. If the
-  datasource has a bug (wrong endpoint, wrong field mapping), tests still pass.
-  Authors also need to know the datasource's output shape, which is the
-  `{"body"/"status"}` wrapper.
-
-#### Approach B -- HTTP-level mocking (recommended)
-
-The test mocks at the *HTTP boundary*. The datasource definition is loaded, and
-its HTTP calls are intercepted. Rule authors write mocks against real GitHub API
-shapes:
+Datasource mocking is the most significant design decision in the
+framework. The chosen approach mocks at the **HTTP boundary**. The
+datasource definition is loaded, and its HTTP calls are intercepted
+by a custom `http.RoundTripper`. Rule authors write mocks against
+real provider API shapes:
 
 ```python
 # Test: classic branch protection blocks force pushes
 mocks = {
-    "GET https://api.github.com/repos/acme-corp/widgets/branches/main/protection":
+    "GET https://api.github.com/repos/acme-corp/widgets"
+    "/branches/main/protection":
         body({"allow_force_pushes": {"enabled": False}}),
-    "GET https://api.github.com/repos/acme-corp/widgets/rules/branches/main":
-        body([{"ruleset_source_type": "Repository", "type": "non_fast_forward"}]),
+    "GET https://api.github.com/repos/acme-corp/widgets"
+    "/rules/branches/main":
+        body([{"ruleset_source_type": "Repository",
+               "type": "non_fast_forward"}]),
 }
 ```
 
 ```python
-# Test: branch not protected (separate test case -- different mock for same endpoint)
+# Test: branch not protected
+# (different mock for same endpoint)
 mocks = {
-    "GET https://api.github.com/repos/acme-corp/widgets/branches/main/protection":
+    "GET https://api.github.com/repos/acme-corp/widgets"
+    "/branches/main/protection":
         code(404),
 }
 ```
@@ -289,81 +245,56 @@ mocks = {
 
 **Advantages:**
 
-- The datasource definition is loaded and exercised.
-- Authors can go directly from GitHub API docs to test mocks -- no knowledge of
-  datasource internals needed.
-- The `{"body"/"status"}` wrapper is applied by the datasource as in
-  production, so authors don't need to think about it.
+- The datasource definition is loaded and exercised, catching bugs
+  in endpoint URLs or field mappings.
+- Authors can go directly from provider API docs to test mocks
+  without knowledge of datasource internals.
+- The `{"body"/"status"}` wrapper is applied by the datasource as
+  in production, so authors do not need to think about it.
+- Both datasource calls and ingest fetches use the same consistent
+  mocking mechanism.
 
-**Disadvantages:**
+**URL matching:** Mock URLs support glob patterns for path
+parameters (e.g. `repos/*/branches/*`), allowing a single mock to
+match multiple entity-specific paths.
 
-- Requires loading datasource definitions.
-- Needs a discovery mechanism for where datasource YAMLs live.
-- URL patterns need glob support for path params (e.g.
-  `repos/*/branches/*`).
+#### Datasource discovery
 
-**Recommendation:** Approach B. The test exercises more of the real pipeline
-and aligns test mocks with GitHub API documentation rather than internal Minder
-abstractions.
+Datasource definitions are declared explicitly in the test file.
+This avoids implicit magic and makes each test self-contained:
 
-**Open question:** How are datasource definitions discovered? Options:
+```python
+result = eval(
+    rule = "branch_protection_allow_force_pushes",
+    entity = DEFAULT_ENTITY,
+    datasources = ["path/to/baselineghapi.yaml"],
+    mocks = {
+        "GET https://api.github.com/repos/*/branches/*/protection":
+            body({"allow_force_pushes": {"enabled": False}}),
+    },
+)
+```
 
-1. Inferred from the rule YAML (which declares
-   `data_sources: [{name: baselineghapi}]`)
-2. Co-located YAML in the same directory
-3. Declared explicitly in the test file
+See [Alternatives Considered](#a4-datasource-abstract-box-mocking)
+for the rejected approach of mocking datasource outputs directly.
 
 ---
 
 ### DD3: Test Discovery and File Layout
 
-#### File layout options
-
-The current `minder-rules-and-profiles` structure places rule YAML files in
-flat directories:
+Test files are co-located alongside rule YAML files in the same
+directory:
 
 ```text
 rule-types/github/
-├── branch_protection_allow_force_pushes.yaml
-├── osps-ac-03-01.yaml
-└── actions_check_pinned_tags.yaml
++-- branch_protection_allow_force_pushes.yaml
++-- branch_protection_allow_force_pushes.star
++-- osps-ac-03-01.yaml
++-- osps-ac-03-01.star
 ```
 
-Two co-location options for test files:
-
-**Option A -- Flat directory (alongside rule YAML):**
-
-```text
-rule-types/github/
-├── branch_protection_allow_force_pushes.yaml
-├── branch_protection_allow_force_pushes.star   # co-located
-├── osps-ac-03-01.yaml
-└── osps-ac-03-01.star
-```
-
-- **Advantage:** Easy to see if a rule has a test -- it's right next to the
-  YAML.
-- **Disadvantage:** Directory grows with two files per rule; no visual
-  separation between "config" and "test".
-
-**Option B -- Subdirectory for tests:**
-
-```text
-rule-types/github/
-├── branch_protection_allow_force_pushes.yaml
-├── osps-ac-03-01.yaml
-└── tests/
-    ├── branch_protection_allow_force_pushes.star
-    └── osps-ac-03-01.star
-```
-
-- **Advantage:** Clear separation between rule definitions and test code.
-  Easier to see test coverage at a glance.
-- **Disadvantage:** Adding a test requires navigating to a different directory;
-  rule and test are farther apart.
-
-Avoid **one directory per rule** -- creates many tiny directories, especially
-when rules have no test yet.
+With `*.star` as a suffix, globs can easily distinguish test files
+from rule definitions (`*.yaml`).
 
 #### Discovery
 
@@ -371,119 +302,80 @@ when rules have no test yet.
 ruletest --dir ./rule-types
 ```
 
-Recursive walk finds all `*.star` files. The directory path acts as the
-implicit test suite -- no explicit suite configuration in v1.
+Recursive walk finds all `*.star` files. The directory path acts
+as the implicit test suite without explicit suite configuration.
 
-**Rule loading:** Test runner loads all `*.yaml` files in the same directory
-(or parent directory if using `tests/` subdir) as the `*.star` file, then
-filters by the name passed to `eval(rule="name")`. Duplicate rule names in the
-same directory: "don't do that" is sufficient for v1.
+**Rule loading:** The test runner loads all `*.yaml` files in the
+same directory as the `*.star` file, then filters by the name
+passed to `eval(rule="name")`. Duplicate rule names in the same
+directory are detected and generate an error.
 
 ---
 
 ### DD4: Test Case Declaration
 
-Four approaches are under active consideration.
-
-#### Approach A -- `test_*` function discovery
-
-Runner scans module globals after execution for no-arg callables whose names
-start with `test_`. Function name becomes the test identifier.
+The framework uses `test_*` function discovery. After Starlark
+module execution, the runner scans module globals for no-argument
+callables whose names start with `test_`. The function name becomes
+the test identifier, mirroring the conventions of pytest and Go's
+`TestXxx`.
 
 ```python
 def test_force_pushes_disabled():
-    result = eval(rule="branch_protection_allow_force_pushes",
-                  entity=DEFAULT_ENTITY,
-                  mocks={ENDPOINT: body({"allow_force_pushes": {"enabled": False}})})
+    result = eval(
+        rule = "branch_protection_allow_force_pushes",
+        entity = DEFAULT_ENTITY,
+        mocks = {ENDPOINT: body({
+            "allow_force_pushes": {"enabled": False},
+        })},
+    )
     check.eq(result.status, "pass")
+
+def test_force_pushes_enabled():
+    result = eval(
+        rule = "branch_protection_allow_force_pushes",
+        entity = DEFAULT_ENTITY,
+        mocks = {ENDPOINT: body({
+            "allow_force_pushes": {"enabled": True},
+        })},
+    )
+    check.eq(result.status, "fail")
 ```
 
-- **Advantage:** Familiar (pytest, Go `TestXxx`). Function name is naturally
-  the test name. Custom assertions are straightforward.
-- **Disadvantage:** Implementation requires invoking Starlark functions after
-  module definition with correct thread context. Table-driven tests require
-  all cases inside one `test_*` function.
+This approach requires scanning `starlark.StringDict` globals after
+`ExecFile` and invoking matching functions. The `go.starlark.net`
+library provides `starlark.Call()` for this, making implementation
+straightforward.
 
-**Implementation note:** This requires using `go.starlark.net`'s `Value`
-interface to scan module globals and call functions. Worth prototyping with a
-small Go program before committing to this approach.
+#### Table-driven tests
 
-#### Approach B -- `test()` builtin with `expect`
-
-Test evaluation is a side effect of module loading. `test()` wraps both rule
-evaluation and result validation:
+For parameterized tests, a helper function combined with a list of
+test case objects provides the equivalent of Go's table-driven test
+pattern:
 
 ```python
-test("force pushes disabled", "branch_protection_allow_force_pushes",
-     mocks  = {ENDPOINT: body({"allow_force_pushes": {"enabled": False}})},
-     entity = DEFAULT_ENTITY,
-     expect = "pass")
+cases = [
+    {"name": "pinned",   "ref": PINNED_SHA,   "expect": "pass"},
+    {"name": "floating", "ref": FLOATING_TAG, "expect": "fail"},
+]
+
+def test_workflow_refs():
+    for case in cases:
+        result = eval(
+            rule = "actions_check_pinned_tags",
+            entity = DEFAULT_ENTITY,
+            files = workflow_files(case["ref"]),
+        )
+        check.eq(result.status, case["expect"],
+                 label=case["name"])
 ```
-
-- **Advantage:** Name is explicit. Integrates directly with
-  `t.Run("name", ...)`. No post-load scanning needed.
-- **Disadvantage:** `expect=` handles simple pass/fail but not complex
-  assertions (like checking violation messages).
-
-#### Approach C -- `test()` with `(label, got, want)` tuples
-
-Separates `eval()` from assertion so that debugging output preserves both the
-actual and expected values:
-
-```python
-result = eval("no_open_security_advisories", entity=DEFAULT,
-              mocks={"/*": code(404)})
-
-test("security advisories off", [
-    ("status",          result.status,          "fail"),
-    ("violation count", len(result.violations), 1),
-    ("first violation", result.violations[0],   "Security advisories not enabled."),
-])
-```
-
-On failure, the Go side has all three values and can print:
-
-```text
-FAIL: security advisories off
-  violation count: got 3, want 1
-  first violation: got "No SECURITY.md found", want "Security advisories not enabled."
-```
-
-- **Advantage:** The label is for humans, `got`/`want` are for the diff --
-  nothing gets "eaten". Custom assertions on violations, counts, and messages
-  are natural.
-- **Disadvantage:** More verbose for simple pass/fail tests. Tuple syntax is
-  less readable than a simple `expect="pass"`.
-
-#### Approach D -- `cases` dict + comprehension
-
-```python
-def run_test(name, case):
-    result = eval(rule="actions_check_pinned_tags",
-                  entity=DEFAULT_ENTITY,
-                  files=workflow_files(case["ref"]))
-    test(name, [("status", result.status, case["expect"])])
-
-cases = {
-    "pinned":   {"ref": PINNED_SHA,   "expect": "pass"},
-    "floating": {"ref": FLOATING_TAG, "expect": "fail"},
-}
-[run_test(k, v) for k, v in cases.items()]
-```
-
-- **Advantage:** Most compact for parametrized tests.
-- **Disadvantage:** Dict key is the test name (data, not structure) -- harder
-  to navigate.
-
-**Current status:** No single approach is clearly best. All four will be
-prototyped before week 2 narrowing. The `test()` builtin example shared during
-design was illustrative, not prescriptive.
 
 ---
 
-### DD5: Assertions -- Assert vs Expect Semantics
+### DD5: Assertions -- Expect Semantics
 
-The `check` module needs a clear semantic contract. Per the
+The `check` module uses **expect semantics** rather than assert
+semantics. Per the
 [Google Testing Blog](https://testing.googleblog.com/2008/07/tott-expect-vs-assert.html):
 
 | Style | Behavior | Effect |
@@ -491,31 +383,32 @@ The `check` module needs a clear semantic contract. Per the
 | **Assert** | Stops test on first failure | You see only the first error |
 | **Expect** | Collects all failures, reports at end | You see all errors at once |
 
-For a rule test framework, **expect semantics** are preferable -- a test with
-multiple `check.*` calls should report all failures, not stop at the first.
-
-**Proposed `check` module (expect-style):**
+For a rule test framework, expect semantics are preferable. A test
+with multiple `check.*` calls reports all failures rather than
+stopping at the first:
 
 ```python
-check.eq(result.status, "pass")           # continue even if fails
-check.eq(len(result.violations), 1)       # continue even if fails
+check.eq(result.status, "pass")
+check.eq(len(result.violations), 1)
 check.contains(result.violations[0].msg, "unpinned")
 ```
 
-All failures are collected and reported together when the test case completes.
+All failures are collected and reported together when the test
+function returns.
 
-**Implementation:** The `check` builtin maintains a thread-local error list
-via `starlark.Thread`'s local storage. At test completion, the runner reads
-this list and reports all collected failures.
+**Implementation:** The `check` module maintains a thread-local
+error list via `starlark.Thread` local storage. At test completion,
+the runner reads this list and reports all collected failures via
+Go's `testing.T`.
 
-#### Extended check helpers as a Starlark module
+#### Shared check helpers via `load()`
 
-Rather than implementing every check variant as a Go builtin, a Starlark module
-can define higher-level helpers that call the primitive `check.eq` and
-`check.contains` builtins:
+Higher-level check helpers are defined as a Starlark module that
+tests import using Starlark's
+[`load()` statement](https://starlark-lang.org/spec.html#load-statements):
 
 ```python
-# checks.star (shipped with ruletest, auto-loaded)
+# checks.star (shipped with ruletest)
 def violations_count(result, n):
     check.eq(len(result.violations), n)
 
@@ -527,195 +420,68 @@ def violation_contains(result, msg):
     check.eq(found, True)
 ```
 
-This means new check helpers can be added without Go changes. The core Go
-builtins stay minimal (`check.eq`, `check.ne`, `check.contains`); the Starlark
-module layer provides ergonomic wrappers.
+```python
+# In a test file:
+load("checks.star", "violations_count", "violation_contains")
+
+def test_unpinned_action():
+    result = eval(...)
+    violations_count(result, 1)
+    violation_contains(result, "unpinned")
+```
+
+This means new check helpers can be added without Go changes. The
+core Go builtins stay minimal (`check.eq`, `check.ne`,
+`check.contains`); the Starlark `load()` mechanism provides
+extensibility.
 
 ---
 
-### DD6: Go Builtins Implementation
+### DD6: Predeclared Builtins
 
-All builtins use `go.starlark.net`'s `starlark.NewBuiltin` pattern. The
-predeclared environment is passed to `starlark.ExecFile`:
+The following Go-implemented builtins are injected into each
+Starlark module's predeclared environment:
 
-```go
-predeclared := starlark.StringDict{
-    "eval":      makeEval(evaluator),
-    "read_file": makeReadFile(testDir),   // sandboxed I/O
-    "txtar":     makeTxtar(),             // pure string parser
-    "check":     makeCheckModule(),       // expect-style assertions
-    "body":      makeBody(),              // mock response helper
-    "code":      makeCode(),              // mock error response helper
-}
+| Builtin | Signature | Description |
+|---|---|---|
+| `eval` | `eval(rule, entity, mocks?, files?, datasources?)` | Evaluate a rule against the given entity and mocks. Returns an `EvalResult` with `.status` and `.violations`. |
+| `read_file` | `read_file(path)` | Read a file relative to the test file's directory. Rejects absolute paths and `..` traversal. |
+| `txtar` | `txtar(string)` | Parse a txtar-formatted string into a `dict[filename -> content]`. Pure string parsing, no I/O. |
+| `check` | `check.eq(got, want)`, `check.ne(got, want)`, `check.contains(haystack, needle)` | Expect-style assertions. Failures are collected, not thrown. |
+| `body` | `body(payload)` | Create a mock HTTP response with status 200 and the given payload. |
+| `code` | `code(status)` | Create a mock HTTP response with the given status code and empty body. |
 
-thread := &starlark.Thread{Name: filepath.Base(filename)}
-globals, err := starlark.ExecFile(thread, filename, nil, predeclared)
-```
-
-#### `eval` -- rule evaluator
-
-```go
-// Starlark: eval(rule, entity, mocks?, files?) -> EvalResult
-func makeEval(evaluator *engine.RuleEvaluator) starlark.Value {
-    return starlark.NewBuiltin("eval", func(
-        thread *starlark.Thread,
-        b      *starlark.Builtin,
-        args   starlark.Tuple,
-        kwargs []starlark.Tuple,
-    ) (starlark.Value, error) {
-        var ruleName string
-        var entity, mocks, files starlark.Value
-        if err := starlark.UnpackArgs(b.Name(), args, kwargs,
-            "rule",   &ruleName,
-            "entity", &entity,
-            "mocks?", &mocks,
-            "files?", &files,
-        ); err != nil {
-            return nil, err
-        }
-        result, err := evaluator.EvaluateOffline(ruleName,
-            toGoMap(entity), toMocks(mocks), toFileMap(files))
-        if err != nil {
-            return nil, err
-        }
-        return newEvalResult(result), nil
-    })
-}
-```
-
-#### `read_file` -- sandboxed file reader
-
-```go
-// Starlark: read_file(path) -> string
-// Sandbox: reject absolute paths and ".." traversal
-func makeReadFile(testDir string) starlark.Value {
-    return starlark.NewBuiltin("read_file", func(
-        _ *starlark.Thread, b *starlark.Builtin,
-        args starlark.Tuple, kwargs []starlark.Tuple,
-    ) (starlark.Value, error) {
-        var path string
-        if err := starlark.UnpackPositionalArgs(
-            b.Name(), args, kwargs, 1, &path,
-        ); err != nil {
-            return nil, err
-        }
-        if filepath.IsAbs(path) || strings.Contains(path, "..") {
-            return nil, fmt.Errorf(
-                "read_file: %q not allowed (must be relative, no ..)", path,
-            )
-        }
-        data, err := os.ReadFile(filepath.Join(testDir, path))
-        if err != nil {
-            return nil, fmt.Errorf("read_file: %w", err)
-        }
-        return starlark.String(data), nil
-    })
-}
-```
-
-#### `txtar` -- pure string parser (no I/O)
-
-```go
-// Starlark: txtar(string) -> dict[filename -> content]
-func makeTxtar() starlark.Value {
-    return starlark.NewBuiltin("txtar", func(
-        _ *starlark.Thread, b *starlark.Builtin,
-        args starlark.Tuple, kwargs []starlark.Tuple,
-    ) (starlark.Value, error) {
-        var content starlark.String
-        if err := starlark.UnpackPositionalArgs(
-            b.Name(), args, kwargs, 1, &content,
-        ); err != nil {
-            return nil, err
-        }
-        archive := txtar.Parse([]byte(content.GoString()))
-        d := new(starlark.Dict)
-        for _, f := range archive.Files {
-            d.SetKey(starlark.String(f.Name), starlark.String(f.Data))
-        }
-        return d, nil
-    })
-}
-```
-
-Sandboxing uses `io/fs.FS` rooted at the test file's directory -- the same
-abstraction already used by Minder's go-billy git client.
+The `read_file` builtin uses `io/fs.FS` rooted at the test file's
+directory for sandboxing, the same abstraction already used by
+Minder's go-billy git client.
 
 ---
 
 ### DD7: Error Propagation
 
-Starlark builtins return `(starlark.Value, error)`. An `error` return **stops
-module execution** (assert semantics for the runtime). The `check` module uses
-thread-local error collection to provide expect semantics at the test level:
+```mermaid
+sequenceDiagram
+    participant Runner
+    participant Starlark
+    participant Check as Check Module
 
-```text
-  Runner              Starlark            Check Module
-    │                    │                     │
-    │  ExecFile(test.star)                     │
-    │───────────────────▶│                     │
-    │                    │  check.eq("fail",   │
-    │                    │           "pass")   │
-    │                    │────────────────────▶│
-    │                    │                     │ append error to
-    │                    │                     │ thread-local list
-    │                    │    return None      │
-    │                    │◀────────────────────│
-    │                    │                     │
-    │                    │  check.contains(    │
-    │                    │    msg, "unpinned")  │
-    │                    │────────────────────▶│
-    │                    │                     │ append error to
-    │                    │                     │ thread-local list
-    │                    │    return None      │
-    │                    │◀────────────────────│
-    │                    │                     │
-    │   module complete  │                     │
-    │◀───────────────────│                     │
-    │                                          │
-    │  read thread-local error list            │
-    │─────────────────────────────────────────▶│
-    │                                          │
-    │  report all 2 failures                   │
-    │                                          │
+    Runner->>Starlark: ExecFile(test.star)
+    Starlark->>Check: check.eq("fail", "pass")
+    Note over Check: Append error to<br/>thread-local list
+    Check-->>Starlark: return None
+    Starlark->>Check: check.contains(msg, "unpinned")
+    Note over Check: Append error to<br/>thread-local list
+    Check-->>Starlark: return None
+    Starlark-->>Runner: module complete
+    Runner->>Check: read thread-local error list
+    Note over Runner: Report all 2 failures
 ```
 
-`eval()` errors (e.g. unmocked HTTP call, unknown rule name) return Go
-`error`, which surfaces as a Starlark exception and stops the current function.
-This is appropriate -- a broken test setup should fail loudly, not silently
-continue.
-
----
-
-### DD8: Standalone Binary (`ruletest`)
-
-The test runner ships as a standalone binary, not as a `minder` subcommand,
-for v1.
-
-**Rationale:** The binary pulls in `pkg/engine`, Starlark, datasource
-definitions, and all their dependencies. This is likely significantly larger
-than the `minder` CLI binary. Keeping it separate avoids bloating `minder` and
-allows faster iteration on the test tooling independently.
-
-**Target timeline:** Working `ruletest` binary by **week 5**, not week 2.
-Earlier weeks focus on the Starlark execution environment and `eval`
-correctness.
-
-```bash
-# Discovery and execution
-ruletest --dir ./rule-types
-
-# Single file
-ruletest --file rule-types/github/branch_protection_allow_force_pushes.star
-
-# Output: standard Go test output
---- PASS: branch_protection_allow_force_pushes/test_force_pushes_disabled (0.03s)
---- FAIL: branch_protection_allow_force_pushes/test_force_pushes_enabled (0.02s)
-    check.eq: got "pass", want "fail"
-FAIL
-```
-
-Binary name candidates: `ruletest`, `mindev`. To be decided.
+`eval()` errors (e.g. unmocked HTTP call, unknown rule name) return
+Go `error`, which surfaces as a Starlark exception and stops the
+current function. This is appropriate because a broken test setup
+should fail immediately rather than silently continue with invalid
+state.
 
 ---
 
@@ -735,11 +501,11 @@ test "force_pushes_disabled":
     result: pass
 ```
 
-- **Pros:** Readable for non-programmers. Clear visual separation of inputs
-  and assertions.
-- **Cons:** Requires custom tokenizer and BNF grammar. No parameterization or
-  loops. No sharing of test setup across cases. Every check variant requires a
-  grammar change.
+- **Pros:** Readable for non-programmers. Clear visual separation
+  of inputs and assertions.
+- **Cons:** Requires custom tokenizer and BNF grammar. No
+  parameterization or loops. No sharing of test setup across cases.
+  Every check variant requires a grammar change.
 
 ### A2: txtar + TOML
 
@@ -754,40 +520,111 @@ expect.result = "pass"
 ```
 
 - **Pros:** Standard parsers exist (`BurntSushi/toml`).
-  `[[array.of.tables]]` gives clear test boundaries. TOML dotted-key notation
-  (`body.allow_force_pushes.enabled = false`) is clean for shallow data.
-- **Cons:** `[[array.of.tables]]` nesting becomes hard to follow when a test
-  case has multiple mock sources. No parameterization. Mock data and test
-  definition are in the same file, coupling "dumb data" with "active logic".
+  `[[array.of.tables]]` gives clear test boundaries. TOML
+  dotted-key notation is clean for shallow data.
+- **Cons:** `[[array.of.tables]]` nesting becomes hard to follow
+  when a test case has multiple mock sources. No parameterization.
+  Mock data and test definition are in the same file, coupling data
+  with logic.
 
-txtar remains useful as a **file-bundling layer** alongside Starlark for
-git-ingest test fixtures.
+txtar remains useful as a **file-bundling layer** alongside Starlark
+for git-ingest test fixtures.
 
-### A3: Embedded real language (Python, Lua, JavaScript)
+### A3: Alternative embedded language
 
 - **Python:** Familiar but heavy dependency. Non-trivial to sandbox.
-- **Lua:** Lightweight but niche -- unfamiliar to most contributors.
+- **Lua:** Lightweight but niche. Unfamiliar to most contributors.
 - **JavaScript/Node:** Familiar but significant runtime complexity.
-- **Starlark (chosen):** Designed for embedding in Go tools. Deterministic
-  (no I/O, no randomness by default). `go.starlark.net` is mature (used by
-  Bazel). Python-like syntax. Sandboxable.
+- **Starlark (chosen):** Designed for embedding in Go tools.
+  Deterministic (no I/O, no randomness by default).
+  `go.starlark.net` is mature (used by Bazel). Python-like syntax.
+  Sandboxable.
 
 ### A4: Datasource abstract box mocking
 
-Mock the output of the datasource call directly (see DD2 -- Approach A).
-Simpler to write but doesn't exercise the datasource definition. The
-`{"body"/"status"}` wrapper becomes a concern for test authors. Rejected in
-favor of HTTP-level mocking.
+Instead of HTTP-level mocking (DD2), this approach mocks the
+*output* of the datasource call directly, bypassing the datasource
+definition:
 
----
+```python
+mocks = {
+    "datasource:baselineghapi/branch_protection_status": {
+        "body": {"applied_rulesets": [
+            {"type": "non_fast_forward"},
+        ]},
+    },
+}
+```
 
-## Open Questions
+- **Advantage:** Simple to write. No knowledge of the underlying
+  API shape needed.
+- **Disadvantage:** The datasource definition is never exercised.
+  If the datasource has a bug (wrong endpoint, wrong field mapping),
+  tests still pass. Authors also need to know the datasource's
+  output shape, including the `{"body"/"status"}` wrapper.
 
-| # | Question | Status |
-|---|---|---|
-| Q1 | `test_*` vs `test()` vs tuples vs `cases` -- which approach ships first? | Open -- prototype all four |
-| Q2 | How are datasource definitions discovered and loaded? | Open |
-| Q3 | File layout: Option A (flat) vs Option B (`tests/` subdir)? | Open |
-| Q4 | `check` module: ship as Go builtins or auto-loaded Starlark module? | Leaning Starlark module |
-| Q5 | Binary name: `ruletest` vs `mindev`? | Open |
-| Q6 | Glob pattern matching for URL mocks (`repos/*/branches/*`)? | Needed for Approach B |
+Rejected in favor of HTTP-level mocking, which exercises the full
+datasource pipeline and aligns test mocks with provider API
+documentation.
+
+### A5: Subdirectory for test files
+
+Instead of co-locating `*.star` files next to `*.yaml` files (DD3),
+test files could live in a `tests/` subdirectory:
+
+```text
+rule-types/github/
++-- branch_protection_allow_force_pushes.yaml
++-- osps-ac-03-01.yaml
++-- tests/
+    +-- branch_protection_allow_force_pushes.star
+    +-- osps-ac-03-01.star
+```
+
+- **Advantage:** Clear separation between rule definitions and test
+  code.
+- **Disadvantage:** Adding a test requires navigating to a different
+  directory; rule and test are farther apart.
+
+Rejected because co-location makes it immediately visible whether
+a rule has a test, and the `*.star` suffix provides sufficient
+distinction from `*.yaml` files.
+
+### A6: Alternative test declaration approaches
+
+Three other test declaration approaches were considered alongside
+`test_*` function discovery (DD4):
+
+**`test()` builtin with `expect`:**
+
+```python
+test("force pushes disabled",
+     "branch_protection_allow_force_pushes",
+     mocks = {ENDPOINT: body({...})},
+     entity = DEFAULT_ENTITY,
+     expect = "pass")
+```
+
+Simple for pass/fail but does not support complex assertions like
+checking violation messages.
+
+**`test()` with `(label, got, want)` tuples:**
+
+```python
+result = eval("no_open_security_advisories",
+              entity=DEFAULT, mocks={"/*": code(404)})
+
+test("security advisories off", [
+    ("status",      result.status,          "fail"),
+    ("viol. count", len(result.violations), 1),
+])
+```
+
+Good diagnostic output but more verbose for simple tests.
+
+**`cases` dict + comprehension:**
+
+Compact for parameterized tests but less structured. The `test_*`
+function approach combined with list-of-objects table-driven tests
+(see DD4) provides equivalent functionality with a more familiar
+API.
