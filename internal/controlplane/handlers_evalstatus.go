@@ -630,8 +630,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		return nil, fmt.Errorf("error fetching properties for entity: %s: %w", efp.Entity.ID.String(), err)
 	}
 
-	entityInfo := map[string]string{}
-	entityInfo["entity_id"] = eval.EntityID.String()
+	entityInfo := getRuleEvalEntityInfo(eval, efp)
 
 	if uid := efp.Properties.GetProperty(properties.PropertyUpstreamID); uid != nil {
 		entityInfo["upstream_id"] = uid.GetString()
@@ -639,20 +638,6 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 
 	remediationURL := ""
 	if eval.EntityType == db.EntitiesRepository {
-		// If any fields are missing, just leave them empty in the response
-		entityInfo["provider"] = eval.Provider
-		// TODO: We'll probably remove these fields in the future as we
-		// introduce more providers
-		if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
-			entityInfo["repo_owner"] = owner.GetString()
-		}
-		if name := efp.Properties.GetProperty(ghprop.RepoPropertyName); name != nil {
-			entityInfo["repo_name"] = name.GetString()
-		}
-
-		// TODO: This will be removed in favor of entity_id
-		entityInfo["repository_id"] = efp.Entity.ID.String()
-
 		remediationURL, err = getRemediationURLFromMetadata(
 			eval.RemMetadata, efp.Entity.Name,
 		)
@@ -762,6 +747,49 @@ func buildEvalResultAlertFromLRERow(
 	}
 
 	return era
+}
+
+func getRuleEvalEntityInfo(
+	rs db.ListRuleEvaluationsByProfileIdRow,
+	efp *entmodels.EntityWithProperties,
+) map[string]string {
+	entityInfo := map[string]string{}
+
+	if name := efp.Properties.GetProperty(properties.PropertyName); name != nil {
+		entityInfo["name"] = name.GetString()
+	}
+
+	if owner := efp.Properties.GetProperty(ghprop.RepoPropertyOwner); owner != nil {
+		entityInfo["repo_owner"] = owner.GetString()
+	}
+	if name := efp.Properties.GetProperty(ghprop.RepoPropertyName); name != nil {
+		entityInfo["repo_name"] = name.GetString()
+	}
+
+	if artName := efp.Properties.GetProperty(ghprop.ArtifactPropertyName); artName != nil {
+		entityInfo["artifact_name"] = artName.GetString()
+	}
+
+	if artType := efp.Properties.GetProperty(ghprop.ArtifactPropertyType); artType != nil {
+		entityInfo["artifact_type"] = artType.GetString()
+	}
+
+	entityInfo["provider"] = rs.Provider
+	entityInfo["entity_type"] = efp.Entity.Type.ToString()
+	entityInfo["entity_id"] = rs.EntityID.String()
+
+	// temporary: These will be replaced by entity_id
+	//nolint:exhaustive
+	switch rs.EntityType {
+	case db.EntitiesRepository:
+		entityInfo["repository_id"] = efp.Entity.ID.String()
+	case db.EntitiesArtifact:
+		entityInfo["artifact_id"] = efp.Entity.ID.String()
+	default:
+		// We only need to handle the above two types specially for historical compatibility.
+	}
+
+	return entityInfo
 }
 
 func dbEntityToEntity(dbEnt db.Entities) minderv1.Entity {
