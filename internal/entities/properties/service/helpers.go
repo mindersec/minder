@@ -24,6 +24,7 @@ import (
 
 func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	ctx context.Context, provider provifv1.Provider, entID uuid.UUID,
+	projectID uuid.UUID, providerID uuid.UUID,
 	lookupProperties *properties.Properties, entType minderv1.Entity,
 	opts *ReadOptions, l zerolog.Logger,
 ) (*properties.Properties, error) {
@@ -33,7 +34,11 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	if entID != uuid.Nil {
 		// fetch properties from db
 		var err error
-		dbProps, err = qtx.GetAllPropertiesForEntity(ctx, entID)
+		dbProps, err = qtx.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+			EntityID:   entID,
+			ProjectID:  projectID,
+			ProviderID: providerID,
+		})
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		}
@@ -68,7 +73,7 @@ func (ps *propertiesService) retrieveAllPropertiesForEntity(
 	}
 
 	// save updated properties to db, thus making sure that the updatedAt are bumped
-	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, opts.getPropertiesServiceCallOptions())
+	err = ps.ReplaceAllProperties(ctx, entID, refreshedProps, projectID, providerID, opts.getPropertiesServiceCallOptions())
 	if err != nil {
 		return nil, fmt.Errorf("failed to update properties: %w", err)
 	}
