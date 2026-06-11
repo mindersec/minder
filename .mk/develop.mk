@@ -21,8 +21,8 @@ run-server: ## run the app
 .PHONY: run-docker-teardown
 run-docker-teardown: ## teardown the docker compose environment
 ifeq ($(RUN_DOCKER_NO_TEARDOWN),false)
-	@echo "Running docker compose down $(services)..."
-	@$(COMPOSE) down $(services)
+	@echo "Running docker compose down..."
+	@$(COMPOSE) down
 else
 	@echo "Skipping docker compose down"
 endif
@@ -41,8 +41,8 @@ run-docker: run-docker-teardown ## run the app under docker compose
 
 .PHONY: stop-docker
 stop-docker: ## stop the app under docker compose
-	@echo "Running docker compose down $(services)..."
-	@$(COMPOSE) down $(services)
+	@echo "Running docker compose down..."
+	@$(COMPOSE) down
 
 .PHONY: pre-commit
 pre-commit:	## run pre-commit hooks

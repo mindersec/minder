@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine"
 	"github.com/mindersec/minder/internal/engine/entities"
 	mockengine "github.com/mindersec/minder/internal/engine/mock"
@@ -22,6 +23,14 @@ import (
 	"github.com/mindersec/minder/pkg/eventer"
 	"github.com/mindersec/minder/pkg/eventer/constants"
 )
+
+type fakeStore struct {
+	db.Store
+}
+
+func (*fakeStore) GetProviderByID(_ context.Context, _ uuid.UUID) (db.Provider, error) {
+	return db.Provider{Name: "test-provider"}, nil
+}
 
 func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 	t.Parallel()
@@ -83,6 +92,8 @@ func TestExecutorEventHandler_handleEntityEvent(t *testing.T) {
 		evt,
 		[]message.HandlerMiddleware{},
 		executor,
+		engine.DefaultExecutionTimeout,
+		&fakeStore{},
 	)
 
 	t.Log("waiting for eventer to start")
