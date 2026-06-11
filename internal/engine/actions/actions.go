@@ -160,9 +160,7 @@ func shouldRemediate(prevEval *previousEval, evalStatus EvalStatus) engif.Action
 
 	// Proceed with use cases where the evaluation changed
 	switch evalStatus {
-	case EvalStatusError:
-		return engif.ActionCmdDoNothing
-	case EvalStatusSuccess:
+	case EvalStatusError, EvalStatusSuccess:
 		// Case 2 - Evaluation changed from something else to ERROR -> Remediation should be OFF
 		// Case 3 - Evaluation changed from something else to PASSING -> Remediation should be OFF
 		// The Remediation should be OFF (if it wasn't already)

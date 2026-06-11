@@ -63,14 +63,12 @@ func TestShouldRemediate(t *testing.T) {
 			expected:   engif.ActionCmdDoNothing,
 		},
 		{
-			// NOTE: EvalStatusTypesError has an empty case body in shouldRemediate,
-			// so eval errors fall through to the default DoNothing. This may be a bug
-			// (see the comment on cases Error/Success in shouldRemediate).
-			name:       "eval error, prev success -> do nothing",
+			// EvalStatusError now follows the same remediation-off behavior as EvalStatusSuccess
+			name:       "eval error, prev success -> off",
 			prevStatus: RemediationStatusSuccess,
 			hasPrev:    true,
 			evalErr:    errors.New("random error"),
-			expected:   engif.ActionCmdDoNothing,
+			expected:   engif.ActionCmdOff,
 		},
 		{
 			name:       "eval failure, prev error -> do nothing",
@@ -80,11 +78,18 @@ func TestShouldRemediate(t *testing.T) {
 			expected:   engif.ActionCmdDoNothing,
 		},
 		{
-			name:       "eval error, prev error -> do nothing",
+			name:       "eval error, prev error -> off",
 			prevStatus: RemediationStatusError,
 			hasPrev:    true,
 			evalErr:    errors.New("random error"),
-			expected:   engif.ActionCmdDoNothing,
+			expected:   engif.ActionCmdOff,
+		},
+		{
+			name:       "eval error, prev failure -> off",
+			prevStatus: RemediationStatusFailure,
+			hasPrev:    true,
+			evalErr:    errors.New("random error"),
+			expected:   engif.ActionCmdOff,
 		},
 		// Edge cases
 		{
