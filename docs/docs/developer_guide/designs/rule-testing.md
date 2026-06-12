@@ -28,6 +28,7 @@ A Minder rule type defines a security policy check for an entity
 ```mermaid
 flowchart LR
     A[Ingest] --> B[Evaluate]
+    DS[Datasource] <--> B
     B --> C[Remediate]
     C --> D[Alert]
 ```
@@ -209,8 +210,7 @@ workflow content per test case.
 
 ### DD2: Datasource Mocking -- HTTP-Level Interception
 
-Datasource mocking is the most significant design decision in the
-framework. The chosen approach mocks at the **HTTP boundary**. The
+The chosen approach mocks at the **HTTP boundary**. The
 datasource definition is loaded, and its HTTP calls are intercepted
 by a custom `http.RoundTripper`. Rule authors write mocks against
 real provider API shapes:
@@ -225,6 +225,15 @@ mocks = {
     "/rules/branches/main":
         body([{"ruleset_source_type": "Repository",
                "type": "non_fast_forward"}]),
+}
+```
+
+Mock response bodies can also be loaded from txtar fixture files:
+
+```python
+mocks = {
+    "GET https://api.github.com/repos/*/branches/*/protection":
+        body(txtar(read_file("api_responses.txtar"))["main-protected.json"]),
 }
 ```
 
@@ -275,8 +284,8 @@ result = eval(
 )
 ```
 
-See [Alternatives Considered](#a4-datasource-abstract-box-mocking)
-for the rejected approach of mocking datasource outputs directly.
+See [A4](#a4-datasource-abstract-box-mocking)
+for other approaches to mocking datasource outputs.
 
 ---
 
@@ -374,9 +383,8 @@ def test_workflow_refs():
 
 ### DD5: Assertions -- Expect Semantics
 
-The `check` module uses **expect semantics** rather than assert
-semantics. Per the
-[Google Testing Blog](https://testing.googleblog.com/2008/07/tott-expect-vs-assert.html):
+The `check` module uses [**expect semantics** rather than assert
+semantics](https://testing.googleblog.com/2008/07/tott-expect-vs-assert.html):
 
 | Style | Behavior | Effect |
 |---|---|---|
@@ -466,22 +474,33 @@ sequenceDiagram
     participant Check as Check Module
 
     Runner->>Starlark: ExecFile(test.star)
-    Starlark->>Check: check.eq("fail", "pass")
-    Note over Check: Append error to<br/>thread-local list
-    Check-->>Starlark: return None
-    Starlark->>Check: check.contains(msg, "unpinned")
-    Note over Check: Append error to<br/>thread-local list
-    Check-->>Starlark: return None
-    Starlark-->>Runner: module complete
-    Runner->>Check: read thread-local error list
-    Note over Runner: Report all 2 failures
+    Note over Starlark: Module loads,<br/>defines test_* functions
+    Starlark-->>Runner: return globals
+
+    loop For each test_* function
+        Runner->>Starlark: starlark.Call(test_fn)
+        Starlark->>Starlark: eval() runs rule
+        Starlark->>Check: check.eq("fail", "pass")
+        Note over Check: Append error to<br/>thread-local list
+        Check-->>Starlark: return None
+        Starlark->>Check: check.contains(msg, "unpinned")
+        Note over Check: Append error to<br/>thread-local list
+        Check-->>Starlark: return None
+        Starlark-->>Runner: function complete
+        Runner->>Check: read thread-local error list
+        Note over Runner: Report failures for<br/>this test function
+        Runner->>Check: clear error list
+    end
 ```
 
-`eval()` errors (e.g. unmocked HTTP call, unknown rule name) return
-Go `error`, which surfaces as a Starlark exception and stops the
-current function. This is appropriate because a broken test setup
-should fail immediately rather than silently continue with invalid
-state.
+The runner first loads the module via `ExecFile`, which defines
+`test_*` functions but does not call them. The runner then iterates
+over discovered `test_*` globals and invokes each one separately
+via `starlark.Call()`. This means `eval()` errors (e.g. unmocked
+HTTP call, unknown rule name) surface as exceptions scoped to the
+individual test function, not the module. `check.*` failures are
+also collected per function and reported independently, so one
+failing test does not affect the others.
 
 ---
 
@@ -595,7 +614,7 @@ distinction from `*.yaml` files.
 Three other test declaration approaches were considered alongside
 `test_*` function discovery (DD4):
 
-**`test()` builtin with `expect`:**
+**`test()` builtin with `expect` argument:**
 
 ```python
 test("force pushes disabled",
