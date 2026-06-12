@@ -63,7 +63,7 @@ func TestShouldRemediate(t *testing.T) {
 			expected:   engif.ActionCmdDoNothing,
 		},
 		{
-			// EvalStatusError now follows the same remediation-off behavior as EvalStatusSuccess
+			// Cancel remediation actions if rule evaluation has an error
 			name:       "eval error, prev success -> off",
 			prevStatus: RemediationStatusSuccess,
 			hasPrev:    true,
@@ -200,13 +200,13 @@ func TestShouldAlert(t *testing.T) {
 		},
 		// Expected errors
 		{
-			name:      "eval error -> do nothing",
+			name:      "eval error, alert off -> on",
 			prevAlert: AlertStatusOff,
 			hasPrev:   true,
 			evalErr:   errors.New("generic error"),
 			remErr:    nil,
 			remType:   pull_request.RemediateType,
-			expected:  engif.ActionCmdDoNothing,
+			expected:  engif.ActionCmdOn,
 		},
 		// Edge cases
 		{

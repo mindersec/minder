@@ -214,9 +214,7 @@ func shouldAlert(
 
 	// Proceed with use cases where the evaluation changed
 	switch evalStatus {
-	case EvalStatusError:
-		return engif.ActionCmdDoNothing
-	case EvalStatusFailure:
+	case EvalStatusError, EvalStatusFailure:
 		// Case 3 - Evaluation changed from something else to ERROR -> Alert should be ON
 		// Case 4 - Evaluation has changed from something else to FAILED -> Alert should be ON
 		// The Alert should be on (if it wasn't already)
