@@ -135,10 +135,8 @@ func (p *profileService) CreateProfile(
 
 	profileMap := MergeDatabaseListIntoProfiles(existingProfiles)
 
-	existingProfileNames := make([]string, 0, len(profileMap))
-
 	// Derive the profile name from the profile display name
-	name := DeriveProfileNameFromDisplayName(profile, existingProfileNames)
+	name := DeriveProfileNameFromDisplayName(profile, profileMap)
 
 	// if empty use the name
 	if displayName == "" {

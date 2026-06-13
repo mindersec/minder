@@ -291,7 +291,7 @@ func MergeDatabaseGetByNameIntoProfiles(ppl []db.GetProfileByProjectAndNameRow) 
 // DeriveProfileNameFromDisplayName generates a unique profile name based on the display name and existing profiles.
 func DeriveProfileNameFromDisplayName(
 	profile *pb.Profile,
-	existingProfileNames []string,
+	existingProfileNames map[string]*pb.Profile,
 ) (name string) {
 
 	displayName := profile.GetDisplayName()
@@ -306,16 +306,14 @@ func DeriveProfileNameFromDisplayName(
 	// then the profile name from the incoming request is used as the profile name
 
 	derivedName := name
-	counter := 1
 
 	// check if the current project already has a profile with that name, then add a counter
-	for strings.Contains(strings.Join(existingProfileNames, " "), derivedName) {
+	for counter := 1; existingProfileNames[derivedName] != nil; counter++ {
 		derivedName = fmt.Sprintf("%s-%d", name, counter)
 		if len(derivedName) > profileNameMaxLength {
 			nameLength := profileNameMaxLength - len(fmt.Sprintf("-%d", counter))
 			derivedName = fmt.Sprintf("%s-%d", name[:nameLength], counter)
 		}
-		counter++
 	}
 	return derivedName
 
