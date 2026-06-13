@@ -11,6 +11,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/go-git/go-billy/v5"
 	"gopkg.in/yaml.v3"
 
 	"github.com/mindersec/minder/internal/util"
@@ -20,21 +21,37 @@ import (
 // Printer provides an interface for passing a printf-like function.
 type Printer func(string, ...any)
 
+type filePath struct {
+	Path     string
+	Expanded bool
+}
+
 // ResourcesFromPaths collects
-func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
-	files, err := util.ExpandFileArgs(paths...)
+func ResourcesFromPaths(vfs billy.Filesystem, printer Printer, paths ...string) ([]minderv1.ResourceMeta, error) {
+	if printer == nil {
+		printer = func(string, ...any) {}
+	}
+
+	expandedFiles, err := util.ExpandFileArgs(vfs, paths...)
 	if err != nil {
 		return nil, fmt.Errorf("error expanding args: %w", err)
+	}
+	files := make([]filePath, 0, len(expandedFiles))
+	for _, file := range expandedFiles {
+		files = append(files, filePath{Path: file.Path, Expanded: file.Expanded})
 	}
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))
 	for _, file := range files {
 		var input Decoder
+		var closer io.Closer
 		if file.Path == "-" {
+			if vfs != nil {
+				return nil, fmt.Errorf("stdin is not supported with filesystem-backed reads")
+			}
 			input = yaml.NewDecoder(os.Stdin)
 		} else {
-			var closer io.Closer
-			input, closer = DecoderForFile(file.Path)
+			input, closer = decoderForPath(vfs, file.Path)
 			if input == nil {
 				// Not a valid file type, skip it.
 				continue

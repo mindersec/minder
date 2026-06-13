@@ -48,7 +48,7 @@ func lintCmdRun(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 	rtpathStr := rtpath.Value.String()
 
-	files, err := util.ExpandFileArgs(rtpathStr)
+	files, err := util.ExpandFileArgs(nil, rtpathStr)
 	if err != nil {
 		return fmt.Errorf("error expanding file args: %w", err)
 	}

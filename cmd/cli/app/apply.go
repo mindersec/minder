@@ -31,7 +31,7 @@ func applyCommand(ctx context.Context, cmd *cobra.Command, args []string, conn *
 	if len(viper.GetStringSlice("file")) > 0 {
 		fileNames = viper.GetStringSlice("file")
 	}
-	objects, err := fileconvert.ResourcesFromPaths(cmd.Printf, fileNames...)
+	objects, err := fileconvert.ResourcesFromPaths(nil, cmd.Printf, fileNames...)
 	if err != nil {
 		return cli.MessageAndError("Error reading resources", err)
 	}
