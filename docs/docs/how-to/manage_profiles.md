@@ -102,7 +102,7 @@ def:
       def: |
         package minder
 
-        import future.keywords.if
+        import rego.v1
 
         default allow := false
         default skip := false

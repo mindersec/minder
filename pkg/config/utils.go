@@ -198,7 +198,7 @@ func SetViperStructDefaults(v *viper.Viper, prefix string, s any) {
 		value := field.Tag.Get("default")
 
 		// Dereference one level of pointers, if present
-		if fieldType.Kind() == reflect.Ptr {
+		if fieldType.Kind() == reflect.Pointer {
 			fieldType = fieldType.Elem()
 		}
 

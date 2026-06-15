@@ -235,9 +235,19 @@ func createGitHubApp(
 	}
 
 	class := db.ProviderClassGithubApp
-	providerDef, err := providers.GetProviderClassDefinition(string(class))
+	providerInfo, err := ghprov.ProviderClassInfo(class)
 	if err != nil {
 		return db.Provider{}, err
+	}
+
+	traits, err := providers.PBProviderTypesToDB(providerInfo.GetSupportedProviderTypes())
+	if err != nil {
+		return db.Provider{}, fmt.Errorf("error converting provider class traits: %w", err)
+	}
+
+	authFlows, err := providers.PBAuthFlowsToDB(providerInfo.GetSupportedAuthFlows())
+	if err != nil {
+		return db.Provider{}, fmt.Errorf("error converting provider class auth flows: %w", err)
 	}
 
 	// Save the installation ID and create a provider
@@ -245,9 +255,9 @@ func createGitHubApp(
 		Name:       fmt.Sprintf("%s-%s", db.ProviderClassGithubApp, installationOwner.GetLogin()),
 		ProjectID:  projectId,
 		Class:      class,
-		Implements: providerDef.Traits,
+		Implements: traits,
 		Definition: providerConfig,
-		AuthFlows:  providerDef.AuthorizationFlows,
+		AuthFlows:  authFlows,
 	})
 	if err != nil {
 		return db.Provider{}, err

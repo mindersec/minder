@@ -926,21 +926,6 @@ func (mr *MockStoreMockRecorder) GetAllPropertiesForEntity(ctx, entityID any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertiesForEntity", reflect.TypeOf((*MockStore)(nil).GetAllPropertiesForEntity), ctx, entityID)
 }
 
-// GetAllPropertyValuesV1 mocks base method.
-func (m *MockStore) GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]db.PropertyValueV1, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllPropertyValuesV1", ctx, entityID)
-	ret0, _ := ret[0].([]db.PropertyValueV1)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllPropertyValuesV1 indicates an expected call of GetAllPropertyValuesV1.
-func (mr *MockStoreMockRecorder) GetAllPropertyValuesV1(ctx, entityID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPropertyValuesV1", reflect.TypeOf((*MockStore)(nil).GetAllPropertyValuesV1), ctx, entityID)
-}
-
 // GetBundle mocks base method.
 func (m *MockStore) GetBundle(ctx context.Context, arg db.GetBundleParams) (db.Bundle, error) {
 	m.ctrl.T.Helper()
@@ -1464,21 +1449,6 @@ func (m *MockStore) GetProperty(ctx context.Context, arg db.GetPropertyParams) (
 func (mr *MockStoreMockRecorder) GetProperty(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProperty", reflect.TypeOf((*MockStore)(nil).GetProperty), ctx, arg)
-}
-
-// GetPropertyValueV1 mocks base method.
-func (m *MockStore) GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (db.PropertyValueV1, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPropertyValueV1", ctx, entityID, key)
-	ret0, _ := ret[0].(db.PropertyValueV1)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPropertyValueV1 indicates an expected call of GetPropertyValueV1.
-func (mr *MockStoreMockRecorder) GetPropertyValueV1(ctx, entityID, key any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPropertyValueV1", reflect.TypeOf((*MockStore)(nil).GetPropertyValueV1), ctx, entityID, key)
 }
 
 // GetProviderByID mocks base method.

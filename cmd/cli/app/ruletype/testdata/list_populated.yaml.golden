@@ -1,0 +1,185 @@
+---
+context:
+  project: 00000000-0000-0000-0000-000000000000
+  provider: ""
+def:
+  alert:
+    securityAdvisory: {}
+    type: security_advisory
+  eval:
+    rego:
+      def: |
+        package minder
+
+        import future.keywords.if
+
+        default allow := false
+        default skip := false
+        default message := "Secret push protection is disabled"
+
+        allow if {
+          input.ingested.security_and_analysis.secret_scanning_push_protection.status == "enabled"
+        }
+
+        skip if {
+          input.profile.skip_private_repos == true
+          input.ingested.private == true
+        }
+      type: deny-by-default
+    type: rego
+  inEntity: repository
+  ingest:
+    rest:
+      endpoint: /repos/{{.Entity.Owner}}/{{.Entity.Name}}
+      parse: json
+    type: rest
+  remediate:
+    rest:
+      body: |
+        { "security_and_analysis": {"secret_scanning_push_protection": { "status": "enabled" } } }
+      endpoint: /repos/{{.Entity.Owner}}/{{.Entity.Name}}
+      method: PATCH
+    type: rest
+  ruleSchema:
+    properties:
+      skip_private_repos:
+        default: true
+        description: |
+          If true, this rule will be marked as skipped for private repositories
+        type: boolean
+description: |
+  Verifies that secret push protection is enabled for a given repository.
+  Note that this will will not work as expected for private repositories
+  unless you have GitHub Advanced Security enabled. If you still want to use
+  this rule because you have a mixture of private and public repositories,
+  enable the `skip_private_repos` flag.
+displayName: Enable secret push protection to avoid pushing hardcoded secrets
+guidance: |
+  Ensure that secret scanning push protection is enabled for the
+  repository.
+
+  You can use secret scanning to prevent supported secrets from being
+  pushed into your repository by enabling secret scanning push
+  protection.
+
+  For more information, see [GitHub's
+  documentation](https://docs.github.com/en/code-security/secret-scanning/push-protection-for-repositories-and-organizations#enabling-secret-scanning-as-a-push-protection-for-a-repository).
+id: 00000000-0000-0000-0000-000000000001
+name: secret_push_protection
+releasePhase: RULE_TYPE_RELEASE_PHASE_BETA
+severity:
+  value: VALUE_HIGH
+shortFailureMessage: Secret push protection is not enabled
+
+---
+context:
+  project: 00000000-0000-0000-0000-000000000000
+  provider: ""
+def:
+  alert:
+    securityAdvisory: {}
+    type: security_advisory
+  eval:
+    rego:
+      def: |
+        package minder
+
+        import future.keywords.if
+
+        default allow := false
+        default skip := false
+        default message := "Secret scanning is disabled"
+
+        allow if {
+          input.ingested.security_and_analysis.secret_scanning.status == "enabled"
+        }
+
+        skip if {
+          input.profile.skip_private_repos == true
+          input.ingested.private == true
+        }
+      type: deny-by-default
+    type: rego
+  inEntity: repository
+  ingest:
+    rest:
+      endpoint: /repos/{{.Entity.Owner}}/{{.Entity.Name}}
+      parse: json
+    type: rest
+  remediate:
+    rest:
+      body: |
+        { "security_and_analysis": {"secret_scanning": { "status": "enabled" } } }
+      endpoint: /repos/{{.Entity.Owner}}/{{.Entity.Name}}
+      method: PATCH
+    type: rest
+  ruleSchema:
+    properties:
+      skip_private_repos:
+        default: true
+        description: |
+          If true, this rule will be marked as skipped for private repositories
+        type: boolean
+description: |
+  Verifies that secret scanning is enabled for a given repository.
+  Note that this will will not work as expected for private repositories
+  unless you have GitHub Advanced Security enabled. If you still want to use
+  this rule because you have a mixture of private and public repositories,
+  enable the `skip_private_repos` flag.
+displayName: Enable secret scanning to detect hardcoded secrets
+guidance: |
+  Ensure that secret scanning is enabled for the repository.
+
+  Secret scanning is a feature that scans repositories for secrets and
+  alerts the repository owner when a secret is found. To enable this
+  feature in GitHub, you must enable it in the repository settings.
+
+  For more information, see [GitHub's
+  documentation](https://docs.github.com/en/github/administering-a-repository/about-secret-scanning).
+id: 00000000-0000-0000-0000-000000000002
+name: secret_scanning
+releasePhase: RULE_TYPE_RELEASE_PHASE_BETA
+severity:
+  value: VALUE_HIGH
+shortFailureMessage: Secret scanning is not enabled
+
+---
+context:
+  project: 00000000-0000-0000-0000-000000000000
+  provider: ""
+def:
+  alert:
+    securityAdvisory: {}
+    type: security_advisory
+  eval:
+    rego:
+      def: |
+        package minder
+
+        default allow := false
+
+        allow {
+          base_file.exists("README.md")
+        }
+      type: deny-by-default
+    type: rego
+  inEntity: repository
+  ingest:
+    git: {}
+    type: git
+  ruleSchema:
+    properties: {}
+    required: []
+    type: object
+description: |
+  Checks whether README.md exists in the repository.
+displayName: Check README exists
+guidance: |
+  Ensure that your repository contains a README.md file.
+id: 00000000-0000-0000-0000-000000000003
+name: test_base_file_rule
+releasePhase: RULE_TYPE_RELEASE_PHASE_ALPHA
+severity:
+  value: VALUE_LOW
+shortFailureMessage: README file not found
+

@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/logger"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/profiles/models"
 )
 

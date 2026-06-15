@@ -52,6 +52,11 @@ func (*TestKit) SupportsEntity(_ minderv1.Entity) bool {
 	return true
 }
 
+// ProviderClassInfo implements the Provider interface.
+func (*TestKit) ProviderClassInfo() *minderv1.ProviderClassInfo {
+	return nil
+}
+
 // CreationOptions implements the Provider interface.
 func (*TestKit) CreationOptions(_ minderv1.Entity) *provv1.EntityCreationOptions {
 	// Test scaffold returns no-op options

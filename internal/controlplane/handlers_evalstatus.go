@@ -4,6 +4,7 @@
 package controlplane
 
 import (
+	"cmp"
 	"context"
 	"database/sql"
 	"encoding/base64"
@@ -15,6 +16,8 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/db"
@@ -89,6 +92,19 @@ func (s *Server) GetEvaluationHistory(
 		},
 		Alert:       getAlert(eval.AlertStatus, eval.AlertDetails.String),
 		Remediation: getRemediation(eval.RemediationStatus, eval.RemediationDetails.String),
+	}
+
+	if in.GetIncludeOutputs() {
+		output, err := s.store.GetEvaluationOutput(ctx, eval.EvaluationID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluation output")
+		} else if err == nil && output.Output.Valid {
+			pbEval.Status.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(output.Output.RawMessage, pbEval.Status.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+				pbEval.Status.Output = nil
+			}
+		}
 	}
 
 	return &minderv1.GetEvaluationHistoryResponse{Evaluation: pbEval}, nil
@@ -169,6 +185,7 @@ func (s *Server) ListEvaluationHistory(
 		cursor,
 		size,
 		filter,
+		in.GetIncludeOutputs(),
 	)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error retrieving evaluations")
@@ -176,7 +193,7 @@ func (s *Server) ListEvaluationHistory(
 	}
 
 	// convert data set to proto
-	data, err := fromEvaluationHistoryRows(result.Data)
+	data, err := fromEvaluationHistoryRows(ctx, result.Data)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +223,7 @@ func (s *Server) ListEvaluationHistory(
 }
 
 func fromEvaluationHistoryRows(
+	ctx context.Context,
 	rows []*history.OneEvalHistoryAndEntity,
 ) ([]*minderv1.EvaluationHistory, error) {
 	res := make([]*minderv1.EvaluationHistory, len(rows))
@@ -222,6 +240,13 @@ func fromEvaluationHistoryRows(
 		evalStatus := &minderv1.EvaluationHistoryStatus{
 			Status:  string(row.EvalHistoryRow.EvaluationStatus),
 			Details: row.EvalHistoryRow.EvaluationDetails,
+		}
+
+		if row.EvalHistoryRow.EvalOutput.Valid {
+			evalStatus.Output = &structpb.Value{}
+			if err := protojson.Unmarshal(row.EvalHistoryRow.EvalOutput.RawMessage, evalStatus.Output); err != nil {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("Unable to unmarshal rule output")
+			}
 		}
 
 		res[i] = &minderv1.EvaluationHistory{
@@ -329,58 +354,55 @@ func (s *Server) ListEvaluationResults(
 		return nil, err
 	}
 
-	// Filter the profile and status lists to those in the reques params
-	profileList, profileStatusList = filterProfileLists(in, profileList, profileStatusList)
+	// Filter the profile and status lists to those in the request params
+	profileStatuses := filterProfileLists(in, profileList, profileStatusList)
 
 	// Do the final sort of all the data
-	entities, profileStatuses, statusByEntity, err := s.sortEntitiesEvaluationStatus(
-		ctx, s.store, profileList, profileStatusList, rtIndex, entIdIndex, entTypeIndex,
-	)
+	entities, statusByEntity, err := s.sortEntitiesEvaluationStatus(
+		ctx, s.store, profileStatuses, rtIndex, entIdIndex, entTypeIndex, in.GetIncludeOutputs())
 	if err != nil {
 		return nil, fmt.Errorf("sorting rule evaluations: %w", err)
 	}
 
-	return buildListEvaluationResponse(entities, profileStatuses, statusByEntity), nil
+	resp := buildListEvaluationResponse(entities, profileStatuses, statusByEntity)
+
+	return resp, nil
 }
 
 // sortEntitiesEvaluationStatus queries the database from the filtered lists
 // and compiles the unified entities map, the map of profile statuses and the
 // status by entity map that will be assembled into the evaluation status
 // response.
-//
-//nolint:gocyclo // This function is complex by nature
 func (s *Server) sortEntitiesEvaluationStatus(
 	ctx context.Context, store db.Store,
-	profileList []db.ListProfilesByProjectIDAndLabelRow,
-	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
+	profileStatuses map[uuid.UUID]*minderv1.ProfileStatus,
 	rtIndex, entIdIndex, entTypeIndex map[string]struct{},
+	includeOutputs bool,
 ) (
 	entities map[string]*minderv1.EntityTypedId,
-	profileStatuses map[uuid.UUID]*minderv1.ProfileStatus,
-	statusByEntity map[string]map[uuid.UUID][]*minderv1.RuleEvaluationStatus, err error,
+	statusByEntity map[string]map[uuid.UUID][]*minderv1.RuleEvaluationStatus,
+	err error,
 ) {
 	entities = map[string]*minderv1.EntityTypedId{}
-	profileStatuses = map[uuid.UUID]*minderv1.ProfileStatus{}
 	statusByEntity = map[string]map[uuid.UUID][]*minderv1.RuleEvaluationStatus{}
 
 	psc, err := propSvc.WithEntityCache(s.props, 0)
 	if err != nil {
-		return nil, nil, nil,
+		return nil, nil,
 			status.Errorf(codes.Internal, "error creating entity cache: %v", err)
 	}
 
-	for _, p := range profileList {
+	for profileID := range profileStatuses {
 		evals, err := store.ListRuleEvaluationsByProfileId(
-			ctx, db.ListRuleEvaluationsByProfileIdParams{ProfileID: p.Profile.ID},
+			ctx, db.ListRuleEvaluationsByProfileIdParams{
+				ProfileID:      profileID,
+				IncludeOutputs: includeOutputs,
+			},
 		)
 		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil, nil,
-					util.UserVisibleError(codes.NotFound, "profile not found")
-			}
-			return nil, nil, nil,
+			return nil, nil,
 				status.Errorf(codes.Internal,
-					"error reading evaluations from profile %q: %v", p.Profile.ID.String(), err)
+					"error reading evaluations from profile %q: %v", profileID.String(), err)
 		}
 
 		for _, e := range evals {
@@ -391,14 +413,6 @@ func (s *Server) sortEntitiesEvaluationStatus(
 
 			efp, err := psc.EntityWithPropertiesByID(ctx, e.EntityID, nil)
 			if err != nil {
-				if errors.Is(err, propSvc.ErrEntityNotFound) {
-					// If the entity is not found, log and skip
-					zerolog.Ctx(ctx).Error().
-						Str("entity_id", e.EntityID.String()).
-						Err(err).Msg("Entity not found while building rule evaluation status")
-					continue
-				}
-
 				zerolog.Ctx(ctx).Error().
 					Str("entity_id", e.EntityID.String()).
 					Err(err).Msg("error building entity for rule evaluation status")
@@ -408,7 +422,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 			ent := buildEntityFromEvaluation(efp)
 			entString := fmt.Sprintf("%s/%s", ent.Type, ent.Id)
 
-			/// If we're constrained to a single entity type, ignore others
+			// If we're constrained to a single entity type, ignore others
 			if _, ok := entTypeIndex[ent.Type.String()]; !ok && len(entTypeIndex) > 0 {
 				continue
 			}
@@ -420,11 +434,7 @@ func (s *Server) sortEntitiesEvaluationStatus(
 
 			entities[entString] = ent
 
-			if _, ok := profileStatuses[p.Profile.ID]; !ok {
-				profileStatuses[p.Profile.ID] = buildProfileStatus(&p, profileStatusList)
-			}
-
-			stat, err := s.buildRuleEvaluationStatusFromDBEvaluation(ctx, &p, e, efp)
+			stat, err := s.buildRuleEvaluationStatusFromDBEvaluation(ctx, profileID, e, efp)
 			if err != nil {
 				// A failure parsing the PR metadata points to a corrupt record. Log but don't err.
 				zerolog.Ctx(ctx).Error().Err(err).Msg("error building rule evaluation status")
@@ -432,11 +442,11 @@ func (s *Server) sortEntitiesEvaluationStatus(
 				if _, ok := statusByEntity[entString]; !ok {
 					statusByEntity[entString] = make(map[uuid.UUID][]*minderv1.RuleEvaluationStatus)
 				}
-				statusByEntity[entString][p.Profile.ID] = append(statusByEntity[entString][p.Profile.ID], stat)
+				statusByEntity[entString][profileID] = append(statusByEntity[entString][profileID], stat)
 			}
 		}
 	}
-	return entities, profileStatuses, statusByEntity, err
+	return entities, statusByEntity, err
 }
 
 // buildListEvaluationResponse builds the final response from the sorted and
@@ -540,6 +550,7 @@ func buildProjectsProfileList(
 
 		profileList = append(profileList, profiles...)
 	}
+	// profileProtos := profiles.MergeDatabaseListIntoProfiles(profileList)
 	return profileList, nil
 }
 
@@ -547,32 +558,36 @@ func filterProfileLists(
 	in *minderv1.ListEvaluationResultsRequest,
 	inProfileList []db.ListProfilesByProjectIDAndLabelRow,
 	inProfileStatus map[uuid.UUID]db.GetProfileStatusByProjectRow,
-) ([]db.ListProfilesByProjectIDAndLabelRow, map[uuid.UUID]db.GetProfileStatusByProjectRow) {
-	if in.GetProfile() == "" {
-		return inProfileList, inProfileStatus
-	}
-
-	outProfileList := []db.ListProfilesByProjectIDAndLabelRow{}
-	outProfileStatus := map[uuid.UUID]db.GetProfileStatusByProjectRow{}
+) map[uuid.UUID]*minderv1.ProfileStatus {
+	profileStatusMap := map[uuid.UUID]*minderv1.ProfileStatus{}
 
 	for _, p := range inProfileList {
-		if p.Profile.ID.String() == in.GetProfile() {
-			outProfileList = append(outProfileList, p)
+		profileID := p.Profile.ID
+		//nolint:staticcheck  // QF1001: Not applying DeMorgan's law as it's less clear.
+		if !(in.GetProfile() == "" || in.GetProfile() == profileID.String()) {
+			continue
 		}
+		profileStatus := &minderv1.ProfileStatus{
+			ProfileId:          profileID.String(),
+			ProfileName:        p.Profile.Name,
+			ProfileDisplayName: cmp.Or(p.Profile.DisplayName, p.Profile.Name),
+			LastUpdated:        timestamppb.New(p.Profile.UpdatedAt),
+		}
+		if ps, ok := inProfileStatus[profileID]; ok {
+			profileStatus.ProfileStatus = string(ps.ProfileStatus)
+		}
+
+		profileStatusMap[profileID] = profileStatus
 	}
 
-	if v, ok := inProfileStatus[uuid.MustParse(in.GetProfile())]; ok {
-		outProfileStatus[uuid.MustParse(in.GetProfile())] = v
-	}
-
-	return outProfileList, outProfileStatus
+	return profileStatusMap
 }
 
 // buildRuleEvaluationStatusFromDBEvaluation converts from an evaluation and a
 // profile from the database to a minder RuleEvaluationStatus
 func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	ctx context.Context,
-	profile *db.ListProfilesByProjectIDAndLabelRow, eval db.ListRuleEvaluationsByProfileIdRow,
+	profileID uuid.UUID, eval db.ListRuleEvaluationsByProfileIdRow,
 	efp *entmodels.EntityWithProperties,
 ) (*minderv1.RuleEvaluationStatus, error) {
 	guidance := ""
@@ -644,7 +659,7 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 	res := &minderv1.RuleEvaluationStatus{
 		RuleEvaluationId:       eval.RuleEvaluationID.String(),
 		RuleId:                 eval.RuleTypeID.String(),
-		ProfileId:              profile.Profile.ID.String(),
+		ProfileId:              profileID.String(),
 		RuleName:               eval.RuleName,
 		Entity:                 string(eval.EntityType),
 		Status:                 string(eval.EvalStatus),
@@ -663,6 +678,16 @@ func (s *Server) buildRuleEvaluationStatusFromDBEvaluation(
 		ReleasePhase:           rp,
 	}
 
+	if eval.EvalOutput.Valid {
+		res.Output = &structpb.Value{}
+		if err := protojson.Unmarshal(eval.EvalOutput.RawMessage, res.Output); err != nil {
+			zerolog.Ctx(ctx).Error().Err(err).
+				Str("evaluation_id", eval.RuleEvaluationID.String()).
+				Msg("Unable to unmarshal rule output")
+			res.Output = nil
+		}
+	}
+
 	return res, nil
 }
 
@@ -674,30 +699,6 @@ func buildEntityFromEvaluation(efp *entmodels.EntityWithProperties) *minderv1.En
 	}
 
 	return ent
-}
-
-// buildProfileStatus build a minderv1.ProfileStatus struct from a lookup row
-func buildProfileStatus(
-	row *db.ListProfilesByProjectIDAndLabelRow,
-	profileStatusList map[uuid.UUID]db.GetProfileStatusByProjectRow,
-) *minderv1.ProfileStatus {
-	pfStatus := ""
-	if _, ok := profileStatusList[row.Profile.ID]; ok {
-		pfStatus = string(profileStatusList[row.Profile.ID].ProfileStatus)
-	}
-
-	displayName := row.Profile.DisplayName
-	if displayName == "" {
-		displayName = row.Profile.Name
-	}
-
-	return &minderv1.ProfileStatus{
-		ProfileId:          row.Profile.ID.String(),
-		ProfileName:        row.Profile.Name,
-		ProfileDisplayName: displayName,
-		ProfileStatus:      pfStatus,
-		LastUpdated:        timestamppb.New(row.Profile.UpdatedAt),
-	}
 }
 
 // buildEvalResultAlertFromLRERow build the evaluation result alert from a

@@ -57,7 +57,8 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"ID", "Name"}).SetAutoMerge(true)
+
 		for _, v := range resp.Projects {
 			t.AddRow(v.ProjectId, v.Name)
 		}

@@ -1,0 +1,54 @@
+alert: "off"
+context:
+    provider: github
+display_name: Mock Export Profile
+id: 239b530d-9ee6-4f15-b4f8-e3fac4a87dfb
+name: mock-profile
+remediate: "off"
+repository:
+    - def:
+        apply_if_file: go.mod
+        package_ecosystem: gomod
+      name: Mock rule implementation
+      type: mock-rule-type
+type: profile
+version: v1
+---
+context:
+    provider: github
+def:
+    eval:
+        data_sources:
+            - name: mock-data-source
+        rego:
+            def: |-
+                package minder
+
+                default allow := false
+
+                allow {
+                    input.profile.package_ecosystem == "gomod"
+                }
+            type: deny-by-default
+    in_entity: repository
+    remediate:
+        pull_request:
+            body: This is an automated pull request to add mock configurations.
+            title: Add mock configuration
+description: Verifies that mock security settings are enabled.
+display_name: Mock Rule Type
+guidance: Ensure that the repository has the required mock configurations. Dependabot enables automated updates.
+id: 31023c54-28ff-406f-9dff-14d9f7b4bfba
+name: mock-rule-type
+release_phase: beta
+severity:
+    value: info
+short_failure_message: Mock configuration is missing
+type: rule-type
+version: v1
+---
+context:
+    provider: github
+name: mock-data-source
+type: data-source
+version: v1

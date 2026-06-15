@@ -44,18 +44,18 @@ func (m *MockProviderStore) EXPECT() *MockProviderStoreMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockProviderStore) Create(ctx context.Context, providerClass db.ProviderClass, name string, projectID uuid.UUID, config json.RawMessage) (*db.Provider, error) {
+func (m *MockProviderStore) Create(ctx context.Context, providerClass db.ProviderClass, name string, projectID uuid.UUID, config json.RawMessage, traits []db.ProviderType, authFlows []db.AuthorizationFlow) (*db.Provider, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", ctx, providerClass, name, projectID, config)
+	ret := m.ctrl.Call(m, "Create", ctx, providerClass, name, projectID, config, traits, authFlows)
 	ret0, _ := ret[0].(*db.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockProviderStoreMockRecorder) Create(ctx, providerClass, name, projectID, config any) *gomock.Call {
+func (mr *MockProviderStoreMockRecorder) Create(ctx, providerClass, name, projectID, config, traits, authFlows any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProviderStore)(nil).Create), ctx, providerClass, name, projectID, config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockProviderStore)(nil).Create), ctx, providerClass, name, projectID, config, traits, authFlows)
 }
 
 // Delete mocks base method.

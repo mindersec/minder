@@ -20,6 +20,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/manager"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	"github.com/mindersec/minder/internal/providers/mock/fixtures"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type configMatcher struct {
@@ -202,10 +203,27 @@ func TestProviderManager_CreateFromConfig(t *testing.T) {
 			} else {
 				classManager.EXPECT().MarshallConfig(gomock.Any(), scenario.Provider.Class, scenario.Config).
 					Return(scenario.Config, nil).MaxTimes(1)
+				classManager.EXPECT().GetProviderClassInfo(scenario.Provider.Class).Return(&minderv1.ProviderClassInfo{
+					Class: string(scenario.Provider.Class),
+					SupportedProviderTypes: []minderv1.ProviderType{
+						minderv1.ProviderType_PROVIDER_TYPE_GITHUB,
+					},
+					SupportedAuthFlows: []minderv1.AuthorizationFlow{
+						minderv1.AuthorizationFlow_AUTHORIZATION_FLOW_USER_INPUT,
+					},
+				}, nil).MaxTimes(1)
 			}
 
 			expectedProvider := providerWithClass(scenario.Provider.Class, providerWithConfig(scenario.Config))
-			store.EXPECT().Create(gomock.Any(), scenario.Provider.Class, scenario.Provider.Name, scenario.Provider.ProjectID, scenario.Config).Return(expectedProvider, nil).MaxTimes(1)
+			store.EXPECT().Create(
+				gomock.Any(),
+				scenario.Provider.Class,
+				scenario.Provider.Name,
+				scenario.Provider.ProjectID,
+				scenario.Config,
+				[]db.ProviderType{db.ProviderTypeGithub},
+				[]db.AuthorizationFlow{db.AuthorizationFlowUserInput},
+			).Return(expectedProvider, nil).MaxTimes(1)
 
 			provManager, closer, err := manager.NewProviderManager(ctx, store, classManager)
 			require.NoError(t, err)

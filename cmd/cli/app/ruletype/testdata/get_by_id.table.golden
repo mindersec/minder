@@ -1,0 +1,31 @@
+ RULE TYPE         │ DETAILS                                                                        
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Name              │ secret_push_protection                                                         
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ ID                │ 00000000-0000-0000-0000-000000000001                                           
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Applicable Entity │ repository                                                                     
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Release phase     │ beta                                                                           
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Description       │ Verifies that secret push protection is enabled for a given repository. Note   
+                   │ that this will will not work as expected for private repositories unless you   
+                   │ have GitHub Advanced Security enabled. If you still want to use this rule      
+                   │ because you have a mixture of private and public repositories, enable the      
+                   │ `skip_private_repos` flag.                                                     
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Ingest type       │ rest                                                                           
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Eval type         │ rego                                                                           
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Guidance          │ Ensure that secret scanning push protection is enabled for the repository. You 
+                   │ can use secret scanning to prevent supported secrets from being pushed into    
+                   │ your repository by enabling secret scanning push protection. For more          
+                   │ information, see GitHub's documentation                                        
+                   │ https://docs.github.com/en/code-security/secret-scanning/push-protection-for-r 
+                   │ epositories-and-organizations#enabling-secret-scanning-as-a-push-protection-fo 
+                   │ r-a-repository.                                                                
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Remediation       │ rest                                                                           
+───────────────────┼────────────────────────────────────────────────────────────────────────────────
+ Alert             │ security_advisory                                                              

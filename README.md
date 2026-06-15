@@ -252,6 +252,8 @@ You can find more detailed information about the development process in the [Dev
 ## Contributing
 
 We welcome contributions to Minder. Please see our [Contributing](./CONTRIBUTING.md) guide for more information.
+* The Minder community meets regularly. You can find the meeting schedule on the [OpenSSF Community Calendar](https://calendar.google.com/calendar/u/0?cid=czYzdm9lZmhwNWk5cGZsdGI1cTY3bmdwZXNAZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ).
+* The project charter and governance documents are maintained in the [mindersec/community](https://github.com/mindersec/community) repository.
 
 ## Provenance
 

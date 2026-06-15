@@ -1,0 +1,20 @@
+{
+  "profile":  {
+    "context":  {
+      "provider":  "github",
+      "project":  "00000000-0000-0000-0000-000000000000"
+    },
+    "id":  "11111111-1111-1111-1111-111111111111",
+    "name":  "mock-profile",
+    "repository":  [
+      {
+        "type":  "dependabot_configured",
+        "def":  {
+          "package_ecosystem":  "gomod"
+        }
+      }
+    ],
+    "remediate":  "off",
+    "alert":  "on"
+  }
+}

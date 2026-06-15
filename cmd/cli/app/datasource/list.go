@@ -64,7 +64,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"Name", "Type", "Functions"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Name", "Type", "Functions"}).SetAutoMerge(true)
 		for _, ds := range resp.GetDataSources() {
 			var functions iter.Seq[string]
 			switch driver := ds.Driver.(type) {

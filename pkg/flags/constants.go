@@ -10,12 +10,12 @@ const (
 	GitLabProvider Experiment = "gitlab_provider"
 	// AlternateMessageDriver enables an an alternate message driver.
 	AlternateMessageDriver Experiment = "alternate_message_driver"
-	// GitPRDiffs enables the git ingester for pull requests.
-	GitPRDiffs Experiment = "git_pr_diffs"
-	// DependencyExtract enables functions to perform dependency extraction.
-	DependencyExtract Experiment = "dependency_extract"
 	// ProjectCreateDelete enables creating top-level projects and deleting them.
 	ProjectCreateDelete Experiment = "project_create_delete"
 	// AuthenticatedDataSources enables provider authentication for data sources.
 	AuthenticatedDataSources Experiment = "authenticated_datasources"
+	// RegoV1DualParse enables dual-parse version detection (try V1, fall back
+	// to V0) when creating or updating rule types. When disabled, all rule
+	// types are treated as Rego V0.
+	RegoV1DualParse Experiment = "rego_v1_dual_parse"
 )

@@ -112,6 +112,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
+| GetVersion | [GetVersionRequest](#minder-v1-GetVersionRequest) | [GetVersionResponse](#minder-v1-GetVersionResponse) |  |
 
 
 
@@ -1071,7 +1072,7 @@ This is only used in responses.
 | ----- | ---- | ----- | ----------- |
 | status | <TypeLink type="string">string</TypeLink> |  | status is one of (success, error, failure, skipped) not using enums to mirror the behaviour of the existing API contracts. |
 | details | <TypeLink type="string">string</TypeLink> |  | details contains optional details about the evaluation. the structure and contents are rule type specific, and are subject to change. |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
+| output | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -1567,6 +1568,24 @@ get user
 
 
 
+<Message id="minder-v1-GetVersionRequest">GetVersionRequest</Message>
+
+
+
+
+
+<Message id="minder-v1-GetVersionResponse">GetVersionResponse</Message>
+
+GetVersionResponse returns the build and version info of the Minder server
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | <TypeLink type="string">string</TypeLink> |  |  |
+| commit | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
 <Message id="minder-v1-GitHubAppParams">GitHubAppParams</Message>
 
 GitHubAppParams is the parameters for a GitHub App provider.
@@ -1926,7 +1945,8 @@ The default is to return all user-created profiles; the string "*" can be used t
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| provider_classes | <TypeLink type="string">string</TypeLink> | repeated | provider_classes is the list of provider classes. |
+| provider_classes | <TypeLink type="string">string</TypeLink> | repeated | **Deprecated.** provider_classes is the legacy list of provider class names. Deprecated: use provider_class_infos for rich metadata. |
+| provider_class_infos | <TypeLink type="minder-v1-ProviderClassInfo">ProviderClassInfo</TypeLink> | repeated | provider_class_infos is the rich metadata for each provider class. |
 
 
 
@@ -2285,6 +2305,23 @@ All fields are optional because we want to allow partial updates.
 | parameters | <TypeLink type="minder-v1-ProviderParameter">ProviderParameter</TypeLink> |  | parameters is the list of parameters that the provider requires. |
 | credentials_state | <TypeLink type="string">string</TypeLink> |  | credentials_state is the state of the credentials for the provider. This is an output-only field. It may be: "set", "unset", "not_applicable". |
 | id | <TypeLink type="string">string</TypeLink> |  | id is the unique identifier of the provider. |
+
+
+
+<Message id="minder-v1-ProviderClassInfo">ProviderClassInfo</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| class | <TypeLink type="string">string</TypeLink> |  | class is the provider class identifier. |
+| display_name | <TypeLink type="string">string</TypeLink> |  | display_name is a human-friendly provider class name. |
+| description | <TypeLink type="string">string</TypeLink> |  | description is a short plaintext summary of the provider class. |
+| supported_provider_types | <TypeLink type="minder-v1-ProviderType">ProviderType</TypeLink> | repeated | supported_provider_types is the list of provider traits/interfaces supported by this class. |
+| supported_auth_flows | <TypeLink type="minder-v1-AuthorizationFlow">AuthorizationFlow</TypeLink> | repeated | supported_auth_flows is the list of supported authorization flows. |
+| supported_entities | <TypeLink type="minder-v1-Entity">Entity</TypeLink> | repeated | supported_entities is the list of entity types supported by this provider class. |
+| documentation_url | <TypeLink type="string">string</TypeLink> |  | documentation_url points to provider-specific or generic documentation. |
 
 
 
@@ -2689,7 +2726,7 @@ get the status of the rules for a given profile
 | remediation_url | <TypeLink type="string">string</TypeLink> |  | remediation_url is a url to get more data about a remediation, for PRs is the link to the PR |
 | rule_display_name | <TypeLink type="string">string</TypeLink> |  | rule_display_name captures the display name of the rule |
 | release_phase | <TypeLink type="minder-v1-RuleTypeReleasePhase">RuleTypeReleasePhase</TypeLink> |  | release_phase is the phase of the release |
-| output | <TypeLink type="google-protobuf-Struct">google.protobuf.Struct</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
+| output | <TypeLink type="google-protobuf-Value">google.protobuf.Value</TypeLink> |  | output optionally contains the structured rule evaluation output. Because output may be multiple KB, it is only returned if include_outputs is set. Historical evaluations may discard structured output sooner than status results. |
 
 
 
@@ -2752,7 +2789,7 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the alert. * 'security_advisory' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | security_advisory | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypeSA">RuleType.Definition.Alert.AlertTypeSA</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
 
@@ -2765,7 +2802,8 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| review_message | <TypeLink type="string">string</TypeLink> |  |  |
+| review_message | <TypeLink type="string">string</TypeLink> |  | review_message is the message to post in the PR review. |
+| action | <TypeLink type="string">string</TypeLink> | optional | action is the action to use for the PR review (comment or request_changes). Default is comment. |
 
 
 
@@ -2890,10 +2928,11 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  |  |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |
+| pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
 
 
 

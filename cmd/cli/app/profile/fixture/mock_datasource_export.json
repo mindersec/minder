@@ -1,0 +1,8 @@
+{
+  "version": "v1",
+  "type": "data-source",
+  "name": "mock-data-source",
+  "context": {
+    "provider": "github"
+  }
+}

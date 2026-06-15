@@ -15,8 +15,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	propertiessvc "github.com/mindersec/minder/internal/entities/properties/service"
 	"github.com/mindersec/minder/internal/providers/manager"
 )
@@ -48,6 +48,7 @@ type EvaluationHistoryService interface {
 		cursor *ListEvaluationCursor,
 		size uint32,
 		filter ListEvaluationFilter,
+		includeOutputs bool,
 	) (*ListEvaluationHistoryResult, error)
 }
 
@@ -91,8 +92,8 @@ func (e *evaluationHistoryService) StoreEvaluationStatus(
 	output any,
 ) (uuid.UUID, error) {
 	var ruleEntityID uuid.UUID
-	status := evalerrors.ErrorAsEvalStatus(evalError)
-	details := evalerrors.ErrorAsEvalDetails(evalError)
+	status := dbadapter.ErrorAsEvalStatus(evalError)
+	details := dbadapter.ErrorAsEvalDetails(evalError)
 
 	params := paramsFromEntity(ruleID, entityID)
 
@@ -201,9 +202,11 @@ func (ehs *evaluationHistoryService) ListEvaluationHistory(
 	cursor *ListEvaluationCursor,
 	size uint32,
 	filter ListEvaluationFilter,
+	includeOutputs bool,
 ) (*ListEvaluationHistoryResult, error) {
 	params := db.ListEvaluationHistoryParams{
-		Size: int64(size),
+		Size:           int64(size),
+		IncludeOutputs: includeOutputs,
 	}
 
 	if err := toSQLCursor(cursor, &params); err != nil {
@@ -398,7 +401,9 @@ func paramsFromLabelFilter(
 	if len(filter.IncludedLabels()) != 0 {
 		params.Labels = filter.IncludedLabels()
 	}
-	// We do not exclude based on labels
+	if len(filter.ExcludedLabels()) != 0 {
+		params.Notlabels = filter.ExcludedLabels()
+	}
 	return nil
 }
 

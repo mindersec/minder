@@ -49,8 +49,12 @@ func executeOnOneDataSource(
 		if ds.Context == nil {
 			ds.Context = &minderv1.ContextV2{}
 		}
-
 		ds.Context.ProjectId = proj
+	}
+
+	// Ensure context is not nil so the server can fall back to the default project
+	if ds.Context == nil {
+		ds.Context = &minderv1.ContextV2{}
 	}
 
 	if err := ds.Validate(); err != nil {
@@ -69,7 +73,6 @@ func executeOnOneDataSource(
 		createdDS.Context.ProjectId,
 		createdDS.Id,
 		name,
-		cli.ConcatenateAndWrap(createdDS.Name, 20),
 	)
 
 	return nil
@@ -106,32 +109,25 @@ func shouldSkipFile(f string) bool {
 	}
 }
 
-// appendDataSourcePropertiesToName appends the data source properties to the name. The format is:
-// <name> (<properties>)
-// where <properties> is a comma separated list of properties.
+// appendDataSourcePropertiesToName appends the data source properties to the name.
 func appendDataSourcePropertiesToName(ds *minderv1.DataSource) string {
 	name := ds.Name
-	properties := []string{}
-	// add the type property if it is present
-	dType := ds.GetDriverType()
-	if dType != "" {
+	var properties []string
+
+	if dType := ds.GetDriverType(); dType != "" {
 		properties = append(properties, fmt.Sprintf("type: %s", dType))
 	}
 
-	// add other properties as needed
-
-	// return the name with the properties if any
 	if len(properties) != 0 {
-		return fmt.Sprintf("%s (%s)", name, strings.Join(properties, ", "))
+		return fmt.Sprintf("%s\n(%s)", name, strings.Join(properties, ", "))
 	}
 
-	// return only name otherwise
 	return name
 }
 
 // initializeTableForList initializes the table for listing data sources
-func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Project ID", "ID", "Name", "Description"})
-	// TODO: add automerge common cells (project ID)
+func initializeTableForList(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Project ID", "ID", "Name", "Description"}).
+		SetAutoMerge(true)
 }

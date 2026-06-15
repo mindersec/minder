@@ -1,0 +1,38 @@
+{
+  "repository": {
+    "owner": "mock-owner",
+    "name": "mock-repo",
+    "repoId": "123456789",
+    "context": {
+      "provider": "github"
+    },
+    "hookId": "987654321",
+    "hookUrl": "https://api.github.com/repos/mock-owner/mock-repo/hooks/987654321",
+    "deployUrl": "https://api.github.com/repos/mock-owner/mock-repo/deployments",
+    "cloneUrl": "https://github.com/mock-owner/mock-repo.git",
+    "defaultBranch": "main",
+    "properties": {
+      "github/clone_url": "https://github.com/mock-owner/mock-repo.git",
+      "github/default_branch": "main",
+      "github/deploy_url": "https://api.github.com/repos/mock-owner/mock-repo/deployments",
+      "github/hook_id": {
+        "minder.internal.type": "int64",
+        "minder.internal.value": "987654321"
+      },
+      "github/hook_url": "https://api.github.com/repos/mock-owner/mock-repo/hooks/987654321",
+      "github/license": "MIT",
+      "github/primary_language": "Go",
+      "github/repo_id": {
+        "minder.internal.type": "int64",
+        "minder.internal.value": "123456789"
+      },
+      "github/repo_name": "mock-repo",
+      "github/repo_owner": "mock-owner",
+      "is_archived": false,
+      "is_fork": false,
+      "is_private": false,
+      "name": "mock-owner/mock-repo",
+      "upstream_id": "123456789"
+    }
+  }
+}

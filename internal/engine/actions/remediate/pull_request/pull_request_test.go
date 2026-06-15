@@ -28,7 +28,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -37,6 +36,7 @@ import (
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/engine/errors"
 	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -179,6 +179,7 @@ type remediateArgs struct {
 	ent       protoreflect.ProtoMessage
 	pol       map[string]any
 	params    map[string]any
+	ruleName  string
 }
 
 func createTestRemArgs() *remediateArgs {
@@ -381,7 +382,7 @@ func mockRepoSetupWithBranch(t *testing.T) (*git.Repository, error) {
 		// this is just a convoluted way of creating a new branch
 		ref := plumbing.NewHashReference(
 			plumbing.ReferenceName(
-				refFromBranch(branchBaseName(commitTitle)),
+				refFromBranch(branchBaseName(commitTitle, "")),
 			),
 			headRef.Hash())
 
@@ -423,7 +424,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(42)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -445,7 +446,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(nil, fmt.Errorf("failed to create PR"))
 			},
 			expectedErr:      errors.ErrActionFailed,
@@ -467,7 +468,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						commitTitle, prBody,
-						refFromBranch(branchBaseName(commitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(commitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(41)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -555,7 +556,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBody,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(40)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -580,7 +581,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(43)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -606,7 +607,7 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						frizbeeCommitTitle, frizbeePrBodyWithExcludes,
-						refFromBranch(branchBaseName(frizbeeCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(frizbeeCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(44)}, nil)
 			},
 			expectedErr:      errors.ErrActionPending,
@@ -629,12 +630,38 @@ func TestPullRequestRemediate(t *testing.T) {
 						gomock.Any(),
 						repoOwner, repoName,
 						yqCommitTitle, yqPrBody,
-						refFromBranch(branchBaseName(yqCommitTitle)), dflBranchTo).
+						refFromBranch(branchBaseName(yqCommitTitle, "")), dflBranchTo).
 					Return(&github.PullRequest{Number: github.Int(45)}, nil)
 			},
 			remArgs:          createTestRemArgs(),
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"pr_number":45}`),
+		},
+		{
+			name: "open a PR with a rule name",
+			newRemArgs: &newPullRequestRemediateArgs{
+				prRem:      dependabotPrRem(),
+				actionType: TestActionTypeValid,
+			},
+			remArgs: func() *remediateArgs {
+				args := createTestRemArgs()
+				args.ruleName = "my-rule"
+				return args
+			}(),
+			repoSetup: defaultMockRepoSetup,
+			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
+				happyPathMockSetup(mockGitHub)
+
+				mockGitHub.EXPECT().
+					CreatePullRequest(
+						gomock.Any(),
+						repoOwner, repoName,
+						commitTitle, prBody,
+						refFromBranch("minder_my-rule_add_dependabot_configuration_for_gomod"), dflBranchTo).
+					Return(&github.PullRequest{Number: github.Int(46)}, nil)
+			},
+			expectedErr:      errors.ErrActionPending,
+			expectedMetadata: json.RawMessage(`{"pr_number":46}`),
 		},
 	}
 
@@ -672,6 +699,7 @@ func TestPullRequestRemediate(t *testing.T) {
 				Rule: &models.RuleInstance{
 					Def:    tt.remArgs.pol,
 					Params: tt.remArgs.params,
+					Name:   tt.remArgs.ruleName,
 				},
 			}
 

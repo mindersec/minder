@@ -116,7 +116,6 @@ func (s *Server) ListProfiles(ctx context.Context,
 	}
 
 	var resp minderv1.ListProfilesResponse
-	resp.Profiles = make([]*minderv1.Profile, 0, len(profiles))
 	profileMap := prof.MergeDatabaseListIntoProfiles(profiles)
 
 	// Sort the profiles by name to get a consistent order. This is important for UI.
@@ -126,6 +125,7 @@ func (s *Server) ListProfiles(ctx context.Context,
 	}
 	sort.Strings(profileNames)
 
+	resp.Profiles = make([]*minderv1.Profile, 0, len(profileNames))
 	for _, prfName := range profileNames {
 		profile := profileMap[prfName]
 		resp.Profiles = append(resp.Profiles, profile)

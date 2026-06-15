@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -80,65 +79,6 @@ func (q *Queries) UpsertPropertyValueV1(ctx context.Context, params UpsertProper
 		Value:    jsonVal,
 	}
 	return q.UpsertProperty(ctx, dbParams)
-}
-
-// PropertyValueV1 is a property value for an entity
-type PropertyValueV1 struct {
-	ID        uuid.UUID `json:"id"`
-	EntityID  uuid.UUID `json:"entity_id"`
-	Key       string    `json:"key"`
-	Value     any       `json:"value"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// GetPropertyValueV1 retrieves a property value for an entity
-func (q *Queries) GetPropertyValueV1(ctx context.Context, entityID uuid.UUID, key string) (PropertyValueV1, error) {
-	dbProp, err := q.GetProperty(ctx, GetPropertyParams{
-		EntityID: entityID,
-		Key:      key,
-	})
-	if err != nil {
-		return PropertyValueV1{}, err
-	}
-
-	value, err := PropValueFromDbV1(dbProp.Value)
-	if err != nil {
-		return PropertyValueV1{}, err
-	}
-
-	return PropertyValueV1{
-		ID:        dbProp.ID,
-		EntityID:  dbProp.EntityID,
-		Key:       dbProp.Key,
-		Value:     value,
-		UpdatedAt: dbProp.UpdatedAt,
-	}, nil
-}
-
-// GetAllPropertyValuesV1 retrieves all property values for an entity
-func (q *Queries) GetAllPropertyValuesV1(ctx context.Context, entityID uuid.UUID) ([]PropertyValueV1, error) {
-	dbProps, err := q.GetAllPropertiesForEntity(ctx, entityID)
-	if err != nil {
-		return nil, err
-	}
-
-	props := make([]PropertyValueV1, len(dbProps))
-	for i, dbProp := range dbProps {
-		value, err := PropValueFromDbV1(dbProp.Value)
-		if err != nil {
-			return nil, err
-		}
-
-		props[i] = PropertyValueV1{
-			ID:        dbProp.ID,
-			EntityID:  dbProp.EntityID,
-			Key:       dbProp.Key,
-			Value:     value,
-			UpdatedAt: dbProp.UpdatedAt,
-		}
-	}
-
-	return props, nil
 }
 
 // GetTypedEntitiesByPropertyV1 retrieves all entities with a property value

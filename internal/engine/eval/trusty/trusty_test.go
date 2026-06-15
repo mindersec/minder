@@ -13,11 +13,11 @@ import (
 	trustytypes "github.com/stacklok/trusty-sdk-go/pkg/v2/types"
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/pr_actions"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
 	pbinternal "github.com/mindersec/minder/internal/proto"
 	mock_github "github.com/mindersec/minder/internal/providers/github/mock"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
@@ -447,9 +447,73 @@ func TestEvaluationDetailRendering(t *testing.T) {
 	}
 }
 
+func TestGetDependencyScore(t *testing.T) {
+	t.Parallel()
+	dep := &pbinternal.PrDependencies_ContextualDependency{
+		Dep: &pbinternal.Dependency{
+			Ecosystem: pbinternal.DepEcosystem_DEP_ECOSYSTEM_NPM,
+			Name:      "left-pad",
+			Version:   "1.3.0",
+		},
+	}
+
+	goroutineDone := make(chan struct{}, 4)
+	signal := func() { goroutineDone <- struct{}{} }
+
+	client := &mockTrustyClient{
+		summaryFn: func(_ context.Context, _ *trustytypes.Dependency) (*trustytypes.PackageSummaryAnnotation, error) {
+			defer signal()
+			return nil, fmt.Errorf("summary failed")
+		},
+		packageMetadataFn: func(ctx context.Context, _ *trustytypes.Dependency) (*trustytypes.TrustyPackageData, error) {
+			defer signal()
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+		alternativesFn: func(ctx context.Context, _ *trustytypes.Dependency) (*trustytypes.PackageAlternatives, error) {
+			defer signal()
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+		provenanceFn: func(ctx context.Context, _ *trustytypes.Dependency) (*trustytypes.Provenance, error) {
+			defer signal()
+			<-ctx.Done()
+			return nil, ctx.Err()
+		},
+	}
+	_, err := getDependencyScore(context.Background(), client, dep)
+
+	// Simulate a long-lived process: keep the test alive until all goroutines finish,
+	for i := 0; i < 4; i++ {
+		<-goroutineDone
+	}
+
+	require.ErrorContains(t, err, "summary failed")
+}
+
 func defaultConfig() *config {
 	return &config{
 		Action:          defaultAction,
 		EcosystemConfig: defaultEcosystemConfig,
 	}
+}
+
+type mockTrustyClient struct {
+	summaryFn         func(context.Context, *trustytypes.Dependency) (*trustytypes.PackageSummaryAnnotation, error)
+	packageMetadataFn func(context.Context, *trustytypes.Dependency) (*trustytypes.TrustyPackageData, error)
+	alternativesFn    func(context.Context, *trustytypes.Dependency) (*trustytypes.PackageAlternatives, error)
+	provenanceFn      func(context.Context, *trustytypes.Dependency) (*trustytypes.Provenance, error)
+}
+
+func (m *mockTrustyClient) Summary(ctx context.Context, d *trustytypes.Dependency) (*trustytypes.PackageSummaryAnnotation, error) {
+	return m.summaryFn(ctx, d)
+}
+func (m *mockTrustyClient) PackageMetadata(ctx context.Context, d *trustytypes.Dependency) (*trustytypes.TrustyPackageData, error) {
+	return m.packageMetadataFn(ctx, d)
+}
+func (m *mockTrustyClient) Alternatives(ctx context.Context, d *trustytypes.Dependency) (*trustytypes.PackageAlternatives, error) {
+	return m.alternativesFn(ctx, d)
+}
+func (m *mockTrustyClient) Provenance(ctx context.Context, d *trustytypes.Dependency) (*trustytypes.Provenance, error) {
+	return m.provenanceFn(ctx, d)
 }

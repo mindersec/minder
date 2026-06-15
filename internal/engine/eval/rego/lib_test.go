@@ -15,10 +15,10 @@ import (
 	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/stretchr/testify/require"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/flags"
 )
@@ -35,14 +35,16 @@ func TestFileExistsWithExistingFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	file.exists("foo")
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -64,21 +66,20 @@ func TestFileExistsInBase(t *testing.T) {
 	_, err := fs.Create("foo")
 	require.NoError(t, err, "could not create file")
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"git_pr_diffs": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
-    base_file.exists("foo")
-}`,
+default allow := false
+
+allow if {
+	base_file.exists("foo")
+}
+`,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 
@@ -99,14 +100,16 @@ func TestFileExistsWithNonExistentFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	file.exists("unexistent")
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -135,15 +138,17 @@ func TestFileReadWithContentsMatching(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	contents := file.read("foo")
 	contents == "bar"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -172,15 +177,17 @@ func TestFileReadWithContentsNotMatching(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	contents := file.read("foo")
 	contents == "bar"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -202,15 +209,17 @@ func TestFileLsWithUnexistentFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("unexistent")
 	is_null(files)
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -234,15 +243,17 @@ func TestFileLsWithEmptyDirectory(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("foo")
 	count(files) == 0
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -270,16 +281,18 @@ func TestFileLsWithSingleFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("foo")
 	count(files) == 1
 	files[0] == "foo/bar"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -307,16 +320,18 @@ func TestFileLsWithSingleFileDirect(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("foo/bar")
 	count(files) == 1
 	files[0] == "foo/bar"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -348,15 +363,17 @@ func TestFileLsWithMultipleFiles(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("foo")
 	count(files) == 3
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -391,15 +408,17 @@ func TestFileLsWithSimpleSymlink(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("beer")
 	count(files) == 3
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -429,15 +448,17 @@ func TestFileLsWithSymlinkToDir(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls("foo/baz")
 	count(files) == 1
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -525,16 +546,18 @@ func TestListGithubActionsDirectory(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	actions := github_workflow.ls_actions("workflows")
 	expected_set = {"actions/checkout", "actions/setup-go", "GoTestTools/gotestfmt-action", "azure/setup-helm"}
 	actions == expected_set
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -561,16 +584,18 @@ func TestListGithubActionsFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	actions := github_workflow.ls_actions("build.yml")
 	expected_set = {"actions/checkout", "actions/setup-go"}
 	actions == expected_set
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -597,15 +622,17 @@ func TestListYamlUsingLSGlob(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls_glob(".github/dependabot.y*ml")
 	count(files) == 1
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -643,15 +670,17 @@ func TestListYamlsUsingLSGlob(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.ls_glob(".github/workflows/*.y*ml")
 	count(files) == 3
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -679,15 +708,17 @@ func TestHTTPTypeWithTextFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	htype := file.http_type("textfile")
 	htype == "text/plain; charset=utf-8"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -716,15 +747,17 @@ func TestHTTPTypeWithBinaryFile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	htype := file.http_type("binfile")
 	htype == "application/octet-stream"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -766,15 +799,17 @@ func TestFileWalk(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	files := file.walk(".")
 	count(files) == 7
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -820,8 +855,8 @@ func TestFileArchive(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
+
 import rego.v1
 
 tarball := file.archive(["foo", "file.txt"])
@@ -972,11 +1007,13 @@ on:
 			regoCode := fmt.Sprintf(`
 package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	workflowstr := file.read("%s")
-    parsed := parse_yaml(workflowstr)
+	parsed := parse_yaml(workflowstr)
 	jq.is_true(parsed, %q)
 }`, workflowFile, jqQuery)
 
@@ -1077,12 +1114,14 @@ array: [1, 2, 3]`,
 			regoCode := fmt.Sprintf(`
 package minder
 
-default allow = false
+import rego.v1
 
-allow {
-    parsed := parse_yaml(%q)
-    expected := json.unmarshal(%q)
-    parsed == expected
+default allow := false
+
+allow if {
+	parsed := parse_yaml(%q)
+	expected := json.unmarshal(%q)
+	parsed == expected
 }`, s.yaml, s.want)
 
 			e, err := rego.NewRegoEvaluator(
@@ -1149,9 +1188,11 @@ name = "bar"`,
 			regoCode := fmt.Sprintf(`
 package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	parsed := parse_toml(%q)
 	print(parsed)
 	expected := json.unmarshal(%q)
@@ -1234,29 +1275,27 @@ require (
 	require.NoError(t, billyutil.WriteFile(fs, "foo/go.mod", []byte(goMod), 0644))
 	require.NoError(t, billyutil.WriteFile(fs, "requirements.txt", []byte("PyYAML>=5.3.1"), 0644))
 
-	featureClient := &flags.FakeClient{}
-	featureClient.Data = map[string]any{"dependency_extract": true}
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			// TODO: update rego for different APIs
-			Def: `
-package minder
+			Def: `package minder
+
 import rego.v1
 
 deps := file.deps(input.profile.path)
-depsSet := { x |  x = deps.node_list.nodes[_].name }
-expected := { x | x = input.profile.expected[_] }
+depsSet := {x | x = deps.node_list.nodes[_].name}
+expected := {x | x = input.profile.expected[_]}
 
-default allow = false
+default allow := false
+
 allow if {
-  count(depsSet) > 0
-  count(depsSet - expected) == 0
-  count(expected - depsSet) == 0
+	count(depsSet) > 0
+	count(depsSet - expected) == 0
+	count(expected - depsSet) == 0
 }
 `,
 		},
-		options.WithFlagsClient(featureClient),
 	)
 	require.NoError(t, err, "could not create evaluator")
 

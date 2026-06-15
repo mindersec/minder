@@ -33,7 +33,6 @@ import (
 	"github.com/mindersec/minder/internal/deps/scalibr"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
-	"github.com/mindersec/minder/pkg/flags"
 )
 
 // MinderRegoLib contains the minder-specific functions for rego
@@ -50,38 +49,23 @@ var MinderRegoLib = []func(res *interfaces.Ingested) func(*rego.Rego){
 	ParseYaml,
 	ParseToml,
 	JQIsTrue,
+	BaseFileExists,
+	BaseFileLs,
+	BaseFileLsGlob,
+	BaseFileHTTPType,
+	BaseFileRead,
+	BaseFileWalk,
+	BaseListGithubActions,
+	DependencyExtract,
+	BaseDependencyExtract,
 }
 
-// MinderRegoLibExperiments contains Minder-specific functions which
-// should only be exposed when the given experiment is enabled.
-var MinderRegoLibExperiments = map[flags.Experiment][]func(res *interfaces.Ingested) func(*rego.Rego){
-	flags.GitPRDiffs: {
-		BaseFileExists,
-		BaseFileLs,
-		BaseFileLsGlob,
-		BaseFileHTTPType,
-		BaseFileRead,
-		BaseFileWalk,
-		BaseListGithubActions,
-	},
-	flags.DependencyExtract: {
-		DependencyExtract,
-		BaseDependencyExtract,
-	},
-}
-
-func instantiateRegoLib(ctx context.Context, featureFlags flags.Interface, res *interfaces.Ingested) []func(*rego.Rego) {
+func instantiateRegoLib(res *interfaces.Ingested) []func(*rego.Rego) {
 	var lib []func(*rego.Rego)
 	for _, f := range MinderRegoLib {
 		lib = append(lib, f(res))
 	}
-	for flag, funcs := range MinderRegoLibExperiments {
-		if flags.Bool(ctx, featureFlags, flag) {
-			for _, f := range funcs {
-				lib = append(lib, f(res))
-			}
-		}
-	}
+
 	return lib
 }
 

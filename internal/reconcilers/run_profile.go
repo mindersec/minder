@@ -92,8 +92,8 @@ func (r *Reconciler) publishProfileInitEvents(
 
 		if err := entRefresh.ToMessage(m); err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msg("error marshalling message")
-			// no point in retrying, so we return nil
-			return nil
+			// Skip this entity but continue processing the rest
+			continue
 		}
 
 		if err := r.evt.Publish(constants.TopicQueueRefreshEntityByIDAndEvaluate, m); err != nil {

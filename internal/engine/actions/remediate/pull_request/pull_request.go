@@ -23,11 +23,12 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/protobuf/proto"
 
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/db"
-	enginerr "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/util"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	enginerr "github.com/mindersec/minder/pkg/engine/errors"
 	engifv1 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
@@ -78,6 +79,7 @@ type paramsPR struct {
 	ingested   *engifv1.Ingested
 	repo       *pb.Repository
 	title      string
+	ruleName   string
 	modifier   fsModifier
 	body       string
 	metadata   *pullRequestMetadata
@@ -238,6 +240,7 @@ func (r *Remediator) getParamsForPRRemediation(
 		ingested:   ingested,
 		repo:       repo,
 		title:      title,
+		ruleName:   params.GetRule().Name,
 		modifier:   modification,
 		body:       prFullBodyText,
 		metadata:   meta,
@@ -312,9 +315,9 @@ func (r *Remediator) runOn(
 	// This also makes sure, all new remediations check out from main branch rather than prev remediation branch.
 	defer checkoutToOriginallyFetchedBranch(&logger, wt, currHeadName)
 
-	logger.Debug().Str("branch", branchBaseName(p.title)).Msg("Checking out branch")
+	logger.Debug().Str("branch", branchBaseName(p.title, p.ruleName)).Msg("Checking out branch")
 	err = wt.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName(branchBaseName(p.title)),
+		Branch: plumbing.NewBranchReferenceName(branchBaseName(p.title, p.ruleName)),
 		Create: true,
 	})
 	if err != nil {
@@ -346,12 +349,12 @@ func (r *Remediator) runOn(
 		return nil, fmt.Errorf("cannot commit: %w", err)
 	}
 
-	refspec := refFromBranch(branchBaseName(p.title))
+	refspec := refFromBranch(branchBaseName(p.title, p.ruleName))
 
-	l := logger.With().Str("branchBaseName", branchBaseName(p.title)).Logger()
+	l := logger.With().Str("branchBaseName", branchBaseName(p.title, p.ruleName)).Logger()
 
 	// Check if a PR already exists for this branch
-	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title))
+	prNumber := getPRNumberFromBranch(ctx, r.ghCli, p.repo, branchBaseName(p.title, p.ruleName))
 
 	// If no PR exists, push the branch and create a PR
 	if prNumber == 0 {
@@ -492,10 +495,14 @@ func refFromBranch(branchFrom string) string {
 	return fmt.Sprintf("refs/heads/%s", branchFrom)
 }
 
-func branchBaseName(prTitle string) string {
+func branchBaseName(prTitle, ruleName string) string {
 	baseName := dflBranchBaseName
 	normalizedPrTitle := strings.ReplaceAll(strings.ToLower(prTitle), " ", "_")
-	return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+	if ruleName == "" {
+		return fmt.Sprintf("%s_%s", baseName, normalizedPrTitle)
+	}
+	normalizedRuleName := strings.ReplaceAll(strings.ToLower(ruleName), " ", "_")
+	return fmt.Sprintf("%s_%s_%s", baseName, normalizedRuleName, normalizedPrTitle)
 }
 
 func userNameForCommit(ctx context.Context, gh provifv1.GitHub) string {
@@ -577,7 +584,7 @@ func (*Remediator) runDoNothing(ctx context.Context, p *paramsPR) (json.RawMessa
 	logger.Debug().Msg("Running do nothing")
 
 	// Return the previous remediation status.
-	err := enginerr.RemediationStatusAsError(p.prevStatus)
+	err := dbadapter.RemediationStatusAsError(p.prevStatus)
 	// If there is a valid remediation metadata, return it too
 	if p.prevStatus != nil {
 		return p.prevStatus.RemMetadata, err

@@ -655,6 +655,58 @@ func (x *SelectorPullRequest) GetProperties() *structpb.Struct {
 	return nil
 }
 
+type SelectorGeneric struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Properties    *structpb.Struct       `protobuf:"bytes,3,opt,name=properties,proto3" json:"properties,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SelectorGeneric) Reset() {
+	*x = SelectorGeneric{}
+	mi := &file_internal_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SelectorGeneric) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SelectorGeneric) ProtoMessage() {}
+
+func (x *SelectorGeneric) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SelectorGeneric.ProtoReflect.Descriptor instead.
+func (*SelectorGeneric) Descriptor() ([]byte, []int) {
+	return file_internal_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SelectorGeneric) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *SelectorGeneric) GetProperties() *structpb.Struct {
+	if x != nil {
+		return x.Properties
+	}
+	return nil
+}
+
 type SelectorEntity struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// one of repository, pull_request, artifact (see oneof entity)
@@ -667,6 +719,7 @@ type SelectorEntity struct {
 	//	*SelectorEntity_Repository
 	//	*SelectorEntity_Artifact
 	//	*SelectorEntity_PullRequest
+	//	*SelectorEntity_Generic
 	Entity        isSelectorEntity_Entity `protobuf_oneof:"entity"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -674,7 +727,7 @@ type SelectorEntity struct {
 
 func (x *SelectorEntity) Reset() {
 	*x = SelectorEntity{}
-	mi := &file_internal_proto_msgTypes[8]
+	mi := &file_internal_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -686,7 +739,7 @@ func (x *SelectorEntity) String() string {
 func (*SelectorEntity) ProtoMessage() {}
 
 func (x *SelectorEntity) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[8]
+	mi := &file_internal_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -699,7 +752,7 @@ func (x *SelectorEntity) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SelectorEntity.ProtoReflect.Descriptor instead.
 func (*SelectorEntity) Descriptor() ([]byte, []int) {
-	return file_internal_proto_rawDescGZIP(), []int{8}
+	return file_internal_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SelectorEntity) GetEntityType() v1.Entity {
@@ -757,6 +810,15 @@ func (x *SelectorEntity) GetPullRequest() *SelectorPullRequest {
 	return nil
 }
 
+func (x *SelectorEntity) GetGeneric() *SelectorGeneric {
+	if x != nil {
+		if x, ok := x.Entity.(*SelectorEntity_Generic); ok {
+			return x.Generic
+		}
+	}
+	return nil
+}
+
 type isSelectorEntity_Entity interface {
 	isSelectorEntity_Entity()
 }
@@ -773,11 +835,17 @@ type SelectorEntity_PullRequest struct {
 	PullRequest *SelectorPullRequest `protobuf:"bytes,6,opt,name=pull_request,json=pullRequest,proto3,oneof"`
 }
 
+type SelectorEntity_Generic struct {
+	Generic *SelectorGeneric `protobuf:"bytes,7,opt,name=generic,proto3,oneof"`
+}
+
 func (*SelectorEntity_Repository) isSelectorEntity_Entity() {}
 
 func (*SelectorEntity_Artifact) isSelectorEntity_Entity() {}
 
 func (*SelectorEntity_PullRequest) isSelectorEntity_Entity() {}
+
+func (*SelectorEntity_Generic) isSelectorEntity_Entity() {}
 
 type PrDependencies_ContextualDependency struct {
 	state         protoimpl.MessageState                         `protogen:"open.v1"`
@@ -789,7 +857,7 @@ type PrDependencies_ContextualDependency struct {
 
 func (x *PrDependencies_ContextualDependency) Reset() {
 	*x = PrDependencies_ContextualDependency{}
-	mi := &file_internal_proto_msgTypes[9]
+	mi := &file_internal_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -801,7 +869,7 @@ func (x *PrDependencies_ContextualDependency) String() string {
 func (*PrDependencies_ContextualDependency) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[9]
+	mi := &file_internal_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -841,7 +909,7 @@ type PrDependencies_ContextualDependency_FilePatch struct {
 
 func (x *PrDependencies_ContextualDependency_FilePatch) Reset() {
 	*x = PrDependencies_ContextualDependency_FilePatch{}
-	mi := &file_internal_proto_msgTypes[10]
+	mi := &file_internal_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -853,7 +921,7 @@ func (x *PrDependencies_ContextualDependency_FilePatch) String() string {
 func (*PrDependencies_ContextualDependency_FilePatch) ProtoMessage() {}
 
 func (x *PrDependencies_ContextualDependency_FilePatch) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[10]
+	mi := &file_internal_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -894,7 +962,7 @@ type PrContents_File struct {
 
 func (x *PrContents_File) Reset() {
 	*x = PrContents_File{}
-	mi := &file_internal_proto_msgTypes[11]
+	mi := &file_internal_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -906,7 +974,7 @@ func (x *PrContents_File) String() string {
 func (*PrContents_File) ProtoMessage() {}
 
 func (x *PrContents_File) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[11]
+	mi := &file_internal_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -955,7 +1023,7 @@ type PrContents_File_Line struct {
 
 func (x *PrContents_File_Line) Reset() {
 	*x = PrContents_File_Line{}
-	mi := &file_internal_proto_msgTypes[12]
+	mi := &file_internal_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1035,7 @@ func (x *PrContents_File_Line) String() string {
 func (*PrContents_File_Line) ProtoMessage() {}
 
 func (x *PrContents_File_Line) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_msgTypes[12]
+	mi := &file_internal_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1076,7 +1144,12 @@ const file_internal_proto_rawDesc = "" +
 	"\bprovider\x18\x03 \x01(\v2\x1a.internal.SelectorProviderR\bprovider\x127\n" +
 	"\n" +
 	"properties\x18\x02 \x01(\v2\x17.google.protobuf.StructR\n" +
-	"properties\"\xd8\x02\n" +
+	"properties\"^\n" +
+	"\x0fSelectorGeneric\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x127\n" +
+	"\n" +
+	"properties\x18\x03 \x01(\v2\x17.google.protobuf.StructR\n" +
+	"properties\"\x8f\x03\n" +
 	"\x0eSelectorEntity\x122\n" +
 	"\ventity_type\x18\x01 \x01(\x0e2\x11.minder.v1.EntityR\n" +
 	"entityType\x12\x12\n" +
@@ -1086,7 +1159,8 @@ const file_internal_proto_rawDesc = "" +
 	"repository\x18\x04 \x01(\v2\x1c.internal.SelectorRepositoryH\x00R\n" +
 	"repository\x128\n" +
 	"\bartifact\x18\x05 \x01(\v2\x1a.internal.SelectorArtifactH\x00R\bartifact\x12B\n" +
-	"\fpull_request\x18\x06 \x01(\v2\x1d.internal.SelectorPullRequestH\x00R\vpullRequestB\b\n" +
+	"\fpull_request\x18\x06 \x01(\v2\x1d.internal.SelectorPullRequestH\x00R\vpullRequest\x125\n" +
+	"\ageneric\x18\a \x01(\v2\x19.internal.SelectorGenericH\x00R\agenericB\b\n" +
 	"\x06entity*r\n" +
 	"\fDepEcosystem\x12\x1d\n" +
 	"\x19DEP_ECOSYSTEM_UNSPECIFIED\x10\x00\x12\x15\n" +
@@ -1107,7 +1181,7 @@ func file_internal_proto_rawDescGZIP() []byte {
 }
 
 var file_internal_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_internal_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_internal_proto_goTypes = []any{
 	(DepEcosystem)(0),                                     // 0: internal.DepEcosystem
 	(*Dependency)(nil),                                    // 1: internal.Dependency
@@ -1118,42 +1192,45 @@ var file_internal_proto_goTypes = []any{
 	(*SelectorRepository)(nil),                            // 6: internal.SelectorRepository
 	(*SelectorArtifact)(nil),                              // 7: internal.SelectorArtifact
 	(*SelectorPullRequest)(nil),                           // 8: internal.SelectorPullRequest
-	(*SelectorEntity)(nil),                                // 9: internal.SelectorEntity
-	(*PrDependencies_ContextualDependency)(nil),           // 10: internal.PrDependencies.ContextualDependency
-	(*PrDependencies_ContextualDependency_FilePatch)(nil), // 11: internal.PrDependencies.ContextualDependency.FilePatch
-	(*PrContents_File)(nil),                               // 12: internal.PrContents.File
-	(*PrContents_File_Line)(nil),                          // 13: internal.PrContents.File.Line
-	(*v1.Context)(nil),                                    // 14: minder.v1.Context
-	(*structpb.Struct)(nil),                               // 15: google.protobuf.Struct
-	(v1.Entity)(0),                                        // 16: minder.v1.Entity
+	(*SelectorGeneric)(nil),                               // 9: internal.SelectorGeneric
+	(*SelectorEntity)(nil),                                // 10: internal.SelectorEntity
+	(*PrDependencies_ContextualDependency)(nil),           // 11: internal.PrDependencies.ContextualDependency
+	(*PrDependencies_ContextualDependency_FilePatch)(nil), // 12: internal.PrDependencies.ContextualDependency.FilePatch
+	(*PrContents_File)(nil),                               // 13: internal.PrContents.File
+	(*PrContents_File_Line)(nil),                          // 14: internal.PrContents.File.Line
+	(*v1.Context)(nil),                                    // 15: minder.v1.Context
+	(*structpb.Struct)(nil),                               // 16: google.protobuf.Struct
+	(v1.Entity)(0),                                        // 17: minder.v1.Entity
 }
 var file_internal_proto_depIdxs = []int32{
 	0,  // 0: internal.Dependency.ecosystem:type_name -> internal.DepEcosystem
-	14, // 1: internal.PullRequest.context:type_name -> minder.v1.Context
-	15, // 2: internal.PullRequest.properties:type_name -> google.protobuf.Struct
+	15, // 1: internal.PullRequest.context:type_name -> minder.v1.Context
+	16, // 2: internal.PullRequest.properties:type_name -> google.protobuf.Struct
 	2,  // 3: internal.PrDependencies.pr:type_name -> internal.PullRequest
-	10, // 4: internal.PrDependencies.deps:type_name -> internal.PrDependencies.ContextualDependency
+	11, // 4: internal.PrDependencies.deps:type_name -> internal.PrDependencies.ContextualDependency
 	2,  // 5: internal.PrContents.pr:type_name -> internal.PullRequest
-	12, // 6: internal.PrContents.files:type_name -> internal.PrContents.File
+	13, // 6: internal.PrContents.files:type_name -> internal.PrContents.File
 	5,  // 7: internal.SelectorRepository.provider:type_name -> internal.SelectorProvider
-	15, // 8: internal.SelectorRepository.properties:type_name -> google.protobuf.Struct
+	16, // 8: internal.SelectorRepository.properties:type_name -> google.protobuf.Struct
 	5,  // 9: internal.SelectorArtifact.provider:type_name -> internal.SelectorProvider
-	15, // 10: internal.SelectorArtifact.properties:type_name -> google.protobuf.Struct
+	16, // 10: internal.SelectorArtifact.properties:type_name -> google.protobuf.Struct
 	5,  // 11: internal.SelectorPullRequest.provider:type_name -> internal.SelectorProvider
-	15, // 12: internal.SelectorPullRequest.properties:type_name -> google.protobuf.Struct
-	16, // 13: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
-	5,  // 14: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
-	6,  // 15: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
-	7,  // 16: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
-	8,  // 17: internal.SelectorEntity.pull_request:type_name -> internal.SelectorPullRequest
-	1,  // 18: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
-	11, // 19: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
-	13, // 20: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
-	21, // [21:21] is the sub-list for method output_type
-	21, // [21:21] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	16, // 12: internal.SelectorPullRequest.properties:type_name -> google.protobuf.Struct
+	16, // 13: internal.SelectorGeneric.properties:type_name -> google.protobuf.Struct
+	17, // 14: internal.SelectorEntity.entity_type:type_name -> minder.v1.Entity
+	5,  // 15: internal.SelectorEntity.provider:type_name -> internal.SelectorProvider
+	6,  // 16: internal.SelectorEntity.repository:type_name -> internal.SelectorRepository
+	7,  // 17: internal.SelectorEntity.artifact:type_name -> internal.SelectorArtifact
+	8,  // 18: internal.SelectorEntity.pull_request:type_name -> internal.SelectorPullRequest
+	9,  // 19: internal.SelectorEntity.generic:type_name -> internal.SelectorGeneric
+	1,  // 20: internal.PrDependencies.ContextualDependency.dep:type_name -> internal.Dependency
+	12, // 21: internal.PrDependencies.ContextualDependency.file:type_name -> internal.PrDependencies.ContextualDependency.FilePatch
+	14, // 22: internal.PrContents.File.patch_lines:type_name -> internal.PrContents.File.Line
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_init() }
@@ -1162,10 +1239,11 @@ func file_internal_proto_init() {
 		return
 	}
 	file_internal_proto_msgTypes[5].OneofWrappers = []any{}
-	file_internal_proto_msgTypes[8].OneofWrappers = []any{
+	file_internal_proto_msgTypes[9].OneofWrappers = []any{
 		(*SelectorEntity_Repository)(nil),
 		(*SelectorEntity_Artifact)(nil),
 		(*SelectorEntity_PullRequest)(nil),
+		(*SelectorEntity_Generic)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1173,7 +1251,7 @@ func file_internal_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_rawDesc), len(file_internal_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

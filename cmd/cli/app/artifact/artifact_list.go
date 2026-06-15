@@ -58,7 +58,7 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 
 	switch format {
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default,
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(),
 			[]string{"ID", "Type", "Owner", "Name", "Repository", "Visibility", "Creation date"})
 		for _, artifact := range artifactList.Results {
 			t.AddRow(

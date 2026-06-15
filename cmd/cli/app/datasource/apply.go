@@ -67,7 +67,7 @@ func applyCommand(_ context.Context, cmd *cobra.Command, args []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	table := initializeTableForList()
+	table := initializeTableForList(cmd.OutOrStdout())
 
 	applyFunc := func(ctx context.Context, fileName string, ds *minderv1.DataSource) (*minderv1.DataSource, error) {
 		createResp, err := client.CreateDataSource(ctx, &minderv1.CreateDataSourceRequest{

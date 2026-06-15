@@ -61,7 +61,7 @@ func inviteGetCommand(ctx context.Context, cmd *cobra.Command, args []string, co
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Expires"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Sponsor", "Project", "Expires"})
 		t.AddRow(res.SponsorDisplay, res.ProjectDisplay, res.ExpiresAt.AsTime().Format(time.RFC3339))
 		t.Render()
 	default:

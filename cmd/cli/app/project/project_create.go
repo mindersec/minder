@@ -64,7 +64,7 @@ func createCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"ID", "Name"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"ID", "Name"})
 		t.AddRow(resp.Project.ProjectId, resp.Project.Name)
 		t.Render()
 	default:

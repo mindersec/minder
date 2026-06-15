@@ -7,6 +7,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 
@@ -1054,10 +1055,6 @@ func TestPatchProfile(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error getting profile: %v", err)
 			}
-
-			if err != nil {
-				t.Fatalf("Error getting profile: %v", err)
-			}
 			if tc.result.GetProfile().GetId() == "" {
 				tc.result.GetProfile().Id = proto.String(profile.ID.String())
 			}
@@ -1524,6 +1521,10 @@ func TestListProfiles(t *testing.T) {
 				t.Errorf("ListProfiles() got %d profiles, want %d", len(res.Profiles), len(tc.wantProfiles))
 				return
 			}
+
+			slices.SortFunc(res.Profiles, func(a, b *minderv1.Profile) int {
+				return strings.Compare(a.Name, b.Name)
+			})
 
 			for i, wantName := range tc.wantProfiles {
 				if res.Profiles[i].Name != wantName {

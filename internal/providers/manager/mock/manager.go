@@ -19,7 +19,8 @@ import (
 	uuid "github.com/google/uuid"
 	db "github.com/mindersec/minder/internal/db"
 	manager "github.com/mindersec/minder/internal/providers/manager"
-	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v10 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -106,11 +107,26 @@ func (mr *MockProviderManagerMockRecorder) DeleteByName(ctx, name, projectID any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByName", reflect.TypeOf((*MockProviderManager)(nil).DeleteByName), ctx, name, projectID)
 }
 
+// GetProviderClassInfo mocks base method.
+func (m *MockProviderManager) GetProviderClassInfo(class db.ProviderClass) (*v1.ProviderClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderClassInfo", class)
+	ret0, _ := ret[0].(*v1.ProviderClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderClassInfo indicates an expected call of GetProviderClassInfo.
+func (mr *MockProviderManagerMockRecorder) GetProviderClassInfo(class any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderClassInfo", reflect.TypeOf((*MockProviderManager)(nil).GetProviderClassInfo), class)
+}
+
 // InstantiateFromID mocks base method.
-func (m *MockProviderManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v1.Provider, error) {
+func (m *MockProviderManager) InstantiateFromID(ctx context.Context, providerID uuid.UUID) (v10.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstantiateFromID", ctx, providerID)
-	ret0, _ := ret[0].(v1.Provider)
+	ret0, _ := ret[0].(v10.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -122,10 +138,10 @@ func (mr *MockProviderManagerMockRecorder) InstantiateFromID(ctx, providerID any
 }
 
 // InstantiateFromNameProject mocks base method.
-func (m *MockProviderManager) InstantiateFromNameProject(ctx context.Context, name string, projectID uuid.UUID) (v1.Provider, error) {
+func (m *MockProviderManager) InstantiateFromNameProject(ctx context.Context, name string, projectID uuid.UUID) (v10.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstantiateFromNameProject", ctx, name, projectID)
-	ret0, _ := ret[0].(v1.Provider)
+	ret0, _ := ret[0].(v10.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -148,6 +164,35 @@ func (m *MockProviderManager) IterateWebhookHandlers() iter.Seq2[string, http.Ha
 func (mr *MockProviderManagerMockRecorder) IterateWebhookHandlers() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateWebhookHandlers", reflect.TypeOf((*MockProviderManager)(nil).IterateWebhookHandlers))
+}
+
+// ListProviderClassInfo mocks base method.
+func (m *MockProviderManager) ListProviderClassInfo() ([]*v1.ProviderClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListProviderClassInfo")
+	ret0, _ := ret[0].([]*v1.ProviderClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProviderClassInfo indicates an expected call of ListProviderClassInfo.
+func (mr *MockProviderManagerMockRecorder) ListProviderClassInfo() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProviderClassInfo", reflect.TypeOf((*MockProviderManager)(nil).ListProviderClassInfo))
+}
+
+// ListSupportedClasses mocks base method.
+func (m *MockProviderManager) ListSupportedClasses() []db.ProviderClass {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListSupportedClasses")
+	ret0, _ := ret[0].([]db.ProviderClass)
+	return ret0
+}
+
+// ListSupportedClasses indicates an expected call of ListSupportedClasses.
+func (mr *MockProviderManagerMockRecorder) ListSupportedClasses() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSupportedClasses", reflect.TypeOf((*MockProviderManager)(nil).ListSupportedClasses))
 }
 
 // PatchProviderConfig mocks base method.
@@ -189,10 +234,10 @@ func (m *MockProviderClassManager) EXPECT() *MockProviderClassManagerMockRecorde
 }
 
 // Build mocks base method.
-func (m *MockProviderClassManager) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
+func (m *MockProviderClassManager) Build(ctx context.Context, config *db.Provider) (v10.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Build", ctx, config)
-	ret0, _ := ret[0].(v1.Provider)
+	ret0, _ := ret[0].(v10.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -215,6 +260,21 @@ func (m *MockProviderClassManager) Delete(ctx context.Context, config *db.Provid
 func (mr *MockProviderClassManagerMockRecorder) Delete(ctx, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockProviderClassManager)(nil).Delete), ctx, config)
+}
+
+// GetProviderClassInfo mocks base method.
+func (m *MockProviderClassManager) GetProviderClassInfo(class db.ProviderClass) (*v1.ProviderClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderClassInfo", class)
+	ret0, _ := ret[0].(*v1.ProviderClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderClassInfo indicates an expected call of GetProviderClassInfo.
+func (mr *MockProviderClassManagerMockRecorder) GetProviderClassInfo(class any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderClassInfo", reflect.TypeOf((*MockProviderClassManager)(nil).GetProviderClassInfo), class)
 }
 
 // GetSupportedClasses mocks base method.

@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evalerrors "github.com/mindersec/minder/internal/engine/errors"
 	"github.com/mindersec/minder/internal/engine/eval/homoglyphs/domain"
 	"github.com/mindersec/minder/internal/engine/eval/templates"
+	evalerrors "github.com/mindersec/minder/pkg/engine/errors"
 )
 
 func TestInvisibleCharactersEvaluationDetailRendering(t *testing.T) {

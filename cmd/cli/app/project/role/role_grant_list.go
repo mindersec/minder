@@ -6,6 +6,7 @@ package role
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 	"time"
 
@@ -67,13 +68,13 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := initializeTableForGrantListRoleAssignments()
+		t := initializeTableForGrantListRoleAssignments(cmd.OutOrStdout())
 		for _, r := range resp.RoleAssignments {
 			t.AddRow(fmt.Sprintf("%s / %s", r.DisplayName, r.Subject), r.Role, *r.Project)
 		}
 		t.Render()
 		if len(resp.Invitations) > 0 {
-			t := initializeTableForGrantListInvitations()
+			t := initializeTableForGrantListInvitations(cmd.OutOrStdout())
 			for _, r := range resp.Invitations {
 				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339))
 			}
@@ -85,12 +86,12 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 	return nil
 }
 
-func initializeTableForGrantListRoleAssignments() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"User", "Role", "Project"})
+func initializeTableForGrantListRoleAssignments(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out, []string{"User", "Role", "Project"})
 }
 
-func initializeTableForGrantListInvitations() table.Table {
-	return table.New(table.Simple, layouts.Default, []string{"Invitee", "Role", "Sponsor", "Expires At"})
+func initializeTableForGrantListInvitations(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out, []string{"Invitee", "Role", "Sponsor", "Expires At"})
 }
 
 func init() {

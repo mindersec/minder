@@ -126,6 +126,11 @@ message SelectorPullRequest {
   google.protobuf.Struct properties = 2;
 }
 
+message SelectorGeneric {
+  string name = 1;
+  google.protobuf.Struct properties = 3;
+}
+
 message SelectorEntity {
   // one of repository, pull_request, artifact (see oneof entity)
   minder.v1.Entity entity_type = 1;
@@ -137,5 +142,6 @@ message SelectorEntity {
     SelectorRepository repository = 4;
     SelectorArtifact artifact = 5;
     SelectorPullRequest pull_request = 6;
+    SelectorGeneric generic = 7;
   }
 }

@@ -1,3 +1,6 @@
+> ⚠️ **Deprecated:** This quickstart flow is outdated and currently being redesigned.
+> It may not reflect the recommended onboarding process.
+
 ---
 title: Quickstart with Minder (< 1 min)
 sidebar_position: 30

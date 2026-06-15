@@ -42,6 +42,7 @@ type testSelectorEntityBuilder func() *internalpb.SelectorEntity
 type testRepoOption func(selRepo *internalpb.SelectorRepository)
 type testArtifactOption func(selArtifact *internalpb.SelectorArtifact)
 type testPrOption func(selPr *internalpb.SelectorPullRequest)
+type testGenericOption func(selGen *internalpb.SelectorGeneric)
 
 func newTestArtifactSelectorEntity(provSelBld testProviderSelectorBuilder, artifactOpts ...testArtifactOption) testSelectorEntityBuilder {
 	return func() *internalpb.SelectorEntity {
@@ -152,6 +153,29 @@ func newTestPullRequestSelectorEntity(provSelBld testProviderSelectorBuilder, pr
 	}
 }
 
+func newTestGenericSelectorEntity(provSelBld testProviderSelectorBuilder, genericOpts ...testGenericOption) testSelectorEntityBuilder {
+	return func() *internalpb.SelectorEntity {
+		generic := &internalpb.SelectorEntity{
+			EntityType: minderv1.Entity_ENTITY_REPOSITORIES, // or whichever test requires
+			Name:       "testorg/testgeneric",
+			Entity: &internalpb.SelectorEntity_Generic{
+				Generic: &internalpb.SelectorGeneric{
+					Name: "testorg/testgeneric",
+				},
+			},
+		}
+
+		for _, opt := range genericOpts {
+			opt(generic.Entity.(*internalpb.SelectorEntity_Generic).Generic)
+		}
+
+		provSel := provSelBld()
+		generic.Provider = provSel
+
+		return generic
+	}
+}
+
 func TestSelectSelectorEntity(t *testing.T) {
 	t.Parallel()
 
@@ -226,6 +250,28 @@ func TestSelectSelectorEntity(t *testing.T) {
 				},
 			},
 			selectorEntityBld: newTestPullRequestSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "Simple true generic release expression",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_RELEASE,
+					Selector: "generic.name == 'testorg/testrelease'",
+				},
+			},
+			selectorEntityBld: newTestGenericSelectorEntity(newGithubProviderSelector()),
+			selected:          true,
+		},
+		{
+			name: "Simple true generic release expression",
+			exprs: []models.ProfileSelector{
+				{
+					Entity:   minderv1.Entity_ENTITY_RELEASE,
+					Selector: "generic.name == 'testorg/testrelease'",
+				},
+			},
+			selectorEntityBld: newTestGenericSelectorEntity(newGithubProviderSelector()),
 			selected:          true,
 		},
 		{

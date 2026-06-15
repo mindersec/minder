@@ -26,18 +26,8 @@ import (
 // GithubApp is the string that represents the GitHubApp provider
 const GithubApp = "github-app"
 
-// AppImplements is the list of provider types that the GitHubOAuth provider implements
-var AppImplements = []db.ProviderType{
-	db.ProviderTypeGithub,
-	db.ProviderTypeGit,
-	db.ProviderTypeRest,
-	db.ProviderTypeRepoLister,
-}
-
-// AppAuthorizationFlows is the list of authorization flows that the GitHubOAuth provider supports
-var AppAuthorizationFlows = []db.AuthorizationFlow{
-	db.AuthorizationFlowGithubAppFlow,
-}
+// AppAuthorizationFlows is the list of authorization flows that the GitHub App provider supports.
+var AppAuthorizationFlows = github.AppAuthorizationFlows
 
 // GitHubAppDelegate is the struct that contains the GitHub App specific operations
 type GitHubAppDelegate struct {
@@ -105,6 +95,7 @@ func NewGitHubAppProvider(
 		packageListingClient,
 		restClientCache,
 		delegate,
+		db.ProviderClassGithubApp,
 		appConfig,
 		whcfg,
 		propertyFetchers,

@@ -531,7 +531,6 @@ const (
 	remoteRepoId     int64 = 123456
 	repoName2              = "another-repo"
 	remoteRepoId2    int64 = 234567
-	accessToken            = "TOKEN"
 )
 
 var (

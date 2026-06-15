@@ -38,5 +38,5 @@ minder repo reconcile [flags]
 
 ### SEE ALSO
 
-* [minder repo](minder_repo.md)	 - Manage repositories
+* [minder repo](minder_repo.md)	 - Manage repositories within a Minder project
 

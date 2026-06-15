@@ -7,8 +7,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -16,9 +14,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"golang.org/x/oauth2"
 
 	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth"
+	mockauth "github.com/mindersec/minder/internal/auth/mock"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
@@ -26,32 +25,20 @@ import (
 	"github.com/mindersec/minder/internal/projects"
 	mockmanager "github.com/mindersec/minder/internal/providers/manager/mock"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	serverconfig "github.com/mindersec/minder/pkg/config/server"
 )
 
 func TestHandleEvents(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/realms/stacklok/protocol/openid-connect/token":
-			tokenHandler(t, w)
-		case "/admin/realms/stacklok/events":
-			eventHandler(t, w)
-		default:
-			t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
-		}
-	}))
-	defer server.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	mockIdManager := mockauth.NewMockIdentityManager(ctrl)
 
 	tx := sql.Tx{}
-	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
-	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil).Times(2)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore).Times(2)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "existingUserId").
 		Return(db.User{
@@ -60,57 +47,44 @@ func TestHandleEvents(t *testing.T) {
 	mockStore.EXPECT().
 		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
-	mockStore.EXPECT().Commit(gomock.Any())
-	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
-	mockStore.EXPECT().Rollback(gomock.Any())
+	mockStore.EXPECT().Commit(gomock.Any()).Times(2)
+	mockStore.EXPECT().Rollback(gomock.Any()).Times(2)
 
-	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
-	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
-	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
 
-	c := serverconfig.Config{
-		Identity: serverconfig.IdentityConfigWrapper{
-			Server: serverconfig.IdentityConfig{
-				IssuerUrl:    server.URL,
-				Realm:        "stacklok",
-				ClientId:     "client-id",
-				ClientSecret: "client-secret",
-			},
+	mockIdManager.EXPECT().GetEvents(gomock.Any()).Return([]auth.AccountEvent{
+		{
+			Time:   1697030342912,
+			Type:   "DELETE_ACCOUNT",
+			UserId: "existingUserId",
 		},
-	}
+		{
+			Time:   1697030342844,
+			Type:   "DELETE_ACCOUNT",
+			UserId: "alreadyDeletedUserId",
+		},
+	}, nil)
+
 	authzClient := &mock.NoopClient{Authorized: true}
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
-	HandleEvents(context.Background(), mockStore, authzClient, &c, deleter)
+	HandleEvents(context.Background(), mockStore, authzClient, mockIdManager, deleter)
 }
 
 func TestHandleAdminEvents(t *testing.T) {
 	t.Parallel()
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/realms/stacklok/protocol/openid-connect/token":
-			tokenHandler(t, w)
-		case "/admin/realms/stacklok/admin-events":
-			adminEventHandler(t, w)
-		default:
-			t.Fatalf("Unexpected call to mock server endpoint %s", r.URL.Path)
-		}
-	}))
-	defer server.Close()
-
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockStore := mockdb.NewMockStore(ctrl)
+	mockIdManager := mockauth.NewMockIdentityManager(ctrl)
 
 	tx := sql.Tx{}
-	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
-	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
+	mockStore.EXPECT().BeginTransaction().Return(&tx, nil).Times(2)
+	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore).Times(2)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "existingUserId").
 		Return(db.User{
@@ -119,32 +93,32 @@ func TestHandleAdminEvents(t *testing.T) {
 	mockStore.EXPECT().
 		DeleteUser(gomock.Any(), gomock.Any()).
 		Return(nil)
-	mockStore.EXPECT().Commit(gomock.Any())
-	// we expect rollback to be called even if there is no error (through defer), in that case it will be a no-op
-	mockStore.EXPECT().Rollback(gomock.Any())
+	mockStore.EXPECT().Commit(gomock.Any()).Times(2)
+	mockStore.EXPECT().Rollback(gomock.Any()).Times(2)
 
-	mockStore.EXPECT().BeginTransaction().Return(&tx, nil)
-	mockStore.EXPECT().GetQuerierWithTransaction(gomock.Any()).Return(mockStore)
 	mockStore.EXPECT().
 		GetUserBySubject(gomock.Any(), "alreadyDeletedUserId").
 		Return(db.User{}, sql.ErrNoRows)
-	mockStore.EXPECT().Commit(gomock.Any())
-	mockStore.EXPECT().Rollback(gomock.Any())
 
-	c := serverconfig.Config{
-		Identity: serverconfig.IdentityConfigWrapper{
-			Server: serverconfig.IdentityConfig{
-				IssuerUrl:    server.URL,
-				Realm:        "stacklok",
-				ClientId:     "client-id",
-				ClientSecret: "client-secret",
-			},
+	mockIdManager.EXPECT().GetAdminEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return([]auth.AdminEvent{
+		{
+			Time:          1697030342912,
+			OperationType: "DELETE",
+			ResourceType:  "USER",
+			ResourcePath:  "users/existingUserId",
 		},
-	}
+		{
+			Time:          1697030342844,
+			OperationType: "DELETE",
+			ResourceType:  "USER",
+			ResourcePath:  "users/alreadyDeletedUserId",
+		},
+	}, nil)
+
 	authzClient := &mock.NoopClient{Authorized: true}
 	mockProviderManager := mockmanager.NewMockProviderManager(ctrl)
 	deleter := projects.NewProjectDeleter(authzClient, mockProviderManager)
-	HandleAdminEvents(context.Background(), mockStore, authzClient, &c, deleter)
+	HandleAdminEvents(context.Background(), mockStore, authzClient, mockIdManager, deleter)
 }
 
 func TestDeleteUserOneProject(t *testing.T) {
@@ -298,67 +272,4 @@ func TestDeleteUserMultiProjectMembership(t *testing.T) {
 	assert.Equal(t, u2.IdentitySubject, assignments[0].Subject, "User2 is not a member of project2")
 	assert.Equal(t, authz.RoleAdmin.String(), assignments[0].Role, "User2 is not an admin of project2")
 	assert.Equal(t, p2ID, *assignments[0].Project, "User2 is not a member of project2")
-}
-
-func tokenHandler(t *testing.T, w http.ResponseWriter) {
-	t.Helper()
-	data := oauth2.Token{
-		AccessToken: "some-token",
-	}
-	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func eventHandler(t *testing.T, w http.ResponseWriter) {
-	t.Helper()
-	data := []AccountEvent{
-		{
-			Time:     1697030342912,
-			Type:     "DELETE_ACCOUNT",
-			RealmId:  "realmId",
-			ClientId: "clientId",
-			UserId:   "existingUserId",
-		},
-		{
-			Time:     1697030342844,
-			Type:     "DELETE_ACCOUNT",
-			RealmId:  "realmId",
-			ClientId: "clientId",
-			UserId:   "alreadyDeletedUserId",
-		},
-	}
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
-func adminEventHandler(t *testing.T, w http.ResponseWriter) {
-	t.Helper()
-	data := []AdminEvent{
-		{
-			Time:          1697030342912,
-			RealmId:       "realmId",
-			OperationType: "DELETE",
-			ResourceType:  "USER",
-			ResourcePath:  "users/existingUserId",
-		},
-		{
-			Time:          1697030342844,
-			RealmId:       "realmId",
-			OperationType: "DELETE",
-			ResourceType:  "USER",
-			ResourcePath:  "users/alreadyDeletedUserId",
-		},
-	}
-	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(data)
-	if err != nil {
-		t.Fatal(err)
-	}
 }

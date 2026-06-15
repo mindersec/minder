@@ -88,7 +88,7 @@ func New(ctx context.Context, config *server.Config) (Store, Closer, error) {
 	return &querierType{
 		store:         store,
 		querier:       store, // use store by default
-		ruleSvc:       ruletypes.NewRuleTypeService(),
+		ruleSvc:       ruletypes.NewRuleTypeService(nil),
 		profileSvc:    profiles.NewProfileService(evt, selectors.NewEnv()),
 		dataSourceSvc: datasourceservice.NewDataSourceService(store),
 	}, dbCloser, nil

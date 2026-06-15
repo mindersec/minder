@@ -17,7 +17,8 @@ import (
 
 	db "github.com/mindersec/minder/internal/db"
 	manager "github.com/mindersec/minder/internal/providers/manager"
-	v1 "github.com/mindersec/minder/pkg/providers/v1"
+	v1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v10 "github.com/mindersec/minder/pkg/providers/v1"
 	gomock "go.uber.org/mock/gomock"
 	oauth2 "golang.org/x/oauth2"
 )
@@ -62,7 +63,7 @@ func (mr *MockAuthManagerMockRecorder) NewOAuthConfig(providerClass, cli any) *g
 }
 
 // ValidateCredentials mocks base method.
-func (m *MockAuthManager) ValidateCredentials(ctx context.Context, providerClass db.ProviderClass, cred v1.Credential, opts ...manager.CredentialVerifyOptFn) error {
+func (m *MockAuthManager) ValidateCredentials(ctx context.Context, providerClass db.ProviderClass, cred v10.Credential, opts ...manager.CredentialVerifyOptFn) error {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, providerClass, cred}
 	for _, a := range opts {
@@ -129,10 +130,10 @@ func (m *MockproviderClassOAuthManager) EXPECT() *MockproviderClassOAuthManagerM
 }
 
 // Build mocks base method.
-func (m *MockproviderClassOAuthManager) Build(ctx context.Context, config *db.Provider) (v1.Provider, error) {
+func (m *MockproviderClassOAuthManager) Build(ctx context.Context, config *db.Provider) (v10.Provider, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Build", ctx, config)
-	ret0, _ := ret[0].(v1.Provider)
+	ret0, _ := ret[0].(v10.Provider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -155,6 +156,21 @@ func (m *MockproviderClassOAuthManager) Delete(ctx context.Context, config *db.P
 func (mr *MockproviderClassOAuthManagerMockRecorder) Delete(ctx, config any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).Delete), ctx, config)
+}
+
+// GetProviderClassInfo mocks base method.
+func (m *MockproviderClassOAuthManager) GetProviderClassInfo(class db.ProviderClass) (*v1.ProviderClassInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProviderClassInfo", class)
+	ret0, _ := ret[0].(*v1.ProviderClassInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProviderClassInfo indicates an expected call of GetProviderClassInfo.
+func (mr *MockproviderClassOAuthManagerMockRecorder) GetProviderClassInfo(class any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProviderClassInfo", reflect.TypeOf((*MockproviderClassOAuthManager)(nil).GetProviderClassInfo), class)
 }
 
 // GetSupportedClasses mocks base method.
@@ -216,7 +232,7 @@ func (mr *MockproviderClassOAuthManagerMockRecorder) NewOAuthConfig(providerClas
 }
 
 // ValidateCredentials mocks base method.
-func (m *MockproviderClassOAuthManager) ValidateCredentials(ctx context.Context, cred v1.Credential, params *manager.CredentialVerifyParams) error {
+func (m *MockproviderClassOAuthManager) ValidateCredentials(ctx context.Context, cred v10.Credential, params *manager.CredentialVerifyParams) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateCredentials", ctx, cred, params)
 	ret0, _ := ret[0].(error)

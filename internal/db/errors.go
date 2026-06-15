@@ -7,17 +7,11 @@ import (
 	"errors"
 
 	"github.com/lib/pq"
+	"github.com/lib/pq/pqerror"
 )
 
 // ErrIsUniqueViolation returns true if the error is a unique violation
 func ErrIsUniqueViolation(err error) bool {
-	return isPostgresError(err, "23505")
-}
-
-func isPostgresError(err error, code string) bool {
-	var pgErr *pq.Error
-	if errors.As(err, &pgErr) {
-		return pgErr.Code == pq.ErrorCode(code)
-	}
-	return false
+	pgErr, ok := errors.AsType[*pq.Error](err)
+	return ok && pgErr.Code == pqerror.UniqueViolation
 }

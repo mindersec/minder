@@ -139,6 +139,22 @@ func (p *projectDeleter) DeleteProject(
 		return err
 	}
 
+	as, err := p.authzClient.AssignmentsToProject(ctx, proj)
+	if err != nil {
+		return fmt.Errorf("error getting role assignments for project %v: %w", proj, err)
+	}
+
+	for _, a := range as {
+		role, err := authz.ParseRole(a.Role)
+		if err != nil {
+			l.Error().Err(err).Str("role", a.Role).Msg("error parsing role")
+			continue
+		}
+		if err := p.authzClient.Delete(ctx, a.Subject, role, proj); err != nil {
+			return fmt.Errorf("error deleting role assignment %v for project %v: %w", a.Role, proj, err)
+		}
+	}
+
 	// no role assignments for this project
 	// we can safely delete it.
 	l.Debug().Msg("deleting project from database")

@@ -10,10 +10,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
-
-	"github.com/spf13/viper"
-	"golang.org/x/exp/slices"
 
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -30,9 +28,6 @@ func execOnOneRuleType(
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
-	ctx, cancel := cli.GetAppContext(ctx, viper.GetViper())
-	defer cancel()
-
 	reader, closer, err := util.OpenFileArg(f, dashOpen)
 	if err != nil {
 		return fmt.Errorf("error opening file arg: %w", err)
@@ -61,11 +56,11 @@ func execOnOneRuleType(
 
 	// add the rule type to the table rows
 	name := appendRuleTypePropertiesToName(rt)
+
 	t.AddRow(
-		*rt.Context.Project,
-		*rt.Id,
 		name,
-		cli.ConcatenateAndWrap(rt.Description, 20),
+		rt.Def.InEntity,
+		rt.Description,
 	)
 
 	return nil
@@ -101,15 +96,16 @@ func shouldSkipFile(f string) bool {
 }
 
 // initializeTableForList initializes the table for the rule type
-func initializeTableForList() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Name", "Entity Type", "Description"})
-	// TODO: set automerge common cells
+func initializeTableForList(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Name", "Entity Type", "Description"}).
+		SetAutoMerge(true).
+		SeparateRows()
 }
 
-// initializeTableForList initializes the table for the rule type
-func initializeTableForOne() table.Table {
-	return table.New(table.Simple, layouts.Default,
+// initializeTableForOne initializes the table for the rule type
+func initializeTableForOne(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
 		[]string{"Rule Type", "Details"})
 }
 
@@ -124,7 +120,7 @@ func oneRuleTypeToRows(t table.Table, rt *minderv1.RuleType) {
 	t.AddRow("Description", rt.Description)
 	t.AddRow("Ingest type", rt.Def.Ingest.Type)
 	t.AddRow("Eval type", rt.Def.Eval.Type)
-	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(0.7)))
+	t.AddRow("Guidance", cli.RenderMarkdown(rt.Guidance, cli.WidthFraction(50.0)))
 	t.AddRow("Remediation", cmp.Or(rt.Def.GetRemediate().GetType(), "unsupported"))
 	t.AddRow("Alert", cmp.Or(rt.Def.GetAlert().GetType(), "unsupported"))
 }

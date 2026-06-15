@@ -4,13 +4,12 @@
 package ruletype
 
 import (
-	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -22,32 +21,50 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List rule types",
 	Long:  `The ruletype list subcommand lets you list rule type within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(listCommand),
+	Args:  cobra.NoArgs,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+
+		format, err := cmd.Flags().GetString("output")
+		if err != nil {
+			return cli.MessageAndError("Error parsing output flag", err)
+		}
+
+		// Ensure the output format is supported
+		if !app.IsOutputFormatSupported(format) {
+			return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
+		}
+
+		return nil
+	},
+	RunE: listCommand,
 }
 
-// listCommand is the ruletype list subcommand
-func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRuleTypeServiceClient(conn)
-
-	project := viper.GetString("project")
-	format := viper.GetString("output")
-
-	// Ensure the output format is supported
-	if !app.IsOutputFormatSupported(format) {
-		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
-	}
-
+func listCommand(cmd *cobra.Command, _ []string) error {
 	// No longer print usage on returned error, since we've parsed our inputs
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListRuleTypes(ctx, &minderv1.ListRuleTypesRequest{
+	client, closeConn, err := cli.GetCLIClient(cmd, minderv1.NewRuleTypeServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closeConn()
+
+	project := viper.GetString("project")
+
+	format := viper.GetString("output")
+
+	resp, err := client.ListRuleTypes(cmd.Context(), &minderv1.ListRuleTypesRequest{
 		Context: &minderv1.Context{Project: &project},
 	})
 	if err != nil {
 		return cli.MessageAndError("Error listing rule types", err)
 	}
 
+	// handle output formatting
 	switch format {
 	case app.JSON:
 		out, err := util.GetJsonFromProto(resp)
@@ -66,18 +83,27 @@ func listCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc
 			cmd.Println(out)
 		}
 	case app.Table:
-		table := initializeTableForList()
-		table.SeparateRows()
+		// Sort by Entity Type first to ensure AutoMerge works correctly,
+		// then by Name within those groups.
+		slices.SortFunc(resp.RuleTypes, func(a, b *minderv1.RuleType) int {
+			if a.GetDef().GetInEntity() != b.GetDef().GetInEntity() {
+				return strings.Compare(a.GetDef().GetInEntity(), b.GetDef().GetInEntity())
+			}
+			return strings.Compare(a.GetName(), b.GetName())
+		})
+
+		table := initializeTableForList(cmd.OutOrStdout())
+
 		for _, rt := range resp.RuleTypes {
 			table.AddRow(
 				appendRuleTypePropertiesToName(rt),
 				rt.GetDef().GetInEntity(),
-				cli.RenderMarkdown(rt.Description, cli.WidthFraction(0.5)),
+				rt.Description,
 			)
 		}
 		table.Render()
 	}
-	// this is unreachable
+
 	return nil
 }
 

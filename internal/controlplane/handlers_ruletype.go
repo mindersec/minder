@@ -23,11 +23,9 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	"github.com/mindersec/minder/internal/engine/ingester/git"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
@@ -176,11 +174,6 @@ func (s *Server) CreateRuleType(
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
 	}
 
-	ruleDef := crt.GetRuleType().GetDef()
-	if err := checkRuleDefinitionFlags(ctx, s.featureFlags, ruleDef); err != nil {
-		return nil, err
-	}
-
 	newRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {
 		return s.ruleTypes.CreateRuleType(ctx, projectID, uuid.Nil, crt.GetRuleType(), qtx)
 	})
@@ -198,17 +191,6 @@ func (s *Server) CreateRuleType(
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: newRuleType,
 	}, nil
-}
-
-func checkRuleDefinitionFlags(
-	ctx context.Context, featureFlags flags.Interface, ruleDef *minderv1.RuleType_Definition) *util.NiceStatus {
-	usesGitPR := ruleDef.GetIngest().GetType() == git.GitRuleDataIngestType &&
-		ruleDef.GetInEntity() == minderv1.PullRequestEntity.String()
-	if usesGitPR && !flags.Bool(ctx, featureFlags, flags.GitPRDiffs) {
-		return util.UserVisibleError(codes.InvalidArgument, "Git pull request ingest is disabled")
-	}
-
-	return nil
 }
 
 // UpdateRuleType is a method to update a rule type
@@ -232,11 +214,6 @@ func (s *Server) UpdateRuleType(
 	}
 	if err := validateMarkdown(urt.RuleType.Guidance); err != nil {
 		return nil, util.UserVisibleError(codes.InvalidArgument, "%s", err)
-	}
-
-	ruleDef := urt.GetRuleType().GetDef()
-	if err := checkRuleDefinitionFlags(ctx, s.featureFlags, ruleDef); err != nil {
-		return nil, err
 	}
 
 	updatedRuleType, err := db.WithTransaction(s.store, func(qtx db.ExtendQuerier) (*minderv1.RuleType, error) {

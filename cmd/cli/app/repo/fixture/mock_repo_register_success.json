@@ -1,0 +1,11 @@
+{
+  "result": {
+    "repository": {
+      "owner": "mock-owner",
+      "name": "mock-repo"
+    },
+    "status": {
+      "success": true
+    }
+  }
+}

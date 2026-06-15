@@ -180,11 +180,12 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 	for idx := range ppl {
 		p := ppl[idx]
 
+		profileID := p.GetProfile().ID.String()
+
 		// NOTE: names are unique within a given Provider & Project ID (Unique index),
 		// so we don't need to worry about collisions.
 		// first we check if profile already exists, if not we create a new one
-		if _, ok := profiles[p.GetProfile().Name]; !ok {
-			profileID := p.GetProfile().ID.String()
+		if _, ok := profiles[profileID]; !ok {
 			project := p.GetProfile().ProjectID.String()
 
 			displayName := p.GetProfile().DisplayName
@@ -192,7 +193,7 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 				displayName = p.GetProfile().Name
 			}
 
-			profiles[p.GetProfile().Name] = &pb.Profile{
+			newProfile := &pb.Profile{
 				Id:          &profileID,
 				Name:        p.GetProfile().Name,
 				DisplayName: displayName,
@@ -202,23 +203,23 @@ func MergeDatabaseListIntoProfiles[T db.ProfileRow](ppl []T) map[string]*pb.Prof
 			}
 
 			if p.GetProfile().Remediate.Valid {
-				profiles[p.GetProfile().Name].Remediate = proto.String(string(p.GetProfile().Remediate.ActionType))
+				newProfile.Remediate = proto.String(string(p.GetProfile().Remediate.ActionType))
 			} else {
-				profiles[p.GetProfile().Name].Remediate = proto.String(string(db.ActionTypeOff))
+				newProfile.Remediate = proto.String(string(db.ActionTypeOff))
 			}
 
 			if p.GetProfile().Alert.Valid {
-				profiles[p.GetProfile().Name].Alert = proto.String(string(p.GetProfile().Alert.ActionType))
+				newProfile.Alert = proto.String(string(p.GetProfile().Alert.ActionType))
 			} else {
-				profiles[p.GetProfile().Name].Alert = proto.String(string(db.ActionTypeOn))
+				newProfile.Alert = proto.String(string(db.ActionTypeOn))
 			}
 
-			selectorsToProfile(profiles[p.GetProfile().Name], p.GetSelectors())
+			selectorsToProfile(newProfile, p.GetSelectors())
+
+			profiles[profileID] = newProfile
 		}
-		if pm := rowInfoToProfileMap(
-			profiles[p.GetProfile().Name], p.GetEntityProfile(),
-			p.GetContextualRules()); pm != nil {
-			profiles[p.GetProfile().Name] = pm
+		if pm := rowInfoToProfileMap(profiles[profileID], p.GetEntityProfile(), p.GetContextualRules()); pm != nil {
+			profiles[profileID] = pm
 		}
 	}
 

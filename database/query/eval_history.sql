@@ -128,7 +128,9 @@ SELECT s.id::uuid AS evaluation_id,
        re.details AS remediation_details,
        -- alert status and details
        ae.status AS alert_status,
-       ae.details AS alert_details
+       ae.details AS alert_details,
+       -- evaluation output
+       eo.output AS eval_output
   FROM evaluation_statuses s
   JOIN evaluation_rule_entities ere ON ere.id = s.rule_entity_id
   JOIN rule_instances ri ON ere.rule_id = ri.id
@@ -138,6 +140,7 @@ SELECT s.id::uuid AS evaluation_id,
   JOIN projects j ON ei.project_id = j.id
   LEFT JOIN remediation_events re ON re.evaluation_id = s.id
   LEFT JOIN alert_events ae ON ae.evaluation_id = s.id
+  LEFT JOIN evaluation_outputs eo ON eo.id = s.id AND sqlc.arg(include_outputs)::boolean
  WHERE (sqlc.narg(next)::timestamp without time zone IS NULL OR sqlc.narg(next) > s.evaluation_time)
    AND (sqlc.narg(prev)::timestamp without time zone IS NULL OR sqlc.narg(prev) < s.evaluation_time)
    -- inclusion filters

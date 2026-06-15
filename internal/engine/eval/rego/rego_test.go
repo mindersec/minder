@@ -12,13 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	engerrors "github.com/mindersec/minder/internal/engine/errors"
+	dbadapter "github.com/mindersec/minder/internal/adapters/db"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/engine/options"
 	"github.com/mindersec/minder/internal/util/ptr"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	v1mockds "github.com/mindersec/minder/pkg/datasources/v1/mock"
+	engerrors "github.com/mindersec/minder/pkg/engine/errors"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 )
 
@@ -102,16 +103,17 @@ func TestEvaluatorDenyByDefaultEvalSimple(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.data == "foo"
 }
-	
-message = "By the pricking of my thumbs..."
+
+message := "By the pricking of my thumbs..."
 `,
 		},
 	)
@@ -146,10 +148,12 @@ func TestEvaluatorDenyByDefaultEvalWrongType(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-allow := "false"`,
+import rego.v1
+
+allow := "false"
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -168,18 +172,17 @@ func TestEvaluatorDenyByDefaultSkip(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.data == "foo"
 }
 
-skip {
-	true
-}
+skip := true
 `,
 		},
 	)
@@ -202,8 +205,9 @@ func TestEvaluatorDenyByDefaultSkipWrongType(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
+
+import rego.v1
 
 allow := true
 
@@ -228,8 +232,9 @@ func TestEvaluatorDenyByDefaultJSONOutput(t *testing.T) {
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type:            rego.DenyByDefaultEvaluationType.String(),
 			ViolationFormat: ptr.Ptr(rego.OutputJSON.String()),
-			Def: `
-package minder
+			Def: `package minder
+
+import rego.v1
 
 allow := false
 
@@ -260,8 +265,9 @@ func TestEvaluatorDenyByDefaultJSONOutputFromMessage(t *testing.T) {
 			Type: rego.DenyByDefaultEvaluationType.String(),
 			// ViolationFormat is not used for deny_by_default
 			ViolationFormat: ptr.Ptr(rego.OutputJSON.String()),
-			Def: `
-package minder
+			Def: `package minder
+
+import rego.v1
 
 allow := false
 
@@ -288,13 +294,15 @@ func TestEvaluatorDenyByConstraintsEvalSimple(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input.ingested.data != "foo"
 	msg := "data did not contain foo"
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -326,12 +334,13 @@ func TestEvaluatorConstraintWithOutput(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-messages = ["one", "two"]
-violations[{"msg": msg}] {
-    msg := messages[_]
+import rego.v1
+
+messages := ["one", "two"]
+violations contains {"msg": msg} if {
+	msg := messages[_]
 }
 
 output := {"messages_len": 2, "messages": messages}
@@ -359,15 +368,16 @@ func TestEvaluatorDenyByConstraintsEvalMultiple(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input.ingested.data == "foo"
 	msg := "data should not contain foo"
 }
 
-violations[{"msg": msg}] {
+violations contains {"msg": msg} if {
 	input.ingested.datum == "bar"
 	msg := "datum should not contain bar"
 }
@@ -396,8 +406,9 @@ func TestEvaluatorConstraintWrongType(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
+
+import rego.v1
 
 violations := {"msg": "I forgot the list"}
 `,
@@ -421,11 +432,12 @@ func TestEvaluatorConstraintWrongTypeInArray(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[msg] {
-  msg := "I forgot the list"
+import rego.v1
+
+violations contains msg if {
+	msg := "I forgot the list"
 }
 `,
 		},
@@ -448,11 +460,12 @@ func TestEvaluatorConstraintWrongKeyInMap(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"problem": msg}] {
-  msg := "this is the wrong key!"
+import rego.v1
+
+violations contains {"problem": msg} if {
+	msg := "this is the wrong key!"
 }
 `,
 		},
@@ -475,11 +488,12 @@ func TestEvaluatorConstraintWrongTypeInObject(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
-  msg := {"detail": "this is the wrong key!"}
+import rego.v1
+
+violations contains {"msg": msg} if {
+	msg := {"detail": "this is the wrong key!"}
 }
 `,
 		},
@@ -507,14 +521,16 @@ func TestDenyByDefaultEvaluationWithProfile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.profile.data == input.ingested.data
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -546,13 +562,15 @@ func TestConstrainedEvaluationWithProfile(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input.profile.data != input.ingested.data
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -581,29 +599,30 @@ violations[{"msg": msg}] {
 }
 
 const (
-	jsonPolicyDef = `
-package minder
+	jsonPolicyDef = `package minder
 
-violations[{"msg": msg}] {
-  expected_set := {x | x := input.profile.data[_]}
-  input_set := {x | x := input.ingested.data[_]}
+import rego.v1
 
-  intersection := expected_set & input_set
-  not count(intersection) == count(input.ingested.data)
+violations contains {"msg": msg} if {
+	expected_set := {x | x := input.profile.data[_]}
+	input_set := {x | x := input.ingested.data[_]}
 
-  difference := [x | x := input.ingested.data[_]; not intersection[x]]
-  
-  msg = format_message(difference, input.output_format)
+	intersection := expected_set & input_set
+	not count(intersection) == count(input.ingested.data)
+
+	difference := [x | x := input.ingested.data[_]; not intersection[x]]
+
+	msg = format_message(difference, input.output_format)
 }
 
-format_message(difference, format) = msg {
-    format == "json"
+format_message(difference, format) := msg if {
+	format == "json"
 	json_body := {"actions_not_allowed": difference}
-    msg := json.marshal(json_body)
+	msg := json.marshal(json_body)
 }
 
-format_message(difference, format) = msg {
-    not format == "json"
+format_message(difference, format) := msg if {
+	not format == "json"
 	msg := sprintf("extra actions found in workflows but not allowed in the profile: %v", [difference])
 }
 `
@@ -634,7 +653,7 @@ func TestConstraintsJSONOutput(t *testing.T) {
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	var errDetails []struct {
 		ActionsNotAllowed []string `json:"actions_not_allowed"`
 	}
@@ -661,13 +680,15 @@ func TestConstraintsJSONFalback(t *testing.T) {
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type:            rego.ConstraintsEvaluationType.String(),
 			ViolationFormat: &violationFormat,
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input.profile.data != input.ingested.data
 	msg := sprintf("data did not match profile: %s", [input.profile.data])
-}`,
+}
+`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -684,7 +705,7 @@ violations[{"msg": msg}] {
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
 	// check that the error payload msg is JSON in the expected format
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	var errDetails []struct {
 		Msg string `json:"msg"`
 	}
@@ -720,7 +741,7 @@ func TestOutputTypePassedIntoRule(t *testing.T) {
 	require.Error(t, err, "should have failed the evaluation")
 	require.ErrorIs(t, err, interfaces.ErrEvaluationFailed, "should have failed the evaluation")
 
-	errmsg := engerrors.ErrorAsEvalDetails(err)
+	errmsg := dbadapter.ErrorAsEvalDetails(err)
 	assert.Contains(t, errmsg, "extra actions found in workflows but not allowed in the profile", "should have the expected error message")
 	assert.Contains(t, errmsg, "three", "should have the expected content")
 	assert.Equal(t, []any{`extra actions found in workflows but not allowed in the profile: ["three"]`}, res.Output)
@@ -766,7 +787,9 @@ func TestCantEvaluateWithInvalidProfile(t *testing.T) {
 			Def: `
 package minder
 
-violations[{"msg": msg}] {`,
+import rego.v1
+
+violations contains {"msg": msg} if {`,
 		},
 	)
 	require.NoError(t, err, "could not create evaluator")
@@ -787,7 +810,9 @@ func TestCantEvaluateWithCompilerError(t *testing.T) {
 			Def: `
 package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input := 12345
 	msg := "data did not contain foo"
 }`,
@@ -823,14 +848,16 @@ func TestCustomDatasourceRegister(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	minder.datasource.fake.source({"datasourcetest": input.ingested.data}) == "foo"
-}`,
+}
+`,
 		},
 		options.WithDataSources(fdsr),
 	)
@@ -870,60 +897,68 @@ func TestDenyByDefaultWithShortFailureMessage(t *testing.T) {
 		{
 			name:                "uses custom message when provided in rego",
 			shortFailureMessage: "Repository does not meet security requirements",
-			regoDef: `
-package minder
+			regoDef: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.secure == true
 }
 
-message = "Custom rego message: security check failed"`,
+message := "Custom rego message: security check failed"
+`,
 			expectedMessage: "Custom rego message: security check failed",
 			expectedDetails: "Custom rego message: security check failed",
 		},
 		{
 			name:                "falls back to short_failure_message when no custom message",
 			shortFailureMessage: "Repository does not meet security requirements",
-			regoDef: `
-package minder
+			regoDef: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.secure == true
-}`,
+}
+`,
 			expectedMessage: "Repository does not meet security requirements",
 			expectedDetails: "Repository does not meet security requirements",
 		},
 		{
 			name:                "falls back to denied when neither message is provided",
 			shortFailureMessage: "",
-			regoDef: `
-package minder
+			regoDef: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.secure == true
-}`,
+}
+`,
 			expectedMessage: "denied",
 			expectedDetails: "denied",
 		},
 		{
 			name:                "empty custom message falls back to short_failure_message",
 			shortFailureMessage: "Short failure message used",
-			regoDef: `
-package minder
+			regoDef: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.secure == true
 }
 
-message = ""`,
+message := ""
+`,
 			expectedMessage: "Short failure message used",
 			expectedDetails: "Short failure message used",
 		},
@@ -971,13 +1006,15 @@ func TestDenyByDefaultShortFailureMessageOnlyAppliedToDenyByDefault(t *testing.T
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.ConstraintsEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-violations[{"msg": msg}] {
+import rego.v1
+
+violations contains {"msg": msg} if {
 	input.ingested.data != "foo"
 	msg := "data did not contain foo"
-}`,
+}
+`,
 		},
 		rego.WithShortFailureMessage("This should be ignored"),
 	)
@@ -1001,14 +1038,16 @@ func TestDenyByDefaultShortFailureMessageWithEntityName(t *testing.T) {
 	e, err := rego.NewRegoEvaluator(
 		&minderv1.RuleType_Definition_Eval_Rego{
 			Type: rego.DenyByDefaultEvaluationType.String(),
-			Def: `
-package minder
+			Def: `package minder
 
-default allow = false
+import rego.v1
 
-allow {
+default allow := false
+
+allow if {
 	input.ingested.compliant == true
-}`,
+}
+`,
 		},
 		rego.WithShortFailureMessage("Repository is not compliant"),
 	)

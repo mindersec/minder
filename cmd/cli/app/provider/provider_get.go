@@ -75,7 +75,7 @@ func GetProviderCommand(ctx context.Context, cmd *cobra.Command, _ []string, con
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"Key", "Value"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Key", "Value"})
 		p := out.GetProvider()
 
 		impls := getImplementsAsStrings(p)

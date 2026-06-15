@@ -103,6 +103,12 @@ func TestGetGrpcConnection(t *testing.T) {
 	grpcPort, err := strconv.Atoi(grpcPortStr)
 	require.NoError(t, err)
 
+	// Get a guaranteed-closed ephemeral port for the legacy fallback test
+	ln, err := net.Listen("tcp", "localhost:0")
+	require.NoError(t, err)
+	closedPort := ln.Addr().(*net.TCPAddr).Port
+	ln.Close()
+
 	tests := []struct {
 		name           string
 		externalName   bool
@@ -145,7 +151,7 @@ func TestGetGrpcConnection(t *testing.T) {
 		},
 		{
 			name:           "Defaults connect to legacy endpoint",
-			overridePort:   9, // discard service, generally not listening
+			overridePort:   closedPort,
 			allowInsecure:  true,
 			expectedLegacy: 1,
 			expectedError:  "error unmarshaling credentials: EOF",

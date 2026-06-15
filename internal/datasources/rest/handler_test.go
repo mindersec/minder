@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -667,5 +668,61 @@ func Test_restHandler_ValidateUpdate(t *testing.T) {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+// trackingCloser wraps an io.ReadCloser and records whether Close was called.
+type trackingCloser struct {
+	io.Reader
+	closed bool
+	mu     sync.Mutex
+}
+
+func (tc *trackingCloser) Close() error {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	tc.closed = true
+	return nil
+}
+
+func (tc *trackingCloser) wasClosed() bool {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	return tc.closed
+}
+
+func Test_retriableDo_ClosesBodyOnRateLimit(t *testing.T) {
+	t.Parallel()
+
+	var bodies []*trackingCloser
+	var mu sync.Mutex
+
+	callCount := 0
+	dofunc := func(_ *http.Request) (*http.Response, error) {
+		tc := &trackingCloser{Reader: strings.NewReader("rate limit response")}
+		mu.Lock()
+		bodies = append(bodies, tc)
+		mu.Unlock()
+		callCount++
+		return &http.Response{
+			StatusCode: http.StatusTooManyRequests,
+			Body:       tc,
+			Request:    httptest.NewRequest(http.MethodGet, "/test", nil),
+		}, nil
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/test", nil)
+	initMetrics()
+
+	_, err := retriableDo(dofunc, req)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "rate limited")
+
+	// With maxRetries=3, we expect 4 total calls (1 initial + 3 retries).
+	require.Len(t, bodies, 4, "expected 4 total HTTP attempts")
+
+	// Every response body must have been closed.
+	for i, tc := range bodies {
+		assert.True(t, tc.wasClosed(), "response body from attempt %d was not closed", i)
 	}
 }

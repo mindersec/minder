@@ -154,6 +154,11 @@ func (*ImageLister) SupportsEntity(_ minderv1.Entity) bool {
 	return false
 }
 
+// ProviderClassInfo implements the Provider interface
+func (*ImageLister) ProviderClassInfo() *minderv1.ProviderClassInfo {
+	return nil
+}
+
 // CreationOptions implements the Provider interface
 func (*ImageLister) CreationOptions(_ minderv1.Entity) *provifv1.EntityCreationOptions {
 	// GHCR doesn't support any entities yet

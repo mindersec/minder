@@ -4,11 +4,10 @@
 package repo
 
 import (
-	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -18,13 +17,17 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete a repository",
 	Long:  `The repo delete subcommand is used to delete a registered repository within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(deleteCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		return nil
+	},
+	RunE: deleteCommand,
 }
 
 // deleteCommand is the repo delete subcommand
-func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewRepositoryServiceClient(conn)
-
+func deleteCommand(cmd *cobra.Command, _ []string) error {
 	provider := viper.GetString("provider")
 	project := viper.GetString("project")
 	repoID := viper.GetString("id")
@@ -34,9 +37,15 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
+	client, cleanup, err := getRepoClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
 	// delete repo by id
 	if repoID != "" {
-		resp, err := client.DeleteRepositoryById(ctx, &minderv1.DeleteRepositoryByIdRequest{
+		resp, err := client.DeleteRepositoryById(cmd.Context(), &minderv1.DeleteRepositoryByIdRequest{
 			Context:      &minderv1.Context{Provider: &provider, Project: &project},
 			RepositoryId: repoID,
 		})
@@ -46,7 +55,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 		cmd.Println("Successfully deleted repo with id:", resp.RepositoryId)
 	} else {
 		// delete repo by name
-		resp, err := client.DeleteRepositoryByName(ctx, &minderv1.DeleteRepositoryByNameRequest{
+		resp, err := client.DeleteRepositoryByName(cmd.Context(), &minderv1.DeleteRepositoryByNameRequest{
 			Context: &minderv1.Context{Provider: &provider, Project: &project},
 			Name:    name,
 		})
@@ -57,6 +66,7 @@ func deleteCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *gr
 	}
 	return nil
 }
+
 func init() {
 	RepoCmd.AddCommand(deleteCmd)
 	// Flags

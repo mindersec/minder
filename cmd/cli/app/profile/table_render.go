@@ -4,14 +4,16 @@
 package profile
 
 import (
+	"cmp"
 	"fmt"
+	"io"
 	"slices"
 	"strings"
 	"time"
 
 	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/yaml.v2"
 
+	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	"github.com/mindersec/minder/internal/util/cli/types"
@@ -19,29 +21,23 @@ import (
 )
 
 func marshalStructOrEmpty(v *structpb.Struct) string {
-	if v == nil {
+	if v == nil || len(v.GetFields()) == 0 {
 		return ""
 	}
 
-	m := v.AsMap()
-
-	if len(m) == 0 {
-		return ""
-	}
-
-	// marhsal as YAML
-	out, err := yaml.Marshal(m)
+	out, err := util.GetYamlFromProto(v)
 	if err != nil {
 		return ""
 	}
-
-	return string(out)
+	return strings.TrimSpace(out)
 }
 
 // NewProfileSettingsTable creates a new table for rendering profile settings
-func NewProfileSettingsTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Name", "Description", "Alert", "Remediate"})
+func NewProfileSettingsTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Name", "Description", "Alert", "Remediate"}).
+		SetAutoMerge(true).
+		SetEqualColumns(false) // Divided equally across terminal width
 }
 
 // RenderProfileSettingsTable renders the profile settings table
@@ -50,48 +46,40 @@ func RenderProfileSettingsTable(p *minderv1.Profile, t table.Table) {
 }
 
 // NewProfileRulesTable creates a new table for rendering profiles
-func NewProfileRulesTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"})
+func NewProfileRulesTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Entity", "Rule", "Rule Params", "Rule Definition"}).
+		SetAutoMerge(true).
+		SetEqualColumns(false) // Divided equally across terminal width
 }
 
 // RenderProfileRulesTable renders the profile table
 func RenderProfileRulesTable(p *minderv1.Profile, t table.Table) {
-	// repositories
 	renderProfileRow(minderv1.RepositoryEntity, p.Repository, t)
-
-	// build_environments
 	renderProfileRow(minderv1.BuildEnvironmentEntity, p.BuildEnvironment, t)
-
-	// artifacts
 	renderProfileRow(minderv1.ArtifactEntity, p.Artifact, t)
-
-	// pull request
 	renderProfileRow(minderv1.PullRequestEntity, p.PullRequest, t)
-
-	// release
 	renderProfileRow(minderv1.ReleaseEntity, p.Release, t)
 }
 
 func renderProfileRow(entType minderv1.EntityType, rs []*minderv1.Profile_Rule, t table.Table) {
-	for idx := range rs {
-		rule := rs[idx]
-		params := marshalStructOrEmpty(rule.Params)
-		def := marshalStructOrEmpty(rule.Def)
-
+	for _, rule := range rs {
 		t.AddRow(
 			entType.String(),
 			rule.Type,
-			params,
-			def,
+			marshalStructOrEmpty(rule.Params),
+			marshalStructOrEmpty(rule.Def),
 		)
 	}
 }
 
 // NewProfileStatusTable creates a new table for rendering profile status
-func NewProfileStatusTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Name", "Status", "Evaluated At"})
+func NewProfileStatusTable(out io.Writer) table.Table {
+	// Status tables are usually better "Compact" (default) because they have short fields
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Name", "Status", "Evaluated At"}).
+		SetAutoMerge(true).
+		SetEqualColumns(false)
 }
 
 // RenderProfileStatusTable renders the profile status table
@@ -104,30 +92,89 @@ func RenderProfileStatusTable(ps *minderv1.ProfileStatus, t table.Table, emoji b
 }
 
 // NewRuleEvaluationsTable creates a new table for rendering rule evaluations
-func NewRuleEvaluationsTable() table.Table {
-	return table.New(table.Simple, layouts.Default,
-		[]string{"Entity", "Rule Name", "Status", "Details"})
-	// TODO: add automerge common cells (name/entity)
+func NewRuleEvaluationsTable(out io.Writer) table.Table {
+	return table.New(table.Simple, layouts.Default, out,
+		[]string{"Entity", "Rule", "Result", "Details"}).
+		SetAutoMerge(true).
+		SetEqualColumns(false)
 }
 
-// RenderRuleEvaluationStatusTable renders the rule evaluations table
+func buildLabeledBlock(label, detail, url string) string {
+	detail = strings.TrimSpace(detail)
+	url = strings.TrimSpace(url)
+
+	if detail == "" && url == "" {
+		return ""
+	}
+
+	if detail == "" {
+		return fmt.Sprintf("%s: %s", label, url)
+	}
+
+	block := fmt.Sprintf("%s: %s", label, detail)
+	if url != "" {
+		block += fmt.Sprintf("\nURL: %s", url)
+	}
+
+	return block
+}
+
+func buildDetailSummary(eval *minderv1.RuleEvaluationStatus) string {
+	sections := make([]string, 0, 4)
+
+	if alert := eval.GetAlert(); alert != nil {
+		if section := buildLabeledBlock("Alert", alert.GetDetails(), alert.GetUrl()); section != "" {
+			sections = append(sections, section)
+		}
+	}
+
+	if section := buildLabeledBlock("Remediation", eval.GetRemediationDetails(), eval.GetRemediationUrl()); section != "" {
+		sections = append(sections, section)
+	}
+
+	if detail := strings.TrimSpace(eval.GetDetails()); detail != "" {
+		sections = append(sections, fmt.Sprintf("Details: %s", detail))
+	}
+
+	if guidance := strings.TrimSpace(eval.GetGuidance()); guidance != "" {
+		sections = append(sections, fmt.Sprintf("Guidance: %s", guidance))
+	}
+
+	return strings.Join(sections, "\n")
+}
+
+// RuleDisplayName returns the most user-friendly rule name available.
+func RuleDisplayName(eval *minderv1.RuleEvaluationStatus) string {
+	return strings.TrimSpace(cmp.Or(eval.GetRuleDescriptionName(), eval.GetRuleDisplayName(), eval.GetRuleTypeName()))
+}
+
+// FormatEvaluationReasoning returns a rendered reasoning block for CLI output.
+func FormatEvaluationReasoning(eval *minderv1.RuleEvaluationStatus) string {
+	return cmp.Or(buildDetailSummary(eval), "-")
+}
+
+// RenderRuleEvaluationStatusTable renders the rule evaluations table.
 func RenderRuleEvaluationStatusTable(
 	statuses []*minderv1.RuleEvaluationStatus,
 	t table.Table,
 	emoji bool,
 ) {
-	// sort by entity
-	slices.SortFunc(statuses, func(a *minderv1.RuleEvaluationStatus, b *minderv1.RuleEvaluationStatus) int {
-		return strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"])
+	slices.SortFunc(statuses, func(a, b *minderv1.RuleEvaluationStatus) int {
+		if sort := strings.Compare(a.EntityInfo["name"], b.EntityInfo["name"]); sort != 0 {
+			return sort
+		}
+		return strings.Compare(a.Entity, b.Entity)
 	})
 
 	for _, eval := range statuses {
 		evalInfo := types.RuleEvalStatus(eval)
+		ruleName := RuleDisplayName(eval)
+		reasoning := FormatEvaluationReasoning(eval)
 		t.AddRowWithColor(
 			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.EntityInfo["name"], eval.Entity)),
-			layouts.NoColor(fmt.Sprintf("%s\n[%s]", eval.RuleDescriptionName, eval.RuleTypeName)),
+			layouts.NoColor(ruleName),
 			table.GetStatusIcon(evalInfo, emoji),
-			table.BestDetail(evalInfo),
+			layouts.NoColor(reasoning),
 		)
 	}
 }

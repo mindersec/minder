@@ -15,7 +15,9 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mindersec/minder/internal/db"
+	"github.com/mindersec/minder/internal/engine/actions"
 	em "github.com/mindersec/minder/internal/entities/models"
+	"github.com/mindersec/minder/internal/labels"
 )
 
 var (
@@ -36,10 +38,16 @@ var (
 )
 
 var (
-	allowedEntityTypes         = []string{"repository", "build_environment", "artifact", "pull_request"}
-	allowedEvaluationStatuses  = []string{"success", "failure", "error", "skipped", "pending"}
-	allowedRemediationStatuses = []string{"success", "failure", "error", "skipped", "not_available", "pending"}
-	allowedAlertStatuses       = []string{"on", "off", "error", "skipped", "not_available"}
+	allowedEntityTypes        = []string{"repository", "build_environment", "artifact", "pull_request"}
+	allowedEvaluationStatuses = []actions.EvalStatus{
+		actions.EvalStatusSuccess, actions.EvalStatusFailure, actions.EvalStatusError,
+		actions.EvalStatusSkipped, actions.EvalStatusPending}
+	allowedRemediationStatuses = []actions.RemediationStatus{
+		actions.RemediationStatusSuccess, actions.RemediationStatusFailure, actions.RemediationStatusError,
+		actions.RemediationStatusSkipped, actions.RemediationStatusNotAvailable, actions.RemediationStatusPending}
+	allowedAlertStatuses = []actions.AlertStatus{
+		actions.AlertStatusOn, actions.AlertStatusOff, actions.AlertStatusError,
+		actions.AlertStatusSkipped, actions.AlertStatusNotAvailable}
 )
 
 // Direction enumerates the direction of the Cursor.
@@ -375,22 +383,21 @@ func (filter *listEvaluationFilter) ExcludedProfileNames() []string {
 }
 
 func (filter *listEvaluationFilter) AddLabel(label string) error {
-	if label == "!*" {
-		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
+	inc, exc := labels.ParseLabel(label)
+
+	if inc != "" {
+		filter.includedLabels = append(filter.includedLabels, inc)
 	}
-	if label == "*" && len(filter.includedLabels) != 0 {
-		return fmt.Errorf("%w: label", ErrInvalidIdentifier)
-	}
-	if strings.HasPrefix(label, "!") {
-		label = strings.Split(label, "!")[1] // guaranteed to exist
-		filter.excludedLabels = append(filter.excludedLabels, label)
-	} else {
-		filter.includedLabels = append(filter.includedLabels, label)
+	if exc != "" {
+		filter.excludedLabels = append(filter.excludedLabels, exc)
 	}
 
 	return nil
 }
 func (filter *listEvaluationFilter) IncludedLabels() []string {
+	if slices.Contains(filter.includedLabels, "*") {
+		return []string{"*"}
+	}
 	return filter.includedLabels
 }
 func (filter *listEvaluationFilter) ExcludedLabels() []string {
@@ -404,7 +411,7 @@ func (filter *listEvaluationFilter) AddStatus(status string) error {
 	} else {
 		filter.includedStatuses = append(filter.includedStatuses, status)
 	}
-	if !slices.Contains(allowedEvaluationStatuses, status) {
+	if !slices.Contains(allowedEvaluationStatuses, actions.EvalStatus(status)) {
 		return fmt.Errorf("%w: status", ErrInvalidIdentifier)
 	}
 
@@ -430,7 +437,7 @@ func (filter *listEvaluationFilter) AddRemediation(remediation string) error {
 	} else {
 		filter.includedRemediations = append(filter.includedRemediations, remediation)
 	}
-	if !slices.Contains(allowedRemediationStatuses, remediation) {
+	if !slices.Contains(allowedRemediationStatuses, actions.RemediationStatus(remediation)) {
 		return fmt.Errorf("%w: remediation", ErrInvalidIdentifier)
 	}
 
@@ -456,7 +463,7 @@ func (filter *listEvaluationFilter) AddAlert(alert string) error {
 	} else {
 		filter.includedAlerts = append(filter.includedAlerts, alert)
 	}
-	if !slices.Contains(allowedAlertStatuses, alert) {
+	if !slices.Contains(allowedAlertStatuses, actions.AlertStatus(alert)) {
 		return fmt.Errorf("%w: alert", ErrInvalidIdentifier)
 	}
 

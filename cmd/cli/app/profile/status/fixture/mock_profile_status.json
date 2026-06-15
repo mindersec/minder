@@ -1,0 +1,48 @@
+{
+  "profile_status": {
+    "profile_id": "11111111-1111-1111-1111-111111111111",
+    "profile_name": "mock-profile",
+    "profile_status": "success",
+    "last_updated": "2024-01-01T00:00:00Z"
+  },
+  "rule_evaluation_status": [
+    {
+      "profile_id": "11111111-1111-1111-1111-111111111111",
+      "rule_id": "mock-rule-123",
+      "rule_name": "secret_scanning",
+      "rule_type_name": "secret_scanning",
+      "rule_display_name": "Enable secret scanning to detect hardcoded secrets",
+      "entity": "repository",
+      "entity_info": {
+        "entity_type": "repository",
+        "name": "acme-corp/mock-repo",
+        "provider": "github-app-mock-provider",
+        "repo_name": "mock-repo",
+        "repo_owner": "acme-corp",
+        "repository_id": "22222222-2222-2222-2222-222222222222"
+      },
+      "status": "success",
+      "last_updated": "2024-01-01T00:00:00Z",
+      "details": "Mock rule evaluation succeeded."
+    },
+    {
+      "profile_id": "11111111-1111-1111-1111-111111111111",
+      "rule_id": "mock-rule-456",
+      "rule_name": "codeql_enabled",
+      "rule_type_name": "codeql_enabled",
+      "rule_display_name": "Enable CodeQL for vulnerability scanning",
+      "entity": "repository",
+      "entity_info": {
+        "entity_type": "repository",
+        "name": "acme-corp/mock-repo",
+        "provider": "github-app-mock-provider",
+        "repo_name": "mock-repo",
+        "repo_owner": "acme-corp",
+        "repository_id": "22222222-2222-2222-2222-222222222222"
+      },
+      "status": "failure",
+      "last_updated": "2024-01-01T00:00:00Z",
+      "details": "Mock rule evaluation failed."
+    }
+  ]
+}

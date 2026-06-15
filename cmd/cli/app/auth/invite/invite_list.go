@@ -62,7 +62,7 @@ func inviteListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn
 			cmd.Println("No pending invitations")
 			return nil
 		}
-		t := table.New(table.Simple, layouts.Default, []string{"Sponsor", "Project", "Role", "Expires", "Code"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Sponsor", "Project", "Role", "Expires", "Code"})
 		for _, v := range res.Invitations {
 			t.AddRow(v.SponsorDisplay, v.Project, v.Role, v.ExpiresAt.AsTime().Format(time.RFC3339), v.Code)
 		}

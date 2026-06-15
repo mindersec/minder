@@ -92,7 +92,7 @@ func outputDataSource(cmd *cobra.Command, format string, ds *minderv1.DataSource
 		}
 		cmd.Println(out)
 	case app.Table:
-		t := table.New(table.Simple, layouts.Default, []string{"Name", "Type", "Functions"})
+		t := table.New(table.Simple, layouts.Default, cmd.OutOrStdout(), []string{"Name", "Type", "Functions"}).SetAutoMerge(true)
 		var functions iter.Seq[string]
 		switch driver := ds.Driver.(type) {
 		case *minderv1.DataSource_Rest:

@@ -1,0 +1,5 @@
+ NAME                          │ DESCRIPTION                               │ ALERT  │ REMEDIATE     
+───────────────────────────────┼───────────────────────────────────────────┼────────┼───────────────
+ mock-artifact-profile         │ Mock Artifact Signature Profile           │ on     │ off           
+───────────────────────────────┼───────────────────────────────────────────┼────────┼───────────────
+ mock-branch-protection        │ Mock Branch Protection Profile            │ off    │ on            
