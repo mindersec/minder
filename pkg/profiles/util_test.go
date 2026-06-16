@@ -742,7 +742,7 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				Name:        "",
 				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
 			},
-			existingProfileNames: []string{"this_is_a_very_long_display_name_that_will_exceed_the_limit_when"},
+			existingProfileNames: []string{"this_is_a_very_long_display_name_that_will_exceed_the_limit_whe"},
 			expected:             "this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
 		},
 		{
@@ -752,7 +752,7 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 				DisplayName: "This is a very long display name that will exceed the limit when counter is added",
 			},
 			existingProfileNames: []string{
-				"this_is_a_very_long_display_name_that_will_exceed_the_limit_when",
+				"this_is_a_very_long_display_name_that_will_exceed_the_limit_whe",
 				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-1",
 				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-2",
 				"this_is_a_very_long_display_name_that_will_exceed_the_limit_w-3",
@@ -772,7 +772,13 @@ func TestDeriveProfileNameFromDisplayName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result := profiles.DeriveProfileNameFromDisplayName(tt.profile, tt.existingProfileNames)
+			emptyProfile := &minderv1.Profile{}
+			existingMap := make(map[string]*minderv1.Profile, len(tt.existingProfileNames))
+			for _, name := range tt.existingProfileNames {
+				existingMap[name] = emptyProfile
+			}
+
+			result := profiles.DeriveProfileNameFromDisplayName(tt.profile, existingMap)
 			if result != tt.expected {
 				t.Errorf("DeriveProfileNameFromDisplayName: for profile %+v, expected %s, but got %s", tt.profile, tt.expected, result)
 			}
