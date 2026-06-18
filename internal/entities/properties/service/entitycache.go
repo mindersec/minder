@@ -47,7 +47,10 @@ func newPropertyServiceWithPersistentEntityCache(
 }
 
 func (ps *propertyServiceWithPersistentEntityCache) EntityWithPropertiesByID(
-	ctx context.Context, entityID uuid.UUID,
+	ctx context.Context,
+	entityID uuid.UUID,
+	projectID uuid.UUID,
+	providerID uuid.UUID,
 	opts *CallOptions,
 ) (*models.EntityWithProperties, error) {
 	// Check the cache first.
@@ -56,7 +59,7 @@ func (ps *propertyServiceWithPersistentEntityCache) EntityWithPropertiesByID(
 	}
 
 	// If not in the cache, call the underlying service.
-	ent, err := ps.PropertiesService.EntityWithPropertiesByID(ctx, entityID, opts)
+	ent, err := ps.PropertiesService.EntityWithPropertiesByID(ctx, entityID, projectID, providerID, opts)
 	if err != nil {
 		return nil, err
 	}
