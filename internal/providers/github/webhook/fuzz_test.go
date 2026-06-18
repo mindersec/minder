@@ -81,9 +81,7 @@ func FuzzGitHubEventParsers(f *testing.F) {
 		req.Header.Add("X-Hub-Signature-256", fmt.Sprintf("sha256=%s", expectedMAC))
 
 		wes := &metrics.WebhookEventState{
-			Typ:      "unknown",
-			Accepted: false,
-			Error:    true,
+			Typ: "unknown",
 		}
 
 		wes.Typ = github.WebHookType(req)
