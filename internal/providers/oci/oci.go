@@ -126,9 +126,8 @@ func (o *OCI) GetReferrer(ctx context.Context, contname, tag, artifactType strin
 	return refer, nil
 }
 
-// GetManifest returns the manifest for the given tag of the given container in the given namespace
-// for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
-func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manifest, error) {
+// getImage returns the remote image for the given tag of the given container.
+func (o *OCI) getImage(ctx context.Context, contname, tag string) (v1.Image, error) {
 	ref, err := o.getReference(contname, tag)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get reference: %w", err)
@@ -137,6 +136,17 @@ func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manife
 	img, err := remote.Image(ref, remote.WithContext(ctx), remote.WithUserAgent(constants.ServerUserAgent))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get image: %w", err)
+	}
+
+	return img, nil
+}
+
+// GetManifest returns the manifest for the given tag of the given container in the given namespace
+// for the OCI provider. It returns the manifest as a golang struct given the OCI spec.
+func (o *OCI) GetManifest(ctx context.Context, contname, tag string) (*v1.Manifest, error) {
+	img, err := o.getImage(ctx, contname, tag)
+	if err != nil {
+		return nil, err
 	}
 
 	man, err := img.Manifest()
@@ -186,27 +196,19 @@ func (ov *OCI) GetArtifactVersions(
 	for _, t := range tags {
 		// TODO: We probably should try to surface errors while returning a subset
 		// of manifests.
-		man, err := ov.GetManifest(ctx, artifact.GetName(), t)
+		img, err := ov.getImage(ctx, artifact.GetName(), t)
 		if err != nil {
 			return nil, err
 		}
 
-		// NOTE/FIXME: This is going to be a hassle as not a lot of
-		// container images have the needed annotations. We'd need
-		// go down to a specific image configuration (e.g. for _some_
-		// architecture) to actually verify the creation date...
-		// Anybody has other ideas?
-		strcreated, ok := man.Annotations[imgspecv1.AnnotationCreated]
-		var createdAt time.Time
-		if ok {
-			// TODO: Verify if this is correct
-			createdAt, err = time.Parse(time.RFC3339, strcreated)
-			if err != nil {
-				return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
-			}
-		} else {
-			// FIXME: This is a hack
-			createdAt = time.Now()
+		man, err := img.Manifest()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get manifest for tag %s: %w", t, err)
+		}
+
+		createdAt, err := resolveCreatedAt(man, img.ConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get creation time for tag %s: %w", t, err)
 		}
 
 		if err := filter.IsSkippable(createdAt, []string{t}); err != nil {
@@ -229,6 +231,33 @@ func (ov *OCI) GetArtifactVersions(
 	}
 
 	return out, nil
+}
+
+// resolveCreatedAt determines the creation time of an artifact version. It
+// prefers the org.opencontainers.image.created manifest annotation and, when
+// that annotation is absent, falls back to the Created field of the image
+// configuration, which records the real build time. Unlike the previous
+// time.Now() fallback, the resolved value always reflects the image itself: a
+// zero or Unix-epoch timestamp is a legitimate reproducible-build value and is
+// preserved as-is rather than being overwritten with the current time. The
+// image config is passed as a getter so that the config blob is fetched only
+// when the annotation is absent, and so the resolution logic stays testable
+// without a registry.
+func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error)) (time.Time, error) {
+	if strcreated, ok := man.Annotations[imgspecv1.AnnotationCreated]; ok {
+		createdAt, err := time.Parse(time.RFC3339, strcreated)
+		if err != nil {
+			return time.Time{}, fmt.Errorf("parsing created annotation %q: %w", strcreated, err)
+		}
+		return createdAt, nil
+	}
+
+	cfg, err := configFile()
+	if err != nil {
+		return time.Time{}, fmt.Errorf("reading image config: %w", err)
+	}
+
+	return cfg.Created.Time, nil
 }
 
 // getReferenceString returns the reference string for a given container name and tag
