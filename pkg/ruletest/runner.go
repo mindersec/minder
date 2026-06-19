@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
 )
 
@@ -37,10 +38,21 @@ type Runner struct {
 
 // NewRunner creates a new test runner with the default set of predeclared builtins.
 func NewRunner() *Runner {
+	assertMod, err := starlarktest.LoadAssertModule()
+	if err != nil {
+		panic(fmt.Errorf("failed to load starlarktest assert module: %w", err))
+	}
+
+	predeclared := starlark.StringDict{
+		"fail": starlark.NewBuiltin("fail", builtinFail),
+		"eval": starlark.NewBuiltin("eval", builtinEval),
+	}
+	for k, v := range assertMod {
+		predeclared[k] = v
+	}
+
 	return &Runner{
-		predeclared: starlark.StringDict{
-			"fail": starlark.NewBuiltin("fail", builtinFail),
-		},
+		predeclared: predeclared,
 	}
 }
 
@@ -63,10 +75,7 @@ func builtinFail(
 // for each test_* function found in it.
 // src may be nil, or a string, []byte, or io.Reader containing the file source.
 func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
-	thread := &starlark.Thread{
-		Name:  "ruletest",
-		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
-	}
+	thread := r.newThread("ruletest")
 
 	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{}, thread, filename, src, r.predeclared)
 	if err != nil {
@@ -93,18 +102,24 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 
 	var results []TestResult
 	for name, fn := range testFns {
-		result := runOneTest(name, fn)
+		result := r.runOneTest(name, fn)
 		results = append(results, result)
 	}
 
 	return results, nil
 }
 
-func runOneTest(name string, fn *starlark.Function) TestResult {
+func (*Runner) newThread(name string) *starlark.Thread {
 	thread := &starlark.Thread{
 		Name:  name,
 		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
 	}
+	starlarktest.SetReporter(thread, threadReporter{thread})
+	return thread
+}
+
+func (r *Runner) runOneTest(name string, fn *starlark.Function) TestResult {
+	thread := r.newThread(name)
 
 	result := TestResult{Name: name}
 
@@ -189,6 +204,14 @@ func appendFailure(thread *starlark.Thread, msg string) {
 	}
 	failures := ptr.(*[]string)
 	*failures = append(*failures, msg)
+}
+
+type threadReporter struct {
+	thread *starlark.Thread
+}
+
+func (r threadReporter) Error(args ...any) {
+	appendFailure(r.thread, fmt.Sprint(args...))
 }
 
 // getFailures retrieves the accumulated failure messages from the thread-local
