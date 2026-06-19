@@ -16,13 +16,20 @@ func TestDiscoverFiles(t *testing.T) {
 		t.Fatalf("DiscoverFiles failed: %v", err)
 	}
 
-	if len(files) != 1 {
-		t.Fatalf("expected 1 file, got %d", len(files))
+	found := make(map[string]bool)
+	for _, f := range files {
+		found[f] = true
 	}
 
-	expected := filepath.Join("testdata", "sample.star")
-	if files[0] != expected {
-		t.Errorf("expected %s, got %s", expected, files[0])
+	expected := []string{
+		filepath.Join("testdata", "eval.star"),
+		filepath.Join("testdata", "sample.star"),
+	}
+
+	for _, exp := range expected {
+		if !found[exp] {
+			t.Errorf("expected to find %s, but it was missing", exp)
+		}
 	}
 }
 
@@ -81,5 +88,32 @@ func TestRunFile(t *testing.T) {
 				t.Errorf("results[%d] (%s): failure[%d] = %q, want %q", i, tt.name, j, results[i].Failures[j], want)
 			}
 		}
+	}
+}
+
+func TestRunEvalFile(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		file string
+	}{
+		{name: "eval", file: "eval.star"},
+	}
+
+	r := NewRunner()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			results, err := r.RunFile(filepath.Join("testdata", tt.file), nil)
+			if err != nil {
+				t.Fatalf("RunFile failed for %s: %v", tt.file, err)
+			}
+			for _, res := range results {
+				if !res.Passed() {
+					t.Errorf("test %s failed: %v", res.Name, res.Failures)
+				}
+			}
+		})
 	}
 }
