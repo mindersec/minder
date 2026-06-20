@@ -6,6 +6,7 @@ package ruletest
 import (
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -84,8 +85,8 @@ func TestRunFile(t *testing.T) {
 				t.Errorf("results[%d] (%s): missing expected failure %q", i, tt.name, want)
 				continue
 			}
-			if results[i].Failures[j] != want {
-				t.Errorf("results[%d] (%s): failure[%d] = %q, want %q", i, tt.name, j, results[i].Failures[j], want)
+			if !strings.Contains(results[i].Failures[j], want) {
+				t.Errorf("results[%d] (%s): failure[%d] = %q, want it to contain %q", i, tt.name, j, results[i].Failures[j], want)
 			}
 		}
 	}

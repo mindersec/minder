@@ -2,9 +2,9 @@
 def test_passing():
     pass
 
-# Simple test that fails using the built-in fail()
+# Simple test that fails using assert.fail()
 def test_failing():
-    fail("this test failed intentionally")
+    assert.fail("this test failed intentionally")
 
 # Test that throws a Starlark exception
 def test_exception():

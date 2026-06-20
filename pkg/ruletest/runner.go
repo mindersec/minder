@@ -44,7 +44,6 @@ func NewRunner() *Runner {
 	}
 
 	predeclared := starlark.StringDict{
-		"fail": starlark.NewBuiltin("fail", builtinFail),
 		"eval": starlark.NewBuiltin("eval", builtinEval),
 	}
 	for k, v := range assertMod {
@@ -54,21 +53,6 @@ func NewRunner() *Runner {
 	return &Runner{
 		predeclared: predeclared,
 	}
-}
-
-func builtinFail(
-	thread *starlark.Thread,
-	b *starlark.Builtin,
-	args starlark.Tuple,
-	kwargs []starlark.Tuple,
-) (starlark.Value, error) {
-	var msg string
-	if err := starlark.UnpackPositionalArgs(b.Name(), args, kwargs, 1, &msg); err != nil {
-		return nil, err
-	}
-
-	appendFailure(thread, msg)
-	return starlark.None, nil
 }
 
 // RunFile executes a single Starlark test file and returns the results
