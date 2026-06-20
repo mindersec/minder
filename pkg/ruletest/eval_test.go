@@ -5,8 +5,10 @@ package ruletest
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"go.starlark.net/starlark"
 
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -52,20 +54,14 @@ func TestFormatEvalResult(t *testing.T) {
 			t.Parallel()
 			dict := formatEvalResult(tt.err)
 
-			v, found, err := dict.Get(starlark.String("status"))
-			if err != nil || !found {
-				t.Fatalf("failed to get status: %v", err)
-			}
-			if s, ok := v.(starlark.String); !ok || string(s) != tt.wantSt {
-				t.Errorf("status = %v, want %q", v, tt.wantSt)
+			result, err := dictToGoMap(dict)
+			if err != nil {
+				t.Fatalf("dictToGoMap failed: %v", err)
 			}
 
-			v, found, err = dict.Get(starlark.String("message"))
-			if err != nil || !found {
-				t.Fatalf("failed to get message: %v", err)
-			}
-			if s, ok := v.(starlark.String); !ok || string(s) != tt.wantMsg {
-				t.Errorf("message = %v, want %q", v, tt.wantMsg)
+			diff := cmp.Diff(result, map[string]any{"status": tt.wantSt, "message": tt.wantMsg})
+			if diff != "" {
+				t.Errorf("unexpected result: %s", diff)
 			}
 		})
 	}
@@ -108,8 +104,8 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
-			if err.Error() == "" {
-				t.Fatalf("error is empty")
+			if !strings.Contains(err.Error(), tt.wantErr) {
+				t.Errorf("error %q does not contain expected string %q", err.Error(), tt.wantErr)
 			}
 		})
 	}
