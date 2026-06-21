@@ -6,7 +6,6 @@
 package pull_request_comment
 
 import (
-	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -140,103 +139,117 @@ func (alert *Alert) Do(
 }
 
 func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.ActionCmd) (json.RawMessage, error) {
+	// Process the command
+	switch cmd {
+	// Create or update a review
+	case interfaces.ActionCmdOn:
+		return alert.handleActionOn(ctx, params)
+	// Dismiss the review
+	case interfaces.ActionCmdOff:
+		return alert.handleActionOff(ctx, params)
+	case interfaces.ActionCmdDoNothing:
+		// Return the previous alert status.
+		return alert.runDoNothing(ctx, params)
+	}
+	return nil, enginerr.ErrActionSkipped
+}
+
+func (alert *Alert) handleActionOn(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
 	logger := zerolog.Ctx(ctx).With().
 		Str("owner", params.Owner).
 		Str("repo", params.Repo).
 		Int("pr", params.Number).
 		Logger()
 
-	// Process the command
-	switch cmd {
-	// Create or update a review
-	case interfaces.ActionCmdOn:
-		existingReview, err := alert.findExistingReview(ctx, params)
-		if err != nil {
-			return nil, fmt.Errorf("error searching for existing PR review: %w", err)
-		}
-
-		var reviewID int64
-		if existingReview != nil {
-			reviewID = existingReview.GetID()
-			if _, err := alert.gh.UpdateReview(ctx, params.Owner, params.Repo, params.Number, reviewID, params.Comment); err != nil {
-				return nil, fmt.Errorf("error updating PR review: %w, %w", err, enginerr.ErrActionFailed)
-			}
-			if len(params.LineComments) > 0 {
-				// The GitHub UpdateReview API only accepts a new body; it cannot add new
-				// line-level comments to an already-submitted review. Line comments are
-				// only posted when the review is first created.
-				logger.Warn().Int64("review_id", reviewID).
-					Int("line_comments", len(params.LineComments)).
-					Msg("PR review updated but line comments were not re-posted (GitHub API limitation)")
-			} else {
-				logger.Info().Int64("review_id", reviewID).Msg("PR review updated")
-			}
-		} else {
-			req := &github.PullRequestReviewRequest{
-				Body:  github.String(params.Comment),
-				Event: github.String(params.Event),
-			}
-			// CommitID is required by GitHub for reviews that include line comments;
-			// it tells GitHub which commit's diff to annotate.
-			if params.CommitSha != "" {
-				req.CommitID = github.String(params.CommitSha)
-			}
-			// Attach line-specific draft comments if any were configured
-			if len(params.LineComments) > 0 {
-				req.Comments = params.LineComments
-			}
-			review, err := alert.gh.CreateReview(ctx, params.Owner, params.Repo, params.Number, req)
-			if err != nil {
-				return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
-			}
-			reviewID = review.GetID()
-			existingReview = review
-			logger.Info().Int64("review_id", reviewID).
-				Int("line_comments", len(params.LineComments)).
-				Msg("PR review created")
-		}
-
-		now := time.Now()
-		newMeta, err := json.Marshal(alertMetadata{
-			ReviewID:       strconv.FormatInt(reviewID, 10),
-			SubmittedAt:    &now,
-			PullRequestUrl: existingReview.HTMLURL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
-		}
-
-		return newMeta, nil
-	// Dismiss the review
-	case interfaces.ActionCmdOff:
-		existingReview, err := alert.findExistingReview(ctx, params)
-		if err != nil {
-			return nil, fmt.Errorf("error searching for existing PR review: %w", err)
-		}
-
-		if existingReview == nil {
-			logger.Debug().Msg("No PR review to dismiss")
-			return nil, enginerr.ErrActionTurnedOff
-		}
-
-		reviewID := existingReview.GetID()
-		if _, err := alert.gh.DismissReview(
-			ctx, params.Owner, params.Repo, params.Number, reviewID, &github.PullRequestReviewDismissalRequest{
-				Message: github.String("Dismissed due to alert being turned off"),
-			},
-		); err != nil {
-			if errors.Is(err, enginerr.ErrNotFound) {
-				return nil, fmt.Errorf("PR review already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
-			}
-			return nil, fmt.Errorf("error dismissing PR review: %w, %w", err, enginerr.ErrActionFailed)
-		}
-		logger.Info().Int64("review_id", reviewID).Msg("PR review dismissed")
-		return nil, enginerr.ErrActionTurnedOff
-	case interfaces.ActionCmdDoNothing:
-		// Return the previous alert status.
-		return alert.runDoNothing(ctx, params)
+	existingReview, err := alert.findExistingReview(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("error searching for existing PR review: %w", err)
 	}
-	return nil, enginerr.ErrActionSkipped
+
+	var reviewID int64
+	if existingReview != nil {
+		reviewID = existingReview.GetID()
+		if _, err := alert.gh.UpdateReview(ctx, params.Owner, params.Repo, params.Number, reviewID, params.Comment); err != nil {
+			return nil, fmt.Errorf("error updating PR review: %w, %w", err, enginerr.ErrActionFailed)
+		}
+		if len(params.LineComments) > 0 {
+			// The GitHub UpdateReview API only accepts a new body; it cannot add new
+			// line-level comments to an already-submitted review. Line comments are
+			// only posted when the review is first created.
+			logger.Warn().Int64("review_id", reviewID).
+				Int("line_comments", len(params.LineComments)).
+				Msg("PR review updated but line comments were not re-posted (GitHub API limitation)")
+		} else {
+			logger.Info().Int64("review_id", reviewID).Msg("PR review updated")
+		}
+	} else {
+		req := &github.PullRequestReviewRequest{
+			Body:  github.String(params.Comment),
+			Event: github.String(params.Event),
+		}
+		// CommitID is required by GitHub for reviews that include line comments;
+		// it tells GitHub which commit's diff to annotate.
+		if params.CommitSha != "" {
+			req.CommitID = github.String(params.CommitSha)
+		}
+		// Attach line-specific draft comments if any were configured
+		if len(params.LineComments) > 0 {
+			req.Comments = params.LineComments
+		}
+		review, err := alert.gh.CreateReview(ctx, params.Owner, params.Repo, params.Number, req)
+		if err != nil {
+			return nil, fmt.Errorf("error creating PR review: %w, %w", err, enginerr.ErrActionFailed)
+		}
+		reviewID = review.GetID()
+		existingReview = review
+		logger.Info().Int64("review_id", reviewID).
+			Int("line_comments", len(params.LineComments)).
+			Msg("PR review created")
+	}
+
+	now := time.Now()
+	newMeta, err := json.Marshal(alertMetadata{
+		ReviewID:       strconv.FormatInt(reviewID, 10),
+		SubmittedAt:    &now,
+		PullRequestUrl: existingReview.HTMLURL,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling alert metadata json: %w", err)
+	}
+
+	return newMeta, nil
+}
+
+func (alert *Alert) handleActionOff(ctx context.Context, params *paramsPR) (json.RawMessage, error) {
+	logger := zerolog.Ctx(ctx).With().
+		Str("owner", params.Owner).
+		Str("repo", params.Repo).
+		Int("pr", params.Number).
+		Logger()
+
+	existingReview, err := alert.findExistingReview(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("error searching for existing PR review: %w", err)
+	}
+
+	if existingReview == nil {
+		logger.Debug().Msg("No PR review to dismiss")
+		return nil, enginerr.ErrActionTurnedOff
+	}
+
+	reviewID := existingReview.GetID()
+	if _, err := alert.gh.DismissReview(
+		ctx, params.Owner, params.Repo, params.Number, reviewID, &github.PullRequestReviewDismissalRequest{
+			Message: github.String("Dismissed due to alert being turned off"),
+		},
+	); err != nil {
+		if errors.Is(err, enginerr.ErrNotFound) {
+			return nil, fmt.Errorf("PR review already dismissed: %w, %w", err, enginerr.ErrActionTurnedOff)
+		}
+		return nil, fmt.Errorf("error dismissing PR review: %w, %w", err, enginerr.ErrActionFailed)
+	}
+	logger.Info().Int64("review_id", reviewID).Msg("PR review dismissed")
+	return nil, enginerr.ErrActionTurnedOff
 }
 
 func (alert *Alert) findExistingReview(ctx context.Context, params *paramsPR) (*github.PullRequestReview, error) {
@@ -342,7 +355,10 @@ func (alert *Alert) getParamsForPRComment(
 
 	result.RuleName = params.GetRule().Name
 
-	action := cmp.Or(alert.reviewCfg.GetAction(), "comment")
+	action := alert.reviewCfg.GetAction()
+	if action == "" {
+		action = "comment"
+	}
 	if strings.ToLower(action) == "request_changes" {
 		result.Event = "REQUEST_CHANGES"
 	} else {
@@ -365,9 +381,9 @@ func (alert *Alert) getParamsForPRComment(
 		}
 
 		draftComment := &github.DraftReviewComment{
-			Path:     github.String(lc.GetFilepath()),
-			Body:     github.String(rendered),
-			Line:     github.Int(int(lc.GetLineEnd())),
+			Path:      github.String(lc.GetFilepath()),
+			Body:      github.String(rendered),
+			Line:      github.Int(int(lc.GetLineEnd())),
 			StartLine: github.Int(int(lc.GetLineStart())),
 		}
 		// If the comment spans only one line, omit StartLine (GitHub requires start_line < line)
