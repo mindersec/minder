@@ -57,15 +57,16 @@ type PrCommentTemplateParams struct {
 }
 
 type paramsPR struct {
-	Owner      string
-	Repo       string
-	CommitSha  string
-	Number     int
-	Comment    string
-	RuleName   string
-	Event      string
-	Metadata   *alertMetadata
-	prevStatus *db.ListRuleEvaluationsByProfileIdRow
+	Owner        string
+	Repo         string
+	CommitSha    string
+	Number       int
+	Comment      string
+	LineComments []*github.DraftReviewComment
+	RuleName     string
+	Event        string
+	Metadata     *alertMetadata
+	prevStatus   *db.ListRuleEvaluationsByProfileIdRow
 }
 
 type alertMetadata struct {
@@ -160,11 +161,29 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 			if _, err := alert.gh.UpdateReview(ctx, params.Owner, params.Repo, params.Number, reviewID, params.Comment); err != nil {
 				return nil, fmt.Errorf("error updating PR review: %w, %w", err, enginerr.ErrActionFailed)
 			}
-			logger.Info().Int64("review_id", reviewID).Msg("PR review updated")
+			if len(params.LineComments) > 0 {
+				// The GitHub UpdateReview API only accepts a new body; it cannot add new
+				// line-level comments to an already-submitted review. Line comments are
+				// only posted when the review is first created.
+				logger.Warn().Int64("review_id", reviewID).
+					Int("line_comments", len(params.LineComments)).
+					Msg("PR review updated but line comments were not re-posted (GitHub API limitation)")
+			} else {
+				logger.Info().Int64("review_id", reviewID).Msg("PR review updated")
+			}
 		} else {
 			req := &github.PullRequestReviewRequest{
 				Body:  github.String(params.Comment),
 				Event: github.String(params.Event),
+			}
+			// CommitID is required by GitHub for reviews that include line comments;
+			// it tells GitHub which commit's diff to annotate.
+			if params.CommitSha != "" {
+				req.CommitID = github.String(params.CommitSha)
+			}
+			// Attach line-specific draft comments if any were configured
+			if len(params.LineComments) > 0 {
+				req.Comments = params.LineComments
 			}
 			review, err := alert.gh.CreateReview(ctx, params.Owner, params.Repo, params.Number, req)
 			if err != nil {
@@ -172,7 +191,9 @@ func (alert *Alert) run(ctx context.Context, params *paramsPR, cmd interfaces.Ac
 			}
 			reviewID = review.GetID()
 			existingReview = review
-			logger.Info().Int64("review_id", reviewID).Msg("PR review created")
+			logger.Info().Int64("review_id", reviewID).
+				Int("line_comments", len(params.LineComments)).
+				Msg("PR review created")
 		}
 
 		now := time.Now()
@@ -244,6 +265,9 @@ func (alert *Alert) runDry(ctx context.Context, params *paramsPR, cmd interfaces
 		body := github.String(params.Comment)
 		logger.Info().Msgf("dry run: create a PR comment on PR %d in repo %s/%s with the following body: %s",
 			params.Number, params.Owner, params.Repo, *body)
+		if len(params.LineComments) > 0 {
+			logger.Info().Msgf("dry run: would also post %d line comment(s)", len(params.LineComments))
+		}
 		return nil, nil
 	case interfaces.ActionCmdOff:
 		if params.Metadata == nil || params.Metadata.ReviewID == "" {
@@ -327,6 +351,31 @@ func (alert *Alert) getParamsForPRComment(
 
 	// Add magic comment to identify Minder reviews for this rule
 	result.Comment = fmt.Sprintf("%s\n\n<!-- minder-rule: %s -->", comment, result.RuleName)
+
+	// Render and collect line-specific draft comments
+	for i, lc := range alert.reviewCfg.GetLineComments() {
+		commentBody := lc.GetComment()
+		lineTmpl, err := util.NewSafeHTMLTemplate(&commentBody, fmt.Sprintf("line_comment_%d", i))
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse line comment %d template: %w", i, err)
+		}
+		rendered, err := lineTmpl.Render(ctx, tmplParams, PrCommentMaxLength)
+		if err != nil {
+			return nil, fmt.Errorf("cannot render line comment %d: %w", i, err)
+		}
+
+		draftComment := &github.DraftReviewComment{
+			Path:     github.String(lc.GetFilepath()),
+			Body:     github.String(rendered),
+			Line:     github.Int(int(lc.GetLineEnd())),
+			StartLine: github.Int(int(lc.GetLineStart())),
+		}
+		// If the comment spans only one line, omit StartLine (GitHub requires start_line < line)
+		if lc.GetLineStart() == lc.GetLineEnd() {
+			draftComment.StartLine = nil
+		}
+		result.LineComments = append(result.LineComments, draftComment)
+	}
 
 	// Unmarshal the existing alert metadata, if any
 	if metadata != nil {

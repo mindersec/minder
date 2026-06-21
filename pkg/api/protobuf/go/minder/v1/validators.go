@@ -398,6 +398,29 @@ func (comment *RuleType_Definition_Alert_AlertTypePRComment) Validate() error {
 		return fmt.Errorf("%w: pull request comment message is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
+	for i, lc := range comment.GetLineComments() {
+		if lc.GetFilepath() == "" {
+			return fmt.Errorf("%w: line_comment %d: filepath cannot be empty", ErrInvalidRuleTypeDefinition, i)
+		}
+		if lc.GetLineStart() <= 0 {
+			return fmt.Errorf("%w: line_comment %d: line_start must be greater than 0", ErrInvalidRuleTypeDefinition, i)
+		}
+		if lc.GetLineEnd() <= 0 {
+			return fmt.Errorf("%w: line_comment %d: line_end must be greater than 0", ErrInvalidRuleTypeDefinition, i)
+		}
+		if lc.GetLineStart() > lc.GetLineEnd() {
+			return fmt.Errorf("%w: line_comment %d: line_start (%d) must be <= line_end (%d)",
+				ErrInvalidRuleTypeDefinition, i, lc.GetLineStart(), lc.GetLineEnd())
+		}
+		if lc.GetComment() == "" {
+			return fmt.Errorf("%w: line_comment %d: comment cannot be empty", ErrInvalidRuleTypeDefinition, i)
+		}
+		_, err := util.NewSafeHTMLTemplate(&lc.Comment, fmt.Sprintf("line_comment_%d", i))
+		if err != nil {
+			return fmt.Errorf("%w: line_comment %d: comment is not a valid template: %w", ErrInvalidRuleTypeDefinition, i, err)
+		}
+	}
+
 	return nil
 }
 
