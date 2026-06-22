@@ -341,6 +341,19 @@ func TestPullRequestLineCommentAlert(t *testing.T) {
 			},
 			expectMeta: true,
 		},
+		{
+			name: "line comment body has invalid template syntax",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/file.go",
+					LineStart: 5,
+					LineEnd:   5,
+					Comment:   "Error: {{ .MissingField",
+				},
+			},
+			expectedErr: fmt.Errorf("template"),
+			expectMeta:  false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -358,17 +371,19 @@ func TestPullRequestLineCommentAlert(t *testing.T) {
 			}
 
 			mockClient := mock_provifv1.NewMockReviewPublisher(ctrl)
-			mockClient.EXPECT().
-				ListReviews(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				Return(nil, nil)
-			mockClient.EXPECT().
-				CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(_ context.Context, _, _ string, _ int, req *github.PullRequestReviewRequest) (*github.PullRequestReview, error) {
-					if tt.validateReq != nil {
-						tt.validateReq(t, req)
-					}
-					return &github.PullRequestReview{ID: github.Int64(reviewID)}, nil
-				})
+			if tt.expectedErr == nil {
+				mockClient.EXPECT().
+					ListReviews(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, nil)
+				mockClient.EXPECT().
+					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _ string, _ int, req *github.PullRequestReviewRequest) (*github.PullRequestReview, error) {
+						if tt.validateReq != nil {
+							tt.validateReq(t, req)
+						}
+						return &github.PullRequestReview{ID: github.Int64(reviewID)}, nil
+					})
+			}
 
 			prCommentAlert, err := NewPullRequestCommentAlert(
 				TestActionTypeValid, &prCommentCfg, mockClient, models.ActionOptOn)
@@ -391,7 +406,12 @@ func TestPullRequestLineCommentAlert(t *testing.T) {
 				evalParams,
 				nil,
 			)
-			require.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
 			if tt.expectMeta {
 				require.NotNil(t, retMeta)
 			} else {
