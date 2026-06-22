@@ -6,6 +6,7 @@
 package pull_request_comment
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -355,9 +356,6 @@ func (alert *Alert) getParamsForPRComment(
 
 	result.RuleName = params.GetRule().Name
 
-	action := alert.reviewCfg.GetAction()
-	if action == "" {
-		action = "comment"
 	action := cmp.Or(alert.reviewCfg.GetAction(), "comment")
 	if strings.ToLower(action) == "request_changes" {
 		result.Event = "REQUEST_CHANGES"
