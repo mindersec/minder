@@ -100,6 +100,7 @@ func TestRunEvalFile(t *testing.T) {
 		file string
 	}{
 		{name: "eval", file: "eval.star"},
+		{name: "builtins", file: "builtins_test.star"},
 	}
 
 	r := NewRunner()
