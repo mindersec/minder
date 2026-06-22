@@ -358,7 +358,7 @@ func (alert *Alert) getParamsForPRComment(
 	action := alert.reviewCfg.GetAction()
 	if action == "" {
 		action = "comment"
-	}
+	action := cmp.Or(alert.reviewCfg.GetAction(), "comment")
 	if strings.ToLower(action) == "request_changes" {
 		result.Event = "REQUEST_CHANGES"
 	} else {
