@@ -7,6 +7,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -51,6 +52,10 @@ type PropertiesService interface {
 	// EntityWithPropertiesByID Fetches an Entity by ID and Project in order to refresh the properties
 	EntityWithPropertiesByID(
 		ctx context.Context, entityID uuid.UUID, opts *CallOptions,
+	) (*models.EntityWithProperties, error)
+	// PropertiesFromJSON converts pre-fetched {"key": value} data from JSON_OBJECT_AGG into an EntityWithProperties
+	PropertiesFromJSON(
+		entity db.EntityInstance, props json.RawMessage, opts *CallOptions,
 	) (*models.EntityWithProperties, error)
 	// EntityWithPropertiesByUpstreamHint fetches an entity by upstream properties
 	// and returns the entity with its properties. It is expected that the caller
@@ -299,6 +304,29 @@ func (ps *propertiesService) EntityWithPropertiesByID(
 	}
 
 	return ps.getEntityWithProperties(ctx, ent, opts)
+}
+
+// PropertiesFromJSON converts pre-fetched {"key": propertyvalue} data from JSON_OBJECT_AGG
+// into an EntityWithProperties
+func (*propertiesService) PropertiesFromJSON(
+	entity db.EntityInstance, propsData json.RawMessage, _ *CallOptions,
+) (*models.EntityWithProperties, error) {
+	var propData map[string]db.PropertyWrapper
+
+	err := json.Unmarshal(propsData, &propData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling properties: %w", err)
+	}
+
+	// TODO: check that the version is "v1" (db.propValueV1) for each PropertyWrapper
+	propsMap := make(map[string]any, len(propData))
+	for k, v := range propData {
+		propsMap[k] = v.Value
+	}
+	props := properties.NewProperties(propsMap)
+
+	ewp := models.NewEntityWithProperties(entity, props)
+	return ewp, nil
 }
 
 // ByUpstreamHint is a hint to help find an entity by upstream ID

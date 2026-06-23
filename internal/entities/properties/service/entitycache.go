@@ -5,11 +5,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/puzpuzpuz/xsync/v3"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/entities/models"
 )
 
@@ -65,4 +67,25 @@ func (ps *propertyServiceWithPersistentEntityCache) EntityWithPropertiesByID(
 	ps.entCache.Store(entityID, ent)
 
 	return ent, nil
+}
+
+// PropertiesFromJSON converts pre-fetched {"key": value} data from JSON_OBJECT_AGG into an EntityWithProperties
+func (ps *propertyServiceWithPersistentEntityCache) PropertiesFromJSON(
+	entity db.EntityInstance, props json.RawMessage, opts *CallOptions,
+) (*models.EntityWithProperties, error) {
+	// Check the cache first.
+	if ent, ok := ps.entCache.Load(entity.ID); ok {
+		return ent, nil
+	}
+
+	// If not in the cache, call the underlying service.
+	ewp, err := ps.PropertiesService.PropertiesFromJSON(entity, props, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	// Store the entity in the cache.
+	ps.entCache.Store(entity.ID, ewp)
+
+	return ewp, nil
 }

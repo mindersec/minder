@@ -4570,6 +4570,10 @@
         "properties": {
           "type": "object",
           "description": "properties is a map of properties of the entity."
+        },
+        "originatingId": {
+          "type": "string",
+          "description": "originating_id is the id of the entity which originated this resource.\nIf the originating entity is cleaned up, this entity will also be removed."
         }
       },
       "title": "used for parsing resources in ruletypes"

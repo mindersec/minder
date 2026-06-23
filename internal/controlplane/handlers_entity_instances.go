@@ -42,43 +42,39 @@ func (s *Server) ListEntities(
 		return nil, fmt.Errorf("error getting provider: %w", err)
 	}
 
-	// Get entity type from request
-	entityType := in.GetEntityType()
-	if entityType == pb.Entity_ENTITY_UNSPECIFIED {
-		return nil, util.UserVisibleError(codes.InvalidArgument, "entity type must be specified")
-	}
-
 	// Get limit from request
 	limit := in.GetCursor().GetSize()
 	if limit == 0 {
-		limit = 20 // Default limit
+		limit = 100 // Default limit
 	}
-
-	// Get cursor from request
-	cursor := in.GetCursor().GetCursor()
 
 	// Call service to get entities
 	outentities, nextCursor, err := s.entityService.ListEntities(
 		ctx,
 		projectID,
 		provider.ID,
-		entityType,
-		cursor,
+		in.GetEntityType(),
+		in.GetCursor().GetCursor(),
 		int64(limit),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error listing entities: %w", err)
+	}
+
+	var pageInfo *pb.CursorPage
+	if nextCursor != "" {
+		pageInfo = &pb.CursorPage{
+			Next: &pb.Cursor{
+				Cursor: nextCursor,
+				Size:   limit,
+			},
+		}
 	}
 
 	// Create response
 	resp := &pb.ListEntitiesResponse{
 		Results: outentities,
-		Page: &pb.CursorPage{
-			Next: &pb.Cursor{
-				Cursor: nextCursor,
-				Size:   limit,
-			},
-		},
+		Page:    pageInfo,
 	}
 
 	return resp, nil
