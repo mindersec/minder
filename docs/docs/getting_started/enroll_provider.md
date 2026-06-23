@@ -8,9 +8,9 @@ credentials to allow Minder to manage your GitHub repositories. This allows
 Minder to inspect and manage your repository configuration. You will be prompted
 to grant Minder access.
 
-In the future, Minder will support other source control and artifact
-repositories, and you will be able to enroll credentials for those providers in
-the same manner.
+Minder also supports the GitLab provider, which you can enroll using a
+similar flow. See [Enrolling the GitLab provider](enroll_gitlab_provider)
+for details.
 
 :::note
 
