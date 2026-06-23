@@ -83,11 +83,6 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 	baseDir := ""
 	if filename != "" {
 		baseDir = filepath.Dir(filename)
-		if !filepath.IsAbs(baseDir) {
-			if abs, err := filepath.Abs(baseDir); err == nil {
-				baseDir = abs
-			}
-		}
 	}
 
 	var fileSystem fs.FS
@@ -143,6 +138,14 @@ func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS
 	}
 
 	result.Failures = append(result.Failures, tr.failures...)
+
+	if strings.HasPrefix(name, "test_fail_") {
+		if len(result.Failures) == 0 {
+			result.Failures = []string{"expected test to fail, but it succeeded"}
+		} else {
+			result.Failures = nil // test failed as expected
+		}
+	}
 
 	return result
 }
