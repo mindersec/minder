@@ -236,13 +236,11 @@ func (ov *OCI) GetArtifactVersions(
 // resolveCreatedAt determines the creation time of an artifact version. It
 // prefers the org.opencontainers.image.created manifest annotation and, when
 // that annotation is absent, falls back to the Created field of the image
-// configuration, which records the real build time. Unlike the previous
-// time.Now() fallback, the resolved value always reflects the image itself: a
-// zero or Unix-epoch timestamp is a legitimate reproducible-build value and is
-// preserved as-is rather than being overwritten with the current time. The
-// image config is passed as a getter so that the config blob is fetched only
-// when the annotation is absent, and so the resolution logic stays testable
-// without a registry.
+// configuration, which records the real build time. The resolved value always
+// reflects the image itself: a zero or Unix-epoch timestamp is a legitimate
+// reproducible-build value and is preserved as-is. The image config is passed
+// as a getter so that the config blob is fetched only when the annotation is
+// absent, and so the resolution logic stays testable without a registry.
 func resolveCreatedAt(man *v1.Manifest, configFile func() (*v1.ConfigFile, error)) (time.Time, error) {
 	if strcreated, ok := man.Annotations[imgspecv1.AnnotationCreated]; ok {
 		createdAt, err := time.Parse(time.RFC3339, strcreated)
