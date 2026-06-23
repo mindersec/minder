@@ -38,7 +38,7 @@ func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunne
 		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
 	}
 	starlarktest.SetReporter(tr.thread, tr)
-	
+
 	tr.predeclared["eval"] = starlark.NewBuiltin("eval", tr.builtinEval)
 	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
 	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", tr.builtinTxtar)
@@ -53,7 +53,6 @@ func (tr *testCaseRunner) Error(args ...any) {
 	tr.failures = append(tr.failures, fmt.Sprint(args...))
 }
 
-
 // TestResult holds the outcome of a single Starlark test function.
 type TestResult struct {
 	Name     string
@@ -66,7 +65,7 @@ func (tr *TestResult) Passed() bool {
 }
 
 // Runner loads and executes Starlark test files.
-type Runner struct{
+type Runner struct {
 	assertMod starlark.StringDict
 }
 
@@ -212,4 +211,3 @@ func (r *Runner) RunDir(t *testing.T, dir string) {
 		})
 	}
 }
-

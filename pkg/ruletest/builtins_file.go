@@ -16,7 +16,7 @@ import (
 // Note: This builtin only supports text files containing valid UTF-8 strings.
 // Bytestreams that aren't valid UTF-8 strings are not supported.
 func (tr *testCaseRunner) builtinReadFile(
-	thread *starlark.Thread,
+	_ *starlark.Thread,
 	b *starlark.Builtin,
 	args starlark.Tuple,
 	kwargs []starlark.Tuple,
@@ -42,7 +42,7 @@ func (tr *testCaseRunner) builtinReadFile(
 // builtinTxtar parses a txtar string and returns a Starlark dictionary.
 // Note: This builtin only supports text files containing valid UTF-8 strings.
 // Bytestreams that aren't valid UTF-8 strings are not supported.
-func (tr *testCaseRunner) builtinTxtar(
+func (_ *testCaseRunner) builtinTxtar(
 	_ *starlark.Thread,
 	b *starlark.Builtin,
 	args starlark.Tuple,

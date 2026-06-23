@@ -17,7 +17,7 @@ import (
 	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
-func (tr *testCaseRunner) builtinEval(
+func (_ *testCaseRunner) builtinEval(
 	thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
 	var rulePath string
