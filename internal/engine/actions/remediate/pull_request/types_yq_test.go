@@ -220,12 +220,13 @@ func TestYQExecute(t *testing.T) {
 				require.Len(t, entries, len(testFiles)-2)
 				testFilesCopy := maps.Clone(testFiles)
 				for _, entry := range entries {
-					if entry.Path == nonMatchingFileNameOutsideTree || entry.Path == nonMatchingFileNameInsideTree {
-						t.Errorf("matched file %s that shouldn't be matched", entry.Path)
+					normalizedPath := filepath.ToSlash(entry.Path)
+					if normalizedPath == nonMatchingFileNameOutsideTree || normalizedPath == nonMatchingFileNameInsideTree {
+						t.Errorf("matched file %s that shouldn't be matched", normalizedPath)
 					}
-					file, ok := testFilesCopy[entry.Path]
+					file, ok := testFilesCopy[normalizedPath]
 					require.True(t, ok)
-					delete(testFilesCopy, entry.Path) // remove the entry from the map to make sure we catch duplicates
+					delete(testFilesCopy, normalizedPath) // remove the entry from the map to make sure we catch duplicates
 					if file.modifiedContents != "" {
 						require.Equal(t, file.modifiedContents, entry.Content)
 					}
@@ -318,9 +319,10 @@ updates:
 				require.Len(t, entries, len(testFiles))
 				testFilesCopy := maps.Clone(testFiles)
 				for _, entry := range entries {
-					file, ok := testFilesCopy[entry.Path]
+					normalizedPath := filepath.ToSlash(entry.Path)
+					file, ok := testFilesCopy[normalizedPath]
 					require.True(t, ok)
-					delete(testFilesCopy, entry.Path) // remove the entry from the map to make sure we catch duplicates
+					delete(testFilesCopy, normalizedPath) // remove the entry from the map to make sure we catch duplicates
 					if file.modifiedContents != "" {
 						require.Equal(t, file.modifiedContents, entry.Content)
 					}
