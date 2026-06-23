@@ -39,14 +39,19 @@ func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunne
 	}
 	starlarktest.SetReporter(tr.thread, tr)
 
-	tr.predeclared["eval"] = starlark.NewBuiltin("eval", tr.builtinEval)
+	tr.predeclared["eval"] = starlark.NewBuiltin("eval", builtinEval)
 	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
-	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", tr.builtinTxtar)
+	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", builtinTxtar)
 
 	for k, v := range r.assertMod {
 		tr.predeclared[k] = v
 	}
 	return tr
+}
+
+// RunFile loads and executes a Starlark file within the context of the testCaseRunner.
+func (tr *testCaseRunner) RunFile(filename string, src any) (starlark.StringDict, error) {
+	return starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
 }
 
 func (tr *testCaseRunner) Error(args ...any) {
@@ -84,19 +89,16 @@ func NewRunner() *Runner {
 // for each test_* function found in it.
 // src may be nil, or a string, []byte, or io.Reader containing the file source.
 func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
-	baseDir := ""
+	baseDir := filepath.Dir(filename)
+	fileSystem := os.DirFS(baseDir)
+
+	name := "ruletest"
 	if filename != "" {
-		baseDir = filepath.Dir(filename)
+		name = filepath.Base(filename)
 	}
+	tr := r.newTestCaseRunner(name, fileSystem)
 
-	var fileSystem fs.FS
-	if baseDir != "" {
-		fileSystem = os.DirFS(baseDir)
-	}
-
-	tr := r.newTestCaseRunner("ruletest", fileSystem)
-
-	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
+	globals, err := tr.RunFile(filename, src)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
 			return nil, fmt.Errorf("loading %s: %w\n%s", filename, err, evalErr.Backtrace())
@@ -142,14 +144,6 @@ func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS
 	}
 
 	result.Failures = append(result.Failures, tr.failures...)
-
-	if strings.HasPrefix(name, "test_fail_") {
-		if len(result.Failures) == 0 {
-			result.Failures = []string{"expected test to fail, but it succeeded"}
-		} else {
-			result.Failures = nil // test failed as expected
-		}
-	}
 
 	return result
 }

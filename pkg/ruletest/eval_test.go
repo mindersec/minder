@@ -70,7 +70,6 @@ func TestFormatEvalResult(t *testing.T) {
 func TestBuiltinEval_InvalidArgs(t *testing.T) {
 	t.Parallel()
 
-	tr := &testCaseRunner{}
 	thread := &starlark.Thread{Name: "test"}
 
 	tests := []struct {
@@ -101,7 +100,7 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := tr.builtinEval(thread, starlark.NewBuiltin("eval", tr.builtinEval), tt.args, tt.kwargs)
+			_, err := builtinEval(thread, starlark.NewBuiltin("eval", builtinEval), tt.args, tt.kwargs)
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
