@@ -28,7 +28,7 @@ type testCaseRunner struct {
 	failures    []string
 }
 
-func newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
+func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
 	tr := &testCaseRunner{
 		fs:          fileSystem,
 		predeclared: starlark.StringDict{},
@@ -43,11 +43,8 @@ func newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
 	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
 	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", tr.builtinTxtar)
 
-	assertMod, err := starlarktest.LoadAssertModule()
-	if err == nil {
-		for k, v := range assertMod {
-			tr.predeclared[k] = v
-		}
+	for k, v := range r.assertMod {
+		tr.predeclared[k] = v
 	}
 	return tr
 }
@@ -69,11 +66,19 @@ func (tr *TestResult) Passed() bool {
 }
 
 // Runner loads and executes Starlark test files.
-type Runner struct{}
+type Runner struct{
+	assertMod starlark.StringDict
+}
 
 // NewRunner creates a new test runner.
 func NewRunner() *Runner {
-	return &Runner{}
+	assertMod, err := starlarktest.LoadAssertModule()
+	if err != nil {
+		panic(fmt.Errorf("failed to load starlarktest assert module: %w", err))
+	}
+	return &Runner{
+		assertMod: assertMod,
+	}
 }
 
 // RunFile executes a single Starlark test file and returns the results
@@ -90,7 +95,7 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 		fileSystem = os.DirFS(baseDir)
 	}
 
-	tr := newTestCaseRunner("ruletest", fileSystem)
+	tr := r.newTestCaseRunner("ruletest", fileSystem)
 
 	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
 	if err != nil {
@@ -125,7 +130,7 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 }
 
 func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS) TestResult {
-	tr := newTestCaseRunner(name, fileSystem)
+	tr := r.newTestCaseRunner(name, fileSystem)
 	result := TestResult{Name: name}
 
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
