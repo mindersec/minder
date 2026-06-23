@@ -2933,6 +2933,7 @@ Ingest defines how the data is ingested.
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
+| issue | <TypeLink type="minder-v1-RuleType-Definition-Remediate-IssueRemediation">RuleType.Definition.Remediate.IssueRemediation</TypeLink> | optional |  |
 
 
 
@@ -2944,6 +2945,20 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | patch | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Remediate-IssueRemediation">RuleType.Definition.Remediate.IssueRemediation</Message>
+
+NOTE: Issue remediation is not yet implemented.
+This configuration is reserved for future support.
+"issue" is intentionally not a supported remediation type yet.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| title | <TypeLink type="string">string</TypeLink> |  | the title of the issue Supports Minder's template interpolation syntax. This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
+| body | <TypeLink type="string">string</TypeLink> |  | the body of the issue Supports Minder's template interpolation syntax The rendered body is interpreted as Markdown by repository providers that support Markdown (e.g. Github) This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
 
 
 
