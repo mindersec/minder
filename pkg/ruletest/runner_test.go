@@ -100,6 +100,7 @@ func TestRunEvalFile(t *testing.T) {
 		file string
 	}{
 		{name: "eval", file: "eval.star"},
+		{name: "builtins", file: "builtins_test.star"},
 	}
 
 	r := NewRunner()
@@ -111,6 +112,12 @@ func TestRunEvalFile(t *testing.T) {
 				t.Fatalf("RunFile failed for %s: %v", tt.file, err)
 			}
 			for _, res := range results {
+				if strings.HasPrefix(res.Name, "test_fail_") {
+					if res.Passed() {
+						t.Errorf("expected test %s to fail, but it passed", res.Name)
+					}
+					continue
+				}
 				if !res.Passed() {
 					t.Errorf("test %s failed: %v", res.Name, res.Failures)
 				}
