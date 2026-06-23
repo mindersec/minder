@@ -6,7 +6,6 @@ package ruletest
 import (
 	"fmt"
 	"io/fs"
-	"strings"
 
 	"go.starlark.net/starlark"
 	"golang.org/x/tools/txtar"
@@ -26,9 +25,6 @@ func (tr *testCaseRunner) builtinReadFile(
 		return nil, err
 	}
 
-	if tr.fs == nil {
-		return nil, fmt.Errorf("read_file: no file system available in context")
-	}
 
 	// fs.ReadFile enforces unrooted, valid paths (preventing typical directory traversal)
 	data, err := fs.ReadFile(tr.fs, path)
@@ -57,7 +53,7 @@ func builtinTxtar(
 	dict := starlark.NewDict(len(archive.Files))
 
 	for _, f := range archive.Files {
-		key := starlark.String(strings.TrimSpace(f.Name))
+		key := starlark.String(f.Name)
 		val := starlark.String(string(f.Data))
 		if err := dict.SetKey(key, val); err != nil {
 			return nil, err
