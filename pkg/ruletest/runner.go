@@ -49,8 +49,8 @@ func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunne
 	return tr
 }
 
-// RunFile loads and executes a Starlark file within the context of the testCaseRunner.
-func (tr *testCaseRunner) RunFile(filename string, src any) (starlark.StringDict, error) {
+// runFile loads and executes a Starlark file within the context of the testCaseRunner.
+func (tr *testCaseRunner) runFile(filename string, src any) (starlark.StringDict, error) {
 	return starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
 }
 
@@ -98,7 +98,7 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 	}
 	tr := r.newTestCaseRunner(name, fileSystem)
 
-	globals, err := tr.RunFile(filename, src)
+	globals, err := tr.runFile(filename, src)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
 			return nil, fmt.Errorf("loading %s: %w\n%s", filename, err, evalErr.Backtrace())
