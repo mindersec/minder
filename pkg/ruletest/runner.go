@@ -19,20 +19,41 @@ import (
 	"go.starlark.net/syntax"
 )
 
-const threadContextKey = "ruletest.context"
-
-type threadContext struct {
-	fs       fs.FS
-	failures []string
+// testCaseRunner is responsible for executing a single Starlark file
+// or a single test case. It implements the starlarktest.Reporter interface.
+type testCaseRunner struct {
+	thread      *starlark.Thread
+	fs          fs.FS
+	predeclared starlark.StringDict
+	failures    []string
 }
 
-func getThreadContext(thread *starlark.Thread) *threadContext {
-	ctx, ok := thread.Local(threadContextKey).(*threadContext)
-	if !ok {
-		ctx = &threadContext{}
-		thread.SetLocal(threadContextKey, ctx)
+func newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
+	tr := &testCaseRunner{
+		fs:          fileSystem,
+		predeclared: starlark.StringDict{},
 	}
-	return ctx
+	tr.thread = &starlark.Thread{
+		Name:  name,
+		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
+	}
+	starlarktest.SetReporter(tr.thread, tr)
+	
+	tr.predeclared["eval"] = starlark.NewBuiltin("eval", tr.builtinEval)
+	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
+	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", tr.builtinTxtar)
+
+	assertMod, err := starlarktest.LoadAssertModule()
+	if err == nil {
+		for k, v := range assertMod {
+			tr.predeclared[k] = v
+		}
+	}
+	return tr
+}
+
+func (tr *testCaseRunner) Error(args ...any) {
+	tr.failures = append(tr.failures, fmt.Sprint(args...))
 }
 
 
@@ -48,29 +69,11 @@ func (tr *TestResult) Passed() bool {
 }
 
 // Runner loads and executes Starlark test files.
-type Runner struct {
-	predeclared starlark.StringDict
-}
+type Runner struct{}
 
-// NewRunner creates a new test runner with the default set of predeclared builtins.
+// NewRunner creates a new test runner.
 func NewRunner() *Runner {
-	assertMod, err := starlarktest.LoadAssertModule()
-	if err != nil {
-		panic(fmt.Errorf("failed to load starlarktest assert module: %w", err))
-	}
-
-	predeclared := starlark.StringDict{
-		"eval":      starlark.NewBuiltin("eval", builtinEval),
-		"read_file": starlark.NewBuiltin("read_file", builtinReadFile),
-		"txtar":     starlark.NewBuiltin("txtar", builtinTxtar),
-	}
-	for k, v := range assertMod {
-		predeclared[k] = v
-	}
-
-	return &Runner{
-		predeclared: predeclared,
-	}
+	return &Runner{}
 }
 
 // RunFile executes a single Starlark test file and returns the results
@@ -92,9 +95,9 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 		fileSystem = os.DirFS(baseDir)
 	}
 
-	thread := r.newThread("ruletest", fileSystem)
+	tr := newTestCaseRunner("ruletest", fileSystem)
 
-	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{}, thread, filename, src, r.predeclared)
+	globals, err := starlark.ExecFileOptions(&syntax.FileOptions{}, tr.thread, filename, src, tr.predeclared)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
 			return nil, fmt.Errorf("loading %s: %w\n%s", filename, err, evalErr.Backtrace())
@@ -117,33 +120,20 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 		testFns[name] = fn
 	}
 
-	ctx := getThreadContext(thread)
 	var results []TestResult
 	for name, fn := range testFns {
-		result := r.runOneTest(name, fn, ctx.fs)
+		result := r.runOneTest(name, fn, fileSystem)
 		results = append(results, result)
 	}
 
 	return results, nil
 }
 
-func (*Runner) newThread(name string, fileSystem fs.FS) *starlark.Thread {
-	thread := &starlark.Thread{
-		Name:  name,
-		Print: func(_ *starlark.Thread, msg string) { fmt.Println(msg) },
-	}
-	starlarktest.SetReporter(thread, threadReporter{thread})
-	ctx := &threadContext{fs: fileSystem}
-	thread.SetLocal(threadContextKey, ctx)
-	return thread
-}
-
 func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS) TestResult {
-	thread := r.newThread(name, fileSystem)
-
+	tr := newTestCaseRunner(name, fileSystem)
 	result := TestResult{Name: name}
 
-	_, err := starlark.Call(thread, fn, nil, nil)
+	_, err := starlark.Call(tr.thread, fn, nil, nil)
 	if err != nil {
 		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
 			result.Failures = append(result.Failures, evalErr.Backtrace())
@@ -152,7 +142,7 @@ func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS
 		}
 	}
 
-	result.Failures = append(result.Failures, getFailures(thread)...)
+	result.Failures = append(result.Failures, tr.failures...)
 
 	return result
 }
@@ -215,22 +205,3 @@ func (r *Runner) RunDir(t *testing.T, dir string) {
 	}
 }
 
-func appendFailure(thread *starlark.Thread, msg string) {
-	ctx := getThreadContext(thread)
-	ctx.failures = append(ctx.failures, msg)
-}
-
-type threadReporter struct {
-	thread *starlark.Thread
-}
-
-func (r threadReporter) Error(args ...any) {
-	appendFailure(r.thread, fmt.Sprint(args...))
-}
-
-// getFailures retrieves the accumulated failure messages from the thread-local
-// storage.
-func getFailures(thread *starlark.Thread) []string {
-	ctx := getThreadContext(thread)
-	return ctx.failures
-}

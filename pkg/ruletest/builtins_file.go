@@ -15,7 +15,7 @@ import (
 // builtinReadFile reads a file relative to the current Starlark test file.
 // Note: This builtin only supports text files containing valid UTF-8 strings.
 // Bytestreams that aren't valid UTF-8 strings are not supported.
-func builtinReadFile(
+func (tr *testCaseRunner) builtinReadFile(
 	thread *starlark.Thread,
 	b *starlark.Builtin,
 	args starlark.Tuple,
@@ -26,13 +26,12 @@ func builtinReadFile(
 		return nil, err
 	}
 
-	ctx := getThreadContext(thread)
-	if ctx.fs == nil {
+	if tr.fs == nil {
 		return nil, fmt.Errorf("read_file: no file system available in context")
 	}
 
 	// fs.ReadFile enforces unrooted, valid paths (preventing typical directory traversal)
-	data, err := fs.ReadFile(ctx.fs, path)
+	data, err := fs.ReadFile(tr.fs, path)
 	if err != nil {
 		return nil, fmt.Errorf("read_file: %w", err)
 	}
@@ -43,7 +42,7 @@ func builtinReadFile(
 // builtinTxtar parses a txtar string and returns a Starlark dictionary.
 // Note: This builtin only supports text files containing valid UTF-8 strings.
 // Bytestreams that aren't valid UTF-8 strings are not supported.
-func builtinTxtar(
+func (tr *testCaseRunner) builtinTxtar(
 	_ *starlark.Thread,
 	b *starlark.Builtin,
 	args starlark.Tuple,
