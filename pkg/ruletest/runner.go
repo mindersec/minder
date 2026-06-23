@@ -29,6 +29,9 @@ type testCaseRunner struct {
 }
 
 func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
+	if fileSystem == nil {
+		panic("fileSystem cannot be nil")
+	}
 	tr := &testCaseRunner{
 		fs:          fileSystem,
 		predeclared: starlark.StringDict{},
@@ -89,13 +92,14 @@ func NewRunner() *Runner {
 // for each test_* function found in it.
 // src may be nil, or a string, []byte, or io.Reader containing the file source.
 func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
+	if filename == "" {
+		return nil, errors.New("filename cannot be empty")
+	}
+
 	baseDir := filepath.Dir(filename)
 	fileSystem := os.DirFS(baseDir)
 
-	name := "ruletest"
-	if filename != "" {
-		name = filepath.Base(filename)
-	}
+	name := filepath.Base(filename)
 	tr := r.newTestCaseRunner(name, fileSystem)
 
 	globals, err := tr.runFile(filename, src)
