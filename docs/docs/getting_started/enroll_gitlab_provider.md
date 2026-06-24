@@ -10,11 +10,7 @@ prompted to grant Minder access.
 
 ## Prerequisites
 
-Before you can enroll the GitLab provider, you must:
-
 - [log in to Minder using the CLI](login)
-- have a [GitLab OAuth application configured](../run_minder_server/config_gitlab_oauth)
-  on your Minder server
 
 ## Enrolling and granting access
 
