@@ -21,7 +21,7 @@ require (
 	github.com/cloudevents/sdk-go/observability/opentelemetry/v2 v2.16.1
 	github.com/cloudevents/sdk-go/protocol/nats_jetstream/v2 v2.16.2
 	github.com/cloudevents/sdk-go/v2 v2.16.2
-	github.com/erikgeiser/promptkit v0.9.0
+	github.com/erikgeiser/promptkit v0.11.0
 	github.com/evanphx/json-patch/v5 v5.9.11
 	github.com/fergusstrange/embedded-postgres v1.34.0
 	github.com/go-git/go-billy/v5 v5.9.0
@@ -111,6 +111,9 @@ require (
 
 require (
 	cel.dev/expr v0.25.1 // indirect
+	charm.land/bubbles/v2 v2.0.0 // indirect
+	charm.land/bubbletea/v2 v2.0.2 // indirect
+	charm.land/lipgloss/v2 v2.0.2 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cyphar.com/go-pathrs v0.2.1 // indirect
 	deps.dev/api/v3 v3.0.0-20250903005441-604c45d5b44b // indirect
@@ -157,13 +160,16 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
-	github.com/charmbracelet/colorprofile v0.4.1 // indirect
+	github.com/charmbracelet/colorprofile v0.4.3 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260316091819-b93f6a3b8502 // indirect
 	github.com/charmbracelet/x/ansi v0.11.6 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.15 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20250616121729-19b66ab4499b // indirect
 	github.com/charmbracelet/x/term v0.2.2 // indirect
-	github.com/clipperhouse/displaywidth v0.10.0 // indirect
-	github.com/clipperhouse/uax29/v2 v2.6.0 // indirect
+	github.com/charmbracelet/x/termios v0.1.1 // indirect
+	github.com/charmbracelet/x/windows v0.2.2 // indirect
+	github.com/clipperhouse/displaywidth v0.11.0 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/containerd/cgroups/v3 v3.1.2 // indirect
 	github.com/containerd/containerd v1.7.33 // indirect
 	github.com/containerd/containerd/api v1.10.0 // indirect
@@ -417,7 +423,7 @@ require (
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.21
-	github.com/mattn/go-runewidth v0.0.19 // indirect
+	github.com/mattn/go-runewidth v0.0.21 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.16.0
 	github.com/oklog/ulid v1.3.1 // indirect
