@@ -40,16 +40,6 @@ registered. This allows Minder to identify when configuration changes are
 made to your repositories and re-scan them for compliance with your
 profiles.
 
-:::note
-Webhook registration requires GitLab to be able to reach your Minder
-server's webhook endpoint. If you're running Minder locally (e.g. against
-`localhost`), GitLab cannot reach it, and repository registration will fail
-with a `context deadline exceeded` error. To test repository registration
-locally, expose your server with a tool like `ngrok` and set
-`external_webhook_url` in your server config accordingly, or test against a
-publicly reachable Minder deployment.
-:::
-
 ## More information
 
 For more information about repository registration, see the
