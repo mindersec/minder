@@ -8,6 +8,14 @@ credentials to allow Minder to manage your GitLab repositories. This allows
 Minder to inspect and manage your repository configuration. You will be
 prompted to grant Minder access.
 
+This guide uses the OAuth flow, which is the quickest way to get started.
+Note that OAuth has some tradeoffs: Minder acts as the authorizing user (which
+can make merge requests and attribution confusing), access is hard to scope
+when the user belongs to multiple projects, and enrollment breaks if that
+user ever leaves the project. For production use with multiple administrators,
+a dedicated [service account with a Personal Access Token](../integrations/provider_integrations/gitlab#authorization-methods)
+is recommended instead.
+
 ## Prerequisites
 
 - [log in to Minder using the CLI](login)
