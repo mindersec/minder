@@ -32,7 +32,7 @@ func TestMockRoundTripper(t *testing.T) {
 
 	require.NoError(t, rt.Add("/api/v1/exact", resp1))
 	require.NoError(t, rt.Add("/api/v1/missing", resp2))
-	require.NoError(t, rt.Add("/api/v1/users/*/details", resp3))
+	require.NoError(t, rt.Add("/api/v1/users/{user}/details", resp3))
 
 	// Test 1: Exact match
 	req1, _ := http.NewRequest(http.MethodGet, "/api/v1/exact", nil)

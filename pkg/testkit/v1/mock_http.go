@@ -4,12 +4,9 @@
 package v1
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"net/http"
-
-	"github.com/gobwas/glob"
+	"net/http/httptest"
 )
 
 // HTTPMockResponse represents a mocked HTTP response configuration.
@@ -18,50 +15,38 @@ type HTTPMockResponse struct {
 	Body       string
 }
 
-type mockEntry struct {
-	pattern glob.Glob
-	resp    *HTTPMockResponse
-}
-
-// MockRoundTripper intercepts HTTP requests and returns mocked responses based on URL glob patterns.
+// MockRoundTripper intercepts HTTP requests and returns mocked responses using an http.ServeMux.
 type MockRoundTripper struct {
-	entries []mockEntry
+	mux *http.ServeMux
 }
 
 // NewMockRoundTripper creates a new MockRoundTripper.
 func NewMockRoundTripper() *MockRoundTripper {
-	return &MockRoundTripper{}
+	return &MockRoundTripper{
+		mux: http.NewServeMux(),
+	}
 }
 
-// Add registers a new mock response for a given glob pattern.
+// Add registers a new mock response for a given HTTP pattern.
 func (m *MockRoundTripper) Add(pattern string, resp *HTTPMockResponse) error {
-	g, err := glob.Compile(pattern)
-	if err != nil {
-		return fmt.Errorf("invalid glob pattern %q: %w", pattern, err)
-	}
-
-	m.entries = append(m.entries, mockEntry{
-		pattern: g,
-		resp:    resp,
+	m.mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(resp.StatusCode)
+		_, _ = w.Write([]byte(resp.Body))
 	})
 	return nil
 }
 
 // RoundTrip executes the round trip, returning a mocked response if a match is found.
 func (m *MockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	reqURL := req.URL.String()
-
-	for _, entry := range m.entries {
-		if entry.pattern.Match(reqURL) {
-			resp := &http.Response{
-				StatusCode: entry.resp.StatusCode,
-				Body:       io.NopCloser(bytes.NewBufferString(entry.resp.Body)),
-				Header:     make(http.Header),
-				Request:    req,
-			}
-			return resp, nil
-		}
+	handler, pattern := m.mux.Handler(req)
+	if pattern == "" {
+		return nil, fmt.Errorf("unmatched URL: %s", req.URL.String())
 	}
 
-	return nil, fmt.Errorf("unmatched URL: %s", reqURL)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, req)
+
+	resp := recorder.Result()
+	resp.Request = req
+	return resp, nil
 }

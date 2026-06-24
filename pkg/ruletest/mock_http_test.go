@@ -34,7 +34,7 @@ func TestMockRoundTripper(t *testing.T) {
 
 	require.NoError(t, dict.SetKey(starlark.String("/api/v1/exact"), resp1))
 	require.NoError(t, dict.SetKey(starlark.String("/api/v1/missing"), resp2))
-	require.NoError(t, dict.SetKey(starlark.String("/api/v1/users/*/details"), resp3))
+	require.NoError(t, dict.SetKey(starlark.String("/api/v1/users/{user}/details"), resp3))
 
 	rt, err := NewMockRoundTripper(dict)
 	require.NoError(t, err)
