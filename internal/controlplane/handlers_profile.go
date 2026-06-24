@@ -244,8 +244,6 @@ func getProfilePBFromDB(
 	return nil, fmt.Errorf("profile not found")
 }
 
-// TODO: We need to replace this with a more generic method that can be used for all entities
-// probably coming from the properties.
 func (s *Server) getRuleEvaluationStatuses(
 	ctx context.Context,
 	dbRuleEvaluationStatuses []db.ListRuleEvaluationsByProfileIdRow,
