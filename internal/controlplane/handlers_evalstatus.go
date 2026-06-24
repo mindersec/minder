@@ -779,13 +779,12 @@ func getRuleEvalEntityInfo(
 	entityInfo["entity_id"] = rs.EntityID.String()
 
 	// temporary: These will be replaced by entity_id
-	//nolint:exhaustive
 	switch rs.EntityType {
 	case db.EntitiesRepository:
 		entityInfo["repository_id"] = efp.Entity.ID.String()
 	case db.EntitiesArtifact:
 		entityInfo["artifact_id"] = efp.Entity.ID.String()
-	default:
+	case db.EntitiesBuildEnvironment, db.EntitiesPullRequest, db.EntitiesRelease, db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 		// We only need to handle the above two types specially for historical compatibility.
 	}
 
