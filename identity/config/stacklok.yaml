@@ -139,6 +139,29 @@ clients:
     optionalClientScopes:
       - microprofile-jwt
       - offline_access
+  # Dedicated client for automated integration / smoke tests.
+  # Uses Resource Owner Password Credentials (ROPC / Direct Access Grants)
+  # so the bootstrap script can obtain an offline token without a browser.
+  # This client MUST NOT be used in production or user-facing flows.
+  - clientId: smoke-test-client
+    name: "Smoke Test Client"
+    description: "Headless OIDC client for automated integration tests only"
+    enabled: true
+    publicClient: true
+    # ROPC (Direct Access Grants) — required by bootstrap.sh
+    directAccessGrantsEnabled: true
+    defaultClientScopes:
+      - basic
+      - acr
+      - email
+      - profile
+      - roles
+      - web-origins
+      - minder-audience
+      - offline_access
+    optionalClientScopes:
+      - microprofile-jwt
+      - gh-data
   # From:
   # create clients -r stacklok -s clientId=minder-server -s serviceAccountsEnabled=true -s clientAuthenticatorType=client-secret -s secret="$KC_MINDER_SERVER_SECRET" -s enabled=true -s defaultClientScopes='["acr","email","profile","roles","web-origins","gh-data"]' -s optionalClientScopes='["microprofile-jwt","offline_access"]'
   - clientId: minder-server

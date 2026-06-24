@@ -28,6 +28,7 @@ import (
 	"github.com/mindersec/minder/internal/auth"
 	mockjwt "github.com/mindersec/minder/internal/auth/jwt/mock"
 	mockauthz "github.com/mindersec/minder/internal/authz/mock"
+	"github.com/mindersec/minder/internal/constants"
 	"github.com/mindersec/minder/internal/controlplane/metrics"
 	"github.com/mindersec/minder/internal/crypto"
 	mock_service "github.com/mindersec/minder/internal/entities/properties/service/mock"
@@ -219,4 +220,31 @@ func httpDoWithRetry(client *http.Client, createRequest func() (*http.Request, e
 	}, backoff.WithMaxRetries(backoff.NewConstantBackOff(time.Second), 3))
 
 	return resp, err
+}
+
+func TestGetVersion(t *testing.T) {
+	t.Parallel()
+
+	server := &Server{}
+
+	resp, err := server.GetVersion(context.Background(), &pb.GetVersionRequest{})
+
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.Equal(t, constants.CLIVersion, resp.Version)
+	require.Equal(t, constants.Revision, resp.Commit)
+}
+
+func TestVersionHeaderInterceptor(t *testing.T) {
+	t.Parallel()
+
+	interceptor := VersionHeaderInterceptor()
+
+	handler := func(_ context.Context, _ interface{}) (interface{}, error) {
+		return "success", nil
+	}
+
+	_, err := interceptor(context.Background(), nil, &grpc.UnaryServerInfo{}, handler)
+
+	require.NoError(t, err)
 }

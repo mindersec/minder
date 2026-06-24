@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "context": {
+        "projectId": "00000000-0000-0000-0000-000000000000",
+        "provider": "github"
+      },
+      "name": "myorg/myrepo",
+      "type": "ENTITY_REPOSITORIES",
+      "properties": {
+        "github/license": "Apache-2.0",
+        "github/primary_language": "Go",
+        "github/repo_owner": "myorg",
+        "github/repo_name": "myrepo",
+        "is_archived": false,
+        "is_fork": false,
+        "is_private": false,
+        "name": "myorg/myrepo",
+        "upstream_id": "12345"
+      }
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "context": {
+        "projectId": "00000000-0000-0000-0000-000000000000",
+        "provider": "github"
+      },
+      "name": "myorg/another-repo",
+      "type": "ENTITY_REPOSITORIES",
+      "properties": {
+        "github/license": "MIT",
+        "github/primary_language": "",
+        "github/repo_owner": "myorg",
+        "github/repo_name": "another-repo",
+        "is_archived": false,
+        "is_fork": false,
+        "is_private": false,
+        "name": "myorg/another-repo",
+        "upstream_id": "12346"
+      }
+    }
+  ]
+}

@@ -90,7 +90,6 @@ func GRPCClientWrapRunE(
 
 		ctx, cancel := GetAppContext(cmd.Context(), viper.GetViper())
 		defer cancel()
-
 		defer c.Close()
 
 		return runEFunc(ctx, cmd, args, c)
@@ -138,7 +137,7 @@ func ExitNicelyOnError(err error, userMsg string) {
 			fmt.Fprintf(os.Stderr, "Message: %s\n", message)
 		}
 		// Print the details, if any
-		if details != "" {
+		if details != "" && details != message {
 			fmt.Fprintf(os.Stderr, "Details: %s\n", details)
 		}
 		// Exit with the right code

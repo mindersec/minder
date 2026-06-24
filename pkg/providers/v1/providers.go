@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -156,6 +157,50 @@ type ArtifactProvider interface {
 		filter GetArtifactVersionsFilter) ([]*minderv1.ArtifactVersion, error)
 }
 
+// CommitStatusState represents the state of a commit status check
+type CommitStatusState string
+
+const (
+	// CommitStatusSuccess marks a commit status as success
+	CommitStatusSuccess CommitStatusState = "success"
+	// CommitStatusFailure marks a commit status as failure
+	CommitStatusFailure CommitStatusState = "failure"
+	// CommitStatusError marks a commit status as error
+	CommitStatusError CommitStatusState = "error"
+	// CommitStatusPending marks a commit status as pending
+	CommitStatusPending CommitStatusState = "pending"
+)
+
+// CommitStatusPublisher is the interface for providers that can publish commit statuses
+type CommitStatusPublisher interface {
+	Provider
+	// SetCommitStatus creates or updates a commit status.
+	//
+	// This mirrors the GitHub API, and should be common across other Git Forge
+	// providers.
+	SetCommitStatus(ctx context.Context, owner, repo, ref string, status *github.RepoStatus) (*github.RepoStatus, error)
+}
+
+// ReviewPublisher is the interface for providers that can publish PR reviews
+type ReviewPublisher interface {
+	Provider
+	// CreateReview creates a review on the given pull request
+	CreateReview(
+		ctx context.Context, owner, repo string, prNumber int, req *github.PullRequestReviewRequest,
+	) (*github.PullRequestReview, error)
+	// UpdateReview updates an existing review on the given pull request
+	UpdateReview(
+		ctx context.Context, owner, repo string, prNumber int, reviewID int64, body string,
+	) (*github.PullRequestReview, error)
+	// ListReviews lists reviews on the given pull request
+	ListReviews(ctx context.Context, owner, repo string, prNumber int, opt *github.ListOptions) ([]*github.PullRequestReview, error)
+	// DismissReview dismisses an existing review on the given pull request
+	DismissReview(ctx context.Context, owner, repo string, prNumber int, reviewID int64,
+		req *github.PullRequestReviewDismissalRequest) (*github.PullRequestReview, error)
+	// GetPullRequest gets a pull request
+	GetPullRequest(ctx context.Context, owner, repo string, prNumber int) (*github.PullRequest, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
@@ -256,6 +301,30 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	}
 
 	return nil
+}
+
+// providerTypeMap maps each ProviderType to the interface type that a provider
+// must implement to support it.
+var providerTypeMap = map[minderv1.ProviderType]reflect.Type{
+	minderv1.ProviderType_PROVIDER_TYPE_GITHUB:       reflect.TypeOf((*GitHub)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REST:         reflect.TypeOf((*REST)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_GIT:          reflect.TypeOf((*Git)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_OCI:          reflect.TypeOf((*OCI)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER:  reflect.TypeOf((*RepoLister)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER: reflect.TypeOf((*ImageLister)(nil)).Elem(),
+}
+
+// ProviderTypesFromImpl returns the set of ProviderType values supported by the given
+// Provider, determined by checking which interfaces it implements.
+func ProviderTypesFromImpl(p Provider) []minderv1.ProviderType {
+	t := reflect.TypeOf(p)
+	out := make([]minderv1.ProviderType, 0, len(providerTypeMap))
+	for ptype, iface := range providerTypeMap {
+		if t.Implements(iface) {
+			out = append(out, ptype)
+		}
+	}
+	return out
 }
 
 // As is a type-cast function for Providers

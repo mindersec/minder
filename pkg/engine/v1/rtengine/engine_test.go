@@ -54,11 +54,15 @@ func TestGitProvider(t *testing.T) {
 						Rego: &minderv1.RuleType_Definition_Eval_Rego{
 							Type: "deny-by-default",
 							Def: `package minder
-default allow = false
 
-allow {
+import rego.v1
+
+default allow := false
+
+allow if {
 	file.exists("README.md")
-}`,
+}
+`,
 						},
 					},
 				},
@@ -95,11 +99,15 @@ allow {
 						Rego: &minderv1.RuleType_Definition_Eval_Rego{
 							Type: "deny-by-default",
 							Def: `package minder
-default allow = false
 
-allow {
+import rego.v1
+
+default allow := false
+
+allow if {
 	file.exists("README.md")
-}`,
+}
+`,
 						},
 					},
 				},

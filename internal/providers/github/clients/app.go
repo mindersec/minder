@@ -26,9 +26,6 @@ import (
 // GithubApp is the string that represents the GitHubApp provider
 const GithubApp = "github-app"
 
-// AppImplements is the list of provider types that the GitHub App provider implements.
-var AppImplements = github.AppImplements
-
 // AppAuthorizationFlows is the list of authorization flows that the GitHub App provider supports.
 var AppAuthorizationFlows = github.AppAuthorizationFlows
 

@@ -4,12 +4,12 @@
 package repo
 
 import (
-	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
+	"github.com/mindersec/minder/cmd/cli/app/project"
 	"github.com/mindersec/minder/internal/util/cli"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
@@ -19,14 +19,20 @@ var reconcileCmd = &cobra.Command{
 	Short: "Reconcile (Sync) a repository with Minder.",
 	Long: `The reconcile command is used to trigger a reconciliation (sync) of a repository against
 profiles and rules in a project.`,
-	RunE: cli.GRPCClientWrapRunE(reconcileCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %w", err)
+		}
+		return nil
+	},
+	RunE: reconcileCommand,
 }
 
 // getCommand is the repo get subcommand
-func reconcileCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
+func reconcileCommand(cmd *cobra.Command, _ []string) error {
 	name := viper.GetString("name")
 	id := viper.GetString("id")
-	project := viper.GetString("project")
+	projectName := viper.GetString("project")
 	provider := viper.GetString("provider")
 
 	// No longer print usage on returned error, since we've parsed our inputs
@@ -43,12 +49,17 @@ func reconcileCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		entity.Name = name
 	}
 
-	projectsClient := minderv1.NewProjectsServiceClient(conn)
-	_, err := projectsClient.CreateEntityReconciliationTask(ctx, &minderv1.CreateEntityReconciliationTaskRequest{
+	projectsClient, cleanup, err := project.GetProjectsClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer cleanup()
+
+	_, err = projectsClient.CreateEntityReconciliationTask(cmd.Context(), &minderv1.CreateEntityReconciliationTaskRequest{
 		Entity: entity,
 		Context: &minderv1.Context{
 			Provider: &provider,
-			Project:  &project,
+			Project:  &projectName,
 		},
 	})
 	if err != nil {

@@ -13,6 +13,26 @@ import (
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 )
 
+const (
+	baseSchemaDef = `{
+		"type": "object",
+		"properties": {
+			"foo": {
+				"type": "string"
+			}
+		}
+	}`
+	requiredSchemaDef = `{
+		"type": "object",
+		"properties": {
+			"foo": {
+				"type": "string"
+			}
+		},
+		"required": ["foo"]
+	}`
+)
+
 func TestValidateSchemaUpdate(t *testing.T) {
 	t.Parallel()
 
@@ -35,14 +55,7 @@ func TestValidateSchemaUpdate(t *testing.T) {
 		{
 			name: "empty new schema should not error",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				oldRuleSchemaDef: baseSchemaDef,
 				newRuleSchemaDef: "{}",
 			},
 		},
@@ -50,15 +63,7 @@ func TestValidateSchemaUpdate(t *testing.T) {
 			name: "empty old schema should error if new schema has required fields",
 			args: args{
 				oldRuleSchemaDef: "{}",
-				newRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					},
-					"required": ["foo"]
-				}`,
+				newRuleSchemaDef: requiredSchemaDef,
 			},
 			wantErr: true,
 		},
@@ -66,59 +71,22 @@ func TestValidateSchemaUpdate(t *testing.T) {
 			name: "empty old schema should not error if new schema has no required fields",
 			args: args{
 				oldRuleSchemaDef: "{}",
-				newRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				newRuleSchemaDef: baseSchemaDef,
 			},
 		},
 		{
 			name: "old schema should error if new schema has required fields",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
-				newRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					},
-					"required": ["foo"]
-				}`,
+				oldRuleSchemaDef: baseSchemaDef,
+				newRuleSchemaDef: requiredSchemaDef,
 			},
 			wantErr: true,
 		},
 		{
 			name: "removing required fields is allowed",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					},
-					"required": ["foo"]
-				}`,
-				newRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				oldRuleSchemaDef: requiredSchemaDef,
+				newRuleSchemaDef: baseSchemaDef,
 			},
 		},
 		{
@@ -135,28 +103,14 @@ func TestValidateSchemaUpdate(t *testing.T) {
 						}
 					}
 				}`,
-				newRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				newRuleSchemaDef: baseSchemaDef,
 			},
 			wantErr: true,
 		},
 		{
 			name: "old schema should error if new schema changes type of field",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				oldRuleSchemaDef: baseSchemaDef,
 				newRuleSchemaDef: `{
 					"type": "bool"
 				}`,
@@ -166,14 +120,7 @@ func TestValidateSchemaUpdate(t *testing.T) {
 		{
 			name: "update should succeed if new schema is a superset of old schema",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				oldRuleSchemaDef: baseSchemaDef,
 				newRuleSchemaDef: `{
 					"type": "object",
 					"properties": {
@@ -324,14 +271,7 @@ func TestValidateSchemaUpdate(t *testing.T) {
 		{
 			name: "Removing the properties map is not allowed",
 			args: args{
-				oldRuleSchemaDef: `{
-					"type": "object",
-					"properties": {
-						"foo": {
-							"type": "string"
-						}
-					}
-				}`,
+				oldRuleSchemaDef: baseSchemaDef,
 				newRuleSchemaDef: `{
 					"type": "object"
 				}`,

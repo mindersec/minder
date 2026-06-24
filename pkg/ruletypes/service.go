@@ -13,6 +13,7 @@ import (
 	"regexp"
 
 	"github.com/google/uuid"
+	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/logger"
@@ -20,6 +21,7 @@ import (
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/schemaupdate"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 //go:generate go run go.uber.org/mock/mockgen -package mock_$GOPACKAGE -destination=./mock/$GOFILE -source=./$GOFILE
@@ -68,11 +70,13 @@ type RuleTypeService interface {
 	) error
 }
 
-type ruleTypeService struct{}
+type ruleTypeService struct {
+	featureFlags flags.Interface
+}
 
 // NewRuleTypeService creates a new instance of RuleTypeService
-func NewRuleTypeService() RuleTypeService {
-	return &ruleTypeService{}
+func NewRuleTypeService(featureFlags flags.Interface) RuleTypeService {
+	return &ruleTypeService{featureFlags: featureFlags}
 }
 
 var (
@@ -89,7 +93,7 @@ var (
 	uuidLike = regexp.MustCompile(`^[[:alnum:]]{8}-([[:alnum:]]{4}-){3}[[:alnum:]]{12}$`)
 )
 
-func (*ruleTypeService) CreateRuleType(
+func (s *ruleTypeService) CreateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
@@ -100,6 +104,11 @@ func (*ruleTypeService) CreateRuleType(
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if err := ruleType.Validate(); err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
+	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 	if uuidLike.MatchString(ruleType.Name) {
@@ -156,6 +165,7 @@ func (*ruleTypeService) CreateRuleType(
 		SeverityValue:       *severity,
 		SubscriptionID:      uuid.NullUUID{UUID: subscriptionID, Valid: subscriptionID != uuid.Nil},
 		ReleasePhase:        *releasePhase,
+		RegoVersion:         regoVersion,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create rule type: %w", err)
@@ -179,7 +189,7 @@ func (*ruleTypeService) CreateRuleType(
 	return rt, nil
 }
 
-func (*ruleTypeService) UpdateRuleType(
+func (s *ruleTypeService) UpdateRuleType(
 	ctx context.Context,
 	projectID uuid.UUID,
 	subscriptionID uuid.UUID,
@@ -190,6 +200,11 @@ func (*ruleTypeService) UpdateRuleType(
 	logger.BusinessRecord(ctx).Project = projectID
 
 	if err := ruleType.Validate(); err != nil {
+		return nil, errors.Join(ErrRuleTypeInvalid, err)
+	}
+
+	regoVersion, err := s.validateAndDetectRegoVersion(ctx, ruleType)
+	if err != nil {
 		return nil, errors.Join(ErrRuleTypeInvalid, err)
 	}
 
@@ -243,6 +258,7 @@ func (*ruleTypeService) UpdateRuleType(
 		DisplayName:         ruleType.GetDisplayName(),
 		ShortFailureMessage: ruleType.GetShortFailureMessage(),
 		ReleasePhase:        *releasePhase,
+		RegoVersion:         regoVersion,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to update rule type: %w", err)
@@ -295,6 +311,46 @@ func (s *ruleTypeService) UpsertRuleType(
 		return fmt.Errorf("error while updating rule: %w", err)
 	}
 	return nil
+}
+
+// validateAndDetectRegoVersion validates the rego definition syntax, gates
+// V1-only policies behind the feature flag, and returns the detected version
+// string ("v0" or "v1") for database storage. This avoids parsing the rego
+// definition multiple times across separate validation and detection steps.
+func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, ruleType *pb.RuleType) (string, error) {
+	def := ruleType.GetDef().GetEval().GetRego().GetDef()
+	if def == "" {
+		return "v0", nil
+	}
+
+	flagOn := flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse)
+
+	_, errV0 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+		ast.ParserOptions{RegoVersion: ast.RegoV0})
+	_, errV1 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+		ast.ParserOptions{RegoVersion: ast.RegoV1})
+
+	switch {
+	case errV0 == nil && errV1 == nil:
+		// Valid in both dialects — store as V1 when flag is on.
+		if flagOn {
+			return "v1", nil
+		}
+		return "v0", nil
+	case errV0 == nil:
+		// V0 only — always accepted.
+		return "v0", nil
+	case errV1 == nil:
+		// V1 only — gate behind feature flag.
+		if !flagOn {
+			return "", fmt.Errorf("rego definition uses V1-only syntax which is not yet enabled")
+		}
+		return "v1", nil
+	default:
+		// Invalid in both dialects — return V0 error as it's the more
+		// likely intent for authors not yet on V1.
+		return "", fmt.Errorf("rego definition is invalid: %w", errV0)
+	}
 }
 
 func getRuleTypeSeverity(severity *pb.Severity) (*db.Severity, error) {

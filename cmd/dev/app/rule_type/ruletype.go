@@ -8,7 +8,7 @@ import "github.com/spf13/cobra"
 
 // CmdRuleType is the root command for the ruletype subcommands
 func CmdRuleType() *cobra.Command {
-	var rtCmd = &cobra.Command{
+	rtCmd := &cobra.Command{
 		Use:   "ruletype",
 		Short: "ruletype provides utilities for testing rule types",
 	}

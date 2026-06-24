@@ -45,6 +45,14 @@ func Test_tokenNeedsRefresh(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "stored a PAT",
+			token: oauth2.Token{
+				AccessToken:  "glpat-notarealtoken.01.1234567",
+				RefreshToken: "",
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -180,12 +180,13 @@ func (ps *propertiesService) ReplaceAllProperties(
 	qtx := ps.getStoreOrTransaction(opts)
 	zerolog.Ctx(ctx).Debug().Str("entityID", entityID.String()).Msg("replacing all properties")
 
-	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
-	if err != nil {
-		return fmt.Errorf("failed to delete properties: %w", err)
+	if store, ok := qtx.(db.Store); ok {
+		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+			return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+		})
 	}
 
-	return ps.SaveAllProperties(ctx, entityID, props, opts)
+	return ps.replaceAllPropertiesWithQuerier(ctx, entityID, props, qtx)
 }
 
 func (ps *propertiesService) SaveAllProperties(
@@ -193,6 +194,30 @@ func (ps *propertiesService) SaveAllProperties(
 	opts *CallOptions,
 ) error {
 	qtx := ps.getStoreOrTransaction(opts)
+
+	if store, ok := qtx.(db.Store); ok {
+		return store.WithTransactionErr(func(qtx db.ExtendQuerier) error {
+			return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+		})
+	}
+
+	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+}
+
+func (ps *propertiesService) replaceAllPropertiesWithQuerier(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+) error {
+	err := qtx.DeleteAllPropertiesForEntity(ctx, entityID)
+	if err != nil {
+		return fmt.Errorf("failed to delete properties: %w", err)
+	}
+
+	return ps.saveAllPropertiesWithQuerier(ctx, entityID, props, qtx)
+}
+
+func (*propertiesService) saveAllPropertiesWithQuerier(
+	ctx context.Context, entityID uuid.UUID, props *properties.Properties, qtx db.ExtendQuerier,
+) error {
 	for key, prop := range props.Iterate() {
 		_, err := qtx.UpsertPropertyValueV1(ctx, db.UpsertPropertyValueV1Params{
 			EntityID: entityID,

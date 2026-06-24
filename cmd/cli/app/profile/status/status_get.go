@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/cmd/cli/app"
@@ -26,13 +25,17 @@ var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get profile status",
 	Long:  `The profile status get subcommand lets you get profile status within Minder.`,
-	RunE:  cli.GRPCClientWrapRunE(getCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return fmt.Errorf("error binding flags: %s", err)
+		}
+		return nil
+	},
+	RunE: getCommand,
 }
 
 // getCommand is the profile "get" subcommand
-func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewProfileServiceClient(conn)
-
+func getCommand(cmd *cobra.Command, _ []string) error {
 	project := viper.GetString("project")
 	profileName := viper.GetString("name")
 	profileId := viper.GetString("id")
@@ -45,6 +48,16 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
 	}
 
+	// No longer print usage on returned error, since we've parsed our inputs
+	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
+	cmd.SilenceUsage = true
+
+	client, closer, err := cli.GetCLIClient(cmd, minderv1.NewProfileServiceClient)
+	if err != nil {
+		return cli.MessageAndError("Error connecting to server", err)
+	}
+	defer closer()
+
 	entity := &minderv1.EntityTypedId{
 		Type: minderv1.EntityFromString(entityType),
 	}
@@ -56,13 +69,13 @@ func getCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.
 	}
 
 	if profileId != "" {
-		resp, err := getProfileStatusById(ctx, client, project, profileId, entity)
+		resp, err := getProfileStatusById(cmd.Context(), client, project, profileId, entity)
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
 		return formatAndDisplayOutput(cmd, format, resp, viper.GetBool("emoji"))
 	} else if profileName != "" {
-		resp, err := getProfileStatusByName(ctx, client, project, profileName, entity)
+		resp, err := getProfileStatusByName(cmd.Context(), client, project, profileName, entity)
 		if err != nil {
 			return cli.MessageAndError("Error getting profile status", err)
 		}
@@ -171,5 +184,4 @@ func init() {
 		getCmd.Printf("Error marking flag required: %s", err)
 		os.Exit(1)
 	}
-
 }

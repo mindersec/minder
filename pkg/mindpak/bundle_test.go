@@ -40,7 +40,7 @@ func TestReadSource(t *testing.T) {
 					RuleTypes: []*File{
 						{
 							Name:   "secret_scanning.yaml",
-							Hashes: map[HashAlgorithm]string{SHA256: "3857bca2ccabdac3d136eb3df4549ddd87a00ddef9fdcf88d8f824e5e796d34c"},
+							Hashes: map[HashAlgorithm]string{SHA256: "f15e935b96674f4d47776a7c323f77bb36c1cc783112fededce721a7b4c7edd5"},
 						},
 					},
 					DataSources: []*File{},
