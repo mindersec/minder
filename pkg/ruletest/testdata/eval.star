@@ -4,16 +4,22 @@
 def test_eval_success():
     res = eval(
         rule="rule_type_sample.yaml",
-        entity={"required_pull_request_reviews": {"required_approving_review_count": 2}},
+        entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
+        mock_http={
+            "/repos/test/repo/branches/main/protection": body('{"required_pull_request_reviews": {"required_approving_review_count": 2}}')
+        }
     )
     assert.eq(res["status"], "pass")
 
 def test_eval_fail():
     res = eval(
         rule="rule_type_sample.yaml",
-        entity={"required_pull_request_reviews": {"required_approving_review_count": 1}},
+        entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
+        mock_http={
+            "/repos/test/repo/branches/main/protection": body('{"required_pull_request_reviews": {"required_approving_review_count": 1}}')
+        }
     )
     assert.eq(res["status"], "fail")
     assert.true(res["message"] != "")

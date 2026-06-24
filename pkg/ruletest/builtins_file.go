@@ -25,7 +25,6 @@ func (tr *testCaseRunner) builtinReadFile(
 		return nil, err
 	}
 
-
 	// fs.ReadFile enforces unrooted, valid paths (preventing typical directory traversal)
 	data, err := fs.ReadFile(tr.fs, path)
 	if err != nil {

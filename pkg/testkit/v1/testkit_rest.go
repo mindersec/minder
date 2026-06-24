@@ -35,6 +35,10 @@ func (tk *TestKit) Do(ctx context.Context, req *http.Request) (*http.Response, e
 		Str("url", req.URL.String()).
 		Msg("HTTP request")
 
+	if tk.httpRoundTripper != nil {
+		return tk.httpRoundTripper.RoundTrip(req)
+	}
+
 	h := func(w http.ResponseWriter, _ *http.Request) {
 		for k, v := range tk.httpHeaders {
 			w.Header().Set(k, v)

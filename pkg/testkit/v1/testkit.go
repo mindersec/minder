@@ -6,6 +6,7 @@
 package v1
 
 import (
+	"net/http"
 	"net/http/httptest"
 
 	"github.com/mindersec/minder/internal/engine/ingester/git"
@@ -19,6 +20,8 @@ type TestKit struct {
 	gitDir string
 
 	// HTTP
+	httpRoundTripper http.RoundTripper
+
 	httpRecorder *httptest.ResponseRecorder
 	httpStatus   int
 	httpBody     []byte
@@ -35,6 +38,13 @@ func WithGitDir(dir string) Option {
 	return func(tp *TestKit) {
 		tp.ingestType = git.GitRuleDataIngestType
 		tp.gitDir = dir
+	}
+}
+
+// WithRoundTripper is a functional option to configure the TestKit to use a specific RoundTripper
+func WithRoundTripper(rt http.RoundTripper) Option {
+	return func(tk *TestKit) {
+		tk.httpRoundTripper = rt
 	}
 }
 
