@@ -12,6 +12,7 @@ import (
 	"github.com/gobwas/glob"
 )
 
+// HTTPMockResponse represents a mocked HTTP response configuration.
 type HTTPMockResponse struct {
 	StatusCode int
 	Body       string
@@ -22,14 +23,17 @@ type mockEntry struct {
 	resp    *HTTPMockResponse
 }
 
+// MockRoundTripper intercepts HTTP requests and returns mocked responses based on URL glob patterns.
 type MockRoundTripper struct {
 	entries []mockEntry
 }
 
+// NewMockRoundTripper creates a new MockRoundTripper.
 func NewMockRoundTripper() *MockRoundTripper {
 	return &MockRoundTripper{}
 }
 
+// Add registers a new mock response for a given glob pattern.
 func (m *MockRoundTripper) Add(pattern string, resp *HTTPMockResponse) error {
 	g, err := glob.Compile(pattern)
 	if err != nil {
@@ -43,6 +47,7 @@ func (m *MockRoundTripper) Add(pattern string, resp *HTTPMockResponse) error {
 	return nil
 }
 
+// RoundTrip executes the round trip, returning a mocked response if a match is found.
 func (m *MockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	reqURL := req.URL.String()
 

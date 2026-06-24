@@ -7,8 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 	"go.starlark.net/starlark"
+
+	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
 // MockResponse represents a mocked HTTP response in Starlark.
@@ -27,20 +28,25 @@ func (m *MockResponse) String() string {
 	return fmt.Sprintf("mock_response(code=%d, body=%q)", m.StatusCode, m.Body)
 }
 
-func (m *MockResponse) Type() string {
+// Type returns the Starlark type name.
+func (*MockResponse) Type() string {
 	return "mock_response"
 }
 
-func (m *MockResponse) Freeze() {}
+// Freeze makes the value immutable.
+func (*MockResponse) Freeze() {}
 
-func (m *MockResponse) Truth() starlark.Bool {
+// Truth returns the truth value of the mock response.
+func (*MockResponse) Truth() starlark.Bool {
 	return starlark.True
 }
 
-func (m *MockResponse) Hash() (uint32, error) {
+// Hash returns a hash value for the mock response.
+func (*MockResponse) Hash() (uint32, error) {
 	return 0, errors.New("unhashable type: mock_response")
 }
 
+// Attr retrieves the attribute for Starlark.
 func (m *MockResponse) Attr(name string) (starlark.Value, error) {
 	switch name {
 	case "code":
@@ -52,11 +58,14 @@ func (m *MockResponse) Attr(name string) (starlark.Value, error) {
 	}
 }
 
-func (m *MockResponse) AttrNames() []string {
+// AttrNames returns the list of attribute names.
+func (*MockResponse) AttrNames() []string {
 	return []string{"body", "code"}
 }
 
-func (m *MockResponse) builtinCode(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m *MockResponse) builtinCode(
+	_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var code int
 	if err := starlark.UnpackArgs("code", args, kwargs, "status", &code); err != nil {
 		return nil, err
@@ -68,7 +77,9 @@ func (m *MockResponse) builtinCode(thread *starlark.Thread, b *starlark.Builtin,
 	}, nil
 }
 
-func (m *MockResponse) builtinBody(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func (m *MockResponse) builtinBody(
+	_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
+) (starlark.Value, error) {
 	var payload string
 	if err := starlark.UnpackArgs("body", args, kwargs, "payload", &payload); err != nil {
 		return nil, err
@@ -80,7 +91,7 @@ func (m *MockResponse) builtinBody(thread *starlark.Thread, b *starlark.Builtin,
 	}, nil
 }
 
-func builtinCode(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func builtinCode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var code int
 	if err := starlark.UnpackArgs("code", args, kwargs, "status", &code); err != nil {
 		return nil, err
@@ -90,7 +101,7 @@ func builtinCode(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tup
 	}, nil
 }
 
-func builtinBody(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func builtinBody(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var payload string
 	if err := starlark.UnpackArgs("body", args, kwargs, "payload", &payload); err != nil {
 		return nil, err
@@ -101,6 +112,7 @@ func builtinBody(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tup
 	}, nil
 }
 
+// NewMockRoundTripper creates a new tkv1.MockRoundTripper from a Starlark dictionary.
 func NewMockRoundTripper(mockDict *starlark.Dict) (*tkv1.MockRoundTripper, error) {
 	rt := tkv1.NewMockRoundTripper()
 

@@ -92,7 +92,7 @@ func builtinEval(
 
 type stubResultSink struct{}
 
-func (s *stubResultSink) SetIngestResult(*interfaces.Ingested) {}
+func (*stubResultSink) SetIngestResult(*interfaces.Ingested) {}
 
 func formatEvalResult(evalErr error) *starlark.Dict {
 	result := starlark.NewDict(2)
@@ -121,6 +121,7 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 	return result
 }
 
+//nolint:gocyclo // this is a simple switch over many entity types
 func mapToProto(entityType string, entityMap map[string]any) (protoreflect.ProtoMessage, error) {
 	if len(entityMap) == 0 {
 		return nil, nil
@@ -171,6 +172,10 @@ func mapToProto(entityType string, entityMap map[string]any) (protoreflect.Proto
 			return nil, err
 		}
 		return &bld, nil
+	case minderv1.Entity_ENTITY_UNSPECIFIED,
+		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
+		minderv1.Entity_ENTITY_PULL_REQUESTS:
+		fallthrough
 	default:
 		// Some entities like PullRequest or BuildEnvironment may not have concrete protobuf structs available here.
 		// For mocking purposes, returning nil is acceptable if the template doesn't strict check them,
@@ -178,4 +183,3 @@ func mapToProto(entityType string, entityMap map[string]any) (protoreflect.Proto
 		return nil, fmt.Errorf("unsupported entity type for mapping to proto: %s", entityType)
 	}
 }
-
