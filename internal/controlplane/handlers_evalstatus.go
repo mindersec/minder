@@ -744,7 +744,8 @@ func getRuleEvalEntityInfo(
 		entityInfo["repository_id"] = efp.Entity.ID.String()
 	case db.EntitiesArtifact:
 		entityInfo["artifact_id"] = efp.Entity.ID.String()
-	case db.EntitiesBuildEnvironment, db.EntitiesPullRequest, db.EntitiesRelease, db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
+	case db.EntitiesBuildEnvironment, db.EntitiesPullRequest, db.EntitiesRelease,
+		db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 		// We only need to handle the above two types specially for historical compatibility.
 	}
 

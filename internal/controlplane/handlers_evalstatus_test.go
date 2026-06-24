@@ -882,11 +882,14 @@ func TestListEvaluationResultsEntityInfo(t *testing.T) {
 			mockStore := mockdb.NewMockStore(ctrl)
 			mockProps := mockpropssvc.NewMockPropertiesService(ctrl)
 
-			minderEntityType := minderv1.Entity_ENTITY_REPOSITORIES
-			if tt.entityType == db.EntitiesArtifact {
+			var minderEntityType minderv1.Entity
+			switch tt.entityType {
+			case db.EntitiesArtifact:
 				minderEntityType = minderv1.Entity_ENTITY_ARTIFACTS
-			} else if tt.entityType == db.EntitiesPullRequest {
+			case db.EntitiesPullRequest:
 				minderEntityType = minderv1.Entity_ENTITY_PULL_REQUESTS
+			default:
+				minderEntityType = minderv1.Entity_ENTITY_REPOSITORIES
 			}
 
 			props := map[string]any{
