@@ -101,7 +101,6 @@ func builtinBody(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tup
 	}, nil
 }
 
-// NewMockRoundTripper creates a new tkv1.MockRoundTripper from a Starlark dictionary.
 func NewMockRoundTripper(mockDict *starlark.Dict) (*tkv1.MockRoundTripper, error) {
 	rt := tkv1.NewMockRoundTripper()
 
