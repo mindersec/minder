@@ -888,7 +888,8 @@ func TestListEvaluationResultsEntityInfo(t *testing.T) {
 				minderEntityType = minderv1.Entity_ENTITY_ARTIFACTS
 			case db.EntitiesPullRequest:
 				minderEntityType = minderv1.Entity_ENTITY_PULL_REQUESTS
-			default:
+			case db.EntitiesRepository, db.EntitiesBuildEnvironment, db.EntitiesRelease,
+				db.EntitiesPipelineRun, db.EntitiesTaskRun, db.EntitiesBuild:
 				minderEntityType = minderv1.Entity_ENTITY_REPOSITORIES
 			}
 
