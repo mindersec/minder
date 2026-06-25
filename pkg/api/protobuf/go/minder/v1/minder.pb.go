@@ -12043,7 +12043,10 @@ type EntityInstance struct {
 	// have this be a string, and have the user provide the type.
 	Type Entity `protobuf:"varint,4,opt,name=type,proto3,enum=minder.v1.Entity" json:"type,omitempty"`
 	// properties is a map of properties of the entity.
-	Properties    *structpb.Struct `protobuf:"bytes,5,opt,name=properties,proto3" json:"properties,omitempty"`
+	Properties *structpb.Struct `protobuf:"bytes,5,opt,name=properties,proto3" json:"properties,omitempty"`
+	// originating_id is the id of the entity which originated this resource.
+	// If the originating entity is cleaned up, this entity will also be removed.
+	OriginatingId string `protobuf:"bytes,6,opt,name=originating_id,json=originatingId,proto3" json:"originating_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -12111,6 +12114,13 @@ func (x *EntityInstance) GetProperties() *structpb.Struct {
 		return x.Properties
 	}
 	return nil
+}
+
+func (x *EntityInstance) GetOriginatingId() string {
+	if x != nil {
+		return x.OriginatingId
+	}
+	return ""
 }
 
 // ListEntitiesRequest is the request message for the ListEntities method
@@ -15965,7 +15975,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\adetails\x18\x02 \x01(\tR\adetails\"O\n" +
 	"\x16EvaluationHistoryAlert\x12\x1b\n" +
 	"\x06status\x18\x01 \x01(\tB\x03\xe0A\x02R\x06status\x12\x18\n" +
-	"\adetails\x18\x02 \x01(\tR\adetails\"\xc4\x01\n" +
+	"\adetails\x18\x02 \x01(\tR\adetails\"\xeb\x01\n" +
 	"\x0eEntityInstance\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12.\n" +
 	"\acontext\x18\x02 \x01(\v2\x14.minder.v1.ContextV2R\acontext\x12\x12\n" +
@@ -15973,7 +15983,8 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x04type\x18\x04 \x01(\x0e2\x11.minder.v1.EntityR\x04type\x127\n" +
 	"\n" +
 	"properties\x18\x05 \x01(\v2\x17.google.protobuf.StructR\n" +
-	"properties\"\xa9\x01\n" +
+	"properties\x12%\n" +
+	"\x0eoriginating_id\x18\x06 \x01(\tR\roriginatingId\"\xa9\x01\n" +
 	"\x13ListEntitiesRequest\x12.\n" +
 	"\acontext\x18\x01 \x01(\v2\x14.minder.v1.ContextV2R\acontext\x127\n" +
 	"\ventity_type\x18\x02 \x01(\x0e2\x11.minder.v1.EntityB\x03\xe0A\x02R\n" +
