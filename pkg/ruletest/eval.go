@@ -75,11 +75,7 @@ func builtinEval(
 
 	ctx := context.Background()
 
-	opts := []tkv1.Option{}
-	if mockHandler != nil {
-		opts = append(opts, tkv1.WithHandlerFunc(mockHandler.ServeHTTP))
-	}
-	tk := tkv1.NewTestKit(opts...)
+	tk := tkv1.NewTestKit(tkv1.WithHandlerFunc(mockHandler.ServeHTTP))
 
 	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk)
 	if err != nil {

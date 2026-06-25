@@ -113,11 +113,11 @@ func builtinBody(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 // The dictionary is expected to have string keys (representing the HTTP URL pattern)
 // and mock_response values (created via body() or code() built-ins).
 func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
-	if mockDict == nil {
-		return nil, nil
-	}
-
 	mux := http.NewServeMux()
+
+	if mockDict == nil {
+		return mux, nil
+	}
 
 	for _, key := range mockDict.Keys() {
 		val, found, err := mockDict.Get(key)
@@ -135,7 +135,7 @@ func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 			return nil, fmt.Errorf("mock endpoint %q must be mapped to a mock_response, got %s", keyStr, val.Type())
 		}
 
-		mux.HandleFunc(keyStr, func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc(keyStr, func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(mockResp.StatusCode)
 			_, _ = w.Write([]byte(mockResp.Body))
 		})

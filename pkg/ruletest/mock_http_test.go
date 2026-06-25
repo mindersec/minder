@@ -78,7 +78,7 @@ func TestMockHTTPHandler(t *testing.T) {
 	// Test 5: Nil dictionary
 	nilHandler, err := buildMockHTTPHandler(nil)
 	require.NoError(t, err)
-	assert.Nil(t, nilHandler)
+	assert.NotNil(t, nilHandler)
 }
 
 func TestMockResponseMethods(t *testing.T) {
