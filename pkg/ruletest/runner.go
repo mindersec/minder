@@ -45,6 +45,8 @@ func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunne
 	tr.predeclared["eval"] = starlark.NewBuiltin("eval", builtinEval)
 	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
 	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", builtinTxtar)
+	tr.predeclared["body"] = starlark.NewBuiltin("body", builtinBody)
+	tr.predeclared["code"] = starlark.NewBuiltin("code", builtinCode)
 
 	for k, v := range r.assertMod {
 		tr.predeclared[k] = v

@@ -6,7 +6,7 @@
 package v1
 
 import (
-	"net/http/httptest"
+	"net/http"
 
 	"github.com/mindersec/minder/internal/engine/ingester/git"
 )
@@ -19,10 +19,7 @@ type TestKit struct {
 	gitDir string
 
 	// HTTP
-	httpRecorder *httptest.ResponseRecorder
-	httpStatus   int
-	httpBody     []byte
-	httpHeaders  map[string]string
+	httpHandler http.Handler
 }
 
 // Option is a functional option type for TestKit
@@ -38,14 +35,22 @@ func WithGitDir(dir string) Option {
 	}
 }
 
+// WithHandlerFunc is a functional option to configure the TestKit to use a specific Handler
+func WithHandlerFunc(hf http.HandlerFunc) Option {
+	return func(tk *TestKit) {
+		tk.httpHandler = hf
+	}
+}
+
 // WithHTTP is a functional option to set the HTTP response
 func WithHTTP(status int, body []byte, headers map[string]string) Option {
-	return func(tp *TestKit) {
-		tp.httpRecorder = httptest.NewRecorder()
-		tp.httpStatus = status
-		tp.httpBody = body
-		tp.httpHeaders = headers
-	}
+	return WithHandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		for k, v := range headers {
+			w.Header().Set(k, v)
+		}
+		w.WriteHeader(status)
+		_, _ = w.Write(body)
+	})
 }
 
 // NewTestKit creates a new TestKit
