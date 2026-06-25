@@ -12,7 +12,7 @@ import (
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/proto"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
@@ -68,14 +68,18 @@ func builtinEval(
 		return nil, fmt.Errorf("failed to convert entity map to proto: %w", err)
 	}
 
-	mockRT, err := NewMockRoundTripper(mockHttpDict)
+	mockHandler, err := buildMockHTTPHandler(mockHttpDict)
 	if err != nil {
 		return nil, fmt.Errorf("invalid mock_http configuration: %w", err)
 	}
 
 	ctx := context.Background()
 
-	tk := tkv1.NewTestKit(tkv1.WithRoundTripper(mockRT))
+	opts := []tkv1.Option{}
+	if mockHandler != nil {
+		opts = append(opts, tkv1.WithHandlerFunc(mockHandler.ServeHTTP))
+	}
+	tk := tkv1.NewTestKit(opts...)
 
 	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk)
 	if err != nil {
@@ -122,7 +126,7 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 }
 
 //nolint:gocyclo // this is a simple switch over many entity types
-func mapToProto(entityType string, entityMap map[string]any) (protoreflect.ProtoMessage, error) {
+func mapToProto(entityType string, entityMap map[string]any) (proto.Message, error) {
 	if len(entityMap) == 0 {
 		return nil, nil
 	}
@@ -135,43 +139,21 @@ func mapToProto(entityType string, entityMap map[string]any) (protoreflect.Proto
 	unmarshaller := protojson.UnmarshalOptions{DiscardUnknown: true}
 	entEnum := minderv1.EntityFromString(entityType)
 
+	var msg proto.Message
+
 	switch entEnum {
 	case minderv1.Entity_ENTITY_REPOSITORIES:
-		var repo minderv1.Repository
-		if err := unmarshaller.Unmarshal(b, &repo); err != nil {
-			return nil, err
-		}
-		return &repo, nil
+		msg = &minderv1.Repository{}
 	case minderv1.Entity_ENTITY_ARTIFACTS:
-		var art minderv1.Artifact
-		if err := unmarshaller.Unmarshal(b, &art); err != nil {
-			return nil, err
-		}
-		return &art, nil
+		msg = &minderv1.Artifact{}
 	case minderv1.Entity_ENTITY_RELEASE:
-		var rel minderv1.Release
-		if err := unmarshaller.Unmarshal(b, &rel); err != nil {
-			return nil, err
-		}
-		return &rel, nil
+		msg = &minderv1.Release{}
 	case minderv1.Entity_ENTITY_PIPELINE_RUN:
-		var prun minderv1.PipelineRun
-		if err := unmarshaller.Unmarshal(b, &prun); err != nil {
-			return nil, err
-		}
-		return &prun, nil
+		msg = &minderv1.PipelineRun{}
 	case minderv1.Entity_ENTITY_TASK_RUN:
-		var trun minderv1.TaskRun
-		if err := unmarshaller.Unmarshal(b, &trun); err != nil {
-			return nil, err
-		}
-		return &trun, nil
+		msg = &minderv1.TaskRun{}
 	case minderv1.Entity_ENTITY_BUILD:
-		var bld minderv1.Build
-		if err := unmarshaller.Unmarshal(b, &bld); err != nil {
-			return nil, err
-		}
-		return &bld, nil
+		msg = &minderv1.Build{}
 	case minderv1.Entity_ENTITY_UNSPECIFIED,
 		minderv1.Entity_ENTITY_BUILD_ENVIRONMENTS,
 		minderv1.Entity_ENTITY_PULL_REQUESTS:
@@ -182,4 +164,10 @@ func mapToProto(entityType string, entityMap map[string]any) (protoreflect.Proto
 		// but returning an error is safer to flag unsupported mocking right now.
 		return nil, fmt.Errorf("unsupported entity type for mapping to proto: %s", entityType)
 	}
+
+	if err := unmarshaller.Unmarshal(b, msg); err != nil {
+		return nil, err
+	}
+
+	return msg, nil
 }

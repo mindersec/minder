@@ -6,13 +6,14 @@ package ruletest
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"go.starlark.net/starlark"
-
-	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
 // MockResponse represents a mocked HTTP response in Starlark.
+// It is the expected value type for the dictionary provided to the
+// mock_http parameter in eval().
 type MockResponse struct {
 	StatusCode int
 	Body       string
@@ -71,10 +72,8 @@ func (m *MockResponse) builtinCode(
 		return nil, err
 	}
 
-	return &MockResponse{
-		StatusCode: code,
-		Body:       m.Body,
-	}, nil
+	m.StatusCode = code
+	return m, nil
 }
 
 func (m *MockResponse) builtinBody(
@@ -85,10 +84,8 @@ func (m *MockResponse) builtinBody(
 		return nil, err
 	}
 
-	return &MockResponse{
-		StatusCode: m.StatusCode,
-		Body:       payload,
-	}, nil
+	m.Body = payload
+	return m, nil
 }
 
 func builtinCode(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -112,13 +109,15 @@ func builtinBody(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, k
 	}, nil
 }
 
-// NewMockRoundTripper creates a new tkv1.MockRoundTripper from a Starlark dictionary.
-func NewMockRoundTripper(mockDict *starlark.Dict) (*tkv1.MockRoundTripper, error) {
-	rt := tkv1.NewMockRoundTripper()
-
+// buildMockHTTPHandler creates a new http.Handler from a Starlark dictionary.
+// The dictionary is expected to have string keys (representing the HTTP URL pattern)
+// and mock_response values (created via body() or code() built-ins).
+func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 	if mockDict == nil {
-		return rt, nil
+		return nil, nil
 	}
+
+	mux := http.NewServeMux()
 
 	for _, key := range mockDict.Keys() {
 		val, found, err := mockDict.Get(key)
@@ -136,14 +135,11 @@ func NewMockRoundTripper(mockDict *starlark.Dict) (*tkv1.MockRoundTripper, error
 			return nil, fmt.Errorf("mock endpoint %q must be mapped to a mock_response, got %s", keyStr, val.Type())
 		}
 
-		err = rt.Add(keyStr, &tkv1.HTTPMockResponse{
-			StatusCode: mockResp.StatusCode,
-			Body:       mockResp.Body,
+		mux.HandleFunc(keyStr, func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(mockResp.StatusCode)
+			_, _ = w.Write([]byte(mockResp.Body))
 		})
-		if err != nil {
-			return nil, fmt.Errorf("failed to register mock endpoint %q: %w", keyStr, err)
-		}
 	}
 
-	return rt, nil
+	return mux, nil
 }

@@ -7,7 +7,6 @@ package v1
 
 import (
 	"net/http"
-	"net/http/httptest"
 
 	"github.com/mindersec/minder/internal/engine/ingester/git"
 )
@@ -20,12 +19,7 @@ type TestKit struct {
 	gitDir string
 
 	// HTTP
-	httpRoundTripper http.RoundTripper
-
-	httpRecorder *httptest.ResponseRecorder
-	httpStatus   int
-	httpBody     []byte
-	httpHeaders  map[string]string
+	httpHandler http.Handler
 }
 
 // Option is a functional option type for TestKit
@@ -41,21 +35,22 @@ func WithGitDir(dir string) Option {
 	}
 }
 
-// WithRoundTripper is a functional option to configure the TestKit to use a specific RoundTripper
-func WithRoundTripper(rt http.RoundTripper) Option {
+// WithHandlerFunc is a functional option to configure the TestKit to use a specific Handler
+func WithHandlerFunc(hf http.HandlerFunc) Option {
 	return func(tk *TestKit) {
-		tk.httpRoundTripper = rt
+		tk.httpHandler = hf
 	}
 }
 
 // WithHTTP is a functional option to set the HTTP response
 func WithHTTP(status int, body []byte, headers map[string]string) Option {
-	return func(tp *TestKit) {
-		tp.httpRecorder = httptest.NewRecorder()
-		tp.httpStatus = status
-		tp.httpBody = body
-		tp.httpHeaders = headers
-	}
+	return WithHandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		for k, v := range headers {
+			w.Header().Set(k, v)
+		}
+		w.WriteHeader(status)
+		_, _ = w.Write(body)
+	})
 }
 
 // NewTestKit creates a new TestKit
