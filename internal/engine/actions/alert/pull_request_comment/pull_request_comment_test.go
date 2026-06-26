@@ -241,6 +241,186 @@ func TestPullRequestCommentAlert(t *testing.T) {
 	}
 }
 
+func TestPullRequestLineCommentAlert(t *testing.T) {
+	t.Parallel()
+
+	reviewID := int64(789)
+
+	tests := []struct {
+		name         string
+		lineComments []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment
+		validateReq  func(t *testing.T, req *github.PullRequestReviewRequest)
+		expectedErr  error
+		expectMeta   bool
+	}{
+		{
+			name: "creates review with single-line comment",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/path1.yaml",
+					LineStart: 110,
+					LineEnd:   110,
+					Comment:   "This dependency needs to be updated",
+				},
+			},
+			validateReq: func(t *testing.T, req *github.PullRequestReviewRequest) {
+				t.Helper()
+				require.Len(t, req.Comments, 1)
+				require.Equal(t, "home/path1.yaml", req.Comments[0].GetPath())
+				require.Equal(t, 110, req.Comments[0].GetLine())
+				// single-line: StartLine should be nil
+				require.Nil(t, req.Comments[0].StartLine)
+				require.Equal(t, "This dependency needs to be updated", req.Comments[0].GetBody())
+			},
+			expectMeta: true,
+		},
+		{
+			name: "creates review with multi-line comment",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/path2.xml",
+					LineStart: 120,
+					LineEnd:   130,
+					Comment:   "These lines of code need to be updated",
+				},
+			},
+			validateReq: func(t *testing.T, req *github.PullRequestReviewRequest) {
+				t.Helper()
+				require.Len(t, req.Comments, 1)
+				require.Equal(t, "home/path2.xml", req.Comments[0].GetPath())
+				require.Equal(t, 120, req.Comments[0].GetStartLine())
+				require.Equal(t, 130, req.Comments[0].GetLine())
+				require.Equal(t, "These lines of code need to be updated", req.Comments[0].GetBody())
+			},
+			expectMeta: true,
+		},
+		{
+			name: "creates review with multiple line comments on different files",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/path1.yaml",
+					LineStart: 110,
+					LineEnd:   110,
+					Comment:   "This dependency needs to be updated",
+				},
+				{
+					Filepath:  "home/path2.xml",
+					LineStart: 120,
+					LineEnd:   130,
+					Comment:   "These lines of code need to be updated",
+				},
+			},
+			validateReq: func(t *testing.T, req *github.PullRequestReviewRequest) {
+				t.Helper()
+				require.Len(t, req.Comments, 2)
+				// First comment
+				require.Equal(t, "home/path1.yaml", req.Comments[0].GetPath())
+				require.Equal(t, 110, req.Comments[0].GetLine())
+				require.Nil(t, req.Comments[0].StartLine)
+				// Second comment
+				require.Equal(t, "home/path2.xml", req.Comments[1].GetPath())
+				require.Equal(t, 120, req.Comments[1].GetStartLine())
+				require.Equal(t, 130, req.Comments[1].GetLine())
+			},
+			expectMeta: true,
+		},
+		{
+			name: "line comment body is a template rendered with eval params",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/file.go",
+					LineStart: 5,
+					LineEnd:   5,
+					Comment:   "Error: {{ .EvalErrorDetails }}",
+				},
+			},
+			validateReq: func(t *testing.T, req *github.PullRequestReviewRequest) {
+				t.Helper()
+				require.Len(t, req.Comments, 1)
+				require.Equal(t, fmt.Sprintf("Error: %s", evaluationFailureDetails), req.Comments[0].GetBody())
+			},
+			expectMeta: true,
+		},
+		{
+			name: "line comment body has invalid template syntax",
+			lineComments: []*pb.RuleType_Definition_Alert_AlertTypePRComment_PullRequestLineComment{
+				{
+					Filepath:  "home/file.go",
+					LineStart: 5,
+					LineEnd:   5,
+					Comment:   "Error: {{ .MissingField",
+				},
+			},
+			expectedErr: fmt.Errorf("template"),
+			expectMeta:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			t.Cleanup(func() { ctrl.Finish() })
+
+			reviewAction := ""
+			prCommentCfg := pb.RuleType_Definition_Alert_AlertTypePRComment{
+				ReviewMessage: "Summary review message",
+				Action:        &reviewAction,
+				LineComments:  tt.lineComments,
+			}
+
+			mockClient := mock_provifv1.NewMockReviewPublisher(ctrl)
+			if tt.expectedErr == nil {
+				mockClient.EXPECT().
+					ListReviews(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, nil)
+				mockClient.EXPECT().
+					CreateReview(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, _, _ string, _ int, req *github.PullRequestReviewRequest) (*github.PullRequestReview, error) {
+						if tt.validateReq != nil {
+							tt.validateReq(t, req)
+						}
+						return &github.PullRequestReview{ID: github.Int64(reviewID)}, nil
+					})
+			}
+
+			prCommentAlert, err := NewPullRequestCommentAlert(
+				TestActionTypeValid, &prCommentCfg, mockClient, models.ActionOptOn)
+			require.NoError(t, err)
+
+			evalParams := &engif.EvalStatusParams{
+				EvalStatusFromDb: &db.ListRuleEvaluationsByProfileIdRow{},
+				Profile:          &models.ProfileAggregate{},
+				Rule:             &models.RuleInstance{Name: "test-rule"},
+			}
+			evalParams.SetEvalErr(enginerr.NewErrEvaluationFailed(evaluationFailureDetails))
+			evalParams.SetEvalResult(&interfaces.EvaluationResult{
+				Output: exampleOutput{ViolationMsg: violationMsg},
+			})
+
+			retMeta, err := prCommentAlert.Do(
+				context.Background(),
+				engif.ActionCmdOn,
+				&pbinternal.PullRequest{CommitSha: "abc123"},
+				evalParams,
+				nil,
+			)
+			if tt.expectedErr != nil {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
+			if tt.expectMeta {
+				require.NotNil(t, retMeta)
+			} else {
+				require.Nil(t, retMeta)
+			}
+		})
+	}
+}
+
 type exampleOutput struct {
 	ViolationMsg string
 }

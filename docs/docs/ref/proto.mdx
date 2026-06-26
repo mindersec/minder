@@ -2804,6 +2804,21 @@ Definition defines the rule type. It encompases the schema and the data evaluati
 | ----- | ---- | ----- | ----------- |
 | review_message | <TypeLink type="string">string</TypeLink> |  | review_message is the message to post in the PR review. |
 | action | <TypeLink type="string">string</TypeLink> | optional | action is the action to use for the PR review (comment or request_changes). Default is comment. |
+| line_comments | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment-PullRequestLineComment">RuleType.Definition.Alert.AlertTypePRComment.PullRequestLineComment</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Alert-AlertTypePRComment-PullRequestLineComment">RuleType.Definition.Alert.AlertTypePRComment.PullRequestLineComment</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filepath | <TypeLink type="string">string</TypeLink> |  | filepath is the path to the file to comment on. |
+| line_start | <TypeLink type="int32">int32</TypeLink> |  | line_start is the starting line number. |
+| line_end | <TypeLink type="int32">int32</TypeLink> |  | line_end is the ending line number. |
+| comment | <TypeLink type="string">string</TypeLink> |  | comment is the comment to post on those lines. |
 
 
 

@@ -2972,6 +2972,38 @@ message RuleType {
                         in: ["comment", "request_changes"],
                     }
                 ];
+
+                message PullRequestLineComment {
+                    // filepath is the path to the file to comment on.
+                    string filepath = 1 [
+                        (buf.validate.field).string = {
+                            max_len: 1024,
+                        },
+                        (google.api.field_behavior) = REQUIRED
+                    ];
+                    // line_start is the starting line number.
+                    int32 line_start = 2 [
+                        (buf.validate.field).int32 = {
+                            gt: 0,
+                        },
+                        (google.api.field_behavior) = REQUIRED
+                    ];
+                    // line_end is the ending line number.
+                    int32 line_end = 3 [
+                        (buf.validate.field).int32 = {
+                            gt: 0,
+                        },
+                        (google.api.field_behavior) = REQUIRED
+                    ];
+                    // comment is the comment to post on those lines.
+                    string comment = 4 [
+                        (buf.validate.field).string = {
+                            max_len: 65536,
+                        },
+                        (google.api.field_behavior) = REQUIRED
+                    ];
+                }
+                repeated PullRequestLineComment line_comments = 3;
             }
             optional AlertTypePRComment pull_request_comment = 3;
         }
