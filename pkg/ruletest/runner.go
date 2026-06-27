@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
@@ -26,15 +28,17 @@ type testCaseRunner struct {
 	fs          fs.FS
 	predeclared starlark.StringDict
 	failures    []string
+	ruleTypes   map[string]*minderv1.RuleType
 }
 
-func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunner {
+func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS, ruleTypes map[string]*minderv1.RuleType) *testCaseRunner {
 	if fileSystem == nil {
 		panic("fileSystem cannot be nil")
 	}
 	tr := &testCaseRunner{
 		fs:          fileSystem,
 		predeclared: starlark.StringDict{},
+		ruleTypes:   ruleTypes,
 	}
 	tr.thread = &starlark.Thread{
 		Name:  name,
@@ -42,7 +46,7 @@ func (r *Runner) newTestCaseRunner(name string, fileSystem fs.FS) *testCaseRunne
 	}
 	starlarktest.SetReporter(tr.thread, tr)
 
-	tr.predeclared["eval"] = starlark.NewBuiltin("eval", builtinEval)
+	tr.predeclared["eval"] = starlark.NewBuiltin("eval", tr.builtinEval)
 	tr.predeclared["read_file"] = starlark.NewBuiltin("read_file", tr.builtinReadFile)
 	tr.predeclared["txtar"] = starlark.NewBuiltin("txtar", builtinTxtar)
 	tr.predeclared["body"] = starlark.NewBuiltin("body", builtinBody)
@@ -90,10 +94,13 @@ func NewRunner() *Runner {
 	}
 }
 
-// RunFile executes a single Starlark test file and returns the results
-// for each test_* function found in it.
-// src may be nil, or a string, []byte, or io.Reader containing the file source.
+// RunFile executes a single Starlark test file. If src is non-nil, it is
+// used as the file contents.
 func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
+	return r.runFileWithRules(filename, src, nil)
+}
+
+func (r *Runner) runFileWithRules(filename string, src any, ruleTypes map[string]*minderv1.RuleType) ([]TestResult, error) {
 	if filename == "" {
 		return nil, errors.New("filename cannot be empty")
 	}
@@ -102,11 +109,11 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 	fileSystem := os.DirFS(baseDir)
 
 	name := filepath.Base(filename)
-	tr := r.newTestCaseRunner(name, fileSystem)
+	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
 
 	globals, err := tr.runFile(filename, src)
 	if err != nil {
-		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
+		if evalErr, ok := err.(*starlark.EvalError); ok {
 			return nil, fmt.Errorf("loading %s: %w\n%s", filename, err, evalErr.Backtrace())
 		}
 		return nil, fmt.Errorf("loading %s: %w", filename, err)
@@ -129,15 +136,15 @@ func (r *Runner) RunFile(filename string, src any) ([]TestResult, error) {
 
 	var results []TestResult
 	for name, fn := range testFns {
-		result := r.runOneTest(name, fn, fileSystem)
+		result := r.runOneTest(name, fn, fileSystem, ruleTypes)
 		results = append(results, result)
 	}
 
 	return results, nil
 }
 
-func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS) TestResult {
-	tr := r.newTestCaseRunner(name, fileSystem)
+func (r *Runner) runOneTest(name string, fn *starlark.Function, fileSystem fs.FS, ruleTypes map[string]*minderv1.RuleType) TestResult {
+	tr := r.newTestCaseRunner(name, fileSystem, ruleTypes)
 	result := TestResult{Name: name}
 
 	_, err := starlark.Call(tr.thread, fn, nil, nil)
@@ -174,10 +181,62 @@ func DiscoverFiles(root string) ([]string, error) {
 	return files, nil
 }
 
+// loadRulesFromDir finds and parses all *.yaml files in the given directory
+// into a map of RuleTypes keyed by rule name.
+func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
+	ruleTypes := make(map[string]*minderv1.RuleType)
+	yamlFiles, err := filepath.Glob(filepath.Join(dir, "*.yaml"))
+	if err != nil {
+		return nil, fmt.Errorf("globbing yaml files: %w", err)
+	}
+	for _, yf := range yamlFiles {
+		decoder, closer := fileconvert.DecoderForFile(yf)
+		if decoder == nil {
+			return nil, fmt.Errorf("error opening file: %s", yf)
+		}
+		rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+		closer.Close()
+		if err == nil && rt != nil && rt.Name != "" {
+			ruleTypes[rt.Name] = rt
+		}
+	}
+	return ruleTypes, nil
+}
+
 // RunDir discovers and executes all *.star test files under the given
-// directory, reporting results through t.
-func (r *Runner) RunDir(t *testing.T, dir string) {
+// directory. It also discovers and loads any *.yaml rule files in the directory.
+func (r *Runner) RunDir(dir string) ([]TestResult, error) {
+	ruleTypes, err := loadRulesFromDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("loading rules: %w", err)
+	}
+
+	files, err := DiscoverFiles(dir)
+	if err != nil {
+		return nil, fmt.Errorf("discovering test files: %w", err)
+	}
+
+	var allResults []TestResult
+	for _, file := range files {
+		results, err := r.runFileWithRules(file, nil, ruleTypes)
+		if err != nil {
+			return nil, err
+		}
+		allResults = append(allResults, results...)
+	}
+
+	return allResults, nil
+}
+
+// TestDir discovers and executes all *.star test files under the given
+// directory, reporting results through t. It also loads *.yaml rules.
+func (r *Runner) TestDir(t *testing.T, dir string) {
 	t.Helper()
+
+	ruleTypes, err := loadRulesFromDir(dir)
+	if err != nil {
+		t.Fatalf("loading rules: %v", err)
+	}
 
 	files, err := DiscoverFiles(dir)
 	if err != nil {
@@ -196,7 +255,7 @@ func (r *Runner) RunDir(t *testing.T, dir string) {
 		}
 
 		t.Run(rel, func(t *testing.T) {
-			results, err := r.RunFile(file, nil)
+			results, err := r.runFileWithRules(file, nil, ruleTypes)
 			if err != nil {
 				t.Fatalf("running %s: %v", file, err)
 			}
