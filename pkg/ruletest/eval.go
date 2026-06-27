@@ -21,36 +21,47 @@ import (
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
-func builtinEval(
+func (tr *testCaseRunner) builtinEval(
 	thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
-	var rulePath string
+	var ruleNameOrPath string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &rulePath, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict)
+		"rule", &ruleNameOrPath, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict)
 	if err != nil {
 		return nil, err
 	}
 
-	if !filepath.IsAbs(rulePath) {
-		callerFrame := thread.CallFrame(1)
-		if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
-			rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
+	var rt *minderv1.RuleType
+
+	if tr.ruleTypes != nil {
+		if ruleType, ok := tr.ruleTypes[ruleNameOrPath]; ok {
+			rt = ruleType
 		}
 	}
 
-	decoder, closer := fileconvert.DecoderForFile(rulePath)
-	if decoder == nil {
-		return nil, fmt.Errorf("error opening file: %s", rulePath)
-	}
-	defer closer.Close()
+	if rt == nil {
+		rulePath := ruleNameOrPath
+		if !filepath.IsAbs(rulePath) {
+			callerFrame := thread.CallFrame(1)
+			if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
+				rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
+			}
+		}
 
-	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse rule type: %w", err)
+		decoder, closer := fileconvert.DecoderForFile(rulePath)
+		if decoder == nil {
+			return nil, fmt.Errorf("error opening file: %s (or rule not found in loaded rule types)", rulePath)
+		}
+		defer closer.Close()
+
+		rt, err = fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse rule type: %w", err)
+		}
 	}
 
 	profileMap, err := dictToGoMap(profileDict)
