@@ -32,7 +32,9 @@ import (
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
 
-const regoV0DeprecationWarning = "This rule type uses Rego V0 syntax. Please migrate to V1 using `opa fmt --v0-v1`. V0 support will be removed in a future release."
+const regoV0DeprecationWarning = "This rule type uses Rego V0 syntax. " +
+	"Please migrate to V1 using `opa fmt --v0-v1`. " +
+	"V0 support will be removed in a future release."
 
 var (
 	maxReadableStringSize = 3 * 1 << 10 // 3kB
