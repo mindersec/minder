@@ -3469,6 +3469,13 @@
         "action": {
           "type": "string",
           "description": "action is the action to use for the PR review (comment or request_changes).\nDefault is comment."
+        },
+        "lineComments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/AlertTypePRCommentPullRequestLineComment"
+          }
         }
       },
       "required": [
@@ -3482,6 +3489,35 @@
           "type": "string"
         }
       }
+    },
+    "AlertTypePRCommentPullRequestLineComment": {
+      "type": "object",
+      "properties": {
+        "filepath": {
+          "type": "string",
+          "description": "filepath is the path to the file to comment on."
+        },
+        "lineStart": {
+          "type": "integer",
+          "format": "int32",
+          "description": "line_start is the starting line number."
+        },
+        "lineEnd": {
+          "type": "integer",
+          "format": "int32",
+          "description": "line_end is the ending line number."
+        },
+        "comment": {
+          "type": "string",
+          "description": "comment is the comment to post on those lines."
+        }
+      },
+      "required": [
+        "filepath",
+        "lineStart",
+        "lineEnd",
+        "comment"
+      ]
     },
     "DefPath": {
       "type": "object",
