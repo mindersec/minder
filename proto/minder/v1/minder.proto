@@ -2933,10 +2933,35 @@ message RuleType {
                 optional ActionsReplaceTagsWithSha actions_replace_tags_with_sha = 5;
             }
 
+            // NOTE: Issue remediation is not yet implemented.
+            // This configuration is reserved for future support.
+            // "issue" is intentionally not a supported remediation type yet.
+            message IssueRemediation {
+                // the title of the issue
+                // Supports Minder's template interpolation syntax.
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the issue
+                string title = 1 [(buf.validate.field).string = {
+                    min_len: 1
+                    max_len: 75
+                }];
+                // the body of the issue
+                // Supports Minder's template interpolation syntax
+                // The rendered body is interpreted as Markdown by repository providers that
+                // support Markdown (e.g. Github)
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the issue
+                string body = 2 [(buf.validate.field).string = {
+                    min_len: 1
+                    max_len: 65536
+                }];
+            }
+
             optional RestType rest = 2;
             optional GhBranchProtectionType gh_branch_protection = 3;
             optional PullRequestRemediation pull_request = 4;
             optional Alert.AlertTypePRComment pull_request_comment = 5;
+            optional IssueRemediation issue = 6;
         }
         Remediate remediate = 6;
 

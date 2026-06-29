@@ -201,6 +201,43 @@ type ReviewPublisher interface {
 	GetPullRequest(ctx context.Context, owner, repo string, prNumber int) (*github.PullRequest, error)
 }
 
+// IssuePublisher is the interface for providers that can publish issues.
+type IssuePublisher interface {
+	Provider
+
+	// CreateIssue creates an issue in the given repository.
+	CreateIssue(
+		ctx context.Context,
+		owner, repo string,
+		title string,
+		body string,
+		labels []string,
+		assignees []string,
+	) (*github.Issue, error)
+
+	// GetIssue gets an issue from the given repository
+	GetIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+	) (*github.Issue, error)
+
+	// CloseIssue closes an existing issue
+	CloseIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+		comment string,
+	) (*github.Issue, error)
+
+	// ReopenIssue reopens an existing issue
+	ReopenIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+	) (*github.Issue, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
@@ -238,6 +275,11 @@ type GitHub interface {
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
 	ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
+	CreateIssue(ctx context.Context, owner, repo string, title string, body string, labels []string,
+		assignees []string) (*github.Issue, error)
+	GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, error)
+	CloseIssue(ctx context.Context, owner, repo string, number int, comment string) (*github.Issue, error)
+	ReopenIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
