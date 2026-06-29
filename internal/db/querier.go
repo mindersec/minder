@@ -207,6 +207,10 @@ type Querier interface {
 	// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
 	// This is used for cursor-based iteration over all entities (e.g., in the reminder service).
 	ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error)
+	// ListEntitiesByTypePaginated retrieves entities of a given type for a project/provider
+	// with cursor-based pagination. Pass a null (all-zeros) UUID as cursor for the first page.
+	// The query over-fetches one row to determine if there are more results.
+	ListEntitiesByTypePaginated(ctx context.Context, arg ListEntitiesByTypePaginatedParams) ([]EntityInstance, error)
 	ListEvaluationHistory(ctx context.Context, arg ListEvaluationHistoryParams) ([]ListEvaluationHistoryRow, error)
 	ListEvaluationHistoryStaleRecords(ctx context.Context, arg ListEvaluationHistoryStaleRecordsParams) ([]ListEvaluationHistoryStaleRecordsRow, error)
 	ListFlushCache(ctx context.Context) ([]FlushCache, error)
