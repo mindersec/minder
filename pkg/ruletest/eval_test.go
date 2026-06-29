@@ -95,6 +95,29 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 			kwargs:  []starlark.Tuple{{starlark.String("entity"), starlark.String("not a dict")}},
 			wantErr: "got string, want dict",
 		},
+		{
+			name: "invalid mock_fs type",
+			args: starlark.Tuple{starlark.String("rule.yaml")},
+			kwargs: []starlark.Tuple{
+				{starlark.String("mock_fs"), starlark.String("not a dict")},
+			},
+			wantErr: "got string, want dict",
+		},
+		{
+			name: "mock_fs non-string keys",
+			args: starlark.Tuple{starlark.String("rule.yaml")},
+			kwargs: []starlark.Tuple{
+				{
+					starlark.String("mock_fs"),
+					func() *starlark.Dict {
+						d := starlark.NewDict(1)
+						_ = d.SetKey(starlark.MakeInt(1), starlark.String("content"))
+						return d
+					}(),
+				},
+			},
+			wantErr: "mock_fs keys and values must be strings",
+		},
 	}
 
 	for _, tt := range tests {

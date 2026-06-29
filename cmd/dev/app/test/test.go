@@ -15,9 +15,10 @@ import (
 // CmdTest returns the test cobra command
 func CmdTest() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "test [directories...]",
+		Use:   "test [paths...]",
 		Short: "Run Minder rule tests",
-		Long:  `Run Starlark-based tests for Minder rules. If no directories are provided, tests the current directory.`,
+		Long: "Run Starlark-based tests for Minder rules. Each path may be a file or directory. " +
+			"If no paths are provided, tests the current directory.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				args = []string{"."}

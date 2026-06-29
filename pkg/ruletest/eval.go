@@ -24,44 +24,26 @@ import (
 func (tr *testCaseRunner) builtinEval(
 	thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
-	var ruleNameOrPath string
+	var ruleName string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
+	var mockFSDict *starlark.Dict
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &ruleNameOrPath, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict)
+		"rule", &ruleName, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict, "mock_fs?", &mockFSDict)
 	if err != nil {
 		return nil, err
 	}
 
-	var rt *minderv1.RuleType
-
-	if tr.ruleTypes != nil {
-		if ruleType, ok := tr.ruleTypes[ruleNameOrPath]; ok {
-			rt = ruleType
-		}
+	mockFSMap, err := parseMockFSDict(mockFSDict)
+	if err != nil {
+		return nil, err
 	}
 
-	if rt == nil {
-		rulePath := ruleNameOrPath
-		if !filepath.IsAbs(rulePath) {
-			callerFrame := thread.CallFrame(1)
-			if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
-				rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
-			}
-		}
-
-		decoder, closer := fileconvert.DecoderForFile(rulePath)
-		if decoder == nil {
-			return nil, fmt.Errorf("error opening file: %s (or rule not found in loaded rule types)", rulePath)
-		}
-		defer closer.Close()
-
-		rt, err = fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse rule type: %w", err)
-		}
+	rt, err := tr.loadRuleTypeFallback(ruleName, thread)
+	if err != nil {
+		return nil, err
 	}
 
 	profileMap, err := dictToGoMap(profileDict)
@@ -86,7 +68,11 @@ func (tr *testCaseRunner) builtinEval(
 
 	ctx := context.Background()
 
-	tk := tkv1.NewTestKit(tkv1.WithHandlerFunc(mockHandler.ServeHTTP))
+	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
+	if len(mockFSMap) > 0 {
+		tkOpts = append(tkOpts, tkv1.WithMockFS(mockFSMap))
+	}
+	tk := tkv1.NewTestKit(tkOpts...)
 
 	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk)
 	if err != nil {
@@ -130,6 +116,51 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 	_ = result.SetKey(starlark.String("status"), starlark.String(status))
 	_ = result.SetKey(starlark.String("message"), starlark.String(msg))
 	return result
+}
+
+func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
+	mockFSMap := make(map[string]string)
+	if mockFSDict != nil {
+		for _, item := range mockFSDict.Items() {
+			k, v := item[0], item[1]
+			ks, ok1 := k.(starlark.String)
+			vs, ok2 := v.(starlark.String)
+			if !ok1 || !ok2 {
+				return nil, fmt.Errorf("mock_fs keys and values must be strings")
+			}
+			mockFSMap[string(ks)] = string(vs)
+		}
+	}
+	return mockFSMap, nil
+}
+
+func (tr *testCaseRunner) loadRuleTypeFallback(ruleName string, thread *starlark.Thread) (*minderv1.RuleType, error) {
+	if tr.ruleTypes != nil {
+		if ruleType, ok := tr.ruleTypes[ruleName]; ok {
+			return ruleType, nil
+		}
+	}
+
+	rulePath := ruleName
+	if !filepath.IsAbs(rulePath) {
+		callerFrame := thread.CallFrame(1)
+		if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
+			rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
+		}
+	}
+
+	decoder, closer := fileconvert.DecoderForFile(rulePath)
+	if decoder == nil {
+		return nil, fmt.Errorf("rule %q not found in loaded rule types and no file found at path %s", ruleName, rulePath)
+	}
+	defer closer.Close()
+
+	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse rule type: %w", err)
+	}
+
+	return rt, nil
 }
 
 //nolint:gocyclo // this is a simple switch over many entity types

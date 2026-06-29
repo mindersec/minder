@@ -15,11 +15,12 @@ import (
 	"strings"
 	"testing"
 
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/fileconvert"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
 )
 
 // testCaseRunner is responsible for executing a single Starlark file
@@ -110,7 +111,7 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 
 	globals, err := tr.runFile(filename, src)
 	if err != nil {
-		if evalErr, ok := err.(*starlark.EvalError); ok {
+		if evalErr, ok := errors.AsType[*starlark.EvalError](err); ok {
 			return nil, fmt.Errorf("loading %s: %w\n%s", filename, err, evalErr.Backtrace())
 		}
 		return nil, fmt.Errorf("loading %s: %w", filename, err)
@@ -207,9 +208,9 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 	return ruleTypes, nil
 }
 
-// RunDir discovers and executes all *.star test files under the given
+// runDir discovers and executes all *.star test files under the given
 // directory. It also discovers and loads any *.yaml rule files in the directory.
-func (r *Runner) RunDir(dir string) ([]TestResult, error) {
+func (r *Runner) runDir(dir string) ([]TestResult, error) {
 	ruleTypes, err := loadRulesFromDir(dir)
 	if err != nil {
 		return nil, fmt.Errorf("loading rules: %w", err)
@@ -245,7 +246,7 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 			continue
 		}
 		if info.IsDir() {
-			res, err := r.RunDir(p)
+			res, err := r.runDir(p)
 			if err != nil {
 				errs = append(errs, fmt.Errorf("error running directory %s: %w", p, err))
 			}
@@ -271,40 +272,24 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 // directory, reporting results through t. It also loads *.yaml rules.
 func (r *Runner) TestDir(t *testing.T, dir string) {
 	t.Helper()
+	t.Parallel()
 
-	ruleTypes, err := loadRulesFromDir(dir)
+	results, err := r.RunPaths([]string{dir})
 	if err != nil {
-		t.Fatalf("loading rules: %v", err)
+		t.Fatalf("running tests in %s: %v", dir, err)
 	}
 
-	files, err := DiscoverFiles(dir)
-	if err != nil {
-		t.Fatalf("discovering test files: %v", err)
-	}
-
-	if len(files) == 0 {
+	if len(results) == 0 {
 		t.Logf("no *.star test files found in %s", dir)
 		return
 	}
 
-	for _, file := range files {
-		rel, err := filepath.Rel(dir, file)
-		if err != nil {
-			t.Fatalf("failed to compute relative path for %s: %v", file, err)
-		}
-
-		t.Run(rel, func(t *testing.T) {
-			results, err := r.RunFile(file, nil, ruleTypes)
-			if err != nil {
-				t.Fatalf("running %s: %v", file, err)
-			}
-
-			for _, result := range results {
-				t.Run(result.Name, func(t *testing.T) {
-					for _, msg := range result.Failures {
-						t.Error(msg)
-					}
-				})
+	for _, result := range results {
+		result := result
+		t.Run(result.Name, func(t *testing.T) {
+			t.Parallel()
+			for _, msg := range result.Failures {
+				t.Error(msg)
 			}
 		})
 	}
