@@ -3612,6 +3612,9 @@
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
+        },
+        "issue": {
+          "$ref": "#/definitions/RemediateIssueRemediation"
         }
       }
     },
@@ -3851,6 +3854,20 @@
           "type": "string"
         }
       }
+    },
+    "RemediateIssueRemediation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "title": "the title of the issue\nSupports Minder's template interpolation syntax.\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        },
+        "body": {
+          "type": "string",
+          "title": "the body of the issue\nSupports Minder's template interpolation syntax\nThe rendered body is interpreted as Markdown by repository providers that\nsupport Markdown (e.g. Github)\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        }
+      },
+      "description": "NOTE: Issue remediation is not yet implemented.\nThis configuration is reserved for future support.\n\"issue\" is intentionally not a supported remediation type yet."
     },
     "RemediatePullRequestRemediation": {
       "type": "object",
