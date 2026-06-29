@@ -3983,6 +3983,11 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type that was created.
+      warnings:
+        type: array
+        items:
+          type: string
+        description: warnings contains non-fatal notices about the created rule type.
     description: CreateRuleTypeResponse is the response to create a rule type.
     required:
       - ruleType
@@ -6001,6 +6006,11 @@ definitions:
       ruleType:
         $ref: '#/definitions/v1RuleType'
         description: rule_type is the rule type that was updated.
+      warnings:
+        type: array
+        items:
+          type: string
+        description: warnings contains non-fatal notices about the updated rule type.
     description: UpdateRuleTypeResponse is the response to update a rule type.
     required:
       - ruleType
