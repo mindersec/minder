@@ -43,32 +43,32 @@ func (m *MockEntityService) EXPECT() *MockEntityServiceMockRecorder {
 }
 
 // DeleteEntityByID mocks base method.
-func (m *MockEntityService) DeleteEntityByID(ctx context.Context, entityID, projectID uuid.UUID) error {
+func (m *MockEntityService) DeleteEntityByID(ctx context.Context, entityID, projectID, providerID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEntityByID", ctx, entityID, projectID)
+	ret := m.ctrl.Call(m, "DeleteEntityByID", ctx, entityID, projectID, providerID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteEntityByID indicates an expected call of DeleteEntityByID.
-func (mr *MockEntityServiceMockRecorder) DeleteEntityByID(ctx, entityID, projectID any) *gomock.Call {
+func (mr *MockEntityServiceMockRecorder) DeleteEntityByID(ctx, entityID, projectID, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityByID", reflect.TypeOf((*MockEntityService)(nil).DeleteEntityByID), ctx, entityID, projectID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityByID", reflect.TypeOf((*MockEntityService)(nil).DeleteEntityByID), ctx, entityID, projectID, providerID)
 }
 
 // GetEntityByID mocks base method.
-func (m *MockEntityService) GetEntityByID(ctx context.Context, entityID, projectID uuid.UUID) (*v1.EntityInstance, error) {
+func (m *MockEntityService) GetEntityByID(ctx context.Context, entityID, projectID, providerID uuid.UUID) (*v1.EntityInstance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityByID", ctx, entityID, projectID)
+	ret := m.ctrl.Call(m, "GetEntityByID", ctx, entityID, projectID, providerID)
 	ret0, _ := ret[0].(*v1.EntityInstance)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEntityByID indicates an expected call of GetEntityByID.
-func (mr *MockEntityServiceMockRecorder) GetEntityByID(ctx, entityID, projectID any) *gomock.Call {
+func (mr *MockEntityServiceMockRecorder) GetEntityByID(ctx, entityID, projectID, providerID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockEntityService)(nil).GetEntityByID), ctx, entityID, projectID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityByID", reflect.TypeOf((*MockEntityService)(nil).GetEntityByID), ctx, entityID, projectID, providerID)
 }
 
 // GetEntityByName mocks base method.
