@@ -24,6 +24,7 @@ import (
 	"github.com/mindersec/minder/internal/projects"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 func TestProvisionSelfEnrolledProject(t *testing.T) {
@@ -59,7 +60,7 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 			"teamA": "featureA",
 			"teamB": "featureB",
 		},
-	})
+	}, mockStore, &flags.FakeClient{})
 
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
@@ -86,7 +87,7 @@ func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 		Return(db.Project{}, fmt.Errorf("failed to create project"))
 
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
 	_, err := creator.ProvisionSelfEnrolledProject(
 		ctx,
 		mockStore,
@@ -118,7 +119,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 
 	mockStore := mockdb.NewMockStore(ctrl)
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
 
 	for _, tc := range testCases {
 		_, err := creator.ProvisionSelfEnrolledProject(
@@ -159,7 +160,7 @@ func TestProvisionChildProject(t *testing.T) {
 			"teamA": "featureA",
 			"teamB": "featureB",
 		},
-	})
+	}, mockStore, &flags.FakeClient{})
 
 	_, err := creator.ProvisionChildProject(
 		ctx,
@@ -188,7 +189,7 @@ func TestProvisionChildProjectFailsNoParent(t *testing.T) {
 		Return(db.Project{}, fmt.Errorf("parent not found"))
 
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
 	_, err := creator.ProvisionChildProject(
 		ctx,
 		mockStore,
@@ -221,7 +222,7 @@ func TestProvisionChildProjectFailsTooManyParents(t *testing.T) {
 		}, nil)
 
 	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{})
+	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
 	_, err := creator.ProvisionChildProject(
 		ctx,
 		mockStore,

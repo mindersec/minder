@@ -43,6 +43,7 @@ import (
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	serverconfig "github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/eventer"
+	"github.com/mindersec/minder/pkg/flags"
 )
 
 const (
@@ -271,6 +272,8 @@ func TestCreateUser_gRPC(t *testing.T) {
 					marketplaces.NewNoopMarketplace(),
 					&serverconfig.DefaultProfilesConfig{},
 					&serverconfig.FeaturesConfig{},
+					mockStore,
+					&flags.FakeClient{},
 				),
 			}
 
