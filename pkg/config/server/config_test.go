@@ -6,6 +6,7 @@ package server_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -164,6 +165,7 @@ func TestReadDefaultConfig(t *testing.T) {
 	require.Equal(t, "debug", cfg.LoggingConfig.Level)
 	require.Equal(t, "minder", cfg.Database.Name)
 	require.Equal(t, "./.ssh/token_key_passphrase", cfg.Auth.TokenKey)
+	require.Equal(t, 5*time.Minute, cfg.Events.ExecutionTimeout)
 }
 
 const (
