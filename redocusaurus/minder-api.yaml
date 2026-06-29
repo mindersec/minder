@@ -3343,6 +3343,8 @@ definitions:
         $ref: '#/definitions/RemediatePullRequestRemediation'
       pullRequestComment:
         $ref: '#/definitions/AlertAlertTypePRComment'
+      issue:
+        $ref: '#/definitions/RemediateIssueRemediation'
   DepsTypePullRequestConfigs:
     type: object
     properties:
@@ -3563,6 +3565,40 @@ definitions:
     properties:
       patch:
         type: string
+  RemediateIssueRemediation:
+    type: object
+    properties:
+      title:
+        type: string
+        title: >-
+          the title of the issue
+
+          Supports Minder's template interpolation syntax.
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the issue
+      body:
+        type: string
+        title: >-
+          the body of the issue
+
+          Supports Minder's template interpolation syntax
+
+          The rendered body is interpreted as Markdown by repository providers
+          that
+
+          support Markdown (e.g. Github)
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the issue
+    description: |-
+      NOTE: Issue remediation is not yet implemented.
+      This configuration is reserved for future support.
+      "issue" is intentionally not a supported remediation type yet.
   RemediatePullRequestRemediation:
     type: object
     properties:
