@@ -13,6 +13,7 @@ import (
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/rs/zerolog"
 
+	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
 	"github.com/mindersec/minder/internal/engine/entities"
 	minderlogger "github.com/mindersec/minder/internal/logger"
@@ -25,8 +26,9 @@ const (
 	// DefaultExecutionTimeout is the timeout for execution of a set
 	// of profiles on an entity.
 	DefaultExecutionTimeout = 5 * time.Minute
-	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact signature to be available
-	// before proceeding with evaluation.
+
+	// ArtifactSignatureWaitPeriod is the waiting period for potential artifact
+	// signature to be available before proceeding with evaluation.
 	ArtifactSignatureWaitPeriod = 10 * time.Second
 )
 
@@ -37,6 +39,11 @@ type ExecutorEventHandler struct {
 	handlerMiddleware      []message.HandlerMiddleware
 	wgEntityEventExecution *sync.WaitGroup
 	executor               Executor
+
+	executionTimeout time.Duration
+	store            db.Store
+	closed           bool
+
 	// cancels are a set of cancel functions for current entity events in flight.
 	// This allows us to cancel rule evaluation directly when terminationContext
 	// is cancelled.
@@ -51,13 +58,27 @@ func NewExecutorEventHandler(
 	evt interfaces.Publisher,
 	handlerMiddleware []message.HandlerMiddleware,
 	executor Executor,
+	executionTimeout time.Duration,
+	store db.Store,
 ) *ExecutorEventHandler {
+
+	if executionTimeout <= 0 {
+		executionTimeout = DefaultExecutionTimeout
+	}
+
 	eh := &ExecutorEventHandler{
 		evt:                    evt,
 		wgEntityEventExecution: &sync.WaitGroup{},
 		handlerMiddleware:      handlerMiddleware,
 		executor:               executor,
+		executionTimeout:       executionTimeout,
+		store:                  store,
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Dur("execution_timeout", executionTimeout).
+		Msg("executor event handler initialized")
+
 	go func() {
 		<-ctx.Done()
 		eh.lock.Lock()
@@ -90,12 +111,13 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	// NOTE: we're _deliberately_ "escaping" from the parent context's Cancel/Done
 	// completion, because the default watermill behavior for both Go channels and
 	// SQL is to process messages sequentially, but we need additional parallelism
-	// beyond that.  When we switch to a different message processing system, we
+	// beyond that. When we switch to a different message processing system, we
 	// should aim to remove this goroutine altogether and have the messaging system
 	// provide the parallelism.
 	// We _do_ still want to cancel on shutdown, however.
 	// TODO: Make this timeout configurable
 	msgCtx := context.WithoutCancel(msg.Context())
+
 	//nolint:gosec // this is called when we iterate over e.cancels
 	msgCtx, shutdownCancel := context.WithCancel(msgCtx)
 
@@ -117,8 +139,10 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 	}
 
 	e.wgEntityEventExecution.Add(1)
+
 	go func() {
 		defer e.wgEntityEventExecution.Done()
+
 		if inf.Type == pb.Entity_ENTITY_ARTIFACTS {
 			// Wait for artifact signatures, but allow early exit on shutdown
 			select {
@@ -128,8 +152,9 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			}
 		}
 
-		ctx, cancel := context.WithTimeout(msgCtx, DefaultExecutionTimeout)
+		ctx, cancel := context.WithTimeout(msgCtx, e.executionTimeout)
 		defer cancel()
+
 		defer func() {
 			e.lock.Lock()
 			e.cancels = slices.DeleteFunc(e.cancels, func(cf *context.CancelFunc) bool {
@@ -138,15 +163,31 @@ func (e *ExecutorEventHandler) HandleEntityEvent(msg *message.Message) error {
 			e.lock.Unlock()
 		}()
 
+		providerName := ""
+		if e.store != nil {
+			provider, err := e.store.GetProviderByID(ctx, inf.ProviderID)
+			if err != nil {
+				zerolog.Ctx(ctx).Debug().
+					Err(err).
+					Str("provider_id", inf.ProviderID.String()).
+					Msg("failed to resolve provider name")
+			} else if provider.Name != "" {
+				providerName = provider.Name
+			}
+		}
+
 		ctx = engcontext.WithEntityContext(ctx, &engcontext.EntityContext{
 			Project: engcontext.Project{ID: inf.ProjectID},
-			// TODO: extract Provider name from ProviderID?
+			Provider: engcontext.Provider{
+				Name: providerName,
+			},
 		})
 
 		ts := minderlogger.BusinessRecord(ctx)
 		ctx = ts.WithTelemetry(ctx)
 
 		logger := zerolog.Ctx(ctx)
+
 		if err := inf.WithExecutionIDFromMessage(msg); err != nil {
 			logger.Info().
 				Str("message_id", msg.UUID).
