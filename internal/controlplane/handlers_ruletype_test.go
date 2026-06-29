@@ -105,6 +105,23 @@ func TestCreateRuleType(t *testing.T) {
 			expectedWarnings: []string{regoV0DeprecationWarning},
 		},
 		{
+			name: "warns when creating a V0 rule type without dual-parse",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulCreateRuleType,
+			),
+			features: map[string]any{
+				string(flags.RegoV1WarnV0): true,
+			},
+			request: &minderv1.CreateRuleTypeRequest{
+				RuleType: ruleTypeWithRego(regoV0Definition),
+			},
+			expectedWarnings: []string{regoV0DeprecationWarning},
+		},
+		{
 			name: "does not warn when creating a V1 rule type",
 			mockStoreFunc: df.NewMockStore(
 				df.WithTransaction(),
@@ -254,6 +271,23 @@ func TestUpdateRuleType(t *testing.T) {
 			features: map[string]any{
 				string(flags.RegoV1DualParse): true,
 				string(flags.RegoV1WarnV0):    true,
+			},
+			request: &minderv1.UpdateRuleTypeRequest{
+				RuleType: ruleTypeWithRego(regoV0Definition),
+			},
+			expectedWarnings: []string{regoV0DeprecationWarning},
+		},
+		{
+			name: "warns when updating a V0 rule type without dual-parse",
+			mockStoreFunc: df.NewMockStore(
+				df.WithTransaction(),
+				WithSuccessfulGetProjectByID(projectID),
+			),
+			ruleTypeServiceFunc: sf.NewRuleTypeServiceMock(
+				sf.WithSuccessfulUpdateRuleType,
+			),
+			features: map[string]any{
+				string(flags.RegoV1WarnV0): true,
 			},
 			request: &minderv1.UpdateRuleTypeRequest{
 				RuleType: ruleTypeWithRego(regoV0Definition),
