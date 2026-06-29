@@ -55,7 +55,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 	// Combine positional args with -f flag values
 	allFiles := append(fileFlag, args...)
 
-	files, err := util.ExpandFileArgs(allFiles...)
+	files, err := util.ExpandFileArgs(nil, allFiles...)
 	if err != nil {
 		return cli.MessageAndError("Error expanding file args", err)
 	}

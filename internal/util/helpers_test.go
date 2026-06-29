@@ -242,7 +242,7 @@ func TestExpandFileArgs(t *testing.T) {
 				tt.expected[i].Path = fmt.Sprintf("%s/%s", testDir, file.Path)
 			}
 			combinedFiles := tt.files
-			got, err := util.ExpandFileArgs(combinedFiles...)
+			got, err := util.ExpandFileArgs(nil, combinedFiles...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ExpandFileArgs() error = %v, wantErr %v", err, tt.wantErr)
 			}
