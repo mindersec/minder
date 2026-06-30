@@ -230,7 +230,7 @@ func (p *projectCreator) ProvisionProject(
 
 	if parentProjectID != uuid.Nil {
 		// Verify permissions if we have a parent
-		if err := p.authzClient.Check(ctx, "create", parentProjectID); err != nil {
+		if err := p.authzClient.Check(ctx, authz.RelationCreate, parentProjectID); err != nil {
 			return nil, util.UserVisibleError(
 				codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
 				auth.IdentityFromContext(ctx).Human(), parentProjectID)
