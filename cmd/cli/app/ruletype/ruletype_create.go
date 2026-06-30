@@ -70,6 +70,7 @@ func createCommand(cmd *cobra.Command, _ []string) error {
 			return nil, err
 		}
 
+		printWarnings(cmd, resprt.GetWarnings())
 		return resprt.RuleType, nil
 	}
 

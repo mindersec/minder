@@ -3612,6 +3612,9 @@
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
+        },
+        "issue": {
+          "$ref": "#/definitions/RemediateIssueRemediation"
         }
       }
     },
@@ -3851,6 +3854,20 @@
           "type": "string"
         }
       }
+    },
+    "RemediateIssueRemediation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "title": "the title of the issue\nSupports Minder's template interpolation syntax.\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        },
+        "body": {
+          "type": "string",
+          "title": "the body of the issue\nSupports Minder's template interpolation syntax\nThe rendered body is interpreted as Markdown by repository providers that\nsupport Markdown (e.g. Github)\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        }
+      },
+      "description": "NOTE: Issue remediation is not yet implemented.\nThis configuration is reserved for future support.\n\"issue\" is intentionally not a supported remediation type yet."
     },
     "RemediatePullRequestRemediation": {
       "type": "object",
@@ -4266,6 +4283,13 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type that was created."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "warnings contains non-fatal notices about the created rule type."
         }
       },
       "description": "CreateRuleTypeResponse is the response to create a rule type.",
@@ -6632,6 +6656,13 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type that was updated."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "warnings contains non-fatal notices about the updated rule type."
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type.",
