@@ -410,3 +410,184 @@ func TestParseIdentifyingProperties(t *testing.T) {
 		})
 	}
 }
+
+func TestServer_ListEntities(t *testing.T) {
+	t.Parallel()
+
+	projectID := uuid.New()
+	providerID := uuid.New()
+	providerName := "github"
+
+	tests := []struct {
+		name         string
+		request      *pb.ListEntitiesRequest
+		setupContext func(context.Context) context.Context
+		setupMocks   func(*mockproviders.MockProviderStore, *mockentitysvc.MockEntityService)
+		wantCode     codes.Code
+		errContains  string
+		validateResp func(*testing.T, *pb.ListEntitiesResponse)
+	}{
+		{
+			name: "successfully lists entities",
+			request: &pb.ListEntitiesRequest{
+				EntityType: pb.Entity_ENTITY_REPOSITORIES,
+			},
+			setupMocks: func(provStore *mockproviders.MockProviderStore, svc *mockentitysvc.MockEntityService) {
+				provStore.EXPECT().
+					GetByName(gomock.Any(), projectID, providerName).
+					Return(&db.Provider{
+						ID:        providerID,
+						Name:      providerName,
+						ProjectID: projectID,
+					}, nil)
+
+				svc.EXPECT().
+					ListEntities(gomock.Any(), projectID, providerID, pb.Entity_ENTITY_REPOSITORIES, "", int64(100)).
+					Return([]*pb.EntityInstance{
+						{Id: uuid.New().String(), Name: "repo1", Type: pb.Entity_ENTITY_REPOSITORIES},
+						{Id: uuid.New().String(), Name: "repo2", Type: pb.Entity_ENTITY_REPOSITORIES},
+					}, "", nil)
+			},
+			validateResp: func(t *testing.T, resp *pb.ListEntitiesResponse) {
+				t.Helper()
+				assert.Len(t, resp.Results, 2)
+				assert.Nil(t, resp.Page)
+			},
+		},
+		{
+			name:    "lists multiple entity types",
+			request: &pb.ListEntitiesRequest{},
+			setupMocks: func(provStore *mockproviders.MockProviderStore, svc *mockentitysvc.MockEntityService) {
+				provStore.EXPECT().
+					GetByName(gomock.Any(), projectID, providerName).
+					Return(&db.Provider{
+						ID:        providerID,
+						Name:      providerName,
+						ProjectID: projectID,
+					}, nil)
+
+				svc.EXPECT().
+					ListEntities(gomock.Any(), projectID, providerID, pb.Entity_ENTITY_UNSPECIFIED, "", int64(100)).
+					Return([]*pb.EntityInstance{
+						{Id: uuid.New().String(), Name: "repo1", Type: pb.Entity_ENTITY_REPOSITORIES},
+						{Id: uuid.New().String(), Name: "repo1/pull/2", Type: pb.Entity_ENTITY_PULL_REQUESTS},
+					}, "", nil)
+			},
+			validateResp: func(t *testing.T, resp *pb.ListEntitiesResponse) {
+				t.Helper()
+				assert.Len(t, resp.Results, 2)
+				assert.Nil(t, resp.Page)
+			},
+		},
+		{
+			name: "successfully lists entities with pagination",
+			request: &pb.ListEntitiesRequest{
+				EntityType: pb.Entity_ENTITY_REPOSITORIES,
+				Cursor: &pb.Cursor{
+					Size: 1,
+				},
+			},
+			setupMocks: func(provStore *mockproviders.MockProviderStore, svc *mockentitysvc.MockEntityService) {
+				provStore.EXPECT().
+					GetByName(gomock.Any(), projectID, providerName).
+					Return(&db.Provider{
+						ID:        providerID,
+						Name:      providerName,
+						ProjectID: projectID,
+					}, nil)
+
+				svc.EXPECT().
+					ListEntities(gomock.Any(), projectID, providerID, pb.Entity_ENTITY_REPOSITORIES, "", int64(1)).
+					Return([]*pb.EntityInstance{
+						{Id: uuid.New().String(), Name: "repo1", Type: pb.Entity_ENTITY_REPOSITORIES},
+					}, "next-cursor", nil)
+			},
+			validateResp: func(t *testing.T, resp *pb.ListEntitiesResponse) {
+				t.Helper()
+				assert.Len(t, resp.Results, 1)
+				assert.NotNil(t, resp.Page)
+				assert.Equal(t, "next-cursor", resp.Page.Next.Cursor)
+				assert.Equal(t, uint32(1), resp.Page.Next.Size)
+			},
+		},
+		{
+			name: "fails when provider not found",
+			request: &pb.ListEntitiesRequest{
+				EntityType: pb.Entity_ENTITY_REPOSITORIES,
+			},
+			setupMocks: func(provStore *mockproviders.MockProviderStore, _ *mockentitysvc.MockEntityService) {
+				provStore.EXPECT().
+					GetByName(gomock.Any(), projectID, providerName).
+					Return(nil, sql.ErrNoRows)
+			},
+			wantCode:    codes.NotFound,
+			errContains: "provider not found",
+		},
+		{
+			name: "handles service error",
+			request: &pb.ListEntitiesRequest{
+				EntityType: pb.Entity_ENTITY_REPOSITORIES,
+			},
+			setupMocks: func(provStore *mockproviders.MockProviderStore, svc *mockentitysvc.MockEntityService) {
+				provStore.EXPECT().
+					GetByName(gomock.Any(), projectID, providerName).
+					Return(&db.Provider{
+						ID:        providerID,
+						Name:      providerName,
+						ProjectID: projectID,
+					}, nil)
+
+				svc.EXPECT().
+					ListEntities(gomock.Any(), projectID, providerID, pb.Entity_ENTITY_REPOSITORIES, "", int64(100)).
+					Return(nil, "", errors.New("service error"))
+			},
+			wantCode: codes.Internal,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockProvStore := mockproviders.NewMockProviderStore(ctrl)
+			mockEntitySvc := mockentitysvc.NewMockEntityService(ctrl)
+
+			if tt.setupMocks != nil {
+				tt.setupMocks(mockProvStore, mockEntitySvc)
+			}
+
+			server := &Server{
+				providerStore: mockProvStore,
+				entityService: mockEntitySvc,
+			}
+
+			ctx := engcontext.WithEntityContext(context.Background(), &engcontext.EntityContext{
+				Project:  engcontext.Project{ID: projectID},
+				Provider: engcontext.Provider{Name: providerName},
+			})
+
+			resp, err := server.ListEntities(ctx, tt.request)
+
+			if tt.wantCode != codes.OK {
+				require.Error(t, err)
+
+				if tt.wantCode != codes.Internal {
+					st, ok := status.FromError(err)
+					require.True(t, ok, "error should be a gRPC status error")
+					assert.Equal(t, tt.wantCode, st.Code())
+				}
+				assert.Contains(t, err.Error(), tt.errContains)
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			if tt.validateResp != nil {
+				tt.validateResp(t, resp)
+			}
+		})
+	}
+}

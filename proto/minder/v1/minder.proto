@@ -4185,6 +4185,10 @@ message EntityInstance {
 
     // properties is a map of properties of the entity.
     google.protobuf.Struct properties = 5;
+
+    // originating_id is the id of the entity which originated this resource.
+    // If the originating entity is cleaned up, this entity will also be removed.
+    string originating_id = 6;
 }
 
 // EntityInstanceService provides API endpoints for managing entity instances
