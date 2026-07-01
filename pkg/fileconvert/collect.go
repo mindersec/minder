@@ -29,34 +29,51 @@ func ResourcesFromPaths(printer Printer, paths ...string) ([]minderv1.ResourceMe
 
 	objects := make([]minderv1.ResourceMeta, 0, len(files))
 	for _, file := range files {
-		var input Decoder
-		if file.Path == "-" {
-			input = yaml.NewDecoder(os.Stdin)
-		} else {
-			var closer io.Closer
-			input, closer = DecoderForFile(file.Path)
-			if input == nil {
-				// Not a valid file type, skip it.
-				continue
-			}
-			defer closer.Close()
+		resources, err := ReadFromPath(printer, file)
+		if err != nil && !errors.Is(err, minderv1.ErrNotAResource) {
+			return nil, err
 		}
+		objects = append(objects, resources...)
 
-		for i := 0; ; i = i + 1 {
-			resource, err := ReadResource(input)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-				if file.Expanded && i == 0 {
-					// Skip files expanded from directories where the contents aren't valid
-					printer("Skipping expanded file %s due to error %s\n", file.Path, err)
-					break
-				}
-				return nil, fmt.Errorf("error reading resource from file %s: %w", file.Path, err)
-			}
-			objects = append(objects, resource)
+	}
+	return objects, nil
+}
+
+// ReadFromPath reads a _single_ file (possibly expanded) and returns a set of Minder
+// resources (often 1, but YAML files may include multiple documents) decoded by file
+// type.  If "-" is passed as the filename, stdin will be read as a YAML document.
+//
+// TODO: do we want to return minderv1.ErrNotAResource or minderv1.ErrInvalidResource
+// on parse erros?  Right now, we simply skip them (from ResourcesFromPaths' behavior).
+func ReadFromPath(printer Printer, file util.ExpandedFile) ([]minderv1.ResourceMeta, error) {
+	objects := []minderv1.ResourceMeta{}
+	var input Decoder
+	if file.Path == "-" {
+		input = yaml.NewDecoder(os.Stdin)
+	} else {
+		var closer io.Closer
+		input, closer = DecoderForFile(file.Path)
+		if input == nil {
+			// Not a valid file type, skip it.
+			return objects, nil
 		}
+		defer closer.Close()
+	}
+
+	for i := 0; ; i = i + 1 {
+		resource, err := ReadResource(input)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			if file.Expanded && i == 0 {
+				// Skip files expanded from directories where the contents aren't valid
+				printer("Skipping expanded file %s due to error %s\n", file.Path, err)
+				break
+			}
+			return nil, fmt.Errorf("error reading resource from file %s: %w", file.Path, err)
+		}
+		objects = append(objects, resource)
 	}
 	return objects, nil
 }

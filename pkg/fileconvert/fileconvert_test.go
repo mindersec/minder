@@ -202,7 +202,7 @@ func TestReadAll(t *testing.T) {
 	collectedInput, closer := DecoderForFile("testdata/resources.yaml")
 	require.NotNil(t, collectedInput, "Expected non-nil decoder for profile")
 	t.Cleanup(func() { _ = closer.Close() })
-	collected := make([]proto.Message, 0, 3)
+	collected := make([]proto.Message, 0, 4)
 	for {
 		resource, err := ReadResource(collectedInput)
 		if errors.Is(err, io.EOF) {
