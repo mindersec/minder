@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -17,40 +16,32 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
-	"github.com/mindersec/minder/pkg/fileconvert"
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
-func builtinEval(
+func (tr *testCaseRunner) builtinEval(
 	thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
-	var rulePath string
+	var ruleName string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
+	var mockFSDict *starlark.Dict
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &rulePath, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict)
+		"rule", &ruleName, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict, "mock_fs?", &mockFSDict)
 	if err != nil {
 		return nil, err
 	}
 
-	if !filepath.IsAbs(rulePath) {
-		callerFrame := thread.CallFrame(1)
-		if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
-			rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
-		}
-	}
-
-	decoder, closer := fileconvert.DecoderForFile(rulePath)
-	if decoder == nil {
-		return nil, fmt.Errorf("error opening file: %s", rulePath)
-	}
-	defer closer.Close()
-
-	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
+	mockFSMap, err := parseMockFSDict(mockFSDict)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse rule type: %w", err)
+		return nil, err
+	}
+
+	rt, err := tr.lookupRuleType(ruleName)
+	if err != nil {
+		return nil, err
 	}
 
 	profileMap, err := dictToGoMap(profileDict)
@@ -75,7 +66,11 @@ func builtinEval(
 
 	ctx := context.Background()
 
-	tk := tkv1.NewTestKit(tkv1.WithHandlerFunc(mockHandler.ServeHTTP))
+	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
+	if len(mockFSMap) > 0 {
+		tkOpts = append(tkOpts, tkv1.WithMockFS(mockFSMap))
+	}
+	tk := tkv1.NewTestKit(tkOpts...)
 
 	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk)
 	if err != nil {
@@ -121,12 +116,33 @@ func formatEvalResult(evalErr error) *starlark.Dict {
 	return result
 }
 
+func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
+	mockFSMap := make(map[string]string)
+	if mockFSDict != nil {
+		for _, item := range mockFSDict.Items() {
+			k, v := item[0], item[1]
+			ks, ok1 := k.(starlark.String)
+			vs, ok2 := v.(starlark.String)
+			if !ok1 || !ok2 {
+				return nil, fmt.Errorf("mock_fs keys and values must be strings")
+			}
+			mockFSMap[string(ks)] = string(vs)
+		}
+	}
+	return mockFSMap, nil
+}
+
+func (tr *testCaseRunner) lookupRuleType(ruleName string) (*minderv1.RuleType, error) {
+	if tr.ruleTypes != nil {
+		if ruleType, ok := tr.ruleTypes[ruleName]; ok {
+			return ruleType, nil
+		}
+	}
+	return nil, fmt.Errorf("rule %q not found; make sure the rule type YAML is in the same directory as the test file", ruleName)
+}
+
 //nolint:gocyclo // this is a simple switch over many entity types
 func mapToProto(entityType string, entityMap map[string]any) (proto.Message, error) {
-	if len(entityMap) == 0 {
-		return nil, nil
-	}
-
 	b, err := json.Marshal(entityMap)
 	if err != nil {
 		return nil, err
@@ -155,9 +171,6 @@ func mapToProto(entityType string, entityMap map[string]any) (proto.Message, err
 		minderv1.Entity_ENTITY_PULL_REQUESTS:
 		fallthrough
 	default:
-		// Some entities like PullRequest or BuildEnvironment may not have concrete protobuf structs available here.
-		// For mocking purposes, returning nil is acceptable if the template doesn't strict check them,
-		// but returning an error is safer to flag unsupported mocking right now.
 		return nil, fmt.Errorf("unsupported entity type for mapping to proto: %s", entityType)
 	}
 

@@ -3,7 +3,7 @@
 
 def test_eval_success():
     res = eval(
-        rule="rule_type_sample.yaml",
+        rule="branch_protection_reviews",
         entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
         mock_http={
@@ -14,7 +14,7 @@ def test_eval_success():
 
 def test_eval_fail():
     res = eval(
-        rule="rule_type_sample.yaml",
+        rule="branch_protection_reviews",
         entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
         mock_http={
@@ -26,7 +26,7 @@ def test_eval_fail():
 
 def test_eval_error_404():
     res = eval(
-        rule="rule_type_sample.yaml",
+        rule="branch_protection_reviews",
         entity={"owner": "test", "name": "repo"},
         profile={"required_reviews": 2},
         mock_http={

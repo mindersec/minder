@@ -4,6 +4,7 @@
 package ruletest
 
 import (
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -37,7 +38,7 @@ func TestDiscoverFiles(t *testing.T) {
 func TestRunFile(t *testing.T) {
 	t.Parallel()
 	r := NewRunner()
-	results, err := r.RunFile(filepath.Join("testdata", "sample.star"), nil)
+	results, err := r.RunFile(filepath.Join("testdata", "sample.star"), nil, nil)
 	if err != nil {
 		t.Fatalf("RunFile failed: %v", err)
 	}
@@ -103,11 +104,16 @@ func TestRunEvalFile(t *testing.T) {
 		{name: "builtins", file: "builtins_test.star"},
 	}
 
+	ruleTypes, err := loadRulesFromDir("testdata")
+	if err != nil {
+		t.Fatalf("loading rule types: %v", err)
+	}
+
 	r := NewRunner()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			results, err := r.RunFile(filepath.Join("testdata", tt.file), nil)
+			results, err := r.RunFile(filepath.Join("testdata", tt.file), nil, ruleTypes)
 			if err != nil {
 				t.Fatalf("RunFile failed for %s: %v", tt.file, err)
 			}
@@ -124,4 +130,18 @@ func TestRunEvalFile(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTestDir(t *testing.T) {
+	t.Parallel()
+	r := NewRunner()
+	dir := t.TempDir()
+	content := []byte(`
+def test_pass():
+    assert.eq(1, 1)
+`)
+	if err := os.WriteFile(filepath.Join(dir, "pass.star"), content, 0644); err != nil {
+		t.Fatal(err)
+	}
+	r.TestDir(t, dir)
 }

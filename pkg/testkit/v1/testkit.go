@@ -18,6 +18,9 @@ type TestKit struct {
 	// gitDir is the directory where the git repository is cloned
 	gitDir string
 
+	// mockFS contains the filesystem representation for git ingestion testing
+	mockFS map[string]string
+
 	// HTTP
 	httpHandler http.Handler
 }
@@ -32,6 +35,13 @@ func WithGitDir(dir string) Option {
 	return func(tp *TestKit) {
 		tp.ingestType = git.GitRuleDataIngestType
 		tp.gitDir = dir
+	}
+}
+
+// WithMockFS is a functional option to configure the TestKit with a mocked filesystem
+func WithMockFS(fs map[string]string) Option {
+	return func(tk *TestKit) {
+		tk.mockFS = fs
 	}
 }
 

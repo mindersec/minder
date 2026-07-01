@@ -6,8 +6,13 @@ package v1
 import (
 	"context"
 	"errors"
+	"path/filepath"
+	"time"
 
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -83,9 +88,56 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 	return nil, nil
 }
 
-// Clone Implements the Git trait. This is a stub implementation that allows us to instantiate a Git ingester.
-// This will later be overridden by the actual implementation.
-func (*TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
-	// Note that this should not be called. If it is, it means that the ingester has not been overridden.
-	return nil, ErrNotIngesterOverridden
+// Clone Implements the Git trait. This initializes an in-memory repository with the mocked filesystem if provided.
+func (tk *TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
+	if len(tk.mockFS) == 0 {
+		return nil, ErrNotIngesterOverridden
+	}
+
+	storer := memory.NewStorage()
+	fs := memfs.New()
+
+	for path, content := range tk.mockFS {
+		if err := fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
+			return nil, err
+		}
+		f, err := fs.Create(path)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := f.Write([]byte(content)); err != nil {
+			_ = f.Close()
+			return nil, err
+		}
+		_ = f.Close()
+	}
+
+	repo, err := git.Init(storer, fs)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := repo.Worktree()
+	if err != nil {
+		return nil, err
+	}
+
+	for path := range tk.mockFS {
+		if _, err := w.Add(path); err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = w.Commit("Initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "TestKit",
+			Email: "testkit@minder.test",
+			When:  time.Now(),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return repo, nil
 }
