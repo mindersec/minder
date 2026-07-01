@@ -1,0 +1,79 @@
+{
+  "ruleTypes": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "applied_rule",
+      "displayName": "Applied Rule",
+      "context": {
+        "provider": "",
+        "project": "00000000-0000-0000-0000-000000000000"
+      },
+      "def": {
+        "inEntity": "repository",
+        "ruleSchema": {
+        },
+        "ingest": {
+          "type": "rest",
+          "rest": {
+            "endpoint": "/repos/{{.Entity.Owner}}/{{.Entity.Name}}",
+            "parse": "json"
+          }
+        },
+        "eval": {
+          "type": "rego",
+          "rego": {
+            "type": "deny-by-default",
+            "def": "package minder\n\n# METADATA\n# \n# title: 'Applied Rule'\n# ...\nimport rego.v1\n\ndefault allow := false\n\nallow := ntrue\n"
+          }
+        }
+      },
+      "description": "A minimal test rule type",
+      "guidance": "Do it!",
+      "severity": {
+        "value": "VALUE_LOW"
+      },
+      "releasePhase": "RULE_TYPE_RELEASE_PHASE_BETA"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "branch_protection_reviews",
+      "displayName": "Require Branch Protection Reviews",
+      "shortFailureMessage": "Secret scanning is not enabled",
+      "context": {
+        "provider": "",
+        "project": "00000000-0000-0000-0000-000000000000"
+      },
+      "def": {
+        "inEntity": "repository",
+        "ruleSchema": {
+          "properties": {
+            "required_reviews": {
+              "default": 2,
+              "type": "integer"
+            }
+          }
+        },
+        "ingest": {
+          "type": "rest",
+          "rest": {
+            "endpoint": "/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/main/protection",
+            "parse": "json"
+          }
+        },
+        "eval": {
+          "type": "rego",
+          "rego": {
+            "type": "deny-by-default",
+            "def": "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if{\n  #Check if the required review count meets our minimum\n  input.ingested.required_pull_request_reviews.required_approving_review_count >= input.profile.required_reviews\n}\n"
+          }
+        }
+      },
+      "description": "Ensures that branch protection requires at least two approved reviews.",
+      "guidance": "To comply with this rule, you must enable branch protection on your main branch \nand set the 'Required approving reviews' count to 2 or higher.\n",
+      "severity": {
+        "value": "VALUE_HIGH"
+      },
+      "releasePhase": "RULE_TYPE_RELEASE_PHASE_BETA"
+    }
+  ]
+}

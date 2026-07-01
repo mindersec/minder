@@ -18,51 +18,53 @@ import (
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	"github.com/mindersec/minder/pkg/fileconvert"
+	"github.com/spf13/cobra"
 )
 
 func execOnOneRuleType(
-	ctx context.Context,
+	cmd *cobra.Command,
 	t table.Table,
-	f string,
+	f util.ExpandedFile,
 	dashOpen io.Reader,
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {
-	reader, closer, err := util.OpenFileArg(f, dashOpen)
-	if err != nil {
-		return fmt.Errorf("error opening file arg: %w", err)
-	}
-	defer closer()
-
-	r := &minderv1.RuleType{}
-	if err := minderv1.ParseResource(reader, r); err != nil {
-		return fmt.Errorf("error parsing rule type: %w", err)
-	}
-
-	// Override the YAML specified project with the command line argument
-	if proj != "" {
-		if r.Context == nil {
-			r.Context = &minderv1.Context{}
-		}
-
-		r.Context.Project = &proj
-	}
-
-	// create a rule
-	rt, err := exec(ctx, f, r)
+	resources, err := fileconvert.ReadFromPath(cmd.Printf, f)
 	if err != nil {
 		return err
 	}
 
-	// add the rule type to the table rows
-	name := appendRuleTypePropertiesToName(rt)
+	for _, resource := range resources {
+		r, ok := resource.(*minderv1.RuleType)
+		if !ok {
+			return fmt.Errorf("file is a different type of resource: %T", resource)
+		}
 
-	t.AddRow(
-		name,
-		rt.Def.InEntity,
-		rt.Description,
-	)
+		// Override the YAML specified project with the command line argument
+		if proj != "" {
+			if r.Context == nil {
+				r.Context = &minderv1.Context{}
+			}
 
+			r.Context.Project = &proj
+		}
+
+		// create a rule
+		rt, err := exec(cmd.Context(), f.Path, r)
+		if err != nil {
+			return err
+		}
+
+		// add the rule type to the table rows
+		name := appendRuleTypePropertiesToName(rt)
+
+		t.AddRow(
+			name,
+			rt.Def.InEntity,
+			rt.Description,
+		)
+	}
 	return nil
 }
 
@@ -72,7 +74,7 @@ func validateFilesArg(files []string) error {
 	}
 
 	if slices.Contains(files, "") {
-		return fmt.Errorf("error: file must be set")
+		return fmt.Errorf("error: file must be nonempty")
 	}
 
 	if slices.Contains(files, "-") && len(files) > 1 {
@@ -87,10 +89,10 @@ func shouldSkipFile(f string) bool {
 	// Get file extension
 	ext := filepath.Ext(f)
 	switch ext {
-	case ".yaml", ".yml", ".json":
+	case ".yaml", ".yml", ".json", ".rego":
 		return false
 	default:
-		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml or json file\n", f)
+		fmt.Fprintf(os.Stderr, "Skipping file %s: not a yaml, json or rego file\n", f)
 		return true
 	}
 }
