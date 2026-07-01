@@ -7164,7 +7164,9 @@ func (x *CreateRuleTypeRequest) GetRuleType() *RuleType {
 type CreateRuleTypeResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// rule_type is the rule type that was created.
-	RuleType      *RuleType `protobuf:"bytes,1,opt,name=rule_type,json=ruleType,proto3" json:"rule_type,omitempty"`
+	RuleType *RuleType `protobuf:"bytes,1,opt,name=rule_type,json=ruleType,proto3" json:"rule_type,omitempty"`
+	// warnings contains non-fatal notices about the created rule type.
+	Warnings      []string `protobuf:"bytes,2,rep,name=warnings,proto3" json:"warnings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7202,6 +7204,13 @@ func (*CreateRuleTypeResponse) Descriptor() ([]byte, []int) {
 func (x *CreateRuleTypeResponse) GetRuleType() *RuleType {
 	if x != nil {
 		return x.RuleType
+	}
+	return nil
+}
+
+func (x *CreateRuleTypeResponse) GetWarnings() []string {
+	if x != nil {
+		return x.Warnings
 	}
 	return nil
 }
@@ -7256,7 +7265,9 @@ func (x *UpdateRuleTypeRequest) GetRuleType() *RuleType {
 type UpdateRuleTypeResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// rule_type is the rule type that was updated.
-	RuleType      *RuleType `protobuf:"bytes,1,opt,name=rule_type,json=ruleType,proto3" json:"rule_type,omitempty"`
+	RuleType *RuleType `protobuf:"bytes,1,opt,name=rule_type,json=ruleType,proto3" json:"rule_type,omitempty"`
+	// warnings contains non-fatal notices about the updated rule type.
+	Warnings      []string `protobuf:"bytes,2,rep,name=warnings,proto3" json:"warnings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -7294,6 +7305,13 @@ func (*UpdateRuleTypeResponse) Descriptor() ([]byte, []int) {
 func (x *UpdateRuleTypeResponse) GetRuleType() *RuleType {
 	if x != nil {
 		return x.RuleType
+	}
+	return nil
+}
+
+func (x *UpdateRuleTypeResponse) GetWarnings() []string {
+	if x != nil {
+		return x.Warnings
 	}
 	return nil
 }
@@ -15562,13 +15580,15 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x17GetRuleTypeByIdResponse\x125\n" +
 	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\"T\n" +
 	"\x15CreateRuleTypeRequest\x125\n" +
-	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleTypeJ\x04\b\x02\x10\x03\"O\n" +
+	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleTypeJ\x04\b\x02\x10\x03\"k\n" +
 	"\x16CreateRuleTypeResponse\x125\n" +
-	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\"T\n" +
+	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\x12\x1a\n" +
+	"\bwarnings\x18\x02 \x03(\tR\bwarnings\"T\n" +
 	"\x15UpdateRuleTypeRequest\x125\n" +
-	"\trule_type\x18\x02 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleTypeJ\x04\b\x03\x10\x04\"O\n" +
+	"\trule_type\x18\x02 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleTypeJ\x04\b\x03\x10\x04\"k\n" +
 	"\x16UpdateRuleTypeResponse\x125\n" +
-	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\"~\n" +
+	"\trule_type\x18\x01 \x01(\v2\x13.minder.v1.RuleTypeB\x03\xe0A\x02R\bruleType\x12\x1a\n" +
+	"\bwarnings\x18\x02 \x03(\tR\bwarnings\"~\n" +
 	"\x15DeleteRuleTypeRequest\x12,\n" +
 	"\acontext\x18\x01 \x01(\v2\x12.minder.v1.ContextR\acontext\x127\n" +
 	"\x02id\x18\x02 \x01(\tB'\xe0A\x02\xbaH!r\x1f\x18\xc8\x012\x1a^[A-Za-z0-9][-/[:word:]]*$R\x02id\"\x18\n" +

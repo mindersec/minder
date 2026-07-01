@@ -40,6 +40,26 @@ func TestCreateCommand(t *testing.T) {
 			GoldenFileName: "create_success.table",
 		},
 		{
+			Name: "display server warnings",
+			Args: []string{"ruletype", "create", "-f", sampleFile},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
+				mockResp := &minderv1.ListRuleTypesResponse{}
+				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
+
+				client.EXPECT().
+					CreateRuleType(gomock.Any(), gomock.Any()).
+					Return(&minderv1.CreateRuleTypeResponse{
+						RuleType: mockResp.RuleTypes[0],
+						Warnings: []string{"Rego V0 is deprecated"},
+					}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
+			},
+			GoldenFileName: "create_warning.table",
+		},
+
+		{
 			Name: "create rule type from rego file",
 			Args: []string{"ruletype", "create", "-f", regoFile},
 			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {

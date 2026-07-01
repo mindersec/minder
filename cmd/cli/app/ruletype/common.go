@@ -13,13 +13,14 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
 	"github.com/mindersec/minder/internal/util/cli/table/layouts"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
-	"github.com/spf13/cobra"
 )
 
 func execOnOneRuleType(
@@ -82,6 +83,12 @@ func validateFilesArg(files []string) error {
 	}
 
 	return nil
+}
+
+func printWarnings(cmd *cobra.Command, warnings []string) {
+	for _, warning := range warnings {
+		cmd.PrintErrf("Warning: %s\n", warning)
+	}
 }
 
 func shouldSkipFile(f string) bool {

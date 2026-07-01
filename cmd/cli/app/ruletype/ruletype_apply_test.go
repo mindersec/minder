@@ -76,6 +76,29 @@ func TestApplyCommand(t *testing.T) {
 			GoldenFileName: "apply_update.table",
 		},
 		{
+			Name: "apply displays update warnings",
+			Args: []string{"ruletype", "apply", applyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
+				mockResp := &minderv1.ListRuleTypesResponse{}
+				cli.LoadFixture(t, "mock_ruletypes_response.json", mockResp)
+
+				client.EXPECT().
+					CreateRuleType(gomock.Any(), gomock.Any()).
+					Return(nil, status.Error(codes.AlreadyExists, "already exists"))
+
+				client.EXPECT().
+					UpdateRuleType(gomock.Any(), gomock.Any()).
+					Return(&minderv1.UpdateRuleTypeResponse{
+						RuleType: mockResp.RuleTypes[0],
+						Warnings: []string{"Rego V0 is deprecated"},
+					}, nil)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
+			},
+			GoldenFileName: "apply_warning.table",
+		},
+		{
 			Name:          "no files specified",
 			Args:          []string{"ruletype", "apply"},
 			ExpectedError: "no files specified",
