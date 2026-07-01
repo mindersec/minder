@@ -32,6 +32,11 @@ const (
 	RolePermissionsManager Role = "permissions_manager"
 )
 
+const (
+	// RelationCreate maps to Relation_RELATION_CREATE [(name) = "create"].
+	RelationCreate = "create"
+)
+
 // nolint:lll
 var (
 	// AllRolesDescriptions is a list of all roles

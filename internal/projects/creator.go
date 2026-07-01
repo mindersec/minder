@@ -15,11 +15,14 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/authz"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
+	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/pkg/config/server"
+	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/mindpak"
 )
 
@@ -28,6 +31,13 @@ import (
 // 1. Move the delete operations into this interface
 // 2. The interface is very GitHub-specific. It needs to be made more generic.
 type ProjectCreator interface {
+	// ProvisionProject orchestrates the creation of a project, checking permissions,
+	// managing the database transaction, and calling the appropriate provisioning logic.
+	ProvisionProject(
+		ctx context.Context,
+		projectName string,
+		parentProjectID uuid.UUID,
+	) (*db.Project, error)
 
 	// ProvisionSelfEnrolledProject creates the core default components of the project
 	// (project, marketplace subscriptions, etc.).
@@ -50,10 +60,12 @@ type ProjectCreator interface {
 }
 
 type projectCreator struct {
-	authzClient authz.Client
-	marketplace marketplaces.Marketplace
-	profilesCfg *server.DefaultProfilesConfig
-	featuresCfg *server.FeaturesConfig
+	authzClient  authz.Client
+	marketplace  marketplaces.Marketplace
+	profilesCfg  *server.DefaultProfilesConfig
+	featuresCfg  *server.FeaturesConfig
+	store        db.Store
+	featureFlags flags.Interface
 }
 
 // NewProjectCreator creates a new instance of the project creator
@@ -61,12 +73,16 @@ func NewProjectCreator(authzClient authz.Client,
 	marketplace marketplaces.Marketplace,
 	profilesCfg *server.DefaultProfilesConfig,
 	featuresCfg *server.FeaturesConfig,
+	store db.Store,
+	featureFlags flags.Interface,
 ) ProjectCreator {
 	return &projectCreator{
-		authzClient: authzClient,
-		marketplace: marketplace,
-		profilesCfg: profilesCfg,
-		featuresCfg: featuresCfg,
+		authzClient:  authzClient,
+		marketplace:  marketplace,
+		profilesCfg:  profilesCfg,
+		featuresCfg:  featuresCfg,
+		store:        store,
+		featureFlags: featureFlags,
 	}
 }
 
@@ -203,4 +219,76 @@ func (p *projectCreator) ProvisionChildProject(
 	}
 
 	return &subProject, nil
+}
+
+func (p *projectCreator) ProvisionProject(
+	ctx context.Context,
+	projectName string,
+	parentProjectID uuid.UUID,
+) (*db.Project, error) {
+	var project *db.Project
+
+	if parentProjectID != uuid.Nil {
+		// Verify permissions if we have a parent
+		if err := p.authzClient.Check(ctx, authz.RelationCreate, parentProjectID); err != nil {
+			return nil, util.UserVisibleError(
+				codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
+				auth.IdentityFromContext(ctx).Human(), parentProjectID)
+		}
+
+		if !features.ProjectAllowsProjectHierarchyOperations(ctx, p.store, parentProjectID) {
+			return nil, util.UserVisibleError(codes.PermissionDenied,
+				"project does not allow project hierarchy operations")
+		}
+
+		tx, err := p.store.BeginTransaction()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+		}
+		defer p.store.Rollback(tx)
+		qtx := p.store.GetQuerierWithTransaction(tx)
+
+		project, err = p.ProvisionChildProject(ctx, qtx, parentProjectID, projectName)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.store.Commit(tx); err != nil {
+			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+		}
+
+	} else {
+		// This is a top-level project creation request, so we need to check
+		// if the user has the right to create projects in the system.
+		if !flags.Bool(ctx, p.featureFlags, flags.ProjectCreateDelete) {
+			return nil, util.UserVisibleError(codes.Unimplemented, "cannot create a new top-level project")
+		}
+
+		id := auth.IdentityFromContext(ctx)
+		if id.String() == "" {
+			return nil, util.UserVisibleError(codes.Unauthenticated, "cannot determine user ID")
+		}
+
+		tx, err := p.store.BeginTransaction()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
+		}
+		defer p.store.Rollback(tx)
+		qtx := p.store.GetQuerierWithTransaction(tx)
+
+		project, err = p.ProvisionSelfEnrolledProject(ctx, qtx, projectName, id.String())
+		if err != nil {
+			return nil, err
+		}
+
+		if err := p.store.Commit(tx); err != nil {
+			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
+		}
+	}
+
+	if project == nil {
+		return nil, status.Errorf(codes.Internal, "project is nil after creation")
+	}
+
+	return project, nil
 }
