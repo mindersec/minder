@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -17,7 +16,6 @@ import (
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
-	"github.com/mindersec/minder/pkg/fileconvert"
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
@@ -41,7 +39,7 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, err
 	}
 
-	rt, err := tr.loadRuleTypeFallback(ruleName, thread)
+	rt, err := tr.lookupRuleType(ruleName)
 	if err != nil {
 		return nil, err
 	}
@@ -134,41 +132,17 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 	return mockFSMap, nil
 }
 
-func (tr *testCaseRunner) loadRuleTypeFallback(ruleName string, thread *starlark.Thread) (*minderv1.RuleType, error) {
+func (tr *testCaseRunner) lookupRuleType(ruleName string) (*minderv1.RuleType, error) {
 	if tr.ruleTypes != nil {
 		if ruleType, ok := tr.ruleTypes[ruleName]; ok {
 			return ruleType, nil
 		}
 	}
-
-	rulePath := ruleName
-	if !filepath.IsAbs(rulePath) {
-		callerFrame := thread.CallFrame(1)
-		if callerFile := callerFrame.Pos.Filename(); callerFile != "" {
-			rulePath = filepath.Join(filepath.Dir(callerFile), rulePath)
-		}
-	}
-
-	decoder, closer := fileconvert.DecoderForFile(rulePath)
-	if decoder == nil {
-		return nil, fmt.Errorf("rule %q not found in loaded rule types and no file found at path %s", ruleName, rulePath)
-	}
-	defer closer.Close()
-
-	rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse rule type: %w", err)
-	}
-
-	return rt, nil
+	return nil, fmt.Errorf("rule %q not found; make sure the rule type YAML is in the same directory as the test file", ruleName)
 }
 
 //nolint:gocyclo // this is a simple switch over many entity types
 func mapToProto(entityType string, entityMap map[string]any) (proto.Message, error) {
-	if len(entityMap) == 0 {
-		return nil, nil
-	}
-
 	b, err := json.Marshal(entityMap)
 	if err != nil {
 		return nil, err
@@ -197,9 +171,6 @@ func mapToProto(entityType string, entityMap map[string]any) (proto.Message, err
 		minderv1.Entity_ENTITY_PULL_REQUESTS:
 		fallthrough
 	default:
-		// Some entities like PullRequest or BuildEnvironment may not have concrete protobuf structs available here.
-		// For mocking purposes, returning nil is acceptable if the template doesn't strict check them,
-		// but returning an error is safer to flag unsupported mocking right now.
 		return nil, fmt.Errorf("unsupported entity type for mapping to proto: %s", entityType)
 	}
 

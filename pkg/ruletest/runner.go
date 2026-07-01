@@ -71,6 +71,7 @@ func (tr *testCaseRunner) Error(args ...any) {
 
 // TestResult holds the outcome of a single Starlark test function.
 type TestResult struct {
+	Filename string
 	Name     string
 	Failures []string
 }
@@ -96,8 +97,9 @@ func NewRunner() *Runner {
 	}
 }
 
-// RunFile executes a single Starlark test file. If src is non-nil, it is
-// used as the file contents.
+// RunFile executes a single Starlark test file and returns the results
+// for each test_* function found in it.
+// src may be nil, or a string, []byte, or io.Reader containing the file source.
 func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv1.RuleType) ([]TestResult, error) {
 	if filename == "" {
 		return nil, errors.New("filename cannot be empty")
@@ -132,9 +134,11 @@ func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv
 		testFns[name] = fn
 	}
 
+	base := filepath.Base(filename)
 	var results []TestResult
 	for name, fn := range testFns {
 		result := r.runOneTest(name, fn, fileSystem, ruleTypes)
+		result.Filename = base
 		results = append(results, result)
 	}
 
@@ -272,7 +276,6 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 // directory, reporting results through t. It also loads *.yaml rules.
 func (r *Runner) TestDir(t *testing.T, dir string) {
 	t.Helper()
-	t.Parallel()
 
 	results, err := r.RunPaths([]string{dir})
 	if err != nil {
@@ -286,8 +289,8 @@ func (r *Runner) TestDir(t *testing.T, dir string) {
 
 	for _, result := range results {
 		result := result
-		t.Run(result.Name, func(t *testing.T) {
-			t.Parallel()
+		name := result.Filename + "/" + result.Name
+		t.Run(name, func(t *testing.T) {
 			for _, msg := range result.Failures {
 				t.Error(msg)
 			}

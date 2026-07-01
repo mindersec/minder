@@ -104,11 +104,16 @@ func TestRunEvalFile(t *testing.T) {
 		{name: "builtins", file: "builtins_test.star"},
 	}
 
+	ruleTypes, err := loadRulesFromDir("testdata")
+	if err != nil {
+		t.Fatalf("loading rule types: %v", err)
+	}
+
 	r := NewRunner()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			results, err := r.RunFile(filepath.Join("testdata", tt.file), nil, nil)
+			results, err := r.RunFile(filepath.Join("testdata", tt.file), nil, ruleTypes)
 			if err != nil {
 				t.Fatalf("RunFile failed for %s: %v", tt.file, err)
 			}
