@@ -80,6 +80,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 		})
 
 		if err == nil {
+			printWarnings(cmd, createResp.GetWarnings())
 			return createResp.RuleType, nil
 		}
 
@@ -100,6 +101,7 @@ func applyCommand(cmd *cobra.Command, args []string) error {
 			return nil, fmt.Errorf("error updating rule type from %s: %w", fileName, err)
 		}
 
+		printWarnings(cmd, updateResp.GetWarnings())
 		return updateResp.RuleType, nil
 	}
 
