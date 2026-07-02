@@ -6,11 +6,8 @@ package v1
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/storage/memory"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
@@ -86,46 +83,9 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 	return nil, nil
 }
 
-// Clone Implements the Git trait. If gitFS is set, it initializes an
-// in-memory Git repository backed by that filesystem.
-func (tk *TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
-	if tk.gitFS == nil {
-		return nil, ErrNotIngesterOverridden
-	}
-
-	storer := memory.NewStorage()
-
-	repo, err := git.Init(storer, tk.gitFS)
-	if err != nil {
-		return nil, err
-	}
-
-	w, err := repo.Worktree()
-	if err != nil {
-		return nil, err
-	}
-
-	// Add all files from the worktree
-	status, err := w.Status()
-	if err != nil {
-		return nil, err
-	}
-	for path := range status {
-		if _, err := w.Add(path); err != nil {
-			continue
-		}
-	}
-
-	_, err = w.Commit("Initial commit", &git.CommitOptions{
-		Author: &object.Signature{
-			Name:  "TestKit",
-			Email: "testkit@minder.test",
-			When:  time.Now(),
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return repo, nil
+// Clone implements the Git interface.
+// TestKit relies on fakeGit and Ingest for filesystem operations.
+func (*TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
+	return nil, errors.New("Clone is not supported in TestKit; use Ingest instead")
 }
+

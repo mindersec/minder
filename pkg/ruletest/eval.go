@@ -77,6 +77,10 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("failed to initialize rule type engine: %w", err)
 	}
 
+	if tk.ShouldOverrideIngest() {
+		rte.WithCustomIngester(tk)
+	}
+
 	res, err := rte.Eval(ctx, entityProto, profileMap, nil, &stubResultSink{})
 
 	// Because Eval returns the error, we pass that error to formatEvalResult
@@ -134,7 +138,7 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 
 func (tr *testCaseRunner) lookupRuleType(ruleName string) (*minderv1.RuleType, error) {
 	if tr.ruleTypes != nil {
-		if ruleType, ok := tr.ruleTypes[ruleName]; ok {
+		if ruleType := tr.ruleTypes[ruleName]; ruleType != nil {
 			return ruleType, nil
 		}
 	}

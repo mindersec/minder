@@ -97,7 +97,7 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 		},
 		{
 			name: "invalid mock_fs type",
-			args: starlark.Tuple{starlark.String("rule.yaml")},
+			args: starlark.Tuple{starlark.String("fs_check")},
 			kwargs: []starlark.Tuple{
 				{starlark.String("mock_fs"), starlark.String("not a dict")},
 			},
@@ -105,7 +105,7 @@ func TestBuiltinEval_InvalidArgs(t *testing.T) {
 		},
 		{
 			name: "mock_fs non-string keys",
-			args: starlark.Tuple{starlark.String("rule.yaml")},
+			args: starlark.Tuple{starlark.String("fs_check")},
 			kwargs: []starlark.Tuple{
 				{
 					starlark.String("mock_fs"),
