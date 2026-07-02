@@ -21,6 +21,7 @@ import (
 func TestApplyCommand(t *testing.T) {
 	applyFixture := filepath.Join("fixture", "rule_type_apply.yaml")
 	applyRegoFixture := filepath.Join("fixture", "applied_rule.rego")
+	emptyFixture := filepath.Join("fixture", "empty_file.yaml")
 
 	tests := []cli.CmdTestCase{
 		{
@@ -97,6 +98,18 @@ func TestApplyCommand(t *testing.T) {
 				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
 			},
 			GoldenFileName: "apply_warning.table",
+		},
+		{
+			Name: "apply with empty file fails",
+			Args: []string{"ruletype", "apply", "-f", emptyFixture},
+			MockSetup: func(t *testing.T, ctrl *gomock.Controller) context.Context {
+				// Apply creates the client _before_ loading the file, so we need to mock out
+				// the client even though we don't call the service.
+				t.Helper()
+				client := mockv1.NewMockRuleTypeServiceClient(ctrl)
+				return cli.WithRPCClient[minderv1.RuleTypeServiceClient](context.Background(), client)
+			},
+			ExpectedError: "fixture/empty_file.yaml did not contain a ruletype",
 		},
 		{
 			Name:          "no files specified",

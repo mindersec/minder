@@ -34,6 +34,9 @@ func execOnOneRuleType(
 	if err != nil {
 		return err
 	}
+	if len(resources) == 0 {
+		return fmt.Errorf("%s did not contain a ruletype", f.Path)
+	}
 
 	for _, resource := range resources {
 		r, ok := resource.(*minderv1.RuleType)
