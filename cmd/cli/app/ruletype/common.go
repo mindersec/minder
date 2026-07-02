@@ -27,7 +27,6 @@ func execOnOneRuleType(
 	cmd *cobra.Command,
 	t table.Table,
 	f util.ExpandedFile,
-	dashOpen io.Reader,
 	proj string,
 	exec func(context.Context, string, *minderv1.RuleType) (*minderv1.RuleType, error),
 ) error {

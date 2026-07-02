@@ -78,7 +78,7 @@ func createCommand(cmd *cobra.Command, _ []string) error {
 		if f.Path != "-" && shouldSkipFile(f.Path) {
 			continue
 		}
-		if err = execOnOneRuleType(cmd, table, f, os.Stdin, project, createFunc); err != nil {
+		if err = execOnOneRuleType(cmd, table, f, project, createFunc); err != nil {
 			// We swallow errors if you're loading a directory to avoid failing
 			// on test files.
 			if f.Expanded && minderv1.YouMayHaveTheWrongResource(err) {

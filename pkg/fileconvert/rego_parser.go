@@ -12,8 +12,9 @@ import (
 	"path/filepath"
 	"regexp"
 
-	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"gopkg.in/yaml.v3"
+
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
 type regoDecoder struct {
@@ -52,9 +53,10 @@ func (r *regoDecoder) Decode(v any) error {
 	// The OPA metadata spec says that custom fields should be under the "custom" key
 	// We also accept them under the top-level object for convenience, despite possible
 	// future conflicts.
-	customMap, ok := ruleType["custom"].(map[string]any)
-	for k, v := range customMap {
-		ruleType[k] = v
+	if customMap, ok := ruleType["custom"].(map[string]any); ok {
+		for k, v := range customMap {
+			ruleType[k] = v
+		}
 	}
 
 	ruleType["type"] = string(minderv1.RuleTypeResource)
@@ -74,7 +76,7 @@ func (r *regoDecoder) Decode(v any) error {
 
 	// Rules must have a schema, per validation, but an empty schema is fine.
 	// For convenience, allow omitting this in the metadata.
-	ensureEntry(defMap, "rule_schema", map[string]any{})
+	_, _ = ensureEntry(defMap, "rule_schema", map[string]any{})
 
 	evalMap, err := ensureEntry(defMap, "eval", map[string]any{})
 	if err != nil {

@@ -32,7 +32,9 @@ var applyCmd = &cobra.Command{
 }
 
 // applyCommand is the general-purpose "apply" subcommand
-func applyCommand(cmd *cobra.Command, args []string) error { //ctx context.Context, cmd *cobra.Command, args []string, conn *grpc.ClientConn) error {
+//
+//nolint:gocyclo
+func applyCommand(cmd *cobra.Command, args []string) error {
 	// Step 1: Collect inputs, by reading files or directories.  Use the "-f" flag if set, positional arguments otherwise.
 	fileNames := args
 	argFiles, _ := cmd.Flags().GetStringSlice("file")
