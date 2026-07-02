@@ -56,8 +56,6 @@ The Minder CLI will parse rego files and extract RuleType metadata from them.  I
 | `def.rule_schemad` | defaults to empty-object |
 
 ```rego
-package minder
-
 # METADATA
 #
 # name: github_branch_protection
@@ -77,6 +75,9 @@ package minder
 #     eval:
 #       rego:
 #         type: deny-by-default
+package minder
+
+import rego.v1
 
 input.ingested.required_pull_request_reviews.required_approving_review_count >= 1
 input.ingested.enforce_admins.enabled == true
