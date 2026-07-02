@@ -6,10 +6,8 @@ package v1
 import (
 	"context"
 	"errors"
-	"path/filepath"
 	"time"
 
-	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
@@ -88,31 +86,16 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 	return nil, nil
 }
 
-// Clone Implements the Git trait. This initializes an in-memory repository with the mocked filesystem if provided.
+// Clone Implements the Git trait. If gitFS is set, it initializes an
+// in-memory Git repository backed by that filesystem.
 func (tk *TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
-	if len(tk.mockFS) == 0 {
+	if tk.gitFS == nil {
 		return nil, ErrNotIngesterOverridden
 	}
 
 	storer := memory.NewStorage()
-	fs := memfs.New()
 
-	for path, content := range tk.mockFS {
-		if err := fs.MkdirAll(filepath.Dir(path), 0755); err != nil {
-			return nil, err
-		}
-		f, err := fs.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := f.Write([]byte(content)); err != nil {
-			_ = f.Close()
-			return nil, err
-		}
-		_ = f.Close()
-	}
-
-	repo, err := git.Init(storer, fs)
+	repo, err := git.Init(storer, tk.gitFS)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +105,14 @@ func (tk *TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository
 		return nil, err
 	}
 
-	for path := range tk.mockFS {
+	// Add all files from the worktree
+	status, err := w.Status()
+	if err != nil {
+		return nil, err
+	}
+	for path := range status {
 		if _, err := w.Add(path); err != nil {
-			return nil, err
+			continue
 		}
 	}
 

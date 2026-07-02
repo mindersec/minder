@@ -68,7 +68,7 @@ func (tr *testCaseRunner) builtinEval(
 
 	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
 	if len(mockFSMap) > 0 {
-		tkOpts = append(tkOpts, tkv1.WithMockFS(mockFSMap))
+		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
 

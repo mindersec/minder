@@ -19,6 +19,7 @@ import (
 	"go.starlark.net/starlarktest"
 	"go.starlark.net/syntax"
 
+	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/fileconvert"
 )
@@ -99,7 +100,11 @@ func NewRunner() *Runner {
 
 // RunFile executes a single Starlark test file and returns the results
 // for each test_* function found in it.
-// src may be nil, or a string, []byte, or io.Reader containing the file source.
+//
+// filename is the path to the *.star file. If src is nil, the file is
+// read from disk; otherwise src may be a string, []byte, or io.Reader
+// containing the Starlark source. ruleTypes supplies the rule type
+// definitions available to eval() calls within the test file.
 func (r *Runner) RunFile(filename string, src any, ruleTypes map[string]*minderv1.RuleType) ([]TestResult, error) {
 	if filename == "" {
 		return nil, errors.New("filename cannot be empty")
@@ -168,26 +173,6 @@ func (r *Runner) runOneTest(
 	return result
 }
 
-// DiscoverFiles walks the given directory tree and returns the paths of
-// all *.star files found, in sorted order.
-func DiscoverFiles(root string) ([]string, error) {
-	var files []string
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() && strings.HasSuffix(d.Name(), ".star") {
-			files = append(files, path)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("walking %s: %w", root, err)
-	}
-	sort.Strings(files)
-	return files, nil
-}
-
 // loadRulesFromDir finds and parses all *.yaml files in the given directory
 // into a map of RuleTypes keyed by rule name.
 func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
@@ -197,73 +182,76 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 		return nil, fmt.Errorf("globbing yaml files: %w", err)
 	}
 	for _, yf := range yamlFiles {
-		decoder, closer := fileconvert.DecoderForFile(yf)
-		if decoder == nil {
-			return nil, fmt.Errorf("error opening file: %s", yf)
+		rt, err := loadSingleRule(yf)
+		if err != nil {
+			continue // skip files that aren't valid rule types
 		}
-		defer func(c io.Closer) {
-			_ = c.Close()
-		}(closer)
-		rt, err := fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
-		if err == nil && rt != nil && rt.Name != "" {
+		if rt != nil && rt.Name != "" {
 			ruleTypes[rt.Name] = rt
 		}
 	}
 	return ruleTypes, nil
 }
 
-// runDir discovers and executes all *.star test files under the given
-// directory. It also discovers and loads any *.yaml rule files in the directory.
-func (r *Runner) runDir(dir string) ([]TestResult, error) {
-	ruleTypes, err := loadRulesFromDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("loading rules: %w", err)
+// loadSingleRule reads a single YAML file and returns the parsed RuleType, if any.
+func loadSingleRule(path string) (*minderv1.RuleType, error) {
+	decoder, closer := fileconvert.DecoderForFile(path)
+	if decoder == nil {
+		return nil, fmt.Errorf("error opening file: %s", path)
 	}
-
-	files, err := DiscoverFiles(dir)
-	if err != nil {
-		return nil, fmt.Errorf("discovering test files: %w", err)
-	}
-
-	var allResults []TestResult
-	for _, file := range files {
-		results, err := r.RunFile(file, nil, ruleTypes)
-		if err != nil {
-			return nil, err
-		}
-		allResults = append(allResults, results...)
-	}
-
-	return allResults, nil
+	defer func(c io.Closer) {
+		_ = c.Close()
+	}(closer)
+	return fileconvert.ReadResourceTyped[*minderv1.RuleType](decoder)
 }
 
-// RunPaths takes a list of file or directory paths, executing tests in each.
+// RunPaths takes a list of file or directory paths, discovering all *.star test
+// files recursively. Tests are grouped by their immediate directory, and any
+// *.yaml rules in that same directory are loaded and made available to the tests.
 // It collects errors instead of returning early on the first error.
 func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
+	expanded, err := util.ExpandFileArgs(paths...)
+	if err != nil {
+		return nil, fmt.Errorf("expanding paths: %w", err)
+	}
+
+	// Group .star files by their immediate directory
+	filesByDir := make(map[string][]string)
+	for _, f := range expanded {
+		if !f.Expanded && filepath.Ext(f.Path) != ".star" && filepath.Ext(f.Path) != ".yaml" && filepath.Ext(f.Path) != ".yml" {
+			// If it's a specific file that is not a star or yaml file, we skip it
+			continue
+		}
+		if filepath.Ext(f.Path) == ".star" {
+			dir := filepath.Dir(f.Path)
+			filesByDir[dir] = append(filesByDir[dir], f.Path)
+		}
+	}
+
 	var allResults []TestResult
 	var errs []error
 
-	for _, p := range paths {
-		info, err := os.Stat(p)
+	// Ensure deterministic execution order by sorting directories
+	var dirs []string
+	for dir := range filesByDir {
+		dirs = append(dirs, dir)
+	}
+	sort.Strings(dirs)
+
+	for _, dir := range dirs {
+		files := filesByDir[dir]
+		sort.Strings(files)
+
+		ruleTypes, err := loadRulesFromDir(dir)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("stat %s: %w", p, err))
+			errs = append(errs, fmt.Errorf("loading rules for directory %s: %w", dir, err))
 			continue
 		}
-		if info.IsDir() {
-			res, err := r.runDir(p)
+
+		for _, file := range files {
+			res, err := r.RunFile(file, nil, ruleTypes)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("error running directory %s: %w", p, err))
-			}
-			allResults = append(allResults, res...)
-		} else {
-			ruleTypes, err := loadRulesFromDir(filepath.Dir(p))
-			if err != nil {
-				errs = append(errs, fmt.Errorf("loading rules for file %s: %w", p, err))
-				continue
-			}
-			res, err := r.RunFile(p, nil, ruleTypes)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("error running file %s: %w", p, err))
+				errs = append(errs, fmt.Errorf("error running file %s: %w", file, err))
 				continue
 			}
 			allResults = append(allResults, res...)
@@ -274,6 +262,7 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 
 // TestDir discovers and executes all *.star test files under the given
 // directory, reporting results through t. It also loads *.yaml rules.
+//nolint:tparallel // TestDir acts as a test runner helper, caller is responsible for t.Parallel
 func (r *Runner) TestDir(t *testing.T, dir string) {
 	t.Helper()
 

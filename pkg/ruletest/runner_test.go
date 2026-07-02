@@ -11,30 +11,6 @@ import (
 	"testing"
 )
 
-func TestDiscoverFiles(t *testing.T) {
-	t.Parallel()
-	files, err := DiscoverFiles("testdata")
-	if err != nil {
-		t.Fatalf("DiscoverFiles failed: %v", err)
-	}
-
-	found := make(map[string]bool)
-	for _, f := range files {
-		found[f] = true
-	}
-
-	expected := []string{
-		filepath.Join("testdata", "eval.star"),
-		filepath.Join("testdata", "sample.star"),
-	}
-
-	for _, exp := range expected {
-		if !found[exp] {
-			t.Errorf("expected to find %s, but it was missing", exp)
-		}
-	}
-}
-
 func TestRunFile(t *testing.T) {
 	t.Parallel()
 	r := NewRunner()
@@ -102,6 +78,7 @@ func TestRunEvalFile(t *testing.T) {
 	}{
 		{name: "eval", file: "eval.star"},
 		{name: "builtins", file: "builtins_test.star"},
+		{name: "mock_fs", file: "mock_fs.star"},
 	}
 
 	ruleTypes, err := loadRulesFromDir("testdata")

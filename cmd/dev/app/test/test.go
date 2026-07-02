@@ -5,7 +5,7 @@
 package test
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 
@@ -32,27 +32,27 @@ func CmdTest() *cobra.Command {
 
 			if len(results) == 0 {
 				cmd.Printf("No tests found\n")
-				return err
+				return nil
 			}
 
 			hasFailures := false
 			for _, res := range results {
 				if len(res.Failures) > 0 {
 					hasFailures = true
-					cmd.Printf("FAIL: %s\n", res.Name)
+					cmd.Printf("FAIL: %s/%s\n", res.Filename, res.Name)
 					for _, f := range res.Failures {
 						cmd.Printf("  - %s\n", f)
 					}
 				} else {
-					cmd.Printf("PASS: %s\n", res.Name)
+					cmd.Printf("PASS: %s/%s\n", res.Filename, res.Name)
 				}
 			}
 
 			if hasFailures {
-				return fmt.Errorf("one or more tests failed")
+				return errors.New("one or more tests failed")
 			}
 
-			return err
+			return nil
 		},
 	}
 
