@@ -280,6 +280,12 @@ func (r *Runner) TestDir(t *testing.T, dir string) {
 		result := result
 		name := result.Filename + "/" + result.Name
 		t.Run(name, func(t *testing.T) {
+			if strings.HasPrefix(result.Name, "test_fail_") {
+				if result.Passed() {
+					t.Errorf("expected test %s to fail, but it passed", result.Name)
+				}
+				return
+			}
 			for _, msg := range result.Failures {
 				t.Error(msg)
 			}
