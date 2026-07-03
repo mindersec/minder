@@ -18,7 +18,7 @@ func CreateGitHubAppJWT(appId int64, privateKey *rsa.PrivateKey) (string, error)
 	// Create the Claims
 	claims := jwt.MapClaims{
 		"iat": time.Now().Unix(),
-		"exp": time.Now().Add(time.Minute * 10).Unix(),
+		"exp": time.Now().Add(time.Minute * 9).Unix(),
 		"iss": strconv.FormatInt(appId, 10),
 	}
 

@@ -35,16 +35,11 @@ func (tk *TestKit) Do(ctx context.Context, req *http.Request) (*http.Response, e
 		Str("url", req.URL.String()).
 		Msg("HTTP request")
 
-	h := func(w http.ResponseWriter, _ *http.Request) {
-		for k, v := range tk.httpHeaders {
-			w.Header().Set(k, v)
-		}
-
-		w.WriteHeader(tk.httpStatus)
-		_, _ = w.Write(tk.httpBody)
+	recorder := httptest.NewRecorder()
+	if tk.httpHandler != nil {
+		tk.httpHandler.ServeHTTP(recorder, req)
 	}
-
-	h(tk.httpRecorder, req)
-
-	return tk.httpRecorder.Result(), nil
+	resp := recorder.Result()
+	resp.Request = req
+	return resp, nil
 }
