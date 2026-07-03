@@ -4,7 +4,6 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"strings"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 
 	"github.com/mindersec/minder/cmd/cli/app"
 	"github.com/mindersec/minder/internal/util"
@@ -27,15 +25,26 @@ var grantListCmd = &cobra.Command{
 	Short: "List role grants within a given project",
 	Long: `The minder project role grant list command lists all role grants
 on a particular project.`,
-	RunE: cli.GRPCClientWrapRunE(GrantListCommand),
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return cli.MessageAndError("Error binding flags", err)
+		}
+		return nil
+	},
+	RunE: GrantListCommand,
 }
 
 // GrantListCommand is the command for listing grants
-func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn *grpc.ClientConn) error {
-	client := minderv1.NewPermissionsServiceClient(conn)
+func GrantListCommand(cmd *cobra.Command, _ []string) error {
+	client, cleanup, err := GetPermissionsClient(cmd)
+	if err != nil {
+		return cli.MessageAndError("Error getting client", err)
+	}
+	defer cleanup()
 
 	project := viper.GetString("project")
 	format := viper.GetString("output")
+
 	// Ensure the output format is supported
 	if !app.IsOutputFormatSupported(format) {
 		return cli.MessageAndError(fmt.Sprintf("Output format %s not supported", format), fmt.Errorf("invalid argument"))
@@ -45,7 +54,7 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 	// See https://github.com/spf13/cobra/issues/340#issuecomment-374617413
 	cmd.SilenceUsage = true
 
-	resp, err := client.ListRoleAssignments(ctx, &minderv1.ListRoleAssignmentsRequest{
+	resp, err := client.ListRoleAssignments(cmd.Context(), &minderv1.ListRoleAssignmentsRequest{
 		Context: &minderv1.Context{
 			Project: &project,
 		},
@@ -74,11 +83,11 @@ func GrantListCommand(ctx context.Context, cmd *cobra.Command, _ []string, conn 
 		}
 		t.Render()
 		if len(resp.Invitations) > 0 {
-			t := initializeTableForGrantListInvitations(cmd.OutOrStdout())
+			t2 := initializeTableForGrantListInvitations(cmd.OutOrStdout())
 			for _, r := range resp.Invitations {
-				t.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339))
+				t2.AddRow(r.Email, r.Role, r.SponsorDisplay, r.ExpiresAt.AsTime().Format(time.RFC3339))
 			}
-			t.Render()
+			t2.Render()
 		} else {
 			cmd.Println("No pending invitations found.")
 		}
