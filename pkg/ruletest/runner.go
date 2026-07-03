@@ -259,4 +259,3 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 	}
 	return allResults, errors.Join(errs...)
 }
-

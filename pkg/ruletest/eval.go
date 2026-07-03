@@ -20,7 +20,7 @@ import (
 )
 
 func (tr *testCaseRunner) builtinEval(
-	thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
+	_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple,
 ) (starlark.Value, error) {
 	var ruleName string
 	var entityDict *starlark.Dict
