@@ -9,11 +9,12 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
-	"testing"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarktest"
@@ -187,6 +188,9 @@ func loadRulesFromDir(dir string) (map[string]*minderv1.RuleType, error) {
 			continue // skip files that aren't valid rule types
 		}
 		if rt != nil && rt.Name != "" {
+			if _, exists := ruleTypes[rt.Name]; exists {
+				return nil, fmt.Errorf("duplicate rule type name %q in directory %s", rt.Name, dir)
+			}
 			ruleTypes[rt.Name] = rt
 		}
 	}
@@ -232,11 +236,7 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 	var errs []error
 
 	// Ensure deterministic execution order by sorting directories
-	var dirs []string
-	for dir := range filesByDir {
-		dirs = append(dirs, dir)
-	}
-	sort.Strings(dirs)
+	dirs := slices.Sorted(maps.Keys(filesByDir))
 
 	for _, dir := range dirs {
 		files := filesByDir[dir]
@@ -260,35 +260,3 @@ func (r *Runner) RunPaths(paths []string) ([]TestResult, error) {
 	return allResults, errors.Join(errs...)
 }
 
-// TestDir discovers and executes all *.star test files under the given
-// directory, reporting results through t. It also loads *.yaml rules.
-//nolint:tparallel // TestDir acts as a test runner helper, caller is responsible for t.Parallel
-func (r *Runner) TestDir(t *testing.T, dir string) {
-	t.Helper()
-
-	results, err := r.RunPaths([]string{dir})
-	if err != nil {
-		t.Fatalf("running tests in %s: %v", dir, err)
-	}
-
-	if len(results) == 0 {
-		t.Logf("no *.star test files found in %s", dir)
-		return
-	}
-
-	for _, result := range results {
-		result := result
-		name := result.Filename + "/" + result.Name
-		t.Run(name, func(t *testing.T) {
-			if strings.HasPrefix(result.Name, "test_fail_") {
-				if result.Passed() {
-					t.Errorf("expected test %s to fail, but it passed", result.Name)
-				}
-				return
-			}
-			for _, msg := range result.Failures {
-				t.Error(msg)
-			}
-		})
-	}
-}

@@ -88,4 +88,3 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 func (*TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
 	return nil, errors.New("Clone is not supported in TestKit; use Ingest instead")
 }
-
