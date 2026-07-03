@@ -83,9 +83,8 @@ func (*TestKit) PropertiesToProtoMessage(_ minderv1.Entity, _ *properties.Proper
 	return nil, nil
 }
 
-// Clone Implements the Git trait. This is a stub implementation that allows us to instantiate a Git ingester.
-// This will later be overridden by the actual implementation.
+// Clone implements the Git interface.
+// TestKit relies on fakeGit and Ingest for filesystem operations.
 func (*TestKit) Clone(_ context.Context, _ string, _ string) (*git.Repository, error) {
-	// Note that this should not be called. If it is, it means that the ingester has not been overridden.
-	return nil, ErrNotIngesterOverridden
+	return nil, errors.New("Clone is not supported in TestKit; use Ingest instead")
 }
