@@ -17,7 +17,9 @@ before:
     - go generate ./...
 # This section defines the build matrix.
 builds:
-  - env:
+  - id: minder
+    binary: minder
+    env:
       - GO111MODULE=on
       - CGO_ENABLED=0
     flags:
@@ -37,6 +39,27 @@ builds:
       - amd64
       - arm64
     main: ./cmd/cli
+  - id: mindev
+    binary: mindev
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags=netgo
+    ldflags:
+      - "-X main.Version={{ .Env.VERSION }}"
+      - "-X main.Commit={{ .Env.COMMIT }}"
+      - "-X main.CommitDate={{ .Env.COMMIT_DATE }}"
+      - "-X main.TreeState={{ .Env.TREE_STATE }}"
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    main: ./cmd/dev
 # This section defines the release format.
 archives:
   - format: tar.gz # we can use binary, but it seems there's an issue where goreleaser skips the sboms
