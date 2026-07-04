@@ -31,7 +31,11 @@ func WithTestOnlyTransport(transport http.RoundTripper) BuildOption {
 
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
-func BuildFromProtobuf(ds *minderv1.DataSource, provider provinfv1.Provider, opts ...BuildOption) (v1datasources.DataSource, error) {
+func BuildFromProtobuf(
+	ds *minderv1.DataSource,
+	provider provinfv1.Provider,
+	opts ...BuildOption,
+) (v1datasources.DataSource, error) {
 	if ds == nil {
 		return nil, fmt.Errorf("data source is nil")
 	}

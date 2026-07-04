@@ -42,22 +42,26 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 	return r.handlers
 }
 
-// RestOption allows customizing the REST data source creation
-type RestOption func(*restOptions)
+// Option allows customizing the REST data source creation
+type Option func(*options)
 
-type restOptions struct {
+type options struct {
 	testOnlyTransport http.RoundTripper
 }
 
 // WithTestOnlyTransport allows passing a custom HTTP transport for testing.
-func WithTestOnlyTransport(transport http.RoundTripper) RestOption {
-	return func(opts *restOptions) {
+func WithTestOnlyTransport(transport http.RoundTripper) Option {
+	return func(opts *options) {
 		opts.testOnlyTransport = transport
 	}
 }
 
 // NewRestDataSource builds a new REST data source.
-func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provider, opts ...RestOption) (v1datasources.DataSource, error) {
+func NewRestDataSource(
+	rest *minderv1.RestDataSource,
+	provider provinfv1.Provider,
+	opts ...Option,
+) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
 	}
@@ -66,7 +70,7 @@ func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provide
 		return nil, errors.New("rest data source definition is nil")
 	}
 
-	rOpts := &restOptions{}
+	rOpts := &options{}
 	for _, opt := range opts {
 		opt(rOpts)
 	}

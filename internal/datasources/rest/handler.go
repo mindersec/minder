@@ -78,7 +78,11 @@ func initMetrics() {
 	})
 }
 
-func newHandlerFromDef(def *minderv1.RestDataSource_Def, provider provinfv1.Provider, testOnlyTransport http.RoundTripper) (*restHandler, error) {
+func newHandlerFromDef(
+	def *minderv1.RestDataSource_Def,
+	provider provinfv1.Provider,
+	testOnlyTransport http.RoundTripper,
+) (*restHandler, error) {
 	if def == nil {
 		return nil, errors.New("rest data source handler definition is nil")
 	}
