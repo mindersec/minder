@@ -18,9 +18,9 @@ type mockDataSourceFunc struct {
 	result any
 }
 
-func (_ *mockDataSourceFunc) ValidateArgs(_ any) error { return nil }
-func (_ *mockDataSourceFunc) ValidateUpdate(_ *structpb.Struct) error { return nil }
-func (_ *mockDataSourceFunc) GetArgsSchema() *structpb.Struct { return nil }
+func (*mockDataSourceFunc) ValidateArgs(_ any) error                { return nil }
+func (*mockDataSourceFunc) ValidateUpdate(_ *structpb.Struct) error { return nil }
+func (*mockDataSourceFunc) GetArgsSchema() *structpb.Struct         { return nil }
 func (m *mockDataSourceFunc) Call(_ context.Context, _ *interfaces.Ingested, _ any) (any, error) {
 	return m.result, nil
 }
