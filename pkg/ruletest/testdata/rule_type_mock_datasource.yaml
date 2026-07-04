@@ -20,6 +20,8 @@ def:
         default: "hello"
   ingest:
     type: builtin
+    builtin:
+      method: Passthrough
   eval:
     type: rego
     rego:

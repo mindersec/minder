@@ -567,14 +567,31 @@ func checkoutToOriginallyFetchedBranch(
 ) {
 	err := wt.Checkout(&git.CheckoutOptions{
 		Branch: originallyFetchedBranch,
+		Force:  true,
 	})
 	if err != nil {
 		logger.Err(err).Msg(
 			"unable to checkout to the previous head, this can corrupt the ingest cache, should not happen",
 		)
-	} else {
-		logger.Info().Msg(fmt.Sprintf("checked out back to %s branch", originallyFetchedBranch))
+		return
 	}
+
+	// Clean any untracked files or directories left over from the failed or
+	// aborted remediation so they don't leak into subsequent evaluations.
+	status, err := wt.Status()
+	if err == nil {
+		for file, fileStatus := range status {
+			if fileStatus.Worktree == git.Untracked {
+				if removeErr := wt.Filesystem.Remove(file); removeErr != nil {
+					logger.Debug().Err(removeErr).Str("file", file).Msg("unable to remove untracked file")
+				}
+			}
+		}
+	} else {
+		logger.Err(err).Msg("unable to get worktree status for cleanup")
+	}
+
+	logger.Info().Msg(fmt.Sprintf("checked out back to %s branch", originallyFetchedBranch))
 }
 
 // runDoNothing returns the previous remediation status

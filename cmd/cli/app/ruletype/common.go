@@ -13,6 +13,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
 	"github.com/mindersec/minder/internal/util/cli/table"
@@ -80,6 +82,12 @@ func validateFilesArg(files []string) error {
 	}
 
 	return nil
+}
+
+func printWarnings(cmd *cobra.Command, warnings []string) {
+	for _, warning := range warnings {
+		cmd.PrintErrf("Warning: %s\n", warning)
+	}
 }
 
 func shouldSkipFile(f string) bool {

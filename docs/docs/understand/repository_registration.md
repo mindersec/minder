@@ -11,8 +11,8 @@ when the repository is out of compliance.
 
 ## Registering repositories
 
-Once you have [enrolled the GitHub provider](providers.md), you can register
-repositories that you granted Minder access to within GitHub.
+Once you have [enrolled a provider](providers.md), you can register
+repositories that you granted Minder access to within your provider.
 
 To get a list of repositories, and select them using a menu in Minder's text
 user interface, run:
@@ -107,4 +107,4 @@ minder repo delete --name "owner/repo1"
 ```
 
 This will remove the repository configuration from Minder and remove the webhook
-from the GitHub repository.
+from the repository.

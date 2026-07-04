@@ -44,8 +44,9 @@ import (
 // and the state to be used for the callback. It accepts a provider string
 // and a boolean indicating whether the client is a CLI or web client
 // nolint:gocyclo
-func (s *Server) GetAuthorizationURL(ctx context.Context,
-	req *pb.GetAuthorizationURLRequest) (*pb.GetAuthorizationURLResponse, error) {
+func (s *Server) GetAuthorizationURL(
+	ctx context.Context, req *pb.GetAuthorizationURLRequest,
+) (*pb.GetAuthorizationURLResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 
@@ -114,7 +115,8 @@ func (s *Server) GetAuthorizationURL(ctx context.Context,
 	// Delete any existing session state for the project
 	err = s.store.DeleteSessionStateByProjectID(ctx, db.DeleteSessionStateByProjectIDParams{
 		Provider:  providerName,
-		ProjectID: projectID})
+		ProjectID: projectID,
+	})
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.Unknown, "error deleting session state: %s", err)
 	}
@@ -278,8 +280,9 @@ func (s *Server) HandleGitHubAppCallback() runtime.HandlerFunc {
 	}
 }
 
-func (s *Server) processOAuthCallback(ctx context.Context, w http.ResponseWriter, r *http.Request,
-	pathParams map[string]string) error {
+func (s *Server) processOAuthCallback(
+	ctx context.Context, w http.ResponseWriter, r *http.Request, pathParams map[string]string,
+) error {
 	state := r.URL.Query().Get("state")
 	code := r.URL.Query().Get("code")
 
@@ -391,8 +394,9 @@ func (s *Server) validateOwnerFilter(ctx context.Context, token *oauth2.Token, o
 	return nil
 }
 
-func (s *Server) processAppCallback(ctx context.Context, w http.ResponseWriter, r *http.Request,
-	pathParams map[string]string) error {
+func (s *Server) processAppCallback(
+	ctx context.Context, w http.ResponseWriter, r *http.Request, pathParams map[string]string,
+) error {
 	state := r.URL.Query().Get("state")
 	code := r.URL.Query().Get("code")
 	setupAction := r.URL.Query().Get("setup_action")
@@ -527,8 +531,9 @@ func (s *Server) exchangeCodeForToken(ctx context.Context, providerClass db.Prov
 	token, err := oauthConfig.Exchange(ctx, code)
 	if err != nil {
 		if strings.Contains(err.Error(), "bad_verification_code") {
+			zerolog.Ctx(ctx).Info().Err(err).Msg("invalid authorization code from exchange")
 			return nil, newHttpError(http.StatusBadRequest, "Invalid authorization code").SetContents(
-				"The verifycation code is invalid or has expired. Please retry the authorization process.")
+				"The verification code is invalid or has expired. Please retry the authorization process.")
 		}
 		return nil, fmt.Errorf("error exchanging code for token: %w", err)
 	}
@@ -551,8 +556,9 @@ func (s *Server) handleAppInstallWithoutInvite(ctx context.Context, token *oauth
 }
 
 // StoreProviderToken stores the provider token for a project
-func (s *Server) StoreProviderToken(ctx context.Context,
-	in *pb.StoreProviderTokenRequest) (*pb.StoreProviderTokenResponse, error) {
+func (s *Server) StoreProviderToken(
+	ctx context.Context, in *pb.StoreProviderTokenRequest,
+) (*pb.StoreProviderTokenResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
@@ -623,8 +629,9 @@ func (s *Server) StoreProviderToken(ctx context.Context,
 
 // VerifyProviderTokenFrom verifies the provider token since a timestamp
 // Deprecated: Use VerifyProviderCredential instead
-func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
-	in *pb.VerifyProviderTokenFromRequest) (*pb.VerifyProviderTokenFromResponse, error) {
+func (s *Server) VerifyProviderTokenFrom(
+	ctx context.Context, in *pb.VerifyProviderTokenFromRequest,
+) (*pb.VerifyProviderTokenFromResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 	providerName := entityCtx.Provider.Name
@@ -687,8 +694,9 @@ func (s *Server) VerifyProviderTokenFrom(ctx context.Context,
 }
 
 // VerifyProviderCredential verifies the provider credential has been created for the matching enrollment nonce
-func (s *Server) VerifyProviderCredential(ctx context.Context,
-	in *pb.VerifyProviderCredentialRequest) (*pb.VerifyProviderCredentialResponse, error) {
+func (s *Server) VerifyProviderCredential(
+	ctx context.Context, in *pb.VerifyProviderCredentialRequest,
+) (*pb.VerifyProviderCredentialResponse, error) {
 	entityCtx := engcontext.EntityFromContext(ctx)
 	projectID := entityCtx.Project.ID
 

@@ -26,7 +26,7 @@ sidebar_position: 75
      http://localhost:8080/api/v1/auth/callback/gitlab/web
      ```
    - **Confidential:** Yes (checked)
-   - **Scopes:** Check `api`, `profile`, and `read_repository`
+   - **Scopes:** Check `api`, `read_user`, and `read_repository`
 
 3. Click **Save application**. Copy the **Application ID** and **Secret** — the
    secret is only shown once.
@@ -42,7 +42,7 @@ sidebar_position: 75
        webhook_secret: "a-random-secret-string"
        scopes:
          - "api"
-         - "profile"
+         - "read_user"
          - "read_repository"
    ```
 

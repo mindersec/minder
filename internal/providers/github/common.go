@@ -85,6 +85,9 @@ var _ provifv1.CommitStatusPublisher = (*GitHub)(nil)
 // Ensure that the GitHub client implements the ReviewPublisher interface
 var _ provifv1.ReviewPublisher = (*GitHub)(nil)
 
+// Ensure that the Github client implements the IssuePublisher interface
+var _ provifv1.IssuePublisher = (*GitHub)(nil)
+
 // ClientService is an interface for GitHub operations
 // It is used to mock GitHub operations in tests, but in order to generate
 // mocks, the interface must be exported
@@ -734,6 +737,78 @@ func (c *GitHub) ListPullRequests(
 	}
 
 	return prs, nil
+}
+
+// GetIssue get a single issue in repository
+func (c *GitHub) GetIssue(
+	ctx context.Context,
+	owner, repo string,
+	number int,
+) (*github.Issue, error) {
+	issue, _, err := c.client.Issues.Get(ctx, owner, repo, number)
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+// CreateIssue creates an issue in a repository
+func (c *GitHub) CreateIssue(
+	ctx context.Context,
+	owner, repo string,
+	title string,
+	body string,
+	labels []string,
+	assignees []string,
+) (*github.Issue, error) {
+	req := &github.IssueRequest{
+		Title: github.String(title),
+		Body:  github.String(body),
+	}
+	if len(labels) > 0 {
+		req.Labels = &labels
+	}
+	if len(assignees) > 0 {
+		req.Assignees = &assignees
+	}
+	issue, _, err := c.client.Issues.Create(ctx, owner, repo, req)
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+// CloseIssue closes an issue in a repository
+func (c *GitHub) CloseIssue(
+	ctx context.Context,
+	owner, repo string,
+	number int,
+	comment string,
+) (*github.Issue, error) {
+	_ = comment
+	// TODO: If comment is provided, create an issue comment before closing the issue.
+	issue, _, err := c.client.Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
+		State: github.String("closed"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
+}
+
+// ReopenIssue reopens an issue in a repository
+func (c *GitHub) ReopenIssue(
+	ctx context.Context,
+	owner, repo string,
+	number int,
+) (*github.Issue, error) {
+	issue, _, err := c.client.Issues.Edit(ctx, owner, repo, number, &github.IssueRequest{
+		State: github.String("open"),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return issue, nil
 }
 
 // CreateIssueComment creates a comment on a pull request or an issue

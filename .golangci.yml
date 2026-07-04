@@ -42,8 +42,6 @@ linters:
     goconst:
       min-len: 6
       min-occurrences: 5
-      # Tests can be clearer with string literals
-      ignore-tests: true
     gocyclo:
       min-complexity: 15
     gosec:
@@ -85,6 +83,7 @@ linters:
     generated: lax
     rules:
       - linters:
+          - goconst
           - lll
           - gosec
         path: (.+)_test\.go
