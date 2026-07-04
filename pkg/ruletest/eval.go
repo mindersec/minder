@@ -31,7 +31,9 @@ func (tr *testCaseRunner) builtinEval(
 	var datasourcesDict *starlark.Dict
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &ruleName, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict, "mock_fs?", &mockFSDict, "data_sources?", &datasourcesDict)
+		"rule", &ruleName, "entity?", &entityDict,
+		"profile?", &profileDict, "mock_http?", &mockHttpDict,
+		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesDict)
 	if err != nil {
 		return nil, err
 	}
