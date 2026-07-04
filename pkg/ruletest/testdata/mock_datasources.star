@@ -3,12 +3,13 @@ def test_mock_datasource_passing():
         rule="mock_datasource_rule",
         entity={"type": "repository", "name": "test"},
         profile={"required_value": "hello"},
-        data_sources={
-            "mock_ds.get_val": "hello"
+        data_sources=["testdata/mock_datasource_def.yaml"],
+        mock_http={
+            "https://api.github.com/mock_endpoint": body('"hello"')
         }
     )
     if res["status"] != "pass":
-        print(res["message"])
+        assert.fail("expected pass, got %s: %s" % (res["status"], res["message"]))
     assert.eq(res["status"], "pass")
 
 def test_mock_datasource_failing():
@@ -16,8 +17,9 @@ def test_mock_datasource_failing():
         rule="mock_datasource_rule",
         entity={"type": "repository", "name": "test"},
         profile={"required_value": "hello"},
-        data_sources={
-            "mock_ds.get_val": "wrong_value"
+        data_sources=["testdata/mock_datasource_def.yaml"],
+        mock_http={
+            "https://api.github.com/mock_endpoint": body('"wrong_value"')
         }
     )
     if res["status"] != "fail":

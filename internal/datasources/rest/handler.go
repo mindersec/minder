@@ -78,7 +78,7 @@ func initMetrics() {
 	})
 }
 
-func newHandlerFromDef(def *minderv1.RestDataSource_Def, provider provinfv1.Provider) (*restHandler, error) {
+func newHandlerFromDef(def *minderv1.RestDataSource_Def, provider provinfv1.Provider, testOnlyTransport http.RoundTripper) (*restHandler, error) {
 	if def == nil {
 		return nil, errors.New("rest data source handler definition is nil")
 	}
@@ -100,15 +100,16 @@ func newHandlerFromDef(def *minderv1.RestDataSource_Def, provider provinfv1.Prov
 	restProvider, _ := interfaces.As[interfaces.RESTProvider](provider)
 
 	return &restHandler{
-		rawInputSchema: def.GetInputSchema(),
-		inputSchema:    schema,
-		endpointTmpl:   def.GetEndpoint(),
-		method:         strings.ToUpper(cmp.Or(def.GetMethod(), http.MethodGet)),
-		headers:        def.GetHeaders(),
-		body:           body,
-		bodyFromInput:  bodyFromInput,
-		parse:          def.GetParse(),
-		provider:       restProvider,
+		rawInputSchema:    def.GetInputSchema(),
+		inputSchema:       schema,
+		endpointTmpl:      def.GetEndpoint(),
+		method:            strings.ToUpper(cmp.Or(def.GetMethod(), http.MethodGet)),
+		headers:           def.GetHeaders(),
+		body:              body,
+		bodyFromInput:     bodyFromInput,
+		parse:             def.GetParse(),
+		provider:          restProvider,
+		testOnlyTransport: testOnlyTransport,
 	}, nil
 }
 

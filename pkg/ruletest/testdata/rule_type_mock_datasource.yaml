@@ -34,6 +34,6 @@ def:
         default allow := false
 
         allow if {
-          data_val := minder.datasource.mock_ds.get_val("some_arg")
-          data_val == input.profile.required_value
+          data_val := minder.datasource.mock_ds.get_val({})
+          data_val.body == input.profile.required_value
         }
