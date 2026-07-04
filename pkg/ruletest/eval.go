@@ -11,6 +11,7 @@ import (
 
 	"go.starlark.net/starlark"
 
+	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
@@ -23,9 +24,10 @@ func builtinEval(
 	var rulePath string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
+	var datasourcesDict *starlark.Dict
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &rulePath, "entity?", &entityDict, "profile?", &profileDict)
+		"rule", &rulePath, "entity?", &entityDict, "profile?", &profileDict, "data_sources?", &datasourcesDict)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,13 @@ func builtinEval(
 	}
 
 	ctx := context.Background()
-	evaluator, err := rtengine.NewRuleEvaluator(ctx, rt, nil)
+
+	dsRegistry, err := buildMockDataSourceRegistry(datasourcesDict)
+	if err != nil {
+		return nil, fmt.Errorf("invalid data_sources argument: %w", err)
+	}
+
+	evaluator, err := rtengine.NewRuleEvaluator(ctx, rt, nil, eoptions.WithDataSources(dsRegistry))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize rule evaluator: %w", err)
 	}

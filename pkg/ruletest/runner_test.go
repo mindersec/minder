@@ -23,6 +23,7 @@ func TestDiscoverFiles(t *testing.T) {
 
 	expected := []string{
 		filepath.Join("testdata", "eval.star"),
+		filepath.Join("testdata", "mock_datasources.star"),
 		filepath.Join("testdata", "sample.star"),
 	}
 
@@ -99,6 +100,7 @@ func TestRunEvalFile(t *testing.T) {
 		file string
 	}{
 		{name: "eval", file: "eval.star"},
+		{name: "mock_datasources", file: "mock_datasources.star"},
 	}
 
 	r := NewRunner()
