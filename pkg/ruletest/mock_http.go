@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"go.starlark.net/starlark"
 )
@@ -128,6 +129,11 @@ func buildMockHTTPHandler(mockDict *starlark.Dict) (http.Handler, error) {
 		keyStr, ok := starlark.AsString(key)
 		if !ok {
 			return nil, fmt.Errorf("mock endpoints must have string keys, got %s", key.Type())
+		}
+
+		parsedURL, err := url.Parse(keyStr)
+		if err == nil && parsedURL.Host != "" {
+			keyStr = parsedURL.Host + parsedURL.Path
 		}
 
 		mockResp, ok := val.(*MockResponse)

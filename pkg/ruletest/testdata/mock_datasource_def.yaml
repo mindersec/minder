@@ -1,0 +1,11 @@
+version: v1
+type: data-source
+name: mock_ds
+rest:
+  providerAuth: true
+  def:
+    get_val:
+      input_schema: {}
+      endpoint: "https://api.github.com/mock_endpoint"
+      method: GET
+      parse: json

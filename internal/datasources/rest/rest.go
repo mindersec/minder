@@ -42,13 +42,22 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 }
 
 // NewRestDataSource builds a new REST data source.
-func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provider) (v1datasources.DataSource, error) {
+func NewRestDataSource(
+	rest *minderv1.RestDataSource,
+	provider provinfv1.Provider,
+	opts ...v1datasources.Option,
+) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
 	}
 
 	if rest.GetDef() == nil {
 		return nil, errors.New("rest data source definition is nil")
+	}
+
+	rOpts := &v1datasources.Options{}
+	for _, opt := range opts {
+		opt(rOpts)
 	}
 
 	// Provider auth is opt-in, so the property must be true to pass along the provider.
@@ -61,7 +70,7 @@ func NewRestDataSource(rest *minderv1.RestDataSource, provider provinfv1.Provide
 	}
 
 	for key, handlerCfg := range rest.GetDef() {
-		handler, err := newHandlerFromDef(handlerCfg, provider)
+		handler, err := newHandlerFromDef(handlerCfg, provider, rOpts.TestOnlyTransport)
 		if err != nil {
 			return nil, err
 		}

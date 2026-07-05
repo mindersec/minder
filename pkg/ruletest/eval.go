@@ -13,9 +13,13 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/mindersec/minder/internal/datasources"
+	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
+	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/fileconvert"
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
@@ -27,9 +31,12 @@ func (tr *testCaseRunner) builtinEval(
 	var profileDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
 	var mockFSDict *starlark.Dict
+	var datasourcesList *starlark.List
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
-		"rule", &ruleName, "entity?", &entityDict, "profile?", &profileDict, "mock_http?", &mockHttpDict, "mock_fs?", &mockFSDict)
+		"rule", &ruleName, "entity?", &entityDict,
+		"profile?", &profileDict, "mock_http?", &mockHttpDict,
+		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +79,12 @@ func (tr *testCaseRunner) builtinEval(
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
 
-	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk)
+	dsRegistry, err := buildDataSourceRegistry(datasourcesList, tk)
+	if err != nil {
+		return nil, fmt.Errorf("invalid data_sources argument: %w", err)
+	}
+
+	rte, err := rtengine.NewRuleTypeEngine(ctx, rt, tk, eoptions.WithDataSources(dsRegistry))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize rule type engine: %w", err)
 	}
@@ -134,6 +146,53 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 		}
 	}
 	return mockFSMap, nil
+}
+
+func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (*v1datasources.DataSourceRegistry, error) {
+	registry := v1datasources.NewDataSourceRegistry()
+	if datasourcesList == nil {
+		return registry, nil
+	}
+
+	iter := datasourcesList.Iterate()
+	defer iter.Done()
+	var val starlark.Value
+	for iter.Next(&val) {
+		pathStr, ok := val.(starlark.String)
+		if !ok {
+			return nil, fmt.Errorf("data_sources must be a list of strings")
+		}
+
+		path := string(pathStr)
+
+		ds, err := loadDataSource(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load data source %q: %w", path, err)
+		}
+
+		// Build the datasource, passing the TestKit as the HTTP RoundTripper
+		builtDS, err := datasources.BuildFromProtobuf(ds, tk, v1datasources.WithTestOnlyTransport(tk))
+		if err != nil {
+			return nil, fmt.Errorf("failed to build data source %q: %w", path, err)
+		}
+
+		if err := registry.RegisterDataSource(ds.GetName(), builtDS); err != nil {
+			return nil, fmt.Errorf("failed to register data source %q: %w", ds.GetName(), err)
+		}
+	}
+
+	return registry, nil
+}
+
+func loadDataSource(path string) (*minderv1.DataSource, error) {
+	decoder, closer := fileconvert.DecoderForFile(path)
+	if decoder == nil {
+		return nil, fmt.Errorf("error opening file: %s", path)
+	}
+	defer func() {
+		_ = closer.Close()
+	}()
+	return fileconvert.ReadResourceTyped[*minderv1.DataSource](decoder)
 }
 
 func (tr *testCaseRunner) lookupRuleType(ruleName string) (*minderv1.RuleType, error) {
