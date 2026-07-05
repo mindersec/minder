@@ -6,7 +6,6 @@ package datasources
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/mindersec/minder/internal/datasources/rest"
 	"github.com/mindersec/minder/internal/datasources/structured"

@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -156,7 +154,7 @@ func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (
 		return registry, nil
 	}
 
-	iter := datasourcesList.Iter()
+	iter := datasourcesList.Iterate()
 	defer iter.Done()
 	var val starlark.Value
 	for iter.Next(&val) {
