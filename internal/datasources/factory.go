@@ -15,26 +15,12 @@ import (
 	provinfv1 "github.com/mindersec/minder/pkg/providers/v1"
 )
 
-// BuildOption allows customizing the data source creation
-type BuildOption func(*buildOptions)
-
-type buildOptions struct {
-	testOnlyTransport http.RoundTripper
-}
-
-// WithTestOnlyTransport allows passing a custom HTTP transport for testing.
-func WithTestOnlyTransport(transport http.RoundTripper) BuildOption {
-	return func(opts *buildOptions) {
-		opts.testOnlyTransport = transport
-	}
-}
-
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
 func BuildFromProtobuf(
 	ds *minderv1.DataSource,
 	provider provinfv1.Provider,
-	opts ...BuildOption,
+	opts ...v1datasources.Option,
 ) (v1datasources.DataSource, error) {
 	if ds == nil {
 		return nil, fmt.Errorf("data source is nil")
@@ -44,16 +30,11 @@ func BuildFromProtobuf(
 		return nil, fmt.Errorf("data source driver is nil")
 	}
 
-	bOpts := &buildOptions{}
-	for _, opt := range opts {
-		opt(bOpts)
-	}
-
 	switch ds.GetDriver().(type) {
 	case *minderv1.DataSource_Structured:
 		return structured.NewStructDataSource(ds.GetStructured())
 	case *minderv1.DataSource_Rest:
-		return rest.NewRestDataSource(ds.GetRest(), provider, rest.WithTestOnlyTransport(bOpts.testOnlyTransport))
+		return rest.NewRestDataSource(ds.GetRest(), provider, opts...)
 	default:
 		return nil, fmt.Errorf("unknown data source type: %T", ds)
 	}

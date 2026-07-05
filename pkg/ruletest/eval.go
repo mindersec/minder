@@ -8,21 +8,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 
 	"go.starlark.net/starlark"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/datasources"
-	"github.com/mindersec/minder/pkg/fileconvert"
-	"io"
-	"net/http"
-
 	eoptions "github.com/mindersec/minder/internal/engine/options"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
 	"github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/engine/v1/rtengine"
+	"github.com/mindersec/minder/pkg/fileconvert"
 	tkv1 "github.com/mindersec/minder/pkg/testkit/v1"
 )
 
@@ -151,22 +150,16 @@ func parseMockFSDict(mockFSDict *starlark.Dict) (map[string]string, error) {
 	return mockFSMap, nil
 }
 
-type testKitRoundTripper struct {
-	tk *tkv1.TestKit
-}
-
-func (t *testKitRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	return t.tk.Do(req.Context(), req)
-}
-
 func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (*v1datasources.DataSourceRegistry, error) {
 	registry := v1datasources.NewDataSourceRegistry()
 	if datasourcesList == nil {
 		return registry, nil
 	}
 
-	for i := 0; i < datasourcesList.Len(); i++ {
-		val := datasourcesList.Index(i)
+	iter := datasourcesList.Iter()
+	defer iter.Done()
+	var val starlark.Value
+	for iter.Next(&val) {
 		pathStr, ok := val.(starlark.String)
 		if !ok {
 			return nil, fmt.Errorf("data_sources must be a list of strings")
@@ -179,11 +172,8 @@ func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (
 			return nil, fmt.Errorf("failed to load data source %q: %w", path, err)
 		}
 
-		// Use the testKitRoundTripper to intercept HTTP requests
-		transport := &testKitRoundTripper{tk: tk}
-
-		// Build the datasource
-		builtDS, err := datasources.BuildFromProtobuf(ds, tk, datasources.WithTestOnlyTransport(transport))
+		// Build the datasource, passing the TestKit as the HTTP RoundTripper
+		builtDS, err := datasources.BuildFromProtobuf(ds, tk, v1datasources.WithTestOnlyTransport(tk))
 		if err != nil {
 			return nil, fmt.Errorf("failed to build data source %q: %w", path, err)
 		}
@@ -201,9 +191,9 @@ func loadDataSource(path string) (*minderv1.DataSource, error) {
 	if decoder == nil {
 		return nil, fmt.Errorf("error opening file: %s", path)
 	}
-	defer func(c io.Closer) {
-		_ = c.Close()
-	}(closer)
+	defer func() {
+		_ = closer.Close()
+	}()
 	return fileconvert.ReadResourceTyped[*minderv1.DataSource](decoder)
 }
 

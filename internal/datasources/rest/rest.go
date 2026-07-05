@@ -23,7 +23,6 @@ package rest
 
 import (
 	"errors"
-	"net/http"
 
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	v1datasources "github.com/mindersec/minder/pkg/datasources/v1"
@@ -42,25 +41,11 @@ func (r *restDataSource) GetFuncs() map[v1datasources.DataSourceFuncKey]v1dataso
 	return r.handlers
 }
 
-// Option allows customizing the REST data source creation
-type Option func(*options)
-
-type options struct {
-	testOnlyTransport http.RoundTripper
-}
-
-// WithTestOnlyTransport allows passing a custom HTTP transport for testing.
-func WithTestOnlyTransport(transport http.RoundTripper) Option {
-	return func(opts *options) {
-		opts.testOnlyTransport = transport
-	}
-}
-
 // NewRestDataSource builds a new REST data source.
 func NewRestDataSource(
 	rest *minderv1.RestDataSource,
 	provider provinfv1.Provider,
-	opts ...Option,
+	opts ...v1datasources.Option,
 ) (v1datasources.DataSource, error) {
 	if rest == nil {
 		return nil, errors.New("rest data source is nil")
@@ -70,7 +55,7 @@ func NewRestDataSource(
 		return nil, errors.New("rest data source definition is nil")
 	}
 
-	rOpts := &options{}
+	rOpts := &v1datasources.Options{}
 	for _, opt := range opts {
 		opt(rOpts)
 	}
@@ -85,7 +70,7 @@ func NewRestDataSource(
 	}
 
 	for key, handlerCfg := range rest.GetDef() {
-		handler, err := newHandlerFromDef(handlerCfg, provider, rOpts.testOnlyTransport)
+		handler, err := newHandlerFromDef(handlerCfg, provider, rOpts.TestOnlyTransport)
 		if err != nil {
 			return nil, err
 		}
