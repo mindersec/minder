@@ -154,10 +154,7 @@ func buildDataSourceRegistry(datasourcesList *starlark.List, tk *tkv1.TestKit) (
 		return registry, nil
 	}
 
-	iter := datasourcesList.Iterate()
-	defer iter.Done()
-	var val starlark.Value
-	for iter.Next(&val) {
+	for val := range datasourcesList.Elements() {
 		pathStr, ok := val.(starlark.String)
 		if !ok {
 			return nil, fmt.Errorf("data_sources must be a list of strings")
