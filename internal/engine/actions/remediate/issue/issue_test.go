@@ -11,11 +11,6 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v63/github"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/mock/gomock"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/reflect/protoreflect"
-
 	"github.com/mindersec/minder/internal/engine/interfaces"
 	"github.com/mindersec/minder/internal/providers/credentials"
 	"github.com/mindersec/minder/internal/providers/github/clients"
@@ -23,12 +18,15 @@ import (
 	"github.com/mindersec/minder/internal/providers/github/properties"
 	"github.com/mindersec/minder/internal/providers/ratecache"
 	"github.com/mindersec/minder/internal/providers/telemetry"
-
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/engine/errors"
 	interfaces2 "github.com/mindersec/minder/pkg/engine/v1/interfaces"
 	"github.com/mindersec/minder/pkg/profiles/models"
 	provifv1 "github.com/mindersec/minder/pkg/providers/v1"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const (
@@ -161,7 +159,7 @@ func TestIssueRemediate(t *testing.T) {
 				actionType: TestActionTypeValid,
 			},
 			remArgs: createTestRemArgs(),
-			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, _ *mockghclient.MockGitHub) {
 				// Intentionally empty.
 				// If CreateIssue() is called, gomock will fail the test.
 			},
@@ -201,7 +199,7 @@ func TestIssueRemediate(t *testing.T) {
 				actionType: TestActionTypeValid,
 			},
 			remArgs: createTestRemArgs(),
-			mockSetup: func(_ *testing.T, mockGitHub *mockghclient.MockGitHub) {
+			mockSetup: func(_ *testing.T, _ *mockghclient.MockGitHub) {
 				// No expectations.
 				// CloseIssue must NOT be called.
 			},

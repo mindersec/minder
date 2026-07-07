@@ -42,6 +42,7 @@ type issueMetadata struct {
 	Number int `json:"issue_number,omitempty"`
 }
 
+// Remediator implements the issue remediation engine.
 type Remediator struct {
 	issueCli   provifv1.IssuePublisher
 	actionType interfaces.ActionType
@@ -97,8 +98,8 @@ func NewIssueRemediate(
 	}, nil
 }
 
-// IssueTemplateParams is the parameters for the Issue templates
-type IssueTemplateParams struct {
+// TemplateParams is the parameters for the Issue templates
+type TemplateParams struct {
 	// Entity is the entity being evaluated.
 	Entity any
 	// Profile contains the profile definition.
@@ -183,7 +184,7 @@ func (r *Remediator) getParamsForIssueRemediation(
 		return nil, fmt.Errorf("expected repository, got %T", ent)
 	}
 
-	tmplParams := &IssueTemplateParams{
+	tmplParams := &TemplateParams{
 		Entity:  ent,
 		Profile: params.GetRule().Def,
 		Params:  params.GetRule().Params,
@@ -363,7 +364,7 @@ func (r *Remediator) runOff(
 
 func (r *Remediator) getIssueBodyText(
 	ctx context.Context,
-	tmplParams *IssueTemplateParams,
+	tmplParams *TemplateParams,
 ) (string, error) {
 
 	body := new(bytes.Buffer)

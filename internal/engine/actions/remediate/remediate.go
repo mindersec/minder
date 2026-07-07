@@ -11,10 +11,10 @@ import (
 
 	"github.com/mindersec/minder/internal/engine/actions/alert/pull_request_comment"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/gh_branch_protect"
+	"github.com/mindersec/minder/internal/engine/actions/remediate/issue"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/noop"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/pull_request"
 	"github.com/mindersec/minder/internal/engine/actions/remediate/rest"
-	"github.com/mindersec/minder/internal/engine/actions/remediate/issue"
 	engif "github.com/mindersec/minder/internal/engine/interfaces"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/profiles/models"
@@ -71,17 +71,17 @@ func NewRuleRemediator(
 			ActionType, remediate.GetPullRequest(), client, setting)
 
 	case issue.RemediateType:
-	    client, err := provinfv1.As[provinfv1.IssuePublisher](provider)
-	    if err != nil {
-		    return nil, errors.New("provider does not implement issue trait")
-	    }
-	    if remediate.GetIssue() == nil {
-		return nil, fmt.Errorf("remediations engine missing issue configuration")
-	    }
+		client, err := provinfv1.As[provinfv1.IssuePublisher](provider)
+		if err != nil {
+			return nil, errors.New("provider does not implement issue trait")
+		}
+		if remediate.GetIssue() == nil {
+			return nil, fmt.Errorf("remediations engine missing issue configuration")
+		}
 
-	    return issue.NewIssueRemediate(
-		    ActionType,remediate.GetIssue(),client,setting)
-			
+		return issue.NewIssueRemediate(
+			ActionType, remediate.GetIssue(), client, setting)
+
 	case pull_request_comment.AlertType:
 		client, err := provinfv1.As[provinfv1.ReviewPublisher](provider)
 		if err != nil {
