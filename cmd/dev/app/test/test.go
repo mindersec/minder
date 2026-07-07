@@ -5,7 +5,9 @@
 package test
 
 import (
+	"encoding/xml"
 	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
@@ -14,12 +16,18 @@ import (
 
 // CmdTest returns the test cobra command
 func CmdTest() *cobra.Command {
+	var outputFormat string
+
 	cmd := &cobra.Command{
 		Use:   "test [paths...]",
 		Short: "Run Minder rule tests",
 		Long: "Run Starlark-based tests for Minder rules. Each path may be a file or directory. " +
 			"If no paths are provided, tests the current directory.",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if outputFormat != "text" && outputFormat != "junit" {
+				return fmt.Errorf("unsupported output format %q: must be \"text\" or \"junit\"", outputFormat)
+			}
+
 			if len(args) == 0 {
 				args = []string{"."}
 			}
@@ -31,7 +39,25 @@ func CmdTest() *cobra.Command {
 			}
 
 			if len(results) == 0 {
-				cmd.Printf("No tests found\n")
+				if outputFormat == "text" {
+					cmd.Printf("No tests found\n")
+				}
+				return nil
+			}
+
+			if outputFormat == "junit" {
+				suites := ruletest.AsJUnit(results)
+				bytes, fmtErr := xml.MarshalIndent(suites, "", "  ")
+				if fmtErr != nil {
+					return fmtErr
+				}
+				cmd.Println(xml.Header + string(bytes))
+
+				for _, res := range results {
+					if len(res.Failures) > 0 {
+						return errors.New("one or more tests failed")
+					}
+				}
 				return nil
 			}
 
@@ -55,6 +81,8 @@ func CmdTest() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().StringVarP(&outputFormat, "output", "o", "text", "Output format (text, junit)")
 
 	return cmd
 }
