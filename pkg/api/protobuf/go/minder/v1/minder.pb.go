@@ -13721,7 +13721,7 @@ type RuleType_Definition_Remediate struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// type is the type of the remediation.
 	// * 'rest' can be used with any entity type.
-	// * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.
+	// * 'gh_branch_protection' 'pull_request', and 'issue' can only be used with the 'repository' entity type.
 	// * 'pull_request_comment' can only be used with the 'pull_request' entity type.
 	Type               string                                                `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	Rest               *RestType                                             `protobuf:"bytes,2,opt,name=rest,proto3,oneof" json:"rest,omitempty"`
@@ -14327,9 +14327,6 @@ func (x *RuleType_Definition_Remediate_PullRequestRemediation) GetActionsReplace
 	return nil
 }
 
-// NOTE: Issue remediation is not yet implemented.
-// This configuration is reserved for future support.
-// "issue" is intentionally not a supported remediation type yet.
 type RuleType_Definition_Remediate_IssueRemediation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// the title of the issue
@@ -15656,7 +15653,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xa3'\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xaa'\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
 	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
@@ -15670,7 +15667,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\x9e\"\n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xa5\"\n" +
 	"\n" +
 	"Definition\x12;\n" +
 	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x128\n" +
@@ -15728,9 +15725,9 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"_vulncheckB\t\n" +
 	"\a_trustyB\r\n" +
-	"\v_homoglyphs\x1a\xee\f\n" +
-	"\tRemediate\x12\\\n" +
-	"\x04type\x18\x01 \x01(\tBH\xbaHE\xd8\x01\x01r@R\x04restR\x14gh_branch_protectionR\fpull_requestR\x14pull_request_commentR\x04type\x12,\n" +
+	"\v_homoglyphs\x1a\xf5\f\n" +
+	"\tRemediate\x12c\n" +
+	"\x04type\x18\x01 \x01(\tBO\xbaHL\xd8\x01\x01rGR\x04restR\x14gh_branch_protectionR\fpull_requestR\x14pull_request_commentR\x05issueR\x04type\x12,\n" +
 	"\x04rest\x18\x02 \x01(\v2\x13.minder.v1.RestTypeH\x00R\x04rest\x88\x01\x01\x12v\n" +
 	"\x14gh_branch_protection\x18\x03 \x01(\v2?.minder.v1.RuleType.Definition.Remediate.GhBranchProtectionTypeH\x01R\x12ghBranchProtection\x88\x01\x01\x12g\n" +
 	"\fpull_request\x18\x04 \x01(\v2?.minder.v1.RuleType.Definition.Remediate.PullRequestRemediationH\x02R\vpullRequest\x88\x01\x01\x12n\n" +
