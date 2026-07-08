@@ -42,7 +42,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0
 	github.com/hashicorp/go-version v1.9.0
-	github.com/itchyny/gojq v0.12.17
+	github.com/itchyny/gojq v0.12.19
 	github.com/jedib0t/go-pretty/v6 v6.8.1
 	github.com/lib/pq v1.12.3
 	github.com/mhale/smtpd v0.8.3
@@ -411,7 +411,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/in-toto/in-toto-golang v0.11.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/itchyny/timefmt-go v0.1.6 // indirect
+	github.com/itchyny/timefmt-go v0.1.8 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
