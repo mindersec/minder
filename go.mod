@@ -59,7 +59,7 @@ require (
 	github.com/openfga/openfga v1.18.0
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.23.2
-	github.com/protobom/protobom v0.5.6
+	github.com/protobom/protobom v0.5.8
 	github.com/puzpuzpuz/xsync/v3 v3.5.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rs/zerolog v1.34.0
