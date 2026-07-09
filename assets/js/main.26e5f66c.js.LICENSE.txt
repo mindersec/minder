@@ -51,6 +51,15 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+/**
+ * Prism: Lightweight, robust, elegant syntax highlighting
+ *
+ * @license MIT <https://opensource.org/licenses/MIT>
+ * @author Lea Verou <https://lea.verou.me>
+ * @namespace
+ * @public
+ */
+
 /** @license React v16.13.1
  * react-is.production.min.js
  *
