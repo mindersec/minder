@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
@@ -78,7 +77,7 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 
 	relation := opts.GetRelation()
 
-	relationName := relationAsName(relation)
+	relationName := minder.RelationAsName(relation)
 	if relationName == "" {
 		return nil, status.Errorf(codes.Internal, "error getting name for requested relation %v", relation)
 	}
@@ -103,21 +102,6 @@ func ProjectAuthorizationInterceptor(ctx context.Context, req interface{}, info 
 	}
 
 	return handler(ctx, req)
-}
-
-// relationAsName returns the OpenFGA relation name for the given relation enum.
-// It returns an empty string in the case of error.
-func relationAsName(relation minder.Relation) string {
-	relationValue := relation.Descriptor().Values().ByNumber(relation.Number())
-	if relationValue == nil {
-		return ""
-	}
-	extension := proto.GetExtension(relationValue.Options(), minder.E_Name)
-	relationName, ok := extension.(string)
-	if !ok {
-		return ""
-	}
-	return relationName
 }
 
 // populateEntityContext populates the project in the entity context, by looking at the proto context or

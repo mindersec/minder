@@ -170,76 +170,13 @@ func (s *Server) CreateProject(
 		return nil, err
 	}
 
-	var project *db.Project
-	if parentProjectID != uuid.Nil {
-		// Verify permissions if we have a parent
-		relationName := relationAsName(minderv1.Relation_RELATION_CREATE)
-		if err := s.authzClient.Check(ctx, relationName, parentProjectID); err != nil {
-			return nil, util.UserVisibleError(
-				codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
-				auth.IdentityFromContext(ctx).Human(), parentProjectID)
-		}
-
-		if !features.ProjectAllowsProjectHierarchyOperations(ctx, s.store, parentProjectID) {
-			return nil, util.UserVisibleError(codes.PermissionDenied,
-				"project does not allow project hierarchy operations")
-		}
-		tx, err := s.store.BeginTransaction()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-		}
-		defer s.store.Rollback(tx)
-		qtx := s.store.GetQuerierWithTransaction(tx)
-
-		project, err = s.projectCreator.ProvisionChildProject(ctx, qtx, parentProjectID, req.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := s.store.Commit(tx); err != nil {
-			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-		}
-
-	} else {
-		// This is a top-level project creation request.
-		// We need to check if the user has the right to create projects in the system.
-		if !flags.Bool(ctx, s.featureFlags, flags.ProjectCreateDelete) {
-			return nil, util.UserVisibleError(codes.Unimplemented, "cannot create a new top-level project")
-		}
-
-		id := auth.IdentityFromContext(ctx)
-		if id.String() == "" {
-			return nil, util.UserVisibleError(codes.Unauthenticated, "cannot determine user ID")
-		}
-
-		tx, err := s.store.BeginTransaction()
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "error starting transaction: %v", err)
-		}
-		defer s.store.Rollback(tx)
-		qtx := s.store.GetQuerierWithTransaction(tx)
-		project, err = s.projectCreator.ProvisionSelfEnrolledProject(ctx, qtx, req.Name, id.String())
-		if err != nil {
-			return nil, err
-		}
-
-		if err := s.store.Commit(tx); err != nil {
-			return nil, status.Errorf(codes.Internal, "error committing transaction: %v", err)
-		}
-	}
-
-	if project == nil {
-		return nil, status.Errorf(codes.Internal, "project is nil after creation")
+	project, err := s.projectCreator.ProvisionProject(ctx, req.Name, parentProjectID)
+	if err != nil {
+		return nil, err
 	}
 
 	return &minderv1.CreateProjectResponse{
-		Project: &minderv1.Project{
-			ProjectId:   project.ID.String(),
-			Name:        project.Name,
-			Description: "",
-			CreatedAt:   timestamppb.New(project.CreatedAt),
-			UpdatedAt:   timestamppb.New(project.UpdatedAt),
-		},
+		Project: project,
 	}, nil
 }
 
