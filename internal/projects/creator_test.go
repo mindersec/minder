@@ -5,6 +5,7 @@ package projects_test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"reflect"
 	"testing"
@@ -15,10 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	mockdb "github.com/mindersec/minder/database/mock"
+	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/auth/jwt"
-	"github.com/mindersec/minder/internal/authz/mock"
+	authmock "github.com/mindersec/minder/internal/authz/mock"
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects"
@@ -30,7 +33,7 @@ import (
 func TestProvisionSelfEnrolledProject(t *testing.T) {
 	t.Parallel()
 
-	authzClient := &mock.SimpleClient{}
+	authzClient := &authmock.SimpleClient{}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -77,7 +80,7 @@ func TestProvisionSelfEnrolledProject(t *testing.T) {
 func TestProvisionSelfEnrolledProjectFailsWritingProjectToDB(t *testing.T) {
 	t.Parallel()
 
-	authzClient := &mock.SimpleClient{}
+	authzClient := &authmock.SimpleClient{}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -112,7 +115,7 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 		{"longestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidnamelongestinvalidname", `name is too long`},
 	}
 
-	authzClient := &mock.SimpleClient{}
+	authzClient := &authmock.SimpleClient{}
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -133,106 +136,164 @@ func TestProvisionSelfEnrolledProjectInvalidName(t *testing.T) {
 
 }
 
-func TestProvisionChildProject(t *testing.T) {
+func TestProvisionProject(t *testing.T) {
 	t.Parallel()
 	parentProject := uuid.New()
 	childProj := uuid.New()
 
-	authzClient := &mock.SimpleClient{}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
-		Return(db.Project{ID: parentProject}, nil)
-	mockStore.EXPECT().CreateProject(gomock.Any(), gomock.Any()).
-		Return(db.Project{
-			ID: childProj,
-		}, nil)
-	mockStore.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).
-		Return(nil)
-
-	ctx := prepareTestToken(context.Background(), t, []any{})
-
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{
-		MembershipFeatureMapping: map[string]string{
-			"teamA": "featureA",
-			"teamB": "featureB",
-		},
-	}, mockStore, &flags.FakeClient{})
-
-	_, err := creator.ProvisionChildProject(
-		ctx,
-		mockStore,
-		parentProject,
-		"test-child-proj",
-	)
-	assert.NoError(t, err)
-
-	t.Log("ensure project permission was written")
-	assert.Len(t, authzClient.Adoptions, 1)
-	assert.Equal(t, authzClient.Adoptions[childProj], parentProject)
-}
-
-func TestProvisionChildProjectFailsNoParent(t *testing.T) {
-	t.Parallel()
-	parentProject := uuid.New()
-
-	authzClient := &mock.SimpleClient{}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
-		Return(db.Project{}, fmt.Errorf("parent not found"))
-
-	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
-	_, err := creator.ProvisionChildProject(
-		ctx,
-		mockStore,
-		parentProject,
-		"test-child-proj",
-	)
-	assert.Error(t, err)
-
-	t.Log("ensure project permission was cleaned up")
-	assert.Len(t, authzClient.Adoptions, 0)
-}
-
-func TestProvisionChildProjectFailsTooManyParents(t *testing.T) {
-	t.Parallel()
-	parentProject := uuid.New()
-
-	authzClient := &mock.SimpleClient{}
-
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockStore := mockdb.NewMockStore(ctrl)
-	mockStore.EXPECT().GetProjectByID(gomock.Any(), parentProject).
-		Return(db.Project{
-			ID: parentProject,
-			ParentID: uuid.NullUUID{
-				UUID:  uuid.New(),
-				Valid: true,
+	tests := []struct {
+		name            string
+		setupCtx        func(t *testing.T) context.Context
+		setupAuthz      func() *authmock.SimpleClient
+		setupStore      func(ctrl *gomock.Controller) *mockdb.MockStore
+		featureFlags    flags.Interface
+		parentProjectID uuid.UUID
+		projectName     string
+		wantErrCode     codes.Code
+		wantNoErr       bool
+	}{
+		{
+			name: "child project: authzClient.Check denies",
+			setupCtx: func(t *testing.T) context.Context {
+				t.Helper()
+				return prepareTestToken(context.Background(), t, []any{})
 			},
-		}, nil)
+			setupAuthz: func() *authmock.SimpleClient {
+				return &authmock.SimpleClient{}
+			},
+			setupStore: func(ctrl *gomock.Controller) *mockdb.MockStore {
+				return mockdb.NewMockStore(ctrl)
+			},
+			featureFlags:    &flags.FakeClient{},
+			parentProjectID: parentProject,
+			projectName:     "child",
+			wantErrCode:     codes.PermissionDenied,
+		},
+		{
+			name: "child project: ProjectAllowsProjectHierarchyOperations returns false",
+			setupCtx: func(t *testing.T) context.Context {
+				t.Helper()
+				return prepareTestToken(context.Background(), t, []any{})
+			},
+			setupAuthz: func() *authmock.SimpleClient {
+				return &authmock.SimpleClient{Allowed: []uuid.UUID{parentProject}}
+			},
+			setupStore: func(ctrl *gomock.Controller) *mockdb.MockStore {
+				s := mockdb.NewMockStore(ctrl)
+				s.EXPECT().GetFeatureInProject(gomock.Any(), gomock.Any()).
+					Return(nil, sql.ErrNoRows)
+				return s
+			},
+			featureFlags:    &flags.FakeClient{},
+			parentProjectID: parentProject,
+			projectName:     "child",
+			wantErrCode:     codes.PermissionDenied,
+		},
+		{
+			name: "top-level: ProjectCreateDelete flag disabled",
+			setupCtx: func(t *testing.T) context.Context {
+				t.Helper()
+				return prepareTestToken(context.Background(), t, []any{})
+			},
+			setupAuthz: func() *authmock.SimpleClient {
+				return &authmock.SimpleClient{}
+			},
+			setupStore: func(ctrl *gomock.Controller) *mockdb.MockStore {
+				return mockdb.NewMockStore(ctrl)
+			},
+			featureFlags:    &flags.FakeClient{},
+			parentProjectID: uuid.Nil,
+			projectName:     "top",
+			wantErrCode:     codes.Unimplemented,
+		},
+		{
+			name: "top-level: no identity in context",
+			setupCtx: func(_ *testing.T) context.Context {
+				return context.Background()
+			},
+			setupAuthz: func() *authmock.SimpleClient {
+				return &authmock.SimpleClient{}
+			},
+			setupStore: func(ctrl *gomock.Controller) *mockdb.MockStore {
+				return mockdb.NewMockStore(ctrl)
+			},
+			featureFlags: &flags.FakeClient{
+				Data: map[string]any{
+					string(flags.ProjectCreateDelete): true,
+				},
+			},
+			parentProjectID: uuid.Nil,
+			projectName:     "top",
+			wantErrCode:     codes.Unauthenticated,
+		},
+		{
+			name: "top-level: happy path returns proto project",
+			setupCtx: func(t *testing.T) context.Context {
+				t.Helper()
+				ctx := prepareTestToken(context.Background(), t, []any{})
+				return auth.WithIdentityContext(ctx, &auth.Identity{UserID: "user-1"})
+			},
+			setupAuthz: func() *authmock.SimpleClient {
+				return &authmock.SimpleClient{}
+			},
+			setupStore: func(ctrl *gomock.Controller) *mockdb.MockStore {
+				s := mockdb.NewMockStore(ctrl)
+				tx := &sql.Tx{}
+				s.EXPECT().BeginTransaction().Return(tx, nil)
+				s.EXPECT().GetQuerierWithTransaction(tx).Return(s)
+				s.EXPECT().Rollback(tx).Return(nil)
+				s.EXPECT().CreateProjectWithID(gomock.Any(), gomock.Any()).
+					Return(db.Project{ID: childProj, Name: "top"}, nil)
+				s.EXPECT().CreateEntitlements(gomock.Any(), gomock.Any()).Return(nil)
+				s.EXPECT().Commit(tx).Return(nil)
+				return s
+			},
+			featureFlags: &flags.FakeClient{
+				Data: map[string]any{
+					string(flags.ProjectCreateDelete): true,
+				},
+			},
+			parentProjectID: uuid.Nil,
+			projectName:     "top",
+			wantNoErr:       true,
+		},
+	}
 
-	ctx := context.Background()
-	creator := projects.NewProjectCreator(authzClient, marketplaces.NewNoopMarketplace(), &server.DefaultProfilesConfig{}, &server.FeaturesConfig{}, mockStore, &flags.FakeClient{})
-	_, err := creator.ProvisionChildProject(
-		ctx,
-		mockStore,
-		parentProject,
-		"test-child-proj",
-	)
-	assert.Error(t, err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Log("ensure project permission was cleaned up")
-	assert.Len(t, authzClient.Adoptions, 0)
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			ctx := tc.setupCtx(t)
+			authzClient := tc.setupAuthz()
+			mockStore := tc.setupStore(ctrl)
+
+			creator := projects.NewProjectCreator(
+				authzClient,
+				marketplaces.NewNoopMarketplace(),
+				&server.DefaultProfilesConfig{},
+				&server.FeaturesConfig{},
+				mockStore,
+				tc.featureFlags,
+			)
+
+			proj, err := creator.ProvisionProject(ctx, tc.projectName, tc.parentProjectID)
+			if tc.wantNoErr {
+				require.NoError(t, err)
+				require.NotNil(t, proj)
+				assert.Equal(t, tc.projectName, proj.Name)
+			} else {
+				require.Error(t, err)
+				st, ok := status.FromError(err)
+				require.True(t, ok, "expected a gRPC status error, got: %v", err)
+				assert.Equal(t, tc.wantErrCode, st.Code(),
+					"expected code %v, got %v: %v", tc.wantErrCode, st.Code(), err)
+				assert.Nil(t, proj)
+			}
+		})
+	}
 }
 
 // prepareTestToken creates a JWT token with the specified roles and returns the context with the token.

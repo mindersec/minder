@@ -14,6 +14,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/mindersec/minder/internal/auth"
 	"github.com/mindersec/minder/internal/authz"
@@ -21,6 +22,7 @@ import (
 	"github.com/mindersec/minder/internal/marketplaces"
 	"github.com/mindersec/minder/internal/projects/features"
 	"github.com/mindersec/minder/internal/util"
+	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 	"github.com/mindersec/minder/pkg/config/server"
 	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/mindpak"
@@ -37,7 +39,7 @@ type ProjectCreator interface {
 		ctx context.Context,
 		projectName string,
 		parentProjectID uuid.UUID,
-	) (*db.Project, error)
+	) (*minderv1.Project, error)
 
 	// ProvisionSelfEnrolledProject creates the core default components of the project
 	// (project, marketplace subscriptions, etc.).
@@ -46,16 +48,6 @@ type ProjectCreator interface {
 		qtx db.ExtendQuerier,
 		projectName string,
 		userSub string,
-	) (outproj *db.Project, projerr error)
-
-	// ProvisionChildProject creates the components of a child project which is nested
-	// under a parent in the project hierarchy.  The parent project is checked for
-	// existence before creating the child project.
-	ProvisionChildProject(
-		ctx context.Context,
-		qtx db.ExtendQuerier,
-		parentProjectID uuid.UUID,
-		projectName string,
 	) (outproj *db.Project, projerr error)
 }
 
@@ -163,7 +155,7 @@ func (p *projectCreator) ProvisionSelfEnrolledProject(
 	return &project, nil
 }
 
-func (p *projectCreator) ProvisionChildProject(
+func (p *projectCreator) provisionChildProject(
 	ctx context.Context,
 	qtx db.ExtendQuerier,
 	parentProjectID uuid.UUID,
@@ -225,12 +217,12 @@ func (p *projectCreator) ProvisionProject(
 	ctx context.Context,
 	projectName string,
 	parentProjectID uuid.UUID,
-) (*db.Project, error) {
+) (*minderv1.Project, error) {
 	var project *db.Project
 
 	if parentProjectID != uuid.Nil {
 		// Verify permissions if we have a parent
-		if err := p.authzClient.Check(ctx, authz.RelationCreate, parentProjectID); err != nil {
+		if err := p.authzClient.Check(ctx, "create", parentProjectID); err != nil {
 			return nil, util.UserVisibleError(
 				codes.PermissionDenied, "user %q is not authorized to perform this operation on project %q",
 				auth.IdentityFromContext(ctx).Human(), parentProjectID)
@@ -248,7 +240,7 @@ func (p *projectCreator) ProvisionProject(
 		defer p.store.Rollback(tx)
 		qtx := p.store.GetQuerierWithTransaction(tx)
 
-		project, err = p.ProvisionChildProject(ctx, qtx, parentProjectID, projectName)
+		project, err = p.provisionChildProject(ctx, qtx, parentProjectID, projectName)
 		if err != nil {
 			return nil, err
 		}
@@ -290,5 +282,10 @@ func (p *projectCreator) ProvisionProject(
 		return nil, status.Errorf(codes.Internal, "project is nil after creation")
 	}
 
-	return project, nil
+	return &minderv1.Project{
+		ProjectId: project.ID.String(),
+		Name:      project.Name,
+		CreatedAt: timestamppb.New(project.CreatedAt),
+		UpdatedAt: timestamppb.New(project.UpdatedAt),
+	}, nil
 }

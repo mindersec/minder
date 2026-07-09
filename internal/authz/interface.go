@@ -32,10 +32,6 @@ const (
 	RolePermissionsManager Role = "permissions_manager"
 )
 
-const (
-	// RelationCreate maps to Relation_RELATION_CREATE [(name) = "create"].
-	RelationCreate = "create"
-)
 
 // nolint:lll
 var (

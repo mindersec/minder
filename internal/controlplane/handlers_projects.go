@@ -176,13 +176,7 @@ func (s *Server) CreateProject(
 	}
 
 	return &minderv1.CreateProjectResponse{
-		Project: &minderv1.Project{
-			ProjectId:   project.ID.String(),
-			Name:        project.Name,
-			Description: "",
-			CreatedAt:   timestamppb.New(project.CreatedAt),
-			UpdatedAt:   timestamppb.New(project.UpdatedAt),
-		},
+		Project: project,
 	}, nil
 }
 

@@ -12,6 +12,7 @@ import (
 	"io"
 
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/mindersec/minder/internal/util/jsonyaml"
@@ -178,4 +179,19 @@ func ResourceMatches(rt ResourceType, r protoreflect.ProtoMessage) bool {
 func YouMayHaveTheWrongResource(err error) bool {
 	return err != nil && (errors.Is(err, ErrResourceTypeMismatch) || errors.Is(err, ErrNotAResource) ||
 		errors.Is(err, ErrInvalidResource) || errors.Is(err, ErrInvalidResourceType))
+}
+
+// RelationAsName returns the OpenFGA relation name for the given Relation enum.
+// It returns an empty string if the relation is unknown or has no name extension.
+func RelationAsName(relation Relation) string {
+	relationValue := relation.Descriptor().Values().ByNumber(relation.Number())
+	if relationValue == nil {
+		return ""
+	}
+	extension := proto.GetExtension(relationValue.Options(), E_Name)
+	relationName, ok := extension.(string)
+	if !ok {
+		return ""
+	}
+	return relationName
 }
