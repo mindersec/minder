@@ -32,7 +32,6 @@ const (
 	RolePermissionsManager Role = "permissions_manager"
 )
 
-
 // nolint:lll
 var (
 	// AllRolesDescriptions is a list of all roles
