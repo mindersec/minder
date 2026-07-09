@@ -16,7 +16,11 @@ import (
 
 // BuildFromProtobuf is a factory function that builds a new data source based on the given
 // data source type.
-func BuildFromProtobuf(ds *minderv1.DataSource, provider provinfv1.Provider) (v1datasources.DataSource, error) {
+func BuildFromProtobuf(
+	ds *minderv1.DataSource,
+	provider provinfv1.Provider,
+	opts ...v1datasources.Option,
+) (v1datasources.DataSource, error) {
 	if ds == nil {
 		return nil, fmt.Errorf("data source is nil")
 	}
@@ -29,7 +33,7 @@ func BuildFromProtobuf(ds *minderv1.DataSource, provider provinfv1.Provider) (v1
 	case *minderv1.DataSource_Structured:
 		return structured.NewStructDataSource(ds.GetStructured())
 	case *minderv1.DataSource_Rest:
-		return rest.NewRestDataSource(ds.GetRest(), provider)
+		return rest.NewRestDataSource(ds.GetRest(), provider, opts...)
 	default:
 		return nil, fmt.Errorf("unknown data source type: %T", ds)
 	}

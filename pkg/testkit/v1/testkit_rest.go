@@ -43,3 +43,8 @@ func (tk *TestKit) Do(ctx context.Context, req *http.Request) (*http.Response, e
 	resp.Request = req
 	return resp, nil
 }
+
+// RoundTrip implements the http.RoundTripper interface.
+func (tk *TestKit) RoundTrip(req *http.Request) (*http.Response, error) {
+	return tk.Do(req.Context(), req)
+}
