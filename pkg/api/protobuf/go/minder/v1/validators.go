@@ -421,6 +421,10 @@ func (rem *RuleType_Definition_Remediate) Validate() error {
 		if err := rem.GetGhBranchProtection().Validate(); err != nil {
 			return err
 		}
+	case "issue":
+		if err := rem.GetIssue().Validate(); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("%w: remediate type cannot be empty", ErrInvalidRuleTypeDefinition)
 	}

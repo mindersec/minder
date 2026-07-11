@@ -5,7 +5,6 @@
 package issue
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -141,7 +140,7 @@ func (r *Remediator) run(
 		return r.runDoNothing(ctx, p)
 	}
 
-	return nil, enginerr.ErrActionSkipped
+	return nil, fmt.Errorf("unimplemented action command: %v", cmd)
 }
 
 // Do perform the remediation
@@ -196,12 +195,12 @@ func (r *Remediator) getParamsForIssueRemediation(
 
 	title, err := r.titleTemplate.Render(ctx, tmplParams, TitleMaxLength)
 	if err != nil {
-		return nil, fmt.Errorf("cannot execute title template: %w", err)
+		return nil, fmt.Errorf("cannot render title template: %w", err)
 	}
 
-	body, err := r.getIssueBodyText(ctx, tmplParams)
+	body, err := r.bodyTemplate.Render(ctx, tmplParams, BodyMaxLength)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create issue body: %w", err)
+		return nil, fmt.Errorf("cannot render body template: %w", err)
 	}
 
 	// Unmarshal existing remediation metadata, if any.
@@ -235,15 +234,19 @@ func (r *Remediator) dryRun(
 	cmd interfaces.ActionCmd,
 	p *paramsIssue,
 ) (json.RawMessage, error) {
-	logger := zerolog.Ctx(ctx).Info().Str("repo", p.repo.String())
+	logger := zerolog.Ctx(ctx).With().
+		Str("repo", p.repo.String()).
+		Logger()
 
 	// Process the command
 	switch cmd {
 	case interfaces.ActionCmdOn:
-		logger.Msgf("title:\n%s\n", p.title)
-		logger.Msgf("body:\n%s\n", p.body)
-		logger.Msgf("labels:\n%v\n", p.labels)
-		logger.Msgf("assignees:\n%v\n", p.assignees)
+		logger.Info().
+			Str("title", p.title).
+			Str("body", p.body).
+			Strs("labels", p.labels).
+			Strs("assignees", p.assignees).
+			Msg("issue remediation dry run")
 
 		return nil, nil
 
@@ -253,12 +256,11 @@ func (r *Remediator) dryRun(
 			return nil, fmt.Errorf("no issue number provided: %w", enginerr.ErrActionSkipped)
 		}
 
-		logger.Msgf(
-			"would close issue #%d in %s/%s",
-			p.metadata.Number,
-			p.repo.GetOwner(),
-			p.repo.GetName(),
-		)
+		logger.Info().
+			Int("issue_number", p.metadata.Number).
+			Str("owner", p.repo.GetOwner()).
+			Str("repo", p.repo.GetName()).
+			Msg("would close issue")
 
 		return nil, nil
 
@@ -280,7 +282,7 @@ func (r *Remediator) runOn(
 	// If we already have an issue recorded in the remediation metadata,
 	// don't create another one.
 	if p.metadata != nil && p.metadata.Number != 0 {
-		logger.Info().
+		logger.Debug().
 			Int("issue_number", p.metadata.Number).
 			Msg("issue already exists")
 
@@ -321,7 +323,7 @@ func (r *Remediator) runOn(
 
 	logger.Info().
 		Int("issue_number", issue.GetNumber()).
-		Msg("issue remediation completed")
+		Msg("issue created")
 
 	return newMeta, enginerr.ErrActionPending
 }
@@ -360,25 +362,6 @@ func (r *Remediator) runOff(
 		Msg("issue closed")
 
 	return nil, enginerr.ErrActionSkipped
-}
-
-func (r *Remediator) getIssueBodyText(
-	ctx context.Context,
-	tmplParams *TemplateParams,
-) (string, error) {
-
-	body := new(bytes.Buffer)
-
-	if err := r.bodyTemplate.Execute(
-		ctx,
-		body,
-		tmplParams,
-		BodyMaxLength,
-	); err != nil {
-		return "", fmt.Errorf("cannot execute body template: %w", err)
-	}
-
-	return body.String(), nil
 }
 
 // runDoNothing returns the previous remediation status.
