@@ -6,8 +6,39 @@ package v1
 import (
 	"testing"
 
+	"buf.build/go/protovalidate"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+func TestUpstreamRepositoryRef_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		owner   string
+		wantErr bool
+	}{
+		{name: "letter-prefixed namespace", owner: "example-org"},
+		{name: "digit-prefixed namespace", owner: "2testminder"},
+		{name: "invalid punctuation prefix", owner: ".example", wantErr: true},
+	}
+
+	validator, err := protovalidate.New()
+	if err != nil {
+		t.Fatalf("create validator: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validator.Validate(&UpstreamRepositoryRef{Owner: tt.owner, Name: "repository"})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
 
 func TestRuleType_Definition_Ingest_Validate(t *testing.T) {
 	t.Parallel()
