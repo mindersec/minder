@@ -1276,7 +1276,7 @@ message UpstreamRepositoryRef {
     // This is optional.
     string owner = 1 [
         (buf.validate.field).string = {
-            pattern: "^[A-Za-z][-[:word:]]*$"
+            pattern: "^[A-Za-z0-9][-[:word:]]*$"
             max_len: 200,
         },
         (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
