@@ -20,6 +20,7 @@ func TestUpstreamRepositoryRef_Validate(t *testing.T) {
 	}{
 		{name: "letter-prefixed namespace", owner: "example-org"},
 		{name: "digit-prefixed namespace", owner: "2testminder"},
+		{name: "digit-prefixed hyphenated namespace", owner: "2-mindertest"},
 		{name: "invalid punctuation prefix", owner: ".example", wantErr: true},
 	}
 
