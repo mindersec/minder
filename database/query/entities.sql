@@ -80,6 +80,19 @@ WHERE entity_instances.entity_type = $1
 ORDER BY entity_instances.id
 LIMIT sqlc.arg('limit')::bigint;
 
+-- ListEntitiesByTypePaginated retrieves entities of a given type for a project/provider
+-- with cursor-based pagination. Pass a null (all-zeros) UUID as cursor for the first page.
+-- The query over-fetches one row to determine if there are more results.
+
+-- name: ListEntitiesByTypePaginated :many
+SELECT * FROM entity_instances
+WHERE entity_type = sqlc.arg(entity_type)
+    AND provider_id = sqlc.arg(provider_id)
+    AND project_id = ANY(sqlc.arg(projects)::uuid[])
+    AND id > sqlc.arg(cursor)::uuid
+ORDER BY id
+LIMIT (sqlc.arg(page_limit)::bigint + 1);
+
 -- EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
 
 -- name: EntityExistsAfterID :one

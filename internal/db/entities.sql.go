@@ -590,6 +590,65 @@ func (q *Queries) ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfter
 	return items, nil
 }
 
+const listEntitiesByTypePaginated = `-- name: ListEntitiesByTypePaginated :many
+
+SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
+WHERE entity_type = $1
+    AND provider_id = $2
+    AND project_id = ANY($3::uuid[])
+    AND id > $4::uuid
+ORDER BY id
+LIMIT ($5::bigint + 1)
+`
+
+type ListEntitiesByTypePaginatedParams struct {
+	EntityType Entities    `json:"entity_type"`
+	ProviderID uuid.UUID   `json:"provider_id"`
+	Projects   []uuid.UUID `json:"projects"`
+	Cursor     uuid.UUID   `json:"cursor"`
+	PageLimit  int64       `json:"page_limit"`
+}
+
+// ListEntitiesByTypePaginated retrieves entities of a given type for a project/provider
+// with cursor-based pagination. Pass a null (all-zeros) UUID as cursor for the first page.
+// The query over-fetches one row to determine if there are more results.
+func (q *Queries) ListEntitiesByTypePaginated(ctx context.Context, arg ListEntitiesByTypePaginatedParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, listEntitiesByTypePaginated,
+		arg.EntityType,
+		arg.ProviderID,
+		pq.Array(arg.Projects),
+		arg.Cursor,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []EntityInstance{}
+	for rows.Next() {
+		var i EntityInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityType,
+			&i.Name,
+			&i.ProjectID,
+			&i.ProviderID,
+			&i.CreatedAt,
+			&i.OriginatedFrom,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertProperty = `-- name: UpsertProperty :one
 INSERT INTO properties (
     entity_id,
