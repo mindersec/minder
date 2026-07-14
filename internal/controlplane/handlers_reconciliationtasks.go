@@ -69,7 +69,7 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	var msg *message.Message
 	var topic string
 
-	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx)
+	msg, err = getRepositoryReconciliationMessage(ctx, s.store, entity.GetId(), entityCtx, dbProvider.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -83,24 +83,29 @@ func (s *Server) CreateEntityReconciliationTask(ctx context.Context,
 	return &pb.CreateEntityReconciliationTaskResponse{}, nil
 }
 
-func getRepositoryReconciliationMessage(ctx context.Context, store db.Store,
-	repoIdString string, entityCtx engcontext.EntityContext) (*message.Message, error) {
+func getRepositoryReconciliationMessage(
+	ctx context.Context,
+	store db.Store,
+	repoIdString string,
+	entityCtx engcontext.EntityContext,
+	providerID uuid.UUID,
+) (*message.Message, error) {
 	repoUUID, err := uuid.Parse(repoIdString)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing repository id: %v", err)
 	}
 
 	// Fetch entity by ID
-	ent, err := store.GetEntityByID(ctx, repoUUID)
+	ent, err := store.GetEntityByID(ctx, db.GetEntityByIDParams{
+		ID:         repoUUID,
+		ProjectID:  entityCtx.Project.ID,
+		ProviderID: providerID,
+	})
+
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, status.Errorf(codes.NotFound, "repository not found")
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot read repository: %v", err)
-	}
-
-	// Verify project matches
-	if ent.ProjectID != entityCtx.Project.ID {
-		return nil, status.Errorf(codes.NotFound, "repository not found")
 	}
 
 	// Telemetry logging

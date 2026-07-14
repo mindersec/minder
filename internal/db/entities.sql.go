@@ -14,12 +14,11 @@ import (
 )
 
 const countEntitiesByType = `-- name: CountEntitiesByType :one
-
 SELECT COUNT(*) FROM entity_instances
-WHERE entity_instances.entity_type = $1
+WHERE entity_type = $1
 `
 
-// CountEntitiesByType counts all entities of a given type (across all projects/providers).
+// CountEntitiesByType counts all entities of a given type (Global admin metric).
 func (q *Queries) CountEntitiesByType(ctx context.Context, entityType Entities) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countEntitiesByType, entityType)
 	var count int64
@@ -28,9 +27,9 @@ func (q *Queries) CountEntitiesByType(ctx context.Context, entityType Entities) 
 }
 
 const countEntitiesByTypeAndProject = `-- name: CountEntitiesByTypeAndProject :one
-
 SELECT COUNT(*) FROM entity_instances
-WHERE entity_instances.entity_type = $1 AND entity_instances.project_id = $2
+WHERE entity_type = $1 
+  AND project_id = $2
 `
 
 type CountEntitiesByTypeAndProjectParams struct {
@@ -47,14 +46,19 @@ func (q *Queries) CountEntitiesByTypeAndProject(ctx context.Context, arg CountEn
 }
 
 const createEntity = `-- name: CreateEntity :one
-
 INSERT INTO entity_instances (
     entity_type,
     name,
     project_id,
     provider_id,
     originated_from
-) VALUES ($1, $2, $3, $4, $5)
+) VALUES (
+    $1, 
+    $2, 
+    $3, 
+    $4, 
+    $5
+)
 RETURNING id, entity_type, name, project_id, provider_id, created_at, originated_from
 `
 
@@ -89,7 +93,6 @@ func (q *Queries) CreateEntity(ctx context.Context, arg CreateEntityParams) (Ent
 }
 
 const createEntityWithID = `-- name: CreateEntityWithID :one
-
 INSERT INTO entity_instances (
     id,
     entity_type,
@@ -97,7 +100,14 @@ INSERT INTO entity_instances (
     project_id,
     provider_id,
     originated_from
-) VALUES ($1, $2, $3, $4, $5, $6)
+) VALUES (
+    $1, 
+    $2, 
+    $3, 
+    $4, 
+    $5, 
+    $6
+)
 RETURNING id, entity_type, name, project_id, provider_id, created_at, originated_from
 `
 
@@ -134,7 +144,6 @@ func (q *Queries) CreateEntityWithID(ctx context.Context, arg CreateEntityWithID
 }
 
 const createOrEnsureEntityByID = `-- name: CreateOrEnsureEntityByID :one
-
 INSERT INTO entity_instances (
     id,
     entity_type,
@@ -142,7 +151,14 @@ INSERT INTO entity_instances (
     project_id,
     provider_id,
     originated_from
-) VALUES ($1, $2, $3, $4, $5, $6)
+) VALUES (
+    $1, 
+    $2, 
+    $3, 
+    $4, 
+    $5, 
+    $6
+)
 ON CONFLICT (id) DO UPDATE
 SET
     id = entity_instances.id  -- This is a "noop" update to ensure the RETURNING clause works
@@ -182,76 +198,121 @@ func (q *Queries) CreateOrEnsureEntityByID(ctx context.Context, arg CreateOrEnsu
 }
 
 const deleteAllPropertiesForEntity = `-- name: DeleteAllPropertiesForEntity :exec
-DELETE FROM properties
-WHERE entity_id = $1
+DELETE FROM properties p
+USING entity_instances ei
+WHERE p.entity_id = ei.id 
+  AND p.entity_id = $1
+  AND ei.project_id = $2
+  AND ei.provider_id = $3
 `
 
-func (q *Queries) DeleteAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteAllPropertiesForEntity, entityID)
+type DeleteAllPropertiesForEntityParams struct {
+	EntityID   uuid.UUID `json:"entity_id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
+}
+
+// DeleteAllPropertiesForEntity deletes all properties for an entity securely.
+func (q *Queries) DeleteAllPropertiesForEntity(ctx context.Context, arg DeleteAllPropertiesForEntityParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAllPropertiesForEntity, arg.EntityID, arg.ProjectID, arg.ProviderID)
 	return err
 }
 
 const deleteEntity = `-- name: DeleteEntity :exec
 DELETE FROM entity_instances
-WHERE id = $1 AND project_id = $2
+WHERE id = $1 
+  AND project_id = $2
+  AND provider_id = $3
 `
 
 type DeleteEntityParams struct {
-	ID        uuid.UUID `json:"id"`
-	ProjectID uuid.UUID `json:"project_id"`
+	ID         uuid.UUID `json:"id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
 }
 
-// DeleteEntity removes an entity from the entity_instances table for a project.
+// DeleteEntity removes an entity from the entity_instances table securely.
 func (q *Queries) DeleteEntity(ctx context.Context, arg DeleteEntityParams) error {
-	_, err := q.db.ExecContext(ctx, deleteEntity, arg.ID, arg.ProjectID)
+	_, err := q.db.ExecContext(ctx, deleteEntity, arg.ID, arg.ProjectID, arg.ProviderID)
 	return err
 }
 
 const deleteProperty = `-- name: DeleteProperty :exec
-DELETE FROM properties
-WHERE entity_id = $1 AND key = $2
+DELETE FROM properties p
+USING entity_instances ei
+WHERE p.entity_id = ei.id 
+  AND p.entity_id = $1 
+  AND p.key = $2
+  AND ei.project_id = $3
+  AND ei.provider_id = $4
 `
 
 type DeletePropertyParams struct {
-	EntityID uuid.UUID `json:"entity_id"`
-	Key      string    `json:"key"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
 }
 
+// DeleteProperty deletes a property, using USING to ensure the caller owns the parent entity.
 func (q *Queries) DeleteProperty(ctx context.Context, arg DeletePropertyParams) error {
-	_, err := q.db.ExecContext(ctx, deleteProperty, arg.EntityID, arg.Key)
+	_, err := q.db.ExecContext(ctx, deleteProperty,
+		arg.EntityID,
+		arg.Key,
+		arg.ProjectID,
+		arg.ProviderID,
+	)
 	return err
 }
 
 const entityExistsAfterID = `-- name: EntityExistsAfterID :one
-
 SELECT EXISTS (
     SELECT 1
     FROM entity_instances
-    WHERE entity_instances.entity_type = $1
-        AND entity_instances.id > $2
+    WHERE entity_type = $1
+      AND id > $2
+      AND provider_id = $3
+      AND project_id = ANY($4::uuid[])
 ) AS exists
 `
 
 type EntityExistsAfterIDParams struct {
-	EntityType Entities  `json:"entity_type"`
-	ID         uuid.UUID `json:"id"`
+	EntityType Entities    `json:"entity_type"`
+	ID         uuid.UUID   `json:"id"`
+	ProviderID uuid.UUID   `json:"provider_id"`
+	Projects   []uuid.UUID `json:"projects"`
 }
 
-// EntityExistsAfterID checks if any entity of a given type exists after a cursor ID.
+// EntityExistsAfterID checks if any entity exists after a cursor ID securely.
 func (q *Queries) EntityExistsAfterID(ctx context.Context, arg EntityExistsAfterIDParams) (bool, error) {
-	row := q.db.QueryRowContext(ctx, entityExistsAfterID, arg.EntityType, arg.ID)
+	row := q.db.QueryRowContext(ctx, entityExistsAfterID,
+		arg.EntityType,
+		arg.ID,
+		arg.ProviderID,
+		pq.Array(arg.Projects),
+	)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
 const getAllPropertiesForEntity = `-- name: GetAllPropertiesForEntity :many
-SELECT id, entity_id, key, value, updated_at FROM properties
-WHERE entity_id = $1
+SELECT p.id, p.entity_id, p.key, p.value, p.updated_at FROM properties p
+JOIN entity_instances ei ON p.entity_id = ei.id
+WHERE p.entity_id = $1
+  AND ei.project_id = $2
+  AND ei.provider_id = $3
 `
 
-func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.UUID) ([]Property, error) {
-	rows, err := q.db.QueryContext(ctx, getAllPropertiesForEntity, entityID)
+type GetAllPropertiesForEntityParams struct {
+	EntityID   uuid.UUID `json:"entity_id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
+}
+
+// GetAllPropertiesForEntity retrieves all properties for one entity, strictly bounded.
+func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, arg GetAllPropertiesForEntityParams) ([]Property, error) {
+	rows, err := q.db.QueryContext(ctx, getAllPropertiesForEntity, arg.EntityID, arg.ProjectID, arg.ProviderID)
 	if err != nil {
 		return nil, err
 	}
@@ -280,9 +341,8 @@ func (q *Queries) GetAllPropertiesForEntity(ctx context.Context, entityID uuid.U
 }
 
 const getEntitiesByProjectHierarchy = `-- name: GetEntitiesByProjectHierarchy :many
-
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.project_id = ANY($1::uuid[])
+WHERE project_id = ANY($1::uuid[])
 `
 
 // GetEntitiesByProjectHierarchy retrieves all entities for a project or hierarchy of projects.
@@ -318,15 +378,20 @@ func (q *Queries) GetEntitiesByProjectHierarchy(ctx context.Context, projects []
 }
 
 const getEntitiesByProvider = `-- name: GetEntitiesByProvider :many
-
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.provider_id = $1
+WHERE provider_id = $1
+  AND project_id = ANY($2::uuid[])
 `
 
-// GetEntitiesByProvider retrieves all entities of a given provider.
+type GetEntitiesByProviderParams struct {
+	ProviderID uuid.UUID   `json:"provider_id"`
+	Projects   []uuid.UUID `json:"projects"`
+}
+
+// GetEntitiesByProvider retrieves all entities of a given provider scoped by project hierarchy.
 // this is how one would get all repositories, artifacts, etc. for a given provider.
-func (q *Queries) GetEntitiesByProvider(ctx context.Context, providerID uuid.UUID) ([]EntityInstance, error) {
-	rows, err := q.db.QueryContext(ctx, getEntitiesByProvider, providerID)
+func (q *Queries) GetEntitiesByProvider(ctx context.Context, arg GetEntitiesByProviderParams) ([]EntityInstance, error) {
+	rows, err := q.db.QueryContext(ctx, getEntitiesByProvider, arg.ProviderID, pq.Array(arg.Projects))
 	if err != nil {
 		return nil, err
 	}
@@ -357,11 +422,10 @@ func (q *Queries) GetEntitiesByProvider(ctx context.Context, providerID uuid.UUI
 }
 
 const getEntitiesByType = `-- name: GetEntitiesByType :many
-
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.entity_type = $1
-    AND entity_instances.provider_id = $2
-    AND entity_instances.project_id = ANY($3::uuid[])
+WHERE entity_type = $1
+  AND provider_id = $2
+  AND project_id = ANY($3::uuid[])
 `
 
 type GetEntitiesByTypeParams struct {
@@ -370,7 +434,7 @@ type GetEntitiesByTypeParams struct {
 	Projects   []uuid.UUID `json:"projects"`
 }
 
-// GetEntitiesByType retrieves all entities of a given type for a project or hierarchy of projects.
+// GetEntitiesByType retrieves all entities of a given type for a project hierarchy.
 // this is how one would get all repositories, artifacts, etc.
 func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypeParams) ([]EntityInstance, error) {
 	rows, err := q.db.QueryContext(ctx, getEntitiesByType, arg.EntityType, arg.ProviderID, pq.Array(arg.Projects))
@@ -405,13 +469,21 @@ func (q *Queries) GetEntitiesByType(ctx context.Context, arg GetEntitiesByTypePa
 
 const getEntityByID = `-- name: GetEntityByID :one
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.id = $1
+WHERE id = $1
+  AND project_id = $2
+  AND provider_id = $3
 LIMIT 1
 `
 
+type GetEntityByIDParams struct {
+	ID         uuid.UUID `json:"id"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
+}
+
 // GetEntityByID retrieves an entity by its ID for a project or hierarchy of projects.
-func (q *Queries) GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstance, error) {
-	row := q.db.QueryRowContext(ctx, getEntityByID, id)
+func (q *Queries) GetEntityByID(ctx context.Context, arg GetEntityByIDParams) (EntityInstance, error) {
+	row := q.db.QueryRowContext(ctx, getEntityByID, arg.ID, arg.ProjectID, arg.ProviderID)
 	var i EntityInstance
 	err := row.Scan(
 		&i.ID,
@@ -427,27 +499,26 @@ func (q *Queries) GetEntityByID(ctx context.Context, id uuid.UUID) (EntityInstan
 
 const getEntityByName = `-- name: GetEntityByName :one
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE
-    entity_instances.name = $3
-    AND entity_instances.project_id = $1
-    AND entity_instances.entity_type = $2
-    AND entity_instances.provider_id = $4
+WHERE name = $1
+  AND entity_type = $2
+  AND project_id = $3
+  AND provider_id = $4
 LIMIT 1
 `
 
 type GetEntityByNameParams struct {
-	ProjectID  uuid.UUID `json:"project_id"`
-	EntityType Entities  `json:"entity_type"`
 	Name       string    `json:"name"`
+	EntityType Entities  `json:"entity_type"`
+	ProjectID  uuid.UUID `json:"project_id"`
 	ProviderID uuid.UUID `json:"provider_id"`
 }
 
-// GetEntityByName retrieves an entity by its name for a project or hierarchy of projects.
+// GetEntityByName retrieves an entity by its name securely.
 func (q *Queries) GetEntityByName(ctx context.Context, arg GetEntityByNameParams) (EntityInstance, error) {
 	row := q.db.QueryRowContext(ctx, getEntityByName,
-		arg.ProjectID,
-		arg.EntityType,
 		arg.Name,
+		arg.EntityType,
+		arg.ProjectID,
 		arg.ProviderID,
 	)
 	var i EntityInstance
@@ -463,18 +534,74 @@ func (q *Queries) GetEntityByName(ctx context.Context, arg GetEntityByNameParams
 	return i, err
 }
 
+const getPropertiesForEntities = `-- name: GetPropertiesForEntities :many
+SELECT p.id, p.entity_id, p.key, p.value, p.updated_at FROM properties p
+JOIN entity_instances ei ON p.entity_id = ei.id
+WHERE p.entity_id = ANY($1::uuid[])
+  AND ei.project_id = ANY($2::uuid[])
+  AND ei.provider_id = $3
+`
+
+type GetPropertiesForEntitiesParams struct {
+	EntityIds  []uuid.UUID `json:"entity_ids"`
+	Projects   []uuid.UUID `json:"projects"`
+	ProviderID uuid.UUID   `json:"provider_id"`
+}
+
+// GetPropertiesForEntities retrieves properties for multiple entities in bulk
+func (q *Queries) GetPropertiesForEntities(ctx context.Context, arg GetPropertiesForEntitiesParams) ([]Property, error) {
+	rows, err := q.db.QueryContext(ctx, getPropertiesForEntities, pq.Array(arg.EntityIds), pq.Array(arg.Projects), arg.ProviderID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Property{}
+	for rows.Next() {
+		var i Property
+		if err := rows.Scan(
+			&i.ID,
+			&i.EntityID,
+			&i.Key,
+			&i.Value,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getProperty = `-- name: GetProperty :one
-SELECT id, entity_id, key, value, updated_at FROM properties
-WHERE entity_id = $1 AND key = $2
+SELECT p.id, p.entity_id, p.key, p.value, p.updated_at FROM properties p
+JOIN entity_instances ei ON p.entity_id = ei.id
+WHERE p.entity_id = $1 
+  AND p.key = $2
+  AND ei.project_id = $3
+  AND ei.provider_id = $4
 `
 
 type GetPropertyParams struct {
-	EntityID uuid.UUID `json:"entity_id"`
-	Key      string    `json:"key"`
+	EntityID   uuid.UUID `json:"entity_id"`
+	Key        string    `json:"key"`
+	ProjectID  uuid.UUID `json:"project_id"`
+	ProviderID uuid.UUID `json:"provider_id"`
 }
 
+// GetProperty retrieves a single property, using a JOIN to ensure the caller owns the parent entity
 func (q *Queries) GetProperty(ctx context.Context, arg GetPropertyParams) (Property, error) {
-	row := q.db.QueryRowContext(ctx, getProperty, arg.EntityID, arg.Key)
+	row := q.db.QueryRowContext(ctx, getProperty,
+		arg.EntityID,
+		arg.Key,
+		arg.ProjectID,
+		arg.ProviderID,
+	)
 	var i Property
 	err := row.Scan(
 		&i.ID,
@@ -489,7 +616,7 @@ func (q *Queries) GetProperty(ctx context.Context, arg GetPropertyParams) (Prope
 const getTypedEntitiesByProperty = `-- name: GetTypedEntitiesByProperty :many
 SELECT ei.id, ei.entity_type, ei.name, ei.project_id, ei.provider_id, ei.created_at, ei.originated_from
 FROM entity_instances ei
-         JOIN properties p ON ei.id = p.entity_id
+JOIN properties p ON ei.id = p.entity_id
 WHERE ei.entity_type = $1
   AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.project_id = $2)
   AND ($3::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ei.provider_id = $3)
@@ -505,6 +632,7 @@ type GetTypedEntitiesByPropertyParams struct {
 	Value      json.RawMessage `json:"value"`
 }
 
+// GetTypedEntitiesByProperty retrieves entities matching a specific property JSONB query securely.
 func (q *Queries) GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEntitiesByPropertyParams) ([]EntityInstance, error) {
 	rows, err := q.db.QueryContext(ctx, getTypedEntitiesByProperty,
 		arg.EntityType,
@@ -543,24 +671,33 @@ func (q *Queries) GetTypedEntitiesByProperty(ctx context.Context, arg GetTypedEn
 }
 
 const listEntitiesAfterID = `-- name: ListEntitiesAfterID :many
-
 SELECT id, entity_type, name, project_id, provider_id, created_at, originated_from FROM entity_instances
-WHERE entity_instances.entity_type = $1
-    AND entity_instances.id > $2
-ORDER BY entity_instances.id
-LIMIT $3::bigint
+WHERE entity_type = $1
+  AND id > $2
+  AND provider_id = $3
+  AND project_id = ANY($4::uuid[])
+ORDER BY id
+LIMIT $5::bigint
 `
 
 type ListEntitiesAfterIDParams struct {
-	EntityType Entities  `json:"entity_type"`
-	ID         uuid.UUID `json:"id"`
-	Limit      int64     `json:"limit"`
+	EntityType Entities    `json:"entity_type"`
+	ID         uuid.UUID   `json:"id"`
+	ProviderID uuid.UUID   `json:"provider_id"`
+	Projects   []uuid.UUID `json:"projects"`
+	Limit      int64       `json:"limit"`
 }
 
-// ListEntitiesAfterID retrieves entities of a given type after a cursor ID, for pagination.
+// ListEntitiesAfterID retrieves entities for pagination securely.
 // This is used for cursor-based iteration over all entities (e.g., in the reminder service).
 func (q *Queries) ListEntitiesAfterID(ctx context.Context, arg ListEntitiesAfterIDParams) ([]EntityInstance, error) {
-	rows, err := q.db.QueryContext(ctx, listEntitiesAfterID, arg.EntityType, arg.ID, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, listEntitiesAfterID,
+		arg.EntityType,
+		arg.ID,
+		arg.ProviderID,
+		pq.Array(arg.Projects),
+		arg.Limit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -596,11 +733,16 @@ INSERT INTO properties (
     key,
     value,
     updated_at
-) VALUES ($1, $2, $3, NOW())
+) VALUES (
+    $1, 
+    $2, 
+    $3, 
+    NOW()
+)
 ON CONFLICT (entity_id, key) DO UPDATE
-    SET
-        value = $4,
-        updated_at = NOW()
+SET
+    value = $3,
+    updated_at = NOW()
 RETURNING id, entity_id, key, value, updated_at
 `
 
@@ -610,13 +752,10 @@ type UpsertPropertyParams struct {
 	Value    json.RawMessage `json:"value"`
 }
 
+// UpsertProperty upserts a property.
+// NOTE: Ownership MUST be verified in Go (e.g. via GetEntityByID) before executing this statement.
 func (q *Queries) UpsertProperty(ctx context.Context, arg UpsertPropertyParams) (Property, error) {
-	row := q.db.QueryRowContext(ctx, upsertProperty,
-		arg.EntityID,
-		arg.Key,
-		arg.Value,
-		arg.Value,
-	)
+	row := q.db.QueryRowContext(ctx, upsertProperty, arg.EntityID, arg.Key, arg.Value)
 	var i Property
 	err := row.Scan(
 		&i.ID,

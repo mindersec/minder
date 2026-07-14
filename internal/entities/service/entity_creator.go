@@ -168,7 +168,7 @@ func (e *entityCreator) CreateEntity(
 
 		// Replace properties - use Replace to ensure a clean slate
 		// (removes any stale properties from previous failed attempts)
-		if err := e.propSvc.ReplaceAllProperties(ctx, ent.ID, registeredProps,
+		if err := e.propSvc.ReplaceAllProperties(ctx, ent.ID, registeredProps, projectID, provider.ID,
 			propService.CallBuilder().WithStoreOrTransaction(t)); err != nil {
 			return nil, fmt.Errorf("error saving properties: %w", err)
 		}

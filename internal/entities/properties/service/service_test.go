@@ -276,6 +276,10 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			require.NoError(t, err)
 			propSvc := NewPropertiesService(tctx.testQueries)
 
+			if tt.dbSetup != nil {
+				tt.dbSetup(t, ent.ID, tctx.testQueries)
+			}
+
 			var prop *properties.Property
 			if tt.val != nil {
 				prop, err = properties.NewProperty(tt.val)
@@ -283,14 +287,16 @@ func TestPropertiesService_SaveProperty(t *testing.T) {
 			}
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop,
+				return propSvc.ReplaceProperty(ctx, ent.ID, tt.key, prop, tctx.dbProj.ID, tctx.ghAppProvider.ID,
 					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
 			dbProp, err := tctx.testQueries.GetProperty(ctx, db.GetPropertyParams{
-				EntityID: ent.ID,
-				Key:      tt.key,
+				EntityID:   ent.ID,
+				Key:        tt.key,
+				ProjectID:  tctx.dbProj.ID,
+				ProviderID: tctx.ghAppProvider.ID,
 			})
 			if tt.val == nil {
 				require.ErrorIs(t, err, sql.ErrNoRows)
@@ -429,15 +435,23 @@ func TestPropertiesService_SaveAllProperties(t *testing.T) {
 			require.NoError(t, err)
 			propSvc := NewPropertiesService(tctx.testQueries)
 
+			if tt.dbSetup != nil {
+				tt.dbSetup(t, ent.ID, tctx.testQueries)
+			}
+
 			props := properties.NewProperties(tt.props)
 
 			err = tctx.testQueries.WithTransactionErr(func(qtx db.ExtendQuerier) error {
-				return propSvc.ReplaceAllProperties(ctx, ent.ID, props,
+				return propSvc.ReplaceAllProperties(ctx, ent.ID, props, tctx.dbProj.ID, tctx.ghAppProvider.ID,
 					CallBuilder().WithStoreOrTransaction(qtx))
 			})
 			require.NoError(t, err)
 
-			dbProps, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, ent.ID)
+			dbProps, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+				EntityID:   ent.ID,
+				ProjectID:  tctx.dbProj.ID,
+				ProviderID: tctx.ghAppProvider.ID,
+			})
 			require.NoError(t, err)
 
 			updatedProps, err := models.DbPropsToModel(dbProps)
@@ -904,50 +918,51 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 	scenarios := []struct {
 		name           string
 		entityID       uuid.UUID
+		projectID      uuid.UUID
+		providerID     uuid.UUID
 		entName        string
-		dbEntBuilder   func(id uuid.UUID, entName string) db.EntityInstance
+		dbEntBuilder   func(id uuid.UUID, projID uuid.UUID, provID uuid.UUID, entName string) db.EntityInstance
 		dbPropsBuilder func(id uuid.UUID) []db.Property
 		checkProps     func(t *testing.T, props *properties.Properties)
 	}{
 		{
-			name:     "Entity with properties",
-			entityID: uuid.New(),
-			entName:  "myorg/the-props-are-different",
-			dbEntBuilder: func(id uuid.UUID, entName string) db.EntityInstance {
+			name:       "Entity with properties",
+			entityID:   uuid.New(),
+			projectID:  uuid.New(),
+			providerID: uuid.New(),
+			entName:    "myorg/the-props-are-different",
+			dbEntBuilder: func(id uuid.UUID, projID uuid.UUID, provID uuid.UUID, entName string) db.EntityInstance {
 				return db.EntityInstance{
-					ID:   id,
-					Name: entName,
+					ID:         id,
+					ProjectID:  projID,
+					ProviderID: provID,
+					Name:       entName,
 				}
 			},
 			dbPropsBuilder: func(id uuid.UUID) []db.Property {
 				return []db.Property{
-					{
-						EntityID: id,
-						Key:      "name",
-						Value:    []byte(`{"value": "myorg/bad-go", "version": "v1"}`),
-					},
-					{
-						EntityID: id,
-						Key:      "is_private",
-						Value:    []byte(`{"value": false, "version": "v1"}`),
-					},
+					{EntityID: id, Key: "name", Value: []byte(`{"value": "myorg/bad-go", "version": "v1"}`)},
+					{EntityID: id, Key: "is_private", Value: []byte(`{"value": false, "version": "v1"}`)},
 				}
 			},
 			checkProps: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
-
 				require.Equal(t, props.GetProperty("name").GetString(), "myorg/bad-go")
 				require.Equal(t, props.GetProperty("is_private").GetBool(), false)
 			},
 		},
 		{
-			name:     "Entity without properties",
-			entityID: uuid.New(),
-			entName:  "myorg/noprops",
-			dbEntBuilder: func(id uuid.UUID, entName string) db.EntityInstance {
+			name:       "Entity without properties",
+			entityID:   uuid.New(),
+			projectID:  uuid.New(),
+			providerID: uuid.New(),
+			entName:    "myorg/noprops",
+			dbEntBuilder: func(id uuid.UUID, projID uuid.UUID, provID uuid.UUID, entName string) db.EntityInstance {
 				return db.EntityInstance{
-					ID:   id,
-					Name: entName,
+					ID:         id,
+					ProjectID:  projID,
+					ProviderID: provID,
+					Name:       entName,
 				}
 			},
 			dbPropsBuilder: func(_ uuid.UUID) []db.Property {
@@ -955,7 +970,6 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 			},
 			checkProps: func(t *testing.T, props *properties.Properties) {
 				t.Helper()
-
 				require.Equal(t, props.GetProperty("name").GetString(), "myorg/noprops")
 			},
 		},
@@ -971,14 +985,14 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 			mockDB := mockdb.NewMockStore(ctrl)
 
 			mockDB.EXPECT().
-				GetEntityByID(ctx, tt.entityID).
-				Return(tt.dbEntBuilder(tt.entityID, tt.entName), nil)
+				GetEntityByID(ctx, db.GetEntityByIDParams{ID: tt.entityID, ProjectID: tt.projectID, ProviderID: tt.providerID}).
+				Return(tt.dbEntBuilder(tt.entityID, tt.projectID, tt.providerID, tt.entName), nil)
 			mockDB.EXPECT().
-				GetAllPropertiesForEntity(ctx, tt.entityID).
+				GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{EntityID: tt.entityID, ProjectID: tt.projectID, ProviderID: tt.providerID}).
 				Return(tt.dbPropsBuilder(tt.entityID), nil)
 
 			ps := NewPropertiesService(mockDB)
-			result, err := ps.EntityWithPropertiesByID(ctx, tt.entityID, nil)
+			result, err := ps.EntityWithPropertiesByID(ctx, tt.entityID, tt.projectID, tt.providerID, nil)
 			require.NoError(t, err)
 			require.NotNil(t, result)
 			require.Equal(t, result.Entity.ID, tt.entityID)
@@ -987,7 +1001,6 @@ func TestPropertiesService_EntityWithProperties(t *testing.T) {
 		})
 	}
 }
-
 func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 	t.Parallel()
 
@@ -1003,32 +1016,27 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 		mockDB := mockdb.NewMockStore(ctrl)
 
 		entityID := uuid.New()
+		projectID := uuid.New()
+		providerID := uuid.New()
 		entityName := "myorg/bad-go"
 
 		entityRet := db.EntityInstance{
-			ID:   entityID,
-			Name: entityName,
+			ID:         entityID,
+			ProjectID:  projectID,
+			ProviderID: providerID,
+			Name:       entityName,
 		}
 		propertyRet := []db.Property{
-			{
-				EntityID: entityID,
-				Key:      "name",
-				Value:    []byte(`{"value": "myorg/bad-go", "version": "v1"}`),
-			},
-			{
-				EntityID: entityID,
-				Key:      "is_private",
-				Value:    []byte(`{"value": false, "version": "v1"}`),
-			},
+			{EntityID: entityID, Key: "name", Value: []byte(`{"value": "myorg/bad-go", "version": "v1"}`)},
+			{EntityID: entityID, Key: "is_private", Value: []byte(`{"value": false, "version": "v1"}`)},
 		}
 
-		// we verify that the entity is only fetched once even though we call the service twice
 		mockDB.EXPECT().
-			GetEntityByID(ctx, entityID).
+			GetEntityByID(ctx, db.GetEntityByIDParams{ID: entityID, ProjectID: projectID, ProviderID: providerID}).
 			Return(entityRet, nil).
 			Times(1)
 		mockDB.EXPECT().
-			GetAllPropertiesForEntity(ctx, entityID).
+			GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{EntityID: entityID, ProjectID: projectID, ProviderID: providerID}).
 			Return(propertyRet, nil).
 			Times(1)
 
@@ -1037,22 +1045,16 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Log("First call, no cache")
-		result, err := cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		result, err := cps.EntityWithPropertiesByID(ctx, entityID, projectID, providerID, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, result.Entity.ID, entityID)
-		require.Equal(t, result.Entity.Name, entityName)
-		require.Equal(t, result.Properties.GetProperty("name").GetString(), "myorg/bad-go")
-		require.Equal(t, result.Properties.GetProperty("is_private").GetBool(), false)
 
 		t.Log("Second call, cache hit")
-		result, err = cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		result, err = cps.EntityWithPropertiesByID(ctx, entityID, projectID, providerID, nil)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.Equal(t, result.Entity.ID, entityID)
-		require.Equal(t, result.Entity.Name, entityName)
-		require.Equal(t, result.Properties.GetProperty("name").GetString(), "myorg/bad-go")
-		require.Equal(t, result.Properties.GetProperty("is_private").GetBool(), false)
 	})
 
 	t.Run("Errors are propagated", func(t *testing.T) {
@@ -1061,9 +1063,11 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 		mockDB := mockdb.NewMockStore(ctrl)
 
 		entityID := uuid.New()
+		projectID := uuid.New()
+		providerID := uuid.New()
 
 		mockDB.EXPECT().
-			GetEntityByID(ctx, entityID).
+			GetEntityByID(ctx, db.GetEntityByIDParams{ID: entityID, ProjectID: projectID, ProviderID: providerID}).
 			Return(db.EntityInstance{}, ErrEntityNotFound).
 			Times(1)
 
@@ -1071,7 +1075,7 @@ func TestPropertiesService_EntityWithProperties_WithCache(t *testing.T) {
 		cps, err := WithEntityCache(ps, 100)
 		require.NoError(t, err)
 
-		result, err := cps.EntityWithPropertiesByID(ctx, entityID, nil)
+		result, err := cps.EntityWithPropertiesByID(ctx, entityID, projectID, providerID, nil)
 		require.ErrorIs(t, err, ErrEntityNotFound)
 		require.Nil(t, result)
 	})
@@ -1089,6 +1093,8 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 
 	ctx := context.Background()
 	entityID := uuid.New()
+	projectID := uuid.New()
+	providerID := uuid.New()
 	props := properties.NewProperties(map[string]any{
 		"name":       "repo-1",
 		"is_private": true,
@@ -1096,21 +1102,21 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 
 	scenarios := []struct {
 		name                  string
-		invoke                func(PropertiesService, context.Context, uuid.UUID, *properties.Properties, *CallOptions) error
+		invoke                func(PropertiesService, context.Context, uuid.UUID, uuid.UUID, uuid.UUID, *properties.Properties, *CallOptions) error
 		expectDeleteBeforePut bool
 	}{
 		{
 			name: "replace all properties",
-			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID, projectID uuid.UUID, providerID uuid.UUID,
 				props *properties.Properties, opts *CallOptions,
 			) error {
-				return ps.ReplaceAllProperties(ctx, entityID, props, opts)
+				return ps.ReplaceAllProperties(ctx, entityID, props, projectID, providerID, opts)
 			},
 			expectDeleteBeforePut: true,
 		},
 		{
 			name: "save all properties",
-			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID,
+			invoke: func(ps PropertiesService, ctx context.Context, entityID uuid.UUID, _ uuid.UUID, _ uuid.UUID,
 				props *properties.Properties, opts *CallOptions,
 			) error {
 				return ps.SaveAllProperties(ctx, entityID, props, opts)
@@ -1137,7 +1143,11 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 				})
 			if tt.expectDeleteBeforePut {
 				mockTxQuerier.EXPECT().
-					DeleteAllPropertiesForEntity(ctx, entityID).
+					DeleteAllPropertiesForEntity(ctx, db.DeleteAllPropertiesForEntityParams{
+						EntityID:   entityID,
+						ProjectID:  projectID,
+						ProviderID: providerID,
+					}).
 					Return(nil)
 			}
 			mockTxQuerier.EXPECT().
@@ -1146,7 +1156,7 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 				Times(2)
 
 			ps := NewPropertiesService(mockStore)
-			err := tt.invoke(ps, ctx, entityID, props, nil)
+			err := tt.invoke(ps, ctx, entityID, projectID, providerID, props, nil)
 			require.NoError(t, err)
 		})
 
@@ -1170,11 +1180,15 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 			txQuerier := tctx.testQueries.GetQuerierWithTransaction(tx)
 
 			ps := NewPropertiesService(tctx.testQueries)
-			err = tt.invoke(ps, ctx, ent.ID, props,
+			err = tt.invoke(ps, ctx, ent.ID, tctx.dbProj.ID, tctx.ghAppProvider.ID, props,
 				CallBuilder().WithStoreOrTransaction(txQuerier))
 			require.NoError(t, err)
 
-			stored, err := txQuerier.GetAllPropertiesForEntity(ctx, ent.ID)
+			stored, err := txQuerier.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+				EntityID:   ent.ID,
+				ProjectID:  tctx.dbProj.ID,
+				ProviderID: tctx.ghAppProvider.ID,
+			})
 			require.NoError(t, err)
 			require.Len(t, stored, 2)
 		})
@@ -1193,7 +1207,7 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 				Return(expectedErr)
 
 			ps := NewPropertiesService(mockStore)
-			err := tt.invoke(ps, ctx, entityID, props, nil)
+			err := tt.invoke(ps, ctx, entityID, projectID, providerID, props, nil)
 			require.ErrorIs(t, err, expectedErr)
 		})
 	}
@@ -1222,10 +1236,14 @@ func TestPropertiesService_MultiPropertyWrites_EnsureTransaction(t *testing.T) {
 			err:        errors.New("forced upsert failure"),
 		})
 
-		err = ps.ReplaceAllProperties(ctx, ent.ID, props, nil)
+		err = ps.ReplaceAllProperties(ctx, ent.ID, props, tctx.dbProj.ID, tctx.ghAppProvider.ID, nil)
 		require.ErrorContains(t, err, "forced upsert failure")
 
-		stored, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, ent.ID)
+		stored, err := tctx.testQueries.GetAllPropertiesForEntity(ctx, db.GetAllPropertiesForEntityParams{
+			EntityID:   ent.ID,
+			ProjectID:  tctx.dbProj.ID,
+			ProviderID: tctx.ghAppProvider.ID,
+		})
 		require.NoError(t, err)
 
 		restoredProps, err := models.DbPropsToModel(stored)

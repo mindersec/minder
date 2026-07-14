@@ -210,7 +210,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			handlerBuilderFn: refreshByIDHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
 				return message.NewEntityRefreshAndDoMessage().
-					WithEntityID(repoID)
+					WithEntityID(repoID).
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				ewp := buildEwp(t, repoEwp, repoPropMap)
@@ -235,7 +237,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 			handlerBuilderFn: refreshByIDHandlerBuilder,
 			messageBuilder: func() *message.HandleEntityAndDoMessage {
 				return message.NewEntityRefreshAndDoMessage().
-					WithEntityID(uuid.Nil)
+					WithEntityID(uuid.Nil).
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService()
@@ -255,7 +259,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				ewp := buildEwp(t, repoEwp, repoPropMap)
@@ -290,7 +296,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
 					WithMatchProps(matchProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				ewp := buildEwp(t, repoEwp, repoPropMap)
@@ -325,7 +333,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
 					WithMatchProps(matchProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				ewp := buildEwp(t, repoEwp, repoPropMap)
@@ -350,7 +360,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				privateRepoMap := maps.Clone(repoPropMap)
@@ -384,7 +396,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				privateRepoMap := maps.Clone(repoPropMap)
@@ -413,7 +427,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				archivedRepoMap := maps.Clone(repoPropMap)
@@ -441,7 +457,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
@@ -463,7 +481,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
@@ -486,7 +506,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
@@ -594,7 +616,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_PULL_REQUESTS, prProps).
 					WithOriginator(minderv1.Entity_ENTITY_REPOSITORIES, originatorProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				repoPropsEwp := buildEwp(t, repoEwp, repoPropMap)
@@ -625,7 +649,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				repoPropsEwp := buildEwp(t, repoEwp, repoPropMap)
@@ -653,7 +679,9 @@ func TestRefreshEntityAndDoHandler_HandleRefreshEntityAndEval(t *testing.T) {
 
 				return message.NewEntityRefreshAndDoMessage().
 					WithEntity(minderv1.Entity_ENTITY_REPOSITORIES, getByProps).
-					WithProviderImplementsHint("github")
+					WithProviderImplementsHint("github").
+					WithProjectID(projectID).
+					WithProviderID(providerID)
 			},
 			setupPropSvcMocks: func() fixtures.MockPropertyServiceBuilder {
 				return fixtures.NewMockPropertiesService(
