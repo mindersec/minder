@@ -3,7 +3,7 @@ module github.com/mindersec/minder
 go 1.26.0
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260415201107-50325440f8f2.1
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1
 	buf.build/go/protovalidate v1.2.0
 	buf.build/go/protoyaml v0.7.0
 	github.com/ThreeDotsLabs/watermill v1.5.2
