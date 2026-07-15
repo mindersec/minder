@@ -131,7 +131,6 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			},
 		},
 		{
-			name: "repository succeeds",
 			args: args{
 				ctx: context.TODO(),
 				getByProps: properties.NewProperties(map[string]any{
@@ -143,18 +142,29 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 				properties.RepoPropertyIsPrivate:  true,
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsFork:     false,
+				RepoPropertyLicense:               "mit", // Uses the correct constant
 			}),
 			wantErr: false,
-			gitLabServerMockFunc: func(w http.ResponseWriter, _ *http.Request) {
+			gitLabServerMockFunc: func(w http.ResponseWriter, r *http.Request) {
+				// Verify the query parameter you added is being sent
+				if r.URL.Query().Get("license") != "true" {
+					t.Errorf("expected query param license=true, got %s", r.URL.RawQuery)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
 				resp := &gitlab.Project{
-					ID:                1,
-					Name:              "project-1",
-					Description:       "project-1 description",
-					Visibility:        gitlab.PrivateVisibility,
-					Archived:          false,
-					ForkedFromProject: nil,
+					ID:                  1,
+					Name:                "project-1",
+					Description:         "project-1 description",
+					Visibility:          gitlab.PrivateVisibility,
+					Archived:            false,
+					ForkedFromProject:   nil,
 					Namespace: &gitlab.ProjectNamespace{
 						Path: "group",
+					},
+					License: &gitlab.ProjectLicense{
+						Name: "mit", // Changed Key to Name to match repository_properties.go
 					},
 				}
 
