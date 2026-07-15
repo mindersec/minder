@@ -74,6 +74,8 @@ func TestIssueRemediate(t *testing.T) {
 		newRemArgs       *newIssueRemediateArgs
 		remArgs          *remediateArgs
 		mockSetup        func(*testing.T, *mockghclient.MockGitHub)
+		cmd              interfaces.ActionCmd
+		metadata         *json.RawMessage
 		expectedErr      error
 		wantInitErr      bool
 		expectedMetadata json.RawMessage
@@ -103,6 +105,8 @@ func TestIssueRemediate(t *testing.T) {
 						nil,
 					)
 			},
+			cmd:              interfaces.ActionCmdOn,
+			metadata:         nil,
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"issue_number":42}`),
 		},
@@ -126,6 +130,8 @@ func TestIssueRemediate(t *testing.T) {
 					).
 					Return(nil, fmt.Errorf("failed to create issue"))
 			},
+			cmd:              interfaces.ActionCmdOn,
+			metadata:         nil,
 			expectedErr:      errors.ErrActionFailed,
 			expectedMetadata: nil,
 		},
@@ -140,6 +146,11 @@ func TestIssueRemediate(t *testing.T) {
 				// Intentionally empty.
 				// If CreateIssue() is called, gomock will fail the test.
 			},
+			cmd: interfaces.ActionCmdOn,
+			metadata: func() *json.RawMessage {
+				m := json.RawMessage(`{"issue_number":42}`)
+				return &m
+			}(),
 			expectedErr:      errors.ErrActionPending,
 			expectedMetadata: json.RawMessage(`{"issue_number":42}`),
 		},
@@ -166,6 +177,11 @@ func TestIssueRemediate(t *testing.T) {
 						nil,
 					)
 			},
+			cmd: interfaces.ActionCmdOff,
+			metadata: func() *json.RawMessage {
+				m := json.RawMessage(`{"issue_number":42}`)
+				return &m
+			}(),
 			expectedErr:      errors.ErrActionSkipped,
 			expectedMetadata: nil,
 		},
@@ -194,6 +210,11 @@ func TestIssueRemediate(t *testing.T) {
 						nil,
 					)
 			},
+			cmd: interfaces.ActionCmdOff,
+			metadata: func() *json.RawMessage {
+				m := json.RawMessage(`{"issue_number":42}`)
+				return &m
+			}(),
 			expectedErr:      errors.ErrActionSkipped,
 			expectedMetadata: nil,
 		},
@@ -208,6 +229,8 @@ func TestIssueRemediate(t *testing.T) {
 				// No expectations.
 				// CloseIssue must NOT be called.
 			},
+			cmd:              interfaces.ActionCmdOff,
+			metadata:         nil,
 			expectedErr:      errors.ErrActionSkipped,
 			expectedMetadata: nil,
 		},
@@ -249,25 +272,12 @@ func TestIssueRemediate(t *testing.T) {
 
 			evalParams.SetEvalResult(&interfaces2.EvaluationResult{})
 
-			cmd := interfaces.ActionCmdOn
-			switch tt.name {
-			case "close an issue", "close already closed issue", "close issue without metadata":
-				cmd = interfaces.ActionCmdOff
-			}
-
-			var metadata *json.RawMessage
-			switch tt.name {
-			case "issue already exists", "close an issue", "close already closed issue":
-				m := json.RawMessage(`{"issue_number":42}`)
-				metadata = &m
-			}
-
 			retMeta, err := engine.Do(
 				context.Background(),
-				cmd,
+				tt.cmd,
 				tt.remArgs.ent,
 				evalParams,
-				metadata,
+				tt.metadata,
 			)
 
 			require.ErrorIs(t, err, tt.expectedErr)

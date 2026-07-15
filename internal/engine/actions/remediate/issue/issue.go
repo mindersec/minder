@@ -28,7 +28,7 @@ const (
 	RemediateType = "issue"
 )
 
-// Keep these limits in sync with the proto validation constraints.
+// Limits on the rendered output sent to the repository provider.
 const (
 	// TitleMaxLength is the maximum number of bytes for the title.
 	TitleMaxLength = 75
@@ -156,7 +156,6 @@ func (r *Remediator) Do(
 		return nil, fmt.Errorf("cannot get issue remediation params: %w", err)
 	}
 
-	var remErr error
 	switch r.setting {
 	case models.ActionOptOn:
 		return r.run(ctx, cmd, p)
@@ -165,10 +164,11 @@ func (r *Remediator) Do(
 		return r.dryRun(ctx, cmd, p)
 
 	case models.ActionOptOff, models.ActionOptUnknown:
-		remErr = errors.New("unexpected action")
-	}
+		return nil, errors.New("unexpected remediation action setting")
 
-	return nil, remErr
+	default:
+		return nil, fmt.Errorf("unexpected remediation action setting: %v", r.setting)
+	}
 }
 
 func (r *Remediator) getParamsForIssueRemediation(
