@@ -679,10 +679,8 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			mockClient := mockghclient.NewMockGitHub(ctrl)
 
-			provider, err := testGithubProvider()
-			require.NoError(t, err)
 			engine, err := NewPullRequestRemediate(
-				tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider, tt.remArgs.remAction)
+				tt.newRemArgs.actionType, tt.newRemArgs.prRem, mockClient, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
