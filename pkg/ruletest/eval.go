@@ -29,13 +29,14 @@ func (tr *testCaseRunner) builtinEval(
 	var ruleName string
 	var entityDict *starlark.Dict
 	var profileDict *starlark.Dict
+	var paramsDict *starlark.Dict
 	var mockHttpDict *starlark.Dict
 	var mockFSDict *starlark.Dict
 	var datasourcesList *starlark.List
 
 	err := starlark.UnpackArgs("eval", args, kwargs,
 		"rule", &ruleName, "entity?", &entityDict,
-		"profile?", &profileDict, "mock_http?", &mockHttpDict,
+		"profile?", &profileDict, "params?", &paramsDict, "mock_http?", &mockHttpDict,
 		"mock_fs?", &mockFSDict, "data_sources?", &datasourcesList)
 	if err != nil {
 		return nil, err
@@ -56,6 +57,11 @@ func (tr *testCaseRunner) builtinEval(
 		return nil, fmt.Errorf("invalid profile argument: %w", err)
 	}
 
+	paramsMap, err := dictToGoMap(paramsDict)
+	if err != nil {
+		return nil, fmt.Errorf("invalid params argument: %w", err)
+	}
+
 	entityMap, err := dictToGoMap(entityDict)
 	if err != nil {
 		return nil, fmt.Errorf("invalid entity argument: %w", err)
@@ -74,7 +80,7 @@ func (tr *testCaseRunner) builtinEval(
 	ctx := context.Background()
 
 	tkOpts := []tkv1.Option{tkv1.WithHandlerFunc(mockHandler.ServeHTTP)}
-	if len(mockFSMap) > 0 {
+	if mockFSDict != nil {
 		tkOpts = append(tkOpts, tkv1.WithGitFiles(mockFSMap))
 	}
 	tk := tkv1.NewTestKit(tkOpts...)
@@ -93,11 +99,9 @@ func (tr *testCaseRunner) builtinEval(
 		rte.WithCustomIngester(tk)
 	}
 
-	res, err := rte.Eval(ctx, entityProto, profileMap, nil, &stubResultSink{})
-
-	// Because Eval returns the error, we pass that error to formatEvalResult
-	// We ignore res for now as we just want the error
+	res, err := rte.Eval(ctx, entityProto, profileMap, paramsMap, &stubResultSink{})
 	_ = res
+
 	return formatEvalResult(err), nil
 }
 
