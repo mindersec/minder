@@ -3330,8 +3330,8 @@ definitions:
 
           * 'rest' can be used with any entity type.
 
-          * 'gh_branch_protection' and 'pull_request' can only be used with the
-          'repository' entity type.
+          * 'gh_branch_protection' 'pull_request', and 'issue' can only be used
+          with the 'repository' entity type.
 
           * 'pull_request_comment' can only be used with the 'pull_request'
           entity type.
@@ -3595,10 +3595,6 @@ definitions:
           provider, i.e. GitHub upon
 
           creation of the issue
-    description: |-
-      NOTE: Issue remediation is not yet implemented.
-      This configuration is reserved for future support.
-      "issue" is intentionally not a supported remediation type yet.
   RemediatePullRequestRemediation:
     type: object
     properties:
