@@ -7,6 +7,9 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 )
 
+// V0MigrationMessage explains how to convert a V0-only policy to Rego V1.
+const V0MigrationMessage = "policy uses Rego V0 syntax; run 'opa fmt --v0-v1' to upgrade before creating or updating the rule type"
+
 // DetectRegoVersion attempts to parse the Rego source with the V1 parser first.
 // If V1 parsing succeeds, it returns ast.RegoV1. If V1 parsing fails, it falls
 // back to ast.RegoV0. This allows the system to accept both V0 and V1 policies

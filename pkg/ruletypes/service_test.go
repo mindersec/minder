@@ -327,6 +327,36 @@ func TestRuleTypeService(t *testing.T) {
 			FeatureFlags: map[string]any{string(flags.RegoV1DualParse): true},
 		},
 		{
+			Name:          "CreateRuleType refuses V0-only rego when refusal flag is on",
+			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
+			ExpectedError: "opa fmt --v0-v1",
+			TestMethod:    create,
+			FeatureFlags: map[string]any{
+				string(flags.RegoV1DualParse): true,
+				string(flags.RegoV1RefuseV0):  true,
+			},
+		},
+		{
+			Name:          "UpdateRuleType refuses V0-only rego when refusal flag is on",
+			RuleType:      newRuleType(withBasicStructure, withV0OnlyRego),
+			ExpectedError: "opa fmt --v0-v1",
+			TestMethod:    update,
+			FeatureFlags: map[string]any{
+				string(flags.RegoV1DualParse): true,
+				string(flags.RegoV1RefuseV0):  true,
+			},
+		},
+		{
+			Name:       "CreateRuleType allows V1-only rego when refusal flag is on",
+			RuleType:   newRuleType(withBasicStructure, withV1OnlyRego),
+			DBSetup:    dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreate, withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+			FeatureFlags: map[string]any{
+				string(flags.RegoV1DualParse): true,
+				string(flags.RegoV1RefuseV0):  true,
+			},
+		},
+		{
 			Name:         "CreateRuleType stores detected V0 rego version",
 			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow = false\n\nallow {\n    input.allowed\n}\n")),
 			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
@@ -527,6 +557,17 @@ func withIncompatibleDef(ruleType *pb.RuleType) {
 
 func withIncompatibleParams(ruleType *pb.RuleType) {
 	ruleType.Def.ParamSchema = incompatibleSchema
+}
+
+// withV0OnlyRego uses legacy partial-set syntax, which is invalid under Rego V1.
+func withV0OnlyRego(ruleType *pb.RuleType) {
+	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
+		Type: "rego",
+		Rego: &pb.RuleType_Definition_Eval_Rego{
+			Type: "deny",
+			Def:  "package minder\n\ndenies[msg] {\n    msg := \"something bad\"\n}\n",
+		},
+	}
 }
 
 // withV1OnlyRego sets a Rego definition that uses V1-only syntax (the

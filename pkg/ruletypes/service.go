@@ -16,6 +16,7 @@ import (
 	"github.com/open-policy-agent/opa/v1/ast"
 
 	"github.com/mindersec/minder/internal/db"
+	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
 	"github.com/mindersec/minder/internal/util"
@@ -338,7 +339,10 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 		}
 		return "v0", nil
 	case errV0 == nil:
-		// V0 only — always accepted.
+		// V0 only - accept during migration unless refusal is enabled.
+		if flags.Bool(ctx, s.featureFlags, flags.RegoV1RefuseV0) {
+			return "", errors.New(regoeval.V0MigrationMessage)
+		}
 		return "v0", nil
 	case errV1 == nil:
 		// V1 only — gate behind feature flag.
