@@ -3599,7 +3599,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
+          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' 'pull_request', and 'issue' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
@@ -3866,8 +3866,7 @@
           "type": "string",
           "title": "the body of the issue\nSupports Minder's template interpolation syntax\nThe rendered body is interpreted as Markdown by repository providers that\nsupport Markdown (e.g. Github)\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
         }
-      },
-      "description": "NOTE: Issue remediation is not yet implemented.\nThis configuration is reserved for future support.\n\"issue\" is intentionally not a supported remediation type yet."
+      }
     },
     "RemediatePullRequestRemediation": {
       "type": "object",

@@ -2829,11 +2829,11 @@ message RuleType {
         message Remediate {
             // type is the type of the remediation.
             // * 'rest' can be used with any entity type.
-            // * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.
+            // * 'gh_branch_protection' 'pull_request', and 'issue' can only be used with the 'repository' entity type.
             // * 'pull_request_comment' can only be used with the 'pull_request' entity type.
             string type = 1 [
                 (buf.validate.field).string = {
-                    in: ["rest", "gh_branch_protection", "pull_request", "pull_request_comment"],
+                    in: ["rest", "gh_branch_protection", "pull_request", "pull_request_comment", "issue"],
                 },
                 (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE
             ];
@@ -2933,9 +2933,6 @@ message RuleType {
                 optional ActionsReplaceTagsWithSha actions_replace_tags_with_sha = 5;
             }
 
-            // NOTE: Issue remediation is not yet implemented.
-            // This configuration is reserved for future support.
-            // "issue" is intentionally not a supported remediation type yet.
             message IssueRemediation {
                 // the title of the issue
                 // Supports Minder's template interpolation syntax.
