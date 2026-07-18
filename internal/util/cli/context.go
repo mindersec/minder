@@ -22,6 +22,12 @@ func WithRPCClient[T any](ctx context.Context, client T) context.Context {
 	return context.WithValue(ctx, key, client)
 }
 
+// WithCLIClient is an alias for WithRPCClient kept for backwards/alternate usage
+// by tests or callers expecting a "CLI"-named helper.
+func WithCLIClient[T any](ctx context.Context, client T) context.Context {
+	return WithRPCClient[T](ctx, client)
+}
+
 // GetRPCClient extracts the generic RPC client from the provided context.
 func GetRPCClient[T any](ctx context.Context) (T, bool) {
 	key := rpcKey{clientType: reflect.TypeOf((*T)(nil)).Elem()}
