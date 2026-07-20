@@ -2958,6 +2958,8 @@ Ingest defines how the data is ingested.
 | ----- | ---- | ----- | ----------- |
 | title | <TypeLink type="string">string</TypeLink> |  | the title of the issue Supports Minder's template interpolation syntax. This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
 | body | <TypeLink type="string">string</TypeLink> |  | the body of the issue Supports Minder's template interpolation syntax The rendered body is interpreted as Markdown by repository providers that support Markdown (e.g. Github) This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
+| labels | <TypeLink type="string">string</TypeLink> | repeated | Labels to apply when creating the issue. This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
+| assignees | <TypeLink type="string">string</TypeLink> | repeated | Usernames to assign when creating the issue. This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
 
 
 

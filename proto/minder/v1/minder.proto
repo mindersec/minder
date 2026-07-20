@@ -2952,6 +2952,14 @@ message RuleType {
                     min_len: 1
                     max_len: 65536
                 }];
+                // Labels to apply when creating the issue.
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the issue
+                repeated string labels = 3;
+                // Usernames to assign when creating the issue.
+                // This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+                // creation of the issue
+                repeated string assignees = 4;
             }
 
             optional RestType rest = 2;

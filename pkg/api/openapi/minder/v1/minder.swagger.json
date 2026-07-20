@@ -3865,6 +3865,20 @@
         "body": {
           "type": "string",
           "title": "the body of the issue\nSupports Minder's template interpolation syntax\nThe rendered body is interpreted as Markdown by repository providers that\nsupport Markdown (e.g. Github)\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Labels to apply when creating the issue.\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        },
+        "assignees": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Usernames to assign when creating the issue.\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
         }
       }
     },
