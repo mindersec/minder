@@ -64,4 +64,4 @@ Your access credentials have been saved to ~/.config/minder/credentials.json
 ```
 
 Once you have logged in, you'll want to
-[enroll your GitHub credentials in Minder so that it can act on your behalf](./enroll_provider.md).
+[enroll a provider in Minder so that it can act on your behalf](./enroll_provider).

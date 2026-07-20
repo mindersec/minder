@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -200,6 +201,43 @@ type ReviewPublisher interface {
 	GetPullRequest(ctx context.Context, owner, repo string, prNumber int) (*github.PullRequest, error)
 }
 
+// IssuePublisher is the interface for providers that can publish issues.
+type IssuePublisher interface {
+	Provider
+
+	// CreateIssue creates an issue in the given repository.
+	CreateIssue(
+		ctx context.Context,
+		owner, repo string,
+		title string,
+		body string,
+		labels []string,
+		assignees []string,
+	) (*github.Issue, error)
+
+	// GetIssue gets an issue from the given repository
+	GetIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+	) (*github.Issue, error)
+
+	// CloseIssue closes an existing issue
+	CloseIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+		comment string,
+	) (*github.Issue, error)
+
+	// ReopenIssue reopens an existing issue
+	ReopenIssue(
+		ctx context.Context,
+		owner, repo string,
+		number int,
+	) (*github.Issue, error)
+}
+
 // GitHub is the interface for interacting with the GitHub REST API
 // Add methods here for interacting with the GitHub Rest API
 type GitHub interface {
@@ -237,6 +275,11 @@ type GitHub interface {
 	CreatePullRequest(ctx context.Context, owner, repo, title, body, head, base string) (*github.PullRequest, error)
 	ClosePullRequest(ctx context.Context, owner, repo string, number int) (*github.PullRequest, error)
 	ListPullRequests(ctx context.Context, owner, repo string, opt *github.PullRequestListOptions) ([]*github.PullRequest, error)
+	CreateIssue(ctx context.Context, owner, repo string, title string, body string, labels []string,
+		assignees []string) (*github.Issue, error)
+	GetIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, error)
+	CloseIssue(ctx context.Context, owner, repo string, number int, comment string) (*github.Issue, error)
+	ReopenIssue(ctx context.Context, owner, repo string, number int) (*github.Issue, error)
 	GetUserId(ctx context.Context) (int64, error)
 	GetName(ctx context.Context) (string, error)
 	GetLogin(ctx context.Context) (string, error)
@@ -300,6 +343,30 @@ func ParseAndValidate(rawConfig json.RawMessage, to any) error {
 	}
 
 	return nil
+}
+
+// providerTypeMap maps each ProviderType to the interface type that a provider
+// must implement to support it.
+var providerTypeMap = map[minderv1.ProviderType]reflect.Type{
+	minderv1.ProviderType_PROVIDER_TYPE_GITHUB:       reflect.TypeOf((*GitHub)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REST:         reflect.TypeOf((*REST)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_GIT:          reflect.TypeOf((*Git)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_OCI:          reflect.TypeOf((*OCI)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_REPO_LISTER:  reflect.TypeOf((*RepoLister)(nil)).Elem(),
+	minderv1.ProviderType_PROVIDER_TYPE_IMAGE_LISTER: reflect.TypeOf((*ImageLister)(nil)).Elem(),
+}
+
+// ProviderTypesFromImpl returns the set of ProviderType values supported by the given
+// Provider, determined by checking which interfaces it implements.
+func ProviderTypesFromImpl(p Provider) []minderv1.ProviderType {
+	t := reflect.TypeOf(p)
+	out := make([]minderv1.ProviderType, 0, len(providerTypeMap))
+	for ptype, iface := range providerTypeMap {
+		if t.Implements(iface) {
+			out = append(out, ptype)
+		}
+	}
+	return out
 }
 
 // As is a type-cast function for Providers

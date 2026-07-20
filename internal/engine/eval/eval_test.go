@@ -9,7 +9,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/mindersec/minder/internal/engine/eval"
 	"github.com/mindersec/minder/internal/engine/eval/rego"
@@ -48,7 +50,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.DenyByDefaultEvaluationType.String(),
-					Def:  "package minder\n\ndefault allow = false\n\nallow {\n\tinput.ingested.data == \"bar\"\n}",
+					Def:  "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n\tinput.ingested.data == \"bar\"\n}",
 				},
 			},
 			out: &interfaces.EvaluationResult{
@@ -61,7 +63,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.DenyByDefaultEvaluationType.String(),
-					Def:  "package minder\n\nallow := false\noutput := [\"always fail\",\"never pass\"]",
+					Def:  "package minder\n\nimport rego.v1\n\nallow := false\noutput := [\"always fail\", \"never pass\"]",
 				},
 			},
 			out: &interfaces.EvaluationResult{
@@ -74,7 +76,7 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 				Type: "rego",
 				Rego: &pb.RuleType_Definition_Eval_Rego{
 					Type: rego.ConstraintsEvaluationType.String(),
-					Def:  "package minder\n\nviolations[results] {\n\tinput.ingested.data == \"foo\"\n\tresults := {\"status\": \"denied\", \"msg\": \"foo is not allowed\"}\n}",
+					Def:  "package minder\n\nimport rego.v1\n\nviolations contains results if {\n\tinput.ingested.data == \"foo\"\n\tresults := {\"status\": \"denied\", \"msg\": \"foo is not allowed\"}\n}",
 				},
 			},
 			out: &interfaces.EvaluationResult{
@@ -110,6 +112,143 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 			assert.Equal(t, tt.out, result)
 		})
 	}
+}
+
+func TestNewRuleEvaluatorWithRegoVersion(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		evalType    string
+		def         string
+		version     ast.RegoVersion
+		wantOutput  any
+		wantEvalErr bool
+	}{
+		{
+			name:     "V1 deny-by-default",
+			evalType: rego.DenyByDefaultEvaluationType.String(),
+			def: `package minder
+
+default allow := false
+
+allow if {
+	input.ingested.data == "bar"
+}`,
+			version:     ast.RegoV1,
+			wantOutput:  "denied",
+			wantEvalErr: true,
+		},
+		{
+			name:     "V1 constraints",
+			evalType: rego.ConstraintsEvaluationType.String(),
+			def: `package minder
+
+violations contains result if {
+	input.ingested.data == "foo"
+	result := {"msg": "foo is not allowed"}
+}`,
+			version:     ast.RegoV1,
+			wantOutput:  []any{"foo is not allowed"},
+			wantEvalErr: true,
+		},
+		{
+			name:     "V0 regression",
+			evalType: rego.DenyByDefaultEvaluationType.String(),
+			def: `package minder
+
+default allow = false
+
+allow {
+	input.ingested.data == "bar"
+}`,
+			version:     ast.RegoV0,
+			wantOutput:  "denied",
+			wantEvalErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			rt := &pb.RuleType{
+				Def: &pb.RuleType_Definition{
+					Eval: &pb.RuleType_Definition_Eval{
+						Type: "rego",
+						Rego: &pb.RuleType_Definition_Eval_Rego{
+							Type: tt.evalType,
+							Def:  tt.def,
+						},
+					},
+				},
+			}
+
+			evaluator, err := eval.NewRuleEvaluator(
+				context.Background(),
+				rt,
+				nil,
+				rego.WithRegoVersion(tt.version),
+			)
+			require.NoError(t, err)
+			require.NotNil(t, evaluator)
+
+			result, err := evaluator.Eval(
+				context.Background(),
+				nil,
+				nil,
+				&interfaces.Ingested{Object: map[string]any{"data": "foo"}},
+			)
+			if tt.wantEvalErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			require.NotNil(t, result)
+			assert.Equal(t, tt.wantOutput, result.Output)
+		})
+	}
+}
+
+func TestV1RuleEvaluatorAllowsMatchingInput(t *testing.T) {
+	t.Parallel()
+
+	rt := &pb.RuleType{
+		Def: &pb.RuleType_Definition{
+			Eval: &pb.RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &pb.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def: `package minder
+
+default allow := false
+
+allow if {
+	input.ingested.data == "bar"
+}`,
+				},
+			},
+		},
+	}
+
+	evaluator, err := eval.NewRuleEvaluator(
+		context.Background(),
+		rt,
+		nil,
+		rego.WithRegoVersion(ast.RegoV1),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, evaluator)
+
+	result, err := evaluator.Eval(
+		context.Background(),
+		nil,
+		nil,
+		&interfaces.Ingested{Object: map[string]any{"data": "bar"}},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Nil(t, result.Output)
 }
 
 func TestNewRuleEvaluatorFails(t *testing.T) {

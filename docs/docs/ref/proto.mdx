@@ -112,6 +112,7 @@ replies with OK
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | CheckHealth | [CheckHealthRequest](#minder-v1-CheckHealthRequest) | [CheckHealthResponse](#minder-v1-CheckHealthResponse) |  |
+| GetVersion | [GetVersionRequest](#minder-v1-GetVersionRequest) | [GetVersionResponse](#minder-v1-GetVersionResponse) |  |
 
 
 
@@ -542,6 +543,7 @@ CreateRuleTypeResponse is the response to create a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type that was created. |
+| warnings | <TypeLink type="string">string</TypeLink> | repeated | warnings contains non-fatal notices about the created rule type. |
 
 
 
@@ -1564,6 +1566,24 @@ get user
 | user | <TypeLink type="minder-v1-UserRecord">UserRecord</TypeLink> | optional |  |
 | projects | <TypeLink type="minder-v1-Project">Project</TypeLink> | repeated | **Deprecated.** This will be deprecated in favor of the project_roles field |
 | project_roles | <TypeLink type="minder-v1-ProjectRole">ProjectRole</TypeLink> | repeated |  |
+
+
+
+<Message id="minder-v1-GetVersionRequest">GetVersionRequest</Message>
+
+
+
+
+
+<Message id="minder-v1-GetVersionResponse">GetVersionResponse</Message>
+
+GetVersionResponse returns the build and version info of the Minder server
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | <TypeLink type="string">string</TypeLink> |  |  |
+| commit | <TypeLink type="string">string</TypeLink> |  |  |
 
 
 
@@ -2909,11 +2929,12 @@ Ingest defines how the data is ingested.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
+| type | <TypeLink type="string">string</TypeLink> |  | type is the type of the remediation. * 'rest' can be used with any entity type. * 'gh_branch_protection' 'pull_request', and 'issue' can only be used with the 'repository' entity type. * 'pull_request_comment' can only be used with the 'pull_request' entity type. |
 | rest | <TypeLink type="minder-v1-RestType">RestType</TypeLink> | optional |  |
 | gh_branch_protection | <TypeLink type="minder-v1-RuleType-Definition-Remediate-GhBranchProtectionType">RuleType.Definition.Remediate.GhBranchProtectionType</TypeLink> | optional |  |
 | pull_request | <TypeLink type="minder-v1-RuleType-Definition-Remediate-PullRequestRemediation">RuleType.Definition.Remediate.PullRequestRemediation</TypeLink> | optional |  |
 | pull_request_comment | <TypeLink type="minder-v1-RuleType-Definition-Alert-AlertTypePRComment">RuleType.Definition.Alert.AlertTypePRComment</TypeLink> | optional |  |
+| issue | <TypeLink type="minder-v1-RuleType-Definition-Remediate-IssueRemediation">RuleType.Definition.Remediate.IssueRemediation</TypeLink> | optional |  |
 
 
 
@@ -2925,6 +2946,18 @@ Ingest defines how the data is ingested.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | patch | <TypeLink type="string">string</TypeLink> |  |  |
+
+
+
+<Message id="minder-v1-RuleType-Definition-Remediate-IssueRemediation">RuleType.Definition.Remediate.IssueRemediation</Message>
+
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| title | <TypeLink type="string">string</TypeLink> |  | the title of the issue Supports Minder's template interpolation syntax. This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
+| body | <TypeLink type="string">string</TypeLink> |  | the body of the issue Supports Minder's template interpolation syntax The rendered body is interpreted as Markdown by repository providers that support Markdown (e.g. Github) This is not validated here as it will be validated by the repository provider, i.e. GitHub upon creation of the issue |
 
 
 
@@ -3165,6 +3198,7 @@ UpdateRuleTypeResponse is the response to update a rule type.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rule_type | <TypeLink type="minder-v1-RuleType">RuleType</TypeLink> |  | rule_type is the rule type that was updated. |
+| warnings | <TypeLink type="string">string</TypeLink> | repeated | warnings contains non-fatal notices about the updated rule type. |
 
 
 

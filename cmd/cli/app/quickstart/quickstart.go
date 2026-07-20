@@ -132,10 +132,11 @@ In case you have registered new repositories during this flow, the profile will 
 var content embed.FS
 
 var cmd = &cobra.Command{
-	Use:   "quickstart",
-	Short: "Quickstart minder",
-	Long:  "The quickstart command provide the means to quickly get started with minder",
-	RunE:  cli.GRPCClientWrapRunE(quickstartCommand),
+	Use:    "quickstart",
+	Short:  "Quickstart minder",
+	Long:   "The quickstart command provide the means to quickly get started with minder",
+	Hidden: true,
+	RunE:   cli.GRPCClientWrapRunE(quickstartCommand),
 }
 
 // quickstartCommand is the quickstart command

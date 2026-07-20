@@ -4,7 +4,7 @@ sidebar_position: 60
 ---
 
 Once you have registered repositories, you can create a profile that specifies
-the common, consistent configuration that you expect your your repositories to
+the common, consistent configuration that you expect your repositories to
 comply with.
 
 ## Prerequisites

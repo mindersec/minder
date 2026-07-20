@@ -18,4 +18,7 @@ const (
 	// to V0) when creating or updating rule types. When disabled, all rule
 	// types are treated as Rego V0.
 	RegoV1DualParse Experiment = "rego_v1_dual_parse"
+	// RegoV1WarnV0 adds a non-fatal warning to rule type create and update
+	// responses when the accepted policy is evaluated as Rego V0.
+	RegoV1WarnV0 Experiment = "rego_v1_warn_v0"
 )

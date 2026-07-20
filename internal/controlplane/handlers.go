@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/mindersec/minder/internal/constants"
 	pb "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
 )
 
@@ -24,4 +25,12 @@ func (s *Server) CheckHealth(ctx context.Context, _ *pb.CheckHealthRequest) (*pb
 		return nil, status.Errorf(codes.Internal, "failed to check health: %v", err)
 	}
 	return &pb.CheckHealthResponse{Status: "OK"}, nil
+}
+
+// GetVersion returns the build and version info of the Minder server
+func (*Server) GetVersion(_ context.Context, _ *pb.GetVersionRequest) (*pb.GetVersionResponse, error) {
+	return &pb.GetVersionResponse{
+		Version: constants.CLIVersion,
+		Commit:  constants.Revision,
+	}, nil
 }

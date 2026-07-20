@@ -11,6 +11,7 @@ import (
 	"github.com/mindersec/minder/cmd/dev/app/datasource"
 	"github.com/mindersec/minder/cmd/dev/app/image"
 	"github.com/mindersec/minder/cmd/dev/app/rule_type"
+	"github.com/mindersec/minder/cmd/dev/app/test"
 	"github.com/mindersec/minder/cmd/dev/app/testserver"
 	"github.com/mindersec/minder/internal/util/cli"
 )
@@ -20,11 +21,13 @@ func CmdRoot() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mindev",
 		Short: "mindev provides developer tooling for minder",
+		SilenceErrors: true,
 		Long: `For more information about minder, please visit:
 https://mindersec.github.io/`,
 	}
 
 	cmd.AddCommand(rule_type.CmdRuleType())
+	cmd.AddCommand(test.CmdTest())
 	cmd.AddCommand(image.CmdImage())
 	cmd.AddCommand(testserver.CmdTestServer())
 	cmd.AddCommand(bundles.CmdBundle())

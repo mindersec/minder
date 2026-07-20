@@ -1,0 +1,30 @@
+type: rule-type
+version: v1
+name: mock_fs_rule
+display_name: Mock FS Rule
+release_phase: alpha
+context:
+  provider: github
+  project: 00000000-0000-0000-0000-000000000000
+severity:
+  value: info
+def:
+  in_entity: repository
+  ingest:
+    type: git
+  rule_schema: {}
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package minder
+
+        import rego.v1
+
+        default allow := false
+
+        allow if {
+          file.exists("test.txt")
+          file.read("test.txt") == "hello world\n"
+        }

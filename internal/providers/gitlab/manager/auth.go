@@ -6,6 +6,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/gitlab"
@@ -46,25 +47,19 @@ func (g *providerClassManager) NewOAuthConfig(_ db.ProviderClass, cli bool) (*oa
 func (*providerClassManager) ValidateCredentials(
 	_ context.Context, cred provv1.Credential, _ *m.CredentialVerifyParams,
 ) error {
-	tokenCred, ok := cred.(provv1.OAuth2TokenCredential)
-	if !ok {
+	switch c := cred.(type) {
+	case provv1.OAuth2TokenCredential:
+		_, err := c.GetAsOAuth2TokenSource().Token()
+		if err != nil {
+			return fmt.Errorf("cannot get token from credential: %w", err)
+		}
+	case string:
+		if !strings.HasPrefix(c, "glpat-") {
+			return fmt.Errorf("expected token to start with 'glpat-'")
+		}
+	default:
 		return fmt.Errorf("invalid credential type: %T", cred)
 	}
-
-	_, err := tokenCred.GetAsOAuth2TokenSource().Token()
-	if err != nil {
-		return fmt.Errorf("cannot get token from credential: %w", err)
-	}
-
-	// TODO: verify token identity
-	// if params.RemoteUser != "" {
-	// 	err := g.ghService.VerifyProviderTokenIdentity(ctx, params.RemoteUser, token.AccessToken)
-	// 	if err != nil {
-	// 		return fmt.Errorf("error verifying token identity: %w", err)
-	// 	}
-	// } else {
-	// 	zerolog.Ctx(ctx).Warn().Msg("RemoteUser not found in session state")
-	// }
 
 	return nil
 }

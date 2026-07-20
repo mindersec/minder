@@ -1,0 +1,40 @@
+Usage:
+  minder entity [flags]
+  minder entity [command]
+
+Examples:
+
+  # List entities
+    minder entity list --type repository
+
+  # Get an entity by ID
+    minder entity get --id <entity-id>
+
+  # Register an entity
+    minder entity register --type repository --property github/repo_owner=owner --property github/repo_name=name
+
+  # Delete an entity
+    minder entity delete --id <entity-id>
+
+
+Available Commands:
+  delete      Delete an entity
+  get         Get entity details
+  list        List entities
+  register    Register an entity
+
+Flags:
+  -h, --help              help for entity
+  -j, --project string    ID of the project
+  -p, --provider string   Name of the provider, i.e. github
+
+Global Flags:
+      --config string            Config file (default is $PWD/config.yaml)
+      --grpc-host string         Server host (default "api.custcodian.dev")
+      --grpc-insecure            Allow establishing insecure connections
+      --grpc-port int            Server port (default 443)
+      --identity-client string   Identity server client ID (default "minder-cli")
+      --identity-url string      Identity server issuer URL (default "https://auth.custcodian.dev")
+  -v, --verbose                  Output additional messages to STDERR
+
+Use "minder entity [command] --help" for more information about a command.

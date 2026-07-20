@@ -1,26 +1,23 @@
 ---
-title: minder quickstart
+title: minder entity delete
 ---
-## minder quickstart
+## minder entity delete
 
-Quickstart minder
+Delete an entity
 
 ### Synopsis
 
-The quickstart command provide the means to quickly get started with minder
+The entity delete subcommand is used to delete an entity instance within Minder.
 
 ```
-minder quickstart [flags]
+minder entity delete [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help              help for quickstart
-  -o, --owner string      Owner to filter on for provider resources
-  -j, --project string    ID of the project
-  -p, --provider string   Name of the provider, i.e. github (default "github")
-  -t, --token string      Personal Access Token (PAT) to use for enrollment
+  -h, --help        help for delete
+  -i, --id string   ID of the entity to delete
 ```
 
 ### Options inherited from parent commands
@@ -32,10 +29,12 @@ minder quickstart [flags]
       --grpc-port int            Server port (default 443)
       --identity-client string   Identity server client ID (default "minder-cli")
       --identity-url string      Identity server issuer URL (default "https://auth.custcodian.dev")
+  -j, --project string           ID of the project
+  -p, --provider string          Name of the provider, i.e. github
   -v, --verbose                  Output additional messages to STDERR
 ```
 
 ### SEE ALSO
 
-* [minder](minder.md)	 - Minder controls the hosted minder service
+* [minder entity](minder_entity.md)	 - Manage entities within a Minder project
 

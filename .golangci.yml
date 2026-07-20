@@ -39,6 +39,9 @@ linters:
               desc: We should use zerolog instead
             - pkg: io/ioutil
               desc: this is deprecated
+    goconst:
+      min-len: 6
+      min-occurrences: 5
     gocyclo:
       min-complexity: 15
     gosec:
@@ -80,6 +83,7 @@ linters:
     generated: lax
     rules:
       - linters:
+          - goconst
           - lll
           - gosec
         path: (.+)_test\.go

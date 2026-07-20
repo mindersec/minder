@@ -7,9 +7,8 @@
 package entities
 
 import (
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/mindersec/minder/internal/db"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"

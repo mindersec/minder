@@ -10,9 +10,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
-	"golang.org/x/exp/slices"
+	"github.com/spf13/cobra"
 
 	"github.com/mindersec/minder/internal/util"
 	"github.com/mindersec/minder/internal/util/cli"
@@ -81,6 +82,12 @@ func validateFilesArg(files []string) error {
 	}
 
 	return nil
+}
+
+func printWarnings(cmd *cobra.Command, warnings []string) {
+	for _, warning := range warnings {
+		cmd.PrintErrf("Warning: %s\n", warning)
+	}
 }
 
 func shouldSkipFile(f string) bool {

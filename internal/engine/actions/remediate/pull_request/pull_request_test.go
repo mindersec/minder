@@ -16,12 +16,14 @@ import (
 
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-billy/v5/osfs"
+	billyutil "github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/google/go-github/v63/github"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
@@ -677,10 +679,8 @@ func TestPullRequestRemediate(t *testing.T) {
 
 			mockClient := mockghclient.NewMockGitHub(ctrl)
 
-			provider, err := testGithubProvider()
-			require.NoError(t, err)
 			engine, err := NewPullRequestRemediate(
-				tt.newRemArgs.actionType, tt.newRemArgs.prRem, provider, tt.remArgs.remAction)
+				tt.newRemArgs.actionType, tt.newRemArgs.prRem, mockClient, tt.remArgs.remAction)
 			if tt.wantInitErr {
 				require.Error(t, err, "expected error")
 				return
@@ -726,4 +726,62 @@ func TestPullRequestRemediate(t *testing.T) {
 			require.Equal(t, tt.expectedMetadata, retMeta)
 		})
 	}
+}
+
+func TestCheckoutToOriginallyFetchedBranch_CleansWorktree(t *testing.T) {
+	t.Parallel()
+
+	mfs := memfs.New()
+	storer := memory.NewStorage()
+	repo, err := git.InitWithOptions(storer, mfs, git.InitOptions{
+		DefaultBranch: "refs/heads/main",
+	})
+	require.NoError(t, err)
+
+	wt, err := repo.Worktree()
+	require.NoError(t, err)
+
+	// Create an initial commit on main so we have a valid HEAD.
+	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("initial"), 0644))
+
+	_, err = wt.Add("README.md")
+	require.NoError(t, err)
+	_, err = wt.Commit("initial commit", &git.CommitOptions{
+		Author: &object.Signature{Name: "test", Email: "t@t.com", When: time.Now()},
+	})
+	require.NoError(t, err)
+
+	mainRef := plumbing.NewBranchReferenceName("main")
+
+	// Checkout a remediation branch and simulate a partial failure:
+	// modify a tracked file and create an untracked file without committing.
+	err = wt.Checkout(&git.CheckoutOptions{
+		Branch: plumbing.NewBranchReferenceName("minder_remediation"),
+		Create: true,
+	})
+	require.NoError(t, err)
+
+	// Dirty a tracked file (simulates remediation writing a compliant version).
+	require.NoError(t, billyutil.WriteFile(mfs, "README.md", []byte("dirty content from failed remediation"), 0644))
+
+	// Create an untracked file (simulates remediation creating a new config).
+	require.NoError(t, billyutil.WriteFile(mfs, "leftover.txt", []byte("should be removed"), 0644))
+
+	// Verify the worktree is actually dirty before we clean it.
+	status, err := wt.Status()
+	require.NoError(t, err)
+	require.False(t, status.IsClean(), "worktree should be dirty before cleanup")
+
+	// Run checkoutToOriginallyFetchedBranch — this is the code under test.
+	logger := zerolog.Nop()
+	checkoutToOriginallyFetchedBranch(&logger, wt, mainRef)
+
+	// Assert: worktree should now be clean.
+	status, err = wt.Status()
+	require.NoError(t, err)
+	require.True(t, status.IsClean(), "worktree should be clean after checkout with Force + Clean")
+
+	// Assert: untracked file should have been removed by wt.Clean.
+	_, err = mfs.Stat("leftover.txt")
+	require.Error(t, err, "untracked file should have been removed by Clean")
 }

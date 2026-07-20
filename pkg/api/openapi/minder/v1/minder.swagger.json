@@ -3440,6 +3440,22 @@
           "UserService"
         ]
       }
+    },
+    "/api/v1/version": {
+      "get": {
+        "operationId": "HealthService_GetVersion",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetVersionResponse"
+            }
+          }
+        },
+        "tags": [
+          "HealthService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -3583,7 +3599,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' and 'pull_request' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
+          "description": "type is the type of the remediation.\n* 'rest' can be used with any entity type.\n* 'gh_branch_protection' 'pull_request', and 'issue' can only be used with the 'repository' entity type.\n* 'pull_request_comment' can only be used with the 'pull_request' entity type."
         },
         "rest": {
           "$ref": "#/definitions/v1RestType"
@@ -3596,6 +3612,9 @@
         },
         "pullRequestComment": {
           "$ref": "#/definitions/AlertAlertTypePRComment"
+        },
+        "issue": {
+          "$ref": "#/definitions/RemediateIssueRemediation"
         }
       }
     },
@@ -3833,6 +3852,19 @@
       "properties": {
         "patch": {
           "type": "string"
+        }
+      }
+    },
+    "RemediateIssueRemediation": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "title": "the title of the issue\nSupports Minder's template interpolation syntax.\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
+        },
+        "body": {
+          "type": "string",
+          "title": "the body of the issue\nSupports Minder's template interpolation syntax\nThe rendered body is interpreted as Markdown by repository providers that\nsupport Markdown (e.g. Github)\nThis is not validated here as it will be validated by the repository provider, i.e. GitHub upon\ncreation of the issue"
         }
       }
     },
@@ -4250,6 +4282,13 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type that was created."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "warnings contains non-fatal notices about the created rule type."
         }
       },
       "description": "CreateRuleTypeResponse is the response to create a rule type.",
@@ -5047,6 +5086,18 @@
         "projectRoles"
       ]
     },
+    "v1GetVersionResponse": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "commit": {
+          "type": "string"
+        }
+      },
+      "title": "GetVersionResponse returns the build and version info of the Minder server"
+    },
     "v1GitHubAppParams": {
       "type": "object",
       "properties": {
@@ -5057,12 +5108,14 @@
         },
         "organization": {
           "type": "string",
-          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization slug where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         },
         "organizationId": {
           "type": "string",
           "format": "int64",
-          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id)."
+          "description": "The GitHub organization ID where the app is installed.  This is an\noutput-only parameter, and is validated on input if set (i.e. the value\nmust be either empty or match the org of the installation_id).",
+          "readOnly": true
         }
       },
       "description": "GitHubAppParams is the parameters for a GitHub App provider."
@@ -5472,7 +5525,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the profile.\nThis is optional and is set by the system."
+          "description": "id is the id of the profile.\nThis is optional and is set by the system.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -5678,7 +5732,8 @@
         },
         "project": {
           "type": "string",
-          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest."
+          "description": "project is the project where the provider is.  This is ignored on input\nin favor of the context field in CreateProviderRequest.",
+          "readOnly": true
         },
         "version": {
           "type": "string",
@@ -5708,7 +5763,8 @@
         },
         "credentialsState": {
           "type": "string",
-          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\"."
+          "description": "credentials_state is the state of the credentials for the provider.\nThis is an output-only field. It may be: \"set\", \"unset\", \"not_applicable\".",
+          "readOnly": true
         },
         "id": {
           "type": "string",
@@ -6331,7 +6387,8 @@
         },
         "id": {
           "type": "string",
-          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server."
+          "description": "id is the id of the rule type.\nThis is mostly optional and is set by the server.",
+          "readOnly": true
         },
         "name": {
           "type": "string",
@@ -6598,6 +6655,13 @@
         "ruleType": {
           "$ref": "#/definitions/v1RuleType",
           "description": "rule_type is the rule type that was updated."
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "warnings contains non-fatal notices about the updated rule type."
         }
       },
       "description": "UpdateRuleTypeResponse is the response to update a rule type.",
@@ -6636,14 +6700,16 @@
         "repoId": {
           "type": "string",
           "format": "int64",
-          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input."
+          "description": "The upstream identity of the repository, as an integer.\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         },
         "context": {
           "$ref": "#/definitions/v1Context"
         },
         "registered": {
           "type": "boolean",
-          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input."
+          "description": "True if the repository is already registered in Minder.\nThis is only set on output, and is ignored on input.",
+          "readOnly": true
         }
       },
       "required": [

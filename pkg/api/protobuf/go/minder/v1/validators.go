@@ -342,7 +342,7 @@ func (ing *RuleType_Definition_Ingest) Validate() error {
 		} else if err := ing.GetDiff().Validate(); err != nil {
 			return err
 		}
-	case "rest":
+	case IngestTypeRest:
 		if err := ing.GetRest().Validate(); err != nil {
 			return err
 		}
@@ -419,6 +419,10 @@ func (rem *RuleType_Definition_Remediate) Validate() error {
 		}
 	case "gh_branch_protection":
 		if err := rem.GetGhBranchProtection().Validate(); err != nil {
+			return err
+		}
+	case "issue":
+		if err := rem.GetIssue().Validate(); err != nil {
 			return err
 		}
 	default:
@@ -505,6 +509,33 @@ func (prRem *RuleType_Definition_Remediate_PullRequestRemediation) Validate() er
 	_, err = util.NewSafeHTMLTemplate(&prRem.Body, "body")
 	if err != nil {
 		return fmt.Errorf("%w: pull request body is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	return nil
+}
+
+// Validate validates an issue remediation definition.
+func (issueRem *RuleType_Definition_Remediate_IssueRemediation) Validate() error {
+	if issueRem == nil {
+		return fmt.Errorf("%w: issue remediation is nil", ErrInvalidRuleTypeDefinition)
+	}
+
+	if issueRem.Title == "" {
+		return fmt.Errorf("%w: issue title cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	if issueRem.Body == "" {
+		return fmt.Errorf("%w: issue body cannot be empty", ErrInvalidRuleTypeDefinition)
+	}
+
+	_, err := util.NewSafeHTMLTemplate(&issueRem.Title, "title")
+	if err != nil {
+		return fmt.Errorf("%w: issue title is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
+	}
+
+	_, err = util.NewSafeHTMLTemplate(&issueRem.Body, "body")
+	if err != nil {
+		return fmt.Errorf("%w: issue body is not parsable: %w", ErrInvalidRuleTypeDefinition, err)
 	}
 
 	return nil

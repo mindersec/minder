@@ -35,16 +35,16 @@ func (tk *TestKit) Do(ctx context.Context, req *http.Request) (*http.Response, e
 		Str("url", req.URL.String()).
 		Msg("HTTP request")
 
-	h := func(w http.ResponseWriter, _ *http.Request) {
-		for k, v := range tk.httpHeaders {
-			w.Header().Set(k, v)
-		}
-
-		w.WriteHeader(tk.httpStatus)
-		_, _ = w.Write(tk.httpBody)
+	recorder := httptest.NewRecorder()
+	if tk.httpHandler != nil {
+		tk.httpHandler.ServeHTTP(recorder, req)
 	}
+	resp := recorder.Result()
+	resp.Request = req
+	return resp, nil
+}
 
-	h(tk.httpRecorder, req)
-
-	return tk.httpRecorder.Result(), nil
+// RoundTrip implements the http.RoundTripper interface.
+func (tk *TestKit) RoundTrip(req *http.Request) (*http.Response, error) {
+	return tk.Do(req.Context(), req)
 }

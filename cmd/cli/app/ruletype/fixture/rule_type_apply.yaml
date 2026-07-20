@@ -29,8 +29,8 @@ def:
       def: |
         package minder
 
+        import rego.v1
+
         default allow := false
 
-        allow { 
-            true 
-        }
+        allow := true
