@@ -124,6 +124,7 @@ release:
     owner: mindersec
     name: minder
 # This section defines how and which artifacts we want to sign for the release.
+# See https://goreleaser.com/blog/cosign-v3/ for details.
 signs:
   - id: cosign
     cmd: cosign
@@ -134,6 +135,4 @@ signs:
       - "--yes" # needed on cosign 2.0.0+
     artifacts: archive
     output: true
-    # It looks like this may default to empty-string, and we need to set it to upload
-    # the sigstore certs
-    certificate: '{{ trimsuffix (trimsuffix .Env.artifact ".zip") ".tar.gz" }}.pem'
+    signature: "${artifact}.sigstore.json"
