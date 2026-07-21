@@ -83,7 +83,17 @@ func TestIssueRemediate(t *testing.T) {
 		{
 			name: "create an issue",
 			newRemArgs: &newIssueRemediateArgs{
-				issueRem:   defaultIssueRem(),
+				issueRem: &pb.RuleType_Definition_Remediate_IssueRemediation{
+					Title: issueTitle,
+					Body:  issueBody,
+					Labels: []string{
+						"security",
+						"automated",
+					},
+					Assignees: []string{
+						"alice",
+					},
+				},
 				actionType: TestActionTypeValid,
 			},
 			remArgs: createTestRemArgs(),
@@ -95,8 +105,8 @@ func TestIssueRemediate(t *testing.T) {
 						repoName,
 						issueTitle,
 						issueBody,
-						[]string{},
-						[]string{},
+						[]string{"security", "automated"},
+						[]string{"alice"},
 					).
 					Return(
 						&github.Issue{

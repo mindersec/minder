@@ -212,11 +212,14 @@ func (r *Remediator) getParamsForIssueRemediation(
 		}
 	}
 
-	// Labels and assignees are intentionally left empty for now.
-	// Runtime support already exists in the provider API and will be
-	// wired to configuration in a followup PR.
-	labels := []string{}
-	assignees := []string{}
+	labels := r.issueCfg.GetLabels()
+	if labels == nil {
+		labels = []string{}
+	}
+	assignees := r.issueCfg.GetAssignees()
+	if assignees == nil {
+		assignees = []string{}
+	}
 
 	return &paramsIssue{
 		repo:       repo,
