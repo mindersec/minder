@@ -4,6 +4,7 @@
 package scalibr
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io/fs"
@@ -13,6 +14,8 @@ import (
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/protobom/protobom/pkg/sbom"
+	"github.com/rs/zerolog"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,6 +27,7 @@ func TestScanFilesystem(t *testing.T) {
 		mustErr     bool
 		expect      *sbom.NodeList
 		expectedLen int
+		expectedLog string
 	}{
 		{
 			name: "python-reqs-txt",
@@ -74,6 +78,41 @@ func TestScanFilesystem(t *testing.T) {
 			},
 		},
 		{
+			name: "jumbo package lock (npm)",
+			makeFs: func() fs.FS {
+				t.Helper()
+				memFS := memfs.New()
+				f, err := memFS.Create("package-lock.json")
+				require.NoError(t, err)
+				fmt.Fprintf(f, `{"name":"test","version": "0.0.1", "lockfileVersion": 3, "requires": true, "packages": {`)
+				// Ensure the package-lock.json is over 1MB
+				for i := range 1000 {
+					fmt.Fprintf(f, `"package-%d": {"resolved": "https://myregistry/@fake/package-%900d.tgz",`, i, i)
+					fmt.Fprintf(f, ` "integrity": "sha512-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000"},`)
+				}
+				// We put the root package at the end so we don't have to mess with trailing commas
+				fmt.Fprintf(f, `"": {"name": "test", "version": "0.0.1"}}}`)
+				require.NoError(t, f.Close())
+				return iofs.New(memFS)
+			},
+			expectedLen: 0,
+			expectedLog: `"path":"package-lock.json","res":"FILE_REQUIRED_RESULT_SIZE_LIMIT_EXCEEDED"`,
+		},
+		{
+			name: "go-binary does not panic on python",
+			makeFs: func() fs.FS {
+				t.Helper()
+				memFS := memfs.New()
+				f, err := memFS.Create("binary.py")
+				require.NoError(t, err)
+				fmt.Fprint(f, `print("hello world")\n`)
+				require.NoError(t, f.Close())
+				return iofs.New(memFS)
+			},
+			expectedLen: 0,
+			expectedLog: `"plugin":"go/binary","path":"binary.py"`,
+		},
+		{
 			name: "bad-fs",
 			makeFs: func() fs.FS {
 				return nil
@@ -84,11 +123,15 @@ func TestScanFilesystem(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			fs := tc.makeFs()
-			nodelist, err := scanFilesystem(context.Background(), fs)
+			logOutput := new(bytes.Buffer)
+			ctx := zerolog.New(logOutput).WithContext(context.Background())
+			nodelist, err := scanFilesystem(ctx, fs)
 			if tc.mustErr {
 				require.Error(t, err)
 				return
 			}
+
+			assert.Contains(t, string(logOutput.String()), tc.expectedLog)
 			require.NoError(t, err)
 			require.Len(t, nodelist.Nodes, tc.expectedLen)
 
