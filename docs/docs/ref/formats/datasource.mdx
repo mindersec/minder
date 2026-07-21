@@ -1,0 +1,58 @@
+---
+title: DataSource
+sidebar_position: 60
+---
+
+Data Sources define standard schemas for fetching additional information during rule evaluation.  [Using data sources during rule evaluation](../../understand/data_sources.md) is covered in the conceptual background.  Currently, data sources can only be used with the Rego rule evaluator.
+
+## YAML Example
+
+```yaml
+version: v1
+type: data-source
+name: ghapi
+rest:
+  providerAuth: true
+  def:
+    license:
+      endpoint: https://api.github.com/repos/{owner}/{repo}/license
+      parse: json
+      input_schema:
+        type: object
+        properties:
+          owner:
+            type: string
+          repo:
+            type: string
+    repo_config:
+      endpoint: https://api.github.com/repos/{owner}/{repo}
+      parse: json
+      input_schema:
+        type: object
+        properties:
+          owner:
+            type: string
+          repo:
+            type: string
+    vulnerability_reporting:
+      endpoint: https://api.github.com/repos/{owner}/{repo}/private-vulnerability-reporting
+      parse: json
+      input_schema:
+        type: object
+        properties:
+          owner:
+            type: string
+          repo:
+            type: string
+
+```
+
+## Fields
+
+:::note
+Note that the Minder CLI uses `snake_case` for field names, but the OpenAPI spec (shown here) uses `camelCase` for names like `display_name`, `in_entity`, etc.
+:::
+
+import ApiSchema from '@theme/ApiSchema';
+
+<ApiSchema pointer="#/components/schemas/v1DataSource" />;

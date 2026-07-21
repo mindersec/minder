@@ -1,0 +1,14 @@
+# Copyright 2026 The Minder Authors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v1
+type: profile
+name: sample-profile
+display_name: Sample Profile
+repository:
+  - type: branch_protection_reviews
+    def:
+      package_ecosystem: mock-ecosystem
+      schedule_interval: weekly
+      apply_if_file: mock.mod
+  - type: applied_rule

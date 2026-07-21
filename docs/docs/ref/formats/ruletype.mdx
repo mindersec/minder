@@ -1,0 +1,96 @@
+---
+title: RuleType
+sidebar_position: 20
+---
+
+Rule types define an evaluation (and remediation) process for an individual policy check.  Rule types are [evaluated](../../understand/rule_evaluation.md) as part of a profile, via multiple phases of evaluation:
+
+  1. **Ingest** data about the entity.
+  2. **Evaluate** state using the specified rule definition.
+  3. **Store** output from the rule evaluation.
+  4. **Remediate** failed evaluations, if enabled.
+  5. **Alert** the user about failed evaluations, if enabled.
+
+Rule types can be defined using YAML syntax.  Additionally, rules which use the [Rego evaluator](../../how-to/writing-rules-in-rego.md) can be written using Rego syntax with the additional rule type fields recorded as [Rego package metadata](https://www.openpolicyagent.org/docs/policy-language#metadata).
+
+## YAML Example
+
+```yaml
+version: v1
+type: rule_type
+name: github_branch_protection
+display_name: GitHub branch protection
+description: Ensure protected branches are enabled.
+guidance: Enable branch protection on default branch.
+severity:
+  value: high
+def:
+  in_entity: repository
+  rule_schema: {}
+  ingest:
+    type: rest
+    rest:
+      endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{.Entity.DefaultBranch}}/protection'
+      parse: json
+  eval:
+    type: rego
+    rego:
+      type: deny-by-default
+      def: |
+        package minder
+        
+        input.ingested.required_pull_request_reviews.required_approving_review_count >= 1
+        input.ingested.enforce_admins.enabled == true
+        input.ingested.allow_force_pushes == false
+        input.ingested.allow_deletions == false
+```
+
+## Rego Example
+
+The Minder CLI will parse rego files and extract RuleType metadata from them.  It will automatically fill certain fields (such as `type` and `version`), and will promote the following fields:
+
+| Rego field | RuleType field |
+| --- | --- |
+| `name` | populate from filename if not present |
+| `display_name` | populate from `title` if not present |
+| `def.rule_schemad` | defaults to empty-object |
+
+```rego
+# METADATA
+#
+# name: github_branch_protection
+# title: GitHub branch protection
+# description: Ensure protected branches are enabled.
+# custom:
+#  guidance: Enable branch protection on default branch.
+#  severity:
+#    value: high
+#   def:
+#     in_entity: repository
+#     ingest:
+#       type: rest
+#       rest:
+#         endpoint: '/repos/{{.Entity.Owner}}/{{.Entity.Name}}/branches/{{.Entity.DefaultBranch}}/protection'
+#         parse: json
+#     eval:
+#       rego:
+#         type: deny-by-default
+package minder
+
+import rego.v1
+
+input.ingested.required_pull_request_reviews.required_approving_review_count >= 1
+input.ingested.enforce_admins.enabled == true
+input.ingested.allow_force_pushes == false
+input.ingested.allow_deletions == false
+```
+
+## Fields
+
+:::note
+Note that the Minder CLI uses `snake_case` for field names, but the OpenAPI spec (shown here) uses `camelCase` for names like `display_name`, `in_entity`, etc.
+:::
+
+import ApiSchema from '@theme/ApiSchema';
+
+<ApiSchema pointer="#/components/schemas/v1RuleType" />;
