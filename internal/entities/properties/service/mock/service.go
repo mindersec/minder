@@ -11,9 +11,11 @@ package mock_service
 
 import (
 	context "context"
+	json "encoding/json"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
+	db "github.com/mindersec/minder/internal/db"
 	models "github.com/mindersec/minder/internal/entities/models"
 	service "github.com/mindersec/minder/internal/entities/properties/service"
 	manager "github.com/mindersec/minder/internal/providers/manager"
@@ -91,6 +93,21 @@ func (m *MockPropertiesService) EntityWithPropertiesByUpstreamHint(ctx context.C
 func (mr *MockPropertiesServiceMockRecorder) EntityWithPropertiesByUpstreamHint(ctx, entType, getByProps, hint, opts any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EntityWithPropertiesByUpstreamHint", reflect.TypeOf((*MockPropertiesService)(nil).EntityWithPropertiesByUpstreamHint), ctx, entType, getByProps, hint, opts)
+}
+
+// PropertiesFromJSON mocks base method.
+func (m *MockPropertiesService) PropertiesFromJSON(entity db.EntityInstance, props json.RawMessage, opts *service.CallOptions) (*models.EntityWithProperties, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PropertiesFromJSON", entity, props, opts)
+	ret0, _ := ret[0].(*models.EntityWithProperties)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PropertiesFromJSON indicates an expected call of PropertiesFromJSON.
+func (mr *MockPropertiesServiceMockRecorder) PropertiesFromJSON(entity, props, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropertiesFromJSON", reflect.TypeOf((*MockPropertiesService)(nil).PropertiesFromJSON), entity, props, opts)
 }
 
 // ReplaceAllProperties mocks base method.
