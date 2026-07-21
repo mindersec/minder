@@ -131,7 +131,6 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 			},
 		},
 		{
-			name: "repository succeeds",
 			args: args{
 				ctx: context.TODO(),
 				getByProps: properties.NewProperties(map[string]any{
@@ -143,18 +142,29 @@ func Test_gitlabClient_FetchAllProperties(t *testing.T) {
 				properties.RepoPropertyIsPrivate:  true,
 				properties.RepoPropertyIsArchived: false,
 				properties.RepoPropertyIsFork:     false,
+				RepoPropertyLicense:               "mit", // Uses the correct constant
 			}),
 			wantErr: false,
-			gitLabServerMockFunc: func(w http.ResponseWriter, _ *http.Request) {
+			gitLabServerMockFunc: func(w http.ResponseWriter, r *http.Request) {
+				// Verify the query parameter you added is being sent
+				if r.URL.Query().Get("license") != "true" {
+					t.Errorf("expected query param license=true, got %s", r.URL.RawQuery)
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
 				resp := &gitlab.Project{
-					ID:                1,
-					Name:              "project-1",
-					Description:       "project-1 description",
-					Visibility:        gitlab.PrivateVisibility,
-					Archived:          false,
-					ForkedFromProject: nil,
+					ID:                  1,
+					Name:                "project-1",
+					Description:         "project-1 description",
+					Visibility:          gitlab.PrivateVisibility,
+					Archived:            false,
+					ForkedFromProject:   nil,
 					Namespace: &gitlab.ProjectNamespace{
 						Path: "group",
+					},
+					License: &gitlab.ProjectLicense{
+						Name: "mit", // Changed Key to Name to match repository_properties.go
 					},
 				}
 
@@ -395,5 +405,46 @@ func newTestGitlabProvider(endpoint string) *gitlabClient {
 			Endpoint: endpoint,
 		},
 		cli: &http.Client{},
+	}
+}
+
+
+func TestGitlabProjectToProperties_License(t *testing.T) {
+	t.Parallel()
+
+	// 1. Create a mock GitLab project with a license
+	mockProject := &gitlab.Project{
+		ID:   123,
+		Name: "test-repo",
+		Namespace: &gitlab.ProjectNamespace{
+			Path: "test-org",
+		},
+		License: &gitlab.ProjectLicense{
+			Name: "Apache-2.0",
+		},
+		Visibility:    gitlab.PublicVisibility,
+		Archived:      false,
+		DefaultBranch: "main",
+	}
+
+	// 2. Run the function we want to test
+	props, err := gitlabProjectToProperties(mockProject)
+	if err != nil {
+		t.Fatalf("unexpected error converting project to properties: %v", err)
+	}
+
+	// 3. Verify that the license was successfully populated and is not empty
+	licenseProp := props.GetProperty(RepoPropertyLicense)
+	if licenseProp == nil {
+		t.Fatal("expected license property to be populated, but got nil")
+	}
+
+	licenseVal, err := licenseProp.AsString()
+	if err != nil {
+		t.Fatalf("failed to read license property as string: %v", err)
+	}
+
+	if licenseVal != "Apache-2.0" {
+		t.Errorf("expected license 'Apache-2.0', got '%s'", licenseVal)
 	}
 }
