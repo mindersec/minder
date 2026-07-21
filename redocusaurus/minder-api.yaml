@@ -3595,6 +3595,28 @@ definitions:
           provider, i.e. GitHub upon
 
           creation of the issue
+      labels:
+        type: array
+        items:
+          type: string
+        title: >-
+          Labels to apply when creating the issue.
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the issue
+      assignees:
+        type: array
+        items:
+          type: string
+        title: >-
+          Usernames to assign when creating the issue.
+
+          This is not validated here as it will be validated by the repository
+          provider, i.e. GitHub upon
+
+          creation of the issue
   RemediatePullRequestRemediation:
     type: object
     properties:
