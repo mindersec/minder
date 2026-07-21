@@ -4,6 +4,7 @@
 package ruletypes_test
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -36,6 +38,7 @@ func TestRuleTypeService(t *testing.T) {
 		TestMethod     method
 		SubscriptionID uuid.UUID
 		FeatureFlags   map[string]any
+		ExpectedLog    string
 	}{
 		{
 			Name:          "CreateRuleType rejects nil rule",
@@ -357,6 +360,26 @@ func TestRuleTypeService(t *testing.T) {
 			},
 		},
 		{
+			Name:     "CreateRuleType logs invalid refusal configuration when dual parse is off",
+			RuleType: newRuleType(withBasicStructure, withDualParseRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod:   create,
+			FeatureFlags: map[string]any{string(flags.RegoV1RefuseV0): true},
+			ExpectedLog:  "rego_v1_refuse_v0 requires rego_v1_dual_parse",
+		},
+		{
+			Name:     "CreateRuleType allows dual-parsed rego without rego.v1 import when refusal flag is on",
+			RuleType: newRuleType(withBasicStructure, withDualParseRego),
+			DBSetup: dbf.NewDBMock(withHierarchyGet, withNotFoundGet,
+				withSuccessfulCreateForRegoVersion("v1"), withSuccessfulDeleteRuleTypeDataSource),
+			TestMethod: create,
+			FeatureFlags: map[string]any{
+				string(flags.RegoV1DualParse): true,
+				string(flags.RegoV1RefuseV0):  true,
+			},
+		},
+		{
 			Name:         "CreateRuleType stores detected V0 rego version",
 			RuleType:     newRuleType(withBasicStructure, withRegoEval("package minder\n\ndefault allow = false\n\nallow {\n    input.allowed\n}\n")),
 			DBSetup:      dbf.NewDBMock(withHierarchyGet, withNotFoundGet, withSuccessfulCreateForRegoVersion("v0"), withSuccessfulDeleteRuleTypeDataSource),
@@ -411,6 +434,11 @@ func TestRuleTypeService(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			ctx := context.Background()
+			var logOutput bytes.Buffer
+			if scenario.ExpectedLog != "" {
+				log := zerolog.New(&logOutput)
+				ctx = log.WithContext(ctx)
+			}
 
 			var store db.Store
 			if scenario.DBSetup != nil {
@@ -470,6 +498,10 @@ func TestRuleTypeService(t *testing.T) {
 			} else {
 				require.Nil(t, res)
 				require.ErrorContains(t, err, scenario.ExpectedError)
+			}
+			if scenario.ExpectedLog != "" {
+				require.Contains(t, logOutput.String(), `"level":"error"`)
+				require.Contains(t, logOutput.String(), scenario.ExpectedLog)
 			}
 		})
 	}
@@ -566,6 +598,17 @@ func withV0OnlyRego(ruleType *pb.RuleType) {
 		Rego: &pb.RuleType_Definition_Eval_Rego{
 			Type: "deny",
 			Def:  "package minder\n\ndenies[msg] {\n    msg := \"something bad\"\n}\n",
+		},
+	}
+}
+
+// withDualParseRego is valid under both Rego V0 and V1 without importing rego.v1.
+func withDualParseRego(ruleType *pb.RuleType) {
+	ruleType.Def.Eval = &pb.RuleType_Definition_Eval{
+		Type: "rego",
+		Rego: &pb.RuleType_Definition_Eval_Rego{
+			Type: "deny-by-default",
+			Def:  "package minder\n\ndefault allow := false\n",
 		},
 	}
 }
