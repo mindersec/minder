@@ -11,13 +11,16 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"reflect"
 	"slices"
+	"time"
 
 	scalibr "github.com/google/osv-scalibr"
 	scalibr_cfg "github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
 	"github.com/google/osv-scalibr/plugin/list"
+	"github.com/google/osv-scalibr/stats"
 	"github.com/google/uuid"
 	"github.com/protobom/protobom/pkg/sbom"
 	"github.com/rs/zerolog"
@@ -79,6 +82,9 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	plugins = slices.DeleteFunc(plugins, func(p scalibr_plugin.Plugin) bool {
 		return slices.Contains(skipPlugins, p.Name())
 	})
+	// Ugly way to get statistics from each plugin, see https://github.com/google/osv-scalibr/issues/2316
+	stats := errorStats{}
+	patchExtractorStats(plugins, &stats)
 	scanConfig := scalibr.ScanConfig{
 		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
 		Plugins:      plugins,
@@ -115,6 +121,12 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
 
+	for _, statErr := range stats.errs {
+		zerolog.Ctx(ctx).Info().
+			Str("plugin", statErr.plugin).Str("path", statErr.path).Str("res", string(statErr.result)).
+			Msg("Scalibr require warning on file")
+	}
+
 	res := sbom.NewNodeList()
 	for _, inv := range scanResults.Inventory.Packages {
 		// TODO: use repo and commit from inv.SourceCode
@@ -140,4 +152,80 @@ func scanFilesystem(ctx context.Context, iofs fs.FS) (*sbom.NodeList, error) {
 	}
 
 	return res, nil
+}
+
+// Monkey-patch the plugins with stats.Collector, as Scalibr does not provide a nice interface
+// for setting the collector which almost every plugin exposes.
+// See https://github.com/google/osv-scalibr/issues/2316
+func patchExtractorStats(plugins []scalibr_plugin.Plugin, stats stats.Collector) {
+	for _, p := range plugins {
+		v := reflect.ValueOf(p)
+		if v.Kind() != reflect.Ptr || v.IsNil() {
+			continue
+		}
+		elem := v.Elem()
+		if elem.Kind() != reflect.Struct {
+			continue
+		}
+		statsField := elem.FieldByName("Stats")
+		if !statsField.IsValid() || !statsField.CanSet() {
+			continue
+		}
+		collectorVal := reflect.ValueOf(stats)
+		if collectorVal.Type().AssignableTo(statsField.Type()) {
+			statsField.Set(collectorVal)
+			continue
+		}
+		if collectorVal.Type().Implements(statsField.Type()) {
+			statsField.Set(collectorVal)
+		}
+	}
+}
+
+var _ stats.Collector = (*errorStats)(nil)
+
+type statErr struct {
+	plugin string
+	path   string
+	result string
+}
+
+type errorStats struct {
+	errs   []statErr
+	maxRSS int64
+}
+
+// AfterDetectorRun implements [stats.Collector].
+func (e *errorStats) AfterDetectorRun(name string, runtime time.Duration, err error) {}
+
+// AfterExtractorRun implements [stats.Collector].
+func (e *errorStats) AfterExtractorRun(pluginName string, extractorstats *stats.AfterExtractorStats) {
+}
+
+// AfterFileExtracted implements [stats.Collector].
+func (e *errorStats) AfterFileExtracted(pluginName string, filestats *stats.FileExtractedStats) {
+	if filestats.Result != stats.FileExtractedResultSuccess {
+		e.errs = append(e.errs, statErr{pluginName, filestats.Path, string(filestats.Result)})
+	}
+}
+
+// AfterFileRequired implements [stats.Collector].
+func (e *errorStats) AfterFileRequired(pluginName string, filestats *stats.FileRequiredStats) {
+	if filestats.Result != stats.FileRequiredResultOK {
+		e.errs = append(e.errs, statErr{pluginName, filestats.Path, string(filestats.Result)})
+	}
+}
+
+// AfterInodeVisited implements [stats.Collector].
+func (e *errorStats) AfterInodeVisited(path string) {}
+
+// AfterResultsExported implements [stats.Collector].
+func (e *errorStats) AfterResultsExported(destination string, bytes int, err error) {}
+
+// AfterScan implements [stats.Collector].
+func (e *errorStats) AfterScan(runtime time.Duration, status *scalibr_plugin.ScanStatus) {}
+
+// MaxRSS implements [stats.Collector].
+func (e *errorStats) MaxRSS(maxRSS int64) {
+	e.maxRSS = maxRSS
 }

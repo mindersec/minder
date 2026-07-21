@@ -308,12 +308,12 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	if scanResults == nil || scanResults.Status == nil {
 		return nil, fmt.Errorf("error scanning files: no results")
 	}
-	if scanResults.Status.Status == scalibr_plugin.ScanStatusSucceeded {
+	switch scanResults.Status.Status {
+	case scalibr_plugin.ScanStatusSucceeded:
 		return scanResults.Inventory.Packages, nil
-	}
-	// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
-	// fail for random reasons.  Accept partial success, but log the failing plugins.
-	if scanResults.Status.Status == scalibr_plugin.ScanStatusPartiallySucceeded {
+		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
+		// fail for random reasons.  Accept partial success, but log the failing plugins.
+	case scalibr_plugin.ScanStatusPartiallySucceeded:
 		known_bad := []string{
 			"endoflife/linuxdistro", // https://github.com/google/osv-scalibr/pull/2068
 			"rust/cargoauditable",   // https://github.com/go-git/go-billy/pull/208
@@ -327,8 +327,11 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 			}
 		}
 		return scanResults.Inventory.Packages, nil
+	case scalibr_plugin.ScanStatusUnspecified, scalibr_plugin.ScanStatusFailed:
+		fallthrough
+	default:
+		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
-	return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 }
 
 func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem {
