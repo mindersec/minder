@@ -115,7 +115,7 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 			eval: &RuleType_Definition_Eval{
 				Type: "rego",
 				Rego: &RuleType_Definition_Eval_Rego{
-					Def: "package example.policy\n\nallow { true }",
+					Def: "package example.policy\n\nimport rego.v1\n\nallow if { true }",
 				},
 				DataSources: []*DataSourceReference{
 					{
@@ -131,7 +131,7 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 			eval: &RuleType_Definition_Eval{
 				Type: "rego",
 				Rego: &RuleType_Definition_Eval_Rego{
-					Def: "package example.policy\n\nallow { true }",
+					Def: "package example.policy\n\nimport rego.v1\n\nallow if { true }",
 				},
 				DataSources: []*DataSourceReference{
 					{
@@ -150,7 +150,7 @@ func TestRuleType_Definition_Eval_Validate(t *testing.T) {
 			name: "eval definition with same name and alias",
 			eval: &RuleType_Definition_Eval{
 				Rego: &RuleType_Definition_Eval_Rego{
-					Def: "package example.policy\n\nallow { true }",
+					Def: "package example.policy\n\nimport rego.v1\n\nallow if { true }",
 				},
 				DataSources: []*DataSourceReference{
 					{
@@ -317,7 +317,7 @@ func TestRuleType_Definition_Eval_Rego_Validate(t *testing.T) {
 		{
 			name: "valid rego definition",
 			rego: &RuleType_Definition_Eval_Rego{
-				Def: "package example.policy\n\nallow { true }",
+				Def: "package example.policy\n\nimport rego.v1\n\nallow if { true }",
 			},
 			wantErr: false,
 		},

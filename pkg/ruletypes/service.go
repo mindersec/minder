@@ -14,8 +14,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/rs/zerolog"
 
 	"github.com/mindersec/minder/internal/db"
+	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/marketplaces/namespaces"
 	"github.com/mindersec/minder/internal/util"
@@ -323,26 +325,36 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 		return "v0", nil
 	}
 
-	flagOn := flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse)
+	dualParse := flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse)
+	refuseV0 := flags.Bool(ctx, s.featureFlags, flags.RegoV1RefuseV0)
+	if refuseV0 && !dualParse {
+		zerolog.Ctx(ctx).Error().Msg(
+			"invalid Rego feature flag configuration: rego_v1_refuse_v0 requires rego_v1_dual_parse")
+	}
 
-	_, errV0 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
-		ast.ParserOptions{RegoVersion: ast.RegoV0})
+	var errV0 error
+	if refuseV0 {
+		errV0 = errors.New(regoeval.V0MigrationMessage)
+	} else {
+		_, errV0 = ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+			ast.ParserOptions{RegoVersion: ast.RegoV0})
+	}
 	_, errV1 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
 		ast.ParserOptions{RegoVersion: ast.RegoV1})
 
 	switch {
 	case errV0 == nil && errV1 == nil:
 		// Valid in both dialects — store as V1 when flag is on.
-		if flagOn {
+		if dualParse {
 			return "v1", nil
 		}
 		return "v0", nil
 	case errV0 == nil:
-		// V0 only — always accepted.
+		// V0 only. Refusal mode always supplies a V0 migration error above.
 		return "v0", nil
 	case errV1 == nil:
 		// V1 only — gate behind feature flag.
-		if !flagOn {
+		if !dualParse {
 			return "", fmt.Errorf("rego definition uses V1-only syntax which is not yet enabled")
 		}
 		return "v1", nil

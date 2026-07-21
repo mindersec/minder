@@ -21,4 +21,7 @@ const (
 	// RegoV1WarnV0 adds a non-fatal warning to rule type create and update
 	// responses when the accepted policy is evaluated as Rego V0.
 	RegoV1WarnV0 Experiment = "rego_v1_warn_v0"
+	// RegoV1RefuseV0 rejects V0-only Rego when creating or updating rule
+	// types.
+	RegoV1RefuseV0 Experiment = "rego_v1_refuse_v0"
 )

@@ -11,7 +11,7 @@ def:
       def: |
         package minder
 
-        import future.keywords.if
+        import rego.v1
 
         default allow := false
         default skip := false
@@ -84,7 +84,7 @@ def:
       def: |
         package minder
 
-        import future.keywords.if
+        import rego.v1
 
         default allow := false
         default skip := false
@@ -156,9 +156,11 @@ def:
       def: |
         package minder
 
+        import rego.v1
+
         default allow := false
 
-        allow {
+        allow if {
           base_file.exists("README.md")
         }
       type: deny-by-default

@@ -158,9 +158,11 @@ def:
       def: |
         package minder
 
+        import rego.v1
+
         default allow := false
 
-        allow {
+        allow if {
             # List all workflows
             workflows := file.ls("./.github/workflows")
 
@@ -230,7 +232,9 @@ def:
       def: |
         package minder
 
-        violations[{"msg": msg}] {
+        import rego.v1
+
+        violations contains {"msg": msg} if {
           # Read Dockerfile
           dockerfile := file.read("Dockerfile")
 
