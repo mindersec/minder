@@ -332,8 +332,13 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 			"invalid Rego feature flag configuration: rego_v1_refuse_v0 requires rego_v1_dual_parse")
 	}
 
-	_, errV0 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
-		ast.ParserOptions{RegoVersion: ast.RegoV0})
+	var errV0 error
+	if refuseV0 {
+		errV0 = errors.New(regoeval.V0MigrationMessage)
+	} else {
+		_, errV0 = ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
+			ast.ParserOptions{RegoVersion: ast.RegoV0})
+	}
 	_, errV1 := ast.ParseModuleWithOpts("minder-ruletype-def.rego", def,
 		ast.ParserOptions{RegoVersion: ast.RegoV1})
 
@@ -345,10 +350,7 @@ func (s *ruleTypeService) validateAndDetectRegoVersion(ctx context.Context, rule
 		}
 		return "v0", nil
 	case errV0 == nil:
-		// V0 only - accept during migration unless refusal is enabled.
-		if refuseV0 {
-			return "", errors.New(regoeval.V0MigrationMessage)
-		}
+		// V0 only. Refusal mode always supplies a V0 migration error above.
 		return "v0", nil
 	case errV1 == nil:
 		// V1 only — gate behind feature flag.
