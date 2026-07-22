@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/spf13/cobra"
 	"github.com/styrainc/regal/pkg/linter"
 	"github.com/styrainc/regal/pkg/rules"
@@ -120,8 +121,11 @@ func validateRegoRule(ctx context.Context, r *minderv1.RuleType_Definition_Eval_
 		return fmt.Errorf("rego rule definition is empty")
 	}
 
-	inputs, err := rules.InputFromText(path, r.Def)
+	inputs, err := rules.InputFromTextWithOptions(path, r.Def, ast.ParserOptions{RegoVersion: ast.RegoV1})
 	if err != nil {
+		if _, v0Err := ast.ParseModuleWithOpts(path, r.Def, ast.ParserOptions{RegoVersion: ast.RegoV0}); v0Err == nil {
+			return fmt.Errorf("%s", rego.V0MigrationMessage)
+		}
 		return fmt.Errorf("failed parsing rego rule: %w", err)
 	}
 

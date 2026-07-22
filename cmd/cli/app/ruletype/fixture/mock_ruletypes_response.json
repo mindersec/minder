@@ -31,7 +31,7 @@
           "type": "rego",
           "rego": {
             "type": "deny-by-default",
-            "def": "package minder\n\nimport future.keywords.if\n\ndefault allow := false\ndefault skip := false\ndefault message := \"Secret push protection is disabled\"\n\nallow if {\n  input.ingested.security_and_analysis.secret_scanning_push_protection.status == \"enabled\"\n}\n\nskip if {\n  input.profile.skip_private_repos == true\n  input.ingested.private == true\n}\n"
+            "def": "package minder\n\nimport rego.v1\n\ndefault allow := false\ndefault skip := false\ndefault message := \"Secret push protection is disabled\"\n\nallow if {\n  input.ingested.security_and_analysis.secret_scanning_push_protection.status == \"enabled\"\n}\n\nskip if {\n  input.profile.skip_private_repos == true\n  input.ingested.private == true\n}\n"
           }
         },
         "remediate": {
@@ -85,7 +85,7 @@
           "type": "rego",
           "rego": {
             "type": "deny-by-default",
-            "def": "package minder\n\nimport future.keywords.if\n\ndefault allow := false\ndefault skip := false\ndefault message := \"Secret scanning is disabled\"\n\nallow if {\n  input.ingested.security_and_analysis.secret_scanning.status == \"enabled\"\n}\n\nskip if {\n  input.profile.skip_private_repos == true\n  input.ingested.private == true\n}\n"
+            "def": "package minder\n\nimport rego.v1\n\ndefault allow := false\ndefault skip := false\ndefault message := \"Secret scanning is disabled\"\n\nallow if {\n  input.ingested.security_and_analysis.secret_scanning.status == \"enabled\"\n}\n\nskip if {\n  input.profile.skip_private_repos == true\n  input.ingested.private == true\n}\n"
           }
         },
         "remediate": {
@@ -132,7 +132,7 @@
           "type": "rego",
           "rego": {
             "type": "deny-by-default",
-            "def": "package minder\n\ndefault allow := false\n\nallow {\n  base_file.exists(\"README.md\")\n}\n"
+            "def": "package minder\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n  base_file.exists(\"README.md\")\n}\n"
           }
         },
         "alert": {

@@ -14340,7 +14340,15 @@ type RuleType_Definition_Remediate_IssueRemediation struct {
 	// support Markdown (e.g. Github)
 	// This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
 	// creation of the issue
-	Body          string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	Body string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	// Labels to apply when creating the issue.
+	// This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+	// creation of the issue
+	Labels []string `protobuf:"bytes,3,rep,name=labels,proto3" json:"labels,omitempty"`
+	// Usernames to assign when creating the issue.
+	// This is not validated here as it will be validated by the repository provider, i.e. GitHub upon
+	// creation of the issue
+	Assignees     []string `protobuf:"bytes,4,rep,name=assignees,proto3" json:"assignees,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -14387,6 +14395,20 @@ func (x *RuleType_Definition_Remediate_IssueRemediation) GetBody() string {
 		return x.Body
 	}
 	return ""
+}
+
+func (x *RuleType_Definition_Remediate_IssueRemediation) GetLabels() []string {
+	if x != nil {
+		return x.Labels
+	}
+	return nil
+}
+
+func (x *RuleType_Definition_Remediate_IssueRemediation) GetAssignees() []string {
+	if x != nil {
+		return x.Assignees
+	}
+	return nil
 }
 
 type RuleType_Definition_Remediate_PullRequestRemediation_Content struct {
@@ -15653,7 +15675,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\xea\xdc\x14\x06medium\x12\x18\n" +
 	"\n" +
 	"VALUE_HIGH\x10\x05\x1a\b\xea\xdc\x14\x04high\x12 \n" +
-	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xaa'\n" +
+	"\x0eVALUE_CRITICAL\x10\x06\x1a\f\xea\xdc\x14\bcritical\"\xe1'\n" +
 	"\bRuleType\x12&\n" +
 	"\aversion\x18\v \x01(\tB\f\xbaH\tr\a2\x05^v\\d$R\aversion\x12$\n" +
 	"\x04type\x18\f \x01(\tB\x10\xbaH\rr\v2\trule-typeR\x04type\x12 \n" +
@@ -15667,7 +15689,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\vdescription\x18\x05 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xdc\vR\vdescription\x12)\n" +
 	"\bguidance\x18\x06 \x01(\tB\r\xe0A\x02\xbaH\ar\x05\x10\x01\x18\xe8\aR\bguidance\x12/\n" +
 	"\bseverity\x18\a \x01(\v2\x13.minder.v1.SeverityR\bseverity\x12D\n" +
-	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xa5\"\n" +
+	"\rrelease_phase\x18\t \x01(\x0e2\x1f.minder.v1.RuleTypeReleasePhaseR\freleasePhase\x1a\xdc\"\n" +
 	"\n" +
 	"Definition\x12;\n" +
 	"\tin_entity\x18\x01 \x01(\tB\x1e\xbaH\x1br\x19\x10\x01\x18\xc8\x012\x12^[a-z]+(_[a-z]+)*$R\binEntity\x128\n" +
@@ -15725,7 +15747,7 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\n" +
 	"_vulncheckB\t\n" +
 	"\a_trustyB\r\n" +
-	"\v_homoglyphs\x1a\xf5\f\n" +
+	"\v_homoglyphs\x1a\xac\r\n" +
 	"\tRemediate\x12c\n" +
 	"\x04type\x18\x01 \x01(\tBO\xbaHL\xd8\x01\x01rGR\x04restR\x14gh_branch_protectionR\fpull_requestR\x14pull_request_commentR\x05issueR\x04type\x12,\n" +
 	"\x04rest\x18\x02 \x01(\v2\x13.minder.v1.RestTypeH\x00R\x04rest\x88\x01\x01\x12v\n" +
@@ -15751,10 +15773,12 @@ const file_minder_v1_minder_proto_rawDesc = "" +
 	"\x05_mode\x1a}\n" +
 	"\x19ActionsReplaceTagsWithSha\x12`\n" +
 	"\aexclude\x18\x01 \x03(\tBF\xbaHC\x92\x01@\">r<\x18\xc8\x0127^\\.?([[:word:].-]+\\/)*[[:word:].-]+(?:\\.[[:alnum:]]+)?$R\aexcludeB \n" +
-	"\x1e_actions_replace_tags_with_sha\x1aT\n" +
+	"\x1e_actions_replace_tags_with_sha\x1a\x8a\x01\n" +
 	"\x10IssueRemediation\x12\x1f\n" +
 	"\x05title\x18\x01 \x01(\tB\t\xbaH\x06r\x04\x10\x01\x18KR\x05title\x12\x1f\n" +
-	"\x04body\x18\x02 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\x04bodyB\a\n" +
+	"\x04body\x18\x02 \x01(\tB\v\xbaH\br\x06\x10\x01\x18\x80\x80\x04R\x04body\x12\x16\n" +
+	"\x06labels\x18\x03 \x03(\tR\x06labels\x12\x1c\n" +
+	"\tassignees\x18\x04 \x03(\tR\tassigneesB\a\n" +
 	"\x05_restB\x17\n" +
 	"\x15_gh_branch_protectionB\x0f\n" +
 	"\r_pull_requestB\x17\n" +
