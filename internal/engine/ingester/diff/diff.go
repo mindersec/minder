@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -19,6 +20,7 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/helper/iofs"
 	scalibr "github.com/google/osv-scalibr"
+	scalibr_cfg "github.com/google/osv-scalibr/binary/proto/config_go_proto"
 	"github.com/google/osv-scalibr/extractor"
 	scalibr_fs "github.com/google/osv-scalibr/fs"
 	scalibr_plugin "github.com/google/osv-scalibr/plugin"
@@ -269,11 +271,34 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 		RunningSystem: false,
 	}
 
+	// TODO: it's unfortunate that scalibr spills files to disk.  File an upstream bug?
+	// NOTE: since we require NetworkOffline, we may not actually download anything...
+	tmpDir, err := os.MkdirTemp("", "minder-scalibr-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary scalibr directory: %w", err)
+	}
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
+	cfg := scalibr_cfg.PluginConfig{
+		MaxFileSizeBytes:  1024 * 1024,
+		LocalRegistry:     tmpDir,
+		DisableGoogleAuth: true,
+	}
+
 	scalibrFs := scalibr_fs.ScanRoot{FS: wrapped}
+	plugins, err := list.FromCapabilities(&desiredCaps, &cfg)
+	if err != nil {
+		return nil, err
+	}
+	// unknownbinariesextr uses file extension to determine "binary-ness", and triggers on e.g. .py files
+	skipPlugins := []string{"ffa/unknownbinariesextr"}
+	plugins = slices.DeleteFunc(plugins, func(p scalibr_plugin.Plugin) bool {
+		return slices.Contains(skipPlugins, p.Name())
+	})
 	scanConfig := scalibr.ScanConfig{
-		ScanRoots: []*scalibr_fs.ScanRoot{&scalibrFs},
-		// All includes Ruby, Dotnet which we're not ready to test yet, so use the more limited Default set.
-		Plugins:      list.FromCapabilities(&desiredCaps),
+		ScanRoots:    []*scalibr_fs.ScanRoot{&scalibrFs},
+		Plugins:      plugins,
 		Capabilities: &desiredCaps,
 	}
 
@@ -283,11 +308,30 @@ func scanFs(ctx context.Context, memFS billy.Filesystem, _ map[string]string) ([
 	if scanResults == nil || scanResults.Status == nil {
 		return nil, fmt.Errorf("error scanning files: no results")
 	}
-	if scanResults.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+	switch scanResults.Status.Status {
+	case scalibr_plugin.ScanStatusSucceeded:
+		return scanResults.Inventory.Packages, nil
+		// Scalibr runs a lot of plugins and aggregates the result.  Some of these are picky, and
+		// fail for random reasons.  Accept partial success, but log the failing plugins.
+	case scalibr_plugin.ScanStatusPartiallySucceeded:
+		known_bad := []string{
+			"endoflife/linuxdistro", // https://github.com/google/osv-scalibr/pull/2068
+			"rust/cargoauditable",   // https://github.com/go-git/go-billy/pull/208
+		}
+		for _, ps := range scanResults.PluginStatus {
+			if ps.Status.Status != scalibr_plugin.ScanStatusSucceeded {
+				if !slices.Contains(known_bad, ps.Name) {
+					zerolog.Ctx(ctx).Warn().Str("plugin", ps.Name).Str("status", ps.Status.FailureReason).
+						Msg("Scalibr plugin failed")
+				}
+			}
+		}
+		return scanResults.Inventory.Packages, nil
+	case scalibr_plugin.ScanStatusUnspecified, scalibr_plugin.ScanStatusFailed:
+		fallthrough
+	default:
 		return nil, fmt.Errorf("error scanning files: %s", scanResults.Status)
 	}
-
-	return scanResults.Inventory.Packages, nil
 }
 
 func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem {
@@ -297,6 +341,9 @@ func inventoryToEcosystem(inventory *extractor.Package) pbinternal.DepEcosystem 
 	}
 
 	package_url := inventory.PURL()
+	if package_url == nil {
+		package_url = &purl.PackageURL{}
+	}
 
 	// Sometimes Scalibr uses the string "PyPI" instead of "pypi" when reporting the ecosystem.
 	switch package_url.Type {
