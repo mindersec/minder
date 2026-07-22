@@ -14,7 +14,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
@@ -24,17 +23,11 @@ import (
 
 	"github.com/mindersec/minder/internal/db"
 	"github.com/mindersec/minder/internal/engine/engcontext"
-	regoeval "github.com/mindersec/minder/internal/engine/eval/rego"
 	"github.com/mindersec/minder/internal/logger"
 	"github.com/mindersec/minder/internal/util"
 	minderv1 "github.com/mindersec/minder/pkg/api/protobuf/go/minder/v1"
-	"github.com/mindersec/minder/pkg/flags"
 	"github.com/mindersec/minder/pkg/ruletypes"
 )
-
-const regoV0DeprecationWarning = "This rule type uses Rego V0 syntax. " +
-	"Please migrate to V1 using `opa fmt --v0-v1`. " +
-	"V0 support will be removed in a future release."
 
 var (
 	maxReadableStringSize = 3 * 1 << 10 // 3kB
@@ -197,7 +190,6 @@ func (s *Server) CreateRuleType(
 
 	return &minderv1.CreateRuleTypeResponse{
 		RuleType: newRuleType,
-		Warnings: s.regoVersionWarnings(ctx, crt.GetRuleType()),
 	}, nil
 }
 
@@ -238,29 +230,7 @@ func (s *Server) UpdateRuleType(
 
 	return &minderv1.UpdateRuleTypeResponse{
 		RuleType: updatedRuleType,
-		Warnings: s.regoVersionWarnings(ctx, urt.GetRuleType()),
 	}, nil
-}
-
-func (s *Server) regoVersionWarnings(ctx context.Context, ruleType *minderv1.RuleType) []string {
-	if !flags.Bool(ctx, s.featureFlags, flags.RegoV1WarnV0) {
-		return nil
-	}
-
-	eval := ruleType.GetDef().GetEval()
-	if eval.GetType() != regoeval.RegoEvalType || eval.GetRego().GetDef() == "" {
-		return nil
-	}
-
-	version := ast.RegoV0
-	if flags.Bool(ctx, s.featureFlags, flags.RegoV1DualParse) {
-		version = regoeval.DetectRegoVersion(eval.GetRego().GetDef())
-	}
-	if version != ast.RegoV0 {
-		return nil
-	}
-
-	return []string{regoV0DeprecationWarning}
 }
 
 // DeleteRuleType is a method to delete a rule type

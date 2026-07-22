@@ -14,14 +14,4 @@ const (
 	ProjectCreateDelete Experiment = "project_create_delete"
 	// AuthenticatedDataSources enables provider authentication for data sources.
 	AuthenticatedDataSources Experiment = "authenticated_datasources"
-	// RegoV1DualParse enables dual-parse version detection (try V1, fall back
-	// to V0) when creating or updating rule types. When disabled, all rule
-	// types are treated as Rego V0.
-	RegoV1DualParse Experiment = "rego_v1_dual_parse"
-	// RegoV1WarnV0 adds a non-fatal warning to rule type create and update
-	// responses when the accepted policy is evaluated as Rego V0.
-	RegoV1WarnV0 Experiment = "rego_v1_warn_v0"
-	// RegoV1RefuseV0 rejects V0-only Rego when creating or updating rule
-	// types.
-	RegoV1RefuseV0 Experiment = "rego_v1_refuse_v0"
 )

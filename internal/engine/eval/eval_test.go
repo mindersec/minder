@@ -9,7 +9,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/open-policy-agent/opa/v1/ast"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -114,14 +113,13 @@ func TestNewRuleEvaluatorWorks(t *testing.T) {
 	}
 }
 
-func TestNewRuleEvaluatorWithRegoVersion(t *testing.T) {
+func TestNewRuleEvaluatorUsesRegoV1(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name        string
 		evalType    string
 		def         string
-		version     ast.RegoVersion
 		wantOutput  any
 		wantEvalErr bool
 	}{
@@ -135,7 +133,6 @@ default allow := false
 allow if {
 	input.ingested.data == "bar"
 }`,
-			version:     ast.RegoV1,
 			wantOutput:  "denied",
 			wantEvalErr: true,
 		},
@@ -148,22 +145,7 @@ violations contains result if {
 	input.ingested.data == "foo"
 	result := {"msg": "foo is not allowed"}
 }`,
-			version:     ast.RegoV1,
 			wantOutput:  []any{"foo is not allowed"},
-			wantEvalErr: true,
-		},
-		{
-			name:     "V0 regression",
-			evalType: rego.DenyByDefaultEvaluationType.String(),
-			def: `package minder
-
-default allow = false
-
-allow {
-	input.ingested.data == "bar"
-}`,
-			version:     ast.RegoV0,
-			wantOutput:  "denied",
 			wantEvalErr: true,
 		},
 	}
@@ -188,7 +170,6 @@ allow {
 				context.Background(),
 				rt,
 				nil,
-				rego.WithRegoVersion(tt.version),
 			)
 			require.NoError(t, err)
 			require.NotNil(t, evaluator)
@@ -235,7 +216,6 @@ allow if {
 		context.Background(),
 		rt,
 		nil,
-		rego.WithRegoVersion(ast.RegoV1),
 	)
 	require.NoError(t, err)
 	require.NotNil(t, evaluator)
@@ -249,6 +229,40 @@ allow if {
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Nil(t, result.Output)
+}
+
+func TestRuleEvaluatorRejectsRegoV0(t *testing.T) {
+	t.Parallel()
+
+	rt := &pb.RuleType{
+		Def: &pb.RuleType_Definition{
+			Eval: &pb.RuleType_Definition_Eval{
+				Type: "rego",
+				Rego: &pb.RuleType_Definition_Eval_Rego{
+					Type: rego.DenyByDefaultEvaluationType.String(),
+					Def: `package minder
+
+default allow = false
+
+allow {
+	input.ingested.data == "bar"
+}`,
+				},
+			},
+		},
+	}
+
+	evaluator, err := eval.NewRuleEvaluator(context.Background(), rt, nil)
+	require.NoError(t, err)
+
+	result, err := evaluator.Eval(
+		context.Background(),
+		nil,
+		nil,
+		&interfaces.Ingested{Object: map[string]any{"data": "bar"}},
+	)
+	require.ErrorContains(t, err, "could not prepare Rego")
+	require.Nil(t, result)
 }
 
 func TestNewRuleEvaluatorFails(t *testing.T) {

@@ -45,7 +45,7 @@ default allow = false
 allow {
 	input.allowed
 }`,
-			wantErr: regoeval.V0MigrationMessage,
+			wantErr: regoeval.V1RequiredMessage,
 		},
 		{
 			name:    "rejects invalid Rego",

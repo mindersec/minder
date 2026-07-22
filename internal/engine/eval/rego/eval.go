@@ -45,7 +45,6 @@ type Evaluator struct {
 	regoOpts     []func(*rego.Rego)
 	reseval      resultEvaluator
 	datasources  *v1datasources.DataSourceRegistry
-	regoVersion  ast.RegoVersion
 }
 
 // Input is the input for the rego evaluator
@@ -84,13 +83,13 @@ func NewRegoEvaluator(
 	re := c.getEvalType()
 
 	eval := &Evaluator{
-		cfg:         c,
-		reseval:     re,
-		regoVersion: ast.RegoV0,
+		cfg:     c,
+		reseval: re,
 		regoOpts: []func(*rego.Rego){
 			rego.Query(RegoQueryPrefix),
 			rego.Module(MinderRegoFile, c.Def),
 			rego.Strict(true),
+			rego.SetRegoVersion(ast.RegoV1),
 		},
 	}
 
@@ -140,13 +139,8 @@ func (e *Evaluator) Eval(
 	// this explicitly.
 	obj := res.Object
 
-	// Register options to expose functions
-	regoFuncOptions := []func(*rego.Rego){
-		rego.SetRegoVersion(e.regoVersion),
-	}
-
 	// Initialize the built-in minder library rego functions
-	regoFuncOptions = append(regoFuncOptions, instantiateRegoLib(res)...)
+	regoFuncOptions := instantiateRegoLib(res)
 
 	// If the evaluator has data sources defined, expose their functions
 	regoFuncOptions = append(regoFuncOptions, buildDataSourceOptions(res, e.datasources)...)
@@ -186,18 +180,6 @@ func enrichInputWithEntityProps(
 ) {
 	if inner, ok := entity.(propertiesFetcher); ok {
 		input.Properties = inner.GetProperties().AsMap()
-	}
-}
-
-// WithRegoVersion returns an Option that sets the Rego language version used
-// for evaluation. The version is typically determined at rule type creation
-// time via dual-parse detection and stored in the database.
-func WithRegoVersion(v ast.RegoVersion) interfaces.Option {
-	return func(eval interfaces.Evaluator) error {
-		if e, ok := eval.(*Evaluator); ok {
-			e.regoVersion = v
-		}
-		return nil
 	}
 }
 
